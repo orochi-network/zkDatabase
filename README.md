@@ -1,4 +1,8 @@
-# What is zkDatabase?
+<p align="center">
+    <img src="./assets/zkdatabase.png" alt="Zero-Knowledge Database">
+</p>
+
+## What is zkDatabase?
 
 zkDatabase is a database that utilize Zero-Knowledge Proof (ZKP) to prove the correctness of the data and data processing. As far as we know, every [zkApp](https://minaprotocol.com/zkapps) need to manage their own on-chain and off-chain state themselves, this is costly and inefficient depend on the complexity of data's structure. We want to help other team to build their zkApp by provide the most critical component, the database.
 
@@ -8,7 +12,7 @@ With ZKP and merkle tree, we can easily to prove the immutability of the data bu
 
 The information (the raw data) itself is meaningless without the process to create a structured and sorted data. We try to solve this by build up an engine that allow us to encode the given data into JSON or BSON document (from now, we called it document). We're also establish the ability to index your document so the lookup process can be done over a B-Tree. Of course, we need to prove the lookup process.
 
-Maintaining a database not only about keep it working but also keep it evolves to adapt with the changes of your business. zkDatabase provide a proper way to manage the shapeshift of data. Now, you can focus on develop your business and let us manage it for you. If there is a feature that you think it might necessary please let us know by create an [issue](/issues/).
+Maintaining a database not only about keep it working but also keep it evolves to adapt with the changes of your business. zkDatabase provide a proper way to manage the shapeshift of data. Now, you can focus on develop your business and let us manage it for you. If there is a feature that you think it might necessary please let us know by create an [issue](https://github.com/orochi-network/zkDatabase/issues/new).
 
 ## Current stage of development
 
@@ -20,7 +24,7 @@ We are a team of four (Chiro, Flash, JoeEdoh, robi) and we're participating [zkI
 
 ## Contribute
 
-This section will be updated soon but all contributions are welcomed, feeling free to create a [pull request](/pulls/).
+This section will be updated soon but all contributions are welcomed, feeling free to create a [pull request](https://github.com/orochi-network/zkDatabase/pulls).
 
 Please reach out to us on [zkDatabase @ Discord](https://discord.com/channels/1069494820386635796/1069500366145724476).
 
