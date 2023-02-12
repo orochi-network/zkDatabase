@@ -28,6 +28,10 @@ This section will be updated soon but all contributions are welcomed, feeling fr
 
 Please reach out to us on [zkDatabase @ Discord](https://discord.com/channels/1069494820386635796/1069500366145724476).
 
+## Donation and Grants
+
+Our financial report could be track here [zkDatabase financial report](https://docs.google.com/spreadsheets/d/14R24hdgQGp9RdkOmjAM_l3ZQiZXsbxXD06KjZ3a8Ct0/edit?usp=sharing)
+
 ## License
 
 The source code of zkDatabase will be licensed under [Apache-2.0](./LICENSE) that meant you are a co-owner of project, the ownership depends on the stake and effort that you put in this project.
