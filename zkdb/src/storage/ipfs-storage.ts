@@ -1,7 +1,7 @@
 import { CID } from 'multiformats';
 import * as IPFS from 'ipfs-core';
 import { PutOptions } from 'ipfs-core-types/src/dag';
-import { Poseidon, Field } from 'snarkyjs';
+import { Poseidon, Encoding } from 'snarkyjs';
 
 export function convertHexToUint8Array(hexString: string): Uint8Array {
   const hex = hexString
@@ -51,13 +51,12 @@ export class IPFSStorage {
 
   private async poseidonHash(document: any): Promise<string> {
     const encoder = new TextEncoder();
+
+    const doc = encoder.encode(JSON.stringify(document))
+
     // Calculate poseidon hash of document
     const hexDigest = convertHexToUint8Array(
-      Poseidon.hash([
-        Field.fromBytes(
-          (<any>encoder.encode(JSON.stringify(document))) as number[]
-        ),
-      ]).toString()
+      Poseidon.hash(Encoding.Bijective.Fp.fromBytes(doc)).toString()
     );
 
     return (await this.nodeInstance.bases.getBase('base32')).encoder
@@ -66,12 +65,17 @@ export class IPFSStorage {
   }
 
   private async isExist(path: string, filename: string) {
-    for await (const file of this.nodeInstance.files.ls(path)) {
-      if (file.name === filename) {
-        return true;
-      }
-    }
-    return false;
+    // for await (const file of this.nodeInstance.files.ls(path)) {
+    //   if (file.name === filename) {
+    //     return true;
+    //   }
+    // }
+    // return false;
+    const fullPath = path + '/' + filename
+    const fileStat = await this.nodeInstance.files.stat(fullPath);
+
+    if (fileStat) return true
+    else return false
   }
 
   private async readFile(filename: string): Promise<Uint8Array> {
