@@ -41,18 +41,27 @@
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
     "@types/jest": "^27.0.3",
+    "@types/safer-buffer": "^2.1.0",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.7.0",
     "eslint-plugin-snarkyjs": "^0.1.0",
     "husky": "^7.0.1",
+    "ipfs-core-types": "^0.14.0",
     "jest": "^27.3.1",
     "lint-staged": "^11.0.1",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.7",
+    "tsconfig-paths": "^4.1.2",
     "typescript": "^4.7.2"
   },
   "peerDependencies": {
+    "snarkyjs": "^0.8.0"
+  },
+  "dependencies": {
+    "ipfs-core": "^0.18.0",
+    "multiformats": "^11.0.1",
+    "safer-buffer": "^2.1.2",
     "snarkyjs": "^0.8.0"
   }
 }

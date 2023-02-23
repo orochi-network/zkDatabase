@@ -9,3 +9,4 @@ src
 
 # Never reveal your keys!
 keys
+.env
