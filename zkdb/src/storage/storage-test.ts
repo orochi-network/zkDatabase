@@ -1,7 +1,7 @@
 import { IPFSStorage, IPFSStorageConfiguration } from "./ipfs-storage.js";
 
 async function run() {
-    const config: IPFSStorageConfiguration = { database: "TestDB" }
+    const config: IPFSStorageConfiguration = { database: "TestDatabase" }
 
     const storage = await IPFSStorage.init(config);
 
@@ -13,12 +13,12 @@ async function run() {
         ],
     };
 
-    const result = await storage.put("Test", obj, { pin: true });
+    const result = await storage.put("TestFile", obj, { pin: true });
     console.log(result)
 
-    // const getTestResult = await storage.get("Test", result.documentID)
-    // console.log(getTestResult)
+    const getTestResult = await storage.get("TestFile", result.documentID)
+    console.log(getTestResult)
+    console.log(getTestResult?.value)
 }
-
 
 run()

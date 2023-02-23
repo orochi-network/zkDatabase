@@ -65,17 +65,20 @@ export class IPFSStorage {
   }
 
   private async isExist(path: string, filename: string) {
-    // for await (const file of this.nodeInstance.files.ls(path)) {
-    //   if (file.name === filename) {
-    //     return true;
-    //   }
-    // }
-    // return false;
+    let status = false;
     const fullPath = path + '/' + filename
-    const fileStat = await this.nodeInstance.files.stat(fullPath);
-
-    if (fileStat) return true
-    else return false
+    try {
+      const fileStatus = await this.nodeInstance.files.stat(fullPath);
+      if (fileStatus) {
+        status = true;
+      }
+    } catch (e) {
+      let message = 'Unknown Error'
+      if (e instanceof Error) message = e.message
+      console.log(message)
+      status = false;
+    }
+    return status
   }
 
   private async readFile(filename: string): Promise<Uint8Array> {
@@ -145,6 +148,7 @@ export class IPFSStorage {
       pin: true,
       ...option,
     });
+
     const cid = result.toString();
     this.collections[collection][documentDigest] = cid;
 
