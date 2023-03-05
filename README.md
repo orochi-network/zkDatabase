@@ -49,9 +49,13 @@ Coping with data in your project might be time-consuming and error-prone task. M
 
 A distributed storage will be used to serve the data and prevent single point of failure, it allows everyone with a replication of the data to reconstruct the database and its Merkle tree. Recovery from fault is an essential feature.
 
-Cryptographic authorization & encryption Public data will be accessible for everyone. Private data is encrypted and authorization based. 
+### Cryptographic authorization & encryption
 
-BSON document will be used to enforce the data structure. All data must match with a predefined schema, which is necessary to keep the database consistent.
+Public data will be accessible for everyone. Private data is encrypted and authorization based. 
+
+### BSON document
+
+BSON will be used to enforce the data structure. All data must match with a predefined schema, which is necessary to keep the database consistent.
 
 ### B-tree
 
