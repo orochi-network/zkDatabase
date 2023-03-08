@@ -162,6 +162,9 @@ The response depends on the state of the smart contract, but it will be somethin
 }
 ```
 
+### Events
+It is possible to send up to **16 fields** in events in a single transaction, and each field can be up to **255 bits**.
+
 **HELP:**
 1) Should we agree on particular structure for `Events` to identify its purpose? It could be the command (Add, Remove, Update, etc.).
 2) When `events` are to be requested from the blockchain? Should we use a cron job or subscribe on node changes (if supported). 
