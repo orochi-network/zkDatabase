@@ -55,6 +55,10 @@ _Manual data management is time-consuming, error-prone, and inefficient. The com
 
 ## Solution
 
+<p align="center">
+    <img src="./assets/zkdatabase-architecture.jpg" alt="Zero-Knowledge Database architecture">
+</p>
+
 ### Distributed storage engine
 
 To prevent single point failure and ensure the availability of data, a distributed storage engine will be exploited. This engine will enable anyone with a replica of the data to reconstruct the database and its Merkle tree, ensuring that recovery from faults is possible.
