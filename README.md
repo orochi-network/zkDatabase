@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase is a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to provide cryptographic authorization and encryption, ensuring the correctness of data. With zkDatabase, it's time for provable data, allowing developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
+Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase use a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to  ensuring the correctness of data in verifiable manner. With zkDatabase, it's allow developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
 
 **It's time for provable data.**
 
@@ -21,7 +21,7 @@ _For instance, a centralized cloud storage provider experiences a downtime or da
 
 Achieving off-chain storage through ZKP and Merkle trees can ensure the immutability of the data, but it may limit accessibility to the public. Despite the data being public, not everyone can access it.
 
-_One example of this limitation in accessibility is in the case of sensitive information. While certain data may be public, it is still necessary to restrict access to authorized individuals or entities. For instance, medical records are considered private information and must only be accessed by healthcare professionals or patients themselves. Similarly, financial records may contain sensitive information that should only be accessible to authorized personnel._
+_For instance you have a public records need to everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible.._
 
 ### Inconsistent data structure
 
