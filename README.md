@@ -21,7 +21,7 @@ _For instance, a centralized cloud storage provider experiences a downtime or da
 
 Achieving off-chain storage through ZKP and Merkle trees can ensure the immutability of the data, but it may limit accessibility to the public. Despite the data being public, not everyone can access it.
 
-_For instance you have a public records need to everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible.._
+_For instance you have a public records need to everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible._
 
 ### Inconsistent data structure
 
