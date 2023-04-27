@@ -366,8 +366,20 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param BSONData BSON data
    * @returns [[CID]]
    */
-  writeBSON(BSONData: any): Promise<CID<unknown, number, number, Version>> {
-    return this.writeBytes(BSON.serialize(BSONData));
+  writeBSON(
+    BSONData: any,
+    filename: string | null = null
+  ): Promise<CID<unknown, number, number, Version>> {
+    try {
+      const serializedData = BSON.serialize(BSONData);
+      if (!filename) return this.writeBytes(serializedData);
+      else return this.write(filename, serializedData);
+    } catch (error) {
+      // Log the error and the data that caused it
+      console.error('BSON serialization error: ', error);
+      console.error('Failed BSONData: ', BSONData);
+      throw error;
+    }
   }
 
   /**
@@ -460,6 +472,21 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
       fs.rmSync(fullPath);
     }
     return true;
+  }
+
+  async isDocumentEmpty(filename: string): Promise<boolean> {
+    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
+
+    // If the file does not exist, return true
+    if (!fs.existsSync(fullPath)) {
+      return true;
+    }
+
+    // Read the file and check its size
+    const fileContents = fs.readFileSync(fullPath);
+
+    // If the size is 0, then the file is empty
+    return fileContents.byteLength === 0;
   }
 
   /**
