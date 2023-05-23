@@ -1,12 +1,13 @@
 {
   "name": "zkdatabase",
   "version": "0.0.1",
-  "description": "zkDatabase for the future of blockchain",
+  "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
   "keywords": [
     "zk",
     "database",
+    "zk-database",
     "zkdb",
     "zkdatabase"
   ],
@@ -47,20 +48,40 @@
     "eslint": "^8.7.0",
     "eslint-plugin-snarkyjs": "^0.1.0",
     "husky": "^7.0.1",
-    "ipfs-core-types": "^0.14.0",
     "jest": "^27.3.1",
     "lint-staged": "^11.0.1",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.7",
     "tsconfig-paths": "^4.1.2",
+    "typedoc": "^0.24.7",
     "typescript": "^4.7.2"
   },
   "peerDependencies": {
     "snarkyjs": "^0.8.0"
   },
   "dependencies": {
-    "ipfs-core": "^0.18.0",
-    "multiformats": "^11.0.1",
+    "@chainsafe/libp2p-gossipsub": "^7.0.0",
+    "@chainsafe/libp2p-noise": "^11.0.4",
+    "@chainsafe/libp2p-yamux": "^4.0.1",
+    "@helia/dag-cbor": "^0.0.0",
+    "@helia/interface": "^1.0.0",
+    "@helia/ipns": "^1.1.1",
+    "@helia/unixfs": "^1.2.2",
+    "@libp2p/bootstrap": "^8.0.0",
+    "@libp2p/delegated-peer-routing": "^4.0.6",
+    "@libp2p/kad-dht": "^9.2.0",
+    "@libp2p/mplex": "^8.0.1",
+    "@libp2p/peer-id": "^2.0.3",
+    "@libp2p/tcp": "^7.0.1",
+    "@libp2p/websockets": "^6.0.1",
+    "@multiformats/multiaddr": "^12.1.2",
+    "blockstore-fs": "^1.1.1",
+    "bson": "^5.3.0",
+    "datastore-fs": "^9.1.1",
+    "helia": "^1.0.4",
+    "kubo-rpc-client": "^3.0.1",
+    "libp2p": "^0.44.0",
+    "multiformats": "^11.0.2",
     "safer-buffer": "^2.1.2",
     "snarkyjs": "^0.8.0"
   }
