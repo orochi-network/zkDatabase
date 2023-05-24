@@ -67,7 +67,7 @@ Since a DAG nodes are immutable but we unable to update the `CID` every time. So
 
 #### Metadata
 
-The medata file is holding a mapping of data's poseidon hash to its `CID` that allowed us to retrieve the data from ipfs. It's also use to reconstruct the merkle tree.
+The medata file is holding a mapping of data's poseidon hash to its `CID` that allowed us to retrieve the data from ipfs. It's also use to reconstruct the merkle tree. Metada is stored on IPFS and we also make a copy at local file system.
 
 #### BSON Document
 
