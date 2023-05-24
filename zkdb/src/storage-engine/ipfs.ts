@@ -4,7 +4,6 @@ import { tcp } from '@libp2p/tcp';
 import { kadDHT } from '@libp2p/kad-dht';
 import { noise } from '@chainsafe/libp2p-noise';
 import { MemoryDatastore } from 'datastore-core';
-import { mplex } from '@libp2p/mplex';
 import { webSockets } from '@libp2p/websockets';
 import { multiaddr } from '@multiformats/multiaddr';
 import { yamux } from '@chainsafe/libp2p-yamux';
@@ -89,15 +88,14 @@ const newLibP2p = async (
     },
     dht: kadDHT(),
     connectionEncryption: [noise()],
+    streamMuxers: [yamux()],
   };
 
   // Apply transport configuration
   if (transport === 'tcp') {
     config.transports = [tcp()];
-    config.streamMuxers = [mplex()];
   } else {
     config.transports = [webSockets()];
-    config.streamMuxers = [yamux()];
   }
 
   // Apply storage configuration
