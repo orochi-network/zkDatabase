@@ -110,6 +110,8 @@ const newLibP2p = async (
 
   const nodeP2p = await createLibp2p(config);
   // Manual patch for node bootstrap
+  // IPFS bootstrap list is available here: https://docs.ipfs.tech/how-to/modify-bootstrap-list/
+  // We won't care about this detail for now
   const addresses = [
     '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
     '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
