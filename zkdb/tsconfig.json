@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es2020",
+    "target": "es2022",
     "module": "es2022",
     "lib": ["dom", "esnext"],
     "outDir": "./build",
@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowJs": true,
@@ -20,7 +20,7 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
     "paths": {
-      "@utilities/*": ["utilities/*"]
+      "@utilities/*": ["src/utilities/*"]
     }
   },
   "include": ["./src"],

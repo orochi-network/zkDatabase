@@ -1,4 +1,4 @@
-import { Add } from './Add';
+import { Add } from './Add.js';
 import {
   isReady,
   shutdown,
