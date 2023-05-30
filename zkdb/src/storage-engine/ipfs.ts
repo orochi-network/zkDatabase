@@ -310,16 +310,6 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
       const fileContent = fs.readFileSync(metadataFile);
       const docMetadata = BSON.deserialize(fileContent);
       docMetadata[filename] = cid.toString();
-      console.log(
-        'Metadata file:',
-        metadataFile,
-        'CID:',
-        cid.toString(),
-        'File name:',
-        filename,
-        'Metadata:',
-        docMetadata
-      );
       metadataContent = BSON.serialize(docMetadata);
       fs.writeFileSync(metadataFile, metadataContent);
     } else {
@@ -327,16 +317,6 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
       const docMetadata: { [key: string]: string } = {};
       docMetadata[filename] = cid.toString();
       metadataContent = BSON.serialize(docMetadata);
-      console.log(
-        'Metadata file:',
-        metadataFile,
-        'CID:',
-        cid.toString(),
-        'File name:',
-        filename,
-        'Metadata:',
-        docMetadata
-      );
       fs.writeFileSync(metadataFile, metadataContent);
     }
     // Add content of metadata file to ipfs
@@ -464,7 +444,7 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
       const collectionMetadataCID = await this.unixFs.addBytes(
         docMetadataContent
       );
-      console.log('rm', docMetadata);
+
       // Sync database metadata
       const databaseMetadataCID = await this.syncMetadata(
         this.pathStorageMetadata,
@@ -510,93 +490,3 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
     return this.ipns.resolve(peerID ?? this.nodeLibP2p.peerId);
   }
 }
-/*
-(async () => {
-  console.log(
-    Binary.concatUint8Array([
-      new Uint8Array([1, 2, 3, 4]),
-      new Uint8Array([5, 6, 7, 8]),
-    ])
-  );
-
-  const newInstance = await StorageEngineIPFS.getInstance(
-    '/Users/chiro/GitHub/zkDatabase/zkdb/data'
-  );
-
-  // const encoder = new TextEncoder();
-  console.log('Our peer ID:', newInstance.nodeLibP2p.peerId.toString());
-
-  await newInstance.writeBSON({ something: 'stupid' });
-
-  console.log(
-    BSON.deserialize(
-      await newInstance.read(
-        'bbkscciq5an6kqbwixefbpnftvo34pi2jem3e3rjppf3hai2gyifa'
-      )
-    )
-  );
-
-  console.log(
-    await newInstance.remove(
-      'bbkscciq5an6kqbwixefbpnftvo34pi2jem3e3rjppf3hai2gyifa'
-    )
-  );
-
-  /*
-  const directory = await newInstance.unixFs.addDirectory({
-    path: '/Users/chiro/GitHub/zkDatabase/zkdb/storage',
-  });
-  console.log('Directory:', directory.toString());
-  const fileCid = await newInstance.unixFs.addFile({
-    path: `${directory.toString()}/storage/text2.txt`,
-    content: encoder.encode('Hello'),
-  });
-  console.log('File:', fileCid);
-
-  for await (const entry of newInstance.unixFs.ls(directory)) {
-    console.log('Entry >', entry);
-  }
-
-  const name = await ipns(newInstance.nodeHelia);
-
-  console.log(await name.publish(newInstance.nodeLibP2p.peerId, fileCid));
-  await name.republish();
-  console.log(await name.resolve(newInstance.nodeLibP2p.peerId));
-
-  console.log(await Binary.poseidonHashBSON({ hello: 'fool' }));*/
-
-/*
-  const configuration: IStorageFileConfiguration = {
-    handler: 'file',
-    location: '/Users/chiro/GitHub/zkDatabase/zkdb/data',
-  };
-  const p2pNode = await newLibP2p('tcp', configuration);
-  await p2pNode.start();
-
-  const heliaNode = await newHelia(p2pNode, configuration);
-
-  const fs = unixfs(heliaNode);
-
-  // we will use this TextEncoder to turn strings into Uint8Arrays
-  const encoder = new TextEncoder();
-
-  // add the bytes to your node and receive a unique content identifier
-  const cid = await fs.addBytes(encoder.encode('Hello World 301'));
-
-  const decoder = new TextDecoder();
-  let text = '';
-
-  // use the second Helia node to fetch the file from the first Helia node
-  for await (const chunk of fs.cat(cid)) {
-    text += decoder.decode(chunk, {
-      stream: true,
-    });
-  }
-
-  console.log('Fetched file contents:', text);
-
-  // p2pNode.addEventListener('peer:discovery', console.log);
-
-  const currentPeerId = await p2pNode.keychain.exportPeerId('self');
-  console.log('My peer ID', currentPeerId.toString());
-})();*/
