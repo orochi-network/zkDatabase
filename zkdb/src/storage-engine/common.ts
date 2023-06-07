@@ -3,6 +3,22 @@ import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 
 /**
+ * IPFS entry that record file information
+ */
+export interface IIPFSEntry {
+  // IPFS CID
+  cid: CID;
+  // File digest in bytes
+  digest: Uint8Array;
+  // Collection id of file
+  collection: string;
+  // File name
+  filename: string;
+  // Base path of file
+  basefile: string;
+}
+
+/**
  * Common interface for file system
  * @param S - Content ID could be filename or content ID depends on implementation
  * @param T - Content unique ID, it could be uuid or CID depends on implementation
@@ -10,17 +26,20 @@ import { IPNSEntry } from 'ipns';
  */
 export interface IFileSystem<S, T, R> {
   /**
-   * Write data type R to file system and return content ID
-   * @param _data Data in bytes
-   */
-  writeBytes(_data: R): Promise<T>;
-
-  /**
    * Write data type R to file system with a given filename and return content ID
    * @param _filename Filename
    * @param _data Data in bytes
+   * @returns Data in T
    */
   write(_filename: S, _data: R): Promise<T>;
+
+  /**
+   * Write data type R to file system
+   * @param _filename Filename
+   * @param _data Data in bytes
+   * @returns Data in T
+   */
+  writeBytes(_data: R): Promise<T>;
 
   /**
    * Read data type R from file system with a given content ID/filename
@@ -62,13 +81,13 @@ export interface IFileIndex<S, T, R> {
    * @param _peerID Peer ID of p2p node
    * @returns Content ID
    */
-  resolve(_peerID?: S): Promise<T>;
+  resolve(_peerID?: S): Promise<T | undefined>;
 }
 
 /**
  * IPFS file system
  */
-export type TIPFSFileSystem = IFileSystem<string, CID, Uint8Array>;
+export type TIPFSFileSystem = IFileSystem<string, IIPFSEntry, Uint8Array>;
 
 /**
  * IPFS file index
