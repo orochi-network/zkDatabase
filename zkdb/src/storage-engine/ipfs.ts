@@ -1,5 +1,4 @@
 import { Libp2p, Libp2pOptions, createLibp2p } from 'libp2p';
-import { TIPFSFileSystem, TIPFSFileIndex } from './common.js';
 import { tcp } from '@libp2p/tcp';
 import { kadDHT } from '@libp2p/kad-dht';
 import { noise } from '@chainsafe/libp2p-noise';
@@ -17,8 +16,9 @@ import { CID, Version } from 'multiformats';
 import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 import fs from 'fs';
-import { Binary, Helper } from '../utilities/index.js';
 import { BSON } from 'bson';
+import { Binary, Helper } from '../utilities/index.js';
+import { TIPFSFileSystem, TIPFSFileIndex, IIPFSEntry } from './common.js';
 
 /**
  * Transport layer
@@ -291,6 +291,30 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
     this.pathBase = path;
   }
 
+  // Try to resolve IPNS entry to CID
+  public async tryResolve() {
+    if (typeof (await this.resolve()) === 'undefined') {
+      await this.initializeMetadata();
+    }
+  }
+
+  // Initial missing data
+  public async initializeMetadata() {
+    if (!fs.existsSync(this.pathStorageMetadata)) {
+      const docMetadata: { [key: string]: string } = {};
+      const metadataContent = BSON.serialize(docMetadata);
+      fs.writeFileSync(this.pathStorageMetadata, metadataContent);
+      const cid = await this.unixFs.addBytes(metadataContent);
+      // Publish the metadata to record
+      return this.ipns.publish(this.nodeLibP2p.peerId, cid);
+    } else {
+      const fileContent = fs.readFileSync(this.pathStorageMetadata);
+      const cid = await this.unixFs.addBytes(fileContent);
+      // Publish the metadata to record
+      return this.ipns.publish(this.nodeLibP2p.peerId, cid);
+    }
+  }
+
   /**
    * Sync metadata
    * @note Please consider this is a stupid way to handle metadata.
@@ -387,9 +411,22 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param data Bytes data
    * @returns [[CID]]
    */
-  writeBytes(data: Uint8Array): Promise<CID<unknown, number, number, Version>> {
+  async writeBytes(data: Uint8Array): Promise<IIPFSEntry> {
     // Write bytes to ipfs with filename is hash of data
-    return this.write(Binary.toBase32(Binary.poseidonHashBinary(data)), data);
+    const digest = Binary.poseidonHashBinary(data);
+    const filename = Binary.toBase32(digest);
+    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
+    StorageEngineIPFS.initPath(this.pathCollection);
+    fs.writeFileSync(fullPath, data);
+    const fileCID = await this.unixFs.addBytes(data);
+    await this.syncDatabaseMetadata(fileCID, filename);
+    return {
+      cid: fileCID,
+      filename,
+      digest,
+      collection: this.collection,
+      basefile: fullPath,
+    };
   }
 
   /**
@@ -398,16 +435,35 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param data Bytes data
    * @returns [[CID]]
    */
-  async write(
-    filename: string,
-    data: Uint8Array
-  ): Promise<CID<unknown, number, number, Version>> {
+  async write(filename: string, data: Uint8Array): Promise<IIPFSEntry> {
     const fullPath = `${this.pathCollection}/${filename}.zkdb`;
     StorageEngineIPFS.initPath(this.pathCollection);
     fs.writeFileSync(fullPath, data);
     const fileCID = await this.unixFs.addBytes(data);
     await this.syncDatabaseMetadata(fileCID, filename);
-    return fileCID;
+    return {
+      cid: fileCID,
+      filename,
+      digest: Binary.poseidonHashBinary(data),
+      collection: this.collection,
+      basefile: fullPath,
+    };
+  }
+
+  /**
+   * Read bytes from ipfs by a given CID
+   * @param cid Content ID
+   * @returns Bytes data
+   */
+  async readBytes(cid: CID): Promise<Uint8Array> {
+    const catIterator = this.unixFs.cat(cid);
+    let size = 0;
+    let buf = [];
+    for await (let chunk of catIterator) {
+      size += chunk.length;
+      buf.push(chunk);
+    }
+    return Binary.concatUint8Array(buf, size);
   }
 
   /**
@@ -426,16 +482,7 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
       const collectionMetadata = fs.readFileSync(this.pathCollectionMetdata);
       const docMetadata = BSON.deserialize(collectionMetadata);
       if (typeof docMetadata[filename] === 'string') {
-        const catIterator = this.unixFs.cat(
-          Helper.toCID(docMetadata[filename])
-        );
-        let size = 0;
-        let buf = [];
-        for await (let chunk of catIterator) {
-          size += chunk.length;
-          buf.push(chunk);
-        }
-        return Binary.concatUint8Array(buf, size);
+        return this.readBytes(Helper.toCID(docMetadata[filename]));
       }
       throw new Error('This document doesn not exist in the given collection');
     }
@@ -513,7 +560,14 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param peerID Peer ID
    * @returns [[CID]]
    */
-  resolve(peerID?: PeerId): Promise<CID<unknown, number, number, Version>> {
-    return this.ipns.resolve(peerID ?? this.nodeLibP2p.peerId);
+  async resolve(
+    peerID?: PeerId
+  ): Promise<CID<unknown, number, number, Version> | undefined> {
+    try {
+      const result = await this.ipns.resolve(peerID ?? this.nodeLibP2p.peerId);
+      return result;
+    } catch (e) {
+      return undefined;
+    }
   }
 }
