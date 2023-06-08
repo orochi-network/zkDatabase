@@ -19,6 +19,10 @@ import fs from 'fs';
 import { BSON } from 'bson';
 import { Binary, Helper } from '../utilities/index.js';
 import { TIPFSFileSystem, TIPFSFileIndex, IIPFSEntry } from './common.js';
+import {
+  MERKLE_TREE_COLLECTION_NAME,
+  MERKLE_TREE_FILE_NAME,
+} from '../storage/trees/merkle/DistributedMerkleTree.js';
 
 /**
  * Transport layer
@@ -390,20 +394,28 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param BSONData BSON data
    * @returns [[CID]]
    */
-  writeBSON(
-    BSONData: any,
-    filename: string | null = null
-  ): Promise<CID<unknown, number, number, Version>> {
-    try {
-      const serializedData = BSON.serialize(BSONData);
-      if (!filename) return this.writeBytes(serializedData);
-      else return this.write(filename, serializedData);
-    } catch (error) {
-      // Log the error and the data that caused it
-      console.error('BSON serialization error: ', error);
-      console.error('Failed BSONData: ', BSONData);
-      throw error;
-    }
+  writeBSON(BSONData: any): Promise<IIPFSEntry> {
+    const serializedData = BSON.serialize(BSONData);
+    return this.writeBytes(serializedData);
+  }
+
+  /**
+   * Write bsondata of Merkle tree to IPFS
+   * @param BSONData Merkle tree BSON data
+   * @returns IIPFSEntry
+   */
+  async writeMerkleBSON(BSONData: any): Promise<IIPFSEntry> {
+    this.use(MERKLE_TREE_COLLECTION_NAME);
+    return this.write(MERKLE_TREE_FILE_NAME, BSON.serialize(BSONData));
+  }
+
+  /**
+   * Read Merkle tree BSON data from IPFS
+   * @returns Uint8Array
+   */
+  async readMerkleBSON(): Promise<Uint8Array> {
+    this.use(MERKLE_TREE_COLLECTION_NAME);
+    return this.read(MERKLE_TREE_FILE_NAME);
   }
 
   /**
