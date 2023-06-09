@@ -1,6 +1,5 @@
 import { Libp2p, Libp2pOptions, createLibp2p } from 'libp2p';
 import { tcp } from '@libp2p/tcp';
-import { kadDHT } from '@libp2p/kad-dht';
 import { noise } from '@chainsafe/libp2p-noise';
 import { MemoryDatastore } from 'datastore-core';
 import { webSockets } from '@libp2p/websockets';
@@ -90,7 +89,6 @@ const newLibP2p = async (
     addresses: {
       listen: ['/ip4/127.0.0.1/tcp/0'],
     },
-    dht: kadDHT(),
     connectionEncryption: [noise()],
     streamMuxers: [yamux()],
   };
