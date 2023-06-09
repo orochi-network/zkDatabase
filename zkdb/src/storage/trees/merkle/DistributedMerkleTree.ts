@@ -3,16 +3,17 @@ import { StorageEngineIPFS } from '../../../storage-engine/ipfs.js';
 import { BSON } from 'bson';
 import { Field } from 'snarkyjs';
 
-export default class DistributedMerkleTree extends BaseMerkleTree {
-  public static readonly DEFAULT_FILE_NAME: string = 'merkle_tree';
-  public static readonly DEFAULT_COLLECTION_NAME: string = 'security';
+export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
+export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
+
+export default class DistributedMerkleTree extends BaseMerkleTree {
   private ipfs: StorageEngineIPFS;
 
   constructor(ipfs: StorageEngineIPFS, height: number) {
     super(height);
     this.ipfs = ipfs;
-    ipfs.use(DistributedMerkleTree.DEFAULT_COLLECTION_NAME);
+    ipfs.use(MERKLE_TREE_COLLECTION_NAME);
   }
 
   public async getRoot(): Promise<Field> {
@@ -36,7 +37,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   }
 
   public async isEmpty(): Promise<boolean> {
-    return this.ipfs.isDocumentEmpty(DistributedMerkleTree.DEFAULT_FILE_NAME);
+    return this.ipfs.isDocumentEmpty(MERKLE_TREE_FILE_NAME);
   }
 
   protected async writeLeaf(nodesMap: MerkleNodesMap): Promise<void> {
@@ -64,10 +65,8 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   }
 
   protected async writeNodes(nodes: MerkleNodesMap): Promise<void> {
-    await this.ipfs.writeBSON(
-      JSON.parse(JSON.stringify(nodes)),
-      DistributedMerkleTree.DEFAULT_FILE_NAME
-    );
+    this.ipfs.use(MERKLE_TREE_COLLECTION_NAME);
+    await this.ipfs.writeMerkleBSON(nodes);
   }
 
   protected async fetchNodes(): Promise<MerkleNodesMap> {
@@ -75,9 +74,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
       return {};
     }
 
-    const nodeBytes = await this.ipfs.read(
-      DistributedMerkleTree.DEFAULT_FILE_NAME
-    );
+    const nodeBytes = await this.ipfs.readMerkleBSON();
     const bson = BSON.deserialize(nodeBytes);
 
     const nodesMap: MerkleNodesMap = bson as MerkleNodesMap;
