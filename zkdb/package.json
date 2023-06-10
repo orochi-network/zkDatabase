@@ -72,8 +72,9 @@
     "blockstore-fs": "^1.1.1",
     "bson": "^5.3.0",
     "datastore-fs": "^9.1.1",
-    "helia": "^1.0.4",
+    "helia": "^1.2.1",
     "libp2p": "^0.44.0",
+    "long": "^5.2.3",
     "multiformats": "^11.0.2",
     "safer-buffer": "^2.1.2",
     "snarkyjs": "^0.8.0"
