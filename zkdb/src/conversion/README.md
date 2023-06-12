@@ -59,5 +59,5 @@ Can handle the following BSON types
 Run script on terminal
 
     bash```
-        $npm run build && node build/src/conversion/bson-test.js
+        $npm run test
     ```

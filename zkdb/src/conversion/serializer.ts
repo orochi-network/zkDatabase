@@ -5,9 +5,10 @@ import {
     UInt64,
     Signature,
     Int64,
-    Encoding
+    Encoding,
+    Field
 } from 'snarkyjs';
-import { boolProps, checkType, fieldProps, groupProps } from "./utils.js";
+import { boolProps, checkType, groupProps } from "./utils.js";
 
 const regexp = /\x00/; // eslint-disable-line no-control-regex
 
@@ -181,7 +182,7 @@ export class BSONSerializer {
             this.writeCstring(k);
             return;
         }
-        if (checkType(v, fieldProps)) {
+        if (v instanceof Field) {
             this.writeByte(0x14);
             this.writeCstring(k);
             this.writeFields(v.toFields());

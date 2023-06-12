@@ -1,1 +1,3 @@
-export * from './bson.js';
+import * as zkBson from './bson.js';
+
+export { zkBson };
