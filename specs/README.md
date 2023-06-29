@@ -44,25 +44,27 @@ zkDatabase isn't just support ordinary Key-Value storage but also support BSON d
 ## Data Type
 
 ### SnaryJS supported types
+
 - **Built-in types**
-    - Field
-    - Bool
-    - UInt32
-    - UInt64
-    - PublicKey
-    - PrivateKey
-    - Signature
-    - Group
-    - Scalar
-    - CircuitString
-    - Character
+  - Field
+  - Bool
+  - UInt32
+  - UInt64
+  - PublicKey
+  - PrivateKey
+  - Signature
+  - Group
+  - Scalar
+  - CircuitString
+  - Character
 - **Custom types**
-    - Struct
+  - Struct [\*](https://docs.minaprotocol.com/zkapps/snarkyjs-reference/modules#struct-1)
 - **Trees**
-    - MerkleTree
-    - MerkleMap
+  - MerkleTree
+  - MerkleMap
 
 ### Bson supported types
+
 - Double
 - String
 - Object
@@ -85,26 +87,30 @@ zkDatabase isn't just support ordinary Key-Value storage but also support BSON d
 - Max key
 
 ### Serialization/Deserialization
+
 The provided code snippet demonstrates how to convert a zk-snark data type into a BSON-supported format by first converting the value into a Uint8Array and then serializing it using BSON.
+
 ```ts
-  const value = UInt64.from(12342);
-  const bytes: Uint8Array = Encoding.Bijective.Fp.toBytes(value.toFields());
-  const bson = BSON.serialize({ bytes });
+const value = UInt64.from(12342);
+const bytes: Uint8Array = Encoding.Bijective.Fp.toBytes(value.toFields());
+const bson = BSON.serialize({ bytes });
 ```
+
 This code snippet demonstrates the process of converting BSON data back into a zk-SNARK data type. This is done by first deserializing the BSON data into a JavaScript object, then converting the Binary data into a Uint8Array, and finally using a built-in decoding method to reconstruct the original value from the byte array.
+
 ```ts
-  const deserializedBson = BSON.deserialize(bson);
-  const convertedResult = new Uint8Array(deserializedBson.bytes.buffer);
-  const initialField = Encoding.Bijective.Fp.fromBytes(convertedResult);
+const deserializedBson = BSON.deserialize(bson);
+const convertedResult = new Uint8Array(deserializedBson.bytes.buffer);
+const initialField = Encoding.Bijective.Fp.fromBytes(convertedResult);
 ```
 
 ### Serializing Arbitrary Data into Field Elements
+
 When serializing arbitrary data into field elements, it's important to note that field elements can hold a maximum of 254 arbitrary bits (not 255) due to the largest possible field element lying between 2^254 and 2^255.
 
 You can utilize the `Encoding.bytesToFields` method, which efficiently packs 31 bytes per field element for serialization.
 
-**HELP** We need to clarify which kind of data type will be supported. 
-
+**HELP** We need to clarify which kind of data type will be supported.
 
 ## Index BSON Document
 
@@ -129,15 +135,17 @@ Data collection occures by requesting `events` from the Mina blockchain, which a
 ### Smart Contract
 
 Define _names_ and _types_ of your events:
+
 ```ts
-    events = {
-    'arbitrary-event-key': Field,
-  };
+events = {
+  "arbitrary-event-key": Field,
+};
 ```
 
 In order to send data to the blockchain with use the following method:
+
 ```ts
-    this.emitEvent('arbitrary-event-key', data);
+this.emitEvent("arbitrary-event-key", data);
 ```
 
 ### Off-chain
@@ -145,26 +153,37 @@ In order to send data to the blockchain with use the following method:
 The most convenient way to pull `events` off the blockchain is by [making graphql request](https://berkeley.graphql.minaexplorer.com/):
 
 **Request**
+
 ```gql
 query getEvents($zkAppAddress: String!) {
-    zkapps(query: {zkappCommand: {accountUpdates: {body: {publicKey: $zkAppAddress}}}, canonical: true, failureReason_exists: false}, sortBy: BLOCKHEIGHT_DESC, limit: 1000) {
-        hash
-        dateTime
-        blockHeight
-        zkappCommand {
-            accountUpdates {
-                body {
-                    events
-                    publicKey
-                }
-            }
-        }
+  zkapps(
+    query: {
+      zkappCommand: { accountUpdates: { body: { publicKey: $zkAppAddress } } }
+      canonical: true
+      failureReason_exists: false
     }
+    sortBy: BLOCKHEIGHT_DESC
+    limit: 1000
+  ) {
+    hash
+    dateTime
+    blockHeight
+    zkappCommand {
+      accountUpdates {
+        body {
+          events
+          publicKey
+        }
+      }
+    }
+  }
 }
 ```
+
 The response depends on the state of the smart contract, but it will be something like this:
 
 **Response**
+
 ```json
 {
   "data": {
@@ -177,9 +196,7 @@ The response depends on the state of the smart contract, but it will be somethin
           "accountUpdates": [
             {
               "body": {
-                "events": [
-                  "1,0"
-                ],
+                "events": ["1,0"],
                 "publicKey": "B62qkzUATuPpDcqJ7W8pq381ihswvJ2HdFbE64GK2jP1xkqYUnmeuVA"
               }
             }
@@ -209,9 +226,7 @@ The response depends on the state of the smart contract, but it will be somethin
           "accountUpdates": [
             {
               "body": {
-                "events": [
-                  "13,12"
-                ],
+                "events": ["13,12"],
                 "publicKey": "B62qkzUATuPpDcqJ7W8pq381ihswvJ2HdFbE64GK2jP1xkqYUnmeuVA"
               }
             }
@@ -224,10 +239,12 @@ The response depends on the state of the smart contract, but it will be somethin
 ```
 
 ### Events
+
 It is possible to send up to **16 fields** in events in a single transaction, and each field can be up to **255 bits**.
 
 **HELP:**
-1) Should we agree on particular structure for `Events` to identify its purpose? It could be the command (Add, Remove, Update, etc.).
-2) When `events` are to be requested from the blockchain? Should we use a cron job or subscribe on node changes (if supported). 
 
-****
+1. Should we agree on particular structure for `Events` to identify its purpose? It could be the command (Add, Remove, Update, etc.).
+2. When `events` are to be requested from the blockchain? Should we use a cron job or subscribe on node changes (if supported).
+
+---
