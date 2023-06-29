@@ -7,7 +7,7 @@ import { CID } from 'multiformats';
  * @throws Error if invalid CID format
  */
 function toCID(strCID: string): CID {
-  const cid = CID.asCID(strCID);
+  const cid = CID.parse(strCID);
   if (cid) {
     return cid;
   }
