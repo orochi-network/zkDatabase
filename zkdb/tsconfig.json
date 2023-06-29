@@ -19,9 +19,7 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": "./src",
-    "paths": {
-      "@utilities/*": ["src/utilities/*"]
-    }
+    "paths": {}
   },
   "include": ["./src"],
   "exclude": ["node_modules", "build"]
