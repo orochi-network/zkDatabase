@@ -83,6 +83,7 @@
     "graphql": "^16.6.0",
     "graphql-type-json": "^0.3.2",
     "helia": "^1.0.4",
+    "joi": "^17.9.2",
     "libp2p": "^0.45.9",
     "multiformats": "^11.0.2",
     "safer-buffer": "^2.1.2",
