@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
 import {
   ConfigLoader,
   Singleton,
@@ -6,20 +8,33 @@ import {
 } from '@orochi-network/framework';
 
 interface IAppConfiguration {
-  nodeEnv: string;
+  nodeEnv: 'development' | 'production' | 'staging';
+  hmacSecretKey: string;
 }
+
+export const envLocation = `${Utilities.File.getRootFolder(
+  path.dirname(fileURLToPath(import.meta.url))
+)}/.env`;
 
 const configLoader = Singleton<ConfigLoader>(
   'orochi-backend',
   ConfigLoader,
-  `${Utilities.File.getRootFolder()}/.env`,
-  new Validator({
-    name: 'nodeEnv',
-    type: 'string',
-    defaultValue: 'development',
-    require: true,
-    enums: ['development', 'production', 'staging'],
-  })
+  envLocation,
+  new Validator(
+    {
+      name: 'nodeEnv',
+      type: 'string',
+      defaultValue: 'development',
+      require: true,
+      enums: ['development', 'production', 'staging'],
+    },
+    {
+      name: 'hmacSecretKey',
+      type: 'string',
+      require: true,
+      postProcess: (v: string) => v.trim(),
+    }
+  )
 );
 
 export const config: IAppConfiguration = configLoader.getConfig();

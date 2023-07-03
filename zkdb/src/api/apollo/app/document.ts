@@ -8,6 +8,8 @@ import resolverWrapper, {
   validateCollection,
   validateDigest,
 } from '../validation.js';
+import { AppContext } from '../../helper/common.js';
+import jwt from '../../helper/jwt.js';
 
 export interface IResponseIPFSEntry {
   cid: string;
@@ -92,7 +94,12 @@ export const resolversDocument = {
   Mutation: {
     writeDocument: resolverWrapper(
       mutationDocument,
-      async (_: any, params: any): Promise<IResponseIPFSEntry> => {
+      async (
+        _: any,
+        params: any,
+        context: AppContext
+      ): Promise<IResponseIPFSEntry> => {
+        await jwt.verifyZKDatabaseHeader(context.token || '');
         const ipfs = await getStorageEngine();
         const docCollection =
           typeof params.collection === 'undefined'

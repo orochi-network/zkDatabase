@@ -3,7 +3,12 @@ import Joi from 'joi';
 
 const resolverWrapper = (
   schema: Joi.ObjectSchema,
-  resolver: (..._params: any[]) => Promise<any>
+  resolver: (
+    _root: any,
+    _args: any,
+    _context: any,
+    _info: GraphQLResolveInfo
+  ) => Promise<any>
 ) => {
   return async (
     root: any,

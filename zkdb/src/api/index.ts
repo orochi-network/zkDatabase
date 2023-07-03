@@ -8,16 +8,11 @@ import bodyparser from 'body-parser';
 import logger from './helper/logger.js';
 import { TypedefsApp, ResolversApp } from './apollo/index.js';
 import getStorageEngine from './helper/ipfs-storage-engine.js';
-
-const { json } = bodyparser;
-
-interface MyContext {
-  token?: String;
-}
+import { AppContext } from './helper/common.js';
 
 const app = express();
 const httpServer = http.createServer(app);
-const server = new ApolloServer<MyContext>({
+const server = new ApolloServer<AppContext>({
   typeDefs: TypedefsApp,
   resolvers: ResolversApp,
   plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
@@ -32,9 +27,9 @@ await server.start();
 app.use(
   '/graphql',
   cors<cors.CorsRequest>(),
-  json(),
+  bodyparser.json(),
   expressMiddleware(server, {
-    context: async ({ req }) => ({ token: req.headers.token }),
+    context: async ({ req }) => ({ token: req.headers.authorization }),
   })
 );
 
