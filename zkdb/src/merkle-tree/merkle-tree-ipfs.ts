@@ -1,5 +1,5 @@
-import { BaseMerkleTree, MerkleNodesMap } from './BaseMerkleTree.js';
-import { StorageEngineIPFS } from '../../../storage-engine/ipfs.js';
+import { BaseMerkleTree, MerkleNodesMap } from './merkle-tree-base.js';
+import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
 import { BSON } from 'bson';
 import { Field } from 'snarkyjs';
 

@@ -1,10 +1,7 @@
 import { Poseidon, Field, MerkleTree, Circuit, Bool } from 'snarkyjs';
-import {
-  MerkleNodesMap,
-  BaseMerkleTree,
-} from './trees/merkle/BaseMerkleTree.js';
+import { MerkleNodesMap, BaseMerkleTree } from './merkle-tree-base.js';
 import crypto from 'crypto';
-import DistributedMerkleTree from './trees/merkle/DistributedMerkleTree.js';
+import DistributedMerkleTree from './merkle-tree-ipfs.js';
 import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
 
 const DEFAULT_HEIGHT = 20;

@@ -1,6 +1,6 @@
 import { Circuit, Field, Poseidon } from 'snarkyjs';
-import MerkleProof from './types/MerkleProof.js';
-import { createExtendedMerkleWitness } from './witness/extended-merkle-tree.js';
+import { MerkleProof } from './common.js';
+import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
 
 export type MerkleNodesMap = {
   [level: number]: {

@@ -21,7 +21,7 @@ import { TIPFSFileSystem, TIPFSFileIndex, IIPFSEntry } from './common.js';
 import {
   MERKLE_TREE_COLLECTION_NAME,
   MERKLE_TREE_FILE_NAME,
-} from '../storage/trees/merkle/DistributedMerkleTree.js';
+} from '../merkle-tree/merkle-tree-ipfs.js';
 
 /**
  * Transport layer
