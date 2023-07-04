@@ -28,13 +28,16 @@ export abstract class BaseMerkleTree {
    * @param height The height of the Merkle tree.
    */
   constructor(height: number) {
+    if (height < 1) {
+      throw new Error('Merkle tree height must be greater than 0');
+    }
     this.height = height;
     this.nodesMap = {};
-    const zeroes = [Field(0)];
-    for (let i = 1; i < this.height; i++) {
-      zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
+    this.zeroes = new Array(height);
+    this.zeroes[0] = Field(0);
+    for (let i = 1; i < height; i += 1) {
+      this.zeroes[i] = Poseidon.hash([this.zeroes[i - 1], this.zeroes[i - 1]]);
     }
-    this.zeroes = zeroes;
   }
 
   /**
@@ -96,8 +99,7 @@ export abstract class BaseMerkleTree {
    * @returns A promise that resolves to an object containing the Merkle path.
    */
   protected abstract calculateMerklePath(
-    // eslint-disable-next-line no-unused-vars
-    leafIndex: bigint
+    _leafIndex: bigint
   ): Promise<MerkleNodesMap>;
 
   public async getNodes(): Promise<MerkleNodesMap> {
