@@ -4,9 +4,7 @@ const instanceStorage: { [key: string]: StorageEngineIPFS } = {};
 
 export const getStorageEngine = async () => {
   if (typeof instanceStorage.storage === 'undefined') {
-    instanceStorage.storage = await StorageEngineIPFS.getInstance(
-      '/Users/chiro/GitHub/zkDatabase/zkdb/data'
-    );
+    instanceStorage.storage = await StorageEngineIPFS.getInstance('data');
     // Make sure metadata is created
     await instanceStorage.storage.tryResolve();
   }

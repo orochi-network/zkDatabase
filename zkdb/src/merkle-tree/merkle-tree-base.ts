@@ -1,4 +1,4 @@
-import { Circuit, Field, Poseidon } from 'snarkyjs';
+import { Field, Poseidon } from 'snarkyjs';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
 
@@ -167,7 +167,6 @@ export abstract class BaseMerkleTree {
     const nodesMap: MerkleNodesMap = {};
 
     if (await this.isEmpty()) {
-      Circuit.log('isEmpty');
       nodesMap[0] = {};
       await this.setLeafAtLevel(nodesMap, index, leaf);
     } else {
