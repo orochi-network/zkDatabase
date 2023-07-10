@@ -12,6 +12,14 @@ To keep our merkle tree verification succinct, efficient and friendly with [Snar
 
 **HELP** How do we store the merkle tree? where do we store the merkle tree? How could we reconstruct the merkle tree?
 
+## On-chain storage
+
+Each zkApp account provides 8 fields of 32 bytes each of arbitrary storage. You may store anything here as long as it fits in the size provided.
+
+If you anticipate your state to be larger than this, or if the state accumulates per user with your zkApp, then use off-chain state instead.
+
+[zkApp Document](https://docs.minaprotocol.com/zkapps/how-zkapps-work#on-chain-state)
+
 ## Distribute Storage
 
 There are many distributed solutions out there, we need to define an unified front-end interface for all distributed storages from which we can guarantee that our zkDatabase is extendable and adaptable with different kind of distributed storage back-end.
