@@ -2,6 +2,7 @@ import { BaseMerkleTree, MerkleNodesMap } from './merkle-tree-base.js';
 import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
 import { BSON } from 'bson';
 import { Field } from 'snarkyjs';
+import { mapFieldToString, mapStringToField } from './mappers.js';
 
 export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
@@ -66,7 +67,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
 
   protected async writeNodes(nodes: MerkleNodesMap): Promise<void> {
     this.ipfs.use(MERKLE_TREE_COLLECTION_NAME);
-    await this.ipfs.writeMerkleBSON(nodes);
+    await this.ipfs.writeMerkleBSON(mapFieldToString(nodes));
   }
 
   protected async fetchNodes(): Promise<MerkleNodesMap> {
@@ -87,7 +88,8 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
         levelNodes[nodeIndex] = Field(nodeValue);
       }
     }
-    return nodesMap;
+
+    return mapStringToField(nodesMap);
   }
 
   protected async calculateMerklePath(_: bigint): Promise<MerkleNodesMap> {

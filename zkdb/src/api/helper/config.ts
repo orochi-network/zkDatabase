@@ -10,6 +10,7 @@ import {
 interface IAppConfiguration {
   nodeEnv: 'development' | 'production' | 'staging';
   hmacSecretKey: string;
+  dataLocation: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
@@ -32,6 +33,12 @@ const configLoader = Singleton<ConfigLoader>(
       name: 'hmacSecretKey',
       type: 'string',
       require: true,
+      postProcess: (v: string) => v.trim(),
+    },
+    {
+      name: 'dataLocation',
+      type: 'string',
+      require: false,
       postProcess: (v: string) => v.trim(),
     }
   )

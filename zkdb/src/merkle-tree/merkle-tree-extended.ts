@@ -1,4 +1,4 @@
-import { MerkleWitness, Field, Circuit, Poseidon } from 'snarkyjs';
+import { MerkleWitness, Field, Poseidon, Provable } from 'snarkyjs';
 
 /**
  * Factory function to create an ExtendedMerkleWitness class with a given height.
@@ -20,12 +20,12 @@ export function createExtendedMerkleWitness(height: number): any {
       const n = this.height();
 
       for (let i = 1; i < n; ++i) {
-        const left = Circuit.if(
+        const left = Provable.if(
           this.isLeft[i - 1],
           path[path.length - 1],
           this.path[i - 1]
         );
-        const right = Circuit.if(
+        const right = Provable.if(
           this.isLeft[i - 1],
           this.path[i - 1],
           path[path.length - 1]
