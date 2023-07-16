@@ -41,6 +41,10 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
   }
 
   public async verifyZKDatabaseHeader(header: string): Promise<boolean> {
+    // Skip for development
+    if (config.nodeEnv == 'development') {
+      return true;
+    }
     try {
       // 7 is length of `Bearer + space`
       const { payload } = await this.verify(header.substring(7));
