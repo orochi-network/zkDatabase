@@ -402,9 +402,9 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param BSONData Merkle tree BSON data
    * @returns IIPFSEntry
    */
-  async writeMerkleBSON(BSONData: any): Promise<IIPFSEntry> {
+  async writeMerkleBSON(bson: Uint8Array): Promise<IIPFSEntry> {
     this.use(MERKLE_TREE_COLLECTION_NAME);
-    return this.write(MERKLE_TREE_FILE_NAME, BSON.serialize(BSONData));
+    return this.write(MERKLE_TREE_FILE_NAME, bson);
   }
 
   /**

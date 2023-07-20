@@ -1,6 +1,7 @@
 import { Field, Poseidon } from 'snarkyjs';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
+import { BSON } from 'bson';
 
 export type MerkleNodesMap = {
   [level: number]: {
@@ -27,12 +28,12 @@ export abstract class BaseMerkleTree {
    *
    * @param height The height of the Merkle tree.
    */
-  constructor(height: number) {
+  constructor(height: number, nodesMap: MerkleNodesMap = {}) {
     if (height < 1) {
       throw new Error('Merkle tree height must be greater than 0');
     }
     this.height = height;
-    this.nodesMap = {};
+    this.nodesMap = nodesMap;
     this.zeroes = new Array(height);
     this.zeroes[0] = Field(0);
     for (let i = 1; i < height; i += 1) {
@@ -236,5 +237,46 @@ export abstract class BaseMerkleTree {
 
   public get leafCount() {
     return 2n ** BigInt(this.height - 1);
+  }
+
+  toBSON(): Uint8Array {
+    return this._toBSON(this.nodesMap);
+  }
+
+  static fromBSON(data: Uint8Array): MerkleNodesMap {
+    const root = BSON.deserialize(data);
+    const matrix: { index: number; value: string }[][] = root.matrix;
+
+    let nodesMap: MerkleNodesMap = {};
+
+    for (let level = 0; level < matrix.length; level++) {
+      nodesMap[level] = {};
+      const levelMatrix = matrix[level];
+      for (const element of levelMatrix) {
+        nodesMap[level][element.index] = Field(element.value);
+      }
+    }
+
+    return nodesMap;
+  }
+
+  protected _toBSON(nodesMap: MerkleNodesMap): Uint8Array {
+    let matrix: { index: number; value: string }[][] = [];
+
+    for (const level in nodesMap) {
+      matrix[level] = [];
+      const levelNodes = nodesMap[level];
+      for (const nodeIndex in levelNodes) {
+        const nodeValue = levelNodes[nodeIndex];
+        matrix[level].push({
+          index: parseInt(nodeIndex),
+          value: nodeValue.toString(),
+        });
+      }
+    }
+
+    const root = { matrix };
+
+    return BSON.serialize(root);
   }
 }
