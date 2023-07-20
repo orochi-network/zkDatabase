@@ -1,27 +1,24 @@
 import { Libp2p, Libp2pOptions, createLibp2p } from 'libp2p';
 import { tcp } from '@libp2p/tcp';
+import { create as kuboClient } from 'kubo-rpc-client';
+import { delegatedPeerRouting } from '@libp2p/delegated-peer-routing';
 import { noise } from '@chainsafe/libp2p-noise';
 import { MemoryDatastore } from 'datastore-core';
 import { webSockets } from '@libp2p/websockets';
-import { multiaddr } from '@multiformats/multiaddr';
 import { yamux } from '@chainsafe/libp2p-yamux';
 import { FsDatastore } from 'datastore-fs';
 import { FsBlockstore } from 'blockstore-fs';
 import { createHelia } from 'helia';
-import { UnixFS, unixfs } from '@helia/unixfs';
+import { UnixFS, UnixFSStats, unixfs } from '@helia/unixfs';
 import { Helia } from '@helia/interface';
 import { IPNS, ipns } from '@helia/ipns';
 import { CID, Version } from 'multiformats';
 import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 import fs from 'fs';
+import { Binary } from '../utilities/index.js';
+import { IDocument } from 'core/common.js';
 import { BSON } from 'bson';
-import { Binary, Helper } from '../utilities/index.js';
-import { TIPFSFileSystem, TIPFSFileIndex, IIPFSEntry } from './common.js';
-import {
-  MERKLE_TREE_COLLECTION_NAME,
-  MERKLE_TREE_FILE_NAME,
-} from '../merkle-tree/merkle-tree-ipfs.js';
 
 /**
  * Transport layer
@@ -74,13 +71,21 @@ export interface IIPFSConfiguration {
  */
 export const METADATA_FILENAME = 'metadata';
 
+// default is to use ipfs.io
+const client = kuboClient({
+  // use default api settings
+  protocol: 'https',
+  port: 443,
+  host: 'node0.delegate.ipfs.io',
+});
+
 /**
  * New instance of libp2p
  * @param transport transport layer
  * @param storage storage configuration
  * @returns libp2p instance
  */
-const newLibP2p = async (
+export const newLibP2p = async (
   transport: TTransport,
   storage: TStorageConfiguration
 ): Promise<Libp2p> => {
@@ -89,6 +94,7 @@ const newLibP2p = async (
     addresses: {
       listen: ['/ip4/127.0.0.1/tcp/0'],
     },
+    peerRouters: [delegatedPeerRouting(client)],
     connectionEncryption: [noise()],
     streamMuxers: [yamux()],
   };
@@ -110,21 +116,8 @@ const newLibP2p = async (
     config.datastore = new MemoryDatastore();
   }
 
-  const nodeP2p = await createLibp2p(config);
-  // Manual patch for node bootstrap
-  // IPFS bootstrap list is available here: https://docs.ipfs.tech/how-to/modify-bootstrap-list/
-  // We won't care about this detail for now
-  const addresses = [
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt',
-  ].map((e) => multiaddr(e));
-  // Dial to bootstrap nodes
-  for (let i = 0; i < addresses.length; i += 1) {
-    await nodeP2p.dial(addresses[i]);
-  }
   // Start libp2p node
+  const nodeP2p = await createLibp2p(config);
   await nodeP2p.start();
   return nodeP2p;
 };
@@ -135,7 +128,7 @@ const newLibP2p = async (
  * @param storage storage configuration
  * @returns helia instance
  */
-const newHelia = (libp2p: Libp2p, storage: TStorageConfiguration) => {
+export const newHelia = (libp2p: Libp2p, storage: TStorageConfiguration) => {
   if (storage.handler === 'file') {
     return createHelia({
       blockstore: new FsBlockstore(
@@ -154,7 +147,22 @@ const newHelia = (libp2p: Libp2p, storage: TStorageConfiguration) => {
  * Storage engine using IPFS as backend
  * @note This is a very simple implementation of storage engine using IPFS as backend
  */
-export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
+export class StorageEngineIPFS {
+  /**
+   * Root CID of root directory
+   */
+  private rootCID: CID | undefined = undefined;
+
+  /**
+   * We sure that the root CID is defined
+   */
+  private get definedRootCID(): CID {
+    if (typeof this.rootCID !== 'undefined') {
+      return this.rootCID;
+    }
+    throw new Error('Undefined root CID');
+  }
+
   /**
    * Base path of the storage engine
    */
@@ -207,27 +215,6 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
   }
 
   /**
-   * Path to storage metadata
-   */
-  get pathStorageMetadata(): string {
-    return `${this.pathBase}/storage/${METADATA_FILENAME}`;
-  }
-
-  /**
-   * Path to collection
-   */
-  get pathCollection(): string {
-    return `${this.pathStorage}/${this.collection}`;
-  }
-
-  /**
-   * Path to collection metadata
-   */
-  get pathCollectionMetdata(): string {
-    return `${this.pathStorage}/${this.collection}/${METADATA_FILENAME}`;
-  }
-
-  /**
    * Create new instance of storage engine
    * @param basePath Base path of the storage engine
    * @param config Configuration of the storage engine
@@ -256,6 +243,7 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
     const nodeLibP2p = await newLibP2p(transport, storageP2p);
     const nodeHelia = await newHelia(nodeLibP2p, storageHelia);
     const newInstance = new StorageEngineIPFS(nodeLibP2p, nodeHelia, basePath);
+    await newInstance.tryResolve();
     return newInstance;
   }
 
@@ -295,96 +283,248 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
 
   // Try to resolve IPNS entry to CID
   public async tryResolve() {
-    if (typeof (await this.resolve()) === 'undefined') {
-      await this.initializeMetadata();
-    }
-  }
-
-  // Initial missing data
-  public async initializeMetadata() {
-    if (!fs.existsSync(this.pathStorageMetadata)) {
-      const docMetadata: { [key: string]: string } = {};
-      const metadataContent = BSON.serialize(docMetadata);
-      fs.writeFileSync(this.pathStorageMetadata, metadataContent);
-      const cid = await this.unixFs.addBytes(metadataContent);
-      // Publish the metadata to record
-      return this.ipns.publish(this.nodeLibP2p.peerId, cid);
-    } else {
-      const fileContent = fs.readFileSync(this.pathStorageMetadata);
-      const cid = await this.unixFs.addBytes(fileContent);
-      // Publish the metadata to record
-      return this.ipns.publish(this.nodeLibP2p.peerId, cid);
+    this.rootCID = await this.resolve();
+    if (typeof this.rootCID === 'undefined') {
+      // If we can't resolve IPNS entry, try to create new one
+      await this.mkdir();
     }
   }
 
   /**
-   * Sync metadata
-   * @note Please consider this is a stupid way to handle metadata.
-   * Apparently, we need better mechanism to handle metadata and able to
-   * update metada with lower cost, O(n) is stupid I know.
-   * @param cid Content ID
-   * @param filename Filename
+   * Make new folder in root folder and return CID of created folder
+   * @note If folder name is empty create a new root folder
+   * @todo Sync metadata every time we create new folder
+   * @param foldername Folder name
+   * @returns
    */
-  private async syncMetadata(
-    metadataFile: string,
+  private async mkdir(foldername: string = ''): Promise<CID | undefined> {
+    let cid: CID | undefined = undefined;
+    if (!(await this.isFolder(foldername))) {
+      if (foldername === '') {
+        cid = await this.unixFs.addDirectory();
+        this.rootCID = cid;
+      } else {
+        const localPath = `${this.pathStorage}/${foldername}`;
+        if (!fs.existsSync(localPath)) {
+          fs.mkdirSync(localPath, { recursive: true });
+        }
+        if (typeof this.rootCID === 'undefined') {
+          this.rootCID = await this.unixFs.addDirectory();
+        }
+        cid = await this.unixFs.addDirectory();
+        this.rootCID = await this.unixFs.cp(this.rootCID, cid, foldername);
+      }
+      await this.publish(this.rootCID);
+    }
+    return cid;
+  }
+
+  private async stat(
     cid: CID,
-    filename: string
+    path: string = ''
+  ): Promise<UnixFSStats | undefined> {
+    try {
+      return this.unixFs.stat(cid, path === '' ? {} : { path });
+    } catch (e) {
+      return undefined;
+    }
+  }
+
+  private async isFile(path: string = ''): Promise<boolean> {
+    if (typeof this.rootCID !== 'undefined') {
+      const stat = await this.stat(this.rootCID, path);
+      return typeof stat !== 'undefined' ? stat.type === 'raw' : false;
+    }
+    return false;
+  }
+
+  private async isFolder(path: string = ''): Promise<boolean> {
+    if (typeof this.rootCID !== 'undefined') {
+      const stat = await this.stat(this.rootCID, path);
+      return typeof stat !== 'undefined' ? stat.type === 'directory' : false;
+    }
+    return false;
+  }
+
+  private async isExist(path: string = ''): Promise<boolean> {
+    if (typeof this.rootCID !== 'undefined') {
+      const stat = await this.stat(this.rootCID, path);
+      return typeof stat !== 'undefined';
+    }
+    return false;
+  }
+
+  public async ls(path: string = '') {
+    if (await this.isExist(path)) {
+      const result = [];
+      for await (const entry of this.unixFs.ls(
+        this.definedRootCID,
+        path === '' ? {} : { path }
+      )) {
+        result.push({
+          name: entry.name,
+          type: entry.type,
+          cid: entry.cid,
+          path: entry.path,
+        });
+      }
+    }
+    throw new Error('Given path is not exist');
+  }
+
+  /**
+   * Write the metadata file at the root folder
+   * @param filename
+   * @param content
+   * @returns
+   */
+  public async writeMetadataFile(
+    filename: string,
+    content: Uint8Array
   ): Promise<CID> {
-    let metadataContent;
-    // Read metadata file if existing
-    if (fs.existsSync(metadataFile)) {
-      const fileContent = fs.readFileSync(metadataFile);
-      const docMetadata = BSON.deserialize(fileContent);
-      docMetadata[filename] = cid.toString();
-      metadataContent = BSON.serialize(docMetadata);
-      fs.writeFileSync(metadataFile, metadataContent);
-    } else {
-      // Create new metadata file if not existing
-      const docMetadata: { [key: string]: string } = {};
-      docMetadata[filename] = cid.toString();
-      metadataContent = BSON.serialize(docMetadata);
-      fs.writeFileSync(metadataFile, metadataContent);
+    // Add file to IPFS and get CID
+    const fileCID = await this.unixFs.addBytes(content);
+    // Make the root folder if not exist
+    if (!(await this.isFolder())) {
+      await this.mkdir();
     }
-    // Add content of metadata file to ipfs
-    return this.unixFs.addBytes(metadataContent);
+    // Check for the existance of root folder
+    if (await this.isFolder()) {
+      if (await this.isFile(filename)) {
+        await this.unixFs.rm(this.definedRootCID, filename);
+      }
+      this.rootCID = await this.unixFs.cp(
+        fileCID,
+        this.definedRootCID,
+        filename
+      );
+      await this.publish(this.rootCID);
+      return fileCID;
+    }
+    throw new Error('Root path is not exist and we can not create it');
   }
 
   /**
-   * Sync collection metadata
-   * @param cid Content ID
-   * @param filename Filename
-   * @returns Content ID
+   * @todo Update CID record of collection in metadata file
+   * every time we write something
+   * @param filename
+   * @param content
+   * @returns
    */
-  private async syncCollectionMetadata(
-    cid: CID,
-    filename: string
-  ): Promise<CID> {
-    return this.syncMetadata(this.pathCollectionMetdata, cid, filename);
+  public async writeFile(filename: string, content: Uint8Array) {
+    // Add file to IPFS and get CID
+    const fileCID = await this.unixFs.addBytes(content);
+    // Make the root folder if not exist
+    if (!(await this.isFolder())) {
+      await this.mkdir();
+    }
+    // Check for the existance of root folder
+    if (await this.isFolder()) {
+      // Get stat of collection folder
+      const collectionFolder = await this.stat(
+        this.definedRootCID,
+        this.collection
+      );
+      let collectionFolderCID =
+        typeof collectionFolder === 'undefined'
+          ? await this.unixFs.addDirectory()
+          : collectionFolder.cid;
+      if (typeof collectionFolder !== 'undefined') {
+        // Remove collection folder from the root folder
+        this.rootCID = await this.unixFs.rm(
+          this.definedRootCID,
+          this.collection
+        );
+        // Remove file from collection folder if exist
+        if (await this.isFile(`${this.collection}/${filename}`)) {
+          // Remove file from collection folder
+          collectionFolderCID = await this.unixFs.rm(
+            collectionFolderCID,
+            filename
+          );
+        }
+      }
+      // Add file to collection folder
+      collectionFolderCID = await this.unixFs.cp(
+        fileCID,
+        collectionFolderCID,
+        filename
+      );
+      // Add collection folder to root folder
+      this.rootCID = await this.unixFs.cp(
+        collectionFolderCID,
+        this.definedRootCID,
+        this.collection
+      );
+      await this.publish(this.definedRootCID);
+      return fileCID;
+    }
+    throw new Error('Root folder is not exist and we can not create it');
   }
 
   /**
-   * Sync database metadata
-   * @param cid Content ID
+   * Remove file from ipfs
    * @param filename Filename
-   * @returns IPNS entry
+   * @returns true if file is removed
+   * @throws Error if file is not existing
    */
-  public async syncDatabaseMetadata(
-    cid: CID,
-    filename: string
-  ): Promise<IPNSEntry> {
-    // Sync collection metadata
-    const collectionMetadataCID = await this.syncCollectionMetadata(
-      cid,
-      filename
-    );
-    // Sync database metadata
-    const databaseMetadataCID = await this.syncMetadata(
-      this.pathStorageMetadata,
-      collectionMetadataCID,
-      this.collection
-    );
-    // Publish the metadata to record
-    return this.ipns.publish(this.nodeLibP2p.peerId, databaseMetadataCID);
+  public async delete(path: string): Promise<boolean> {
+    // Make sure root folder is exist
+    if (await this.isExist()) {
+      // Make sure file is exist
+      if (await this.isFile(path)) {
+        const pathParts = path.split('/');
+        if (pathParts.length === 2) {
+          const [collection, finename] = pathParts;
+          // Find collection folder
+          const collectionFolder = await this.stat(
+            this.definedRootCID,
+            collection
+          );
+          if (typeof collectionFolder !== 'undefined') {
+            // Remove file from collection folder
+            collectionFolder.cid = await this.unixFs.rm(
+              collectionFolder.cid,
+              finename
+            );
+            // Add collection folder to root folder
+            this.rootCID = await this.unixFs.cp(
+              collectionFolder.cid,
+              this.definedRootCID,
+              collection
+            );
+          } else {
+            return false;
+          }
+        } else if (pathParts.length === 1) {
+          this.rootCID = await this.unixFs.rm(this.definedRootCID, path);
+        } else {
+          return false;
+        }
+        await this.publish(this.rootCID);
+        return true;
+      }
+      // Since there is one level of folder, we can remove the folder
+      if (!path.includes('/') && (await this.isFolder(path))) {
+        this.rootCID = await this.unixFs.rm(this.definedRootCID, path);
+        await this.publish(this.rootCID);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public async readFile(path: string): Promise<Uint8Array> {
+    if (await this.isFile(path)) {
+      let size = 0;
+      let buf = [];
+      for await (let chunk of this.unixFs.cat(this.definedRootCID)) {
+        size += chunk.length;
+        buf.push(chunk);
+      }
+      return Binary.concatUint8Array(buf, size);
+    }
+    throw new Error('The give path is not a file');
   }
 
   /**
@@ -392,158 +532,20 @@ export class StorageEngineIPFS implements TIPFSFileSystem, TIPFSFileIndex {
    * @param BSONData BSON data
    * @returns [[CID]]
    */
-  writeBSON(BSONData: any): Promise<IIPFSEntry> {
-    const serializedData = BSON.serialize(BSONData);
-    return this.writeBytes(serializedData);
+  public async writeDocument(_document: IDocument): Promise<CID> {
+    throw new Error('Need to implement');
   }
 
   /**
-   * Write bsondata of Merkle tree to IPFS
-   * @param BSONData Merkle tree BSON data
-   * @returns IIPFSEntry
-   */
-  async writeMerkleBSON(bson: Uint8Array): Promise<IIPFSEntry> {
-    this.use(MERKLE_TREE_COLLECTION_NAME);
-    return this.write(MERKLE_TREE_FILE_NAME, bson);
-  }
-
-  /**
-   * Read Merkle tree BSON data from IPFS
-   * @returns Uint8Array
-   */
-  async readMerkleBSON(): Promise<Uint8Array> {
-    this.use(MERKLE_TREE_COLLECTION_NAME);
-    return this.read(MERKLE_TREE_FILE_NAME);
-  }
-
-  /**
-   * Write bytes to ipfs
-   * @param data Bytes data
+   * Write BSON data to ipfs
+   * @param BSONData BSON data
    * @returns [[CID]]
    */
-  async writeBytes(data: Uint8Array): Promise<IIPFSEntry> {
-    // Write bytes to ipfs with filename is hash of data
-    const digest = Binary.poseidonHashBinary(data);
-    const filename = Binary.toBase32(digest);
-    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
-    StorageEngineIPFS.initPath(this.pathCollection);
-    fs.writeFileSync(fullPath, data);
-    const fileCID = await this.unixFs.addBytes(data);
-    await this.syncDatabaseMetadata(fileCID, filename);
-    return {
-      cid: fileCID,
-      filename,
-      digest,
-      collection: this.collection,
-      basefile: fullPath,
-    };
-  }
-
-  /**
-   * Write data to ipfs
-   * @param filename Filename
-   * @param data Bytes data
-   * @returns [[CID]]
-   */
-  async write(filename: string, data: Uint8Array): Promise<IIPFSEntry> {
-    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
-    StorageEngineIPFS.initPath(this.pathCollection);
-    fs.writeFileSync(fullPath, data);
-    const fileCID = await this.unixFs.addBytes(data);
-    await this.syncDatabaseMetadata(fileCID, filename);
-    return {
-      cid: fileCID,
-      filename,
-      digest: Binary.poseidonHashBinary(data),
-      collection: this.collection,
-      basefile: fullPath,
-    };
-  }
-
-  /**
-   * Read bytes from ipfs by a given CID
-   * @param cid Content ID
-   * @returns Bytes data
-   */
-  async readBytes(cid: CID): Promise<Uint8Array> {
-    const catIterator = this.unixFs.cat(cid);
-    let size = 0;
-    let buf = [];
-    for await (let chunk of catIterator) {
-      size += chunk.length;
-      buf.push(chunk);
+  public async readDocument<T>(path: string): Promise<T> {
+    if (await this.isFile(path)) {
+      return <T>BSON.deserialize(await this.readFile(path));
     }
-    return Binary.concatUint8Array(buf, size);
-  }
-
-  /**
-   * Read BSON data from ipfs
-   * @param filename Filename
-   * @returns BSON data
-   * @throws Error if file is not existing
-   * @throws Error if file is not BSON data
-   * @returns BSON data in bytes
-   */
-  async read(filename: string): Promise<Uint8Array> {
-    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
-    if (fs.existsSync(fullPath)) {
-      return fs.readFileSync(fullPath);
-    } else {
-      const collectionMetadata = fs.readFileSync(this.pathCollectionMetdata);
-      const docMetadata = BSON.deserialize(collectionMetadata);
-      if (typeof docMetadata[filename] === 'string') {
-        return this.readBytes(Helper.toCID(docMetadata[filename]));
-      }
-      throw new Error('This document doesn not exist in the given collection');
-    }
-  }
-  /**
-   * Remove file from ipfs
-   * @param filename Filename
-   * @returns true if file is removed
-   * @throws Error if file is not existing
-   */
-  async remove(filename: string): Promise<boolean> {
-    // Read collection metadata
-    const collectionMetadata = fs.readFileSync(this.pathCollectionMetdata);
-    const docMetadata = BSON.deserialize(collectionMetadata);
-    if (typeof docMetadata[filename] === 'string') {
-      delete docMetadata[filename];
-      const docMetadataContent = BSON.serialize(docMetadata);
-      const collectionMetadataCID = await this.unixFs.addBytes(
-        docMetadataContent
-      );
-
-      // Sync database metadata
-      const databaseMetadataCID = await this.syncMetadata(
-        this.pathStorageMetadata,
-        collectionMetadataCID,
-        this.collection
-      );
-      // Publish the metadata to record
-      await this.ipns.publish(this.nodeLibP2p.peerId, databaseMetadataCID);
-    }
-    // Remove if file is existing on local
-    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
-    if (fs.existsSync(fullPath)) {
-      fs.rmSync(fullPath);
-    }
-    return true;
-  }
-
-  async isDocumentEmpty(filename: string): Promise<boolean> {
-    const fullPath = `${this.pathCollection}/${filename}.zkdb`;
-
-    // If the file does not exist, return true
-    if (!fs.existsSync(fullPath)) {
-      return true;
-    }
-
-    // Read the file and check its size
-    const fileContents = fs.readFileSync(fullPath);
-
-    // If the size is 0, then the file is empty
-    return fileContents.byteLength === 0;
+    throw new Error('The give path is not a file');
   }
 
   /**
