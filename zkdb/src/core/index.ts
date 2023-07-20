@@ -1,12 +1,7 @@
 import DistributedMerkleTree from '../merkle-tree/merkle-tree-ipfs.js';
 import { StorageEngineIPFS } from '../storage-engine/index.js';
 import { SimpleIndexing } from '../index/index.js';
-import { Field } from 'snarkyjs';
-
-export interface IDocument {
-  hash(): Field;
-  index(): { [key: string]: string };
-}
+export * from './common.js';
 
 export interface IZKDatabseStorageConfig {
   indexer?: SimpleIndexing;

@@ -1,5 +1,5 @@
-import fs from 'fs';
 import crypto from 'crypto';
+import { BSON } from 'bson';
 
 type TMainIndex = any[][];
 
@@ -34,7 +34,7 @@ function digestToRecord(digestOfRecord: string) {
   return { collection, key, digest };
 }
 
-class IndexResult {
+export class IndexResult {
   private ref: SimpleIndexing;
   private records: IIndexing[];
 
@@ -218,25 +218,12 @@ export class SimpleIndexing {
   }
 
   // To JSON
-  public toJSON() {
-    return JSON.stringify(this.indexer);
+  public toBSON() {
+    return BSON.serialize(this.indexer);
   }
 
-  // To File
-  public toFile(filename: string) {
-    fs.writeFileSync(filename, this.toJSON());
-  }
-
-  // From JSON
-  static fromJSON(json: string) {
-    return new SimpleIndexing(JSON.parse(json));
-  }
-
-  // From File
-  static fromFile(filename: string) {
-    if (fs.existsSync(filename) === false) {
-      throw new Error(`File ${filename} does not exist`);
-    }
-    return SimpleIndexing.fromJSON(fs.readFileSync(filename, 'utf8'));
+  // From BSON
+  public static fromBSON(bson: Uint8Array) {
+    return new SimpleIndexing(<any[][]>BSON.deserialize(bson));
   }
 }
