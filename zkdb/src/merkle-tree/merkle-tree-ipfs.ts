@@ -1,8 +1,6 @@
 import { BaseMerkleTree, MerkleNodesMap } from './merkle-tree-base.js';
 import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
-import { BSON } from 'bson';
 import { Field } from 'snarkyjs';
-import { mapFieldToString, mapStringToField } from './mappers.js';
 
 export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
@@ -11,8 +9,12 @@ export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
 export default class DistributedMerkleTree extends BaseMerkleTree {
   private ipfs: StorageEngineIPFS;
 
-  constructor(ipfs: StorageEngineIPFS, height: number) {
-    super(height);
+  constructor(
+    ipfs: StorageEngineIPFS,
+    height: number,
+    nodesMap: MerkleNodesMap = {}
+  ) {
+    super(height, nodesMap);
     this.ipfs = ipfs;
     ipfs.use(MERKLE_TREE_COLLECTION_NAME);
   }
@@ -67,7 +69,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
 
   protected async writeNodes(nodes: MerkleNodesMap): Promise<void> {
     this.ipfs.use(MERKLE_TREE_COLLECTION_NAME);
-    await this.ipfs.writeMerkleBSON(mapFieldToString(nodes));
+    await this.ipfs.writeMerkleBSON(this._toBSON(nodes));
   }
 
   protected async fetchNodes(): Promise<MerkleNodesMap> {
@@ -76,20 +78,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
     }
 
     const nodeBytes = await this.ipfs.readMerkleBSON();
-    const bson = BSON.deserialize(nodeBytes);
-
-    const nodesMap: MerkleNodesMap = bson as MerkleNodesMap;
-
-    for (const level in nodesMap) {
-      const levelNodes = nodesMap[level];
-      for (const nodeIndex in levelNodes) {
-        const nodeValue = levelNodes[nodeIndex];
-        delete levelNodes[nodeIndex];
-        levelNodes[nodeIndex] = Field(nodeValue);
-      }
-    }
-
-    return mapStringToField(nodesMap);
+    return BaseMerkleTree.fromBSON(nodeBytes);
   }
 
   protected async calculateMerklePath(_: bigint): Promise<MerkleNodesMap> {

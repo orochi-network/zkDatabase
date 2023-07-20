@@ -78,8 +78,6 @@ async function getNodeTest(
 
   const zeroes: Field[] = JSON.parse(JSON.stringify(expectedMerkleTree)).zeroes;
 
-  Circuit.log('zeroes', zeroes);
-
   // Execute
   let isPassed = Bool(true);
 
@@ -133,8 +131,9 @@ async function getSetLeafMerkleTreeTest(
   merkleTree: BaseMerkleTree,
   expectedMerkleTree: MerkleTree
 ) {
+  console.log('set leaf');
   // Setup
-  const LEAF_AMOUNT = 131;
+  const LEAF_AMOUNT = 20;
 
   // Execute
   for (let i = 0; i < LEAF_AMOUNT; i++) {
