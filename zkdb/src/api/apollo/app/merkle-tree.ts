@@ -1,8 +1,8 @@
-import { Field } from 'snarkyjs';
 import Joi from 'joi';
-import resolverWrapper, { validateDigest } from '../validation.js';
+import { Field } from 'snarkyjs';
 import { BigIntResolver } from 'graphql-scalars';
-import getStorageEngine from '../../helper/ipfs-storage-engine.js';
+import resolverWrapper, { validateDigest } from '../validation.js';
+import loader from '../../helper/loader.js';
 import DistributedMerkleTree from '../../../merkle-tree/merkle-tree-ipfs.js';
 
 // Define types for clarity and reusability
@@ -47,7 +47,7 @@ export const typeDefsMerkleTree = `
 `;
 
 const getDistributedMerkleTree = async () => {
-  const ipfs = await getStorageEngine();
+  const ipfs = await loader.getStorageEngine();
   return new DistributedMerkleTree(ipfs, 8);
 };
 

@@ -7,7 +7,7 @@ import cors from 'cors';
 import bodyparser from 'body-parser';
 import logger from './helper/logger.js';
 import { TypedefsApp, ResolversApp } from './apollo/index.js';
-import getStorageEngine from './helper/ipfs-storage-engine.js';
+import loader from './helper/loader.js';
 import { AppContext } from './helper/common.js';
 import config from './helper/config.js';
 
@@ -21,7 +21,7 @@ const server = new ApolloServer<AppContext>({
   logger,
 });
 
-await getStorageEngine();
+await loader.getStorageEngine();
 
 await server.start();
 
