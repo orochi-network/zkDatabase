@@ -1,5 +1,5 @@
 import { base32 } from 'multiformats/bases/base32';
-import { Poseidon, Encoding } from 'snarkyjs';
+import { Poseidon, Encoding, Field } from 'snarkyjs';
 import { BSON } from 'bson';
 
 /**
@@ -62,6 +62,24 @@ function poseidonHashBSON(document: any): Uint8Array {
 }
 
 /**
+ * Convert field to binary
+ * @param field Field
+ * @returns Uint8Array binary data
+ */
+function fieldToBinary(...field: Field[]): Uint8Array {
+  return Encoding.Bijective.Fp.toBytes(field);
+}
+
+/**
+ * Convert binary to field
+ * @param binary Uint8Array binary data
+ * @returns Array of field
+ */
+function binaryToField(binary: Uint8Array): Field[] {
+  return Encoding.Bijective.Fp.fromBytes(binary);
+}
+
+/**
  * Concatenate array of Uint8Array
  * @param input Array of Uint8Array
  * @param size Total size of the concatenated array
@@ -92,4 +110,6 @@ export const Binary = {
   poseidonHashBSON,
   concatUint8Array,
   convertHexToUint8Array,
+  fieldToBinary,
+  binaryToField,
 };
