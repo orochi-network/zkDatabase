@@ -131,7 +131,7 @@ export const newLibP2p = async (
  * @param storage storage configuration
  * @returns helia instance
  */
-export const newHelia = (libp2p: Libp2p, storage: TStorageConfiguration) => {
+export const newHelia = (libp2p: any, storage: TStorageConfiguration) => {
   if (storage.handler === 'file') {
     return createHelia({
       blockstore: new FsBlockstore(
