@@ -1,23 +1,23 @@
 import DistributedMerkleTree from '../merkle-tree/merkle-tree-ipfs.js';
-import { StorageEngineIPFS } from '../storage-engine/index.js';
-import { SimpleIndexing } from '../index/index.js';
+import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
+import { SimpleIndexer } from '../index/simple.js';
 export * from './common.js';
 
 export interface IZKDatabseStorageConfig {
-  indexer?: SimpleIndexing;
+  indexer?: SimpleIndexer;
   commitment?: DistributedMerkleTree;
   storageEngine: StorageEngineIPFS;
   height?: number;
 }
 
 export class ZKDatabaseStorage {
-  private indexer: SimpleIndexing;
+  private indexer: SimpleIndexer;
   private commitment: DistributedMerkleTree;
   private storageEngine: StorageEngineIPFS;
   private collection: string = 'default';
 
   constructor(config: IZKDatabseStorageConfig) {
-    this.indexer = config.indexer || new SimpleIndexing();
+    this.indexer = config.indexer || new SimpleIndexer([]);
     this.storageEngine = config.storageEngine;
     this.commitment =
       config.commitment ||

@@ -1,5 +1,5 @@
 import { Poseidon, Field, MerkleTree, Circuit, Bool } from 'snarkyjs';
-import { MerkleNodesMap, BaseMerkleTree } from './merkle-tree-base.js';
+import { TMerkleNodesMap, BaseMerkleTree } from './merkle-tree-base.js';
 import crypto from 'crypto';
 import DistributedMerkleTree from './merkle-tree-ipfs.js';
 import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
@@ -144,8 +144,8 @@ async function getSetLeafMerkleTreeTest(
   }
 
   //Verify
-  const actualResult: MerkleNodesMap = await merkleTree.getNodes();
-  const expectedResult: MerkleNodesMap = JSON.parse(
+  const actualResult: TMerkleNodesMap = await merkleTree.getNodes();
+  const expectedResult: TMerkleNodesMap = JSON.parse(
     JSON.stringify(expectedMerkleTree)
   ).nodes;
 
@@ -167,7 +167,7 @@ async function getFillMerkleTreeTest(
   }
 
   expectedMerkleTree.fill(fields);
-  const expectedResult: MerkleNodesMap = JSON.parse(
+  const expectedResult: TMerkleNodesMap = JSON.parse(
     JSON.stringify(expectedMerkleTree)
   ).nodes;
 
@@ -175,14 +175,14 @@ async function getFillMerkleTreeTest(
   await merkleTree.fill(fields);
 
   //Verify
-  const actualResult: MerkleNodesMap = await merkleTree.getNodes();
+  const actualResult: TMerkleNodesMap = await merkleTree.getNodes();
 
   console.log('fill is passed', verifyNodes(actualResult, expectedResult));
 }
 
 function verifyNodes(
-  actualNodeMap: MerkleNodesMap,
-  expectedNodeMap: MerkleNodesMap
+  actualNodeMap: TMerkleNodesMap,
+  expectedNodeMap: TMerkleNodesMap
 ): boolean {
   const actualLevels = Object.keys(actualNodeMap).sort();
   const expectedLevels = Object.keys(expectedNodeMap).sort();

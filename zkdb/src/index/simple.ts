@@ -35,10 +35,10 @@ function digestToRecord(digestOfRecord: string) {
 }
 
 export class IndexResult {
-  private ref: SimpleIndexing;
+  private ref: SimpleIndexer;
   private records: IIndexing[];
 
-  constructor(ref: SimpleIndexing, records: IIndexing[] = []) {
+  constructor(ref: SimpleIndexer, records: IIndexing[] = []) {
     this.records = records;
     this.ref = ref;
   }
@@ -71,17 +71,17 @@ export class IndexResult {
  * @todo Implement B-Tree or RB-Tree to index the data
  * instead of this stupid approach
  */
-export class SimpleIndexing {
+export class SimpleIndexer {
   // Indexer is a mapping from record to index
   private indexer: TMainIndex = [];
 
   private collection: string = 'default';
 
-  constructor(indexer: TMainIndex = []) {
+  constructor(indexer: TMainIndex) {
     this.indexer = indexer;
   }
 
-  public use(collection: string): SimpleIndexing {
+  public use(collection: string): SimpleIndexer {
     this.collection = collection;
     return this;
   }
@@ -224,6 +224,6 @@ export class SimpleIndexing {
 
   // From BSON
   public static fromBSON(bson: Uint8Array) {
-    return new SimpleIndexing(<any[][]>BSON.deserialize(bson));
+    return new SimpleIndexer(<any[][]>BSON.deserialize(bson));
   }
 }

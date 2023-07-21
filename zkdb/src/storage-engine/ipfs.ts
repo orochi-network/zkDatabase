@@ -16,8 +16,8 @@ import { CID, Version } from 'multiformats';
 import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 import fs from 'fs';
-import { Binary } from '../utilities/index.js';
-import { IDocument } from 'core/common.js';
+import { Binary } from '../utilities/binary.js';
+import { IDocument } from '../core/common.js';
 import { BSON } from 'bson';
 
 /**
@@ -319,7 +319,7 @@ export class StorageEngineIPFS {
     return cid;
   }
 
-  private async stat(
+  public async stat(
     cid: CID,
     path: string = ''
   ): Promise<UnixFSStats | undefined> {
@@ -330,7 +330,7 @@ export class StorageEngineIPFS {
     }
   }
 
-  private async isFile(path: string = ''): Promise<boolean> {
+  public async isFile(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
       return typeof stat !== 'undefined' ? stat.type === 'raw' : false;
@@ -338,7 +338,7 @@ export class StorageEngineIPFS {
     return false;
   }
 
-  private async isFolder(path: string = ''): Promise<boolean> {
+  public async isFolder(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
       return typeof stat !== 'undefined' ? stat.type === 'directory' : false;
@@ -346,7 +346,7 @@ export class StorageEngineIPFS {
     return false;
   }
 
-  private async isExist(path: string = ''): Promise<boolean> {
+  public async isExist(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
       return typeof stat !== 'undefined';
@@ -366,6 +366,7 @@ export class StorageEngineIPFS {
           type: entry.type,
           cid: entry.cid,
           path: entry.path,
+          cotent: entry.content,
         });
       }
     }

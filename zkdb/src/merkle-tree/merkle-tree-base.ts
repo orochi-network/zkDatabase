@@ -2,12 +2,16 @@ import { Field, Poseidon } from 'snarkyjs';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
 import { BSON } from 'bson';
+import { Binary } from 'utilities/binary.js';
 
-export type MerkleNodesMap = {
+export type TMerkleNodesMap = {
   [level: number]: {
     [nodes: string]: Field;
   };
 };
+
+// We record level/index/value
+export type TMerkleNodesStorage = [number, number, Uint8Array][];
 
 /**
  * The BaseMerkleTree class is an abstract class that serves as the base for different
@@ -18,9 +22,16 @@ export type MerkleNodesMap = {
  * @abstract
  */
 export abstract class BaseMerkleTree {
+  // Tree height
   public readonly height: number;
-  private nodesMap: MerkleNodesMap;
+
+  // Node mapping
+  private nodesMap: TMerkleNodesMap;
+
+  // Zeroes nodes
   protected zeroes: Field[];
+
+  // Flag indicating whether the tree needs to be updated
   protected needsUpdate = false;
 
   /**
@@ -28,7 +39,7 @@ export abstract class BaseMerkleTree {
    *
    * @param height The height of the Merkle tree.
    */
-  constructor(height: number, nodesMap: MerkleNodesMap = {}) {
+  constructor(height: number, nodesMap: TMerkleNodesMap = {}) {
     if (height < 1) {
       throw new Error('Merkle tree height must be greater than 0');
     }
@@ -73,7 +84,7 @@ export abstract class BaseMerkleTree {
    * @param nodesMap An object containing the nodes to be added to the tree.
    */
   // eslint-disable-next-line no-unused-vars
-  protected abstract writeLeaf(nodesMap: MerkleNodesMap): Promise<void>;
+  protected abstract writeLeaf(nodesMap: TMerkleNodesMap): Promise<void>;
 
   /**
    * Saves the nodes of the remote Merkle tree.
@@ -82,7 +93,7 @@ export abstract class BaseMerkleTree {
    * @param nodes An object containing the nodes to be saved.
    */
   // eslint-disable-next-line no-unused-vars
-  protected abstract writeNodes(nodes: MerkleNodesMap): Promise<void>;
+  protected abstract writeNodes(nodes: TMerkleNodesMap): Promise<void>;
 
   /**
    * Fetches the nodes of the Merkle tree.
@@ -90,7 +101,7 @@ export abstract class BaseMerkleTree {
    * @abstract
    * @returns A promise that resolves to an object containing the nodes of the tree.
    */
-  protected abstract fetchNodes(): Promise<MerkleNodesMap>;
+  protected abstract fetchNodes(): Promise<TMerkleNodesMap>;
 
   /**
    * Retrieves the Merkle path for a leaf at the specified index.
@@ -101,9 +112,9 @@ export abstract class BaseMerkleTree {
    */
   protected abstract calculateMerklePath(
     _leafIndex: bigint
-  ): Promise<MerkleNodesMap>;
+  ): Promise<TMerkleNodesMap>;
 
-  public async getNodes(): Promise<MerkleNodesMap> {
+  public async getNodes(): Promise<TMerkleNodesMap> {
     if (Object.keys(this.nodesMap).length === 0 || this.needsUpdate) {
       this.nodesMap = await this.fetchNodes();
       this.needsUpdate = false;
@@ -113,7 +124,7 @@ export abstract class BaseMerkleTree {
   }
 
   private async setLeafAtLevel(
-    nodesMap: MerkleNodesMap,
+    nodesMap: TMerkleNodesMap,
     index: bigint,
     leaf: Field
   ) {
@@ -165,7 +176,7 @@ export abstract class BaseMerkleTree {
    * @param leaf The new leaf value.
    */
   public async setLeaf(index: bigint, leaf: Field): Promise<void> {
-    const nodesMap: MerkleNodesMap = {};
+    const nodesMap: TMerkleNodesMap = {};
 
     if (await this.isEmpty()) {
       nodesMap[0] = {};
@@ -226,7 +237,7 @@ export abstract class BaseMerkleTree {
   protected async getNodeOrZero(
     level: number,
     index: bigint,
-    nodes: MerkleNodesMap
+    nodes: TMerkleNodesMap
   ): Promise<Field> {
     return nodes[level]?.[index.toString()] ?? this.zeroes[level];
   }
@@ -239,44 +250,47 @@ export abstract class BaseMerkleTree {
     return 2n ** BigInt(this.height - 1);
   }
 
-  toBSON(): Uint8Array {
-    return this._toBSON(this.nodesMap);
-  }
-
-  static fromBSON(data: Uint8Array): MerkleNodesMap {
-    const root = BSON.deserialize(data);
-    const matrix: { index: number; value: string }[][] = root.matrix;
-
-    let nodesMap: MerkleNodesMap = {};
-
-    for (let level = 0; level < matrix.length; level++) {
-      nodesMap[level] = {};
-      const levelMatrix = matrix[level];
-      for (const element of levelMatrix) {
-        nodesMap[level][element.index] = Field(element.value);
-      }
-    }
-
-    return nodesMap;
-  }
-
-  protected _toBSON(nodesMap: MerkleNodesMap): Uint8Array {
-    let matrix: { index: number; value: string }[][] = [];
-
+  /**
+   * @todo In the future we can think about byte stream
+   * we can deal with gigabytes of Merkle tree and use storage
+   * as a swap. The Merkle tree can be stored on storage and memory
+   * @returns
+   */
+  protected static serialize(nodesMap: TMerkleNodesMap): Uint8Array {
+    let matrix: TMerkleNodesStorage = [];
     for (const level in nodesMap) {
-      matrix[level] = [];
-      const levelNodes = nodesMap[level];
-      for (const nodeIndex in levelNodes) {
-        const nodeValue = levelNodes[nodeIndex];
-        matrix[level].push({
-          index: parseInt(nodeIndex),
-          value: nodeValue.toString(),
-        });
+      for (const nodeIndex in nodesMap[level]) {
+        matrix.push([
+          parseInt(level, 10),
+          parseInt(nodeIndex, 10),
+          Binary.fieldToBinary(nodesMap[level][nodeIndex]),
+        ]);
       }
     }
+    return BSON.serialize(matrix);
+  }
 
-    const root = { matrix };
-
-    return BSON.serialize(root);
+  /**
+   * @todo Deserialization can be done in a streaming way
+   * @param data
+   * @returns
+   */
+  protected static deserialize(
+    data: Uint8Array
+  ): readonly [number, TMerkleNodesMap] {
+    const matrix = <TMerkleNodesStorage>BSON.deserialize(data);
+    const nodesMap: TMerkleNodesMap = {};
+    let height = 0;
+    for (let recordIndex = 0; recordIndex < matrix.length; recordIndex += 1) {
+      const [level, index, value] = matrix[recordIndex];
+      if (typeof nodesMap[level] === 'undefined') {
+        nodesMap[level] = {};
+      }
+      nodesMap[level][index] = Binary.binaryToField(value)[0];
+      if (level > height) {
+        height = level;
+      }
+    }
+    return [height, nodesMap];
   }
 }

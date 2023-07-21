@@ -1,6 +1,7 @@
-import { BaseMerkleTree, MerkleNodesMap } from './merkle-tree-base.js';
-import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
 import { Field } from 'snarkyjs';
+import { FILENAME_MERKLE } from '../storage-engine/metadata.js';
+import { BaseMerkleTree, TMerkleNodesMap } from './merkle-tree-base.js';
+import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
 
 export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
@@ -12,11 +13,24 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   constructor(
     ipfs: StorageEngineIPFS,
     height: number,
-    nodesMap: MerkleNodesMap = {}
+    nodesMap: TMerkleNodesMap = {}
   ) {
     super(height, nodesMap);
     this.ipfs = ipfs;
-    ipfs.use(MERKLE_TREE_COLLECTION_NAME);
+  }
+
+  public static async load(
+    ipfs: StorageEngineIPFS,
+    defaultHeight: number
+  ): Promise<DistributedMerkleTree> {
+    if (await ipfs.isFile(FILENAME_MERKLE)) {
+      const [height, nodesMap] = DistributedMerkleTree.deserialize(
+        await ipfs.readFile(FILENAME_MERKLE)
+      );
+      return new DistributedMerkleTree(ipfs, height, nodesMap);
+    } else {
+      return new DistributedMerkleTree(ipfs, defaultHeight, {});
+    }
   }
 
   public async getRoot(): Promise<Field> {
@@ -40,10 +54,10 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   }
 
   public async isEmpty(): Promise<boolean> {
-    return this.ipfs.isDocumentEmpty(MERKLE_TREE_FILE_NAME);
+    return this.ipfs.isFile(FILENAME_MERKLE);
   }
 
-  protected async writeLeaf(nodesMap: MerkleNodesMap): Promise<void> {
+  protected async writeLeaf(nodesMap: TMerkleNodesMap): Promise<void> {
     const currentNodesMap = await this.getNodes();
 
     if (
@@ -67,21 +81,23 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
     await this.writeNodes(currentNodesMap);
   }
 
-  protected async writeNodes(nodes: MerkleNodesMap): Promise<void> {
-    this.ipfs.use(MERKLE_TREE_COLLECTION_NAME);
-    await this.ipfs.writeMerkleBSON(this._toBSON(nodes));
+  protected async writeNodes(nodes: TMerkleNodesMap): Promise<void> {
+    await this.ipfs.writeMetadataFile(
+      FILENAME_MERKLE,
+      BaseMerkleTree.serialize(nodes)
+    );
   }
 
-  protected async fetchNodes(): Promise<MerkleNodesMap> {
+  protected async fetchNodes(): Promise<TMerkleNodesMap> {
     if (await this.isEmpty()) {
       return {};
     }
 
-    const nodeBytes = await this.ipfs.readMerkleBSON();
-    return BaseMerkleTree.fromBSON(nodeBytes);
+    const nodeBytes = await this.ipfs.readFile(FILENAME_MERKLE);
+    return BaseMerkleTree.deserialize(nodeBytes)[1];
   }
 
-  protected async calculateMerklePath(_: bigint): Promise<MerkleNodesMap> {
-    return await this.getNodes();
+  protected async calculateMerklePath(_: bigint): Promise<TMerkleNodesMap> {
+    return this.getNodes();
   }
 }
