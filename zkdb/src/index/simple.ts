@@ -219,7 +219,7 @@ export class SimpleIndexer {
 
   // To JSON
   public toBSON() {
-    return BSON.serialize(this.indexer);
+    return BSON.serialize({ root: this.indexer });
   }
 
   // From BSON

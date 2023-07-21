@@ -1,6 +1,5 @@
 import { base32 } from 'multiformats/bases/base32';
 import { Poseidon, Encoding, Field } from 'snarkyjs';
-import { BSON } from 'bson';
 
 /**
  * Convert hex string to Uint8Array
@@ -52,16 +51,6 @@ function fromBase32(input: string): Uint8Array {
 }
 
 /**
- * Perform Poseidon hash on BSON document
- * @param document BSON document
- * @returns Digest of data in Uint8Array
- */
-function poseidonHashBSON(document: any): Uint8Array {
-  const serializedDoc = BSON.serialize(document);
-  return poseidonHashBinary(serializedDoc);
-}
-
-/**
  * Convert field to binary
  * @param field Field
  * @returns Uint8Array binary data
@@ -107,7 +96,6 @@ export const Binary = {
   toBase32,
   fromBase32,
   poseidonHashBinary,
-  poseidonHashBSON,
   concatUint8Array,
   convertHexToUint8Array,
   fieldToBinary,

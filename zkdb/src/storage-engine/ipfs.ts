@@ -2,6 +2,7 @@ import { Libp2p, Libp2pOptions, createLibp2p } from 'libp2p';
 import { tcp } from '@libp2p/tcp';
 import { create as kuboClient } from 'kubo-rpc-client';
 import { delegatedPeerRouting } from '@libp2p/delegated-peer-routing';
+import { kadDHT } from '@libp2p/kad-dht';
 import { noise } from '@chainsafe/libp2p-noise';
 import { MemoryDatastore } from 'datastore-core';
 import { webSockets } from '@libp2p/websockets';
@@ -17,7 +18,6 @@ import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 import fs from 'fs';
 import { Binary } from '../utilities/binary.js';
-import { IDocument } from '../core/common.js';
 import { BSON } from 'bson';
 
 /**
@@ -90,6 +90,9 @@ export const newLibP2p = async (
   storage: TStorageConfiguration
 ): Promise<Libp2p> => {
   const config: Libp2pOptions = {
+    services: {
+      dht: kadDHT(),
+    },
     start: true,
     addresses: {
       listen: ['/ip4/127.0.0.1/tcp/0'],
@@ -216,59 +219,6 @@ export class StorageEngineIPFS {
 
   /**
    * Create new instance of storage engine
-   * @param basePath Base path of the storage engine
-   * @param config Configuration of the storage engine
-   * @returns New instance of storage engine
-   */
-  public static async getInstance(
-    basePath: string,
-    config?: Partial<IIPFSConfiguration>
-  ): Promise<StorageEngineIPFS> {
-    StorageEngineIPFS.initPath(basePath);
-    StorageEngineIPFS.initPath(`${basePath}/storage`);
-    const { transport, storageP2p, storageHelia }: Partial<IIPFSConfiguration> =
-      {
-        transport: 'tcp',
-        storageP2p: {
-          handler: 'file',
-          location: StorageEngineIPFS.initPath(`${basePath}/nodedata`),
-        },
-        storageHelia: {
-          handler: 'file',
-          location: StorageEngineIPFS.initPath(`${basePath}/helia`),
-        },
-        ...config,
-      };
-
-    const nodeLibP2p = await newLibP2p(transport, storageP2p);
-    const nodeHelia = await newHelia(nodeLibP2p, storageHelia);
-    const newInstance = new StorageEngineIPFS(nodeLibP2p, nodeHelia, basePath);
-    await newInstance.tryResolve();
-    return newInstance;
-  }
-
-  /**
-   * Change current collection
-   * @param collection Collection name
-   */
-  public use(collection: string): void {
-    this.collection = collection;
-  }
-
-  /**
-   * Initialize path
-   * @param path path to be initialized
-   * @returns path
-   */
-  private static initPath(path: string): string {
-    if (!fs.existsSync(path)) {
-      fs.mkdirSync(path, { recursive: true });
-    }
-    return path;
-  }
-
-  /**
-   * Create new instance of storage engine
    * @param nodeLibp2p libp2p node
    * @param nodeHelia Helia node
    * @param path path to storage engine
@@ -279,6 +229,12 @@ export class StorageEngineIPFS {
     this.unixFs = unixfs(this.nodeHelia);
     this.ipns = ipns(this.nodeHelia);
     this.pathBase = path;
+    const interval = setInterval(() => {
+      if (this.nodeLibP2p.getPeers().length === 0) {
+        console.log('Disconnected from IPFS network, why? why? libp2p?');
+        clearInterval(interval);
+      }
+    }, 1000);
   }
 
   // Try to resolve IPNS entry to CID
@@ -319,17 +275,30 @@ export class StorageEngineIPFS {
     return cid;
   }
 
+  /**
+   * Get state of given path
+   * @param cid
+   * @param path
+   * @returns
+   */
   public async stat(
     cid: CID,
     path: string = ''
   ): Promise<UnixFSStats | undefined> {
+    let result;
     try {
-      return this.unixFs.stat(cid, path === '' ? {} : { path });
+      result = await this.unixFs.stat(cid, path === '' ? {} : { path });
     } catch (e) {
-      return undefined;
+      result = undefined;
     }
+    return result;
   }
 
+  /**
+   * Is path is a file
+   * @param path
+   * @returns Promise<boolean>
+   */
   public async isFile(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
@@ -338,6 +307,11 @@ export class StorageEngineIPFS {
     return false;
   }
 
+  /**
+   * Is path is a folder
+   * @param path
+   * @returns Promise<boolean>
+   */
   public async isFolder(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
@@ -346,6 +320,11 @@ export class StorageEngineIPFS {
     return false;
   }
 
+  /**
+   * Check the existence of given path
+   * @param path
+   * @returns Promise<boolean>
+   */
   public async isExist(path: string = ''): Promise<boolean> {
     if (typeof this.rootCID !== 'undefined') {
       const stat = await this.stat(this.rootCID, path);
@@ -354,6 +333,10 @@ export class StorageEngineIPFS {
     return false;
   }
 
+  /**
+   * List all files and folders in given path
+   * @param path Given path
+   */
   public async ls(path: string = '') {
     if (await this.isExist(path)) {
       const result = [];
@@ -369,6 +352,7 @@ export class StorageEngineIPFS {
           cotent: entry.content,
         });
       }
+      return result;
     }
     throw new Error('Given path is not exist');
   }
@@ -431,11 +415,6 @@ export class StorageEngineIPFS {
           ? await this.unixFs.addDirectory()
           : collectionFolder.cid;
       if (typeof collectionFolder !== 'undefined') {
-        // Remove collection folder from the root folder
-        this.rootCID = await this.unixFs.rm(
-          this.definedRootCID,
-          this.collection
-        );
         // Remove file from collection folder if exist
         if (await this.isFile(`${this.collection}/${filename}`)) {
           // Remove file from collection folder
@@ -444,6 +423,11 @@ export class StorageEngineIPFS {
             filename
           );
         }
+        // Remove collection folder from the root folder
+        this.rootCID = await this.unixFs.rm(
+          this.definedRootCID,
+          this.collection
+        );
       }
       // Add file to collection folder
       collectionFolderCID = await this.unixFs.cp(
@@ -519,22 +503,13 @@ export class StorageEngineIPFS {
     if (await this.isFile(path)) {
       let size = 0;
       let buf = [];
-      for await (let chunk of this.unixFs.cat(this.definedRootCID)) {
+      for await (let chunk of this.unixFs.cat(this.definedRootCID, { path })) {
         size += chunk.length;
         buf.push(chunk);
       }
       return Binary.concatUint8Array(buf, size);
     }
     throw new Error('The give path is not a file');
-  }
-
-  /**
-   * Write BSON data to ipfs
-   * @param BSONData BSON data
-   * @returns [[CID]]
-   */
-  public async writeDocument(_document: IDocument): Promise<CID> {
-    throw new Error('Need to implement');
   }
 
   /**
@@ -554,7 +529,7 @@ export class StorageEngineIPFS {
    * @param contentID Content ID
    * @returns [[IPNSEntry]]
    */
-  publish(
+  public publish(
     contentID: CID<unknown, number, number, Version>
   ): Promise<IPNSEntry> {
     return this.ipns.publish(this.nodeLibP2p.peerId, contentID);
@@ -564,7 +539,7 @@ export class StorageEngineIPFS {
    * Republish IPNS
    * @returns void
    */
-  republish(): void {
+  public republish(): void {
     return this.ipns.republish();
   }
 
@@ -573,7 +548,7 @@ export class StorageEngineIPFS {
    * @param peerID Peer ID
    * @returns [[CID]]
    */
-  async resolve(
+  public async resolve(
     peerID?: PeerId
   ): Promise<CID<unknown, number, number, Version> | undefined> {
     try {
@@ -582,5 +557,58 @@ export class StorageEngineIPFS {
     } catch (e) {
       return undefined;
     }
+  }
+
+  /**
+   * Create new instance of storage engine
+   * @param basePath Base path of the storage engine
+   * @param config Configuration of the storage engine
+   * @returns New instance of storage engine
+   */
+  public static async getInstance(
+    basePath: string,
+    config?: Partial<IIPFSConfiguration>
+  ): Promise<StorageEngineIPFS> {
+    StorageEngineIPFS.initPath(basePath);
+    StorageEngineIPFS.initPath(`${basePath}/storage`);
+    const { transport, storageP2p, storageHelia }: Partial<IIPFSConfiguration> =
+      {
+        transport: 'tcp',
+        storageP2p: {
+          handler: 'file',
+          location: StorageEngineIPFS.initPath(`${basePath}/nodedata`),
+        },
+        storageHelia: {
+          handler: 'file',
+          location: StorageEngineIPFS.initPath(`${basePath}/helia`),
+        },
+        ...config,
+      };
+
+    const nodeLibP2p = await newLibP2p(transport, storageP2p);
+    const nodeHelia = await newHelia(nodeLibP2p, storageHelia);
+    const newInstance = new StorageEngineIPFS(nodeLibP2p, nodeHelia, basePath);
+    await newInstance.tryResolve();
+    return newInstance;
+  }
+
+  /**
+   * Change current collection
+   * @param collection Collection name
+   */
+  public use(collection: string): void {
+    this.collection = collection;
+  }
+
+  /**
+   * Initialize path
+   * @param path path to be initialized
+   * @returns path
+   */
+  private static initPath(path: string): string {
+    if (!fs.existsSync(path)) {
+      fs.mkdirSync(path, { recursive: true });
+    }
+    return path;
   }
 }

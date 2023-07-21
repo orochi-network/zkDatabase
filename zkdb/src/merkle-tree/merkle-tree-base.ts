@@ -1,8 +1,8 @@
+import { BSON } from 'bson';
 import { Field, Poseidon } from 'snarkyjs';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
-import { BSON } from 'bson';
-import { Binary } from 'utilities/binary.js';
+import { Binary } from '../utilities/binary.js';
 
 export type TMerkleNodesMap = {
   [level: number]: {
@@ -267,7 +267,7 @@ export abstract class BaseMerkleTree {
         ]);
       }
     }
-    return BSON.serialize(matrix);
+    return BSON.serialize({ root: matrix });
   }
 
   /**
@@ -278,7 +278,7 @@ export abstract class BaseMerkleTree {
   protected static deserialize(
     data: Uint8Array
   ): readonly [number, TMerkleNodesMap] {
-    const matrix = <TMerkleNodesStorage>BSON.deserialize(data);
+    const matrix = <TMerkleNodesStorage>BSON.deserialize(data).root;
     const nodesMap: TMerkleNodesMap = {};
     let height = 0;
     for (let recordIndex = 0; recordIndex < matrix.length; recordIndex += 1) {

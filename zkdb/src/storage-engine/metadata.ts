@@ -1,9 +1,9 @@
 import { BSON } from 'bson';
-import DistributedMerkleTree from 'merkle-tree/merkle-tree-ipfs.js';
 import { CID } from 'multiformats';
-import { IKeyValue } from 'core/common.js';
-import { SimpleIndexer } from 'index/simple.js';
+import { IKeyValue } from '../core/common.js';
+import { SimpleIndexer } from '../index/simple.js';
 import { StorageEngineIPFS } from './ipfs.js';
+import DistributedMerkleTree from '../merkle-tree/merkle-tree-ipfs.js';
 
 export interface ICollection {
   [key: string]: CID;
@@ -81,6 +81,7 @@ export class Metadata {
     indexer: SimpleIndexer,
     merkleTree: DistributedMerkleTree
   ) {
+    this.ipfs = ipfs;
     this.collection = collection;
     this.indexer = indexer;
     this.merkle = merkleTree;
