@@ -10,6 +10,12 @@ export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
 export default class DistributedMerkleTree extends BaseMerkleTree {
   private ipfs: StorageEngineIPFS;
 
+  /**
+   * Constructor method of DistributedMerkleTree
+   * @param ipfs
+   * @param height
+   * @param nodesMap
+   */
   constructor(
     ipfs: StorageEngineIPFS,
     height: number,
@@ -19,6 +25,12 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
     this.ipfs = ipfs;
   }
 
+  /**
+   * Load DistributedMerkleTree from IPFS
+   * @param ipfs
+   * @param defaultHeight
+   * @returns
+   */
   public static async load(
     ipfs: StorageEngineIPFS,
     defaultHeight: number
@@ -31,6 +43,16 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
     } else {
       return new DistributedMerkleTree(ipfs, defaultHeight, {});
     }
+  }
+
+  /**
+   * Save DistributedMerkleTree to IPFS
+   */
+  public async save(): Promise<void> {
+    this.ipfs.writeMetadataFile(
+      FILENAME_MERKLE,
+      DistributedMerkleTree.serialize(await this.getNodes())
+    );
   }
 
   public async getRoot(): Promise<Field> {

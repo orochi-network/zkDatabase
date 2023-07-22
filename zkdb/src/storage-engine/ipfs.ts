@@ -19,6 +19,7 @@ import { IPNSEntry } from 'ipns';
 import fs from 'fs';
 import { Binary } from '../utilities/binary.js';
 import { BSON } from 'bson';
+import { multiaddr } from '@multiformats/multiaddr';
 
 /**
  * Transport layer
@@ -91,7 +92,7 @@ export const newLibP2p = async (
 ): Promise<Libp2p> => {
   const config: Libp2pOptions = {
     services: {
-      dht: kadDHT(),
+      dht: kadDHT({ allowQueryWithZeroPeers: true }),
     },
     start: true,
     addresses: {
@@ -121,6 +122,17 @@ export const newLibP2p = async (
 
   // Start libp2p node
   const nodeP2p = await createLibp2p(config);
+  const addresses = [
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
+    '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt',
+  ].map((e) => multiaddr(e));
+  // Dial to bootstrap nodes
+  for (let i = 0; i < addresses.length; i += 1) {
+    await nodeP2p.dial(addresses[i]);
+  }
+
   await nodeP2p.start();
   return nodeP2p;
 };
@@ -253,7 +265,7 @@ export class StorageEngineIPFS {
    * @param foldername Folder name
    * @returns
    */
-  private async mkdir(foldername: string = ''): Promise<CID | undefined> {
+  public async mkdir(foldername: string = ''): Promise<CID | undefined> {
     let cid: CID | undefined = undefined;
     if (!(await this.isFolder(foldername))) {
       if (foldername === '') {
@@ -281,7 +293,7 @@ export class StorageEngineIPFS {
    * @param path
    * @returns
    */
-  public async stat(
+  private async stat(
     cid: CID,
     path: string = ''
   ): Promise<UnixFSStats | undefined> {
@@ -292,6 +304,15 @@ export class StorageEngineIPFS {
       result = undefined;
     }
     return result;
+  }
+
+  /**
+   * Check stat of a path
+   * @param path
+   * @returns
+   */
+  public async check(path: string = '') {
+    return this.unixFs.stat(this.definedRootCID, path === '' ? {} : { path });
   }
 
   /**
@@ -499,6 +520,11 @@ export class StorageEngineIPFS {
     return false;
   }
 
+  /**
+   * Read a file from ipfs
+   * @param path
+   * @returns
+   */
   public async readFile(path: string): Promise<Uint8Array> {
     if (await this.isFile(path)) {
       let size = 0;
@@ -557,6 +583,14 @@ export class StorageEngineIPFS {
     } catch (e) {
       return undefined;
     }
+  }
+
+  /**
+   * Shutdown the serivce
+   */
+  public async shutodnw() {
+    await this.nodeHelia.stop();
+    await this.nodeLibP2p.stop();
   }
 
   /**

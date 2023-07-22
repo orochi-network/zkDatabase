@@ -13,4 +13,5 @@ export interface IMerkleStorage {
 export interface IDocument {
   hash(): Field;
   index(): IKeyValue;
+  serialize(): Uint8Array;
 }
