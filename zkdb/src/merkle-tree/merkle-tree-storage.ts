@@ -1,57 +1,57 @@
 import { Field } from 'snarkyjs';
 import { FILENAME_MERKLE } from '../storage-engine/metadata.js';
 import { BaseMerkleTree, TMerkleNodesMap } from './merkle-tree-base.js';
-import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
+import { StorageEngine } from '../storage-engine/index.js';
 
 export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
 export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
 
-export default class DistributedMerkleTree extends BaseMerkleTree {
-  private ipfs: StorageEngineIPFS;
+export default class MerkleTreeStorage extends BaseMerkleTree {
+  private storageEngine: StorageEngine;
 
   /**
-   * Constructor method of DistributedMerkleTree
-   * @param ipfs
+   * Constructor method of MerkleTreeStorage
+   * @param storageEngine
    * @param height
    * @param nodesMap
    */
   constructor(
-    ipfs: StorageEngineIPFS,
+    storageEngine: StorageEngine,
     height: number,
     nodesMap: TMerkleNodesMap = {}
   ) {
     super(height, nodesMap);
-    this.ipfs = ipfs;
+    this.storageEngine = storageEngine;
   }
 
   /**
-   * Load DistributedMerkleTree from IPFS
-   * @param ipfs
+   * Load MerkleTreeStorage from storageEngine
+   * @param storageEngine
    * @param defaultHeight
    * @returns
    */
   public static async load(
-    ipfs: StorageEngineIPFS,
+    storageEngine: StorageEngine,
     defaultHeight: number
-  ): Promise<DistributedMerkleTree> {
-    if (await ipfs.isFile(FILENAME_MERKLE)) {
-      const [height, nodesMap] = DistributedMerkleTree.deserialize(
-        await ipfs.readFile(FILENAME_MERKLE)
+  ): Promise<MerkleTreeStorage> {
+    if (await storageEngine.isFile(FILENAME_MERKLE)) {
+      const [height, nodesMap] = MerkleTreeStorage.deserialize(
+        await storageEngine.readFile(FILENAME_MERKLE)
       );
-      return new DistributedMerkleTree(ipfs, height, nodesMap);
+      return new MerkleTreeStorage(storageEngine, height, nodesMap);
     } else {
-      return new DistributedMerkleTree(ipfs, defaultHeight, {});
+      return new MerkleTreeStorage(storageEngine, defaultHeight, {});
     }
   }
 
   /**
-   * Save DistributedMerkleTree to IPFS
+   * Save MerkleTreeStorage to storageEngine
    */
   public async save(): Promise<void> {
-    this.ipfs.writeMetadataFile(
+    this.storageEngine.writeMetadataFile(
       FILENAME_MERKLE,
-      DistributedMerkleTree.serialize(await this.getNodes())
+      MerkleTreeStorage.serialize(await this.getNodes())
     );
   }
 
@@ -76,12 +76,16 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   }
 
   public async isEmpty(): Promise<boolean> {
-    return this.ipfs.isFile(FILENAME_MERKLE);
+    const result = await this.storageEngine.isFile(FILENAME_MERKLE);
+    return !result;
   }
 
   protected async writeLeaf(nodesMap: TMerkleNodesMap): Promise<void> {
     const currentNodesMap = await this.getNodes();
-
+    console.log(
+      Object.keys(currentNodesMap).length,
+      Object.keys(nodesMap).length
+    );
     if (
       Object.keys(currentNodesMap).length !== Object.keys(nodesMap).length &&
       Object.keys(currentNodesMap).length !== 0
@@ -104,7 +108,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
   }
 
   protected async writeNodes(nodes: TMerkleNodesMap): Promise<void> {
-    await this.ipfs.writeMetadataFile(
+    await this.storageEngine.writeMetadataFile(
       FILENAME_MERKLE,
       BaseMerkleTree.serialize(nodes)
     );
@@ -115,7 +119,7 @@ export default class DistributedMerkleTree extends BaseMerkleTree {
       return {};
     }
 
-    const nodeBytes = await this.ipfs.readFile(FILENAME_MERKLE);
+    const nodeBytes = await this.storageEngine.readFile(FILENAME_MERKLE);
     return BaseMerkleTree.deserialize(nodeBytes)[1];
   }
 
