@@ -1,21 +1,24 @@
 import { SimpleIndexer } from '../index/simple.js';
+import MerkleTreeStorage from '../merkle-tree/merkle-tree-storage.js';
+import { StorageEngineLocal } from './local.js';
 import { StorageEngineIPFS } from './ipfs.js';
-import DistributedMerkleTree from '../merkle-tree/merkle-tree-ipfs.js';
+
+export type StorageEngine = StorageEngineLocal | StorageEngineIPFS;
 
 export const FILENAME_INDEX = 'index.bson';
 export const FILENAME_MERKLE = 'merkle.bson';
 
 export class Metadata {
   public indexer: SimpleIndexer;
-  public merkle: DistributedMerkleTree;
-  public ipfs: StorageEngineIPFS;
+  public merkle: MerkleTreeStorage;
+  public storageEngine: StorageEngine;
 
   constructor(
-    ipfs: StorageEngineIPFS,
+    storageEngine: StorageEngine,
     indexer: SimpleIndexer,
-    merkleTree: DistributedMerkleTree
+    merkleTree: MerkleTreeStorage
   ) {
-    this.ipfs = ipfs;
+    this.storageEngine = storageEngine;
     this.indexer = indexer;
     this.merkle = merkleTree;
   }
@@ -24,7 +27,7 @@ export class Metadata {
    * Save metadata to IPFS
    */
   public async save() {
-    await this.ipfs.writeFile(FILENAME_INDEX, this.indexer.toBSON());
+    await this.storageEngine.writeFile(FILENAME_INDEX, this.indexer.toBSON());
     await this.merkle.save();
   }
 
@@ -35,20 +38,23 @@ export class Metadata {
    * @returns
    */
   public static async load(
-    ipfs: StorageEngineIPFS,
+    storageEngine: StorageEngine,
     defaultHeight: number = 64
   ) {
-    if (await ipfs.isExist()) {
+    if (await storageEngine.isExist()) {
       // Load indexer
-      const indexer = (await ipfs.isFile(FILENAME_INDEX))
-        ? SimpleIndexer.fromBSON(await ipfs.readFile(FILENAME_INDEX))
+      const indexer = (await storageEngine.isFile(FILENAME_INDEX))
+        ? SimpleIndexer.fromBSON(await storageEngine.readFile(FILENAME_INDEX))
         : new SimpleIndexer([]);
 
       // Load merkle tree
-      const merkleTree = await DistributedMerkleTree.load(ipfs, defaultHeight);
+      const merkleTree = await MerkleTreeStorage.load(
+        storageEngine,
+        defaultHeight
+      );
 
       // Return instance of Metadata
-      return new Metadata(ipfs, indexer, merkleTree);
+      return new Metadata(storageEngine, indexer, merkleTree);
     }
 
     throw new Error(

@@ -55,7 +55,7 @@ function fromBase32(input: string): Uint8Array {
  * @param field Field
  * @returns Uint8Array binary data
  */
-function fieldToBinary(...field: Field[]): Uint8Array {
+function fieldToBinary(field: Field[]): Uint8Array {
   return Encoding.Bijective.Fp.toBytes(field);
 }
 

@@ -133,8 +133,9 @@ export class SimpleIndexer {
     }
     const result: IIndexing[] = new Array(entries.length);
     const firstRecord = this.addOne(entries[0][0], entries[0][1]);
+    result[0] = { ...firstRecord.get()[0] };
     const index = firstRecord.get()[0].index;
-    for (let i = 1; i < entries.length; i++) {
+    for (let i = 1; i < entries.length; i += 1) {
       const [key, value] = entries[i];
       const digest = digestStrings(
         typeof value === 'string' ? value : value.toString()
@@ -224,6 +225,6 @@ export class SimpleIndexer {
 
   // From BSON
   public static fromBSON(bson: Uint8Array) {
-    return new SimpleIndexer(<any[][]>BSON.deserialize(bson));
+    return new SimpleIndexer(<any[][]>BSON.deserialize(bson).root);
   }
 }

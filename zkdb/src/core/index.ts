@@ -1,23 +1,23 @@
-import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
-import { Metadata } from '../storage-engine/metadata.js';
+import { StorageEngine, Metadata } from '../storage-engine/index.js';
 import { IDocument } from './common.js';
 import loader from './loader.js';
 export * from './common.js';
+export * from '../utilities/binary.js';
 
 export class ZKDatabaseStorage {
   private metadata: Metadata;
-  private storageEngine: StorageEngineIPFS;
+  private storageEngine: StorageEngine;
   private collection: string;
 
-  constructor(storageEngine: StorageEngineIPFS, metadata: Metadata) {
+  constructor(storageEngine: StorageEngine, metadata: Metadata) {
     this.storageEngine = storageEngine;
     this.metadata = metadata;
     this.collection = 'default';
   }
 
   public static async getInstance(merkleHeight: number = 64) {
-    const storageEngine = await loader.getStorageEngine();
-    const metadata = await loader.getMetadata(merkleHeight);
+    const storageEngine = await loader.getLocalStorageEngine();
+    const metadata = await loader.getMetadata(storageEngine, merkleHeight);
     return new ZKDatabaseStorage(storageEngine, metadata);
   }
 

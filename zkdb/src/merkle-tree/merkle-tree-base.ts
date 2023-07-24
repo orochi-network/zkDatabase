@@ -11,7 +11,7 @@ export type TMerkleNodesMap = {
 };
 
 // We record level/index/value
-export type TMerkleNodesStorage = [number, number, Uint8Array][];
+export type TMerkleNodesStorage = [number, number, string][];
 
 /**
  * The BaseMerkleTree class is an abstract class that serves as the base for different
@@ -263,7 +263,7 @@ export abstract class BaseMerkleTree {
         matrix.push([
           parseInt(level, 10),
           parseInt(nodeIndex, 10),
-          Binary.fieldToBinary(nodesMap[level][nodeIndex]),
+          Binary.toBase32(Binary.fieldToBinary([nodesMap[level][nodeIndex]])),
         ]);
       }
     }
@@ -286,7 +286,9 @@ export abstract class BaseMerkleTree {
       if (typeof nodesMap[level] === 'undefined') {
         nodesMap[level] = {};
       }
-      nodesMap[level][index] = Binary.binaryToField(value)[0];
+      nodesMap[level][index] = Binary.binaryToField(
+        Binary.fromBase32(value)
+      )[0];
       if (level > height) {
         height = level;
       }

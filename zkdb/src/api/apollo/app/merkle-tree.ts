@@ -3,7 +3,7 @@ import { Field } from 'snarkyjs';
 import { BigIntResolver } from 'graphql-scalars';
 import resolverWrapper, { validateDigest } from '../validation.js';
 import loader from '../../helper/loader.js';
-import DistributedMerkleTree from '../../../merkle-tree/merkle-tree-ipfs.js';
+import MerkleTreeStorage from '../../../merkle-tree/merkle-tree-storage.js';
 
 // Define types for clarity and reusability
 export interface IMerkleProof {
@@ -46,9 +46,9 @@ export const typeDefsMerkleTree = `
   }
 `;
 
-const getDistributedMerkleTree = async () => {
+const getMerkleTreeStorage = async () => {
   const ipfs = await loader.getStorageEngine();
-  return new DistributedMerkleTree(ipfs, 8);
+  return new MerkleTreeStorage(ipfs, 8);
 };
 
 // Resolvers
@@ -56,14 +56,14 @@ export const resolversMerkleTree = {
   BigInt: BigIntResolver,
   Query: {
     getRoot: async (): Promise<string> => {
-      const merkleTree = await getDistributedMerkleTree();
+      const merkleTree = await getMerkleTreeStorage();
       return (await merkleTree.getRoot()).toString();
     },
     getMerkleProof: async (
       _: any,
       { index }: { index: BigInt }
     ): Promise<IMerkleProof[]> => {
-      const merkleTree = await getDistributedMerkleTree();
+      const merkleTree = await getMerkleTreeStorage();
       const witness = await merkleTree.getWitness(index.valueOf());
       return witness.map<IMerkleProof>((element) => ({
         digest: element.sibling.toString(),
@@ -76,7 +76,7 @@ export const resolversMerkleTree = {
         _: unknown,
         { index, level }: { index: BigInt; level: number }
       ): Promise<string> => {
-        const merkleTree = await getDistributedMerkleTree();
+        const merkleTree = await getMerkleTreeStorage();
         if (level === undefined) {
           level = merkleTree.height - 1;
         }
@@ -92,7 +92,7 @@ export const resolversMerkleTree = {
         _: unknown,
         { index, digest }: { index: BigInt; digest: string }
       ): Promise<Boolean> => {
-        const merkleTree = await getDistributedMerkleTree();
+        const merkleTree = await getMerkleTreeStorage();
         await merkleTree.setLeaf(BigInt(index.valueOf()), Field.from(digest));
         return true;
       }
@@ -103,7 +103,7 @@ export const resolversMerkleTree = {
         _: unknown,
         { digests }: { digests: string[] }
       ): Promise<Boolean> => {
-        const merkleTree = await getDistributedMerkleTree();
+        const merkleTree = await getMerkleTreeStorage();
         await merkleTree.fill(digests.map((digest) => Field(digest)));
         return true;
       }

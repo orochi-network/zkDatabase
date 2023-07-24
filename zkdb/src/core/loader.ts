@@ -1,5 +1,9 @@
 import config from '../api/helper/config.js';
-import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
+import {
+  StorageEngineLocal,
+  StorageEngineIPFS,
+  StorageEngine,
+} from '../storage-engine/index.js';
 import { Metadata } from '../storage-engine/metadata.js';
 
 const singleton: { [key: string]: any } = {};
@@ -14,20 +18,29 @@ async function loadInstance<T>(
   return singleton[instance];
 }
 
-export const getStorageEngine = async () =>
+export const getIPFSStorageEngine = async () =>
   loadInstance<StorageEngineIPFS>('storage-engine-ipfs', async () => {
     return StorageEngineIPFS.getInstance(config.dataLocation);
   });
 
-export const getMetadata = async (merkleHeight: number) =>
+export const getLocalStorageEngine = async () =>
+  loadInstance<StorageEngineLocal>('storage-engine-local', async () => {
+    return StorageEngineLocal.getInstance(`${config.dataLocation}/local`);
+  });
+
+export const getMetadata = async (
+  storageEngine: StorageEngine,
+  merkleHeight: number
+) =>
   loadInstance<Metadata>('storageEngine', async () => {
     /**
      * @todo Should load default height from configuration
      */
-    return Metadata.load(await getStorageEngine(), merkleHeight);
+    return Metadata.load(storageEngine, merkleHeight);
   });
 
 export default {
-  getStorageEngine,
+  getIPFSStorageEngine,
+  getLocalStorageEngine,
   getMetadata,
 };
