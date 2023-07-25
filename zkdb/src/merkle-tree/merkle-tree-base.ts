@@ -293,6 +293,6 @@ export abstract class BaseMerkleTree {
         height = level;
       }
     }
-    return [height, nodesMap];
+    return [++height, nodesMap];
   }
 }
