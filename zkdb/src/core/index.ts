@@ -1,3 +1,4 @@
+import { MerkleProof } from 'merkle-tree/common.js';
 import { StorageEngine, Metadata } from '../storage-engine/index.js';
 import { IDocument } from './common.js';
 import loader from './loader.js';
@@ -15,10 +16,19 @@ export class ZKDatabaseStorage {
     this.collection = 'default';
   }
 
-  public static async getInstance(merkleHeight: number = 64) {
-    const storageEngine = await loader.getLocalStorageEngine();
+  public static async getInstance(
+    merkleHeight: number = 64,
+    local: boolean = true
+  ) {
+    const storageEngine = local
+      ? await loader.getLocalStorageEngine()
+      : await loader.getIPFSStorageEngine();
     const metadata = await loader.getMetadata(storageEngine, merkleHeight);
     return new ZKDatabaseStorage(storageEngine, metadata);
+  }
+
+  public async witness(index: number): Promise<MerkleProof[]> {
+    return this.metadata.merkle.getWitness(BigInt(index));
   }
 
   public async use(collection: string) {
@@ -44,7 +54,7 @@ export class ZKDatabaseStorage {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
-      `${this.collection}/${index.toString()}`,
+      `${index.toString()}`,
       document.serialize()
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);
@@ -72,6 +82,7 @@ export class ZKDatabaseStorage {
           });
         }
       }
+      return result;
     }
     return [];
   }

@@ -82,10 +82,6 @@ export default class MerkleTreeStorage extends BaseMerkleTree {
 
   protected async writeLeaf(nodesMap: TMerkleNodesMap): Promise<void> {
     const currentNodesMap = await this.getNodes();
-    console.log(
-      Object.keys(currentNodesMap).length,
-      Object.keys(nodesMap).length
-    );
     if (
       Object.keys(currentNodesMap).length !== Object.keys(nodesMap).length &&
       Object.keys(currentNodesMap).length !== 0

@@ -129,11 +129,10 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns
    */
   public async writeFile(filename: string, content: Uint8Array) {
-    const filepath = `${this.pathBase}/${filename}`;
+    const filepath = `${this.pathBase}/${this.collection}/${filename}`;
     if (!(await this.isFolder(`${this.pathBase}/${this.collection}`))) {
       this.mkdir(`${this.collection}`);
     }
-    console.log(filepath);
     fs.writeFileSync(filepath, content);
     return filepath;
   }
@@ -155,7 +154,6 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns
    */
   public async readFile(path: string): Promise<Uint8Array> {
-    console.log('read', `${this.pathBase}/${path}`);
     return fs.readFileSync(`${this.pathBase}/${path}`);
   }
 

@@ -319,7 +319,7 @@ export class StorageEngineIPFS extends StorageEngineBase<
    * @returns
    */
   public async check(path: string = '') {
-    return this.unixFs.stat(this.definedRootCID, path === '' ? {} : { path });
+    return this.stat(this.definedRootCID, path);
   }
 
   /**

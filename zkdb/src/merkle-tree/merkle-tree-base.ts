@@ -2,7 +2,6 @@ import { BSON } from 'bson';
 import { Field, Poseidon } from 'snarkyjs';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
-import { Binary } from '../utilities/binary.js';
 
 export type TMerkleNodesMap = {
   [level: number]: {
@@ -263,7 +262,7 @@ export abstract class BaseMerkleTree {
         matrix.push([
           parseInt(level, 10),
           parseInt(nodeIndex, 10),
-          Binary.toBase32(Binary.fieldToBinary([nodesMap[level][nodeIndex]])),
+          nodesMap[level][nodeIndex].toString(),
         ]);
       }
     }
@@ -286,9 +285,7 @@ export abstract class BaseMerkleTree {
       if (typeof nodesMap[level] === 'undefined') {
         nodesMap[level] = {};
       }
-      nodesMap[level][index] = Binary.binaryToField(
-        Binary.fromBase32(value)
-      )[0];
+      nodesMap[level][index] = Field(value);
       if (level > height) {
         height = level;
       }
