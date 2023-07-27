@@ -404,7 +404,7 @@ export class StorageEngineIPFS extends StorageEngineBase<
     // Check for the existance of root folder
     if (await this.isFolder()) {
       if (await this.isFile(filename)) {
-        await this.unixFs.rm(this.definedRootCID, filename);
+        this.rootCID = await this.unixFs.rm(this.definedRootCID, filename);
       }
       this.rootCID = await this.unixFs.cp(
         fileCID,
