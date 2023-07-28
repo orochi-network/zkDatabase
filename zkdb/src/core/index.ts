@@ -9,6 +9,8 @@ export * from './schema.js';
 export * from './smart-contract.js';
 export * from '../utilities/binary.js';
 
+export class SearchResult {}
+
 export class ZKDatabaseStorage {
   private metadata: Metadata;
   private storageEngine: StorageEngine;

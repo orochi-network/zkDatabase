@@ -6,12 +6,12 @@ import {
   AccountUpdate,
   MerkleWitness,
   Field,
-  state,
   State,
-  SmartContract,
+  state,
   CircuitString,
+  SmartContract,
 } from 'snarkyjs';
-import { Schema, ZKDatabaseStorage } from '../core/index.js';
+import { Schema, ZKDatabaseStorage, initZKDatabase } from '../core/index.js';
 
 const doProofs = false;
 
@@ -136,6 +136,7 @@ class PigletBank extends SmartContract {
   }
 
   initialCommitment = await zkdb.getMerkleRoot();
+  initZKDatabase(initialCommitment);
   console.log('Initial root:', initialCommitment.toString());
 
   let zkAppPigletBank = new PigletBank(zkappAddress);
