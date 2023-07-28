@@ -1,99 +1,107 @@
-/*
 import {
-  SmartContract,
-  Poseidon,
-  Field,
-  State,
-  state,
   Mina,
   method,
   UInt32,
   PrivateKey,
   AccountUpdate,
-  MerkleTree,
   MerkleWitness,
-  Struct,
+  Field,
+  state,
+  State,
+  SmartContract,
+  CircuitString,
 } from 'snarkyjs';
-import { IKeyValue } from '../core/common.js';
-import { Binary } from 'utilities/binary.js';
+import { Schema, ZKDatabaseStorage } from '../core/index.js';
 
-const doProofs = true;
+const doProofs = false;
 
-class MyMerkleWitness extends MerkleWitness(8) {}
+const merkleHeight = 8;
 
-class Account extends Struct({
-  name: String,
+class MyMerkleWitness extends MerkleWitness(merkleHeight) {}
+
+const AccountSchema = {
+  accountName: CircuitString,
   balance: UInt32,
-}) {
-  index(): IKeyValue {
+};
+
+class Account extends Schema(AccountSchema) {
+  static deserialize(data: Uint8Array): Account {
+    return new Account(Account.decode(data));
+  }
+
+  index(): { accountName: string } {
     return {
-      name: this.name,
+      accountName: this.accountName.toString(),
     };
   }
 
-  serialize(): Uint8Array {
-    return Binary.fieldToBinary(Account.toFields(this));
-  }
-
-  hash(): Field {
-    return Poseidon.hash(Account.toFields(this));
-  }
-
-  tranfser(from: Account, to: Account, value: number) {
+  json(): { accountName: string; balance: string } {
     return {
-      from: new Account({
-        name: from.name,
-        balance: from.balance.sub(value),
-      }),
-      to: new Account({
-        name: to.name,
-        balance: to.balance.add(value),
-      }),
+      accountName: this.accountName.toString(),
+      balance: this.balance.toString(),
     };
   }
 }
-// we need the initiate tree root in order to tell the contract about our off-chain storage
-let initialCommitment: Field = Field(0);
 
+let initialCommitment: Field;
 
-class Leaderboard extends SmartContract {
-  // a commitment is a cryptographic primitive that allows us to commit to data, with the ability to "reveal" it later
-  @state(Field) commitment = State<Field>();
+class PigletBank extends SmartContract {
+  @state(Field) root = State<Field>();
 
   @method init() {
     super.init();
-    this.commitment.set(initialCommitment);
+    this.root.set(initialCommitment);
   }
 
+  /**
+   * Todo provide acuumulation of multiple records
+   * @param oldRecord
+   * @param newRecord
+   * @param merkleWitness
+   */
   @method
-  transfer(
+  trasnfer(
     from: Account,
     fromWitness: MyMerkleWitness,
     to: Account,
     toWitness: MyMerkleWitness,
-    value: number
+    value: UInt32
   ) {
-    // we fetch the on-chain commitment
-    const commitment = this.commitment.get();
-    this.commitment.assertEquals(commitment);
+    // We fetch the on-chain merkle root commitment,
+    // Make sure it matches the one we have locally
+    let commitment = this.root.get();
+    this.root.assertEquals(commitment);
 
-    // we check that the account is within the committed Merkle Tree
+    // Make sure that from account is within the committed Merkle Tree
     fromWitness.calculateRoot(from.hash()).assertEquals(commitment);
 
-    fromWitness.calculateRoot(to.hash()).assertEquals(commitment);
+    // We calculate the new Merkle Root, based on the record changes
+    let newCommitment = fromWitness.calculateRoot(
+      new Account({
+        accountName: from.accountName,
+        balance: from.balance.sub(value),
+      }).hash()
+    );
 
-    // we update the account and grant one point!
-    const updated = from.tranfser(from, to, value);
+    // Make sure that to account is within the committed Merkle Tree
+    toWitness.calculateRoot(to.hash()).assertEquals(newCommitment);
 
-    // we calculate the new Merkle Root, based on the account changes
-    let newCommitment = fromWitness.calculateRoot(updated.from.hash());
+    // We calculate the new Merkle Root, based on the record changes
+    newCommitment = toWitness.calculateRoot(
+      new Account({
+        accountName: to.accountName,
+        balance: to.balance.add(value),
+      }).hash()
+    );
 
-    this.commitment.set(newCommitment);
+    // Update the root state
+    this.root.set(newCommitment);
   }
 }
 
 (async () => {
-  type Names = 'Bob' | 'Alice' | 'Charlie' | 'Olivia';
+  type TNames = 'Bob' | 'Alice' | 'Charlie' | 'Olivia';
+  const accountNameList: TNames[] = ['Bob', 'Alice', 'Charlie', 'Olivia'];
 
   let Local = Mina.LocalBlockchain({ proofsEnabled: doProofs });
   Mina.setActiveInstance(Local);
@@ -107,66 +115,108 @@ class Leaderboard extends SmartContract {
   let zkappAddress = zkappKey.toPublicKey();
 
   // this map serves as our off-chain in-memory storage
-  let Accounts: Map<string, Account> = new Map<Names, Account>(
-    ['Bob', 'Alice', 'Charlie', 'Olivia'].map((name: string, index: number) => {
+  let Accounts: Map<TNames, Account> = new Map<TNames, Account>(
+    accountNameList.map((name: string) => {
       return [
-        name as Names,
+        name as TNames,
         new Account({
-          publicKey: Local.testAccounts[index].publicKey,
-          points: UInt32.from(0),
+          accountName: CircuitString.fromString(name),
+          balance: UInt32.from(1000000),
         }),
       ];
     })
   );
   // we now need "wrap" the Merkle tree around our off-chain storage
   // we initialize a new Merkle Tree with height 8
-  const Tree = new MerkleTree(8);
+  const zkdb = await ZKDatabaseStorage.getInstance(8);
+  for (let i = 0; i < accountNameList.length; i++) {
+    let b = Accounts.get(accountNameList[i])!;
 
-  Tree.setLeaf(0n, Accounts.get('Bob')!.hash());
-  Tree.setLeaf(1n, Accounts.get('Alice')!.hash());
-  Tree.setLeaf(2n, Accounts.get('Charlie')!.hash());
-  Tree.setLeaf(3n, Accounts.get('Olivia')!.hash());
+    await zkdb.write(b);
+  }
 
-  // now that we got our accounts set up, we need the commitment to deploy our contract!
-  initialCommitment = Tree.getRoot();
+  initialCommitment = await zkdb.getMerkleRoot();
+  console.log('Initial root:', initialCommitment.toString());
 
-  let leaderboardZkApp = new Leaderboard(zkappAddress);
-  console.log('Deploying leaderboard..');
+  let zkAppPigletBank = new PigletBank(zkappAddress);
+  console.log('Deploying Piglet Bank..');
   if (doProofs) {
-    await Leaderboard.compile();
+    await PigletBank.compile();
   }
   let tx = await Mina.transaction(feePayer, () => {
     AccountUpdate.fundNewAccount(feePayer).send({
       to: zkappAddress,
       amount: initialBalance,
     });
-    leaderboardZkApp.deploy();
+    zkAppPigletBank.deploy();
   });
   await tx.prove();
   await tx.sign([feePayerKey, zkappKey]).send();
 
-  console.log('Initial points: ' + Accounts.get('Bob')?.points);
+  for (let i = 0; i < accountNameList.length; i++) {
+    console.log(
+      `Initial balance of ${accountNameList[i]} :`,
+      Accounts.get(accountNameList[i])?.balance.toString()
+    );
+  }
 
-  console.log('Making guess..');
-  await makeGuess('Bob', 0n, 22);
+  console.log('Do transaction..');
+  await transfer('Bob', 'Alice', 132);
+  await transfer('Alice', 'Charlie', 44);
+  await transfer('Charlie', 'Olivia', 82);
+  await transfer('Olivia', 'Bob', 50);
 
-  console.log('Final points: ' + Accounts.get('Bob')?.points);
+  for (let i = 0; i < accountNameList.length; i++) {
+    const foundResult = await zkdb.find('accountName', accountNameList[i]);
+    const account = Account.deserialize(foundResult[0].data!);
+    const { accountName, balance } = account.json();
+    console.log(`Final balance of ${accountName} :`, balance);
+  }
 
-  async function makeGuess(name: Names, index: bigint, guess: number) {
-    let account = Accounts.get(name)!;
-    let w = Tree.getWitness(index);
-    let witness = new MyMerkleWitness(w);
+  async function transfer(fromName: TNames, toName: TNames, value: number) {
+    const findFromAccount = await zkdb.find('accountName', fromName);
+    const findToAccount = await zkdb.find('accountName', toName);
+    const from = Account.deserialize(findFromAccount[0].data!);
+    const to = Account.deserialize(findToAccount[0].data!);
+
+    console.log(`Transfer from ${fromName} to ${toName} with ${value}..`);
+
+    const fromWitness = new MyMerkleWitness(
+      await zkdb.witness(findFromAccount[0].index)
+    );
+
+    await zkdb.update(
+      findFromAccount[0].index,
+      new Account({
+        accountName: from.accountName,
+        balance: from.balance.sub(value),
+      })
+    );
+
+    const toWitness = new MyMerkleWitness(
+      await zkdb.witness(findToAccount[0].index)
+    );
+
+    await zkdb.update(
+      findToAccount[0].index,
+      new Account({
+        accountName: to.accountName,
+        balance: to.balance.add(value),
+      })
+    );
 
     let tx = await Mina.transaction(feePayer, () => {
-      leaderboardZkApp.guessPreimage(Field(guess), account, witness);
+      zkAppPigletBank.trasnfer(
+        from,
+        fromWitness,
+        to,
+        toWitness,
+        UInt32.from(value)
+      );
     });
     await tx.prove();
     await tx.sign([feePayerKey, zkappKey]).send();
 
-    // if the transaction was successful, we can update our off-chain storage as well
-    account.points = account.points.add(1);
-    Tree.setLeaf(index, account.hash());
-    leaderboardZkApp.commitment.get().assertEquals(Tree.getRoot());
+    zkAppPigletBank.root.get().assertEquals(await zkdb.getMerkleRoot());
   }
 })();
-*/

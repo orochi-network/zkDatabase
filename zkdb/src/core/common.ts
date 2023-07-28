@@ -10,8 +10,8 @@ export interface IMerkleStorage {
   [level: number]: { [node: string]: string };
 }
 
-export interface IDocument {
+export type IDocument = {
   hash(): Field;
   index(): IKeyValue;
   serialize(): Uint8Array;
-}
+};

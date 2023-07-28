@@ -2,7 +2,11 @@ import { MerkleProof } from 'merkle-tree/common.js';
 import { StorageEngine, Metadata } from '../storage-engine/index.js';
 import { IDocument } from './common.js';
 import loader from './loader.js';
+import { Field } from 'snarkyjs';
 export * from './common.js';
+export * from './loader.js';
+export * from './schema.js';
+export * from './smart-contract.js';
 export * from '../utilities/binary.js';
 
 export class ZKDatabaseStorage {
@@ -18,13 +22,18 @@ export class ZKDatabaseStorage {
 
   public static async getInstance(
     merkleHeight: number = 64,
+    dataLocation: string = './data',
     local: boolean = true
   ) {
     const storageEngine = local
-      ? await loader.getLocalStorageEngine()
-      : await loader.getIPFSStorageEngine();
+      ? await loader.getLocalStorageEngine(dataLocation)
+      : await loader.getIPFSStorageEngine(dataLocation);
     const metadata = await loader.getMetadata(storageEngine, merkleHeight);
     return new ZKDatabaseStorage(storageEngine, metadata);
+  }
+
+  public async getMerkleRoot(): Promise<Field> {
+    return this.metadata.merkle.getRoot();
   }
 
   public async witness(index: number): Promise<MerkleProof[]> {

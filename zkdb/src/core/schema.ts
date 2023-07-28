@@ -2,43 +2,32 @@ import { Struct, Poseidon, Field, InferProvable } from 'snarkyjs';
 import { BSON } from 'bson';
 export { Field } from 'snarkyjs';
 
-export type SchemaExtendable<
-  D,
-  A,
-  T extends InferProvable<A> = InferProvable<A>
-> = D & {
-  new (_type: any): SchemaExtendable<D, A>;
+interface ISchema {
+  serialize(): Uint8Array;
+  hash(): Field;
+}
 
-  deserialize: (_doc: Uint8Array) => any;
-
-  extends: <M extends { [key: string]: unknown }>(
-    _proto: M
-  ) => (new (_type: any) => SchemaExtendable<D, A> & M & T) &
-    SchemaExtendable<D, A>;
+export type SchemaExtendable = <T>(_type: T) => Struct<
+  T & InferProvable<T> & ISchema
+> & {
+  decode: (_doc: Uint8Array) => T;
 };
 
-export const Schema = <A>(type: A) => {
+export const Schema: SchemaExtendable = <A>(type: A) => {
   class Document extends Struct(type) {
-    deserialize = (doc: Uint8Array): this => {
-      const entires = Object.entries(<any>type);
-      const docObj = BSON.deserialize(doc);
-      const result: any = {};
-      for (let i = 0; i < entires.length; i += 1) {
-        const [key, value] = entires[i];
-        result[key] =
-          typeof (<any>value).fromString !== 'undefined'
-            ? (<any>value).fromString(docObj[key])
-            : (<any>value).from(docObj[key]);
-      }
-      return <any>new Document(result);
-    };
-
     serialize(): Uint8Array {
+      const anyThis = <any>this;
       const keys = Object.keys(type as any);
       const result: any = {};
       for (let i = 0; i < keys.length; i += 1) {
         const key = keys[i];
-        result[key] = (this as any)[key].toString();
+        if (typeof anyThis[key].toString !== 'undefined') {
+          result[key] = anyThis[key].toString();
+        } else if (typeof anyThis[key].toBase58 !== 'undefined') {
+          result[key] = anyThis[key].toBase58();
+        } else {
+          throw new Error(`Cannot serialize ${key}`);
+        }
       }
 
       return BSON.serialize(result);
@@ -49,17 +38,26 @@ export const Schema = <A>(type: A) => {
     }
   }
 
-  (<SchemaExtendable<Document, A>>(Document as unknown)).extends = (
-    proto: any
-  ) => {
-    const entries = Object.entries(proto);
+  (Document as any).decode = (doc: Uint8Array): any => {
+    const entires = Object.entries(<any>type);
+    const docObj = BSON.deserialize(doc);
+    const result: any = {};
+    for (let i = 0; i < entires.length; i += 1) {
+      const [key, value] = entires[i];
+      const anyValue = <any>value;
 
-    for (let i = 0; i < entries.length; i += 1) {
-      const [key, value] = entries[i];
-      (<any>Document).prototype[key] = value;
+      if (typeof anyValue.fromBase58 !== 'undefined') {
+        result[key] = anyValue.fromBase58(docObj[key]);
+      } else if (typeof anyValue.from !== 'undefined') {
+        result[key] = anyValue.from(docObj[key]);
+      } else if (typeof anyValue.fromString !== 'undefined') {
+        result[key] = anyValue.fromString(docObj[key]);
+      } else {
+        throw new Error(`Cannot deserialize ${key}`);
+      }
     }
-    return <any>Document;
+    return <any>result;
   };
 
-  return <SchemaExtendable<Document, A>>(Document as unknown);
+  return Document as any;
 };
