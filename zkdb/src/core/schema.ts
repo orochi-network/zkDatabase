@@ -2,7 +2,7 @@ import { Struct, Poseidon, Field, InferProvable } from 'snarkyjs';
 import { BSON } from 'bson';
 export { Field } from 'snarkyjs';
 
-interface ISchema {
+export interface ISchema {
   serialize(): Uint8Array;
   hash(): Field;
 }

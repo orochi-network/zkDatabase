@@ -131,8 +131,7 @@ class PigletBank extends SmartContract {
   const zkdb = await ZKDatabaseStorage.getInstance(8);
   for (let i = 0; i < accountNameList.length; i++) {
     let b = Accounts.get(accountNameList[i])!;
-
-    await zkdb.write(b);
+    await zkdb.add(b);
   }
 
   initialCommitment = await zkdb.getMerkleRoot();
@@ -168,38 +167,34 @@ class PigletBank extends SmartContract {
   await transfer('Olivia', 'Bob', 50);
 
   for (let i = 0; i < accountNameList.length; i++) {
-    const foundResult = await zkdb.find('accountName', accountNameList[i]);
-    const account = Account.deserialize(foundResult[0].data!);
-    const { accountName, balance } = account.json();
-    console.log(`Final balance of ${accountName} :`, balance);
+    const findResult = await zkdb.findOne('accountName', accountNameList[i]);
+    if (!findResult.isEmpty()) {
+      const account = await findResult.load(Account);
+      const { accountName, balance } = account.json();
+      console.log(`Final balance of ${accountName} :`, balance);
+    }
   }
 
   async function transfer(fromName: TNames, toName: TNames, value: number) {
-    const findFromAccount = await zkdb.find('accountName', fromName);
-    const findToAccount = await zkdb.find('accountName', toName);
-    const from = Account.deserialize(findFromAccount[0].data!);
-    const to = Account.deserialize(findToAccount[0].data!);
+    const findFromAccount = await zkdb.findOne('accountName', fromName);
+    const from = await findFromAccount.load(Account);
+    const findToAccount = await zkdb.findOne('accountName', toName);
+    const to = await findFromAccount.load(Account);
 
     console.log(`Transfer from ${fromName} to ${toName} with ${value}..`);
 
-    const fromWitness = new MyMerkleWitness(
-      await zkdb.witness(findFromAccount[0].index)
-    );
+    const fromWitness = new MyMerkleWitness(await findFromAccount.witnesses());
 
-    await zkdb.update(
-      findFromAccount[0].index,
+    await findFromAccount.update(
       new Account({
         accountName: from.accountName,
         balance: from.balance.sub(value),
       })
     );
 
-    const toWitness = new MyMerkleWitness(
-      await zkdb.witness(findToAccount[0].index)
-    );
+    const toWitness = new MyMerkleWitness(await findToAccount.witnesses());
 
-    await zkdb.update(
-      findToAccount[0].index,
+    await findToAccount.update(
       new Account({
         accountName: to.accountName,
         balance: to.balance.add(value),
