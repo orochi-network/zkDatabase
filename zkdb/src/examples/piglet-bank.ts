@@ -176,23 +176,23 @@ class PigletBank extends SmartContract {
   }
 
   async function transfer(fromName: TNames, toName: TNames, value: number) {
-    const findFromAccount = await zkdb.findOne('accountName', fromName);
-    const from = await findFromAccount.load(Account);
-    const findToAccount = await zkdb.findOne('accountName', toName);
-    const to = await findFromAccount.load(Account);
-
     console.log(`Transfer from ${fromName} to ${toName} with ${value}..`);
 
-    const fromWitness = new MyMerkleWitness(await findFromAccount.witnesses());
+    const findFromAccount = await zkdb.findOne('accountName', fromName);
+    const from = await findFromAccount.load(Account);
 
+    const fromWitness = new MyMerkleWitness(await findFromAccount.witness());
     await findFromAccount.update(
       new Account({
         accountName: from.accountName,
         balance: from.balance.sub(value),
       })
     );
+    console.log('>>', (await zkdb.getMerkleRoot()).toString());
 
-    const toWitness = new MyMerkleWitness(await findToAccount.witnesses());
+    const findToAccount = await zkdb.findOne('accountName', toName);
+    const to = await findToAccount.load(Account);
+    const toWitness = new MyMerkleWitness(await findToAccount.witness());
 
     await findToAccount.update(
       new Account({
@@ -200,6 +200,8 @@ class PigletBank extends SmartContract {
         balance: to.balance.add(value),
       })
     );
+
+    console.log('>>', (await zkdb.getMerkleRoot()).toString());
 
     let tx = await Mina.transaction(feePayer, () => {
       zkAppPigletBank.trasnfer(

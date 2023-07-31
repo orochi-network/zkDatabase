@@ -126,10 +126,10 @@ export class SearchResultOne {
   }
 
   public async update(document: IDocument) {
-    this.zkDatabaseStorage.updateByIndex(Number(this.index), document);
+    await this.zkDatabaseStorage.updateByIndex(Number(this.index), document);
   }
 
-  public async witnesses() {
+  public async witness() {
     return this.zkDatabaseStorage.getWitnessByIndex(BigInt(this.index));
   }
 
