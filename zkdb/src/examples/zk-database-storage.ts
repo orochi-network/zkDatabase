@@ -25,56 +25,49 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance(16);
+  const zkDB = await ZKDatabaseStorage.getInstance(16, './data', false);
   await zkDB.use('test');
 
-  let accountChiro = new Account({
-    name: CircuitString.fromString('chiro'),
-    balance: UInt32.from(100),
-  });
+  const findChiro = await zkDB.findOne('name', 'chiro');
+  const findFlash = await zkDB.findOne('name', 'flash');
 
-  let accountFlash = new Account({
-    name: CircuitString.fromString('flash'),
-    balance: UInt32.from(50),
-  });
-
-  const findChiro = await zkDB.find('name', 'chiro');
-  const findFlash = await zkDB.find('name', 'flash');
-
-  if (findChiro.length === 0) {
-    await zkDB.write(accountChiro);
-  } else {
-    const updatedChiro = Account.deserialize(
-      findChiro[0].data || new Uint8Array(0)
-    );
-
-    await zkDB.update(
-      findChiro[0].index,
+  if (findChiro.isEmpty()) {
+    await zkDB.add(
       new Account({
-        name: updatedChiro.accountName,
-        balance: updatedChiro.balance.add(1),
+        name: CircuitString.fromString('chiro'),
+        balance: UInt32.from(100),
+      })
+    );
+  } else {
+    const chiro = await findChiro.load(Account);
+    await findChiro.update(
+      new Account({
+        name: chiro.accountName,
+        balance: chiro.balance.add(1),
       })
     );
   }
 
-  if (findFlash.length === 0) {
-    await zkDB.write(accountFlash);
-  } else {
-    const updatedFlash = Account.deserialize(
-      findFlash[0].data || new Uint8Array(0)
-    );
-    await zkDB.update(
-      findFlash[0].index,
+  if (findFlash.isEmpty()) {
+    await zkDB.add(
       new Account({
-        name: updatedFlash.accountName,
-        balance: updatedFlash.balance.add(1),
+        name: CircuitString.fromString('flash'),
+        balance: UInt32.from(50),
+      })
+    );
+  } else {
+    const flash = await findFlash.load(Account);
+    await findFlash.update(
+      new Account({
+        name: flash.accountName,
+        balance: flash.balance.add(1),
       })
     );
   }
 
-  const index0 = Account.deserialize((await zkDB.read(0))!);
+  const index0 = await findChiro.load(Account);
   console.log('Index 0:', index0.json());
 
-  const index1 = Account.deserialize((await zkDB.read(1))!);
+  const index1 = await findFlash.load(Account);
   console.log('Index 1:', index1.json());
 })();

@@ -11,7 +11,7 @@ import {
   CircuitString,
   SmartContract,
 } from 'snarkyjs';
-import { Schema, ZKDatabaseStorage, initZKDatabase } from '../core/index.js';
+import { Schema, ZKDatabaseStorage } from '../core/index.js';
 
 const doProofs = false;
 
@@ -114,28 +114,32 @@ class PigletBank extends SmartContract {
   let zkappKey = PrivateKey.random();
   let zkappAddress = zkappKey.toPublicKey();
 
-  // this map serves as our off-chain in-memory storage
-  let Accounts: Map<TNames, Account> = new Map<TNames, Account>(
-    accountNameList.map((name: string) => {
-      return [
-        name as TNames,
-        new Account({
-          accountName: CircuitString.fromString(name),
-          balance: UInt32.from(1000000),
-        }),
-      ];
-    })
-  );
   // we now need "wrap" the Merkle tree around our off-chain storage
   // we initialize a new Merkle Tree with height 8
   const zkdb = await ZKDatabaseStorage.getInstance(8);
   for (let i = 0; i < accountNameList.length; i++) {
-    let b = Accounts.get(accountNameList[i])!;
-    await zkdb.add(b);
+    const findRecord = zkdb.findOne('accountName', accountNameList[i]);
+    if (findRecord.isEmpty()) {
+      await zkdb.add(
+        new Account({
+          accountName: CircuitString.fromString(accountNameList[i]),
+          balance: UInt32.from(10000000),
+        })
+      );
+      console.log(
+        `Account ${accountNameList[i]} created, balance: ${10000000}`
+      );
+    } else {
+      const account = await findRecord.load(Account);
+      console.log(
+        `Load account ${
+          accountNameList[i]
+        }, balance: ${account.balance.toString()}`
+      );
+    }
   }
 
   initialCommitment = await zkdb.getMerkleRoot();
-  initZKDatabase(initialCommitment);
   console.log('Initial root:', initialCommitment.toString());
 
   let zkAppPigletBank = new PigletBank(zkappAddress);
@@ -152,13 +156,6 @@ class PigletBank extends SmartContract {
   });
   await tx.prove();
   await tx.sign([feePayerKey, zkappKey]).send();
-
-  for (let i = 0; i < accountNameList.length; i++) {
-    console.log(
-      `Initial balance of ${accountNameList[i]} :`,
-      Accounts.get(accountNameList[i])?.balance.toString()
-    );
-  }
 
   console.log('Do transaction..');
   await transfer('Bob', 'Alice', 132);
@@ -188,20 +185,17 @@ class PigletBank extends SmartContract {
         balance: from.balance.sub(value),
       })
     );
-    console.log('>>', (await zkdb.getMerkleRoot()).toString());
 
     const findToAccount = await zkdb.findOne('accountName', toName);
     const to = await findToAccount.load(Account);
-    const toWitness = new MyMerkleWitness(await findToAccount.witness());
 
+    const toWitness = new MyMerkleWitness(await findToAccount.witness());
     await findToAccount.update(
       new Account({
         accountName: to.accountName,
         balance: to.balance.add(value),
       })
     );
-
-    console.log('>>', (await zkdb.getMerkleRoot()).toString());
 
     let tx = await Mina.transaction(feePayer, () => {
       zkAppPigletBank.trasnfer(
