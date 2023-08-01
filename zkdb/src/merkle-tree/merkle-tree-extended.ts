@@ -11,9 +11,7 @@ import { MerkleWitness, Field, Poseidon, Provable } from 'snarkyjs';
  */
 
 export function createExtendedMerkleWitness(height: number): any {
-  const BaseWitness = MerkleWitness(height);
-
-  class ExtendedMerkleWitness extends BaseWitness {
+  class ExtendedMerkleWitness extends MerkleWitness(height) {
     calculatePath(leaf: Field): Field[] {
       const path: Field[] = leaf.toFields();
 

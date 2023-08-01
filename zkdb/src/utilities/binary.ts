@@ -1,6 +1,6 @@
-import { base32 } from 'multiformats/bases/base32';
-import { Poseidon, Encoding } from 'snarkyjs';
 import { BSON } from 'bson';
+import { base32 } from 'multiformats/bases/base32';
+import { Poseidon, Encoding, Field } from 'snarkyjs';
 
 /**
  * Convert hex string to Uint8Array
@@ -52,13 +52,34 @@ function fromBase32(input: string): Uint8Array {
 }
 
 /**
- * Perform Poseidon hash on BSON document
- * @param document BSON document
- * @returns Digest of data in Uint8Array
+ * Convert field to binary
+ * @param field Field
+ * @returns Uint8Array binary data
  */
-function poseidonHashBSON(document: any): Uint8Array {
-  const serializedDoc = BSON.serialize(document);
-  return poseidonHashBinary(serializedDoc);
+function fieldToBinary(field: Field): Uint8Array {
+  return Encoding.Bijective.Fp.toBytes([field]);
+}
+
+/**
+ * Convert binary to field
+ * @param binary Uint8Array binary data
+ * @returns Array of field
+ */
+function binaryToField(binary: Uint8Array): Field {
+  const result = Encoding.Bijective.Fp.fromBytes(binary);
+  if (result.length === 1) {
+    return result[0];
+  }
+  console.log(result);
+  throw new Error('Invalid binary data');
+}
+
+function ecnodeFields(fields: Field[]) {
+  return BSON.serialize({ root: fields.map((e) => e.toString()) });
+}
+
+function decodeFields(data: Uint8Array): Field[] {
+  return BSON.deserialize(data).root.map((e: string) => Field(e));
 }
 
 /**
@@ -89,7 +110,10 @@ export const Binary = {
   toBase32,
   fromBase32,
   poseidonHashBinary,
-  poseidonHashBSON,
   concatUint8Array,
   convertHexToUint8Array,
+  ecnodeFields,
+  decodeFields,
+  fieldToBinary,
+  binaryToField,
 };

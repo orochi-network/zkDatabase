@@ -256,3 +256,9 @@ It is possible to send up to **16 fields** in events in a single transaction, an
 2. When `events` are to be requested from the blockchain? Should we use a cron job or subscribe on node changes (if supported).
 
 ---
+
+### Research topics
+
+1. Composable https://github.com/o1-labs/snarkyjs/issues/303
+2. Witness accumulate https://github.com/o1-labs/snarkyjs/issues/659
+3. Proving the lookup process on a B-tree + Merkle witness

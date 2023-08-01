@@ -1,5 +1,5 @@
-import fs from 'fs';
 import crypto from 'crypto';
+import { BSON } from 'bson';
 
 type TMainIndex = any[][];
 
@@ -34,11 +34,11 @@ function digestToRecord(digestOfRecord: string) {
   return { collection, key, digest };
 }
 
-class IndexResult {
-  private ref: SimpleIndexing;
+export class IndexResult {
+  private ref: SimpleIndexer;
   private records: IIndexing[];
 
-  constructor(ref: SimpleIndexing, records: IIndexing[] = []) {
+  constructor(ref: SimpleIndexer, records: IIndexing[] = []) {
     this.records = records;
     this.ref = ref;
   }
@@ -71,17 +71,17 @@ class IndexResult {
  * @todo Implement B-Tree or RB-Tree to index the data
  * instead of this stupid approach
  */
-export class SimpleIndexing {
+export class SimpleIndexer {
   // Indexer is a mapping from record to index
   private indexer: TMainIndex = [];
 
   private collection: string = 'default';
 
-  constructor(indexer: TMainIndex = []) {
+  constructor(indexer: TMainIndex) {
     this.indexer = indexer;
   }
 
-  public use(collection: string): SimpleIndexing {
+  public use(collection: string): SimpleIndexer {
     this.collection = collection;
     return this;
   }
@@ -133,8 +133,9 @@ export class SimpleIndexing {
     }
     const result: IIndexing[] = new Array(entries.length);
     const firstRecord = this.addOne(entries[0][0], entries[0][1]);
+    result[0] = { ...firstRecord.get()[0] };
     const index = firstRecord.get()[0].index;
-    for (let i = 1; i < entries.length; i++) {
+    for (let i = 1; i < entries.length; i += 1) {
       const [key, value] = entries[i];
       const digest = digestStrings(
         typeof value === 'string' ? value : value.toString()
@@ -218,25 +219,12 @@ export class SimpleIndexing {
   }
 
   // To JSON
-  public toJSON() {
-    return JSON.stringify(this.indexer);
+  public toBSON() {
+    return BSON.serialize({ root: this.indexer });
   }
 
-  // To File
-  public toFile(filename: string) {
-    fs.writeFileSync(filename, this.toJSON());
-  }
-
-  // From JSON
-  static fromJSON(json: string) {
-    return new SimpleIndexing(JSON.parse(json));
-  }
-
-  // From File
-  static fromFile(filename: string) {
-    if (fs.existsSync(filename) === false) {
-      throw new Error(`File ${filename} does not exist`);
-    }
-    return SimpleIndexing.fromJSON(fs.readFileSync(filename, 'utf8'));
+  // From BSON
+  public static fromBSON(bson: Uint8Array) {
+    return new SimpleIndexer(<any[][]>BSON.deserialize(bson).root);
   }
 }

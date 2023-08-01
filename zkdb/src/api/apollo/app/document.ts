@@ -1,45 +1,35 @@
 import { BSON } from 'bson';
 import GraphQLJSON from 'graphql-type-json';
-import { Binary } from '../../../utilities/index.js';
-import getStorageEngine from '../../helper/ipfs-storage-engine.js';
+import loader from '../../helper/loader.js';
 import Joi from 'joi';
-import resolverWrapper, {
-  validateCID,
-  validateCollection,
-  validateDigest,
-} from '../validation.js';
+import resolverWrapper from '../validation.js';
 import { AppContext } from '../../helper/common.js';
 import jwt from '../../helper/jwt.js';
 
 export interface IResponseIPFSEntry {
   cid: string;
-  digest: string;
   collection: string;
-  filename: string;
-  basefile: string;
-}
-
-export interface IDocumentByCIDRequest {
-  cid: string;
+  path: string;
 }
 
 export interface IDocumentRequest {
-  digest: string;
-  collection?: string;
+  collection: string;
+  path: string;
 }
 
-export const requestDocumentByCID = Joi.object<IDocumentByCIDRequest>({
-  cid: validateCID.required(),
-});
+export interface IDocumentMutation {
+  collection: string;
+  document: any;
+}
 
 export const requestDocument = Joi.object<IDocumentRequest>({
-  digest: validateDigest.required(),
-  collection: validateCollection.optional(),
+  collection: Joi.string().length(256).required(),
+  path: Joi.string().length(512).required(),
 });
 
 export const mutationDocument = Joi.object({
-  doc: Joi.object().required(),
-  collection: validateCollection.optional(),
+  collection: Joi.string().length(256).required(),
+  document: Joi.object().required(),
 });
 
 // The GraphQL schema
@@ -50,19 +40,16 @@ export const typeDefsDocument = `#graphql
 
   type IPFSEntry {    
     cid: String
-    digest: String
+    path: String
     collection: String
-    filename: String
-    basefile: String
   }
 
   extend type Query {
-    readDocumentByCID(cid: String!): JSON
-    readDocument(digest: String!, collection: String): JSON
+    readDocument(collection: !String, path: !String): JSON
   }
 
   extend type Mutation {
-    writeDocument(doc: JSON!, collection: String): IPFSEntry
+    writeDocument(collection: !String, doc: JSON!): IPFSEntry
   }
 `;
 
@@ -70,24 +57,17 @@ export const typeDefsDocument = `#graphql
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
-    readDocumentByCID: resolverWrapper(
-      requestDocumentByCID,
-      async (_: any, params: any): Promise<any> => {
-        const ipfs = await getStorageEngine();
-        return BSON.deserialize(await ipfs.readBytes(params.cid));
-      }
-    ),
     readDocument: resolverWrapper(
       requestDocument,
-      async (_: any, params: any): Promise<any> => {
-        const ipfs = await getStorageEngine();
+      async (_: any, params: IDocumentRequest): Promise<any> => {
+        const ipfs = await loader.getStorageEngine();
         const docCollection =
           typeof params.collection === 'undefined'
             ? 'default'
             : params.collection;
         // Switch to collection
         ipfs.use(docCollection);
-        return BSON.deserialize(await ipfs.read(params.digest));
+        return BSON.deserialize(await ipfs.readFile(params.path));
       }
     ),
   },
@@ -96,20 +76,18 @@ export const resolversDocument = {
       mutationDocument,
       async (
         _: any,
-        params: any,
+        params: IDocumentMutation,
         context: AppContext
       ): Promise<IResponseIPFSEntry> => {
         await jwt.verifyZKDatabaseHeader(context.token || '');
-        const ipfs = await getStorageEngine();
-        const docCollection =
-          typeof params.collection === 'undefined'
-            ? 'default'
-            : params.collection;
+        //const ipfs = await loader.getStorageEngine();
+        throw new Error('Not implemented');
+        /*
         // Switch to collection
-        ipfs.use(docCollection);
+        ipfs.use(params.collection);
         // Write BSON to IPFS
         const { cid, collection, digest, filename, basefile } =
-          await ipfs.writeBSON(params.doc);
+          await ipfs.writeFile(filename, params.document);
 
         return {
           cid: cid.toString(),
@@ -118,6 +96,7 @@ export const resolversDocument = {
           filename,
           basefile,
         };
+        */
       }
     ),
   },
