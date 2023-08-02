@@ -25,16 +25,18 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance(16, './data', false);
+  const zkDB = await ZKDatabaseStorage.getInstance(16);
   await zkDB.use('test');
 
-  const findChiro = await zkDB.findOne('name', 'chiro');
-  const findFlash = await zkDB.findOne('name', 'flash');
+  console.log('Loaded Merkle root:',(await zkDB.getMerkleRoot()).toString());
+
+  const findChiro = await zkDB.findOne('accountName', 'chiro');
+  const findFlash = await zkDB.findOne('accountName', 'flash');
 
   if (findChiro.isEmpty()) {
     await zkDB.add(
       new Account({
-        name: CircuitString.fromString('chiro'),
+        accountName: CircuitString.fromString('chiro'),
         balance: UInt32.from(100),
       })
     );
@@ -42,7 +44,7 @@ class Account extends Schema({
     const chiro = await findChiro.load(Account);
     await findChiro.update(
       new Account({
-        name: chiro.accountName,
+        accountName: chiro.accountName,
         balance: chiro.balance.add(1),
       })
     );
@@ -51,7 +53,7 @@ class Account extends Schema({
   if (findFlash.isEmpty()) {
     await zkDB.add(
       new Account({
-        name: CircuitString.fromString('flash'),
+        accountName: CircuitString.fromString('flash'),
         balance: UInt32.from(50),
       })
     );
@@ -59,15 +61,15 @@ class Account extends Schema({
     const flash = await findFlash.load(Account);
     await findFlash.update(
       new Account({
-        name: flash.accountName,
+        accountName: flash.accountName,
         balance: flash.balance.add(1),
       })
     );
   }
 
   const index0 = await findChiro.load(Account);
-  console.log('Index 0:', index0.json());
-
   const index1 = await findFlash.load(Account);
-  console.log('Index 1:', index1.json());
+  console.table( [index0.json(), index1.json()]);
+
+  console.log('New Merkle root:',(await zkDB.getMerkleRoot()).toString());
 })();
