@@ -18,7 +18,6 @@ import { PeerId } from '@libp2p/interface-peer-id';
 import { IPNSEntry } from 'ipns';
 import fs from 'fs';
 import { Binary } from '../utilities/binary.js';
-import { multiaddr } from '@multiformats/multiaddr';
 import { StorageEngineBase } from './base.js';
 import { identifyService } from 'libp2p/identify';
 
@@ -106,7 +105,7 @@ export const newLibP2p = async (
     },
     start: true,
     addresses: {
-      listen: ['/ip4/0.0.0.0/tcp/0'],
+      listen: ['/ip4/127.0.0.1/tcp/0'],
     },
     peerRouters: [delegatedPeerRouting(client)],
     connectionEncryption: [noise()],
@@ -132,16 +131,6 @@ export const newLibP2p = async (
 
   // Start libp2p node
   const nodeP2p = await createLibp2p(config);
-  const addresses = [
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-    '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt',
-  ].map((e) => multiaddr(e));
-  // Dial to bootstrap nodes
-  for (let i = 0; i < addresses.length; i += 1) {
-    await nodeP2p.dial(addresses[i]);
-  }
 
   await nodeP2p.start();
   return nodeP2p;
