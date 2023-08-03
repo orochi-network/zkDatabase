@@ -20,6 +20,7 @@ import fs from 'fs';
 import { Binary } from '../utilities/binary.js';
 import { multiaddr } from '@multiformats/multiaddr';
 import { StorageEngineBase } from './base.js';
+import { identifyService } from 'libp2p/identify';
 
 export interface IIPFSDirRecord {
   name: string;
@@ -101,10 +102,11 @@ export const newLibP2p = async (
   const config: Libp2pOptions = {
     services: {
       dht: kadDHT({ allowQueryWithZeroPeers: true }),
+      identify: identifyService(),
     },
     start: true,
     addresses: {
-      listen: ['/ip4/127.0.0.1/tcp/0'],
+      listen: ['/ip4/0.0.0.0/tcp/0'],
     },
     peerRouters: [delegatedPeerRouting(client)],
     connectionEncryption: [noise()],
@@ -254,6 +256,12 @@ export class StorageEngineIPFS extends StorageEngineBase<
         clearInterval(interval);
       }
     }, 1000);
+    console.log(
+      'Your node has been successfully initialized and is listening at the following addresses:'
+    );
+    nodeLibp2p
+      .getMultiaddrs()
+      .forEach((address) => console.log(address.toString()));
   }
 
   // Try to resolve IPNS entry to CID
