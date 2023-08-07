@@ -1,3 +1,18 @@
+## Introduction
+
+Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase use a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to ensuring the correctness of data in verifiable manner. With zkDatabase, it's allow developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
+
+**It's time for provable data.**
+
+## Installation
+
+```bash
+npm install zkdb
+```
+
+## Usage
+
+```typescript
 import {
   Mina,
   method,
@@ -11,7 +26,7 @@ import {
   CircuitString,
   SmartContract,
 } from 'snarkyjs';
-import { Schema, ZKDatabaseStorage } from '../core/index.js';
+import { Schema, ZKDatabaseStorage } from 'zkdb';
 
 // Enable this to generate proofs
 const doProofs = false;
@@ -236,3 +251,16 @@ class PigletBank extends SmartContract {
     zkAppPigletBank.root.get().assertEquals(await zkdb.getMerkleRoot());
   }
 })();
+```
+
+### Next version
+
+- [ ] Add more test cases
+- [ ] Support IPFS via Kubo RPC
+- [ ] Improve ther performance of indexing engine
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
+
+_built with <3_

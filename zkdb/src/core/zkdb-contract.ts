@@ -7,7 +7,6 @@ let initialCommitment: Field;
 export class ZKDatabaseContract extends SmartContract {
   // a commitment is a cryptographic primitive that allows us to commit to data,
   // with the ability to "reveal" it later
-  // @ts-ignore
   @state(Field) root = State<any>();
 
   @method init() {
