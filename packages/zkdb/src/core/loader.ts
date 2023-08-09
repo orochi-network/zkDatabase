@@ -7,7 +7,7 @@ import { Metadata } from '../storage-engine/metadata.js';
 
 const singleton: { [key: string]: any } = {};
 
-async function loadInstance<T>(
+export async function loadInstance<T>(
   instance: string,
   async: () => Promise<T>
 ): Promise<T> {
@@ -35,7 +35,7 @@ export const getMetadata = async (
     /**
      * @todo Should load default height from configuration
      */
-    return Metadata.load(storageEngine, merkleHeight);
+    return Metadata.getInstance(storageEngine, merkleHeight);
   });
 
 export default {

@@ -126,7 +126,8 @@ export const newLibP2p = async (
       { createIfMissing: true }
     );
   } else {
-    config.datastore = new MemoryDatastore();
+    // @todo: fix this
+    config.datastore = new MemoryDatastore() as any;
   }
 
   // Start libp2p node

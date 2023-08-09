@@ -40,7 +40,7 @@ export class Metadata {
    * @param defaultHeight
    * @returns
    */
-  public static async load(
+  public static async getInstance(
     storageEngine: StorageEngine,
     defaultHeight: number = 64
   ) {
