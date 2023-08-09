@@ -1,5 +1,5 @@
 import { SimpleIndexer } from '../index/simple.js';
-import MerkleTreeStorage from '../merkle-tree/merkle-tree-storage.js';
+import { MerkleTreeStorage } from '../merkle-tree/merkle-tree-storage.js';
 import { StorageEngineLocal } from './local.js';
 import { StorageEngineIPFS } from './ipfs.js';
 

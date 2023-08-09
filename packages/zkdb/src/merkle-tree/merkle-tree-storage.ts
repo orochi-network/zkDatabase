@@ -7,7 +7,7 @@ export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
 export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
 
-export default class MerkleTreeStorage extends BaseMerkleTree {
+export class MerkleTreeStorage extends BaseMerkleTree {
   private storageEngine: StorageEngine;
 
   /**

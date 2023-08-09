@@ -1,6 +1,6 @@
 {
   "name": "zkdb",
-  "version": "0.1.2",
+  "version": "0.1.4",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -20,8 +20,7 @@
   },
   "homepage": "https://github.com/orochi-network/zkDatabase#readme",
   "type": "module",
-  "main": "build/src/index.js",
-  "types": "build/src/index.d.ts",
+  "types": "./build/src/core/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
@@ -34,6 +33,22 @@
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"
   },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "*",
+        "build/src/*"
+      ]
+    }
+  },
+  "files": [
+    "build/src",
+    "!**/*.tsbuildinfo",
+    "!**/*.test.js",
+    "!**/*.test.js.map",
+    "!**/*.test.d.ts",
+    "!**/*.test.d.ts.map"
+  ],
   "exports": {
     ".": {
       "types": "./build/src/core/index.d.ts",

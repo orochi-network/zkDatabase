@@ -4,11 +4,6 @@ src
 # Editor
 .vscode
 
-# Build
-build/**/*.test.d.ts
-build/**/*.test.d.ts.map
-build/**/*.test.js
-build/**/*.test.js.map
 
 # System
 .DS_Store
