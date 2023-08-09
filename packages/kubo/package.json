@@ -1,7 +1,7 @@
 {
   "name": "@zkdb/kubo",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "zkDatabase Kubo RPC client",
   "type": "module",
   "types": "./build/src/index.d.ts",
@@ -15,6 +15,8 @@
     "url": "git+https://github.com/orochi-network/zkDatabase.git"
   },
   "keywords": [
+    "zkdb",
+    "zkdatabase",
     "kubo",
     "rpc",
     "ipfs",
