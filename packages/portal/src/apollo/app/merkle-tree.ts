@@ -3,7 +3,7 @@ import { Field } from 'snarkyjs';
 import { BigIntResolver } from 'graphql-scalars';
 import resolverWrapper, { validateDigest } from '../validation.js';
 import loader from '../../helper/loader.js';
-import MerkleTreeStorage from '../../../merkle-tree/merkle-tree-storage.js';
+import MerkleTreeStorage from '../../../../zkdb/src/merkle-tree/merkle-tree-storage.js';
 
 // Define types for clarity and reusability
 export interface IMerkleProof {

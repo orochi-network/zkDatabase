@@ -1,6 +1,6 @@
 import config from './config.js';
-import { StorageEngineIPFS } from '../../storage-engine/ipfs.js';
-import { Metadata } from '../../storage-engine/metadata.js';
+import { StorageEngineIPFS } from '../../../zkdb/src/storage-engine/ipfs.js';
+import { Metadata } from '../../../zkdb/src/storage-engine/metadata.js';
 import logger from './logger.js';
 
 const singleton: { [key: string]: any } = {};
