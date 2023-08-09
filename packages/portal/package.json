@@ -1,0 +1,95 @@
+{
+  "name": "zkdb",
+  "version": "0.1.1",
+  "description": "zkDatabase for the future of Web3",
+  "author": "chiro@orochi.network",
+  "license": "Apache-2.0",
+  "keywords": [
+    "zk",
+    "database",
+    "zk-database",
+    "zkdb",
+    "zkdatabase"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orochi-network/zkDatabase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orochi-network/zkDatabase/issues"
+  },
+  "homepage": "https://github.com/orochi-network/zkDatabase#readme",
+  "type": "module",
+  "main": "build/src/index.js",
+  "types": "build/src/index.d.ts",
+  "scripts": {
+    "release": "rm -rf ./build && npm run build && npm publish --access public",
+    "build": "tsc -p tsconfig.json",
+    "buildw": "tsc -p tsconfig.json --watch",
+    "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
+    "format": "prettier --write --ignore-unknown **/*",
+    "prepare": "cd .. && husky install zkdb/.husky",
+    "test": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js",
+    "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
+    "lint": "npx eslint ./src/**/*.ts --fix",
+    "lint-check": "npx eslint ./src/**/*.ts --debug"
+  },
+  "lint-staged": {
+    "**/*": [
+      "eslint src/* --fix",
+      "prettier --write --ignore-unknown"
+    ]
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.22.7",
+    "@babel/preset-typescript": "^7.22.5",
+    "@types/cors": "^2.8.13",
+    "@types/jest": "^27.5.2",
+    "@types/safer-buffer": "^2.1.0",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "eslint": "^8.44.0",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-snarkyjs": "^0.1.0",
+    "husky": "^7.0.4",
+    "jest": "^27.5.1",
+    "lint-staged": "^11.2.6",
+    "prettier": "^2.8.8",
+    "ts-jest": "^27.1.5",
+    "typedoc": "^0.24.7",
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.7.1",
+    "@chainsafe/libp2p-noise": "^12.0.1",
+    "@chainsafe/libp2p-yamux": "^4.0.1",
+    "@helia/interface": "^1.0.0",
+    "@helia/ipns": "^1.1.1",
+    "@helia/unixfs": "^1.2.2",
+    "@libp2p/delegated-peer-routing": "^4.0.9",
+    "@libp2p/kad-dht": "^9.3.8",
+    "@libp2p/peer-id": "^2.0.4",
+    "@libp2p/tcp": "^7.0.1",
+    "@libp2p/websockets": "^6.0.1",
+    "@multiformats/multiaddr": "^12.1.2",
+    "@orochi-network/framework": "^1.1.3",
+    "blockstore-fs": "^1.1.1",
+    "body-parser": "^1.20.2",
+    "bson": "^5.3.0",
+    "cors": "^2.8.5",
+    "datastore-fs": "^9.1.1",
+    "express": "^4.18.2",
+    "graphql": "^16.6.0",
+    "graphql-scalars": "^1.22.2",
+    "graphql-type-json": "^0.3.2",
+    "helia": "^1.0.4",
+    "joi": "^17.9.2",
+    "jose": "^4.14.4",
+    "kubo-rpc-client": "^3.0.1",
+    "libp2p": "^0.45.9",
+    "multiformats": "^11.0.2",
+    "safer-buffer": "^2.1.2",
+    "snarkyjs": "^0.11.4"
+  }
+}
