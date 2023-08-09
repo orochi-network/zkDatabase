@@ -1,6 +1,6 @@
 import { UInt32, CircuitString } from 'snarkyjs';
-import { ZKDatabaseStorage } from '../core/index.js';
-import { Schema } from '../core/schema.js';
+import { ZKDatabaseStorage } from 'zkdb';
+import { Schema } from '../../packages/zkdb/src/core/schema.js';
 
 class Account extends Schema({
   accountName: CircuitString,
@@ -28,7 +28,7 @@ class Account extends Schema({
   const zkDB = await ZKDatabaseStorage.getInstance(16);
   await zkDB.use('test');
 
-  console.log('Loaded Merkle root:',(await zkDB.getMerkleRoot()).toString());
+  console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());
 
   const findChiro = await zkDB.findOne('accountName', 'chiro');
   const findFlash = await zkDB.findOne('accountName', 'flash');
@@ -69,7 +69,7 @@ class Account extends Schema({
 
   const index0 = await findChiro.load(Account);
   const index1 = await findFlash.load(Account);
-  console.table( [index0.json(), index1.json()]);
+  console.table([index0.json(), index1.json()]);
 
-  console.log('New Merkle root:',(await zkDB.getMerkleRoot()).toString());
+  console.log('New Merkle root:', (await zkDB.getMerkleRoot()).toString());
 })();
