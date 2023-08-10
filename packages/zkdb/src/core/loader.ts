@@ -1,4 +1,3 @@
-import { StorageEngineDelegatedIPFS } from '../storage-engine/delegated-ipfs.js';
 import { StorageEngineLocal, StorageEngine } from '../storage-engine/index.js';
 import { Metadata } from '../storage-engine/metadata.js';
 
@@ -19,16 +18,6 @@ export const getLocalStorageEngine = async (dataLocation: string) =>
     return StorageEngineLocal.getInstance(`${dataLocation}/local`);
   });
 
-export const getDelegatedIPFSStorageEngine = async (dataLocation: string) =>
-  loadInstance<StorageEngineDelegatedIPFS>(
-    'storage-engine-delegated-ipfs',
-    async () => {
-      return StorageEngineDelegatedIPFS.getInstance(
-        `${dataLocation.replace(/^\./, '')}`
-      );
-    }
-  );
-
 export const getMetadata = async (
   storageEngine: StorageEngine,
   merkleHeight: number
@@ -41,7 +30,6 @@ export const getMetadata = async (
   });
 
 export default {
-  getDelegatedIPFSStorageEngine,
   getLocalStorageEngine,
   getMetadata,
 };
