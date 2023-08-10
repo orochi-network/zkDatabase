@@ -2,12 +2,12 @@ import { Poseidon, Field, MerkleTree, Circuit, Bool } from 'snarkyjs';
 import { TMerkleNodesMap, BaseMerkleTree } from './merkle-tree-base.js';
 import crypto from 'crypto';
 import { MerkleTreeStorage } from './merkle-tree-storage.js';
-import { StorageEngineIPFS } from '../storage-engine/ipfs.js';
+import { StorageEngineLocal } from '../storage-engine/local.js';
 
 const DEFAULT_HEIGHT = 20;
 
 (async function run() {
-  const storage = await StorageEngineIPFS.getInstance('base');
+  const storage = await StorageEngineLocal.getInstance('base');
   const merkleTreeJSON = new MerkleTreeStorage(storage, DEFAULT_HEIGHT);
   const expectedMerkleTree = new MerkleTree(DEFAULT_HEIGHT);
 

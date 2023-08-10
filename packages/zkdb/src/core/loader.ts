@@ -1,8 +1,4 @@
-import {
-  StorageEngineLocal,
-  StorageEngineIPFS,
-  StorageEngine,
-} from '../storage-engine/index.js';
+import { StorageEngineLocal, StorageEngine } from '../storage-engine/index.js';
 import { Metadata } from '../storage-engine/metadata.js';
 
 const singleton: { [key: string]: any } = {};
@@ -16,11 +12,6 @@ export async function loadInstance<T>(
   }
   return singleton[instance];
 }
-
-export const getIPFSStorageEngine = async (dataLocation: string) =>
-  loadInstance<StorageEngineIPFS>('storage-engine-ipfs', async () => {
-    return StorageEngineIPFS.getInstance(dataLocation);
-  });
 
 export const getLocalStorageEngine = async (dataLocation: string) =>
   loadInstance<StorageEngineLocal>('storage-engine-local', async () => {
@@ -39,7 +30,6 @@ export const getMetadata = async (
   });
 
 export default {
-  getIPFSStorageEngine,
   getLocalStorageEngine,
   getMetadata,
 };

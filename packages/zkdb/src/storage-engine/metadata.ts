@@ -1,9 +1,8 @@
 import { SimpleIndexer } from '../index/simple.js';
 import { MerkleTreeStorage } from '../merkle-tree/merkle-tree-storage.js';
 import { StorageEngineLocal } from './local.js';
-import { StorageEngineIPFS } from './ipfs.js';
 
-export type StorageEngine = StorageEngineLocal | StorageEngineIPFS;
+export type StorageEngine = StorageEngineLocal;
 
 export const FILENAME_INDEX = 'index.bson';
 export const FILENAME_MERKLE = 'merkle.bson';
