@@ -315,7 +315,7 @@ export class ZKDatabaseStorage {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
-      `${index.toString()}`,
+      `${this.collection}/${index.toString()}`,
       document.serialize()
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);

@@ -26,10 +26,7 @@ export class Metadata {
    * Save metadata to IPFS
    */
   public async save() {
-    await this.storageEngine.writeMetadataFile(
-      FILENAME_INDEX,
-      this.indexer.toBSON()
-    );
+    await this.storageEngine.writeFile(FILENAME_INDEX, this.indexer.toBSON());
     await this.merkle.save();
   }
 

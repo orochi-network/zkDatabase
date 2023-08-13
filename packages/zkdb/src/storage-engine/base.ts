@@ -66,26 +66,13 @@ export abstract class StorageEngineBase<T, K, M> {
   public abstract ls(_path: string): Promise<M[]>;
 
   /**
-   * Write the metadata file at the root folder
-   * @param filename
-   * @param content
-   * @returns
-   */
-  public abstract writeMetadataFile(
-    _filename: string,
-    _content: Uint8Array
-  ): Promise<T>;
-  /**
    * @todo Update CID record of collection in metadata file
    * every time we write something
-   * @param filename
+   * @param path
    * @param content
    * @returns
    */
-  public abstract writeFile(
-    _filename: string,
-    _content: Uint8Array
-  ): Promise<T>;
+  public abstract writeFile(_path: string, _content: Uint8Array): Promise<T>;
 
   /**
    * Remove file from ipfs
