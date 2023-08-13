@@ -16,9 +16,9 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * Create new instance of storage engine
    * @param nodeLibp2p libp2p node
    */
-  constructor(pathBase: string) {
+  constructor(pathBase: string, kuboClient: KuboClient) {
     super(pathBase);
-    this.kuboClient = new KuboClient();
+    this.kuboClient = kuboClient;
   }
 
   /**
@@ -94,6 +94,13 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    */
   public async writeFile(path: string, content: Uint8Array): Promise<string> {
     const filePath = `${this.pathBase}/${path}`;
+    if (await this.kuboClient.exist(filePath)) {
+      await this.kuboClient.filesRm({
+        arg: filePath,
+        recursive: true,
+        force: true,
+      });
+    }
     await this.kuboClient.filesWrite(filePath, content);
     return filePath;
   }
@@ -119,7 +126,9 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns
    */
   public async readFile(path: string): Promise<Uint8Array> {
-    return this.kuboClient.filesRead({ arg: `${this.pathBase}/${path}` });
+    return new Uint8Array(
+      await this.kuboClient.filesRead({ arg: `${this.pathBase}/${path}` })
+    );
   }
 
   /**
@@ -131,8 +140,8 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
   public static async getInstance(
     basePath: string
   ): Promise<StorageEngineDelegatedIPFS> {
-    StorageEngineBase.initPath(basePath);
-
-    return new StorageEngineDelegatedIPFS(basePath);
+    const kuboClient = new KuboClient();
+    await kuboClient.filesMkdir({ arg: basePath, parents: true });
+    return new StorageEngineDelegatedIPFS(basePath, kuboClient);
   }
 }

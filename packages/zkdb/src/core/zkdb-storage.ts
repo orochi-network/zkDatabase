@@ -254,9 +254,11 @@ export class ZKDatabaseStorage {
   public static async getInstance(
     merkleHeight: number = 64,
     dataLocation: string = './data',
-    _local: boolean = true
+    local: boolean = true
   ) {
-    const storageEngine = await loader.getLocalStorageEngine(dataLocation);
+    const storageEngine = local
+      ? await loader.getLocalStorageEngine(dataLocation)
+      : await loader.getDelegatedIPFSStorageEngine(dataLocation);
     const metadata = await loader.getMetadata(storageEngine, merkleHeight);
     return new ZKDatabaseStorage(storageEngine, metadata);
   }

@@ -24,7 +24,7 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance(16);
+  const zkDB = await ZKDatabaseStorage.getInstance(16, './data', false);
   await zkDB.use('test');
 
   console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());
