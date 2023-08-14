@@ -23,14 +23,13 @@ module.exports = {
     },
   },
   rules: {
-    'no-constant-condition': 'off',
-    'no-unused-vars': [
-      'error',
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': [
+      2,
       {
-        vars: 'all',
-        args: 'after-used',
-        ignoreRestSiblings: false,
+        args: 'all',
         argsIgnorePattern: '^_',
+        ignoreRestSiblings: true,
       },
     ],
   },

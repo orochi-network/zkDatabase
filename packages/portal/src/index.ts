@@ -4,14 +4,16 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import logger from './helper/logger.js';
+import logger from './helper/logger';
 import { TypedefsApp, ResolversApp } from './apollo';
 import { AppContext } from './helper/common';
 import config from './helper/config';
 import { Connector } from '@orochi-network/framework';
+import RedisInstance from './helper/redis';
 
 (async () => {
   Connector.connectByUrl(config.mariadbConnectUrl);
+  await RedisInstance.connect();
   const app = express();
   const httpServer = http.createServer(app);
   const server = new ApolloServer<AppContext>({

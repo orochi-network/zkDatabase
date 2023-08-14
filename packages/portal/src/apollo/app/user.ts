@@ -1,15 +1,30 @@
-import resolverWrapper from 'apollo/validation.js';
-import config from 'helper/config.js';
-import GoogleOAuth2Instance from 'helper/google-client.js';
-import logger from 'helper/logger.js';
 import Joi from 'joi';
+import GoogleOAuth2Instance from '../../helper/google-client';
+import resolverWrapper from '../validation';
+import config from '../../helper/config';
+import { ModelUser } from '../../model/user';
+import { EAccountType, ModelLoginMethod } from '../../model/login_method';
+import { ModelProfile } from '../../model/profile';
+import UserService from '../../service/user';
+import logger from '../../helper/logger';
+import { AppContext } from '../../helper/common';
+import { revokeAllUserToken, revokeToken } from '../../service/redis';
+import JWTAuthenInstance from '../../helper/jwt';
 
 export interface IGoogleLogin {
   token: string;
 }
 
+export interface ILogout {
+  isSync: boolean;
+}
+
 export const mutationGoogleLogin = Joi.object<IGoogleLogin>({
   token: Joi.string().required().trim(),
+});
+
+export const mutationLogout = Joi.object<ILogout>({
+  isSync: Joi.bool().required(),
 });
 
 export const typeDefsUser = `#graphql
@@ -22,10 +37,16 @@ export const typeDefsUser = `#graphql
     token: String
   }
 
+	type TLogoutResponse {
+		success: Boolean!
+    message: String
+	}
+
   extend type Query {}
 
 	extend type Mutation {
 		googleLogin(token: String): UserAuth
+		logout(isSync: Boolean): TLogoutResponse
 	}
 `;
 
@@ -64,8 +85,10 @@ export const resolversUser = {
                 (item) => item.type === EAccountType.google
               );
               if (googleMethod.length > 0) {
-                const newToken =
-                  await UserResolverHelper.genUserJwtAndSaveCache(user, email);
+                const newToken = await UserService.genUserJwtAndSaveCache(
+                  user,
+                  email
+                );
                 return {
                   uuid: user.uuid,
                   token: newToken,
@@ -78,7 +101,7 @@ export const resolversUser = {
                 sub,
                 EAccountType.google
               );
-              const newToken = await UserResolverHelper.genUserJwtAndSaveCache(
+              const newToken = await UserService.genUserJwtAndSaveCache(
                 user,
                 email
               );
@@ -96,7 +119,7 @@ export const resolversUser = {
                 sub,
                 EAccountType.google
               );
-              const newToken = await UserResolverHelper.genUserJwtAndSaveCache(
+              const newToken = await UserService.genUserJwtAndSaveCache(
                 currentUser,
                 email
               );
@@ -115,7 +138,7 @@ export const resolversUser = {
               firstName: givenName,
               lastName: familyName,
             });
-            const newToken = await UserResolverHelper.genUserJwtAndSaveCache(
+            const newToken = await UserService.genUserJwtAndSaveCache(
               user,
               email
             );
@@ -128,6 +151,39 @@ export const resolversUser = {
         } catch (error: any) {
           logger.error(error.message);
           throw new Error('Unable to sign you in. Invalid token!');
+        }
+      }
+    ),
+
+    logout: resolverWrapper(
+      mutationLogout,
+      async (_root: unknown, args: ILogout, context: AppContext) => {
+        try {
+          const { isSync } = args;
+          const { token } = context;
+          if (token) {
+            const { uuid } = await JWTAuthenInstance.verifyHeader(token);
+            if (uuid) {
+              const imUser = new ModelUser();
+              const [dbUser] = await imUser.get([
+                { field: 'uuid', value: uuid },
+              ]);
+              if (dbUser) {
+                if (isSync) {
+                  await revokeAllUserToken(dbUser.id);
+                } else {
+                  await revokeToken(dbUser.id, token);
+                }
+              }
+              return {
+                success: true,
+                message: 'Logout successfully',
+              };
+            }
+          }
+          throw new Error('User session is invalid. Please try again');
+        } catch (e) {
+          return { success: false, message: (e as Error).message };
         }
       }
     ),
