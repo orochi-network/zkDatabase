@@ -1,7 +1,7 @@
 import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
-import logger from './logger.js';
-import config from './config.js';
+import logger from './logger';
+import config from './config';
 import { Singleton } from '@orochi-network/framework';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {

@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
-    "lib": ["dom", "esnext"],
+    "module": "CommonJS",
     "outDir": "./build",
+    "removeComments": true,
     "rootDir": ".",
     "strict": true,
     "declarationMap": true,
@@ -11,7 +10,6 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "moduleResolution": "nodenext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowJs": true,
@@ -19,9 +17,14 @@
     "sourceMap": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
-    "paths": {}
+    "moduleResolution": "Node",
+    "paths": {},
+    "types": ["node"]
   },
-  "include": ["./src"],
+  "ts-node": {
+    "esm": true,
+    "experimentalSpecifierResolution": "node"
+  },
+  "include": ["./**/*.ts"],
   "exclude": ["node_modules", "build"]
 }

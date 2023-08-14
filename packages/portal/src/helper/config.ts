@@ -1,47 +1,41 @@
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
-import {
-  ConfigLoader,
-  Singleton,
-  Utilities,
-  Validator,
-} from '@orochi-network/framework';
+import { ConfigLoader, Singleton, Utilities } from '@orochi-network/framework';
+import Joi from 'joi';
+
+export const nodeEnvValue = ['development', 'production', 'staging'] as const;
+
+type TNodeEnv = (typeof nodeEnvValue)[number];
 
 interface IAppConfiguration {
-  nodeEnv: 'development' | 'production' | 'staging';
+  nodeEnv: TNodeEnv;
   hmacSecretKey: string;
   dataLocation: string;
+  mariadbConnectUrl: string;
+  googleLoginId: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
-  path.dirname(fileURLToPath(import.meta.url))
+  path.dirname(fileURLToPath(pathToFileURL(__filename).toString()))
 )}/.env`;
 
 const configLoader = Singleton<ConfigLoader>(
-  'orochi-backend',
+  'portal-service',
   ConfigLoader,
   envLocation,
-  new Validator(
-    {
-      name: 'nodeEnv',
-      type: 'string',
-      defaultValue: 'development',
-      require: true,
-      enums: ['development', 'production', 'staging'],
-    },
-    {
-      name: 'hmacSecretKey',
-      type: 'string',
-      require: true,
-      postProcess: (v: string) => v.trim(),
-    },
-    {
-      name: 'dataLocation',
-      type: 'string',
-      require: false,
-      postProcess: (v: string) => v.trim(),
-    }
-  )
+  Joi.object<IAppConfiguration>({
+    dataLocation: Joi.string().optional().trim(),
+    nodeEnv: Joi.string()
+      .required()
+      .trim()
+      .valid(...nodeEnvValue),
+    hmacSecretKey: Joi.string().trim().required(),
+    mariadbConnectUrl: Joi.string()
+      .trim()
+      .required()
+      .regex(/^mysql:\/\//),
+    googleLoginId: Joi.string().trim().required(),
+  })
 );
 
 export const config: IAppConfiguration = configLoader.getConfig();
