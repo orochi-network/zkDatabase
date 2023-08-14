@@ -1,3 +1,5 @@
+import { TKuboConfig } from '@zkdb/kubo';
+
 /**
  * Common interface for file system
  * @param S - Content ID could be filename or content ID depends on implementation
@@ -63,3 +65,17 @@ export interface IFileIndex<S, T, R> {
    */
   resolve(_peerID?: S): Promise<T | undefined>;
 }
+
+export type TDeletatedKuboConfig = Partial<TKuboConfig> & {
+  username: string;
+  secretAPIKey: string;
+};
+
+export type TDelegatedIPFSConfig = {
+  kubo?: TDeletatedKuboConfig;
+  database: string;
+};
+
+export type TLocalConfig = {
+  dataLocation: string;
+};

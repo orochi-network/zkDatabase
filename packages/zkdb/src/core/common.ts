@@ -1,4 +1,8 @@
 import { Field } from 'snarkyjs';
+import {
+  TDelegatedIPFSConfig,
+  TLocalConfig,
+} from '../storage-engine/common.js';
 
 /**
  * Interface for key-value pairs
@@ -36,3 +40,15 @@ export type IDocument = {
    */
   serialize(): Uint8Array;
 };
+
+export type TZKDatabaseConfig =
+  | {
+      storageEngine: 'local';
+      merkleHeight: number;
+      storageEngineCfg: TLocalConfig;
+    }
+  | {
+      storageEngine: 'delegated-ipfs';
+      merkleHeight: number;
+      storageEngineCfg: TDelegatedIPFSConfig;
+    };
