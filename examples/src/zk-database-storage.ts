@@ -1,6 +1,5 @@
 import { UInt32, CircuitString } from 'snarkyjs';
-import { ZKDatabaseStorage } from 'zkdb';
-import { Schema } from '../../packages/zkdb/src/core/schema.js';
+import { ZKDatabaseStorage, Schema } from 'zkdb';
 
 class Account extends Schema({
   accountName: CircuitString,
@@ -25,7 +24,20 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance(16);
+  const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test-ipfs', {
+    storageEngine: 'delegated-ipfs',
+    merkleHeight: 16,
+    storageEngineCfg: {
+      kubo: {
+        host: '127.0.0.1',
+        port: 5001,
+        protocol: 'http',
+        username: 'chiro',
+        secretAPIKey: 'N/A',
+      },
+      database: 'test',
+    },
+  });
   await zkDB.use('test');
 
   console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());
