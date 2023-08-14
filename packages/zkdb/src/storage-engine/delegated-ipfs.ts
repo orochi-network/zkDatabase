@@ -1,5 +1,6 @@
 import { KuboClient, TFilesLsEntry, TFilesStatEntry } from '@zkdb/kubo';
 import { StorageEngineBase } from './base.js';
+import { TDelegatedIPFSConfig } from './common.js';
 
 /**
  * Storage engine using IPFS as backend
@@ -138,9 +139,10 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns New instance of storage engine
    */
   public static async getInstance(
-    basePath: string
+    config: TDelegatedIPFSConfig
   ): Promise<StorageEngineDelegatedIPFS> {
-    const kuboClient = new KuboClient();
+    const kuboClient = new KuboClient(config.kubo);
+    const basePath = `/${config.database}`;
     await kuboClient.filesMkdir({ arg: basePath, parents: true });
     return new StorageEngineDelegatedIPFS(basePath, kuboClient);
   }

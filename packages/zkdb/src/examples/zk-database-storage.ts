@@ -24,7 +24,20 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance(16, './data', false);
+  const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test', {
+    storageEngine: 'delegated-ipfs',
+    merkleHeight: 16,
+    storageEngineCfg: {
+      kubo: {
+        host: '127.0.0.1',
+        port: 5001,
+        protocol: 'http',
+        username: 'chiro',
+        secretAPIKey: 'N/A',
+      },
+      database: 'test',
+    },
+  });
   await zkDB.use('test');
 
   console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());

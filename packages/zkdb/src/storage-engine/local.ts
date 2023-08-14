@@ -115,7 +115,8 @@ export class StorageEngineLocal extends StorageEngineBase<
    */
   public async writeFile(path: string, content: Uint8Array) {
     const filepath = `${this.pathBase}/${path}`;
-    const pathParts = path.split('/');
+    const pathParts = filepath.split('/');
+    pathParts.pop();
     const currentPath = pathParts.join('/');
     if (!(await this.isFolder(currentPath))) {
       fs.mkdirSync(currentPath, { recursive: true });
@@ -154,7 +155,6 @@ export class StorageEngineLocal extends StorageEngineBase<
     basePath: string
   ): Promise<StorageEngineLocal> {
     StorageEngineBase.initPath(basePath);
-
     return new StorageEngineLocal(basePath);
   }
 }

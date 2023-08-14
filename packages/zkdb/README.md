@@ -138,7 +138,13 @@ class PigletBank extends SmartContract {
 
   // we now need "wrap" the Merkle tree around our off-chain storage
   // we initialize a new Merkle Tree with height 8
-  const zkdb = await ZKDatabaseStorage.getInstance(8);
+  const zkdb = await ZKDatabaseStorage.getInstance('zkdb-test', {
+    storageEngine: 'local',
+    merkleHeight,
+    storageEngineCfg: {
+      dataLocation: './data',
+    },
+  });
   for (let i = 0; i < accountNameList.length; i++) {
     const findRecord = zkdb.findOne('accountName', accountNameList[i]);
     if (findRecord.isEmpty()) {
