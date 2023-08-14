@@ -1,23 +1,3 @@
-import { CID } from 'multiformats';
-import { PeerId } from '@libp2p/interface-peer-id';
-import { IPNSEntry } from 'ipns';
-
-/**
- * IPFS entry that record file information
- */
-export interface IIPFSEntry {
-  // IPFS CID
-  cid: CID;
-  // File digest in bytes
-  digest: Uint8Array;
-  // Collection id of file
-  collection: string;
-  // File name
-  filename: string;
-  // Base path of file
-  basefile: string;
-}
-
 /**
  * Common interface for file system
  * @param S - Content ID could be filename or content ID depends on implementation
@@ -83,13 +63,3 @@ export interface IFileIndex<S, T, R> {
    */
   resolve(_peerID?: S): Promise<T | undefined>;
 }
-
-/**
- * IPFS file system
- */
-export type TIPFSFileSystem = IFileSystem<string, IIPFSEntry, Uint8Array>;
-
-/**
- * IPFS file index
- */
-export type TIPFSFileIndex = IFileIndex<PeerId, CID, IPNSEntry>;

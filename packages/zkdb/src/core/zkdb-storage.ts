@@ -258,7 +258,7 @@ export class ZKDatabaseStorage {
   ) {
     const storageEngine = local
       ? await loader.getLocalStorageEngine(dataLocation)
-      : await loader.getIPFSStorageEngine(dataLocation);
+      : await loader.getDelegatedIPFSStorageEngine(dataLocation);
     const metadata = await loader.getMetadata(storageEngine, merkleHeight);
     return new ZKDatabaseStorage(storageEngine, metadata);
   }
@@ -317,7 +317,7 @@ export class ZKDatabaseStorage {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
-      `${index.toString()}`,
+      `${this.collection}/${index.toString()}`,
       document.serialize()
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);

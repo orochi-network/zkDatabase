@@ -1,9 +1,9 @@
 import { SimpleIndexer } from '../index/simple.js';
 import { MerkleTreeStorage } from '../merkle-tree/merkle-tree-storage.js';
+import { StorageEngineDelegatedIPFS } from './delegated-ipfs.js';
 import { StorageEngineLocal } from './local.js';
-import { StorageEngineIPFS } from './ipfs.js';
 
-export type StorageEngine = StorageEngineLocal | StorageEngineIPFS;
+export type StorageEngine = StorageEngineLocal | StorageEngineDelegatedIPFS;
 
 export const FILENAME_INDEX = 'index.bson';
 export const FILENAME_MERKLE = 'merkle.bson';
@@ -27,10 +27,7 @@ export class Metadata {
    * Save metadata to IPFS
    */
   public async save() {
-    await this.storageEngine.writeMetadataFile(
-      FILENAME_INDEX,
-      this.indexer.toBSON()
-    );
+    await this.storageEngine.writeFile(FILENAME_INDEX, this.indexer.toBSON());
     await this.merkle.save();
   }
 

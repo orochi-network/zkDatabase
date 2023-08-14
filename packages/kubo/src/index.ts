@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 
 export interface IKuboOption {}
 
@@ -232,9 +232,11 @@ export class KuboClient {
     return this.filesCp(`/ipfs/${addResult.Hash}`, path);
   }
 
-  public async filesRead(args: TFilesReadArgs = {}): Promise<Uint8Array> {
-    return new TextEncoder().encode(
-      await this.execute(new RequestBuilder("files/read", {}, args))
+  public async filesRead(args: TFilesReadArgs = {}): Promise<ArrayBuffer> {
+    return this.execute(
+      new RequestBuilder("files/read", {}, args),
+      {},
+      { responseType: "arraybuffer", responseEncoding: "binary" }
     );
   }
 
@@ -261,7 +263,8 @@ export class KuboClient {
 
   public async execute<T>(
     requestBuilder: RequestBuilder,
-    configHeaders: any = {}
+    configHeaders: any = {},
+    requestOptions: AxiosRequestConfig = {}
   ): Promise<T> {
     const headers = {
       ...{ "Content-Type": "application/json" },
@@ -271,6 +274,7 @@ export class KuboClient {
       this.getUrl(requestBuilder.command),
       requestBuilder.options,
       {
+        ...requestOptions,
         params: requestBuilder.args,
         headers,
       }
