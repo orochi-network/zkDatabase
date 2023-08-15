@@ -8,7 +8,7 @@ export async function up(knex: Knex): Promise<void> {
       addIdAndUuid(knex, table);
 
       table
-        .integer('userId')
+        .bigInteger('userId')
         .notNullable()
         .unsigned()
         .references('user.id')
