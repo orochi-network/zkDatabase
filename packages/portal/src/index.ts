@@ -10,6 +10,8 @@ import { AppContext } from './helper/common';
 import config from './helper/config';
 import { Connector } from '@orochi-network/framework';
 import RedisInstance from './helper/redis';
+import JWTAuthenInstance from './helper/jwt';
+import { ModelUser } from './model/user';
 
 (async () => {
   Connector.connectByUrl(config.mariadbConnectUrl);
@@ -31,7 +33,20 @@ import RedisInstance from './helper/redis';
     cors<cors.CorsRequest>(),
     express.json(),
     expressMiddleware(server, {
-      context: async ({ req }) => ({ token: req.headers.authorization }),
+      context: async ({ req }) => {
+        const token = req.headers.authorization;
+        if (token) {
+          const { uuid } = await JWTAuthenInstance.verifyHeader(token);
+          const imUser = new ModelUser();
+          const [dbUser] = await imUser.get([{ field: 'uuid', value: uuid }]);
+          if (dbUser)
+            return {
+              token,
+              userId: dbUser.id,
+            };
+        }
+        return {};
+      },
     })
   );
 

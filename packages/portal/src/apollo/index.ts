@@ -1,3 +1,5 @@
-export const TypedefsApp = [typeDefsDocument, typeDefsMerkleTree];
+import { resolversUser, typeDefsUser } from './app/user';
 
-export const ResolversApp = [resolversDocument, resolversMerkleTree];
+export const TypedefsApp = [typeDefsUser];
+
+export const ResolversApp = [resolversUser];

@@ -28,6 +28,7 @@
     "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
+    "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
     "test": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js",
     "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
     "knex:migrate": "knex migrate:latest",

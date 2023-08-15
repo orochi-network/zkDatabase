@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import GraphQLJSON from 'graphql-type-json';
 import GoogleOAuth2Instance from '../../helper/google-client';
 import resolverWrapper from '../validation';
 import config from '../../helper/config';
@@ -9,15 +10,40 @@ import UserService from '../../service/user';
 import logger from '../../helper/logger';
 import { AppContext } from '../../helper/common';
 import { revokeAllUserToken, revokeToken } from '../../service/redis';
-import JWTAuthenInstance from '../../helper/jwt';
+import { IApiKey, ModelApiKey } from '../../model/api_key';
+import {
+  IOrderingBy,
+  IPagination,
+  IRecordList,
+} from '@orochi-network/framework';
+
+export const MAX_LIMIT = 20;
+export const MAX_OFFSET = 100;
 
 export interface IGoogleLogin {
   token: string;
 }
 
+export interface ICreateApiKey {
+  name: string;
+}
+
+export interface IGetApiKeyList extends IPagination {}
+
 export interface ILogout {
   isSync: boolean;
 }
+
+export const queryApiKeys = Joi.object<IGetApiKeyList>({
+  limit: Joi.number().integer().positive().max(MAX_LIMIT).default(10),
+  offset: Joi.number().integer().positive().max(MAX_OFFSET).default(0),
+  order: Joi.array().items(
+    Joi.object<IOrderingBy>({
+      column: Joi.string().trim(),
+      order: Joi.string().trim().valid('asc', 'desc'),
+    })
+  ),
+});
 
 export const mutationGoogleLogin = Joi.object<IGoogleLogin>({
   token: Joi.string().required().trim(),
@@ -27,10 +53,25 @@ export const mutationLogout = Joi.object<ILogout>({
   isSync: Joi.bool().required(),
 });
 
+export const mutationCreateApiKey = Joi.object<ICreateApiKey>({
+  name: Joi.string().required().max(200),
+});
+
 export const typeDefsUser = `#graphql
   scalar JSON
   type Query
   type Mutation
+
+	input OrderingBy {
+    column: String
+    order: String
+  }
+
+	input Pagination {
+    order: [OrderingBy]
+    offset: Int
+    limit: Int
+  }
 
 	type UserAuth {
     uuid: String
@@ -42,16 +83,87 @@ export const typeDefsUser = `#graphql
     message: String
 	}
 
-  extend type Query {}
+	type TCreateApiKeyResponse {
+		name: String!
+    key: String!
+	}
+
+	type ApiKey {
+		name: String!,
+		key: String!
+	}
+
+	type ApiKeyPagination {
+		total: Int!
+    records: [ApiKey]!
+	}
+
+  extend type Query {
+		getApiKey(limit: Int, offset: Int, order: [OrderingBy]): ApiKeyPagination
+	}
 
 	extend type Mutation {
 		googleLogin(token: String): UserAuth
 		logout(isSync: Boolean): TLogoutResponse
+		createApiKey(name:String!): TCreateApiKeyResponse!
 	}
 `;
 
 export const resolversUser = {
+  JSON: GraphQLJSON,
+  Query: {
+    getApiKeys: resolverWrapper(
+      queryApiKeys,
+      async (_root: unknown, args: IGetApiKeyList, context: AppContext) => {
+        try {
+          const { userId } = context;
+          if (userId) {
+            const { limit, offset, order } = args;
+            const imModelApiKey = new ModelApiKey();
+            const result = await imModelApiKey.getApiKeyList(
+              {
+                limit,
+                offset,
+                order,
+              },
+              [{ field: 'userId', value: userId }]
+            );
+            const { records, total } = result.result as IRecordList<IApiKey>;
+            return {
+              total,
+              records,
+            };
+          }
+        } catch (error) {
+          logger.error(error);
+          throw new Error('Unable to create api key');
+        }
+      }
+    ),
+  },
+
   Mutation: {
+    createApiKey: resolverWrapper(
+      mutationCreateApiKey,
+      async (_root: unknown, args: ICreateApiKey, context: AppContext) => {
+        try {
+          const { userId } = context;
+          if (userId) {
+            const { name } = args;
+            const imModelApiKey = new ModelApiKey();
+            const newKey = await imModelApiKey.createApiKey(userId, name);
+            return {
+              name,
+              key: newKey?.key,
+            };
+          }
+        } catch (error) {
+          logger.error(error);
+          throw new Error('Unable to create api key');
+        }
+      }
+    ),
+
     googleLogin: resolverWrapper(
       mutationGoogleLogin,
       async (_: unknown, { token }: { token: string }) => {
@@ -160,30 +272,25 @@ export const resolversUser = {
       async (_root: unknown, args: ILogout, context: AppContext) => {
         try {
           const { isSync } = args;
-          const { token } = context;
-          if (token) {
-            const { uuid } = await JWTAuthenInstance.verifyHeader(token);
-            if (uuid) {
-              const imUser = new ModelUser();
-              const [dbUser] = await imUser.get([
-                { field: 'uuid', value: uuid },
-              ]);
-              if (dbUser) {
-                if (isSync) {
-                  await revokeAllUserToken(dbUser.id);
-                } else {
-                  await revokeToken(dbUser.id, token);
-                }
-              }
-              return {
-                success: true,
-                message: 'Logout successfully',
-              };
+          const { userId, token } = context;
+
+          if (userId && token) {
+            if (isSync) {
+              await revokeAllUserToken(userId);
+            } else {
+              await revokeToken(userId, token);
             }
+
+            return {
+              success: true,
+              message: 'Logout successfully',
+            };
           }
+
           throw new Error('User session is invalid. Please try again');
         } catch (e) {
-          return { success: false, message: (e as Error).message };
+          logger.error(e);
+          throw new Error('User session is invalid. Please try again');
         }
       }
     ),
