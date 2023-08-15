@@ -99,7 +99,7 @@ export const typeDefsUser = `#graphql
 	}
 
   extend type Query {
-		getApiKey(limit: Int, offset: Int, order: [OrderingBy]): ApiKeyPagination
+		getApiKeyList(limit: Int, offset: Int, order: [OrderingBy]): ApiKeyPagination
 	}
 
 	extend type Mutation {
@@ -112,7 +112,7 @@ export const typeDefsUser = `#graphql
 export const resolversUser = {
   JSON: GraphQLJSON,
   Query: {
-    getApiKeys: resolverWrapper(
+    getApiKeyList: resolverWrapper(
       queryApiKeys,
       async (_root: unknown, args: IGetApiKeyList, context: AppContext) => {
         try {
