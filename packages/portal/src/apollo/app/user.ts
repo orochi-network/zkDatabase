@@ -136,7 +136,7 @@ export const resolversUser = {
           }
         } catch (error) {
           logger.error(error);
-          throw new Error('Unable to create api key');
+          throw new Error('Unable to get your keys');
         }
       }
     ),
