@@ -25,12 +25,9 @@
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
     "buildw": "tsc -p tsconfig.json --watch",
-    "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
     "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
-    "test": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js",
-    "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
     "knex:migrate": "knex migrate:latest",
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"
@@ -42,10 +39,7 @@
     ]
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.22.7",
-    "@babel/preset-typescript": "^7.22.5",
     "@types/cors": "^2.8.13",
-    "@types/jest": "^27.5.2",
     "@types/node": "^20.4.10",
     "@types/safer-buffer": "^2.1.0",
     "@types/uuid": "^9.0.2",
@@ -56,7 +50,6 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-snarkyjs": "^0.1.0",
     "husky": "^7.0.4",
-    "jest": "^27.5.1",
     "lint-staged": "^11.2.6",
     "prettier": "^2.8.8",
     "ts-jest": "^27.1.5",
