@@ -22,14 +22,14 @@ export class ModelUser extends ModelMysqlBasic<IUser> {
     return this.getDefaultKnex().select('*');
   }
 
-  public async isOAuthUserExist(email: string): Promise<false | IUser> {
+  public async isOAuthUserExist(email: string): Promise<undefined | IUser> {
     const currentUser = await this.getKnex()('user as u')
       .select('u.id as id', 'u.uuid as uuid', 'l.type as type')
       .join('login_method as l', 'u.id', 'l.userId')
       .where('l.email', email)
       .whereNot('l.type', 0);
     if (currentUser.length > 0) return <IUser>currentUser[0];
-    return false;
+    return undefined;
   }
 
   public async isLocalUserExist(email: string): Promise<false | IUser> {

@@ -261,7 +261,7 @@ export const resolversUser = {
           }
           throw new Error('Unable to sign you in. Invalid token!');
         } catch (error: any) {
-          logger.error(error.message);
+          logger.error(error);
           throw new Error('Unable to sign you in. Invalid token!');
         }
       }
