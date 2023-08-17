@@ -17,7 +17,7 @@ export interface IApiKey extends IBaseEntity {
 
 export class ModelApiKey extends ModelMysqlBasic<IApiKey> {
   constructor() {
-    super('user');
+    super('api_key');
   }
 
   public basicQuery(): Knex.QueryBuilder {
