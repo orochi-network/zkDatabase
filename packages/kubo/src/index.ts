@@ -1,4 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
+import { JWT } from "jwt.js";
 
 export interface IKuboOption {}
 
@@ -87,11 +88,25 @@ export type TNameKeyList = {
   }[];
 };
 
+export const REQUIRED_AUTHENTICATION = [
+  "files/rm",
+  "files/cp",
+  "add",
+  "pin/add",
+  "name/publish",
+];
+
+export type TKuboAuthentication = {
+  username: string;
+  secretKey: string;
+};
+
 export type TKuboConfig = {
   protocol: "http" | "https";
   host: string;
   port: number;
   apiPath: string;
+  authentication?: TKuboAuthentication;
 };
 
 export class RequestBuilder {
@@ -144,8 +159,16 @@ export class KuboClient {
     apiPath: "/api/v0",
   };
 
+  public jwt?: JWT;
+
   constructor(config: Partial<TKuboConfig> = {}) {
     this.config = { ...this.config, ...config };
+    if (typeof config.authentication !== "undefined") {
+      this.jwt = new JWT(
+        config.authentication.username,
+        config.authentication.secretKey
+      );
+    }
   }
 
   private getUrl(command: string) {
@@ -266,10 +289,20 @@ export class KuboClient {
     configHeaders: any = {},
     requestOptions: AxiosRequestConfig = {}
   ): Promise<T> {
-    const headers = {
-      ...{ "Content-Type": "application/json" },
-      ...configHeaders,
-    };
+    const headers =
+      typeof this.jwt !== "undefined" &&
+      REQUIRED_AUTHENTICATION.includes(requestBuilder.command.toLowerCase())
+        ? {
+            ...{
+              "Content-Type": "application/json",
+              Authorization: this.jwt.authentication(),
+            },
+            ...configHeaders,
+          }
+        : {
+            ...{ "Content-Type": "application/json" },
+            ...configHeaders,
+          };
     const res = await axios.post(
       this.getUrl(requestBuilder.command),
       requestBuilder.options,

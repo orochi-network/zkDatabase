@@ -1,7 +1,7 @@
 {
   "name": "@zkdb/kubo",
   "private": false,
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "zkDatabase Kubo RPC client",
   "type": "module",
   "types": "./build/src/index.d.ts",
@@ -51,9 +51,11 @@
   },
   "homepage": "https://github.com/orochi-network/zkDatabase#readme",
   "dependencies": {
-    "axios": "^1.4.0"
+    "axios": "^1.4.0",
+    "crypto-js": "^4.1.1"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.1.1",
     "typescript": "^5.1.6"
   }
 }
