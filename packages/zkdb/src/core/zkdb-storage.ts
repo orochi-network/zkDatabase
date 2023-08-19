@@ -1,9 +1,14 @@
 import { Field } from 'snarkyjs';
 import { MerkleProof } from '../merkle-tree/common.js';
-import { StorageEngine, Metadata } from '../storage-engine/index.js';
-import { IDocument } from './common.js';
-import loader from './loader.js';
-import { IIndexing } from 'index/simple.js';
+import {
+  StorageEngine,
+  Metadata,
+  StorageEngineLocal,
+  StorageEngineDelegatedIPFS,
+} from '../storage-engine/index.js';
+import { IDocument, TZKDatabaseConfig } from './common.js';
+import { IIndexing } from '../index/simple.js';
+import { LoadInstance } from './loader.js';
 
 /**
  * Represents search results for multile records.
@@ -252,15 +257,23 @@ export class ZKDatabaseStorage {
    * @returns
    */
   public static async getInstance(
-    merkleHeight: number = 64,
-    dataLocation: string = './data',
-    local: boolean = true
+    instanceName: string,
+    config: TZKDatabaseConfig
   ) {
-    const storageEngine = local
-      ? await loader.getLocalStorageEngine(dataLocation)
-      : await loader.getIPFSStorageEngine(dataLocation);
-    const metadata = await loader.getMetadata(storageEngine, merkleHeight);
-    return new ZKDatabaseStorage(storageEngine, metadata);
+    return LoadInstance<ZKDatabaseStorage>(instanceName, async () => {
+      const storageEngine =
+        config.storageEngine === 'delegated-ipfs'
+          ? await StorageEngineDelegatedIPFS.getInstance(
+              config.storageEngineCfg
+            )
+          : await StorageEngineLocal.getInstance(
+              config.storageEngineCfg.dataLocation
+            );
+      return new ZKDatabaseStorage(
+        storageEngine,
+        await Metadata.getInstance(storageEngine, config.merkleHeight)
+      );
+    });
   }
 
   /**
@@ -317,7 +330,7 @@ export class ZKDatabaseStorage {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
-      `${index.toString()}`,
+      `${this.collection}/${index.toString()}`,
       document.serialize()
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);

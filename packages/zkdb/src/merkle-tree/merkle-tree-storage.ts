@@ -49,7 +49,7 @@ export class MerkleTreeStorage extends BaseMerkleTree {
    * Save MerkleTreeStorage to storageEngine
    */
   public async save(): Promise<void> {
-    this.storageEngine.writeMetadataFile(
+    this.storageEngine.writeFile(
       FILENAME_MERKLE,
       MerkleTreeStorage.serialize(await this.getNodes())
     );
@@ -104,7 +104,7 @@ export class MerkleTreeStorage extends BaseMerkleTree {
   }
 
   protected async writeNodes(nodes: TMerkleNodesMap): Promise<void> {
-    await this.storageEngine.writeMetadataFile(
+    await this.storageEngine.writeFile(
       FILENAME_MERKLE,
       BaseMerkleTree.serialize(nodes)
     );

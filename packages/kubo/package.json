@@ -1,0 +1,59 @@
+{
+  "name": "@zkdb/kubo",
+  "private": false,
+  "version": "1.0.3",
+  "description": "zkDatabase Kubo RPC client",
+  "type": "module",
+  "types": "./build/src/index.d.ts",
+  "scripts": {
+    "release": "rm -rf ./build && npm run build && npm publish --access public",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orochi-network/zkDatabase.git"
+  },
+  "keywords": [
+    "zkdb",
+    "zkdatabase",
+    "kubo",
+    "rpc",
+    "ipfs",
+    "client"
+  ],
+  "typesVersions": {
+    "*": {
+      "*": [
+        "*",
+        "build/src/*"
+      ]
+    }
+  },
+  "files": [
+    "build/src",
+    "!**/*.tsbuildinfo",
+    "!**/*.test.js",
+    "!**/*.test.js.map",
+    "!**/*.test.d.ts",
+    "!**/*.test.d.ts.map"
+  ],
+  "exports": {
+    ".": {
+      "import": "./build/src/index.js",
+      "types": "./build/src/index.d.ts"
+    }
+  },
+  "author": "chiro@orochi.network",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/orochi-network/zkDatabase/issues"
+  },
+  "homepage": "https://github.com/orochi-network/zkDatabase#readme",
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.1.6"
+  }
+}

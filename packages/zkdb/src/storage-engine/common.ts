@@ -1,22 +1,4 @@
-import { CID } from 'multiformats';
-import { PeerId } from '@libp2p/interface-peer-id';
-import { IPNSEntry } from 'ipns';
-
-/**
- * IPFS entry that record file information
- */
-export interface IIPFSEntry {
-  // IPFS CID
-  cid: CID;
-  // File digest in bytes
-  digest: Uint8Array;
-  // Collection id of file
-  collection: string;
-  // File name
-  filename: string;
-  // Base path of file
-  basefile: string;
-}
+import { TKuboConfig } from '@zkdb/kubo';
 
 /**
  * Common interface for file system
@@ -84,12 +66,16 @@ export interface IFileIndex<S, T, R> {
   resolve(_peerID?: S): Promise<T | undefined>;
 }
 
-/**
- * IPFS file system
- */
-export type TIPFSFileSystem = IFileSystem<string, IIPFSEntry, Uint8Array>;
+export type TDeletatedKuboConfig = Partial<TKuboConfig> & {
+  username: string;
+  secretAPIKey: string;
+};
 
-/**
- * IPFS file index
- */
-export type TIPFSFileIndex = IFileIndex<PeerId, CID, IPNSEntry>;
+export type TDelegatedIPFSConfig = {
+  kubo?: TDeletatedKuboConfig;
+  database: string;
+};
+
+export type TLocalConfig = {
+  dataLocation: string;
+};

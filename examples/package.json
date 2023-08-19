@@ -48,6 +48,6 @@
     "snarkyjs": "^0.11.4"
   },
   "dependencies": {
-    "zkdb": "^0.1.4"
+    "zkdb": "^0.1.5"
   }
 }

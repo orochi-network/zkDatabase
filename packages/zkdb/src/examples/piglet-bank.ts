@@ -11,7 +11,7 @@ import {
   CircuitString,
   SmartContract,
 } from 'snarkyjs';
-import { Schema, ZKDatabaseStorage } from 'zkdb';
+import { Schema, ZKDatabaseStorage } from '../core/index.js';
 
 // Enable this to generate proofs
 const doProofs = false;

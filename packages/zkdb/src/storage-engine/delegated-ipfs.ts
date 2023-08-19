@@ -1,27 +1,25 @@
-import fs from 'fs';
+import { KuboClient, TFilesLsEntry, TFilesStatEntry } from '@zkdb/kubo';
 import { StorageEngineBase } from './base.js';
-
-export interface IDirRecord {
-  name: string;
-  type: string;
-  path: string;
-}
+import { TDelegatedIPFSConfig } from './common.js';
 
 /**
  * Storage engine using IPFS as backend
  * @note This is a very simple implementation of storage engine using IPFS as backend
  */
-export class StorageEngineLocal extends StorageEngineBase<
+export class StorageEngineDelegatedIPFS extends StorageEngineBase<
   string,
-  fs.Stats,
-  IDirRecord
+  TFilesStatEntry,
+  TFilesLsEntry
 > {
+  private kuboClient: KuboClient;
+
   /**
    * Create new instance of storage engine
    * @param nodeLibp2p libp2p node
    */
-  constructor(pathBase: string) {
+  constructor(pathBase: string, kuboClient: KuboClient) {
     super(pathBase);
+    this.kuboClient = kuboClient;
   }
 
   /**
@@ -33,7 +31,7 @@ export class StorageEngineLocal extends StorageEngineBase<
    */
   public async mkdir(foldername: string = ''): Promise<string | undefined> {
     const path = `${this.pathBase}/${foldername}`;
-    fs.mkdirSync(path, { recursive: true });
+    await this.kuboClient.filesMkdir({ arg: path, parents: true });
     return path;
   }
 
@@ -42,9 +40,12 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @param path
    * @returns
    */
-  public async check(path: string = ''): Promise<fs.Stats | undefined> {
+  public async check(path: string = ''): Promise<TFilesStatEntry | undefined> {
     try {
-      return fs.statSync(`${this.pathBase}/${path}`);
+      const result = await this.kuboClient.filesStat({
+        arg: `${this.pathBase}/${path}`,
+      });
+      return result;
     } catch (e) {
       return undefined;
     }
@@ -56,12 +57,7 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isFile(path: string = ''): Promise<boolean> {
-    try {
-      const stat = fs.statSync(`${this.pathBase}/${path}`);
-      return stat.isFile();
-    } catch (e) {
-      return false;
-    }
+    return this.kuboClient.existFile(`${this.pathBase}/${path}`);
   }
 
   /**
@@ -70,12 +66,7 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isFolder(path: string = ''): Promise<boolean> {
-    try {
-      const stat = fs.statSync(`${this.pathBase}/${path}`);
-      return stat.isDirectory();
-    } catch {
-      return false;
-    }
+    return this.kuboClient.existDir(`${this.pathBase}/${path}`);
   }
 
   /**
@@ -84,26 +75,15 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isExist(path: string = ''): Promise<boolean> {
-    return fs.existsSync(`${this.pathBase}/${path}`);
+    return this.kuboClient.exist(`${this.pathBase}/${path}`);
   }
 
   /**
    * List all files and folders in given path
    * @param path Given path
    */
-  public async ls(path: string = ''): Promise<IDirRecord[]> {
-    if (await this.isExist(path)) {
-      const result = [];
-      for await (const entry of fs.opendirSync(`${this.pathBase}/${path}`)) {
-        result.push({
-          name: entry.name,
-          type: entry.isDirectory() ? 'directory' : 'file',
-          path: entry.path,
-        });
-      }
-      return result;
-    }
-    throw new Error('Given path is not exist');
+  public async ls(path: string = ''): Promise<TFilesLsEntry[]> {
+    return this.kuboClient.filesLs({ path: `${this.pathBase}/${path}` });
   }
 
   /**
@@ -113,16 +93,17 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @param content
    * @returns
    */
-  public async writeFile(path: string, content: Uint8Array) {
-    const filepath = `${this.pathBase}/${path}`;
-    const pathParts = filepath.split('/');
-    pathParts.pop();
-    const currentPath = pathParts.join('/');
-    if (!(await this.isFolder(currentPath))) {
-      fs.mkdirSync(currentPath, { recursive: true });
+  public async writeFile(path: string, content: Uint8Array): Promise<string> {
+    const filePath = `${this.pathBase}/${path}`;
+    if (await this.kuboClient.exist(filePath)) {
+      await this.kuboClient.filesRm({
+        arg: filePath,
+        recursive: true,
+        force: true,
+      });
     }
-    fs.writeFileSync(filepath, content);
-    return filepath;
+    await this.kuboClient.filesWrite(filePath, content);
+    return filePath;
   }
 
   /**
@@ -132,7 +113,11 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @throws Error if file is not existing
    */
   public async delete(path: string): Promise<boolean> {
-    fs.unlinkSync(`${this.pathBase}/${path}`);
+    await this.kuboClient.filesRm({
+      arg: `${this.pathBase}/${path}`,
+      recursive: true,
+      force: true,
+    });
     return true;
   }
 
@@ -142,7 +127,9 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns
    */
   public async readFile(path: string): Promise<Uint8Array> {
-    return fs.readFileSync(`${this.pathBase}/${path}`);
+    return new Uint8Array(
+      await this.kuboClient.filesRead({ arg: `${this.pathBase}/${path}` })
+    );
   }
 
   /**
@@ -152,9 +139,11 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns New instance of storage engine
    */
   public static async getInstance(
-    basePath: string
-  ): Promise<StorageEngineLocal> {
-    StorageEngineBase.initPath(basePath);
-    return new StorageEngineLocal(basePath);
+    config: TDelegatedIPFSConfig
+  ): Promise<StorageEngineDelegatedIPFS> {
+    const kuboClient = new KuboClient(config.kubo);
+    const basePath = `/${config.database}`;
+    await kuboClient.filesMkdir({ arg: basePath, parents: true });
+    return new StorageEngineDelegatedIPFS(basePath, kuboClient);
   }
 }

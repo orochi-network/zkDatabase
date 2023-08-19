@@ -1,5 +1,5 @@
 import { UInt32, CircuitString } from 'snarkyjs';
-import { ZKDatabaseStorage, Schema } from 'zkdb';
+import { Schema, ZKDatabaseStorage } from '../core/index.js';
 
 class Account extends Schema({
   accountName: CircuitString,
@@ -24,7 +24,7 @@ class Account extends Schema({
 }
 
 (async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test-ipfs', {
+  const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test', {
     storageEngine: 'delegated-ipfs',
     merkleHeight: 16,
     storageEngineCfg: {
@@ -42,8 +42,8 @@ class Account extends Schema({
 
   console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());
 
-  const findChiro = await zkDB.findOne('accountName', 'chiro');
-  const findFlash = await zkDB.findOne('accountName', 'flash');
+  let findChiro = await zkDB.findOne('accountName', 'chiro');
+  let findFlash = await zkDB.findOne('accountName', 'flash');
 
   if (findChiro.isEmpty()) {
     await zkDB.add(
@@ -78,7 +78,8 @@ class Account extends Schema({
       })
     );
   }
-
+  findChiro = await zkDB.findOne('accountName', 'chiro');
+  findFlash = await zkDB.findOne('accountName', 'flash');
   const index0 = await findChiro.load(Account);
   const index1 = await findFlash.load(Account);
   console.table([index0.json(), index1.json()]);
