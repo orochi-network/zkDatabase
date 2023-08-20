@@ -127,7 +127,7 @@ class PigletBank extends SmartContract {
     storageEngine: 'local',
     merkleHeight,
     storageEngineCfg: {
-      dataLocation: './data',
+      location: './data',
     },
   });
   for (let i = 0; i < accountNameList.length; i++) {
