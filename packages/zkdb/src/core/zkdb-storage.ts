@@ -5,6 +5,7 @@ import {
   Metadata,
   StorageEngineLocal,
   StorageEngineDelegatedIPFS,
+  StorageEngineIPFS,
 } from '../storage-engine/index.js';
 import { IDocument, TZKDatabaseConfig } from './common.js';
 import { IIndexing } from '../index/simple.js';
@@ -261,14 +262,20 @@ export class ZKDatabaseStorage {
     config: TZKDatabaseConfig
   ) {
     return LoadInstance<ZKDatabaseStorage>(instanceName, async () => {
-      const storageEngine =
-        config.storageEngine === 'delegated-ipfs'
-          ? await StorageEngineDelegatedIPFS.getInstance(
-              config.storageEngineCfg
-            )
-          : await StorageEngineLocal.getInstance(
-              config.storageEngineCfg.dataLocation
-            );
+      let storageEngine: StorageEngine;
+      if (config.storageEngine === 'delegated-ipfs') {
+        storageEngine = await StorageEngineDelegatedIPFS.getInstance(
+          config.storageEngineCfg
+        );
+      } else if (config.storageEngine === 'ipfs') {
+        storageEngine = await StorageEngineIPFS.getInstance(
+          config.storageEngineCfg
+        );
+      } else {
+        storageEngine = await StorageEngineLocal.getInstance(
+          config.storageEngineCfg
+        );
+      }
       return new ZKDatabaseStorage(
         storageEngine,
         await Metadata.getInstance(storageEngine, config.merkleHeight)
@@ -304,7 +311,6 @@ export class ZKDatabaseStorage {
       await this.storageEngine.mkdir(collection);
     }
     if (await this.storageEngine.isFolder(collection)) {
-      this.storageEngine.use(collection);
       this.metadata.indexer.use(collection);
       this.collection = collection;
     } else {

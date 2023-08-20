@@ -7,7 +7,9 @@ import { StorageEngineLocal } from '../storage-engine/local.js';
 const DEFAULT_HEIGHT = 20;
 
 (async function run() {
-  const storage = await StorageEngineLocal.getInstance('base');
+  const storage = await StorageEngineLocal.getInstance({
+    location: './base',
+  });
   const merkleTreeJSON = new MerkleTreeStorage(storage, DEFAULT_HEIGHT);
   const expectedMerkleTree = new MerkleTree(DEFAULT_HEIGHT);
 

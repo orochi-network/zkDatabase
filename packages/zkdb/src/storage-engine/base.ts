@@ -11,11 +11,6 @@ export abstract class StorageEngineBase<T, K, M> {
   public pathBase: string;
 
   /**
-   * Collection name
-   */
-  collection: string = 'default';
-
-  /**
    * Create new instance of storage engine
    * @param pathBase path to storage engine
    */
@@ -24,13 +19,38 @@ export abstract class StorageEngineBase<T, K, M> {
   }
 
   /**
+   * Split path to components
+   * @param path
+   * @returns
+   */
+  protected splitPath(path: string) {
+    let parentPath = '';
+    let parentDir = '';
+    let basename = '';
+    const pathParts = path.split('/');
+    if (pathParts.length >= 2) {
+      basename = pathParts.pop()!;
+      parentDir = pathParts.pop()!;
+      pathParts.push(parentDir);
+      parentPath = parentDir === '' ? '/' : pathParts.join('/');
+    } else {
+      basename = pathParts.length === 1 ? pathParts[0] : path;
+    }
+    return {
+      parentPath,
+      parentDir,
+      basename,
+    };
+  }
+
+  /**
    * Make new folder in root folder and return CID of created folder
    * @note If folder name is empty create a new root folder
    * @todo Sync metadata every time we create new folder
-   * @param foldername Folder name
+   * @param path Path to the folder
    * @returns
    */
-  public abstract mkdir(_foldername: string): Promise<T | undefined>;
+  public abstract mkdir(_path: string): Promise<T | undefined>;
 
   /**
    * Check stat of a path
@@ -87,14 +107,6 @@ export abstract class StorageEngineBase<T, K, M> {
    * @returns
    */
   public abstract readFile(_path: string): Promise<Uint8Array>;
-
-  /**
-   * Change current collection
-   * @param collection Collection name
-   */
-  public use(collection: string): void {
-    this.collection = collection;
-  }
 
   /**
    * Initialize path

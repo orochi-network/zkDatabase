@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { StorageEngineBase } from './base.js';
+import { TLocalConfig } from 'core/common.js';
 
 export interface IDirRecord {
   name: string;
@@ -147,14 +148,13 @@ export class StorageEngineLocal extends StorageEngineBase<
 
   /**
    * Create new instance of storage engine
-   * @param basePath Base path of the storage engine
    * @param config Configuration of the storage engine
    * @returns New instance of storage engine
    */
   public static async getInstance(
-    basePath: string
+    config: TLocalConfig
   ): Promise<StorageEngineLocal> {
-    StorageEngineBase.initPath(basePath);
-    return new StorageEngineLocal(basePath);
+    StorageEngineBase.initPath(config.location);
+    return new StorageEngineLocal(config.location);
   }
 }

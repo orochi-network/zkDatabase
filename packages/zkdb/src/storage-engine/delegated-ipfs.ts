@@ -1,6 +1,6 @@
 import { KuboClient, TFilesLsEntry, TFilesStatEntry } from '@zkdb/kubo';
 import { StorageEngineBase } from './base.js';
-import { TDelegatedIPFSConfig } from './common.js';
+import { TDelegatedIPFSConfig } from '../core/common.js';
 
 /**
  * Storage engine using IPFS as backend
