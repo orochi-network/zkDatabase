@@ -1,5 +1,5 @@
 import { UInt32, CircuitString } from 'snarkyjs';
-import { Schema, ZKDatabaseStorage } from '../core/index.js';
+import { Schema, TZKDatabaseConfig, ZKDatabaseStorage } from '../core/index.js';
 
 class Account extends Schema({
   accountName: CircuitString,
@@ -23,8 +23,21 @@ class Account extends Schema({
   }
 }
 
-(async () => {
-  const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test', {
+const CONFIGURATION = {
+  local: <TZKDatabaseConfig>{
+    storageEngine: 'local',
+    merkleHeight: 16,
+    storageEngineCfg: { location: './data' },
+  },
+  ipfs: <TZKDatabaseConfig>{
+    storageEngine: 'ipfs',
+    merkleHeight: 16,
+    storageEngineCfg: {
+      handler: 'file',
+      location: './data',
+    },
+  },
+  delegatedIpfs: <TZKDatabaseConfig>{
     storageEngine: 'delegated-ipfs',
     merkleHeight: 16,
     storageEngineCfg: {
@@ -32,12 +45,22 @@ class Account extends Schema({
         host: '127.0.0.1',
         port: 5001,
         protocol: 'http',
-        username: 'chiro',
-        secretAPIKey: 'N/A',
+        apiPath: '/api/v0',
+        authentication: {
+          username: 'chiro',
+          secretKey: 'N/A',
+        },
       },
       database: 'test',
     },
-  });
+  },
+};
+
+(async () => {
+  const zkDB = await ZKDatabaseStorage.getInstance(
+    'zkdb-test',
+    CONFIGURATION.delegatedIpfs
+  );
   await zkDB.use('test');
 
   console.log('Loaded Merkle root:', (await zkDB.getMerkleRoot()).toString());

@@ -5,11 +5,12 @@ A B-tree is a type of self-balancing search tree that maintains sorted data in a
 ## Features
 
 The main features of a B-tree are:
-1) All leaves are at the same level, making the tree perfectly balanced.
-2) Each node in the B-tree contains a certain number of keys and pointers. The keys act as separation values which divide its subtrees. When we insert a new key into a B-tree, and if the node we want to insert into is already full, we perform a split operation. Similarly, deletion might cause a node to be less than half full, violating the properties of the B-tree. In this case, we perform a merge operation.
-3) For a B-tree of order m (where m is a positive integer), every node in the tree contains a maximum of m children and a minimum of ⌈m/2⌉ children (except for the root which can have fewer children).
-4) The keys within a node are ordered.
-5) The subtree between two keys k1 and k2 consists of all keys that are greater than or equal to k1 and less than k2.
+
+1. All leaves are at the same level, making the tree perfectly balanced.
+2. Each node in the B-tree contains a certain number of keys and pointers. The keys act as separation values which divide its subtrees. When we insert a new key into a B-tree, and if the node we want to insert into is already full, we perform a split operation. Similarly, deletion might cause a node to be less than half full, violating the properties of the B-tree. In this case, we perform a merge operation.
+3. For a B-tree of order m (where m is a positive integer), every node in the tree contains a maximum of m children and a minimum of ⌈m/2⌉ children (except for the root which can have fewer children).
+4. The keys within a node are ordered.
+5. The subtree between two keys k1 and k2 consists of all keys that are greater than or equal to k1 and less than k2.
 
 ## Operations
 
@@ -22,18 +23,18 @@ The main features of a B-tree are:
 
 When we insert a new key into a B-tree, it's possible that the node we want to insert into is already full. In this case, we have to split the node. Here is a high-level overview of how the split operation works:
 
-1) The node to be split is full and contains m-1 keys, where m is the order of the B-tree.
-2) A new node is created, and approximately half of the keys from the original node are moved to this new node.
-3) A key from the original node is moved up into the node's parent to act as a separator between the original node and the new node. If the original node was the root and has no parent, a new root is created.
-4) The new node and the original node are now siblings.
+1. The node to be split is full and contains m-1 keys, where m is the order of the B-tree.
+2. A new node is created, and approximately half of the keys from the original node are moved to this new node.
+3. A key from the original node is moved up into the node's parent to act as a separator between the original node and the new node. If the original node was the root and has no parent, a new root is created.
+4. The new node and the original node are now siblings.
 
 The split operation maintains the property that all leaf nodes are at the same level since all splits start at the leaf level and work their way up the tree.
 
 Conversely, deletion from a B-tree might cause a node to be less than half full, violating the properties of the B-tree. In such cases, we perform a merge operation. Here's a simplified view of the merge process:
 
-1) Two sibling nodes, each with less than ⌈m/2⌉ keys, are combined into a single node.
-2) A key from the parent node, which separates these two nodes, is moved down into the merged node.
-3) If the parent node becomes less than half full as a result, it may also be merged with a sibling and so on.
+1. Two sibling nodes, each with less than ⌈m/2⌉ keys, are combined into a single node.
+2. A key from the parent node, which separates these two nodes, is moved down into the merged node.
+3. If the parent node becomes less than half full as a result, it may also be merged with a sibling and so on.
 
 ### Time complexity
 
@@ -59,14 +60,14 @@ In a non-clustered index, the leaf nodes contain a pointer or reference to the d
 
 Additional considerations when choosing between a Clustered and Non-Clustered Index include the order of data, frequency of updates, width of the table, and the need for multiple indexes. For instance, if the data in a table is accessed sequentially, a clustered index can be beneficial. If a table requires access via multiple different key columns, non-clustered indexes could be a good solution as you can create multiple non-clustered indexes on a single table.
 
-| S.No |                      | Clustered Indexes                                                                                              | Non-Clustered Indexes                                                         |
-|------| -------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| 1    | **Data sorting**     | Defines the order or sorts the table or arranges the data by alphabetical order just like a dictionary.        | Collects the data at one place and records at another place.                  |
-| 2    | **Speed**            | Generally faster for retrieving data in the sorted order or range of values.                                   | Generally slower than the clustered index.                                    |
-| 3    | **Memory usage**     | Demands less memory to execute the operation.                                                                  | Demands more memory to execute the operations.                                |
-| 4    | **Storage**          | Permits you to save data sheets in the leaf nodes of the index.                                                | Does not save data sheets in the leaf nodes of the index.                     |
-| 5    | **Number per table** | A single table can consist of a sole clustered index.                                                          | A table can consist of multiple non-clustered indexes.                        |
-| 6    | **Data storage**     | Has the natural ability to store data on the disk.                                                             | Does not have the natural ability to store data on the disk.                  |
+| S.No |                      | Clustered Indexes                                                                                       | Non-Clustered Indexes                                        |
+| ---- | -------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 1    | **Data sorting**     | Defines the order or sorts the table or arranges the data by alphabetical order just like a dictionary. | Collects the data at one place and records at another place. |
+| 2    | **Speed**            | Generally faster for retrieving data in the sorted order or range of values.                            | Generally slower than the clustered index.                   |
+| 3    | **Memory usage**     | Demands less memory to execute the operation.                                                           | Demands more memory to execute the operations.               |
+| 4    | **Storage**          | Permits you to save data sheets in the leaf nodes of the index.                                         | Does not save data sheets in the leaf nodes of the index.    |
+| 5    | **Number per table** | A single table can consist of a sole clustered index.                                                   | A table can consist of multiple non-clustered indexes.       |
+| 6    | **Data storage**     | Has the natural ability to store data on the disk.                                                      | Does not have the natural ability to store data on the disk. |
 
 Resources: [Difference between Clustered and Non-Clustered Index](https://byjus.com/gate/difference-between-clustered-and-non-clustered-index/#:~:text=1-,A%20clustered%20index%20is%20used%20to%20define%20the%20order%20or,and%20records%20at%20another%20place.)
 
@@ -81,19 +82,18 @@ The choice between a clustered index and a non-clustered index often depends on 
 
 **Clustered Indexes**:
 
-1) **Primary Key**: If a column is a unique identifier for rows in a table (like an ID), it should typically have a clustered index. The primary key of a table is a good candidate for a clustered index.
-2) **Range Queries**: Clustered indexes are beneficial for range queries that return a large range of ordered data, and queries where you expect to retrieve the data sorted by the indexed columns. The database can read the data off the disk in one continuous disk scan.
-3) **Frequently Accessed Tables**: If a table is frequently accessed by other database operations, like a foreign key relationship, a clustered index can help speed these operations.
+1. **Primary Key**: If a column is a unique identifier for rows in a table (like an ID), it should typically have a clustered index. The primary key of a table is a good candidate for a clustered index.
+2. **Range Queries**: Clustered indexes are beneficial for range queries that return a large range of ordered data, and queries where you expect to retrieve the data sorted by the indexed columns. The database can read the data off the disk in one continuous disk scan.
+3. **Frequently Accessed Tables**: If a table is frequently accessed by other database operations, like a foreign key relationship, a clustered index can help speed these operations.
 
 Resources: (Clustered Index)[https://vladmihalcea.com/clustered-index/]
 
 **Non-Clustered Indexes**:
 
-1) **Non-Unique Columns**: If a column is not unique or has a high level of duplication, a non-clustered index can be a better choice.
-2) **Specific Columns**: If only specific columns are frequently accessed, a non-clustered index can provide quicker lookups since it doesn’t need to go through the entire row.
-3) **Covering Indexes**: For queries that can be covered by an index, a non-clustered index that includes all the necessary data can be highly efficient.
-4) **Frequently Updated or Inserted Tables**: If a table's data is frequently updated or if new data is often inserted, using non-clustered indexes can be beneficial as they can be less resource-intensive to maintain.
-
+1. **Non-Unique Columns**: If a column is not unique or has a high level of duplication, a non-clustered index can be a better choice.
+2. **Specific Columns**: If only specific columns are frequently accessed, a non-clustered index can provide quicker lookups since it doesn’t need to go through the entire row.
+3. **Covering Indexes**: For queries that can be covered by an index, a non-clustered index that includes all the necessary data can be highly efficient.
+4. **Frequently Updated or Inserted Tables**: If a table's data is frequently updated or if new data is often inserted, using non-clustered indexes can be beneficial as they can be less resource-intensive to maintain.
 
 ### Multiple different keys
 
@@ -103,6 +103,6 @@ If you need to optimize access based on multiple different keys, it is more comm
 
 A concise overview of data persistence:
 
-1) When we insert records into a table with a clustered index (typically created on the primary key), the database management system stores the records directly within the leaf nodes of the B-tree structure for this index. The records are sorted in the B-tree based on the values of the primary key.
-2) We can create additional non-clustered indexes on the same table. These non-clustered indexes also use a B-tree structure, but they work slightly differently. Instead of storing the full record within the leaf nodes, they store the index key (which could be any column or combination of columns, not necessarily the primary key) and a reference (like a pointer) to the actual record in the clustered index.
-3) When we perform a lookup using a non-clustered index, the database management system first locates the index key in the B-tree of the non-clustered index, finds the reference to the actual record, then uses that reference to retrieve the record from the B-tree of the clustered index.
+1. When we insert records into a table with a clustered index (typically created on the primary key), the database management system stores the records directly within the leaf nodes of the B-tree structure for this index. The records are sorted in the B-tree based on the values of the primary key.
+2. We can create additional non-clustered indexes on the same table. These non-clustered indexes also use a B-tree structure, but they work slightly differently. Instead of storing the full record within the leaf nodes, they store the index key (which could be any column or combination of columns, not necessarily the primary key) and a reference (like a pointer) to the actual record in the clustered index.
+3. When we perform a lookup using a non-clustered index, the database management system first locates the index key in the B-tree of the non-clustered index, finds the reference to the actual record, then uses that reference to retrieve the record from the B-tree of the clustered index.
