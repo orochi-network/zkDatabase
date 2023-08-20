@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from "axios";
-import { JWT } from "jwt.js";
+import { JWT } from "./jwt.js";
 
 export interface IKuboOption {}
 
