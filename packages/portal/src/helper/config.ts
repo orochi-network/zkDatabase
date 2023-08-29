@@ -14,6 +14,7 @@ interface IAppConfiguration {
   mariadbConnectUrl: string;
   googleLoginId: string;
   redisUrl: string;
+  kuboUrl: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
@@ -37,6 +38,7 @@ const configLoader = Singleton<ConfigLoader>(
       .regex(/^mysql:\/\//),
     googleLoginId: Joi.string().trim().required(),
     redisUrl: Joi.string().trim().required(),
+    kuboUrl: Joi.string().trim().required(),
   })
 );
 

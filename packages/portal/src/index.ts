@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import express from 'express';
+import fileupload from 'express-fileupload';
 import http from 'http';
 import cors from 'cors';
 import logger from './helper/logger';
@@ -12,11 +13,14 @@ import { Connector } from '@orochi-network/framework';
 import RedisInstance from './helper/redis';
 import JWTAuthenInstance from './helper/jwt';
 import { ModelUser } from './model/user';
+import kuboProxy from './kubo-proxy';
 
 (async () => {
   Connector.connectByUrl(config.mariadbConnectUrl);
   await RedisInstance.connect();
   const app = express();
+  app.use(express.json()).use(fileupload());
+
   const httpServer = http.createServer(app);
   const server = new ApolloServer<AppContext>({
     typeDefs: TypedefsApp,
@@ -50,15 +54,13 @@ import { ModelUser } from './model/user';
     })
   );
 
+  app.use('/kubo-proxy', kuboProxy);
+
   await new Promise<void>((resolve) =>
     httpServer.listen({ port: 4000 }, resolve)
   );
 
-  if (config.nodeEnv == 'development') {
-    logger.warn(
-      'Our environment is development, skip check for authentication'
-    );
-  }
-
   logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
+
+  logger.debug(`🚀 Proxy ready at http://localhost:4000/kubo-proxy`);
 })();
