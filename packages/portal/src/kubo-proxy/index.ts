@@ -5,6 +5,7 @@ import { UploadedFile } from 'express-fileupload';
 import JWTAuthenInstance from '../helper/jwt';
 import { ModelUser } from '../model/user';
 import { ModelApiKey } from '../model/api_key';
+import logger from '../helper/logger';
 
 export const REQUIRED_AUTHENTICATION = [
   'files/rm',
@@ -52,12 +53,14 @@ const kuboProxy = async (req: Request, res: Response, next: NextFunction) => {
   const imApiKey = new ModelApiKey();
   const token = req.headers.authorization;
   const apiKey = req.header('X-API-KEY');
-  console.log(req.url);
 
   const requireAuth = REQUIRED_AUTHENTICATION.some(
     (arg) => req.url.indexOf(arg) >= 0
   );
-  console.log(requireAuth);
+
+  logger.info(
+    `Proxy to ${config.kuboUrl}${req.url} with requireAuth = ${requireAuth}`
+  );
 
   if (requireAuth) {
     if (token) {
