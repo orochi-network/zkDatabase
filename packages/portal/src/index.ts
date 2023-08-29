@@ -14,6 +14,7 @@ import RedisInstance from './helper/redis';
 import JWTAuthenInstance from './helper/jwt';
 import { ModelUser } from './model/user';
 import kuboProxy from './kubo-proxy';
+import { AppErrorClass } from './helper/response-error';
 
 (async () => {
   Connector.connectByUrl(config.mariadbConnectUrl);
