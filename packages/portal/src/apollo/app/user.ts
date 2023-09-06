@@ -170,8 +170,9 @@ export const resolversUser = {
         try {
           const ticket = await GoogleOAuth2Instance.verifyIdToken({
             idToken: token,
-            audience: [config.googleLoginId],
+            // audience: [config.googleLoginId],
           });
+          console.log(ticket);
 
           const payload = ticket.getPayload();
           if (payload && payload.email) {

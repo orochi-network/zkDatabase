@@ -6,6 +6,7 @@ import JWTAuthenInstance from '../helper/jwt';
 import { ModelUser } from '../model/user';
 import { ModelApiKey } from '../model/api_key';
 import logger from '../helper/logger';
+import { ModelFileLog } from '../model/file_log';
 
 export const REQUIRED_AUTHENTICATION = [
   'files/rm',
@@ -14,6 +15,10 @@ export const REQUIRED_AUTHENTICATION = [
   'pin/add',
   'name/publish',
 ];
+
+export const REMOVE_ACTION = 'files/rm';
+export const ADD_ACTION = 'add';
+export const PIN_ADD_ACTION = 'pin/add';
 
 const getData = (req: Request) => {
   if (req.body['data']) return req.body['data'];
@@ -37,18 +42,32 @@ const transferRequest = async (req: Request, res: Response) => {
     url: `${config.kuboUrl}${req.url}`,
     headers: headers,
     params: params,
-    data: data,
-    responseType: 'stream',
+    data,
   });
-  for (let key in response.headers) {
-    res.setHeader(key, response.headers[key]);
-  }
 
-  const stream = response.data;
-  stream.pipe(res);
+  return response.data;
 };
 
-const kuboProxy = async (req: Request, res: Response, next: NextFunction) => {
+const addFileRequest = async (
+  req: Request,
+  res: Response,
+  userId: number,
+  _next: NextFunction
+) => {
+  const imFileLog = new ModelFileLog();
+  const result = await transferRequest(req, res);
+  await imFileLog.addFile(userId, result?.Name);
+  return res.json({ result });
+};
+
+const removeFileRequest = async (
+  req: Request,
+  res: Response,
+  userId: number,
+  _next: NextFunction
+) => {};
+
+const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
   const imUser = new ModelUser();
   const imApiKey = new ModelApiKey();
   const token = req.headers.authorization;
@@ -63,19 +82,28 @@ const kuboProxy = async (req: Request, res: Response, next: NextFunction) => {
   );
 
   if (requireAuth) {
+    const isAdd =
+      req.url.indexOf(ADD_ACTION) >= 0 && req.url.indexOf('pin/add') < 0;
+    const isRemove = req.url.indexOf(REMOVE_ACTION) >= 0;
     if (token) {
       const { uuid } = await JWTAuthenInstance.verifyHeader(token);
       if (uuid) {
         const [dbUser] = await imUser.get([{ field: 'uuid', value: uuid }]);
         if (dbUser) {
-          return transferRequest(req, res);
+          if (isAdd) {
+            return addFileRequest(req, res, dbUser.id, _next);
+          }
         }
       }
     }
     if (apiKey) {
-      const isExist = await imApiKey.isExist('key', apiKey);
-      if (isExist) {
-        return transferRequest(req, res);
+      const [dbUser] = await imApiKey.get([{ field: 'key', value: apiKey }]);
+      if (dbUser) {
+        if (isAdd) {
+          return addFileRequest(req, res, dbUser.id, _next);
+        }
+        const result = await transferRequest(req, res);
+        return res.json({ result });
       }
     }
 
