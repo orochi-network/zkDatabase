@@ -1,4 +1,4 @@
-import { Field } from 'snarkyjs';
+import { Field } from 'o1js';
 import { CID } from 'multiformats';
 import { TKuboConfig } from '@zkdb/kubo';
 

@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { Field } from 'snarkyjs';
+import { Field } from 'o1js';
 import { BigIntResolver } from 'graphql-scalars';
 import resolverWrapper, { validateDigest } from '../validation.js';
 import loader from '../../helper/loader.js';

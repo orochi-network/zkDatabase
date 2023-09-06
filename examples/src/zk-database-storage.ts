@@ -1,4 +1,4 @@
-import { UInt32, CircuitString } from 'snarkyjs';
+import { UInt32, CircuitString } from 'o1js';
 import { ZKDatabaseStorage, Schema } from 'zkdb';
 
 class Account extends Schema({

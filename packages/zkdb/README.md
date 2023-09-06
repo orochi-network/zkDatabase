@@ -1,3 +1,9 @@
+## Hello o1js!
+
+This version contain no-backward compatible changes, please check the [O(1) Labs has renamed SnarkyJS to o1js, effective immediately!](https://github.com/o1-labs/o1js) for more details.
+
+zkDatabase (aka `zkdb`) from `1.0.0` will switch to `o1js` as the underlying zkSNARK engine.
+
 ## Introduction
 
 Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase use a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to ensuring the correctness of data in verifiable manner. With zkDatabase, it's allow developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
@@ -25,7 +31,7 @@ import {
   state,
   CircuitString,
   SmartContract,
-} from 'snarkyjs';
+} from 'o1js';
 import { Schema, ZKDatabaseStorage } from 'zkdb';
 
 // Enable this to generate proofs

@@ -1,4 +1,4 @@
-import { Field } from 'snarkyjs';
+import { Field } from 'o1js';
 import { MerkleProof } from '../merkle-tree/common.js';
 import {
   StorageEngine,
