@@ -1,4 +1,4 @@
-import { MerkleWitness, Field, Poseidon, Provable } from 'snarkyjs';
+import { MerkleWitness, Field, Poseidon, Provable } from 'o1js';
 
 /**
  * Factory function to create an ExtendedMerkleWitness class with a given height.

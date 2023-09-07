@@ -423,7 +423,7 @@ export class StorageEngineIPFS extends StorageEngineBase<
     } else {
       nodeHelia = await createHelia();
     }
-    const newInstance = new StorageEngineIPFS(nodeHelia);
+    const newInstance = new StorageEngineIPFS(nodeHelia as any as Helia);
     await newInstance.tryResolve();
     return newInstance;
   }

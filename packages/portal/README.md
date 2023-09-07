@@ -25,7 +25,7 @@ import {
   state,
   CircuitString,
   SmartContract,
-} from 'snarkyjs';
+} from 'o1js';
 import { Schema, ZKDatabaseStorage } from 'zkdb';
 
 // Enable this to generate proofs

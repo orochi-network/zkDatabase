@@ -12,7 +12,7 @@ import {
   Signature,
   Int64,
   Encoding,
-} from 'snarkyjs';
+} from 'o1js';
 
 class RandomData extends Struct({
   publicKey: PublicKey,

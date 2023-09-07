@@ -1,4 +1,4 @@
-import { UInt32, CircuitString } from 'snarkyjs';
+import { UInt32, CircuitString } from 'o1js';
 import { Schema, TZKDatabaseConfig, ZKDatabaseStorage } from '../core/index.js';
 
 class Account extends Schema({

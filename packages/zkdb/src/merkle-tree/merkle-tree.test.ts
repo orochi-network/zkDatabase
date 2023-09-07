@@ -1,4 +1,4 @@
-import { Poseidon, Field, MerkleTree, Circuit, Bool } from 'snarkyjs';
+import { Poseidon, Field, MerkleTree, Circuit, Bool, Provable } from 'o1js';
 import { TMerkleNodesMap, BaseMerkleTree } from './merkle-tree-base.js';
 import crypto from 'crypto';
 import { MerkleTreeStorage } from './merkle-tree-storage.js';
@@ -104,7 +104,10 @@ async function getNodeTest(
 
     avaiableIndexies.push(leafIndex);
 
-    const expectedResult = expectedMerkleTree.getNode(randomLevel, randomIndex);
+    const expectedResult = await expectedMerkleTree.getNode(
+      randomLevel,
+      randomIndex
+    );
     const actualResult = await merkleTree.getNode(randomLevel, randomIndex);
 
     let isZero = Bool(false);
@@ -114,9 +117,9 @@ async function getNodeTest(
         break;
       }
     }
-    Circuit.log('is zero', isZero);
-    Circuit.log('expectedResult', expectedResult);
-    Circuit.log('actualResult', actualResult);
+    Provable.log('is zero', isZero);
+    Provable.log('expectedResult', expectedResult);
+    Provable.log('actualResult', actualResult);
 
     isPassed = isPassed.and(expectedResult.equals(actualResult));
 
@@ -126,7 +129,7 @@ async function getNodeTest(
   }
 
   //Verify
-  Circuit.log('getNodeTest is passed', isPassed);
+  Provable.log('getNodeTest is passed', isPassed);
 }
 
 async function getSetLeafMerkleTreeTest(
@@ -215,8 +218,8 @@ function verifyNodes(
     for (let j = 0; j < actualNodeKeys.length; j++) {
       const nodeKey = actualNodeKeys[j];
       if (nodeKey !== expectedNodeKeys[j]) {
-        Circuit.log('expected node key', expectedNodeKeys[j]);
-        Circuit.log('actual node key', nodeKey);
+        Provable.log('expected node key', expectedNodeKeys[j]);
+        Provable.log('actual node key', nodeKey);
         return false;
       }
 
