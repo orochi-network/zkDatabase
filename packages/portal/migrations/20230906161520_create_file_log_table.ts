@@ -17,6 +17,8 @@ export async function up(knex: Knex): Promise<void> {
 
       table.string('name', 255).notNullable().index();
 
+      table.string('hash', 255).notNullable().index();
+
       table.boolean('isRemoved').notNullable().defaultTo(false);
 
       table.index(['uuid', 'name'], 'indexed_fields');

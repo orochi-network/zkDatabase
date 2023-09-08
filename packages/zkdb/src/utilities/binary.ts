@@ -1,5 +1,5 @@
 import { BSON } from 'bson';
-import { Poseidon, Encoding, Field } from 'snarkyjs';
+import { Poseidon, Encoding, Field } from 'o1js';
 
 /**
  * Convert hex string to Uint8Array

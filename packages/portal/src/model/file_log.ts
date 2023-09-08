@@ -5,7 +5,6 @@ import {
   ModelMysqlBasic,
 } from '@orochi-network/framework';
 import { Knex } from 'knex';
-import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { IBaseEntity } from './base_modal';
 
@@ -13,6 +12,7 @@ export interface IFileLog extends IBaseEntity {
   userId: number;
   name: string;
   isRemoved: boolean;
+  hash: string;
 }
 
 export class ModelFileLog extends ModelMysqlBasic<IFileLog> {
@@ -24,19 +24,24 @@ export class ModelFileLog extends ModelMysqlBasic<IFileLog> {
     return this.getDefaultKnex().select('*');
   }
 
-  public async addFile(userId: number, name: string) {
+  public async addFile(userId: number, name: string, hash: string) {
     const [isExist] = await this.get([
       { field: 'name', value: name },
       { field: 'isRemoved', value: false },
+      { field: 'hash', value: hash },
     ]);
     if (isExist) {
-      return this.update({ userId }, [{ field: 'name', value: name }]);
+      return this.update({ userId }, [
+        { field: 'name', value: name },
+        { field: 'hash', value: hash },
+      ]);
     }
     return this.create({
       name,
       userId,
       isRemoved: false,
       uuid: uuidv4(),
+      hash,
     });
   }
 }

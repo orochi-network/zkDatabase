@@ -37,6 +37,7 @@ const transferRequest = async (req: Request, res: Response) => {
   const params = req.body['params'] ?? null;
   const data = getData(req);
 
+  console.log('axios ne');
   const response = await axios({
     method: method,
     url: `${config.kuboUrl}${req.url}`,
@@ -56,7 +57,7 @@ const addFileRequest = async (
 ) => {
   const imFileLog = new ModelFileLog();
   const result = await transferRequest(req, res);
-  await imFileLog.addFile(userId, result?.Name);
+  await imFileLog.addFile(userId, result?.Name, result?.Hash);
   return res.json({ result });
 };
 

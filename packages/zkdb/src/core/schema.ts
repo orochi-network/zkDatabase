@@ -1,6 +1,6 @@
-import { Struct, Poseidon, Field, InferProvable } from 'snarkyjs';
+import { Struct, Poseidon, Field, InferProvable } from 'o1js';
 import { BSON } from 'bson';
-export { Field } from 'snarkyjs';
+export { Field } from 'o1js';
 
 /**
  * Interface for a schema

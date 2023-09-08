@@ -1,5 +1,5 @@
 import { BSON } from 'bson';
-import { Field, Poseidon } from 'snarkyjs';
+import { Field, Poseidon } from 'o1js';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
 

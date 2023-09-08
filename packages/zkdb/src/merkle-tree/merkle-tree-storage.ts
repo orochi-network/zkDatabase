@@ -1,4 +1,4 @@
-import { Field } from 'snarkyjs';
+import { Field } from 'o1js';
 import { FILENAME_MERKLE } from '../storage-engine/metadata.js';
 import { BaseMerkleTree, TMerkleNodesMap } from './merkle-tree-base.js';
 import { StorageEngine } from '../storage-engine/index.js';

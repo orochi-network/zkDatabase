@@ -5,12 +5,12 @@ module.exports = {
     node: true,
     jest: true,
   },
-  extends: ['eslint:recommended', 'plugin:snarkyjs/recommended'],
+  extends: ['eslint:recommended', 'plugin:o1js/recommended'],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
   },
-  plugins: ['@typescript-eslint', 'snarkyjs'],
+  plugins: ['@typescript-eslint', 'o1js'],
   settings: {
     'import/parsers': {
       '@typescript-eslint/parser': ['.ts', '.tsx'],

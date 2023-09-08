@@ -1,4 +1,4 @@
-import { SmartContract, State, state, method, Field } from 'snarkyjs';
+import { SmartContract, State, state, method, Field } from 'o1js';
 import { IDocument } from './common.js';
 
 // we need the initiate tree root in order to tell the contract about our off-chain storage
