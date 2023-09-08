@@ -25,7 +25,7 @@ const getData = (req: Request) => {
   if (req?.files?.file) {
     const file = req?.files?.file as UploadedFile;
     const formData = new FormData();
-    formData.append('file', file.data.toString());
+    formData.append('file', new Blob([file.data]), file.name);
     return formData;
   }
   return null;
@@ -37,16 +37,21 @@ const transferRequest = async (req: Request, res: Response) => {
   const params = req.body['params'] ?? null;
   const data = getData(req);
 
-  console.log('axios ne');
-  const response = await axios({
-    method: method,
-    url: `${config.kuboUrl}${req.url}`,
-    headers: headers,
-    params: params,
-    data,
-  });
+  try {
+    const response = await axios({
+      method: method,
+      url: `${config.kuboUrl}${req.url}`,
+      headers: headers,
+      params: params,
+      data,
+    });
 
-  return response.data;
+    console.log('response', response.data);
+    return response.data;
+  } catch (error) {
+    logger.error(error);
+    return res.status(500).json({ success: false, message: 'Something wrong' });
+  }
 };
 
 const addFileRequest = async (
@@ -110,7 +115,8 @@ const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
 
     return res.status(401).json({ success: false, message: 'Unauthorized' });
   }
-  return transferRequest(req, res);
+  const result = await transferRequest(req, res);
+  return res.json({ result });
 };
 
 export default kuboProxy;
