@@ -44,4 +44,18 @@ export class ModelFileLog extends ModelMysqlBasic<IFileLog> {
       hash,
     });
   }
+
+  public async getFileLog(arg: string): Promise<IFileLog[]> {
+    return this.getDefaultKnex()
+      .select('*')
+      .whereLike('hash', `%${arg}%`)
+      .andWhere('isRemoved', false);
+  }
+
+  public async removeFile(hash: string) {
+    return this.update({ isRemoved: true }, [
+      { field: 'hash', value: hash },
+      { field: 'isRemoved', value: false },
+    ]);
+  }
 }

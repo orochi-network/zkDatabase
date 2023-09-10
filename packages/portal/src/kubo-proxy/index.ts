@@ -46,7 +46,6 @@ const transferRequest = async (req: Request, res: Response) => {
       data,
     });
 
-    console.log('response', response.data);
     return response.data;
   } catch (error) {
     logger.error(error);
@@ -71,7 +70,28 @@ const removeFileRequest = async (
   res: Response,
   userId: number,
   _next: NextFunction
-) => {};
+) => {
+  console.log('query', req.query);
+  const { arg } = req.query;
+  const imFileLog = new ModelFileLog();
+
+  if (arg && typeof arg === 'string') {
+    const hash = arg.substring(arg.lastIndexOf('/') + 1 || 0, arg.length);
+    const [data] = await imFileLog.getFileLog(hash);
+    if (data) {
+      if (userId !== data.userId) {
+        return res
+          .status(401)
+          .json({ success: false, message: 'Unauthorized' });
+      }
+
+      await imFileLog.removeFile(hash);
+      const result = await transferRequest(req, res);
+      return res.json({ result });
+    }
+  }
+  return res.status(500).json({ success: false, message: 'Something wrong' });
+};
 
 const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
   const imUser = new ModelUser();
@@ -99,6 +119,11 @@ const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
           if (isAdd) {
             return addFileRequest(req, res, dbUser.id, _next);
           }
+          if (isRemove) {
+            return removeFileRequest(req, res, dbUser.id, _next);
+          }
+          const result = await transferRequest(req, res);
+          return res.json({ result });
         }
       }
     }
