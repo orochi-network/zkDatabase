@@ -1,27 +1,27 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "es2020",
-    "lib": ["dom", "esnext"],
-    "outDir": "./build",
-    "rootDir": ".",
+    "module": "commonjs",
     "strict": true,
-    "declarationMap": true,
-    "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "moduleResolution": "nodenext",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "allowJs": true,
-    "declaration": true,
-    "sourceMap": true,
-    "noFallthroughCasesInSwitch": true,
+    "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
-    "paths": {}
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "declaration": false,
+    "outDir": "./build/",
+    "rootDir": ".",
+    "types": ["node"]
   },
-  "include": ["./src"],
-  "exclude": ["node_modules", "build"]
+  "include": ["**/*.ts"],
+  "exclude": [
+    "build",
+    "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "typechain/**/*.ts"
+  ]
 }

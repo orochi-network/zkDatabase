@@ -1,12 +1,19 @@
 import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
-import logger from './logger.js';
-import config from './config.js';
+import logger from './logger';
+import config from './config';
 import { Singleton } from '@orochi-network/framework';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
-  zkDatabase: boolean;
+  uuid: string;
+  email: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  zkDatabase?: boolean;
 }
+
+export const jwtExpired = 7200;
 
 export class JWTAuthentication<T extends jose.JWTPayload> {
   private secret: Uint8Array;
@@ -40,15 +47,12 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     return { payload: payload as T, protectedHeader };
   }
 
-  public async verifyZKDatabaseHeader(header: string): Promise<boolean> {
+  public async verifyHeader(header: string): Promise<T> {
     // Skip for development
-    if (config.nodeEnv == 'development') {
-      return true;
-    }
     try {
       // 7 is length of `Bearer + space`
       const { payload } = await this.verify(header.substring(7));
-      return (payload.zkDatabase as boolean) || false;
+      return payload || undefined;
     } catch (e) {
       logger.error(e);
       throw new GraphQLError('User is not authenticated', {
@@ -61,8 +65,10 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
   }
 }
 
-export default Singleton(
+export const JWTAuthenInstance = Singleton(
   'jwt-authentication',
   JWTAuthentication<IJWTAuthenticationPayload>,
   config.hmacSecretKey
 );
+
+export default JWTAuthenInstance;

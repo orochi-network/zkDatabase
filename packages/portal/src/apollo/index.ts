@@ -1,6 +1,5 @@
-import { resolversDocument, typeDefsDocument } from './app/document.js';
-import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
+import { resolversUser, typeDefsUser } from './app/user';
 
-export const TypedefsApp = [typeDefsDocument, typeDefsMerkleTree];
+export const TypedefsApp = [typeDefsUser];
 
-export const ResolversApp = [resolversDocument, resolversMerkleTree];
+export const ResolversApp = [resolversUser];

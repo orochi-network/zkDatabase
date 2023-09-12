@@ -1,7 +1,12 @@
 import { GraphQLResolveInfo } from 'graphql';
 import Joi from 'joi';
+import { AppContext } from '../helper/common';
 
-const resolverWrapper = (
+interface IBaseAuthRequest {
+  apiKey: string;
+}
+
+export const resolverWrapper = (
   schema: Joi.ObjectSchema,
   resolver: (
     _root: any,
@@ -12,7 +17,7 @@ const resolverWrapper = (
 ) => {
   return async (
     root: any,
-    args: any,
+    args: IBaseAuthRequest,
     context: any,
     info: GraphQLResolveInfo
   ) => {
@@ -20,6 +25,31 @@ const resolverWrapper = (
     if (error) {
       throw new Error(error.message);
     }
+    return resolver(root, args, context, info);
+  };
+};
+
+export const resolverAuth = (
+  schema: Joi.ObjectSchema,
+  resolver: (
+    _root: any,
+    _args: any,
+    context: AppContext,
+    _info: GraphQLResolveInfo
+  ) => Promise<any>
+) => {
+  return async (
+    root: any,
+    args: any,
+    context: AppContext,
+    info: GraphQLResolveInfo
+  ) => {
+    const { error } = schema.validate(args);
+    if (error) {
+      throw new Error(error.message);
+    }
+    const { token } = context;
+
     return resolver(root, args, context, info);
   };
 };
