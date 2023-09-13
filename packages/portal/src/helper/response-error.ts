@@ -1,4 +1,4 @@
-import { Singleton } from '@dkdao/framework';
+import { Singleton } from '@orochi-network/framework';
 
 export class AppErrorClass extends Error {
   public statusCode: number;
