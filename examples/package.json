@@ -1,5 +1,5 @@
 {
-  "name": "exam",
+  "name": "example",
   "version": "0.1.0",
   "description": "",
   "author": "",
@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc",
     "buildw": "tsc --watch",
+    "piglet-bank": "npm run build && node --experimental-vm-modules --experimental-wasm-threads build/src/piglet-bank.js",
     "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && husky install contracts/.husky",
@@ -45,9 +46,9 @@
     "typescript": "^4.7.2"
   },
   "peerDependencies": {
-    "snarkyjs": "^0.11.4"
+    "o1js": "0.12.*"
   },
   "dependencies": {
-    "zkdb": "^0.1.5"
+    "zkdb": "^1.0.0"
   }
 }

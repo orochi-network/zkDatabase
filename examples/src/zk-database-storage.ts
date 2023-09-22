@@ -24,6 +24,7 @@ class Account extends Schema({
 }
 
 (async () => {
+  // To use ipfs you need to run `ipfs daemon` first
   const zkDB = await ZKDatabaseStorage.getInstance('zkdb-test-ipfs', {
     storageEngine: 'delegated-ipfs',
     merkleHeight: 16,
@@ -32,8 +33,10 @@ class Account extends Schema({
         host: '127.0.0.1',
         port: 5001,
         protocol: 'http',
-        username: 'chiro',
-        secretAPIKey: 'N/A',
+        authentication: {
+          username: 'N/A',
+          secretKey: 'N/A',
+        },
       },
       database: 'test',
     },
