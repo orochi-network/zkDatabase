@@ -5,7 +5,6 @@ import {
   Metadata,
   StorageEngineLocal,
   StorageEngineDelegatedIPFS,
-  StorageEngineIPFS,
 } from '../storage-engine/index.js';
 import { IDocument, TZKDatabaseConfig } from './common.js';
 import { IIndexing } from '../index/simple.js';
@@ -265,10 +264,6 @@ export class ZKDatabaseStorage {
       let storageEngine: StorageEngine;
       if (config.storageEngine === 'delegated-ipfs') {
         storageEngine = await StorageEngineDelegatedIPFS.getInstance(
-          config.storageEngineCfg
-        );
-      } else if (config.storageEngine === 'ipfs') {
-        storageEngine = await StorageEngineIPFS.getInstance(
           config.storageEngineCfg
         );
       } else {
