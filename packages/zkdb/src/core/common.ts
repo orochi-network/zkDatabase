@@ -157,4 +157,8 @@ export type TZKDatabaseConfig =
       storageEngine: 'delegated-ipfs';
       merkleHeight: number;
       storageEngineCfg: TDelegatedIPFSConfig;
+    }
+  | {
+      storageEngine: 'memory';
+      merkleHeight: number;
     };
