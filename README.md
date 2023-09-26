@@ -158,7 +158,7 @@ Instead of SQL, we build this project in a noSQL fashion, learnt from two succes
 
 ## Specification
 
-We need your help to write the specification. The specification will be in a [different document](./specs/README.md).
+The specification of zkDatabase was moved [here](https://docs.orochi.network/zkdatabase/chapter.html).
 
 ## Contribute
 
