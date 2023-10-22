@@ -2,7 +2,6 @@ import {
   AccountUpdate,
   Experimental,
   Field,
-  Provable,
   SelfProof,
 } from 'o1js';
 import { RollUpInput, RollUpOutput } from './rollup-params.js';

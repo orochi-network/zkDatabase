@@ -7,15 +7,13 @@ import {
   method,
   UInt64,
   AccountUpdate,
-  Provable
+  Provable,
+  Mina
 } from 'o1js';
-import { User } from './user.js';
-import { Action } from '../../roll-up/action.js';
-import { RollUpProof } from '../../roll-up/offchain-rollup.js';
+import { Action } from '../rollup/action.js';
+import { RollUpProof } from '../rollup/offchain-rollup.js';
+import { RollupService } from '../rollup/rollup-service.js';
 
-let initialCommitment: Field = new Field(0);
-
-/*Example*/
 export class DatabaseContract extends SmartContract {
   @state(Field) rootCommitment = State<Field>();
   @state(Field) currentActionState = State<Field>();
@@ -34,18 +32,20 @@ export class DatabaseContract extends SmartContract {
     super.init();
 
     this.currentActionState.set(Reducer.initialActionState);
-    this.rootCommitment.set(initialCommitment);
+    const merkleTreeRoot = Provable.witness(Field, () => RollupService.get().getMerkleTree().getRoot())
+    this.rootCommitment.set(merkleTreeRoot);
   }
 
-  @method insert(index: UInt64, user: User) {
+  // TODO: Figured out how to replace the Field with IDocument / ISchema, which must be provable 
+  @method insert(index: UInt64, hash: Field) {
     this.reducer.dispatch(
       new Action({
         type: Field(0),
         index: index,
-        hash: user.hash(),
+        hash: hash,
       })
     );
-    this.emitEvent('INSERT', user.hash());
+    this.emitEvent('INSERT', hash);
   }
 
   @method remove(index: UInt64) {
@@ -80,7 +80,7 @@ export class DatabaseContract extends SmartContract {
     //   return AccountUpdate.Actions.updateSequenceState(oldActionState, actionsHash)
     // }, this.currentActionState.get()));
 
-    proof.publicOutput.newActionState.assertEquals(proof.publicOutput.newActionState);
+    // proof.publicOutput.newActionState.assertEquals(proof.publicOutput.newActionState);
 
     this.rootCommitment.set(proof.publicOutput.newRoot);
     this.currentActionState.set(proof.publicOutput.newActionState);
@@ -115,9 +115,15 @@ export class DatabaseContract extends SmartContract {
 
     return fromActionState;
   }
-}
 
-export function initZKDatabase(initialRoot: Field) {
-  // We initialize the contract with a commitment of 0
-  initialCommitment = initialRoot;
+  async rollUp(proof: RollUpProof): Promise<void> {
+    const creds = RollupService.get().getCredentials();
+
+    const tx = await Mina.transaction(creds.getFeePayer(), () => {
+      this.rollup(proof);
+    });
+
+    await tx.prove();
+    await tx.sign([creds.getFeePayerKey(), creds.getZkAppKey()]).send();
+  }
 }
