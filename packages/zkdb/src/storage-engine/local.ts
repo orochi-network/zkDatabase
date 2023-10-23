@@ -179,6 +179,12 @@ export class StorageEngineLocal extends StorageEngineBase<
     });
   }
 
+  public async cleanUp(): Promise<void> {
+    if (fs.existsSync(this.pathBase)) {
+      fs.rmSync(this.pathBase, { recursive: true })
+    }
+  }
+
   /**
    * Create new instance of storage engine
    * @param config Configuration of the storage engine
