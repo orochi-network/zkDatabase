@@ -339,6 +339,11 @@ export class StorageEngineIPFS extends StorageEngineBase<
     return false;
   }
 
+  // TODO: Must be implemented
+  public async cleanUp(): Promise<boolean> {
+    throw Error("Not Implemented")
+  }
+
   /**
    * Read a file from ipfs
    * @param path

@@ -141,6 +141,21 @@ export class StorageEngineLocal extends StorageEngineBase<
     return true;
   }
 
+  public async cleanUp(): Promise<boolean> {
+    try {
+      if (fs.existsSync(this.pathBase)) {
+        fs.rmSync(this.pathBase, { recursive: true });
+      }
+      return true;
+    } catch (err) {
+      console.error(
+        `Failed to clean up directory at path ${this.pathBase}:`,
+        err
+      );
+      return false;
+    }
+  }
+
   /**
    * Read a file from ipfs
    * @param path
@@ -177,12 +192,6 @@ export class StorageEngineLocal extends StorageEngineBase<
       writeStream.on('finish', () => resolve(fullPath));
       writeStream.on('error', reject);
     });
-  }
-
-  public async cleanUp(): Promise<void> {
-    if (fs.existsSync(this.pathBase)) {
-      fs.rmSync(this.pathBase, { recursive: true })
-    }
   }
 
   /**
