@@ -10,6 +10,8 @@ import { IPNSEntry } from 'ipns';
 import { Binary } from '../utilities/binary.js';
 import { StorageEngineBase } from './base.js';
 import { IIPFSDirRecord, THeliaConfig } from '../core/common.js';
+import { Readable, Writable } from 'stream';
+import { ReadStream } from 'fs';
 
 /**
  * Metadata filename
@@ -354,6 +356,18 @@ export class StorageEngineIPFS extends StorageEngineBase<
       return Binary.concatUint8Array(buf, size);
     }
     throw new Error('The give path is not a file');
+  }
+
+  public createReadStream(_path: string): Readable {
+    throw Error("Not Implemented");
+  }
+
+  public createWriteStream(_path: string): Writable {
+    throw Error("Not Implemented");
+  }
+
+  public streamWriteFile(_path: string, _contentStream: ReadStream): Promise<string> {
+    throw Error("Not Implemented");
   }
 
   /**

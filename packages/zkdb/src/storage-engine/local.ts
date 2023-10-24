@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { StorageEngineBase } from './base.js';
 import { TLocalConfig } from 'core/common.js';
+import { Readable, Writable } from 'stream';
 
 export interface IDirRecord {
   name: string;
@@ -144,6 +145,32 @@ export class StorageEngineLocal extends StorageEngineBase<
    */
   public async readFile(path: string): Promise<Uint8Array> {
     return fs.readFileSync(`${this.pathBase}/${path}`);
+  }
+
+  public createReadStream(path: string): Readable {
+    return fs.createReadStream(`${this.pathBase}/${path}`);
+  }
+
+  public createWriteStream(path: string): Writable {
+    return fs.createWriteStream(`${this.pathBase}/${path}`);
+  }
+  
+  public async streamWriteFile(path: string, contentStream: fs.ReadStream): Promise<string> {
+    const filepath = `${this.pathBase}/${path}`;
+    const pathParts = filepath.split('/');
+    pathParts.pop();
+    const currentPath = pathParts.join('/');
+    if (!(await this.isFolder(currentPath))) {
+      fs.mkdirSync(currentPath, { recursive: true });
+    }
+
+    const writeStream = this.createWriteStream(path);
+    contentStream.pipe(writeStream);
+
+    return new Promise<string>((resolve, reject) => {
+      writeStream.on('finish', () => resolve(filepath));
+      writeStream.on('error', reject);
+    });
   }
 
   /**

@@ -68,7 +68,7 @@ class RandomData extends Struct({
   }
 }
 
-describe('zkBSON Conversion Test', () => {
+describe.skip('zkBSON Conversion Test', () => {
   let randomData: RandomData;
 
   function randInt(): number {

@@ -255,41 +255,74 @@ export abstract class BaseMerkleTree {
    * as a swap. The Merkle tree can be stored on storage and memory
    * @returns
    */
-  protected static serialize(nodesMap: TMerkleNodesMap): Uint8Array {
-    let matrix: TMerkleNodesStorage = [];
-    for (const level in nodesMap) {
-      for (const nodeIndex in nodesMap[level]) {
-        matrix.push([
-          parseInt(level, 10),
-          parseInt(nodeIndex, 10),
-          nodesMap[level][nodeIndex].toString(),
-        ]);
-      }
-    }
-    return BSON.serialize({ root: matrix });
-  }
+  // protected static serialize(nodesMap: TMerkleNodesMap): Uint8Array {
+  //   let matrix: TMerkleNodesStorage = [];
+  //   for (const level in nodesMap) {
+  //     for (const nodeIndex in nodesMap[level]) {
+  //       matrix.push([
+  //         parseInt(level, 10),
+  //         parseInt(nodeIndex, 10),
+  //         nodesMap[level][nodeIndex].toString(),
+  //       ]);
+  //     }
+  //   }
+  //   return BSON.serialize({ root: matrix });
+  // }
 
   /**
    * @todo Deserialization can be done in a streaming way
    * @param data
    * @returns
    */
-  protected static deserialize(
-    data: Uint8Array
-  ): readonly [number, TMerkleNodesMap] {
-    const matrix = <TMerkleNodesStorage>BSON.deserialize(data).root;
-    const nodesMap: TMerkleNodesMap = {};
-    let height = 0;
-    for (let recordIndex = 0; recordIndex < matrix.length; recordIndex += 1) {
-      const [level, index, value] = matrix[recordIndex];
-      if (typeof nodesMap[level] === 'undefined') {
-        nodesMap[level] = {};
-      }
-      nodesMap[level][index] = Field(value);
-      if (level > height) {
-        height = level;
-      }
-    }
-    return [++height, nodesMap];
+  // protected static deserialize(
+  //   data: Uint8Array
+  // ): readonly [number, TMerkleNodesMap] {
+  //   const matrix = <TMerkleNodesStorage>BSON.deserialize(data).root;
+  //   const nodesMap: TMerkleNodesMap = {};
+  //   let height = 0;
+  //   for (let recordIndex = 0; recordIndex < matrix.length; recordIndex += 1) {
+  //     const [level, index, value] = matrix[recordIndex];
+  //     if (typeof nodesMap[level] === 'undefined') {
+  //       nodesMap[level] = {};
+  //     }
+  //     nodesMap[level][index] = Field(value);
+  //     if (level > height) {
+  //       height = level;
+  //     }
+  //   }
+  //   return [++height, nodesMap];
+  // }
+
+  protected static deserializeNode(
+    buffer: Buffer
+  ): [number, number, string] {
+    // Read the level and index from the buffer
+    const level = buffer.readDoubleLE(0);
+    const index = buffer.readDoubleLE(8);
+
+    // Convert the buffer segment related to the field element back to a hex string
+    const fieldElement = buffer.toString('hex', 16, 48);
+
+    return [level, index, fieldElement];
+  }
+
+  protected static serializeNode(node: [number, number, string]): Buffer {
+    // Extracting the level, index, and field element from the node tuple
+    const [level, index, fieldElement] = node;
+
+    // Convert the field element string to a buffer using hex encoding
+    const fieldElementBuffer = Buffer.from(fieldElement, 'hex');
+
+    // Allocate a buffer to store serialized data. 8 bytes for level, 8 bytes for index, and the rest for the field element
+    const buffer = Buffer.alloc(8 + 8 + fieldElementBuffer.length);
+
+    // Write the level and index to the buffer
+    buffer.writeDoubleLE(level, 0);
+    buffer.writeDoubleLE(index, 8);
+
+    // Copy the field element buffer to our main buffer starting from the 16th byte
+    fieldElementBuffer.copy(buffer, 16);
+
+    return buffer;
   }
 }
