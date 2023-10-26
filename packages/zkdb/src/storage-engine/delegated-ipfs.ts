@@ -122,11 +122,6 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
     return true;
   }
 
-  // TODO: Must be implemented
-  public async cleanUp(): Promise<boolean> {
-    throw Error('Not Implemented');
-  }
-
   /**
    * Read a file from ipfs
    * @param path

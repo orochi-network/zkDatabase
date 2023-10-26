@@ -1,14 +1,13 @@
-import {
-  Poseidon,
-  Field,
-  MerkleTree
-} from 'o1js';
+import { Poseidon, Field, MerkleTree } from 'o1js';
 import { TMerkleNodesMap } from '../../src/merkle-tree/merkle-tree-base.js';
 import crypto from 'crypto';
 import { MerkleTreeStorage } from '../../src/merkle-tree/merkle-tree-storage.js';
 import { StorageEngineLocal } from '../../src/storage-engine/local.js';
+import fs from 'fs';
 
 const MERKLE_TREE_HEIGHT = 8;
+
+const BASE_PATH = 'base';
 
 function randomInteger(min: number, max: number): number {
   const randomValue = Math.random() * (max - min) + min;
@@ -34,7 +33,7 @@ describe('Merkle-tree storage', () => {
 
   beforeEach(async () => {
     localStorage = await StorageEngineLocal.getInstance({
-      location: './base',
+      location: `./${BASE_PATH}`,
     });
 
     merkleTree = new MerkleTreeStorage(localStorage, MERKLE_TREE_HEIGHT);
@@ -42,7 +41,7 @@ describe('Merkle-tree storage', () => {
   });
 
   afterEach(async () => {
-    await localStorage.cleanUp();
+    await cleanUp();
   });
 
   it('fill merkle tree', async () => {
@@ -177,5 +176,17 @@ describe('Merkle-tree storage', () => {
     }
 
     return true;
+  }
+
+  async function cleanUp(): Promise<boolean> {
+    try {
+      if (fs.existsSync(`./${BASE_PATH}`)) {
+        fs.rmSync(`./${BASE_PATH}`, { recursive: true });
+      }
+      return true;
+    } catch (err) {
+      console.error(`Failed to clean up directory at path ./${BASE_PATH}:`, err);
+      return false;
+    }
   }
 });
