@@ -11,7 +11,6 @@ import { Binary } from '../utilities/binary.js';
 import { StorageEngineBase } from './base.js';
 import { IIPFSDirRecord, THeliaConfig } from '../core/common.js';
 import { Readable, Writable } from 'stream';
-import { ReadStream } from 'fs';
 
 /**
  * Metadata filename
@@ -366,7 +365,7 @@ export class StorageEngineIPFS extends StorageEngineBase<
     throw Error("Not Implemented");
   }
 
-  public streamWriteFile(_path: string, _contentStream: ReadStream): Promise<string> {
+  public streamWriteFile(_path: string, _contentStream: Readable): Promise<string> {
     throw Error("Not Implemented");
   }
 
