@@ -2,7 +2,6 @@ import { KuboClient, TFilesLsEntry, TFilesStatEntry } from '@zkdb/kubo';
 import { StorageEngineBase } from './base.js';
 import { TDelegatedIPFSConfig } from '../core/common.js';
 import { Readable, Writable } from 'stream';
-import { ReadStream } from 'fs';
 
 /**
  * Storage engine using IPFS as backend
@@ -142,7 +141,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
     throw Error("Not Implemented");
   }
 
-  public streamWriteFile(_path: string, _contentStream: ReadStream): Promise<string> {
+  public streamWriteFile(_path: string, _contentStream: Readable): Promise<string> {
     throw Error("Not Implemented");
   }
 

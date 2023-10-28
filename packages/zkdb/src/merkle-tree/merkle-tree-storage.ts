@@ -1,38 +1,32 @@
-import { Field } from 'o1js';
-import { FILENAME_MERKLE } from '../storage-engine/metadata.js';
-import { BaseMerkleTree, TMerkleNodesMap, TMerkleNodesStorage } from './merkle-tree-base.js';
-import { StorageEngine } from '../storage-engine/index.js';
-import { MerkleTreeReadStream } from './merkle-tree-read-stream.js';
-import * as fs from 'fs';
+import { MerkleTree, Field } from 'o1js';
+import { FILENAME_MERKLE, StorageEngine } from '../storage-engine/metadata.js';
+import { MerkleProof } from './common.js';
+import { MerkleTreeReadStream } from './merkle-tree-stream.js';
+import { MerkleTreeWriteStream } from './merkle-tree-stream.js';
 
 export const MERKLE_TREE_COLLECTION_NAME = '.security';
 
-export const MERKLE_TREE_FILE_NAME = 'merkle_tree';
+export const MERKLE_TREE_FILE_NAME = 'merkle_tree.txt';
 
-export class MerkleTreeStorage extends BaseMerkleTree {
+// We record index/value
+export type TMerkleNodesStorage = [bigint, Field][];
+
+export class MerkleTreeStorage {
   private storageEngine: StorageEngine;
+  private merkleTree: MerkleTree;
+  private merkleNodes: TMerkleNodesStorage;
 
-  /**
-   * Constructor method of MerkleTreeStorage
-   * @param storageEngine
-   * @param height
-   * @param nodesMap
-   */
-  constructor(
+  private constructor(
     storageEngine: StorageEngine,
     height: number,
-    nodesMap: TMerkleNodesMap = {}
+    nodes: TMerkleNodesStorage = []
   ) {
-    super(height, nodesMap);
     this.storageEngine = storageEngine;
+    this.merkleTree = new MerkleTree(height);
+    this.merkleNodes = nodes;
+    this.setLeaves(nodes)
   }
 
-  /**
-   * Load MerkleTreeStorage from storageEngine
-   * @param storageEngine
-   * @param defaultHeight
-   * @returns
-   */
   public static async load(
     storageEngine: StorageEngine,
     defaultHeight: number
@@ -40,125 +34,58 @@ export class MerkleTreeStorage extends BaseMerkleTree {
     if (await storageEngine.isFile(FILENAME_MERKLE)) {
       const readStream = storageEngine.createReadStream(FILENAME_MERKLE);
 
-      const nodesMap: TMerkleNodesMap = {};
+      const merkleTreeWriteStream = new MerkleTreeWriteStream();
 
-      let height = 0;
+      await new Promise((resolve, reject) => {
+        readStream
+          .pipe(merkleTreeWriteStream)
+          .on('finish', resolve)
+          .on('error', reject);
+      });
 
-      for await (const chunk of readStream) {
-        const node = MerkleTreeStorage.deserializeNode(chunk);
-        nodesMap[node[0]][node[1]] = Field(node[2]);
-        if (node[0] > height) {
-          height = node[0];
-        }
-      }
-
-      return new MerkleTreeStorage(storageEngine, height, nodesMap);
+      const merkleData = merkleTreeWriteStream.getMerkleTreeData();
+      return new MerkleTreeStorage(storageEngine, defaultHeight, merkleData.nodes);
     } else {
-      return new MerkleTreeStorage(storageEngine, defaultHeight, {});
+      return new MerkleTreeStorage(storageEngine, defaultHeight);
     }
   }
 
-  /**
-   * Save MerkleTreeStorage to storageEngine
-   */
   public async save(): Promise<void> {
-    const nodesMap = await this.getNodes();
+    return new Promise((resolve, reject) => {
+      const merkleTreeStream = new MerkleTreeReadStream({
+        height: this.merkleTree.height,
+        nodes: this.merkleNodes,
+      });
 
-    let nodes: TMerkleNodesStorage = [];
-    for (const level in nodesMap) {
-      for (const nodeIndex in nodesMap[level]) {
-        nodes.push([
-          parseInt(level, 10),
-          parseInt(nodeIndex, 10),
-          nodesMap[level][nodeIndex].toString(),
-        ]);
-      }
-    }
-
-    const merkleTreeStream = new MerkleTreeReadStream(nodes);
-
-    const writeStream = this.storageEngine.createWriteStream(MERKLE_TREE_FILE_NAME);
-
-    merkleTreeStream.pipe(writeStream);
+      const writeStream = this.storageEngine.createWriteStream(
+        FILENAME_MERKLE
+      );
+      merkleTreeStream.on('error', reject);
+      writeStream.on('error', reject);
+      writeStream.on('finish', resolve);
+      merkleTreeStream.pipe(writeStream);
+      merkleTreeStream.on('end', writeStream.end);
+    });
   }
 
-  public async getRoot(): Promise<Field> {
-    if (await this.isEmpty()) {
-      return this.zeroes[this.height - 1];
-    }
-    const nodes = await this.getNodes();
-
-    const value = nodes[this.height - 1]['0'];
-
-    return Field(value);
+  public getRoot(): Field {
+    return this.merkleTree.getRoot();
   }
 
-  public async getNode(level: number, index: bigint): Promise<Field> {
-    if (await this.isEmpty()) {
-      return this.zeroes[level];
-    }
-
-    const nodes = await this.getNodes();
-    return this.getNodeOrZero(level, index, nodes);
+  public getWitness(index: bigint): MerkleProof[] {
+    return this.merkleTree.getWitness(index);
   }
 
-  public async isEmpty(): Promise<boolean> {
-    const result = await this.storageEngine.isFile(FILENAME_MERKLE);
-    return !result;
+  public setLeaf(index: bigint, digest: Field) {
+    this.merkleNodes.push([index, digest]);
+    this.merkleTree.setLeaf(index, digest);
   }
 
-  protected async writeLeaf(nodesMap: TMerkleNodesMap): Promise<void> {
-    const currentNodesMap = await this.getNodes();
-    if (
-      Object.keys(currentNodesMap).length !== Object.keys(nodesMap).length &&
-      Object.keys(currentNodesMap).length !== 0
-    ) {
-      throw new Error(`the length of trees are not equal`);
-    }
-
-    for (const level in nodesMap) {
-      const nodesAtLevel = nodesMap[level];
-
-      for (const [nodeIndex, nodeValue] of Object.entries(nodesAtLevel)) {
-        if (!currentNodesMap[level]) {
-          currentNodesMap[level] = {};
-        }
-        currentNodesMap[level][nodeIndex] = nodeValue;
-      }
-    }
-
-    await this.writeNodes(currentNodesMap);
+  public setLeaves(leaf: [index: bigint, digest: Field][]) {
+    leaf.forEach((e) => this.setLeaf(e[0], e[1]));
   }
 
-  protected async writeNodes(nodesMap: TMerkleNodesMap): Promise<void> {
-    let nodes: TMerkleNodesStorage = [];
-    for (const level in nodesMap) {
-      for (const nodeIndex in nodesMap[level]) {
-        nodes.push([
-          parseInt(level, 10),
-          parseInt(nodeIndex, 10),
-          nodesMap[level][nodeIndex].toString(),
-        ]);
-      }
-    }
-
-    const merkleTreeStream = new MerkleTreeReadStream(nodes);
-
-    const writeStream = this.storageEngine.createWriteStream(MERKLE_TREE_FILE_NAME);
-
-    merkleTreeStream.pipe(writeStream);
-  }
-
-  protected async fetchNodes(): Promise<TMerkleNodesMap> {
-    if (await this.isEmpty()) {
-      return {};
-    }
-
-    const nodeBytes = await this.storageEngine.readFile(FILENAME_MERKLE);
-    return BaseMerkleTree.deserialize(nodeBytes)[1];
-  }
-
-  protected async calculateMerklePath(_: bigint): Promise<TMerkleNodesMap> {
-    return this.getNodes();
+  public getLeafCount() {
+    return this.merkleTree.leafCount;
   }
 }

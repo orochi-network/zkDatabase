@@ -1,4 +1,5 @@
 import fs from 'fs';
+import * as path from 'path';
 import { StorageEngineBase } from './base.js';
 import { TLocalConfig } from 'core/common.js';
 import { Readable, Writable } from 'stream';
@@ -34,19 +35,19 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns
    */
   public async mkdir(foldername: string = ''): Promise<string | undefined> {
-    const path = `${this.pathBase}/${foldername}`;
-    fs.mkdirSync(path, { recursive: true });
-    return path;
+    const fullPath = path.join(this.pathBase, foldername);
+    fs.mkdirSync(fullPath, { recursive: true });
+    return fullPath;
   }
 
   /**
    * Check stat of a path
-   * @param path
+   * @param pafilePathth
    * @returns
    */
-  public async check(path: string = ''): Promise<fs.Stats | undefined> {
+  public async check(filePath: string = ''): Promise<fs.Stats | undefined> {
     try {
-      return fs.statSync(`${this.pathBase}/${path}`);
+      return fs.statSync(path.join(this.pathBase, filePath));
     } catch (e) {
       return undefined;
     }
@@ -54,14 +55,16 @@ export class StorageEngineLocal extends StorageEngineBase<
 
   /**
    * Is path is a file
-   * @param path
+   * @param filePath
    * @returns Promise<boolean>
    */
-  public async isFile(path: string = ''): Promise<boolean> {
+  public async isFile(filePath: string = ''): Promise<boolean> {
+    const fullPath = path.join(this.pathBase, filePath);
     try {
-      const stat = fs.statSync(`${this.pathBase}/${path}`);
+      const stat = fs.statSync(fullPath);
       return stat.isFile();
     } catch (e) {
+      console.error('isFile error:', e);
       return false;
     }
   }
@@ -71,9 +74,9 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @param path
    * @returns Promise<boolean>
    */
-  public async isFolder(path: string = ''): Promise<boolean> {
+  public async isFolder(folderPath: string = ''): Promise<boolean> {
     try {
-      const stat = fs.statSync(`${this.pathBase}/${path}`);
+      const stat = fs.statSync(path.join(this.pathBase, folderPath));
       return stat.isDirectory();
     } catch {
       return false;
@@ -82,11 +85,11 @@ export class StorageEngineLocal extends StorageEngineBase<
 
   /**
    * Check the existence of given path
-   * @param path
+   * @param filePath
    * @returns Promise<boolean>
    */
-  public async isExist(path: string = ''): Promise<boolean> {
-    return fs.existsSync(`${this.pathBase}/${path}`);
+  public async isExist(filePath: string = ''): Promise<boolean> {
+    return fs.existsSync(path.join(this.pathBase, filePath));
   }
 
   /**
@@ -115,8 +118,8 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @param content
    * @returns
    */
-  public async writeFile(path: string, content: Uint8Array) {
-    const filepath = `${this.pathBase}/${path}`;
+  public async writeFile(filePath: string, content: Uint8Array) {
+    const filepath = path.join(this.pathBase, filePath);
     const pathParts = filepath.split('/');
     pathParts.pop();
     const currentPath = pathParts.join('/');
@@ -133,8 +136,8 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns true if file is removed
    * @throws Error if file is not existing
    */
-  public async delete(path: string): Promise<boolean> {
-    fs.unlinkSync(`${this.pathBase}/${path}`);
+  public async delete(filePath: string): Promise<boolean> {
+    fs.unlinkSync(path.join(this.pathBase, filePath));
     return true;
   }
 
@@ -143,32 +146,35 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @param path
    * @returns
    */
-  public async readFile(path: string): Promise<Uint8Array> {
-    return fs.readFileSync(`${this.pathBase}/${path}`);
+  public async readFile(filePath: string): Promise<Uint8Array> {
+    return fs.readFileSync(path.join(this.pathBase, filePath));
   }
 
-  public createReadStream(path: string): Readable {
-    return fs.createReadStream(`${this.pathBase}/${path}`);
+  public createReadStream(filePath: string): Readable {
+    return fs.createReadStream(path.join(this.pathBase, filePath));
   }
 
-  public createWriteStream(path: string): Writable {
-    return fs.createWriteStream(`${this.pathBase}/${path}`);
+  public createWriteStream(filePath: string): Writable {
+    return fs.createWriteStream(path.join(this.pathBase, filePath));
   }
-  
-  public async streamWriteFile(path: string, contentStream: fs.ReadStream): Promise<string> {
-    const filepath = `${this.pathBase}/${path}`;
-    const pathParts = filepath.split('/');
+
+  public async streamWriteFile(
+    filePath: string,
+    contentStream: Readable
+  ): Promise<string> {
+    const fullPath = path.join(this.pathBase, filePath);
+    const pathParts = fullPath.split('/');
     pathParts.pop();
     const currentPath = pathParts.join('/');
     if (!(await this.isFolder(currentPath))) {
       fs.mkdirSync(currentPath, { recursive: true });
     }
 
-    const writeStream = this.createWriteStream(path);
+    const writeStream = this.createWriteStream(fullPath);
     contentStream.pipe(writeStream);
 
     return new Promise<string>((resolve, reject) => {
-      writeStream.on('finish', () => resolve(filepath));
+      writeStream.on('finish', () => resolve(fullPath));
       writeStream.on('error', reject);
     });
   }
