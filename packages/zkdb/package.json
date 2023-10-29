@@ -25,11 +25,11 @@
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
     "buildw": "tsc -p tsconfig.json --watch",
-    "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
+    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
+    "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"
   },
@@ -80,7 +80,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
-    "@types/jest": "^27.0.3",
+    "@types/jest": "^27.5.2",
     "@types/mock-fs": "^4.13.3",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
@@ -98,7 +98,7 @@
     "typescript": "^4.7.2"
   },
   "peerDependencies": {
-    "o1js": "0.12.*"
+    "o1js": "0.13.*"
   },
   "dependencies": {
     "@helia/ipns": "^1.1.3",
