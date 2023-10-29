@@ -1,4 +1,4 @@
-import { Field } from 'o1js';
+import { Field, MerkleTree } from 'o1js';
 import { MerkleProof } from '../merkle-tree/common.js';
 import {
   StorageEngine,
@@ -291,6 +291,10 @@ export class ZKDatabaseStorage {
     return this.metadata.merkle.getRoot();
   }
 
+  public getMerkleTree(): MerkleTree {
+    return this.metadata.merkle.toMerkleTree();
+  }
+
   /**
    * Get the witness of the index.
    * @param index Document index.
@@ -331,8 +335,9 @@ export class ZKDatabaseStorage {
    * Update a document by index.
    * @param index Document index.
    * @param document Document instance.
+   * @returns Document index
    */
-  public async updateByIndex(index: number, document: IDocument) {
+  public async updateByIndex(index: number, document: IDocument): Promise<number> {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
@@ -341,13 +346,15 @@ export class ZKDatabaseStorage {
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);
     await this.metadata.save();
+    return index;
   }
 
   /**
    * Add a new document to the current collection.
    * @param document Document instance.
+   * @returns Document index
    */
-  public async add(document: IDocument) {
+  public async add(document: IDocument): Promise<number> {
     const entires = Object.entries(document.index());
     for (let i = 0; i < entires.length; i += 1) {
       const [key, value] = entires[i];
@@ -357,7 +364,8 @@ export class ZKDatabaseStorage {
     }
     // Add a new record to indexer
     const [result] = this.metadata.indexer.add(document.index()).get();
-    await this.updateByIndex(result.index, document);
+    const index = await this.updateByIndex(result.index, document);
+    return index;
   }
 
   /**

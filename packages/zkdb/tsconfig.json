@@ -6,7 +6,7 @@
     "outDir": "./build",
     "rootDir": ".",
     "strict": true,
-    "declarationMap": true,
+    "declarationMap": false,
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -15,7 +15,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowJs": true,
-    "declaration": true,
+    "declaration": false,
     "sourceMap": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,

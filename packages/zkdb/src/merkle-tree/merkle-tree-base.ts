@@ -1,5 +1,5 @@
 import { BSON } from 'bson';
-import { Field, Poseidon } from 'o1js';
+import { Field, MerkleTree, Poseidon } from 'o1js';
 import { MerkleProof } from './common.js';
 import { createExtendedMerkleWitness } from './merkle-tree-extended.js';
 
@@ -247,6 +247,24 @@ export abstract class BaseMerkleTree {
 
   public get leafCount() {
     return 2n ** BigInt(this.height - 1);
+  }
+
+  public toMerkleTree(): MerkleTree {
+    if (this.needsUpdate) {
+      throw Error('Update Merkle Tree before calling this method');
+    }
+
+    const localMerkleTree = new MerkleTree(this.height);
+
+    if (this.nodesMap['0']) {
+      const nodesAtLevel = this.nodesMap['0'];
+
+      for (const [nodeIndex, nodeValue] of Object.entries(nodesAtLevel)) {
+        localMerkleTree.setLeaf(BigInt(nodeIndex), nodeValue);
+      }
+    }
+
+    return localMerkleTree;
   }
 
   /**
