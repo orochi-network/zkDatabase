@@ -10,22 +10,26 @@ export type TMerkleTreeData = {
 export class MerkleTreeReadStream extends Readable {
   private merkleTreeData: TMerkleTreeData;
   private currentIdx: number = 0;
+  private batchSize: number;
 
-  constructor(data: TMerkleTreeData) {
+  constructor(data: TMerkleTreeData, batchSize = 10) {
     super({ objectMode: true });
     this.merkleTreeData = data;
+    this.batchSize = batchSize;
   }
 
   _read() {
-    let more = true;
-    while (more && this.currentIdx < this.merkleTreeData.nodes.length) {
+    const remaining = this.merkleTreeData.nodes.length - this.currentIdx;
+    const limit = Math.min(this.batchSize, remaining);
+
+    for (let i = 0; i < limit; i++) {
       const node = this.merkleTreeData.nodes[this.currentIdx++];
-      more = this.push(this.serializeNode(node));
+      const serializedNode = this.serializeNode(node);
+      if (!this.push(serializedNode)) {
+        return;
+      }
     }
-    if (!more) {
-      this.currentIdx--;
-      return;
-    }
+
     if (this.currentIdx === this.merkleTreeData.nodes.length) {
       const heightJSON = JSON.stringify({ height: this.merkleTreeData.height });
       this.push(Buffer.from(heightJSON, 'utf8'));
@@ -72,32 +76,34 @@ export class MerkleTreeWriteStream extends Writable {
     super({ objectMode: true });
   }
 
+  private isJSONParsed = false;
+
   _write(
     chunk: any,
     encoding: string,
     callback: (_?: Error | null) => void
   ): void {
     try {
-      if (typeof chunk === 'string') {
-        let parsed;
-        try {
-          parsed = JSON.parse(chunk);
-        } catch {
-          parsed = null;
-        }
-
-        if (parsed && typeof parsed.height === 'number') {
-          this.merkleTreeData.height = parsed.height;
-          callback();
-        } else {
-          callback(new Error('Invalid JSON data'));
-        }
-      } else if (Buffer.isBuffer(chunk)) {
+      if (Buffer.isBuffer(chunk)) {
         this.buffer = Buffer.concat([this.buffer, chunk]);
+
+        if (!this.isJSONParsed) {
+          const possibleString = this.buffer.toString('utf8');
+          let parsed;
+          try {
+            parsed = JSON.parse(possibleString);
+          } catch {
+            parsed = null;
+          }
+          if (parsed && typeof parsed.height === 'number') {
+            this.merkleTreeData.height = parsed.height;
+            this.buffer = this.buffer.subarray(possibleString.length);
+            this.isJSONParsed = true;
+          }
+        }
 
         while (this.buffer.length >= 2) {
           const nodeDataLength = this.buffer.readUInt16BE(0);
-
           if (this.buffer.length >= 2 + nodeDataLength) {
             const nodeDataChunk = this.buffer.subarray(2, 2 + nodeDataLength);
             this.buffer = this.buffer.subarray(2 + nodeDataLength);
@@ -108,7 +114,6 @@ export class MerkleTreeWriteStream extends Writable {
             break;
           }
         }
-
         callback();
       } else {
         callback(new Error('Invalid data type'));
