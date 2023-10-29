@@ -1,0 +1,66 @@
+{
+  "name": "zkdb",
+  "version": "0.1.1",
+  "description": "zkDatabase for the future of Web3",
+  "author": "chiro@orochi.network",
+  "license": "Apache-2.0",
+  "keywords": [
+    "zk",
+    "database",
+    "zk-database",
+    "zkdb",
+    "zkdatabase"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orochi-network/zkDatabase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orochi-network/zkDatabase/issues"
+  },
+  "homepage": "https://github.com/orochi-network/zkDatabase#readme",
+  "main": "./build/src/index.js",
+  "types": "./build/src/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "buildw": "tsc -p tsconfig.json --watch",
+    "format": "prettier --write --ignore-unknown **/*",
+    "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
+    "lint": "npx eslint ./src/**/*.ts --fix",
+    "lint-check": "npx eslint ./src/**/*.ts --debug"
+  },
+  "lint-staged": {
+    "**/*": [
+      "eslint src/* --fix",
+      "prettier --write --ignore-unknown"
+    ]
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.14",
+    "@types/express-fileupload": "^1.4.1",
+    "@types/node": "^20.6.0",
+    "@types/uuid": "^9.0.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.0",
+    "@typescript-eslint/parser": "^6.7.0",
+    "eslint": "^8.49.0",
+    "eslint-import-resolver-typescript": "^3.6.0",
+    "eslint-plugin-import": "^2.28.1",
+    "prettier": "^3.0.3",
+    "typedoc": "^0.25.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@apollo/server": "^4.9.3",
+    "@orochi-network/framework": "^1.1.8",
+    "axios": "^1.5.0",
+    "cors": "^2.8.5",
+    "express-fileupload": "^1.4.0",
+    "google-auth-library": "^9.0.0",
+    "graphql": "^16.8.0",
+    "graphql-scalars": "^1.22.2",
+    "graphql-type-json": "^0.3.2",
+    "joi": "^17.10.1",
+    "jose": "^4.14.6",
+    "mongodb": "^6.0.0"
+  }
+}
