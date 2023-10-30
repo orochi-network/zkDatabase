@@ -1,0 +1,98 @@
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .all-\[unset\] {
+    all: unset;
+  }
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+@import url('https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.min.css');
+
+html,
+body {
+  margin: 0px;
+}
+
+a {
+  text-decoration: none;
+}
+
+:root {
+  --baseindependence: rgba(62, 63, 94, 1);
+  --body-font-size: 16px;
+  --body-font-style: normal;
+  --body-font-weight: 400;
+  --body-highlight-font-size: 16px;
+  --body-highlight-font-style: normal;
+  --body-highlight-font-weight: 700;
+  --body-highlight-letter-spacing: 0px;
+  --body-highlight-line-height: 24px;
+  --body-letter-spacing: 0px;
+  --body-line-height: 24px;
+  --colors-background: rgba(252, 254, 255, 1);
+  --colors-body-primary: rgba(25, 36, 49, 1);
+  --colors-body-secondary: rgba(171, 175, 199, 1);
+  --colors-dividers: rgba(241, 241, 241, 1);
+  --colors-foreground: rgba(255, 255, 255, 1);
+  --colors-primary: rgba(236, 69, 37, 1);
+  --colors-primary-hover: rgba(191, 47, 2, 1);
+  --header-font-size: 36px;
+  --header-font-style: normal;
+  --header-font-weight: 700;
+  --header-letter-spacing: 0px;
+  --header-line-height: 54px;
+  --informative-caption-font-size: 12px;
+  --informative-caption-font-style: normal;
+  --informative-caption-font-weight: 500;
+  --informative-caption-letter-spacing: 0px;
+  --informative-caption-line-height: normal;
+  --section-title-font-size: 24px;
+  --section-title-font-style: normal;
+  --section-title-font-weight: 700;
+  --section-title-letter-spacing: 0px;
+  --section-title-line-height: 36px;
+  --subtitle-font-size: 16px;
+  --subtitle-font-style: normal;
+  --subtitle-font-weight: 700;
+  --subtitle-letter-spacing: 0px;
+  --subtitle-line-height: 24px;
+  --title-font-size: 32px;
+  --title-font-style: normal;
+  --title-font-weight: 700;
+  --title-letter-spacing: 0px;
+  --title-line-height: normal;
+  --underline-font-size: 10px;
+  --underline-font-style: normal;
+  --underline-font-weight: 600;
+  --underline-letter-spacing: 0px;
+  --underline-line-height: normal;
+}
+
+/*
+
+To enable a theme in your HTML, simply add one of the following data attributes to an HTML element, like so:
+
+<body data-colors-mode="light">
+    <!-- the rest of your content -->
+</body>
+
+You can apply the theme on any DOM node, not just the `body`
+
+*/
+
+[data-colors-mode="light"] {
+  --colors-background: rgba(252, 254, 255, 1);
+  --colors-body-primary: rgba(25, 36, 49, 1);
+  --colors-dividers: rgba(241, 241, 241, 1);
+}
+
+[data-colors-mode="dark"] {
+  --colors-background: rgba(1, 1, 1, 1);
+  --colors-body-primary: rgba(252, 254, 255, 1);
+  --colors-dividers: rgba(25, 36, 49, 1);
+}
