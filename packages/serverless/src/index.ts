@@ -47,6 +47,4 @@ import { DatabaseEngine } from './model/abstract/database-engine';
   );
 
   logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
-
-  logger.debug(`🚀 Proxy ready at http://localhost:4000/kubo-proxy`);
 })();

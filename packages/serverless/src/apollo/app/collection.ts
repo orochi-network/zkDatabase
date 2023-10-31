@@ -26,7 +26,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   indexField,
 });
 
-export const typeDefsDatabase = `#graphql
+export const typeDefsCollection = `#graphql
 scalar JSON
 type Query
 type Mutation
@@ -75,7 +75,7 @@ const collectionDrop = resolverWrapper(
   }
 );
 
-export const resolversDatabase = {
+export const resolversCollection = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,

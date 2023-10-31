@@ -37,7 +37,7 @@ export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   indexField,
 });
 
-export const typeDefsDatabase = `#graphql
+export const typeDefsCollectionIndex = `#graphql
 scalar JSON
 type Query
 type Mutation
@@ -91,7 +91,7 @@ const indexDrop = resolverWrapper(
     ).dropIndex(args.indexName)
 );
 
-export const resolversDatabase = {
+export const resolversCollectionIndex = {
   JSON: GraphQLJSON,
   Query: {
     indexList,
