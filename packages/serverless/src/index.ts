@@ -13,7 +13,11 @@ import { DatabaseEngine } from './model/abstract/database-engine';
 
 (async () => {
   const app = express();
-  await DatabaseEngine.getInstance(config.mongodbUrl).connect();
+  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+  if (!dbEngine.isConnected()) {
+    await dbEngine.connect();
+  }
+
   app.use(express.json()).use(fileupload());
 
   const httpServer = http.createServer(app);

@@ -6,6 +6,8 @@ import { DatabaseEngine } from '../../model/abstract/database-engine';
 import { databaseName, collectionName, indexField } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
+import { ModelDatabase } from '../../model/database';
+import logger from '../../helper/logger';
 
 export type TCollectionRequest = TDatabaseRequest & {
   collectionName: string;
@@ -46,22 +48,28 @@ const collectionList = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) =>
-    DatabaseEngine.getInstance().client.db(args.databaseName).listCollections()
+  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) => ModelDatabase.getInstance(args.databaseName).listCollections()
 );
 
 // Mutation
 const collectionCreate = resolverWrapper(
-  CollectionRequest,
+  CollectionCreateRequest,
   async (
     _root: unknown,
     args: TCollectionCreateRequest,
     _context: AppContext
   ) => {
-    return ModelCollection.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).create(args.indexField || []);
+    try {
+      await ModelCollection.getInstance(
+        args.databaseName,
+        args.collectionName
+      ).create(args.indexField || [])
+      return true;
+    }
+    catch (e) {
+      logger.error(e);
+      return false;
+    }
   }
 );
 

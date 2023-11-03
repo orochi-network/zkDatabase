@@ -12,11 +12,11 @@ export type TDocumentFindRequest = TCollectionRequest & {
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  documentRecord: { [key: string]: string };
+  documentRecord: { [key: string]: any };
 };
 
 export type TDocumentUpdateRequest = TDocumentFindRequest & {
-  documentRecord: { [key: string]: string };
+  documentRecord: { [key: string]: any };
 };
 
 export const DocumentFindRequest = Joi.object<TDocumentFindRequest>({
@@ -28,7 +28,7 @@ export const DocumentFindRequest = Joi.object<TDocumentFindRequest>({
 export const DocumentCreateRequest = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentRecord: Joi.object(),
+  documentRecord: Joi.object().required(),
 });
 
 export const DocumentUpdateRequest = Joi.object<TDocumentUpdateRequest>({
@@ -45,13 +45,13 @@ type Query
 type Mutation
 
 extend type Query {
-  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON): JSON
+  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON): JSON
-  documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON, documentRecord: JSON): JSON
-  documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON): JSON
+  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!): JSON
+  documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
+  documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
 `;
 
@@ -59,7 +59,7 @@ extend type Mutation {
 const documentFind = resolverWrapper(
   DocumentFindRequest,
   async (_root: unknown, args: TDocumentFindRequest, _context: AppContext) => {
-    return ModelDocument.getInstance(args.databaseName, args.collectionName).find();
+    return ModelDocument.getInstance(args.databaseName, args.collectionName).find(args.documentQuery);
   }
 );
 
@@ -67,10 +67,10 @@ const documentFind = resolverWrapper(
 const documentCreate = resolverWrapper(
   DocumentCreateRequest,
   async (_root: unknown, args: TDocumentCreateRequest, _context: AppContext) => {
-    return ModelCollection.getInstance(
+    return ModelDocument.getInstance(
       args.databaseName,
       args.collectionName
-    ).create({});
+    ).insertOne(args.documentRecord);
   }
 );
 
@@ -84,14 +84,13 @@ const documentUpdate = resolverWrapper(
   }
 );
 
-// @todo Need to implement
 const documentDrop = resolverWrapper(
   DocumentFindRequest,
   async (_root: unknown, args: TDocumentFindRequest, _context: AppContext) => {
     return ModelDocument.getInstance(
       args.databaseName,
       args.collectionName
-    );
+    ).drop(args.documentQuery);
   }
 );
 

@@ -19,15 +19,11 @@ export class ModelCollection extends ModelBasic {
     indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ) {
-    await this.collection.createIndex(indexSpecs, indexOptions);
+    return this.collection.createIndex(indexSpecs, indexOptions);
   }
 
   public async drop() {
     return this.db.dropCollection(this.collectionName!);
-  }
-
-  public async list() {
-    return this.db.listCollections();
   }
 
   public async index(

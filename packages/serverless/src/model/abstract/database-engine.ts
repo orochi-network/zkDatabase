@@ -92,6 +92,10 @@ export class DatabaseEngine {
     return false;
   }
 
+  public isConnected() {
+    return this.connection !== undefined;
+  }
+
   public async connect() {
     let error = true;
     do {
