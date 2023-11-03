@@ -36,7 +36,7 @@ extend type Query {
 
 extend type Mutation {
   dbCreate(databaseName: String!): Boolean
-  dbDrop(databaseName: String!): Boolean
+  #dbDrop(databaseName: String!): Boolean
 }
 `;
 
@@ -89,6 +89,6 @@ export const resolversDatabase = {
   },
   Mutation: {
     dbCreate,
-    dbDrop,
+    //dbDrop,
   },
 };

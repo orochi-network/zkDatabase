@@ -2,7 +2,6 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { AppContext } from '../../helper/common';
 import { ModelCollection } from '../../model/collection';
-import { DatabaseEngine } from '../../model/abstract/database-engine';
 import { databaseName, collectionName, indexField } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
@@ -39,7 +38,7 @@ extend type Query {
 
 extend type Mutation {
   collectionCreate(databaseName: String!, collectionName: String!,  indexField: [String]): Boolean
-  collectionDrop(databaseName: String!, collectionName: String!): Boolean
+  #collectionDrop(databaseName: String!, collectionName: String!): Boolean
 }
 `;
 
@@ -90,6 +89,6 @@ export const resolversCollection = {
   },
   Mutation: {
     collectionCreate,
-    collectionDrop,
+    //collectionDrop,
   },
 };

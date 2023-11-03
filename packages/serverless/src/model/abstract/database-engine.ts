@@ -1,16 +1,7 @@
 import {
-  ClientSession,
-  Collection,
-  CreateIndexesOptions,
-  Db,
-  Filter,
-  IndexSpecification,
-  InsertOneResult,
   MongoClient,
   ObjectId,
-  OptionalUnlessRequiredId,
   ServerApiVersion,
-  WithId,
 } from 'mongodb';
 
 export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';

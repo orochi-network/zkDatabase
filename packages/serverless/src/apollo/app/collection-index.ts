@@ -44,7 +44,7 @@ type Mutation
 
 extend type Query {
   indexList(databaseName: String!, collectionName: String!): JSON
-  indexExist(databaseName: String!, collectionName: String!, indexName: String): Boolean
+  indexExist(databaseName: String!, collectionName: String!, indexName: String!): Boolean
 }
 
 extend type Mutation {

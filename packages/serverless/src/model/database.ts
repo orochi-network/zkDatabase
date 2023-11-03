@@ -5,6 +5,7 @@ import {
   ZKDATABASE_INDEX_RECORD,
 } from './abstract/database-engine';
 import { ModelCollection } from './collection';
+import logger from '../helper/logger';
 
 export class ModelDatabase extends ModelBasic {
   private constructor(databaseName: string) {
@@ -35,11 +36,8 @@ export class ModelDatabase extends ModelBasic {
         _id: indexRecord.link as unknown as ObjectId,
       });
     }
+    logger.debug('ModelDatabase::findIndex()', { index, indexRecord });
     return null;
-  }
-
-  public async sync() {
-    return this.dbEngine.sync(this.databaseName!);
   }
 
   public async create() {
