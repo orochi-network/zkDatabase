@@ -1,5 +1,4 @@
 import { Field } from 'o1js';
-import { CID } from 'multiformats';
 import { TKuboConfig } from '@zkdb/kubo';
 
 /**
@@ -67,21 +66,6 @@ export interface IFileIndex<S, T, R> {
    */
   resolve(_peerID?: S): Promise<T | undefined>;
 }
-
-export interface IIPFSDirRecord {
-  name: string;
-  type: 'object' | 'file' | 'directory' | 'raw' | 'identity';
-  cid: CID;
-  path: string;
-  cotent: () => any;
-}
-
-/**
- * Transport layer
- * @var tcp TCP transport
- * @var websocket Websocket transport
- */
-export type TTransport = 'tcp' | 'websocket';
 
 /**
  * Storage handler
@@ -175,7 +159,6 @@ export type TZKDatabaseConfig =
       storageEngineCfg: TDelegatedIPFSConfig;
     }
   | {
-      storageEngine: 'ipfs';
+      storageEngine: 'memory';
       merkleHeight: number;
-      storageEngineCfg: THeliaConfig;
     };
