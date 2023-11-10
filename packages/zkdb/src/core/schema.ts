@@ -64,10 +64,10 @@ export const Schema: SchemaExtendable = <A>(type: A) => {
       const result: any = {};
       for (let i = 0; i < keys.length; i += 1) {
         const key = keys[i];
-        if (typeof anyThis[key].toString !== 'undefined') {
-          result[key] = anyThis[key].toString();
-        } else if (typeof anyThis[key].toBase58 !== 'undefined') {
+        if (typeof anyThis[key].toBase58 !== 'undefined') {
           result[key] = anyThis[key].toBase58();
+        } else if (typeof anyThis[key].toString !== 'undefined') {
+          result[key] = anyThis[key].toString();
         } else {
           throw new Error(`Cannot serialize ${key}`);
         }
