@@ -10,6 +10,7 @@ import {
   state,
   CircuitString,
   SmartContract,
+  PublicKey,
 } from 'o1js';
 import { Schema, ZKDatabaseStorage } from '../core/index.js';
 
@@ -25,6 +26,7 @@ class MyMerkleWitness extends MerkleWitness(merkleHeight) {}
 // Define the schema of the document
 class Account extends Schema({
   accountName: CircuitString,
+  accountPubKey: PublicKey,
   balance: UInt32,
 }) {
   // Deserialize the document from a Uint8Array
@@ -40,9 +42,10 @@ class Account extends Schema({
   }
 
   // Serialize the document to a json object
-  json(): { accountName: string; balance: string } {
+  json(): { accountName: string; accountPubKey: string; balance: string } {
     return {
       accountName: this.accountName.toString(),
+      accountPubKey: this.accountPubKey.toBase58(),
       balance: this.balance.toString(),
     };
   }
@@ -67,7 +70,7 @@ class PigletBank extends SmartContract {
    * @param merkleWitness
    */
   @method
-  trasnfer(
+  transfer(
     from: Account,
     fromWitness: MyMerkleWitness,
     to: Account,
@@ -86,6 +89,7 @@ class PigletBank extends SmartContract {
     let newCommitment = fromWitness.calculateRoot(
       new Account({
         accountName: from.accountName,
+        accountPubKey: from.accountPubKey,
         balance: from.balance.sub(value),
       }).hash()
     );
@@ -97,6 +101,7 @@ class PigletBank extends SmartContract {
     newCommitment = toWitness.calculateRoot(
       new Account({
         accountName: to.accountName,
+        accountPubKey: to.accountPubKey,
         balance: to.balance.add(value),
       }).hash()
     );
@@ -109,6 +114,9 @@ class PigletBank extends SmartContract {
 (async () => {
   type TNames = 'Bob' | 'Alice' | 'Charlie' | 'Olivia';
   const accountNameList: TNames[] = ['Bob', 'Alice', 'Charlie', 'Olivia'];
+  const accountPubKeyList = new Array(accountNameList.length)
+    .fill(null)
+    .map(() => PrivateKey.random().toPublicKey().toBase58());
 
   let Local = Mina.LocalBlockchain({ proofsEnabled: doProofs });
   Mina.setActiveInstance(Local);
@@ -136,6 +144,7 @@ class PigletBank extends SmartContract {
       await zkdb.add(
         new Account({
           accountName: CircuitString.fromString(accountNameList[i]),
+          accountPubKey: PublicKey.fromBase58(accountPubKeyList[i]),
           balance: UInt32.from(10000000),
         })
       );
@@ -206,6 +215,7 @@ class PigletBank extends SmartContract {
     await findFromAccount.update(
       new Account({
         accountName: from.accountName,
+        accountPubKey: from.accountPubKey,
         balance: from.balance.sub(value),
       })
     );
@@ -221,13 +231,14 @@ class PigletBank extends SmartContract {
     await findToAccount.update(
       new Account({
         accountName: to.accountName,
+        accountPubKey: to.accountPubKey,
         balance: to.balance.add(value),
       })
     );
 
     // Perform the transaction
     let tx = await Mina.transaction(feePayer, () => {
-      zkAppPigletBank.trasnfer(
+      zkAppPigletBank.transfer(
         from,
         fromWitness,
         to,
