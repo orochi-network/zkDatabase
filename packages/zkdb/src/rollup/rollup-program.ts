@@ -64,3 +64,31 @@ function RollUpProgram(name: string, merkleTreeHeight: number) {
     }
   })
 }
+
+export function getDatabaseRollUpFunction(name: string, merkleHeight: number): RollUpProxy {
+  const rollup = RollUpProgram(name, merkleHeight)
+  return new RollUpProxy(rollup)
+}
+
+export class RollUpProxy {
+  private rollUp: DatabaseRollUp
+  private isCompiled = false;
+
+  constructor(rollUp: DatabaseRollUp) {
+    this.rollUp = rollUp
+  }
+
+  async compile() {
+    if (this.isCompiled) {
+      return
+    }
+
+    const cache = Cache.FileSystem("./database-rollup")
+    await this.rollUp.compile({cache})
+    this.isCompiled = true
+  }
+  
+  getProgram(): DatabaseRollUp {
+    return this.rollUp
+  }
+}
