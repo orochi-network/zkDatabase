@@ -1,50 +1,76 @@
-import { SmartContract, State, state, method, Field } from 'o1js';
-import { IDocument } from './common.js';
+import {
+  Field,
+  Provable,
+  Reducer,
+  SmartContract,
+  State,
+  UInt64,
+  ZkProgram,
+  method,
+  state,
+} from 'o1js';
+import { Schema } from './schema.js';
+import { Action } from '../rollup/action.js';
+import { DatabaseRollUp } from 'rollup/rollup-program.js';
 
-// we need the initiate tree root in order to tell the contract about our off-chain storage
-let initialCommitment: Field;
+export function DatabaseSmartContract<T>(
+  type: Provable<T>,
+  rollup: DatabaseRollUp
+) {
+  class Document extends Schema({ data: type }) {}
 
-export class ZKDatabaseContract extends SmartContract {
-  // a commitment is a cryptographic primitive that allows us to commit to data,
-  // with the ability to "reveal" it later
-  @state(Field) root = State<any>();
+  let initialCommitment = Field(0);
 
-  @method init() {
-    super.init();
-    this.root.set(initialCommitment);
-  }
+  class RollUpProof extends ZkProgram.Proof(rollup) {}
 
-  updateState(
-    proofs: {
-      oldRecord: IDocument;
-      newRecord: IDocument;
-      merkleWitness: any;
-    }[]
-  ) {
-    // We fetch the on-chain merkle root commitment,
-    // Make sure it matches the one we have locally
-    const commitment = this.root.get();
-    this.root.assertEquals(commitment);
+  class DatabaseContract extends SmartContract {
+    @state(Field) rootCommitment = State<Field>();
+    @state(Field) currentActionState = State<Field>();
 
-    let newCommitment: Field = commitment;
+    reducer = Reducer({ actionType: Action });
 
-    for (let i = 0; i < proofs.length; i += 1) {
-      // We check that the oldRecord is within the committed Merkle Tree
-      proofs[i].merkleWitness
-        .calculateRoot(proofs[i].oldRecord.hash())
-        .assertEquals(newCommitment);
+    @method init() {
+      this.account.provedState.assertEquals(this.account.provedState.get());
+      this.account.provedState.get().assertFalse();
 
-      // We calculate the new Merkle Root, based on the record changes
-      newCommitment = proofs[i].merkleWitness.calculateRoot(
-        proofs[i].newRecord.hash()
+      super.init();
+
+      this.currentActionState.set(Reducer.initialActionState);
+      this.rootCommitment.set(initialCommitment);
+    }
+
+    @method insert(index: UInt64, document: Document) {
+      this.reducer.dispatch(
+        new Action({
+          type: Field(0),
+          index: index,
+          hash: document.hash(),
+        })
       );
     }
 
-    this.root.set(newCommitment);
-  }
-}
+    @method rollup(proof: RollUpProof) {
+      this.rootCommitment.getAndAssertEquals();
+      this.currentActionState.getAndAssertEquals();
 
-export function initZKDatabase(initialRoot: Field) {
-  // We initialize the contract with a commitment of 0
-  initialCommitment = initialRoot;
+      proof.verify();
+
+      this.rootCommitment.assertEquals(proof.publicInput.onChainRoot);
+      this.currentActionState.assertEquals(
+        proof.publicInput.onChainActionState
+      );
+
+      this.rootCommitment.set(proof.publicOutput.newRoot);
+      this.currentActionState.set(proof.publicOutput.newActionState);
+    }
+
+    setMerkleRoot(root: Field) {
+      initialCommitment = root;
+    }
+  }
+
+  return {
+    DatabaseContract,
+    Document,
+  };
 }
