@@ -2,25 +2,19 @@ import {
   Mina,
   PrivateKey,
   AccountUpdate,
-  UInt32,
-  CircuitString,
+  Provable,
+  Field,
   UInt64,
-  Provable
 } from 'o1js';
 import { User } from './user.js';
-import { ZKDatabaseStorage } from '../../core/zkdb-storage.js';
-import { DatabaseContract } from '../../core/database-contract.js';
-import { RollupService } from '../../rollup/rollup-service.js';
-import { Credentials } from '../../models/credentials.js';
+import { TestContract } from './test-contract.js';
+import { zkDbPrivateKey, zkdb } from './data.js';
 
 let doProofs = false;
-
-const merkleHeight = 8;
 
 (async () => {
   let Local = Mina.LocalBlockchain({ proofsEnabled: doProofs });
   Mina.setActiveInstance(Local);
-  let initialBalance = 10_000_000_000;
 
   let feePayerKey = Local.testAccounts[0].privateKey;
   let feePayer = Local.testAccounts[0].publicKey;
@@ -29,60 +23,43 @@ const merkleHeight = 8;
   let zkappKey = PrivateKey.random();
   let zkappAddress = zkappKey.toPublicKey();
 
-  // Initialize offchain service
+  const test = new TestContract(zkappAddress);
+  const offchainRoot = await zkdb.getMerkleRoot();
 
-  const zkdb = await ZKDatabaseStorage.getInstance('zkdb-test', {
-    storageEngine: 'local',
-    merkleHeight,
-    storageEngineCfg: {
-      location: './data',
-    },
+  let tx = await test.deployZkDatabaseContract(feePayer, offchainRoot);
+
+  await tx.prove();
+  await tx.sign([feePayerKey, zkDbPrivateKey]).send();
+
+  tx = await Mina.transaction(feePayer, () => {
+    AccountUpdate.fundNewAccount(feePayer);
+    test.deploy();
   });
 
-  const offchainContract = new DatabaseContract(zkappAddress);
-  const rollUpService = await RollupService.activate(offchainContract, zkdb, new Credentials(feePayerKey, zkappKey));
-
-  if (doProofs) {
-    await DatabaseContract.compile();
-  }
-
-  console.log('Deploying Database Smart Contract...');
-  let tx = await Mina.transaction(feePayer, () => {
-    AccountUpdate.fundNewAccount(feePayer).send({
-      to: zkappAddress,
-      amount: initialBalance,
-    });
-    offchainContract.deploy();
-  });
   await tx.prove();
   await tx.sign([feePayerKey, zkappKey]).send();
 
-  Provable.log('on chain commitment', offchainContract.getState());
-  Provable.log('off chain commitment', await zkdb.getMerkleRoot());
-
-  // Feed
-  console.log('Update Database Smart Contract...');
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 5; i++) {
     const newUser = new User({
-      accountName: CircuitString.fromString(`user ${i}`),
-      ticketAmount: UInt32.from(i),
+      accountName: Field(i),
+      ticketAmount: Field(i),
     });
 
-    
-    console.log(`Saving user ${i}`);
-    const index = await zkdb.add(newUser);
+    const index = await zkdb.add(newUser)
 
-    const tx = await Mina.transaction(feePayer, () => {
-      offchainContract.insert(UInt64.from(index), newUser.hash());
+    tx = await Mina.transaction(feePayer, () => {
+      test.saveUser(UInt64.from(index), newUser);
     });
 
     await tx.prove();
-    await tx.sign([feePayerKey, zkappKey,]).send();
+    await tx.sign([feePayerKey, zkappKey]).send();
   }
 
-  const batchSize = 5;
-  await rollUpService.rollUp(batchSize);
+  const tx1 = await test.rollUp(feePayer, 3);
 
-  Provable.log('on chain commitment', offchainContract.getState());
-  Provable.log('off chain commitment', await zkdb.getMerkleRoot());
+  if (tx1) {
+    await tx1.sign([zkappKey, feePayerKey]).send()
+  }
+
+  Provable.log('action state after new user', test.getActionState());
 })();
