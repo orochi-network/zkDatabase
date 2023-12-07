@@ -3,11 +3,11 @@ import {
   ZkProgram,
   Field,
   SelfProof,
-  Cache,
   MerkleWitness
 } from 'o1js';
 import { RollUpInput, RollUpOutput } from './rollup-params.js';
 import { Action } from './action.js';
+import { CircuitCache } from '../cache/circuit-cache.js';
 
 export type DatabaseRollUp = ReturnType<typeof RollUpProgram>;
 
@@ -111,7 +111,8 @@ export class RollUpProxy {
       return;
     }
 
-    const cache = Cache.FileSystem('./database-rollup');
+    const circuitCache = new CircuitCache();
+    const cache = circuitCache.getCache('database-rollup');
     await this.rollUp.compile({ cache });
     this.isCompiled = true;
   }
