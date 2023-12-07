@@ -10,8 +10,8 @@ import {
   state,
 } from 'o1js';
 import { Schema } from './schema.js';
-import { Action } from '../rollup/action.js';
-import { DatabaseRollUp } from 'rollup/rollup-program.js';
+import { Action, OperationType, getOperationIndexByType } from '../rollup/action.js';
+import { DatabaseRollUp } from '../rollup/rollup-program.js';
 
 export function DatabaseSmartContract<T>(
   type: Provable<T>,
@@ -42,7 +42,7 @@ export function DatabaseSmartContract<T>(
     @method insert(index: UInt64, document: Document) {
       this.reducer.dispatch(
         new Action({
-          type: Field(0),
+          type: getOperationIndexByType(OperationType.INSERT),
           index: index,
           hash: document.hash(),
         })
