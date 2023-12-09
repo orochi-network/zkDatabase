@@ -12,10 +12,11 @@ import {
   UInt64,
 } from 'o1js';
 import { Action } from '../rollup/action.js';
-import { DatabaseSmartContract } from './zkdb-contract.js';
+import { getDatabaseZkApp } from './zkdb-contract.js';
 import { RollUpInput } from '../rollup/rollup-params.js';
 import { ZKDatabaseStorage } from './zkdb-storage.js';
 import { getDatabaseRollUpFunction } from '../rollup/rollup-program.js';
+import { Schema } from './schema.js';
 
 export class ZKDatabase {
   static SmartContract<T>(
@@ -31,18 +32,18 @@ export class ZKDatabase {
 
     const rollUpProgram = getDatabaseRollUpFunction('', merkleHeight);
 
-    const smartContract = DatabaseSmartContract(
+    const DatabaseContract = getDatabaseZkApp(
       type,
       rollUpProgram.getProgram()
     );
 
     class RollUpProof extends ZkProgram.Proof(rollUpProgram.getProgram()) {}
 
-    class CoreDatabaseSmartContract extends smartContract.DatabaseContract {}
+    class CoreDatabaseSmartContract extends DatabaseContract.getZkApp() {}
 
     const zkdbSmartContract = new CoreDatabaseSmartContract(publicKey);
 
-    class Document extends smartContract.Document {}
+    class Document extends Schema({data: type}) {}
 
     abstract class ZKDatabaseSmartContract extends SmartContract {
       protected createDocument(entity: T) {
@@ -56,9 +57,12 @@ export class ZKDatabase {
       }
 
       async deployZkDatabaseContract(
-        feePayer: PublicKey,
-        merkleRoot: Field
+        feePayer: PublicKey
       ): Promise<Mina.Transaction> {
+        await rollUpProgram.compile();
+        await DatabaseContract.compile();
+        const merkleRoot = await storage.getMerkleRoot();
+        
         zkdbSmartContract.setMerkleRoot(merkleRoot);
 
         return await Mina.transaction(feePayer, () => {

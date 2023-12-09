@@ -24,9 +24,8 @@ let doProofs = false;
   let zkappAddress = zkappKey.toPublicKey();
 
   const test = new TestContract(zkappAddress);
-  const offchainRoot = await zkdb.getMerkleRoot();
 
-  let tx = await test.deployZkDatabaseContract(feePayer, offchainRoot);
+  let tx = await test.deployZkDatabaseContract(feePayer);
 
   await tx.prove();
   await tx.sign([feePayerKey, zkDbPrivateKey]).send();

@@ -12,8 +12,11 @@ import {
 import { Schema } from './schema.js';
 import { Action, OperationType, getOperationIndexByType } from '../rollup/action.js';
 import { DatabaseRollUp } from '../rollup/rollup-program.js';
+import { CircuitCache } from '../cache/circuit-cache.js';
 
-export function DatabaseSmartContract<T>(
+export type DatabaseSmartContract<T> = ReturnType<typeof DatabaseSmartContractFunction<T>>;
+
+function DatabaseSmartContractFunction<T>(
   type: Provable<T>,
   rollup: DatabaseRollUp
 ) {
@@ -69,8 +72,37 @@ export function DatabaseSmartContract<T>(
     }
   }
 
-  return {
-    DatabaseContract,
-    Document,
-  };
+  return DatabaseContract;
+}
+
+export function getDatabaseZkApp<T>(
+  type: Provable<T>,
+  rollup: DatabaseRollUp
+): DatabaseZkAppProxy<T> {
+  const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
+  return new DatabaseZkAppProxy(zkApp);
+}
+
+export class DatabaseZkAppProxy<T> {
+  private smartContract: DatabaseSmartContract<T>;
+  private isCompiled = false;
+
+  constructor(smartContract: DatabaseSmartContract<T>) {
+    this.smartContract = smartContract;
+  }
+
+  async compile() {
+    if (this.isCompiled) {
+      return;
+    }
+
+    const circuitCache = new CircuitCache();
+    const cache = circuitCache.getCache('database-zkapp');
+    await this.smartContract.compile({ cache });
+    this.isCompiled = true;
+  }
+
+  getZkApp(): DatabaseSmartContract<T> {
+    return this.smartContract;
+  }
 }

@@ -105,3 +105,6 @@ dist
 .DS_Store
 build/
 data/
+
+# Circuit Cache files
+circuit-cache/
