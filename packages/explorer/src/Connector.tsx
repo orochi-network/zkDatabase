@@ -2,7 +2,7 @@ import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import { useContext, useState } from "react";
-import ContextApollo, { IContextApollo } from "./context/Apollo";
+import ContextApollo, { IContextApollo } from "@/contexts/Apollo";
 import { ApolloClient, InMemoryCache } from "@apollo/client";
 
 export default function Connector(props: any) {

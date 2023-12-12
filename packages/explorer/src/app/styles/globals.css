@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .nav-header {
+    background: linear-gradient(302deg, #BB3135 0%, #ED4525 39%, #EE6149 100%);
+  }
+}

@@ -9,7 +9,7 @@ import {
   useQuery,
 } from "@apollo/client";
 import Connector from "./Connector";
-import { ContextProviderApollo } from "./context/Apollo";
+import { ContextProviderApollo } from "@/contexts/Apollo";
 import { QUERY_METADATA } from "./GraphQLQuery";
 
 export function FullWidthGrid() {

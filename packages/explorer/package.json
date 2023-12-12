@@ -14,7 +14,10 @@
     "@types/node": "^20.3.3",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
+    "clsx": "^2.0.0",
     "graphql": "^16.7.1",
+    "next": "^14.0.4",
+    "preline": "^2.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "^5.0.1",
@@ -22,10 +25,11 @@
     "web-vitals": "^3.3.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "svgr": "npx @svgr/cli  --out-dir src/app/assets/generated --index-template src/app/assets/index-template.js -- src/app/assets/svg"
   },
   "eslintConfig": {
     "extends": [
@@ -44,5 +48,12 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@svgr/cli": "^8.1.0",
+    "@svgr/webpack": "^8.1.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6"
   }
 }
