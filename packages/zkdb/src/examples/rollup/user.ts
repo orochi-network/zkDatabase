@@ -1,9 +1,8 @@
 import { Schema } from "../../core/schema.js";
-import { CircuitString, UInt32 } from "o1js";
-
+import { Field } from "o1js";
 export class User extends Schema({
-  accountName: CircuitString,
-  ticketAmount: UInt32,
+  accountName: Field,
+  ticketAmount: Field,
 }) {
   static deserialize(data: Uint8Array): User {
     return new User(User.decode(data));

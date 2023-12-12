@@ -337,7 +337,7 @@ export class ZKDatabaseStorage {
    * @param document Document instance.
    * @returns Document index
    */
-  public async updateByIndex(index: number, document: IDocument): Promise<number> {
+  public async updateByIndex(index: number, document: IDocument) {
     const digest = document.hash();
     // Write file with the index as filename to ipfs
     await this.storageEngine.writeFile(
@@ -346,7 +346,6 @@ export class ZKDatabaseStorage {
     );
     await this.metadata.merkle.setLeaf(BigInt(index), digest);
     await this.metadata.save();
-    return index;
   }
 
   /**
@@ -364,8 +363,8 @@ export class ZKDatabaseStorage {
     }
     // Add a new record to indexer
     const [result] = this.metadata.indexer.add(document.index()).get();
-    const index = await this.updateByIndex(result.index, document);
-    return index;
+    await this.updateByIndex(result.index, document);
+    return result.index;
   }
 
   /**
