@@ -14,7 +14,7 @@ export type TMerkleNodesStorage = [bigint, Field][];
 export class MerkleTreeStorage {
   private storageEngine: StorageEngine;
   private merkleTree: MerkleTree;
-  private merkleNodes: TMerkleNodesStorage;
+  private merkleNodes: Map<bigint, Field>;
 
   private constructor(
     storageEngine: StorageEngine,
@@ -23,7 +23,7 @@ export class MerkleTreeStorage {
   ) {
     this.storageEngine = storageEngine;
     this.merkleTree = new MerkleTree(height);
-    this.merkleNodes = nodes;
+    this.merkleNodes = new Map(nodes);
     this.setLeaves(nodes)
   }
 
@@ -54,7 +54,7 @@ export class MerkleTreeStorage {
     return new Promise((resolve, reject) => {
       const merkleTreeStream = new MerkleTreeReadStream({
         height: this.merkleTree.height,
-        nodes: this.merkleNodes,
+        nodes: Array.from(this.merkleNodes.entries()),
       });
 
       const writeStream = this.storageEngine.createWriteStream(
@@ -64,7 +64,6 @@ export class MerkleTreeStorage {
       writeStream.on('error', reject);
       writeStream.on('finish', resolve);
       merkleTreeStream.pipe(writeStream);
-      merkleTreeStream.on('end', writeStream.end);
     });
   }
 
@@ -77,7 +76,7 @@ export class MerkleTreeStorage {
   }
 
   public setLeaf(index: bigint, digest: Field) {
-    this.merkleNodes.push([index, digest]);
+    this.merkleNodes.set(index, digest);
     this.merkleTree.setLeaf(index, digest);
   }
 

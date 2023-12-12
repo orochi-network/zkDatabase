@@ -1,6 +1,7 @@
 import { Readable, Writable } from 'stream';
 import { TMerkleNodesStorage } from './merkle-tree-storage.js';
 import { Encoding, Field } from 'o1js';
+import { Binary } from '../utilities/binary.js';
 
 export type TMerkleTreeData = {
   height: number;
@@ -10,22 +11,26 @@ export type TMerkleTreeData = {
 export class MerkleTreeReadStream extends Readable {
   private merkleTreeData: TMerkleTreeData;
   private currentIdx: number = 0;
+  private batchSize: number;
 
-  constructor(data: TMerkleTreeData) {
+  constructor(data: TMerkleTreeData, batchSize: number = 10) {
     super({ objectMode: true });
     this.merkleTreeData = data;
+    this.batchSize = batchSize;
   }
 
   _read() {
-    let more = true;
-    while (more && this.currentIdx < this.merkleTreeData.nodes.length) {
+    const remaining = this.merkleTreeData.nodes.length - this.currentIdx;
+    const limit = Math.min(this.batchSize, remaining);
+
+    for (let i = 0; i < limit; i++) {
       const node = this.merkleTreeData.nodes[this.currentIdx++];
-      more = this.push(this.serializeNode(node));
+      const serializedNode = this.serializeNode(node);
+      if (!this.push(serializedNode)) {
+        return;
+      }
     }
-    if (!more) {
-      this.currentIdx--;
-      return;
-    }
+
     if (this.currentIdx === this.merkleTreeData.nodes.length) {
       const heightJSON = JSON.stringify({ height: this.merkleTreeData.height });
       this.push(Buffer.from(heightJSON, 'utf8'));
@@ -41,36 +46,50 @@ export class MerkleTreeReadStream extends Readable {
    *   - A 32-byte buffer to hold the serialized bigint value.
    *   - The remaining bytes to hold the serialized field element value (min: 1 byte, max: 32 bytes).
    * @param {Array} node - An array containing a bigint and a Field element.
-   * @returns {Buffer} - A Buffer containing the serialized node data.
+   * @returns {Uint8Array} - A Uint8Array containing the serialized node data.
    */
-  public serializeNode(node: [bigint, Field]): Buffer {
+  public serializeNode(node: [bigint, Field]): Uint8Array {
     const [index, fieldElement] = node;
 
-    const indexBuffer = Buffer.alloc(32);
-    indexBuffer.writeBigInt64BE(index);
+    const indexBuffer = new ArrayBuffer(32);
+    const indexView = new DataView(indexBuffer);
+    indexView.setBigUint64(0, index, false);
 
-    const fieldElementBuffer = Buffer.from(
-      Encoding.Bijective.Fp.toBytes(fieldElement.toFields())
+    const fieldElementBytes = Encoding.Bijective.Fp.toBytes(
+      fieldElement.toFields()
     );
+    const fieldElementBuffer = new Uint8Array(fieldElementBytes);
 
-    const nodeData = Buffer.concat([indexBuffer, fieldElementBuffer]);
+    const nodeData = new Uint8Array(
+      indexBuffer.byteLength + fieldElementBuffer.byteLength
+    );
+    nodeData.set(new Uint8Array(indexBuffer), 0);
+    nodeData.set(fieldElementBuffer, indexBuffer.byteLength);
 
-    const lengthBuffer = Buffer.alloc(2);
-    lengthBuffer.writeUInt16BE(nodeData.length);
+    const lengthBuffer = new ArrayBuffer(2);
+    const lengthView = new DataView(lengthBuffer);
+    lengthView.setUint16(0, nodeData.byteLength, false);
 
-    const buffer = Buffer.concat([lengthBuffer, nodeData]);
+    const combinedBuffer = new Uint8Array(
+      lengthBuffer.byteLength + nodeData.byteLength
+    );
+    combinedBuffer.set(new Uint8Array(lengthBuffer), 0);
+    combinedBuffer.set(nodeData, lengthBuffer.byteLength);
 
-    return buffer;
+    return combinedBuffer;
   }
 }
 
 export class MerkleTreeWriteStream extends Writable {
   private merkleTreeData: TMerkleTreeData = { height: 0, nodes: [] };
-  private buffer: Buffer = Buffer.alloc(0);
+  private bufferList: Uint8Array[] = [];
+  private bufferSize: number = 0;
 
   constructor() {
     super({ objectMode: true });
   }
+
+  private isJSONParsed = false;
 
   _write(
     chunk: any,
@@ -78,29 +97,43 @@ export class MerkleTreeWriteStream extends Writable {
     callback: (_?: Error | null) => void
   ): void {
     try {
-      if (typeof chunk === 'string') {
-        let parsed;
-        try {
-          parsed = JSON.parse(chunk);
-        } catch {
-          parsed = null;
+      if (chunk instanceof Uint8Array) {
+        this.bufferList.push(chunk);
+        this.bufferSize += chunk.length;
+
+        let buffer = Binary.concatUint8Array(this.bufferList, this.bufferSize);
+
+        if (!this.isJSONParsed) {
+          const possibleString = new TextDecoder('utf-8').decode(buffer);
+          let parsed;
+          try {
+            parsed = JSON.parse(possibleString);
+          } catch {
+            parsed = null;
+          }
+          if (parsed && typeof parsed.height === 'number') {
+            this.merkleTreeData.height = parsed.height;
+            const cutOff = new TextEncoder().encode(possibleString).length;
+            buffer = buffer.subarray(cutOff);
+            this.bufferList = [buffer];
+            this.bufferSize = buffer.length;
+            this.isJSONParsed = true;
+          }
         }
 
-        if (parsed && typeof parsed.height === 'number') {
-          this.merkleTreeData.height = parsed.height;
-          callback();
-        } else {
-          callback(new Error('Invalid JSON data'));
-        }
-      } else if (Buffer.isBuffer(chunk)) {
-        this.buffer = Buffer.concat([this.buffer, chunk]);
+        while (this.bufferSize >= 2) {
+          const lengthView = new DataView(
+            buffer.buffer,
+            buffer.byteOffset,
+            buffer.byteLength
+          );
+          const nodeDataLength = lengthView.getUint16(0, false);
 
-        while (this.buffer.length >= 2) {
-          const nodeDataLength = this.buffer.readUInt16BE(0);
-
-          if (this.buffer.length >= 2 + nodeDataLength) {
-            const nodeDataChunk = this.buffer.subarray(2, 2 + nodeDataLength);
-            this.buffer = this.buffer.subarray(2 + nodeDataLength);
+          if (this.bufferSize >= 2 + nodeDataLength) {
+            const nodeDataChunk = buffer.subarray(2, 2 + nodeDataLength);
+            buffer = buffer.subarray(2 + nodeDataLength);
+            this.bufferList = [buffer];
+            this.bufferSize = buffer.length;
 
             const nodeData = this.deserializeNode(nodeDataChunk);
             this.merkleTreeData.nodes.push(nodeData);
@@ -108,7 +141,6 @@ export class MerkleTreeWriteStream extends Writable {
             break;
           }
         }
-
         callback();
       } else {
         callback(new Error('Invalid data type'));
@@ -129,15 +161,19 @@ export class MerkleTreeWriteStream extends Writable {
    * The deserialization format is as follows:
    *   - The first 32 bytes contain the serialized bigint value.
    *   - The remaining bytes contain the serialized field element value.
-   * @param {Buffer} buffer - A Buffer containing the serialized node data.
+   * @param {Uint8Array} buffer - A Uint8Array containing the serialized node data.
    * @returns {Array} - An array containing a bigint and a Field element.
    */
-  private deserializeNode(buffer: Buffer): [bigint, Field] {
+  private deserializeNode(buffer: Uint8Array): [bigint, Field] {
     const indexBuffer = buffer.subarray(0, 32);
-    const index = indexBuffer.readBigInt64BE();
+    const indexView = new DataView(
+      indexBuffer.buffer,
+      indexBuffer.byteOffset,
+      indexBuffer.byteLength
+    );
+    const index = indexView.getBigInt64(0, false);
 
     const fieldElementBuffer = buffer.subarray(32);
-
     const fieldElement = Encoding.Bijective.Fp.fromBytes(fieldElementBuffer)[0];
 
     return [index, fieldElement];

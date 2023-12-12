@@ -59,12 +59,14 @@ export class StorageEngineLocal extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isFile(filePath: string = ''): Promise<boolean> {
+    if (!this.isExist(filePath)) {
+      return false;
+    }
     const fullPath = path.join(this.pathBase, filePath);
     try {
       const stat = fs.statSync(fullPath);
       return stat.isFile();
     } catch (e) {
-      console.error('isFile error:', e);
       return false;
     }
   }
@@ -155,28 +157,7 @@ export class StorageEngineLocal extends StorageEngineBase<
   }
 
   public createWriteStream(filePath: string): Writable {
-    return fs.createWriteStream(path.join(this.pathBase, filePath));
-  }
-
-  public async streamWriteFile(
-    filePath: string,
-    contentStream: Readable
-  ): Promise<string> {
-    const fullPath = path.join(this.pathBase, filePath);
-    const pathParts = fullPath.split('/');
-    pathParts.pop();
-    const currentPath = pathParts.join('/');
-    if (!(await this.isFolder(currentPath))) {
-      fs.mkdirSync(currentPath, { recursive: true });
-    }
-
-    const writeStream = this.createWriteStream(fullPath);
-    contentStream.pipe(writeStream);
-
-    return new Promise<string>((resolve, reject) => {
-      writeStream.on('finish', () => resolve(fullPath));
-      writeStream.on('error', reject);
-    });
+    return fs.createWriteStream(path.join(this.pathBase, filePath), { flags: 'w' });
   }
 
   /**

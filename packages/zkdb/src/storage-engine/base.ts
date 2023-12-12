@@ -124,13 +124,6 @@ export abstract class StorageEngineBase<T, K, M> {
   public abstract createWriteStream(_path: string): Writable
 
   /**
-   * Writes a file using streams
-   * @param path 
-   * @param contentStream 
-   */
-  public abstract streamWriteFile(_path: string, _contentStream: fs.ReadStream): Promise<string>
-
-  /**
    * Initialize path
    * @param path path to be initialized
    * @returns path

@@ -141,10 +141,6 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
     throw Error("Not Implemented");
   }
 
-  public streamWriteFile(_path: string, _contentStream: Readable): Promise<string> {
-    throw Error("Not Implemented");
-  }
-
   /**
    * Create new instance of storage engine
    * @param basePath Base path of the storage engine
