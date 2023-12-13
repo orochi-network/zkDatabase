@@ -21,27 +21,17 @@ describe('MerkleTreeStorage', () => {
   });
 
   it('save nodes', async () => {
-    console.log('nodes')
-    let merkleTreeStorage: MerkleTreeStorage;
-    try {
-      merkleTreeStorage = await MerkleTreeStorage.load(
-        localStorage,
-        DEFAULT_HEIGHT
-      );
-    } catch (error) {
-      console.log('Error:', error);
-    }
-
+    console.log('await MerkleTreeStorage.load()');
+    let merkleTreeStorage: MerkleTreeStorage = await MerkleTreeStorage.load(
+      localStorage,
+      DEFAULT_HEIGHT
+    );
     for (let i = 6n; i < 100n; i++) {
       merkleTreeStorage!.setLeaf(i, Field(i));
     }
 
-    try {
-      console.log('await merkleTreeStorage!.save();')
-      await merkleTreeStorage!.save();
-    } catch (error) {
-      console.log('error', error);
-    }
+    console.log('await merkleTreeStorage!.save();')
+    await merkleTreeStorage!.save();
 
     let newMerkleTreeStorage: MerkleTreeStorage;
     try {
