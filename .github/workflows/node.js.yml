@@ -12,6 +12,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      working-directory: ./packges/zkdb
 
     strategy:
       matrix:
@@ -27,8 +29,8 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       - name: Install Dependencies
-        run: npm --prefix packges/zkdb i
+        run: npm --prefix ./packges/zkdb i
       - name: Eslint check
-        run: npm --prefix packges/zkdb run lint-check
+        run: npm --prefix ./packges/zkdb run lint-check
       - name: Build Project
-        run: npm --prefix packges/zkdb run build
+        run: npm --prefix ./packges/zkdb run build
