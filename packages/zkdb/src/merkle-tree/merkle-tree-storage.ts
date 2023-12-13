@@ -78,7 +78,6 @@ export class MerkleTreeStorage {
   }
 
   public setLeaf(index: bigint, digest: Field) {
-    console.log('setLeaf', index, digest);
     this.merkleNodes.set(index, digest);
     this.merkleTree.setLeaf(index, digest);
   }
