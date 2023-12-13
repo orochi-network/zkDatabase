@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase use a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to  ensuring the correctness of data in verifiable manner. With zkDatabase, it's allow developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
+Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase uses a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to ensure the correctness of data in a verifiable manner. With zkDatabase, it allows developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
 
 **It's time for provable data.**
 
@@ -21,7 +21,7 @@ _For instance, a centralized cloud storage provider experiences a downtime or da
 
 Achieving off-chain storage through ZKP and Merkle trees can ensure the immutability of the data, but it may limit accessibility to the public. Despite the data being public, not everyone can access it.
 
-_For instance you have a public records need to everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible._
+_For instance you have a public records need for everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible._
 
 ### Inconsistent data structure
 
@@ -152,7 +152,7 @@ This module guarantees that private data is secure and can't be accessible by an
 
 ### zkDatabase ODM
 
-Instead of SQL, we build this project in a noSQL fashion, learnt from two successful projects MongoDB and Mongoose. In our conclusion, a language like SQL needs the parser and ORM to leverage its potential meanwhile ODM and non-related documents are better candidates with lower complexity. Besides, ODM and BSON documents are super effective when combine with TypeScript the main language for zkApp.
+Instead of SQL, we build this project in a noSQL fashion, learned from two successful projects MongoDB and Mongoose. In our conclusion, a language like SQL needs the parser and ORM to leverage its potential meanwhile ODM and non-related documents are better candidates with lower complexity. Besides, ODM and BSON documents are super effective when combined with TypeScript the main language for zkApp.
 
 **Note:** A verifiable sampling module can turn zkDatabase into a passive zkOracle, it's the potential of the zkDatabase project that we want to explore in the future.
 
@@ -168,8 +168,8 @@ Please reach out to us on [zkDatabase @ Discord](https://discord.com/channels/10
 
 ## Donation and Grants
 
-Our financial report could be track here [zkDatabase financial report](https://docs.google.com/spreadsheets/d/14R24hdgQGp9RdkOmjAM_l3ZQiZXsbxXD06KjZ3a8Ct0/edit?usp=sharing)
+Our financial report can be tracked here [zkDatabase financial report](https://docs.google.com/spreadsheets/d/14R24hdgQGp9RdkOmjAM_l3ZQiZXsbxXD06KjZ3a8Ct0/edit?usp=sharing)
 
 ## License
 
-The source code of zkDatabase was licensed under [Apache-2.0](./LICENSE) that meant you are a co-owner of project, the ownership depends on the stake and effort that you put in this project.
+The source code of zkDatabase was licensed under [Apache-2.0](./LICENSE) that means you are a co-owner of project, the ownership depends on the stake and effort that you put in this project.
