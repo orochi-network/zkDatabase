@@ -1,9 +1,9 @@
-import { ZKDatabaseStorage } from "../../core/zkdb-storage.js";
-import { PrivateKey } from "o1js";
+import { ZKDatabaseStorage } from '../../core/zkdb-storage.js';
+import { PrivateKey } from 'o1js';
 
 let zkDbPrivateKey = PrivateKey.random();
 let zkDbPublicKey = zkDbPrivateKey.toPublicKey();
-export let zkdb: ZKDatabaseStorage
+export let zkdb: ZKDatabaseStorage;
 
 export async function initializeZKDatabase(merkleHeight: number) {
   zkdb = await ZKDatabaseStorage.getInstance('zkdb-test', {
@@ -14,7 +14,4 @@ export async function initializeZKDatabase(merkleHeight: number) {
     },
   });
 }
-export {
-  zkDbPrivateKey,
-  zkDbPublicKey
-}
+export { zkDbPrivateKey, zkDbPublicKey };

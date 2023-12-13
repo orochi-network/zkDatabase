@@ -157,7 +157,9 @@ export class StorageEngineLocal extends StorageEngineBase<
   }
 
   public createWriteStream(filePath: string): Writable {
-    return fs.createWriteStream(path.join(this.pathBase, filePath), { flags: 'w' });
+    return fs.createWriteStream(path.join(this.pathBase, filePath), {
+      flags: 'w',
+    });
   }
 
   /**

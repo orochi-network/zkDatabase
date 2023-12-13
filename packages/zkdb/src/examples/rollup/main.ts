@@ -1,11 +1,4 @@
-import {
-  Mina,
-  PrivateKey,
-  AccountUpdate,
-  Provable,
-  Field,
-  UInt64,
-} from 'o1js';
+import { Mina, PrivateKey, AccountUpdate, Provable, Field, UInt64 } from 'o1js';
 import { User } from './user.js';
 import { TestContract } from './test-contract.js';
 import { zkDbPrivateKey, zkdb } from './data.js';
@@ -44,7 +37,7 @@ let doProofs = false;
       ticketAmount: Field(i),
     });
 
-    const index = await zkdb.add(newUser)
+    const index = await zkdb.add(newUser);
 
     tx = await Mina.transaction(feePayer, () => {
       test.saveUser(UInt64.from(index), newUser);
@@ -57,7 +50,7 @@ let doProofs = false;
   const tx1 = await test.rollUp(feePayer, 3);
 
   if (tx1) {
-    await tx1.sign([zkappKey, feePayerKey]).send()
+    await tx1.sign([zkappKey, feePayerKey]).send();
   }
 
   Provable.log('action state after new user', test.getActionState());

@@ -111,17 +111,17 @@ export abstract class StorageEngineBase<T, K, M> {
 
   /**
    * Stream file from the file system
-   * @param path 
-   * @returns 
+   * @param path
+   * @returns
    */
-  public abstract createReadStream(_path: string): Readable
+  public abstract createReadStream(_path: string): Readable;
 
   /**
    * Stream content to a file in the file system
-   * @param path 
-   * @param content 
+   * @param path
+   * @param content
    */
-  public abstract createWriteStream(_path: string): Writable
+  public abstract createWriteStream(_path: string): Writable;
 
   /**
    * Initialize path

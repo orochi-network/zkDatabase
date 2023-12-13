@@ -10,7 +10,7 @@ describe('MerkleTreeStorage', () => {
   let localStorage: StorageEngineLocal;
 
   beforeAll(async () => {
-    console.log('beforeAll')
+    console.log('beforeAll');
     try {
       localStorage = await StorageEngineLocal.getInstance({
         location: `./${BASE_PATH}`,
@@ -30,12 +30,12 @@ describe('MerkleTreeStorage', () => {
       merkleTreeStorage!.setLeaf(i, Field(i));
     }
 
-    console.log('await merkleTreeStorage!.save();')
+    console.log('await merkleTreeStorage!.save();');
     await merkleTreeStorage!.save();
 
     let newMerkleTreeStorage: MerkleTreeStorage;
     try {
-      console.log('await MerkleTreeStorage.load(')
+      console.log('await MerkleTreeStorage.load(');
       newMerkleTreeStorage = await MerkleTreeStorage.load(
         localStorage,
         DEFAULT_HEIGHT

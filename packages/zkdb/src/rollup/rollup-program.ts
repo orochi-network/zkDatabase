@@ -3,7 +3,7 @@ import {
   ZkProgram,
   Field,
   SelfProof,
-  MerkleWitness
+  MerkleWitness,
 } from 'o1js';
 import { RollUpInput, RollUpOutput } from './rollup-params.js';
 import { Action } from './action.js';
@@ -52,7 +52,7 @@ function RollUpProgram(name: string, merkleTreeHeight: number) {
           });
         },
       },
-      
+
       update: {
         privateInputs: [SelfProof, Action, DatabaseMerkleWitness, Field],
 

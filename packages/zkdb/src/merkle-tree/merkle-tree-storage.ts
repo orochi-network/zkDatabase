@@ -24,7 +24,7 @@ export class MerkleTreeStorage {
     this.storageEngine = storageEngine;
     this.merkleTree = new MerkleTree(height);
     this.merkleNodes = new Map(nodes);
-    this.setLeaves(nodes)
+    this.setLeaves(nodes);
   }
 
   public static async load(
@@ -44,7 +44,11 @@ export class MerkleTreeStorage {
       });
 
       const merkleData = merkleTreeWriteStream.getMerkleTreeData();
-      return new MerkleTreeStorage(storageEngine, defaultHeight, merkleData.nodes);
+      return new MerkleTreeStorage(
+        storageEngine,
+        defaultHeight,
+        merkleData.nodes
+      );
     } else {
       return new MerkleTreeStorage(storageEngine, defaultHeight);
     }
@@ -57,9 +61,7 @@ export class MerkleTreeStorage {
         nodes: Array.from(this.merkleNodes.entries()),
       });
 
-      const writeStream = this.storageEngine.createWriteStream(
-        FILENAME_MERKLE
-      );
+      const writeStream = this.storageEngine.createWriteStream(FILENAME_MERKLE);
       merkleTreeStream.on('error', reject);
       writeStream.on('error', reject);
       writeStream.on('finish', resolve);

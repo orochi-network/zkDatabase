@@ -1,5 +1,5 @@
-import { Schema } from "../../core/schema.js";
-import { Field } from "o1js";
+import { Schema } from '../../core/schema.js';
+import { Field } from 'o1js';
 export class User extends Schema({
   accountName: Field,
   ticketAmount: Field,

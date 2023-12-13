@@ -134,11 +134,11 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
   }
 
   public createReadStream(_path: string): Readable {
-    throw Error("Not Implemented");
+    throw Error('Not Implemented');
   }
 
   public createWriteStream(_path: string): Writable {
-    throw Error("Not Implemented");
+    throw Error('Not Implemented');
   }
 
   /**
