@@ -1,7 +1,11 @@
 import axios, { AxiosRequestConfig } from "axios";
+import { Readable, Writable } from "stream";
+import { ReadStream } from "fs";
 import { JWT } from "./jwt.js";
 
-export interface IKuboOption {}
+export interface IKuboOption {
+  data: any;
+}
 
 export interface IKuboArg {
   path: string;
@@ -91,6 +95,8 @@ export type TNameKeyList = {
 export const REQUIRED_AUTHENTICATION = [
   "files/rm",
   "files/cp",
+  "files/writeStream",
+  "files/readStream",
   "add",
   "pin/add",
   "name/publish",
@@ -145,7 +151,7 @@ export class RequestBuilder {
   public static new(
     comand: string,
     defaultOpt: Partial<IKuboOption> = {},
-    defautArgs: Partial<IKuboOption> = {}
+    defautArgs: Partial<IKuboArg> = {}
   ) {
     return new RequestBuilder(comand, defaultOpt, defautArgs);
   }
@@ -205,7 +211,7 @@ export class KuboClient {
   public async filesLs(
     args: TFilesLsArgs = { path: "/" }
   ): Promise<TFilesLsEntry[]> {
-    const { Entries } = await this.execute<{ Entries: TFilesLsEntry[] }>(
+    const { Entries } = await this.executePost<{ Entries: TFilesLsEntry[] }>(
       new RequestBuilder("files/ls", {}, args)
     );
     return Entries;
@@ -214,13 +220,13 @@ export class KuboClient {
   public async filesStat(
     args: TFilesStatArgs = { arg: "/" }
   ): Promise<TFilesStatEntry> {
-    return this.execute<TFilesStatEntry>(
+    return this.executePost<TFilesStatEntry>(
       new RequestBuilder("files/stat", {}, args)
     );
   }
 
   public async filesRm(args: TFilesRmArgs): Promise<void> {
-    await this.execute<TFilesStatEntry>(
+    await this.executePost<TFilesStatEntry>(
       new RequestBuilder("files/rm", {}, args)
     );
   }
@@ -231,7 +237,7 @@ export class KuboClient {
   ): Promise<TFilesAdd> {
     const fileForm = new FormData();
     fileForm.append("file", new Blob([filecontent]), filename);
-    return this.execute<TFilesAdd>(
+    return this.executePost<TFilesAdd>(
       new RequestBuilder("add", <any>fileForm, {}),
       {
         "Content-Type": "multipart/form-data",
@@ -240,13 +246,13 @@ export class KuboClient {
   }
 
   public async filesCp(src: string, dst: string) {
-    return this.execute<TFilesAdd>(
+    return this.executePost<TFilesAdd>(
       new RequestBuilder(`files/cp?arg=${src}&arg=${dst}&parents=true`)
     );
   }
 
   public async filesMkdir(args: TFilesMkdirArgs) {
-    return this.execute(new RequestBuilder("files/mkdir", {}, args));
+    return this.executePost(new RequestBuilder("files/mkdir", {}, args));
   }
 
   public async filesWrite(path: string, content: Uint8Array) {
@@ -256,15 +262,35 @@ export class KuboClient {
   }
 
   public async filesRead(args: TFilesReadArgs = {}): Promise<ArrayBuffer> {
-    return this.execute(
+    return this.executePost(
       new RequestBuilder("files/read", {}, args),
       {},
       { responseType: "arraybuffer", responseEncoding: "binary" }
     );
   }
 
+  public async filesReadStream(path: string): Promise<Readable> {
+    const requestBuilder = new RequestBuilder("files/readStream", {}, { path });
+    return this.executeGet<Readable>(
+      requestBuilder,
+      {},
+      { responseType: "stream" }
+    );
+  }
+
+  public async filesWriteStream(path: string, stream: Readable): Promise<any> {
+    const requestBuilder = new RequestBuilder(
+      "files/writeStream",
+      { data: stream },
+      { path }
+    );
+    return this.executePost<any>(requestBuilder, {
+      "Content-Type": "application/octet-stream",
+    });
+  }
+
   public async pinAdd(args: TPinAddArgs): Promise<TPinAdd> {
-    return this.execute(new RequestBuilder("pin/add", {}, args));
+    return this.executePost(new RequestBuilder("pin/add", {}, args));
   }
 
   public async namePublish(arg?: string): Promise<TNamePublish> {
@@ -272,19 +298,22 @@ export class KuboClient {
       typeof arg === "undefined"
         ? `/ipfs/${(await this.filesStat({ arg: "/" })).Hash}`
         : arg;
-    return this.execute(new RequestBuilder("name/publish", {}, { arg: path }));
+    return this.executePost(
+      new RequestBuilder("name/publish", {}, { arg: path })
+    );
   }
 
   public async nameResolve(arg: string): Promise<TNameResolve> {
-    return this.execute(new RequestBuilder("name/resolve", {}, { arg }));
+    return this.executePost(new RequestBuilder("name/resolve", {}, { arg }));
   }
 
   public async keyList() {
-    return (await this.execute<TNameKeyList>(new RequestBuilder("key/list")))
-      .Keys;
+    return (
+      await this.executePost<TNameKeyList>(new RequestBuilder("key/list"))
+    ).Keys;
   }
 
-  public async execute<T>(
+  private async executePost<T>(
     requestBuilder: RequestBuilder,
     configHeaders: any = {},
     requestOptions: AxiosRequestConfig = {}
@@ -303,15 +332,43 @@ export class KuboClient {
             ...{ "Content-Type": "application/json" },
             ...configHeaders,
           };
+
     const res = await axios.post(
       this.getUrl(requestBuilder.command),
-      requestBuilder.options,
+      requestBuilder.options.data,
       {
         ...requestOptions,
         params: requestBuilder.args,
         headers,
       }
     );
+    return res.data;
+  }
+
+  private async executeGet<T>(
+    requestBuilder: RequestBuilder,
+    configHeaders: any = {},
+    requestOptions: AxiosRequestConfig = {}
+  ): Promise<T> {
+    const headers =
+      typeof this.jwt !== "undefined" &&
+      REQUIRED_AUTHENTICATION.includes(requestBuilder.command.toLowerCase())
+        ? {
+            ...{
+              "Content-Type": "application/json",
+              Authorization: this.jwt.authentication(),
+            },
+            ...configHeaders,
+          }
+        : {
+            ...{ "Content-Type": "application/json" },
+            ...configHeaders,
+          };
+    const res = await axios.get(this.getUrl(requestBuilder.command), {
+      ...requestOptions,
+      params: requestBuilder.args,
+      headers,
+    });
     return res.data;
   }
 }

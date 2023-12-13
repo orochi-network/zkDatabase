@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { Readable, Writable } from 'stream';
 
 /**
  * Storage engine using IPFS as backend
@@ -107,6 +108,20 @@ export abstract class StorageEngineBase<T, K, M> {
    * @returns
    */
   public abstract readFile(_path: string): Promise<Uint8Array>;
+
+  /**
+   * Stream file from the file system
+   * @param path
+   * @returns
+   */
+  public abstract createReadStream(_path: string): Readable;
+
+  /**
+   * Stream content to a file in the file system
+   * @param path
+   * @param content
+   */
+  public abstract createWriteStream(_path: string): Writable;
 
   /**
    * Initialize path

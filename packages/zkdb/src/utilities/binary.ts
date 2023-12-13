@@ -1,4 +1,3 @@
-import { BSON } from 'bson';
 import { Poseidon, Encoding, Field } from 'o1js';
 
 /**
@@ -55,14 +54,6 @@ function binaryToField(binary: Uint8Array): Field {
   throw new Error('Invalid binary data');
 }
 
-function ecnodeFields(fields: Field[]) {
-  return BSON.serialize({ root: fields.map((e) => e.toString()) });
-}
-
-function decodeFields(data: Uint8Array): Field[] {
-  return BSON.deserialize(data).root.map((e: string) => Field(e));
-}
-
 /**
  * Concatenate array of Uint8Array
  * @param input Array of Uint8Array
@@ -91,8 +82,6 @@ export const Binary = {
   poseidonHashBinary,
   concatUint8Array,
   convertHexToUint8Array,
-  ecnodeFields,
-  decodeFields,
   fieldToBinary,
   binaryToField,
 };

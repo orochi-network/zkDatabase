@@ -10,11 +10,17 @@ import {
   state,
 } from 'o1js';
 import { Schema } from './schema.js';
-import { Action, OperationType, getOperationIndexByType } from '../rollup/action.js';
+import {
+  Action,
+  OperationType,
+  getOperationIndexByType,
+} from '../rollup/action.js';
 import { DatabaseRollUp } from '../rollup/rollup-program.js';
 import { CircuitCache } from '../cache/circuit-cache.js';
 
-export type DatabaseSmartContract<T> = ReturnType<typeof DatabaseSmartContractFunction<T>>;
+export type DatabaseSmartContract<T> = ReturnType<
+  typeof DatabaseSmartContractFunction<T>
+>;
 
 function DatabaseSmartContractFunction<T>(
   type: Provable<T>,

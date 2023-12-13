@@ -25,11 +25,11 @@
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
     "buildw": "tsc -p tsconfig.json --watch",
-    "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
+    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
-    "test": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js",
-    "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"
   },
@@ -80,7 +80,8 @@
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
     "@babel/preset-typescript": "^7.16.0",
-    "@types/jest": "^27.0.3",
+    "@types/jest": "^27.5.2",
+    "@types/mock-fs": "^4.13.3",
     "@typescript-eslint/eslint-plugin": "^5.5.0",
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.7.0",
@@ -88,8 +89,9 @@
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-o1js": "^0.4.0",
     "husky": "^7.0.1",
-    "jest": "^27.3.1",
+    "jest": "^27.5.1",
     "lint-staged": "^11.0.1",
+    "mock-fs": "^5.2.0",
     "prettier": "^2.3.2",
     "ts-jest": "^27.0.7",
     "typedoc": "^0.24.7",
@@ -105,6 +107,7 @@
     "blockstore-fs": "^1.1.5",
     "bson": "^5.3.0",
     "datastore-fs": "^9.1.4",
-    "helia": "^2.0.1"
+    "helia": "^2.0.1",
+    "jest-worker": "^29.7.0"
   }
 }

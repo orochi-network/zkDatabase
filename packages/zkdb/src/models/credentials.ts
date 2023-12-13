@@ -1,4 +1,4 @@
-import { PrivateKey, PublicKey } from "o1js";
+import { PrivateKey, PublicKey } from 'o1js';
 
 export class Credentials {
   private feePayerKey: PrivateKey;

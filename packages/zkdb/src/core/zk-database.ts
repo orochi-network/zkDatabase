@@ -32,10 +32,7 @@ export class ZKDatabase {
 
     const rollUpProgram = getDatabaseRollUpFunction('', merkleHeight);
 
-    const DatabaseContract = getDatabaseZkApp(
-      type,
-      rollUpProgram.getProgram()
-    );
+    const DatabaseContract = getDatabaseZkApp(type, rollUpProgram.getProgram());
 
     class RollUpProof extends ZkProgram.Proof(rollUpProgram.getProgram()) {}
 
@@ -43,7 +40,7 @@ export class ZKDatabase {
 
     const zkdbSmartContract = new CoreDatabaseSmartContract(publicKey);
 
-    class Document extends Schema({data: type}) {}
+    class Document extends Schema({ data: type }) {}
 
     abstract class ZKDatabaseSmartContract extends SmartContract {
       protected createDocument(entity: T) {
@@ -62,7 +59,7 @@ export class ZKDatabase {
         await rollUpProgram.compile();
         await DatabaseContract.compile();
         const merkleRoot = await storage.getMerkleRoot();
-        
+
         zkdbSmartContract.setMerkleRoot(merkleRoot);
 
         return await Mina.transaction(feePayer, () => {
