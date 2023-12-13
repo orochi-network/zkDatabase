@@ -3,6 +3,7 @@ import '@/styles/globals.css'
 import { Footer } from "@/components/Footer"
 import { Header } from "@/components/Header"
 import PrelineScript from "@/components/PrelineScript"
+import { SideNav } from "./components/SideNav";
 
 type RootLayoutProps = {
   children: ReactNode;
@@ -12,7 +13,12 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   return (
     <html lang="en">
       <Header />
-      <body>{children}</body>
+      <body>
+        <div className="flex">
+          <div className="p-4"><SideNav /></div>
+          <div className="flex-grow">{children}</div>
+        </div>
+      </body>
       <Footer />
       <PrelineScript />
     </html>
