@@ -1,4 +1,6 @@
 // Just prepare the layout and use when needed
-export default function Footer() {
+import { FC } from "react";
+
+export const Footer: FC = () => {
   return null;
 }

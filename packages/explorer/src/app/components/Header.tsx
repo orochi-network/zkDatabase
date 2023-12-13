@@ -1,4 +1,6 @@
 // Just prepare the layout and use when needed
-export default function Header() {
+import { FC } from "react";
+
+export const Header: FC = () => {
   return null;
 }

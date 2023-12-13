@@ -1,13 +1,14 @@
-import Footer from "@/components/Footer"
-import Header from "@/components/Header"
-import PrelineScript from "@/components/PrelineScript"
+import { FC, ReactNode } from "react";
 import '@/styles/globals.css'
+import { Footer } from "@/components/Footer"
+import { Header } from "@/components/Header"
+import PrelineScript from "@/components/PrelineScript"
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+type RootLayoutProps = {
+  children: ReactNode;
+}
+
+const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   return (
     <html lang="en">
       <Header />
@@ -17,3 +18,4 @@ export default function RootLayout({
     </html>
   )
 }
+export default RootLayout;

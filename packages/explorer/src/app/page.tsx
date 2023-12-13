@@ -1,5 +1,8 @@
-import SideNav from "@/components/SideNav";
+import { FC } from "react";
+import { SideNav } from "@/components/SideNav";
 
-export default function Page() {
+const Page: FC = () => {
   return <SideNav />
 }
+
+export default Page;
