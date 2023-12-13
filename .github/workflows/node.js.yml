@@ -27,7 +27,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
       - name: Install Dependencies
-        run: npm --prefix packges/zkdb ci
+        run: npm --prefix packges/zkdb i
       - name: Eslint check
         run: npm --prefix packges/zkdb run lint-check
       - name: Build Project
