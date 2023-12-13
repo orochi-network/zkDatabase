@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 jobs:
   build:
@@ -21,16 +21,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: ./packges/zkdb/package-lock.json
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
       - name: Install Dependencies
-        run: npm --prefix packges/zkdb ci
+        run: npm --prefix ./packages/zkdb i
       - name: Eslint check
-        run: npm --prefix packges/zkdb run lint-check
+        run: cd ./packages/zkdb && npm run lint-check
       - name: Build Project
-        run: npm --prefix packges/zkdb run build
+        run: cd ./packages/zkdb && npm run build
+      - name: test Project
+        run: cd ./packages/zkdb && npm run test
