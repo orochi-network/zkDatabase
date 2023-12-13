@@ -28,21 +28,9 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
-      - name: Debug
-        run: |
-          pwd
-          ls
       - name: Install Dependencies
-        run: cd ./packges/zkdb && npm i
-      - name: Debug
-        run: |
-          pwd
-          ls
+        run: npm --prefix ./packages/zkdb i
       - name: Eslint check
-        run: cd ./packges/zkdb && npm run lint-check
-      - name: Debug
-        run: |
-          pwd
-          ls
+        run: cd ./packages/zkdb && npm run lint-check
       - name: Build Project
-        run: cd ./packges/zkdb && npm run build
+        run: cd ./packages/zkdb && npm run build
