@@ -1,3 +1,4 @@
+import { Readable, Writable } from 'stream';
 import { StorageEngineBase } from './base.js';
 
 /**
@@ -102,6 +103,47 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    */
   public async readFile(path: string): Promise<Uint8Array> {
     return this.innerData.get(`${this.pathBase}/${path}`)!;
+  }
+
+  public createWriteStream(path: string): Writable {
+    const filepath = `${this.pathBase}/${path}`;
+    const innerData = this.innerData;
+    let data: Buffer[] = [];
+  
+    const writableStream = new Writable({
+      write(chunk, encoding, callback) {
+        data.push(chunk);
+        callback();
+      },
+      final(callback) {
+        const content = Buffer.concat(data);
+        innerData.set(filepath, content);
+        callback();
+      }
+    });
+  
+    return writableStream;
+  }
+
+  public createReadStream(path: string): Readable {
+    const filepath = `${this.pathBase}/${path}`;
+    const innerData = this.innerData;
+    let sent = false;
+  
+    const readableStream = new Readable({
+      read(_) {
+        if (!sent) {
+          const data = innerData.get(filepath);
+          if (data) {
+            this.push(data);
+          }
+          sent = true;
+        }
+        this.push(null);
+      }
+    });
+  
+    return readableStream;
   }
 
   /**
