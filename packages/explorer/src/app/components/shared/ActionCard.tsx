@@ -8,7 +8,7 @@ type ActionCardProps = {
 
 export const ActionCard: FC<ActionCardProps> = ({ icon, title, subTitle }) => {
   return (
-    <div className="flex items-center flex-grow gap-3 p-3 border rounded-xl">
+    <div className="flex items-center flex-grow gap-3 p-3 card">
       {icon}
       <div className="flex flex-col">
         <div className="text-sm">{title}</div>

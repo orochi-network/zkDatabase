@@ -8,7 +8,9 @@ export const Database: FC = () => {
     <div className="flex flex-col p-2">
       <Header />
       <SearchInput />
-      <DatabaseList />
+      <div className="mt-4">
+        <DatabaseList />
+      </div>
     </div>
   );
 }
