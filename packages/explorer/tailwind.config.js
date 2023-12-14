@@ -5,7 +5,14 @@ module.exports = {
     './node_modules/preline/preline.js',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'ninuto': ['Ninuto', 'sans-serif']
+      },
+      fontSize: {
+        'xxs': '10px',
+      }
+    },
     textColor: {
       DEFAULT: "#192431",
       white: "#FCFEFF",

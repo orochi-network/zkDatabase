@@ -11,7 +11,7 @@ type RootLayoutProps = {
 
 const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   return (
-    <html lang="en">
+    <html lang="en" className="font-ninuto">
       <Header />
       <body>
         <div className="flex">

@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import url("https://fonts.googleapis.com/css?family=Nunito");
 
 @layer base {
   .nav-header {
@@ -9,5 +10,12 @@
 
   .page-wrapper {
     padding: 40px;
+  }
+}
+
+@layer components {
+  .card {
+    border-width: '1.5px';
+    border-radius: '10px';
   }
 }
