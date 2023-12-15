@@ -26,13 +26,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
-      - name: Install Dependencies
-        run: npm --prefix ./packages/zkdb i
-      - name: Eslint check
-        run: cd ./packages/zkdb && npm run lint-check
-      - name: Build Project
-        run: cd ./packages/zkdb && npm run build
-      - name: test Project
-        run: cd ./packages/zkdb && npm run test
+      - name: Test & Build explorer
+        run: cd ./packages/explorer && npm i && npm run build && npm run test
+      - name: Test & Build kubo
+        run: cd ./packages/kubo && npm i && npm run build && npm run test
+      - name: Test & Build portal
+        run: cd ./packages/portal && npm i && npm run lint-check && npm run build
+      - name: Test & Build serverless
+        run: cd ./packages/serverless && npm i && npm run lint-check && npm run build
+      - name: Test & Build zkdb
+        run: cd ./packages/zkdb && npm i && npm run lint-check && npm run build && npm run test
