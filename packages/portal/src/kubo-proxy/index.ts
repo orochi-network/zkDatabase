@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import config from '../helper/config';
+import { Request, Response } from 'express';
 import axios from 'axios';
 import { UploadedFile } from 'express-fileupload';
+import config from '../helper/config';
 import JWTAuthenInstance from '../helper/jwt';
 import { ModelUser } from '../model/user';
 import { ModelApiKey } from '../model/api_key';
@@ -21,7 +21,7 @@ export const ADD_ACTION = 'add';
 export const PIN_ADD_ACTION = 'pin/add';
 
 const getData = (req: Request) => {
-  if (req.body['data']) return req.body['data'];
+  if (req.body.data) return req.body.data;
   if (req?.files?.file) {
     const file = req?.files?.file as UploadedFile;
     const formData = new FormData();
@@ -32,17 +32,17 @@ const getData = (req: Request) => {
 };
 
 const transferRequest = async (req: Request, res: Response) => {
-  const method = req.body['method'] ?? 'POST';
-  const headers = req.body['headers'] ?? null;
-  const params = req.body['params'] ?? null;
+  const method = req.body.method ?? 'POST';
+  const headers = req.body.headers ?? null;
+  const params = req.body.params ?? null;
   const data = getData(req);
 
   try {
     const response = await axios({
-      method: method,
+      method,
       url: `${config.kuboUrl}${req.url}`,
-      headers: headers,
-      params: params,
+      headers,
+      params,
       data,
     });
 
@@ -53,12 +53,7 @@ const transferRequest = async (req: Request, res: Response) => {
   }
 };
 
-const addFileRequest = async (
-  req: Request,
-  res: Response,
-  userId: number,
-  _next: NextFunction
-) => {
+const addFileRequest = async (req: Request, res: Response, userId: number) => {
   const imFileLog = new ModelFileLog();
   const result = await transferRequest(req, res);
   await imFileLog.addFile(userId, result?.Name, result?.Hash);
@@ -68,10 +63,8 @@ const addFileRequest = async (
 const removeFileRequest = async (
   req: Request,
   res: Response,
-  userId: number,
-  _next: NextFunction
+  userId: number
 ) => {
-  console.log('query', req.query);
   const { arg } = req.query;
   const imFileLog = new ModelFileLog();
 
@@ -93,7 +86,7 @@ const removeFileRequest = async (
   return res.status(500).json({ success: false, message: 'Something wrong' });
 };
 
-const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
+const kuboProxy = async (req: Request, res: Response) => {
   const imUser = new ModelUser();
   const imApiKey = new ModelApiKey();
   const token = req.headers.authorization;
@@ -117,10 +110,10 @@ const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
         const [dbUser] = await imUser.get([{ field: 'uuid', value: uuid }]);
         if (dbUser) {
           if (isAdd) {
-            return addFileRequest(req, res, dbUser.id, _next);
+            return addFileRequest(req, res, dbUser.id);
           }
           if (isRemove) {
-            return removeFileRequest(req, res, dbUser.id, _next);
+            return removeFileRequest(req, res, dbUser.id);
           }
           const result = await transferRequest(req, res);
           return res.json({ result });
@@ -131,7 +124,7 @@ const kuboProxy = async (req: Request, res: Response, _next: NextFunction) => {
       const [dbUser] = await imApiKey.get([{ field: 'key', value: apiKey }]);
       if (dbUser) {
         if (isAdd) {
-          return addFileRequest(req, res, dbUser.id, _next);
+          return addFileRequest(req, res, dbUser.id);
         }
         const result = await transferRequest(req, res);
         return res.json({ result });

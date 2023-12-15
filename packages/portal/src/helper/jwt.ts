@@ -1,8 +1,8 @@
 import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
+import { Singleton } from '@orochi-network/framework';
 import logger from './logger';
 import config from './config';
-import { Singleton } from '@orochi-network/framework';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   uuid: string;

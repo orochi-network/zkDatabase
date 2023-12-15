@@ -1,8 +1,12 @@
 import Joi from 'joi';
+import {
+  IOrderingBy,
+  IPagination,
+  IRecordList,
+} from '@orochi-network/framework';
 import GraphQLJSON from 'graphql-type-json';
 import GoogleOAuth2Instance from '../../helper/google-client';
 import resolverWrapper from '../validation';
-import config from '../../helper/config';
 import { ModelUser } from '../../model/user';
 import { EAccountType, ModelLoginMethod } from '../../model/login_method';
 import { ModelProfile } from '../../model/profile';
@@ -11,11 +15,6 @@ import logger from '../../helper/logger';
 import { AppContext } from '../../helper/common';
 import { revokeAllUserToken, revokeToken } from '../../service/redis';
 import { IApiKey, ModelApiKey } from '../../model/api_key';
-import {
-  IOrderingBy,
-  IPagination,
-  IRecordList,
-} from '@orochi-network/framework';
 
 export const MAX_LIMIT = 20;
 export const MAX_OFFSET = 100;
@@ -121,12 +120,12 @@ export const resolversUser = {
             const { limit, offset, order } = args;
             const imModelApiKey = new ModelApiKey();
             const result = await imModelApiKey.getApiKeyList(
+              [{ field: 'userId', value: userId }],
               {
                 limit,
                 offset,
                 order,
-              },
-              [{ field: 'userId', value: userId }]
+              }
             );
             const { records, total } = result.result as IRecordList<IApiKey>;
             return {
@@ -134,6 +133,7 @@ export const resolversUser = {
               records,
             };
           }
+          throw new Error('Unable to get your keys');
         } catch (error) {
           logger.error(error);
           throw new Error('Unable to get your keys');
@@ -157,6 +157,7 @@ export const resolversUser = {
               key: newKey?.key,
             };
           }
+          throw new Error('Unable to create api key');
         } catch (error) {
           logger.error(error);
           throw new Error('Unable to create api key');

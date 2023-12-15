@@ -48,7 +48,7 @@ export const resolverAuth = (
     if (error) {
       throw new Error(error.message);
     }
-    const { token } = context;
+    // const { token } = context;
 
     return resolver(root, args, context, info);
   };

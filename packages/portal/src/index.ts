@@ -1,6 +1,7 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { Connector } from '@orochi-network/framework';
 import express from 'express';
 import fileupload from 'express-fileupload';
 import http from 'http';
@@ -9,12 +10,10 @@ import logger from './helper/logger';
 import { TypedefsApp, ResolversApp } from './apollo';
 import { AppContext } from './helper/common';
 import config from './helper/config';
-import { Connector } from '@orochi-network/framework';
 import RedisInstance from './helper/redis';
 import JWTAuthenInstance from './helper/jwt';
 import { ModelUser } from './model/user';
 import kuboProxy from './kubo-proxy';
-import { AppErrorClass } from './helper/response-error';
 
 (async () => {
   Connector.connectByUrl(config.mariadbConnectUrl);
@@ -57,9 +56,9 @@ import { AppErrorClass } from './helper/response-error';
 
   app.use('/kubo-proxy', kuboProxy);
 
-  await new Promise<void>((resolve) =>
-    httpServer.listen({ port: 4000 }, resolve)
-  );
+  await new Promise<void>((resolve) => {
+    httpServer.listen({ port: 4000 }, resolve);
+  });
 
   logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
 

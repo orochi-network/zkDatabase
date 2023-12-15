@@ -34,8 +34,8 @@ export class ModelApiKey extends ModelMysqlBasic<IApiKey> {
   }
 
   public getApiKeyList(
-    pagination: IPagination = { offset: 0, limit: 20, order: [] },
-    conditions?: IModelCondition<IApiKey>[]
+    conditions?: IModelCondition<IApiKey>[],
+    pagination: IPagination = { offset: 0, limit: 20, order: [] }
   ): Promise<IResponse<IApiKey>> {
     const queryBuilder = this.basicQuery();
     return this.getListByCondition<IApiKey>(
