@@ -1,11 +1,14 @@
 export { default as AddIcon } from "./AddIcon";
 export { default as Cog } from "./Cog";
 export { default as DatabaseIcon } from "./DatabaseIcon";
+export { default as HamburgerIcon } from "./HamburgerIcon";
 export { default as Home } from "./Home";
+export { default as IconsIcon } from "./IconsIcon";
 export { default as MagnifyingGlassIcon } from "./MagnifyingGlassIcon";
 export { default as NewDatabase } from "./NewDatabase";
 export { default as NewQuery } from "./NewQuery";
 export { default as NewTemplate } from "./NewTemplate";
 export { default as Query } from "./Query";
 export { default as RightChevronIcon } from "./RightChevronIcon";
+export { default as SortAscIcon } from "./SortAscIcon";
 export { default as Vector } from "./Vector";
