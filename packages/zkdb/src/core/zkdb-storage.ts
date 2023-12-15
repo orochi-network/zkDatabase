@@ -290,7 +290,7 @@ export class ZKDatabaseStorage {
   }
 
   public getMerkleTree(): MerkleTree {
-    return this.metadata.merkle.toMerkleTree();
+    return this.metadata.merkle.getMerkleTree();
   }
 
   /**

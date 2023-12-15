@@ -86,6 +86,10 @@ export class MerkleTreeStorage {
     leaf.forEach((e) => this.setLeaf(e[0], e[1]));
   }
 
+  public getMerkleTree(): MerkleTree {
+    return this.merkleTree;
+  }
+
   public getLeafCount() {
     return this.merkleTree.leafCount;
   }
