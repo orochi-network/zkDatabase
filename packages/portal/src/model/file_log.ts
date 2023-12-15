@@ -1,9 +1,4 @@
-import {
-  IModelCondition,
-  IPagination,
-  IResponse,
-  ModelMysqlBasic,
-} from '@orochi-network/framework';
+import { ModelMysqlBasic } from '@orochi-network/framework';
 import { Knex } from 'knex';
 import { v4 as uuidv4 } from 'uuid';
 import { IBaseEntity } from './base_modal';
