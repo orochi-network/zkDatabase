@@ -31,8 +31,8 @@ jobs:
       - name: Test & Build kubo
         run: cd ./packages/kubo && npm i && npm run build && npm run test
       - name: Test & Build portal
-        run: cd ./packages/portal && npm i && npm run lint-check && npm run build
+        run: cd ./packages/portal && npm i && npm run lint && npm run build
       - name: Test & Build serverless
-        run: cd ./packages/serverless && npm i && npm run lint-check && npm run build
+        run: cd ./packages/serverless && npm i && npm run lint && npm run build
       - name: Test & Build zkdb
-        run: cd ./packages/zkdb && npm i && npm run lint-check && npm run build && npm run test
+        run: cd ./packages/zkdb && npm i && npm run lint && npm run build && npm run test
