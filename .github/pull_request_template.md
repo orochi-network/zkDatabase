@@ -8,4 +8,4 @@
 
 ## Description
 
-Breif description of the changes made.
+Brief description of the changes made.
