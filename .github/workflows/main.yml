@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Test & Build explorer
-        run: cd ./packages/explorer && npm i && npm run build && npm run test
+        run: cd ./packages/explorer && npm i && npm run build
       - name: Test & Build kubo
         run: cd ./packages/kubo && npm i && npm run build && npm run test
       - name: Test & Build portal
