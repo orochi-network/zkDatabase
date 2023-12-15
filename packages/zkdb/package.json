@@ -108,6 +108,7 @@
     "bson": "^5.3.0",
     "datastore-fs": "^9.1.4",
     "helia": "^2.0.1",
-    "jest-worker": "^29.7.0"
+    "jest-worker": "^29.7.0",
+    "mongodb": "^6.3.0"
   }
 }
