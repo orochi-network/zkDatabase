@@ -15,10 +15,10 @@ export const TemplateModalContent: FC<TemplateModalContentProps> = ({ modalId })
         <AppInput label="Collection name" placeholder="Collection name"/>
       </div>
       <div className="flex items-center justify-end gap-x-2 dark:border-gray-700">
-        <Button variant={ButtonVariant.primary} data-hs-overlay={`#${modalId}`}>
+        <Button variant={ButtonVariant.secondary} data-hs-overlay={`#${modalId}`}>
           Cancel
         </Button>
-        <Button variant={ButtonVariant.secondary}>
+        <Button variant={ButtonVariant.primary}>
           Create Database
         </Button>
       </div>

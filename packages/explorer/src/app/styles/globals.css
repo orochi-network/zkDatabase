@@ -22,7 +22,8 @@
     border-width: 1.5px;
     border-radius: 10px;
   }
-  .button {
+
+  button {
     padding-top: 0.5rem;
     padding-bottom: 0.5rem; 
     padding-left: 1rem;
