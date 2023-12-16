@@ -2,6 +2,7 @@ export { default as AddIcon } from "./AddIcon";
 export { default as CloseIcon } from "./CloseIcon";
 export { default as Cog } from "./Cog";
 export { default as DatabaseIcon } from "./DatabaseIcon";
+export { default as FolderIcon } from "./FolderIcon";
 export { default as HamburgerIcon } from "./HamburgerIcon";
 export { default as Home } from "./Home";
 export { default as IconsIcon } from "./IconsIcon";

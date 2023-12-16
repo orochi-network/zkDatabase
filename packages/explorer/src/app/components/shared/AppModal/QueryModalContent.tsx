@@ -1,7 +1,7 @@
 import { FC } from "react";
-import { PrimaryButton } from "../Buttons/PrimaryButton";
-import { SecondaryButton } from "../Buttons/SecondaryButton";
+import { Button } from "../Button";
 import { AppInput } from "../AppInput";
+import { ButtonVariant } from "@/types/index";
 
 type QueryModalContentProps = {
   modalId: string;
@@ -15,12 +15,12 @@ export const QueryModalContent: FC<QueryModalContentProps> = ({ modalId }) => {
         <AppInput label="Collection name" placeholder="Collection name"/>
       </div>
       <div className="flex items-center justify-end gap-x-2 dark:border-gray-700">
-        <SecondaryButton data-hs-overlay={`#${modalId}`}>
+        <Button variant={ButtonVariant.primary} data-hs-overlay={`#${modalId}`}>
           Cancel
-        </SecondaryButton>
-        <PrimaryButton>
+        </Button>
+        <Button variant={ButtonVariant.secondary}>
           Create Database
-        </PrimaryButton>
+        </Button>
       </div>
     </div>
   );
