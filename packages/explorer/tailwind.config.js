@@ -11,6 +11,10 @@ module.exports = {
       },
       fontSize: {
         'xxs': '10px',
+      },
+      backgroundColor: {
+        primary: "#EC4525",
+        primaryHover: "#EC4525"
       }
     },
     textColor: {

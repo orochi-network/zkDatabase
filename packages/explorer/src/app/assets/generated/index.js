@@ -1,4 +1,5 @@
 export { default as AddIcon } from "./AddIcon";
+export { default as CloseIcon } from "./CloseIcon";
 export { default as Cog } from "./Cog";
 export { default as DatabaseIcon } from "./DatabaseIcon";
 export { default as HamburgerIcon } from "./HamburgerIcon";

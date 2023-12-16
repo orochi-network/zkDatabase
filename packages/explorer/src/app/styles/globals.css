@@ -11,6 +11,10 @@
   .page-wrapper {
     padding: 40px;
   }
+
+  .shadow {
+    box-shadow: 0px 0px 12px 1px rgba(25, 36, 49, 0.04);
+  }
 }
 
 @layer components {
