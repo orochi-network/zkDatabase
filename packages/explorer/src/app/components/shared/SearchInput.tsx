@@ -5,7 +5,7 @@ export const SearchInput: FC = () => {
   return (
     <div className="flex items-center gap-2 p-2 border rounded-xl">
       <SvgMagnifyingGlassIcon />
-      <div className="text-grey">Search...</div>
+      <input className="focus:outline-none" placeholder={'Search...'}></input>
     </div>
   );
 }
