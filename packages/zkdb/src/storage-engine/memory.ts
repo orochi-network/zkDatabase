@@ -1,3 +1,4 @@
+import { Readable, Writable } from 'stream';
 import { StorageEngineBase } from './base.js';
 
 /**
@@ -23,7 +24,7 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @returns
    */
   public async mkdir(foldername: string = ''): Promise<string | undefined> {
-    return `${this.pathBase}/${foldername}`;
+    return `${this.location}/${foldername}`;
   }
 
   /**
@@ -31,7 +32,7 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @param path
    * @returns
    */
-  public async check(_path: string = ''): Promise<{} | undefined> {
+  public async ispectPath(_path: string = ''): Promise<{} | undefined> {
     return {};
   }
 
@@ -41,7 +42,7 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @returns Promise<boolean>
    */
   public async isFile(path: string = ''): Promise<boolean> {
-    const filepath = `${this.pathBase}/${path}`;
+    const filepath = `${this.location}/${path}`;
     return this.innerData.has(filepath);
   }
 
@@ -79,7 +80,7 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @returns
    */
   public async writeFile(path: string, content: Uint8Array) {
-    const filepath = `${this.pathBase}/${path}`;
+    const filepath = `${this.location}/${path}`;
     this.innerData.set(filepath, content);
     return filepath;
   }
@@ -91,7 +92,7 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @throws Error if file is not existing
    */
   public async delete(path: string): Promise<boolean> {
-    this.innerData.delete(`${this.pathBase}/${path}`);
+    this.innerData.delete(`${this.location}/${path}`);
     return true;
   }
 
@@ -101,7 +102,15 @@ export class StorageEngineMemory extends StorageEngineBase<string, any, any> {
    * @returns
    */
   public async readFile(path: string): Promise<Uint8Array> {
-    return this.innerData.get(`${this.pathBase}/${path}`)!;
+    return this.innerData.get(`${this.location}/${path}`)!;
+  }
+
+  public createReadStream(_path: string): Readable {
+    throw new Error('Method not implemented.');
+  }
+
+  public createWriteStream(_path: string): Writable {
+    throw new Error('Method not implemented.');
   }
 
   /**

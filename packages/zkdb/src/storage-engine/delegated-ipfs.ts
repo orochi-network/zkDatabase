@@ -31,7 +31,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns
    */
   public async mkdir(foldername: string = ''): Promise<string | undefined> {
-    const path = `${this.pathBase}/${foldername}`;
+    const path = `${this.location}/${foldername}`;
     await this.kuboClient.filesMkdir({ arg: path, parents: true });
     return path;
   }
@@ -41,10 +41,10 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @param path
    * @returns
    */
-  public async check(path: string = ''): Promise<TFilesStatEntry | undefined> {
+  public async ispectPath(path: string = ''): Promise<TFilesStatEntry | undefined> {
     try {
       const result = await this.kuboClient.filesStat({
-        arg: `${this.pathBase}/${path}`,
+        arg: `${this.location}/${path}`,
       });
       return result;
     } catch (e) {
@@ -58,7 +58,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isFile(path: string = ''): Promise<boolean> {
-    return this.kuboClient.existFile(`${this.pathBase}/${path}`);
+    return this.kuboClient.existFile(`${this.location}/${path}`);
   }
 
   /**
@@ -67,7 +67,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isFolder(path: string = ''): Promise<boolean> {
-    return this.kuboClient.existDir(`${this.pathBase}/${path}`);
+    return this.kuboClient.existDir(`${this.location}/${path}`);
   }
 
   /**
@@ -76,7 +76,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns Promise<boolean>
    */
   public async isExist(path: string = ''): Promise<boolean> {
-    return this.kuboClient.exist(`${this.pathBase}/${path}`);
+    return this.kuboClient.exist(`${this.location}/${path}`);
   }
 
   /**
@@ -84,7 +84,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @param path Given path
    */
   public async ls(path: string = ''): Promise<TFilesLsEntry[]> {
-    return this.kuboClient.filesLs({ path: `${this.pathBase}/${path}` });
+    return this.kuboClient.filesLs({ path: `${this.location}/${path}` });
   }
 
   /**
@@ -95,7 +95,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    * @returns
    */
   public async writeFile(path: string, content: Uint8Array): Promise<string> {
-    const filePath = `${this.pathBase}/${path}`;
+    const filePath = `${this.location}/${path}`;
     if (await this.kuboClient.exist(filePath)) {
       await this.kuboClient.filesRm({
         arg: filePath,
@@ -115,7 +115,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    */
   public async delete(path: string): Promise<boolean> {
     await this.kuboClient.filesRm({
-      arg: `${this.pathBase}/${path}`,
+      arg: `${this.location}/${path}`,
       recursive: true,
       force: true,
     });
@@ -129,7 +129,7 @@ export class StorageEngineDelegatedIPFS extends StorageEngineBase<
    */
   public async readFile(path: string): Promise<Uint8Array> {
     return new Uint8Array(
-      await this.kuboClient.filesRead({ arg: `${this.pathBase}/${path}` })
+      await this.kuboClient.filesRead({ arg: `${this.location}/${path}` })
     );
   }
 

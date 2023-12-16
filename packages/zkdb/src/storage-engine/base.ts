@@ -9,14 +9,14 @@ export abstract class StorageEngineBase<T, K, M> {
   /**
    * Base path of the storage engine
    */
-  public pathBase: string;
+  protected location: string;
 
   /**
    * Create new instance of storage engine
-   * @param pathBase path to storage engine
+   * @param location path to storage engine
    */
-  constructor(pathBase: string) {
-    this.pathBase = pathBase;
+  constructor(location: string) {
+    this.location = location;
   }
 
   /**
@@ -58,7 +58,7 @@ export abstract class StorageEngineBase<T, K, M> {
    * @param path
    * @returns
    */
-  public abstract check(_path: string): Promise<K | undefined>;
+  public abstract ispectPath(_path: string): Promise<K | undefined>;
 
   /**
    * Is path is a file
@@ -133,5 +133,9 @@ export abstract class StorageEngineBase<T, K, M> {
       fs.mkdirSync(path, { recursive: true });
     }
     return path;
+  }
+
+  public changeLocation(newLocation: string) {
+    this.location = newLocation;
   }
 }
