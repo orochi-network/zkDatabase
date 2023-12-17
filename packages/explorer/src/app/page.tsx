@@ -3,7 +3,7 @@ import SvgNewDatabase from "@/assets/generated/NewDatabase";
 import SvgNewQuery from "@/assets/generated/NewQuery";
 import SvgNewTemplate from "@/assets/generated/NewTemplate";
 import { ActionCard } from "@/components/shared/ActionCard";
-import { DisplayingStyleButtons } from "@/components/DisplayingStyleButtons";
+import { DisplayingStyleButtons } from "@/components/shared/DisplayingStyleButtons";
 import { AppModal } from "@/components/shared/AppModal";
 import { DatabaseModalContent } from "@/components/shared/AppModal/DatabaseModalContent";
 import { QueryModalContent } from "@/components/shared/AppModal/QueryModalContent";

@@ -1,7 +1,7 @@
 "use client"
 import { FC, ReactNode } from "react";
 import { useParams } from "next/navigation";
-import { DisplayingStyleButtons } from "@/components/DisplayingStyleButtons";
+import { DisplayingStyleButtons } from "@/components/shared/DisplayingStyleButtons";
 
 type RootLayoutProps = {
   children: ReactNode;
