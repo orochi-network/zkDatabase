@@ -110,6 +110,11 @@ export type TLocalConfig = {
   location: string;
 };
 
+export type TMongoDbConfig = {
+  url: string;
+  dbName: string;
+};
+
 /**
  * Interface for key-value pairs
  */
@@ -161,4 +166,9 @@ export type TZKDatabaseConfig =
   | {
       storageEngine: 'memory';
       merkleHeight: number;
+    }
+  | {
+      storageEngine: 'mongo';
+      merkleHeight: number;
+      storageEngineCfg: TMongoDbConfig;
     };

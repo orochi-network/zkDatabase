@@ -10,6 +10,7 @@ import {
 import { IDocument, TZKDatabaseConfig } from './common.js';
 import { IIndexing } from '../index/simple.js';
 import { LoadInstance } from './loader.js';
+import { StorageEngineMongoDB } from '../storage-engine/mongo.js';
 
 /**
  * Represents search results for multile records.
@@ -263,17 +264,30 @@ export class ZKDatabaseStorage {
   ) {
     return LoadInstance<ZKDatabaseStorage>(instanceName, async () => {
       let storageEngine: StorageEngine;
-      if (config.storageEngine === 'delegated-ipfs') {
-        storageEngine = await StorageEngineDelegatedIPFS.getInstance(
-          config.storageEngineCfg
-        );
-      } else if (config.storageEngine === 'local') {
-        storageEngine = await StorageEngineLocal.getInstance(
-          config.storageEngineCfg
-        );
-      } else {
-        storageEngine = await StorageEngineMemory.getInstance();
+
+      switch (config.storageEngine) {
+        case 'delegated-ipfs':
+          storageEngine = await StorageEngineDelegatedIPFS.getInstance(
+            config.storageEngineCfg
+          );
+          break;
+
+        case 'mongo':
+          storageEngine = await StorageEngineMongoDB.getInstance(
+            config.storageEngineCfg
+          );
+          break;
+
+        case 'local':
+          storageEngine = await StorageEngineLocal.getInstance(
+            config.storageEngineCfg
+          );
+          break;
+
+        default:
+          storageEngine = await StorageEngineMemory.getInstance();
       }
+
       return new ZKDatabaseStorage(
         storageEngine,
         await Metadata.getInstance(storageEngine, config.merkleHeight)
@@ -290,7 +304,7 @@ export class ZKDatabaseStorage {
   }
 
   public getMerkleTree(): MerkleTree {
-    return this.metadata.merkle.toMerkleTree();
+    return this.metadata.merkle.getMerkleTree();
   }
 
   /**
@@ -307,7 +321,7 @@ export class ZKDatabaseStorage {
    * @param collection Collection name.
    */
   public async use(collection: string) {
-    const collectionState = await this.storageEngine.check(collection);
+    const collectionState = await this.storageEngine.ispectPath(collection);
     // If collection does not exist, create it
     if (typeof collectionState === 'undefined') {
       await this.storageEngine.mkdir(collection);
