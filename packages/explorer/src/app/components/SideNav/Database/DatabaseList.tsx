@@ -69,7 +69,7 @@ export const DatabaseList: FC = () => {
           <DatabaseMenu id={id} icon={icon} title={databaseName} />
           <div id={`${id}-heading`} className="hs-collapse hidden ml-8 overflow-hidden transition-[height] duration-300">
             {tables.map(({ icon, tableName }) => (
-              <MenuItem icon={icon} title={tableName}/>
+              <MenuItem key={tableName} icon={icon} title={tableName}/>
             ))}
           </div>
         </>
