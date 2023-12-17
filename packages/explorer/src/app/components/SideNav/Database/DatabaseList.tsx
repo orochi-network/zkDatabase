@@ -3,6 +3,7 @@ import { DatabaseMenu } from "./DatabaseMenu";
 import SvgDatabaseIcon from "@/assets/generated/DatabaseIcon";
 import SvgFolderIcon from "@/assets/generated/FolderIcon";
 import { MenuItem } from "../Menu/MenuItem";
+import Link from "next/link";
 
 const databaseList = [
   {
@@ -69,7 +70,9 @@ export const DatabaseList: FC = () => {
           <DatabaseMenu id={id} icon={icon} title={databaseName} />
           <div id={`${id}-heading`} className="hs-collapse hidden ml-8 overflow-hidden transition-[height] duration-300">
             {tables.map(({ icon, tableName }) => (
-              <MenuItem key={tableName} icon={icon} title={tableName}/>
+              <Link key={tableName} href={`/database/${databaseName}/${tableName}`}>
+                <MenuItem icon={icon} title={tableName}/>
+              </Link>
             ))}
           </div>
         </>
