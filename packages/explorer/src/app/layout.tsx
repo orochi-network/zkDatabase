@@ -16,7 +16,7 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
       <body>
         <div className="flex h-screen">
           <SideNav />
-          <div className="flex-grow">{children}</div>
+          {children}
         </div>
       </body>
       <Footer />

@@ -2,7 +2,7 @@ import { FC } from "react";
 
 const Page: FC = () => {
   return (
-    <div className="page-wrapper">
+    <div className="flex-grow page-wrapper">
       <div>My Queries page</div>
     </div>
   )

@@ -36,7 +36,7 @@ const listActions = [
 const Page: FC = () => {
 
   return (
-    <div className="page-wrapper">
+    <div className="flex-grow page-wrapper">
       <div className="flex items-center justify-between">
         <div className="text-3xl font-bold">Orochi’s space</div>
         <DisplayingStyleButtons />
