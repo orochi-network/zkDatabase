@@ -9,8 +9,8 @@ type QueryModalContentProps = {
 
 export const QueryModalContent: FC<QueryModalContentProps> = ({ modalId }) => {
   return (
-    <div className="flex flex-col gap-8 mt-8">
-      <div className="flex flex-col gap-8 overflow-y-auto">
+    <div className="flex flex-col gap-4 mt-4">
+      <div className="flex flex-col gap-4 overflow-y-auto">
         <AppInput label="Database name" placeholder="Database name"/>
         <AppInput label="Collection name" placeholder="Collection name"/>
       </div>

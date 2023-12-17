@@ -14,8 +14,8 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
     <html lang="en" className="font-ninuto">
       <Header />
       <body>
-        <div className="flex">
-          <div className="p-4"><SideNav /></div>
+        <div className="flex h-screen">
+          <SideNav />
           <div className="flex-grow">{children}</div>
         </div>
       </body>

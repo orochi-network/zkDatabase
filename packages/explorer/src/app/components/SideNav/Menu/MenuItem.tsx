@@ -1,7 +1,7 @@
 import { FC, ReactElement } from "react";
 
 type MenuItemProps = {
-  icon: ReactElement;
+  icon?: ReactElement;
   title: string;
 }
 

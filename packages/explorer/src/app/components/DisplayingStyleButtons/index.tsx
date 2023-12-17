@@ -5,21 +5,17 @@ import { FC } from "react";
 
 export const DisplayingStyleButtons: FC = () => {
   return (
-    <div className="flex">
+    <div className="flex items-center">
       <div className="p-2 cursor-pointer">
         <SvgHamburgerIcon />
       </div>
       <div className="p-2 cursor-pointer">
         <SvgIconsIcon />
       </div>
-      <div className="p-2">
-        |
-      </div>
-      <div className="p-2 cursor-pointer">
-        <div className="flex gap-1">
-          <SvgSortAscIcon />
-          <div>Most recent</div>
-        </div>
+      <div className="h-4 vertical-divider" />
+      <div className="flex items-center gap-1 p-2 cursor-pointer">
+        <SvgSortAscIcon />
+        <div>Most recent</div>
       </div>
     </div>
   );

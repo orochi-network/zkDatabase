@@ -5,7 +5,7 @@ import { Database } from "./Database";
 
 export const SideNav: FC = () => {
   return (
-    <div className="inline-flex flex-col border rounded-xl">
+    <div className="inline-flex flex-col box-border m-4 border rounded-xl">
       <NavHeader />
       <Menu />
       <Database />
