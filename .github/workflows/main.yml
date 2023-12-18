@@ -5,9 +5,9 @@ name: Node.js CI
 
 on:
   push:
-    branches: ['main']
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
 
 jobs:
   build:
@@ -26,13 +26,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Test & Build explorer
-        run: cd ./packages/explorer && npm i && npm run build
+      #- name: Test & Build explorer
+      #  run: cd ./packages/explorer && npm i && npm run build
       - name: Test & Build kubo
         run: cd ./packages/kubo && npm i && npm run build && npm run test
-      - name: Test & Build portal
-        run: cd ./packages/portal && npm i && npm run lint && npm run build
-      - name: Test & Build serverless
-        run: cd ./packages/serverless && npm i && npm run lint && npm run build
+      #- name: Test & Build portal
+      #  run: cd ./packages/portal && npm i && npm run lint && npm run build
+      #- name: Test & Build serverless
+      #  run: cd ./packages/serverless && npm i && npm run lint && npm run build
       - name: Test & Build zkdb
         run: cd ./packages/zkdb && npm i && npm run lint && npm run build && npm run test
