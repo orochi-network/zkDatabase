@@ -1,5 +1,5 @@
 import { CreateIndexesOptions, IndexSpecification } from 'mongodb';
-import { isOk } from '../helper/common'
+import { isOk } from '../helper/common';
 import { ModelBasic } from './abstract/basic';
 import { ModelDocument } from './document';
 
@@ -31,7 +31,9 @@ export class ModelCollection extends ModelBasic {
     indexSpec: IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ) {
-    return isOk(async () => this.collection.createIndex(indexSpec, indexOptions));
+    return isOk(async () =>
+      this.collection.createIndex(indexSpec, indexOptions)
+    );
   }
 
   public async isIndexed(indexName: string): Promise<boolean> {
@@ -51,3 +53,5 @@ export class ModelCollection extends ModelBasic {
     return this.collection.listIndexes().toArray();
   }
 }
+
+export default ModelCollection;

@@ -40,13 +40,17 @@ export class ModelDocument extends ModelBasic {
   public async updateOne(filter: Filter<any>, update: any): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
-      const result = await this.collection.updateMany(filter, {
-        "$set": {
-          ...update
+      const result = await this.collection.updateMany(
+        filter,
+        {
+          $set: {
+            ...update,
+          },
+        },
+        {
+          session,
         }
-      }, {
-        session,
-      });
+      );
       if (result.modifiedCount === 1) {
         updated = true;
       } else {
@@ -57,7 +61,7 @@ export class ModelDocument extends ModelBasic {
   }
 
   public async insertOne<T extends any>(data: OptionalUnlessRequiredId<T>) {
-    let insertResult = undefined;
+    let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
       const index = (await this.getMaxIndex()) + 1;
       const result: InsertOneResult<IndexedDocument> =
@@ -79,7 +83,7 @@ export class ModelDocument extends ModelBasic {
       insertResult = {
         [ZKDATABASE_INDEX_RECORD]: index,
         ...data,
-      }
+      };
       logger.debug(`ModelDocument::insertOne()`, { result, insertResult });
     });
     return insertResult;
@@ -97,19 +101,31 @@ export class ModelDocument extends ModelBasic {
 
   public async drop(filter: Filter<any>) {
     let deletedCount = 0;
-    let acknowledged = await this.withTransaction(async (session: ClientSession) => {
-      const filteredRecords = await this.collection.find(filter);
-      while (await filteredRecords.hasNext()) {
-        const record = await filteredRecords.next();
-        if (record) {
-          await this.db
-            .collection(ZKDATABASE_INDEX_COLLECTION).deleteOne({ [ZKDATABASE_INDEX_RECORD]: record[ZKDATABASE_INDEX_RECORD] }, { session });
-          await this.collection.deleteOne({ _id: record._id }, { session });
-          deletedCount += 1;
+    const acknowledged = await this.withTransaction(
+      async (session: ClientSession) => {
+        const filteredRecords = await this.collection.find(filter);
+        while (await filteredRecords.hasNext()) {
+          const record = await filteredRecords.next();
+          if (record) {
+            await this.db
+              .collection(ZKDATABASE_INDEX_COLLECTION)
+              .deleteOne(
+                { [ZKDATABASE_INDEX_RECORD]: record[ZKDATABASE_INDEX_RECORD] },
+                { session }
+              );
+            await this.collection.deleteOne({ _id: record._id }, { session });
+            deletedCount += 1;
+          }
         }
       }
+    );
+    logger.debug(`ModelDocument::drop()`, {
+      filter,
+      acknowledged,
+      deletedCount,
     });
-    logger.debug(`ModelDocument::drop()`, { filter, acknowledged, deletedCount });
     return { acknowledged, deletedCount };
   }
 }
+
+export default ModelDocument;
