@@ -1,14 +1,11 @@
-## Feature type 
-  - [ ] UI
-  - [ ] Implementation
-  - [ ] Specification
-  - [ ] CI/CD
-  - [ ] Other
+## Type
 
-## Feature description
+- [ ] Feature
+- [ ] Bug fix
+- [ ] CI/CD
+- [ ] Documentation
+- [ ] Other
 
-## Pull request checklist
+## Description
 
-Please check if your PR fulfills the following requirements:
-- [ ] Your code builds clean without any errors or warnings.
-- [ ] Tests for changes have been added (for bug fixes / features). If no, why?
+Brief description of the changes made.

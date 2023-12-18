@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { Document, ObjectId } from 'mongodb';
 import { ModelBasic } from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
@@ -22,7 +22,9 @@ export class ModelDatabase extends ModelBasic {
 
   public async listCollections() {
     const collections = await this.db.listCollections();
-    return (await collections.toArray()).filter(e => e.name !== ZKDATABASE_INDEX_COLLECTION);
+    return (await collections.toArray()).filter(
+      (e) => e.name !== ZKDATABASE_INDEX_COLLECTION
+    );
   }
 
   public async findIndex<T extends Document>(index: number): Promise<T | null> {
@@ -56,3 +58,5 @@ export class ModelDatabase extends ModelBasic {
     return this.dbEngine.client.db().admin().listDatabases();
   }
 }
+
+export default ModelDatabase;

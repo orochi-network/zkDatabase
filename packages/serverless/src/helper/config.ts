@@ -32,7 +32,7 @@ const configLoader = Singleton<ConfigLoader>(
     mongodbUrl: Joi.string()
       .trim()
       .required()
-      .regex(/^mongodb([\+a-z]+|):\/\//),
+      .regex(/^mongodb([+a-z]+|):\/\//),
     redisUrl: Joi.string().trim(),
   })
 );

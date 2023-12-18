@@ -21,16 +21,18 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: ./packges/zkdb/package-lock.json
-      - name: Install Dependencies
-        run: npm --prefix packges/zkdb ci
-      - name: Eslint check
-        run: npm --prefix packges/zkdb run lint-check
-      - name: Build Project
-        run: npm --prefix packges/zkdb run build
+      #- name: Test & Build explorer
+      #  run: cd ./packages/explorer && npm i && npm run build
+      - name: Test & Build kubo
+        run: cd ./packages/kubo && npm i && npm run build && npm run test
+      #- name: Test & Build portal
+      #  run: cd ./packages/portal && npm i && npm run lint && npm run build
+      #- name: Test & Build serverless
+      #  run: cd ./packages/serverless && npm i && npm run lint && npm run build
+      - name: Test & Build zkdb
+        run: cd ./packages/zkdb && npm i && npm run lint && npm run build && npm run test
