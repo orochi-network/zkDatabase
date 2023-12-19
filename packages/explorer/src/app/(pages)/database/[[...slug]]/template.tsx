@@ -12,7 +12,7 @@ const RootLayout: FC<RootLayoutProps> = ({ children }) => {
   return (
     <section className="flex-grow page-wrapper">
       <div className="flex items-center justify-between">
-        <div className="text-3xl font-bold">{`${params.slug[0]}.${params.slug[1]}`}</div>
+        <div className="text-xl font-bold">{`${params.slug[0]}.${params.slug[1]}`}</div>
         <DisplayingStyleButtons />
       </div>
       {children}
