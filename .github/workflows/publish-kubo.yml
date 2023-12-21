@@ -33,6 +33,8 @@ jobs:
           pwd
           git fetch --tags
           git tag -l
+          git tag --contains bea1dd179ae54f6f5688e95c2967d52276b403cb
+          git log --oneline --decorate
           PREVIOUS_VERSION=$(git describe --tags --abbrev=0)
           echo "::set-output name=previous_version::$PREVIOUS_VERSION"
           echo $PREVIOUS_VERSION
