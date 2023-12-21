@@ -1,107 +1,200 @@
-import { Struct, Poseidon, Field, InferProvable } from 'o1js';
-import { BSON } from 'bson';
+import {
+  Poseidon,
+  InferProvable,
+  CircuitString,
+  UInt32,
+  Bool,
+  Field,
+  UInt64,
+  Character,
+  Int64,
+  Sign,
+  PublicKey,
+  PrivateKey,
+  Signature,
+  MerkleMapWitness,
+  Struct,
+} from 'o1js';
 export { Field } from 'o1js';
 
-/**
- * Interface for a schema
- */
-export interface ISchema {
-  serialize(): Uint8Array;
+export interface SchemaExtend {
+  serialize(): SchemaEncoded;
   hash(): Field;
 }
 
-/**
- * Document schema is a wrapper for SnarkyJS Struct
- * It provides the following additional methods:
- * - serialize(): Serializes the document to a Uint8Array
- * - hash(): Returns the hash of the document
- * - decode(): Deserializes the document from a Uint8Array
- *
- * That makes it possible to use the document schema in the following way:
- *
- * ```ts
- * // Define the schema of the document
- * class Account extends Schema({
- *   accountName: CircuitString,
- *   balance: UInt32,
- * }) {
- *   // Deserialize the document from a Uint8Array
- *   static deserialize(data: Uint8Array): Account {
- *     return new Account(Account.decode(data));
- *   }
- *
- *   // Index the document by accountName
- *   index(): { accountName: string } {
- *     return {
- *       accountName: this.accountName.toString(),
- *     };
- *   }
- *
- *   // Serialize the document to a json object
- *   json(): { accountName: string; balance: string } {
- *     return {
- *       accountName: this.accountName.toString(),
- *       balance: this.balance.toString(),
- *     };
- *   }
- * }
- * ```
- * @template T The inner type of struct of document
- * @param _type The inner struct of document
- */
-export type SchemaExtendable = <T>(_type: T) => Struct<
-  T & InferProvable<T> & ISchema
-> & {
-  decode: (_doc: Uint8Array) => T;
+export interface SchemaStaticExtend<A> {
+  deserialize(_doc: SchemaEncoded): InstanceType<SchemaExtendable<A>>;
+}
+
+export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
+  SchemaStaticExtend<A>;
+
+export type ProvableTypeString =
+  | 'CircuitString'
+  | 'UInt32'
+  | 'UInt64'
+  | 'Bool'
+  | 'Sign'
+  | 'Character'
+  | 'Int64'
+  | 'Field'
+  | 'PrivateKey'
+  | 'PublicKey'
+  | 'Signature'
+  | 'MerkleMapWitness';
+
+const ProvableTypeMap = {
+  CircuitString: CircuitString,
+  UInt32: UInt32,
+  UInt64: UInt64,
+  Bool: Bool,
+  Sign: Sign,
+  Character: Character,
+  Int64: Int64,
+  Field: Field,
+  PrivateKey: PrivateKey,
+  PublicKey: PublicKey,
+  Signature: Signature,
+  MerkleMapWitness: MerkleMapWitness,
 };
 
-export const Schema: SchemaExtendable = <A>(type: A) => {
-  class Document extends Struct(type) {
-    // Serialize the document to a Uint8Array
-    serialize(): Uint8Array {
-      const anyThis = <any>this;
-      const keys = Object.keys(type as any);
-      const result: any = {};
-      for (let i = 0; i < keys.length; i += 1) {
-        const key = keys[i];
-        if (typeof anyThis[key].toBase58 !== 'undefined') {
-          result[key] = anyThis[key].toBase58();
-        } else if (typeof anyThis[key].toString !== 'undefined') {
-          result[key] = anyThis[key].toString();
-        } else {
-          throw new Error(`Cannot serialize ${key}`);
-        }
+export type ProvableMapped<T extends { [key: string]: ProvableTypeString }> = {
+  [Property in keyof T]: (typeof ProvableTypeMap)[T[Property]];
+};
+
+export function toInnerStructure<
+  T extends { [key: string]: ProvableTypeString }
+>(schema: T): ProvableMapped<T> {
+  const result: any = {};
+  const keys: ProvableTypeString[] = Object.keys(schema) as any;
+  for (let i = 0; i < keys.length; i++) {
+    result[keys[i]] = ProvableTypeMap[schema[keys[i]]];
+  }
+  return result;
+}
+
+/*
+const ProvableTypeMap = new Map<
+  ProvableType,
+  (typeof ProvableMap)[ProvableType]
+>([
+  ['CircuitString', CircuitString],
+  ['UInt32', UInt32],
+  ['UInt64', UInt64],
+  ['Bool', Bool],
+  ['Sign', Sign],
+  ['Character', Character],
+  ['Int64', Int64],
+  ['Field', Field],
+  ['PrivateKey', PrivateKey],
+  ['PublicKey', PublicKey],
+  ['Signature', Signature],
+  ['MerkleMapWitness', MerkleMapWitness],
+]);*/
+
+export type SchemaDefinition = {
+  [k: string]: ProvableTypeString;
+};
+
+export type SchemaEncoded = [
+  name: string,
+  kind: ProvableTypeString,
+  value: string
+][];
+
+export class Schema {
+  public static create<A>(type: A): SchemaExtendable<A> {
+    console.log(type);
+
+    class Document extends Struct(type) {
+      constructor(...args: any[]) {
+        super(...args);
       }
-      return BSON.serialize(result);
+
+      private static schemaEntries = Object.entries(type as any).map(
+        ([key, value]): [string, ProvableTypeString] => {
+          return [key, (value as any).name];
+        }
+      );
+
+      public static schema: SchemaDefinition = Object.fromEntries(
+        Document.schemaEntries
+      );
+
+      // Serialize the document to a Uint8Array
+      serialize(): SchemaEncoded {
+        const anyThis = <any>this;
+        const result: any = [];
+        for (let i = 0; i < Document.schemaEntries.length; i += 1) {
+          const [key, kind] = Document.schemaEntries[i];
+          let value = 'N/A';
+          switch (kind) {
+            case 'PrivateKey':
+            case 'PublicKey':
+            case 'Signature':
+              value = anyThis[key].toBase58();
+              break;
+            default:
+              value = anyThis[key].toString();
+          }
+          result.push([key, kind, value]);
+        }
+        return result;
+      }
+
+      // Returns the hash of the document
+      hash(): Field {
+        return Poseidon.hash(Document.toFields(<any>this));
+      }
+
+      static deserialize(doc: SchemaEncoded): Document {
+        const result: any = {};
+        for (let i = 0; i < doc.length; i++) {
+          const [key, kind, value] = doc[i];
+          switch (kind) {
+            case 'PrivateKey':
+            case 'PublicKey':
+            case 'Signature':
+              result[key] = ProvableTypeMap[kind].fromBase58(value);
+              break;
+            case 'MerkleMapWitness':
+              throw new Error('MerkleMapWitness is not supported');
+            case 'UInt32':
+            case 'UInt64':
+            case 'Int64':
+            case 'Field':
+              result[key] = ProvableTypeMap[kind].from(value);
+              break;
+            case 'Bool':
+              result[key] =
+                value.toLowerCase() === 'true'
+                  ? new Bool(true)
+                  : new Bool(false);
+              break;
+            case 'Sign':
+              result[key] =
+                value.toLowerCase() === 'true' ? Sign.minusOne : Sign.one;
+              break;
+            default:
+              result[key] = ProvableTypeMap[kind].fromString(value);
+          }
+        }
+        return new Document(result);
+      }
     }
 
-    // Returns the hash of the document
-    hash(): Field {
-      return Poseidon.hash(Document.toFields(<any>this));
-    }
+    return Document as any as SchemaExtendable<A>;
   }
 
-  // Deserialize the document from a Uint8Array
-  (Document as any).decode = (doc: Uint8Array): any => {
-    const entires = Object.entries(<any>type);
-    const docObj = BSON.deserialize(doc);
-    const result: any = {};
-    for (let i = 0; i < entires.length; i += 1) {
-      const [key, value] = entires[i];
-      const anyValue = <any>value;
+  public static fromRecord(record: string[][]) {
+    return Schema.fromSchema(
+      Object.fromEntries(
+        record.map(([name, kind, _value]) => [name, kind as ProvableTypeString])
+      )
+    );
+  }
 
-      if (typeof anyValue.fromBase58 !== 'undefined') {
-        result[key] = anyValue.fromBase58(docObj[key]);
-      } else if (typeof anyValue.from !== 'undefined') {
-        result[key] = anyValue.from(docObj[key]);
-      } else if (typeof anyValue.fromString !== 'undefined') {
-        result[key] = anyValue.fromString(docObj[key]);
-      } else {
-        throw new Error(`Cannot deserialize ${key}`);
-      }
-    }
-    return <any>result;
-  };
-
-  return Document as any;
-};
+  public static fromSchema(schema: SchemaDefinition) {
+    return Schema.create(toInnerStructure(schema));
+  }
+}
