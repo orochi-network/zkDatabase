@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches: ['main']
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -29,6 +31,25 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Get previous version from Git history
+        id: get_previous_version
+        run: |
+          PREVIOUS_VERSION=$(git describe --tags --abbrev=0)
+          echo "::set-output name=previous_version::$PREVIOUS_VERSION"
+
+      - name: Check if package.json version is newer
+        run: |
+          CURRENT_VERSION=$(node -p "require('./packages/kubo/package.json').version")
+          PREVIOUS_VERSION=${{ steps.get_previous_version.outputs.previous_version }}
+          echo "::set-output name=current_version::$CURRENT_VERSION"
+
+          if [ "$(printf '%s\n' "$CURRENT_VERSION" "$PREVIOUS_VERSION" | sort -V | head -n 1)" != "$CURRENT_VERSION" ]; then
+            echo "Error: Package.json version is not newer than the previous version."
+            exit 1
+          else
+            echo "Package.json version is newer than the previous version."
+          fi
+
       - name: Install dependencies
         run: npm i
 
@@ -36,3 +57,5 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
           npm run release
+          git tag $CURRENT_VERSION
+          git push origin --tags
