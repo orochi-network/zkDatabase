@@ -28,24 +28,23 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Get previous version from Git history
-        id: get_previous_version
+        id: get_previous_number
         run: |
-          pwd
           git fetch --prune --unshallow
           PREVIOUS_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "001")
+          PREVIOUS_NUMBER=$(echo $PREVIOUS_VERSION | sed 's/[^0-9]//g')
 
-          PREVIOUS_NUMBER=echo $PREVIOUS_VERSION | tr -dc '0-9'
           echo "previous_number=${PREVIOUS_NUMBER}" >> $GITHUB_ENV
           echo $PREVIOUS_NUMBER
 
       - name: Check if package.json version is newer
         run: |
           CURRENT_VERSION=$(node -p "require('./packages/kubo/package.json').version")
-          CURRENT_NUMBER=echo $CURRENT_VERSION | tr -dc '0-9'
+          CURRENT_NUMBER=$(echo $CURRENT_VERSION | sed 's/[^0-9]//g')
 
           echo $CURRENT_NUMBER
 
-          PREVIOUS_NUMBER=${{ steps.get_previous_version.outputs.previous_number }}
+          PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
 
           echo $PREVIOUS_NUMBER
 
@@ -57,7 +56,7 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: cd npm --prefix packages/kubo i
+        run: npm --prefix packages/kubo i
 
       - name: Publish package to NPM
         run: |
