@@ -40,17 +40,17 @@ export class ZKDatabase {
 
     const zkdbSmartContract = new CoreDatabaseSmartContract(publicKey);
 
-    class Doc extends Schema.create({data: type}) {}
+    const Document = Schema.create(type);
+
+    type DocumentType = InstanceType<typeof Document>;
 
     abstract class ZKDatabaseSmartContract extends SmartContract {
       protected createDocument(entity: T) {
-        return new Doc({
-          data: entity,
-        });
+        return new Document(entity);
       }
 
-      @method insert(index: UInt64, document: Doc) {
-        // new CoreDatabaseSmartContract(publicKey).insert(index, document);
+      @method insert(index: UInt64, document: DocumentType) {
+        new CoreDatabaseSmartContract(publicKey).insert(index, document);
       }
 
       async deployZkDatabaseContract(

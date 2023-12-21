@@ -22,11 +22,8 @@ export type DatabaseSmartContract<T> = ReturnType<
   typeof DatabaseSmartContractFunction<T>
 >;
 
-function DatabaseSmartContractFunction<T>(
-  type: Provable<T>,
-  rollup: DatabaseRollUp
-) {
-  class Document extends Schema.create({ data: type }) {}
+function DatabaseSmartContractFunction<T>(type: T, rollup: DatabaseRollUp) {
+  const Document = Schema.create(type);
 
   let initialCommitment = Field(0);
 
@@ -48,7 +45,7 @@ function DatabaseSmartContractFunction<T>(
       this.rootCommitment.set(initialCommitment);
     }
 
-    @method insert(index: UInt64, document: Document) {
+    @method insert(index: UInt64, document: InstanceType<typeof Document>) {
       this.reducer.dispatch(
         new Action({
           type: getOperationIndexByType(OperationType.INSERT),
@@ -87,9 +84,7 @@ export function getDatabaseZkApp<T extends { [k: string]: Provable<T> }>(
 ): DatabaseZkAppProxy<T> {
   const DocumentSchema = Schema.create(type);
 
-
-  
-  // const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
+  const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
   return new DatabaseZkAppProxy(DocumentSchema as any);
 }
 
