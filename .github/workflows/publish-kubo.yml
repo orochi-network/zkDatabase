@@ -12,16 +12,15 @@ env:
 jobs:
   publish:
     name: Build & Publish package
-    if: success() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [18.x]
 
     steps:
-      - name: Exit if not on release branch
-        if: endsWith(github.ref, 'release') == false
-        run: exit -1
+      #- name: Exit if not on release branch
+      #  if: endsWith(github.ref, 'release') == false
+      #  run: exit -1
 
       - name: Checkout
         uses: actions/checkout@v4
