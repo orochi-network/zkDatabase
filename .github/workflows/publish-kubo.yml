@@ -26,14 +26,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - run: git fetch --prune --unshallow
 
       - name: Get previous version from Git history
         id: get_previous_number
         run: |
-          git fetch --prune --unshallow
           PREVIOUS_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "001")
           PREVIOUS_NUMBER=$(echo $PREVIOUS_VERSION | sed 's/[^0-9]//g')
 
+          echo previous_number = $PREVIOUS_NUMBER
           echo "previous_number=${PREVIOUS_NUMBER}" >> $GITHUB_ENV
 
       - name: Check if package.json version is newer
@@ -44,8 +45,6 @@ jobs:
           echo current_number = $CURRENT_NUMBER
 
           PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
-
-          echo previous_number = $PREVIOUS_NUMBER
 
           if [ ${PREVIOUS_NUMBER} >> ${CURRENT_NUMBER} ]; then
             echo "Error: Package.json version is not newer than the previous version."
@@ -60,6 +59,6 @@ jobs:
       - name: Publish package to NPM
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
-          npm run release
-          git tag $CURRENT_VERSION
-          git push origin --tags
+          npm --prefix packages/kubo run release
+          cd ./packages/kubo && git tag $CURRENT_VERSION
+          cd ./packages/kubo && git push origin --tags
