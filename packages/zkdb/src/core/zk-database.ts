@@ -19,8 +19,8 @@ import { getDatabaseRollUpFunction } from '../rollup/rollup-program.js';
 import { Schema } from './schema.js';
 
 export class ZKDatabase {
-  static SmartContract<T>(
-    type: Provable<T>,
+  static SmartContract<T extends { [k: string]: Provable<T> }>(
+    type: T,
     storage: ZKDatabaseStorage,
     publicKey: PublicKey
   ) {
@@ -40,17 +40,17 @@ export class ZKDatabase {
 
     const zkdbSmartContract = new CoreDatabaseSmartContract(publicKey);
 
-    class Document extends Schema({ data: type }) {}
+    class Doc extends Schema.create({data: type}) {}
 
     abstract class ZKDatabaseSmartContract extends SmartContract {
       protected createDocument(entity: T) {
-        return new Document({
+        return new Doc({
           data: entity,
         });
       }
 
-      @method insert(index: UInt64, document: Document) {
-        new CoreDatabaseSmartContract(publicKey).insert(index, document);
+      @method insert(index: UInt64, document: Doc) {
+        // new CoreDatabaseSmartContract(publicKey).insert(index, document);
       }
 
       async deployZkDatabaseContract(

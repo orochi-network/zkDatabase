@@ -26,7 +26,7 @@ function DatabaseSmartContractFunction<T>(
   type: Provable<T>,
   rollup: DatabaseRollUp
 ) {
-  class Document extends Schema({ data: type }) {}
+  class Document extends Schema.create({ data: type }) {}
 
   let initialCommitment = Field(0);
 
@@ -81,12 +81,16 @@ function DatabaseSmartContractFunction<T>(
   return DatabaseContract;
 }
 
-export function getDatabaseZkApp<T>(
-  type: Provable<T>,
+export function getDatabaseZkApp<T extends { [k: string]: Provable<T> }>(
+  type: T,
   rollup: DatabaseRollUp
 ): DatabaseZkAppProxy<T> {
-  const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
-  return new DatabaseZkAppProxy(zkApp);
+  const DocumentSchema = Schema.create(type);
+
+
+  
+  // const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
+  return new DatabaseZkAppProxy(DocumentSchema as any);
 }
 
 export class DatabaseZkAppProxy<T> {
