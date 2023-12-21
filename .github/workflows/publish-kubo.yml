@@ -33,20 +33,23 @@ jobs:
           pwd
           git fetch --prune --unshallow
           PREVIOUS_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "001")
-          echo "previous_version=${echo $PREVIOUS_VERSION | tr -dc '0-9'}" >> $GITHUB_ENV
-          echo $PREVIOUS_VERSION
+
+          PREVIOUS_NUMBER=echo $PREVIOUS_VERSION | tr -dc '0-9'
+          echo "previous_number=${PREVIOUS_NUMBER}" >> $GITHUB_ENV
+          echo $PREVIOUS_NUMBER
 
       - name: Check if package.json version is newer
         run: |
-          CURRENT_VERSION=echo "$(node -p "require('./packages/kubo/package.json').version")" | tr -dc '0-9' - 0
+          CURRENT_VERSION=$(node -p "require('./packages/kubo/package.json').version")
+          CURRENT_NUMBER=echo $CURRENT_VERSION | tr -dc '0-9'
 
-          echo $CURRENT_VERSION
+          echo $CURRENT_NUMBER
 
-          PREVIOUS_VERSION=${{ steps.get_previous_version.outputs.previous_version }}
+          PREVIOUS_NUMBER=${{ steps.get_previous_version.outputs.previous_number }}
 
-          echo $PREVIOUS_VERSION
+          echo $PREVIOUS_NUMBER
 
-          if [ ${PREVIOUS_VERSION} >> ${CURRENT_VERSION} ]; then
+          if [ ${PREVIOUS_NUMBER} >> ${CURRENT_NUMBER} ]; then
             echo "Error: Package.json version is not newer than the previous version."
             exit 1
           else
