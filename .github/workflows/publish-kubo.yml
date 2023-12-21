@@ -34,6 +34,7 @@ jobs:
         id: get_previous_version
         run: |
           pwd
+          git fetch --tags
           PREVIOUS_VERSION=$(git describe --tags --abbrev=0)
           echo "::set-output name=previous_version::$PREVIOUS_VERSION"
           echo $PREVIOUS_VERSION
