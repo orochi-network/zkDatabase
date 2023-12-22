@@ -41,6 +41,7 @@ jobs:
           echo current_number = $CURRENT_NUMBER
 
           PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
+          echo previous_number = $PREVIOUS_NUMBER
 
           if [ ${PREVIOUS_NUMBER} >> ${CURRENT_NUMBER} ]; then
             echo "Error: Package.json version is not newer than the previous version."
@@ -50,6 +51,8 @@ jobs:
           fi
 
           max_length=$((${#number1} > ${#number2} ? ${#number1} : ${#number2}))
+
+          echo max_length
 
           echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER}))))
 
