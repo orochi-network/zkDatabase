@@ -43,22 +43,25 @@ jobs:
 
           PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
           echo previous_number = $PREVIOUS_NUMBER
-          echo $(( current_number > previous_number ))
-
-          if [ ${PREVIOUS_NUMBER} -ge ${CURRENT_NUMBER} ]; then
-            echo "Error: Package.json version is not newer than the previous version."
-            exit 1
-          else
-            echo "Package.json version is newer than the previous version."
-          fi
 
           max_length=$((${#number1} > ${#number2} ? ${#number1} : ${#number2}))
 
           echo max_length = $max_length
 
-          echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER}))))
+          FIXED_CURRENT_VERSION=$(echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER})))))
 
-          echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER}))))
+          FIXED_PREVIOUES_VERSION=$(echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER})))))
+
+          echo $FIXED_CURRENT_VERSION
+
+          echo $FIXED_PREVIOUES_VERSION
+
+          if [ ${FIXED_PREVIOUES_VERSION} -ge ${FIXED_CURRENT_VERSION} ]; then
+            echo "Error: Package.json version is not newer than the previous version."
+            exit 1
+          else
+            echo "Package.json version is newer than the previous version."
+          fi
 
       - name: Install dependencies
         run: npm --prefix packages/kubo i
