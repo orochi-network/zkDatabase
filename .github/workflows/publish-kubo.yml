@@ -15,10 +15,6 @@ jobs:
         node-version: [18.x]
 
     steps:
-      #- name: Exit if not on release branch
-      #  if: endsWith(github.ref, 'release') == false
-      #  run: exit -1
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -52,6 +48,12 @@ jobs:
           else
             echo "Package.json version is newer than the previous version."
           fi
+
+          max_length=$((${#number1} > ${#number2} ? ${#number1} : ${#number2}))
+
+          echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER}))))
+
+          echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER}))))
 
       - name: Install dependencies
         run: npm --prefix packages/kubo i
