@@ -1,7 +1,7 @@
 name: Publish Kubo Package
 on:
-  pull_request:
-    branches: ['main']
+  push:
+    branches: ['release']
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
