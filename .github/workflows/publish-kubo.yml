@@ -44,7 +44,7 @@ jobs:
           PREVIOUS_NUMBER=${{ steps.get_previous_number.outputs.previous_number }}
           echo previous_number = $PREVIOUS_NUMBER
 
-          max_length=$((${#number1} > ${#number2} ? ${#number1} : ${#number2}))
+          max_length=$((${#PREVIOUS_NUMBER} > ${#CURRENT_NUMBER} ? ${#PREVIOUS_NUMBER} : ${#CURRENT_NUMBER}))
 
           echo max_length = $max_length
 
