@@ -34,32 +34,6 @@ export type TOriginResolver<T = any> = TResolver<THandler<T>>;
 
 export type TWrapperMap<T = any> = TResolver<Joi.ObjectSchema<T>>;
 
-export const wrapAll = (
-  wrapperMap: TWrapperMap,
-  originResolver: TOriginResolver
-) => {
-  const wrappedResolver: TOriginResolver = {
-    Query: {},
-    Mutation: {},
-  };
-
-  for (const key in wrapperMap.Query) {
-    wrappedResolver.Query[key] = resolverWrapper(
-      wrapperMap[key],
-      originResolver.Query[key]
-    );
-  }
-
-  for (const key in wrapperMap.Mutation) {
-    wrappedResolver.Mutation[key] = resolverWrapper(
-      wrapperMap[key],
-      originResolver.Mutation[key]
-    );
-  }
-
-  return wrappedResolver;
-};
-
 export const resolverWrapper = <T>(
   schema: Joi.ObjectSchema<T>,
   resolver: THandler<T>

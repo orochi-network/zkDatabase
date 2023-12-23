@@ -11,14 +11,11 @@ interface IAppConfiguration {
   nodeEnv: TNodeEnv;
   merkle: string;
   mongodbUrl: string;
-  redisUrl: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
   path.dirname(fileURLToPath(pathToFileURL(__filename).toString()))
 )}/.env`;
-
-console.log(envLocation);
 
 const configLoader = Singleton<ConfigLoader>(
   'zkdb-aas',
@@ -33,7 +30,6 @@ const configLoader = Singleton<ConfigLoader>(
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),
-    redisUrl: Joi.string().trim(),
   })
 );
 

@@ -1,10 +1,11 @@
+/* eslint-disable no-await-in-loop */
 import {
   ClientSession,
   Filter,
   InsertOneResult,
   OptionalUnlessRequiredId,
 } from 'mongodb';
-import { ModelBasic } from './abstract/basic';
+import ModelBasic from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
@@ -13,10 +14,6 @@ import {
 import logger from '../helper/logger';
 
 export class ModelDocument extends ModelBasic {
-  private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, collectionName);
-  }
-
   public static getInstance(databaseName: string, collectionName: string) {
     return new ModelDocument(databaseName, collectionName);
   }

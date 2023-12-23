@@ -5,21 +5,21 @@ export const databaseName = Joi.string()
   .min(4)
   .max(128)
   .required()
-  .pattern(/^[a-z]+[\_a-z0-9]+/i);
+  .pattern(/^[a-z]+[_a-z0-9]+/i);
 
 export const collectionName = Joi.string()
   .trim()
   .min(4)
   .max(128)
   .required()
-  .pattern(/^[a-z]+[\_a-z0-9]+/i);
+  .pattern(/^[a-z]+[_a-z0-9]+/i);
 
 export const indexName = Joi.string()
   .trim()
   .min(2)
   .max(128)
   .required()
-  .pattern(/^[\_a-z]+[\_a-z0-9]+/i);
+  .pattern(/^[_a-z]+[_a-z0-9]+/i);
 
 export const indexNumber = Joi.number().required();
 
