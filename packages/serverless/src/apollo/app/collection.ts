@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { AppContext } from '../../helper/common';
 import { ModelCollection } from '../../model/collection';
 import { databaseName, collectionName, indexField } from './common';
 import { TDatabaseRequest } from './database';
@@ -38,7 +37,6 @@ extend type Query {
 
 extend type Mutation {
   collectionCreate(databaseName: String!, collectionName: String!,  indexField: [String]): Boolean
-  #collectionDrop(databaseName: String!, collectionName: String!): Boolean
 }
 `;
 
@@ -47,38 +45,24 @@ const collectionList = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) => ModelDatabase.getInstance(args.databaseName).listCollections()
+  async (_root: unknown, args: TDatabaseRequest) =>
+    ModelDatabase.getInstance(args.databaseName).listCollections()
 );
 
 // Mutation
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
-  async (
-    _root: unknown,
-    args: TCollectionCreateRequest,
-    _context: AppContext
-  ) => {
+  async (_root: unknown, args: TCollectionCreateRequest) => {
     try {
       await ModelCollection.getInstance(
         args.databaseName,
         args.collectionName
-      ).create(args.indexField || [])
+      ).create(args.indexField || []);
       return true;
-    }
-    catch (e) {
+    } catch (e) {
       logger.error(e);
       return false;
     }
-  }
-);
-
-const collectionDrop = resolverWrapper(
-  CollectionRequest,
-  async (_root: unknown, args: TCollectionRequest, _context: AppContext) => {
-    return ModelCollection.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).drop();
   }
 );
 
@@ -89,6 +73,5 @@ export const resolversCollection = {
   },
   Mutation: {
     collectionCreate,
-    //collectionDrop,
   },
 };

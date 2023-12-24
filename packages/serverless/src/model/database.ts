@@ -1,5 +1,5 @@
 import { Document, ObjectId } from 'mongodb';
-import { ModelBasic } from './abstract/basic';
+import ModelBasic from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
@@ -8,10 +8,6 @@ import { ModelCollection } from './collection';
 import logger from '../helper/logger';
 
 export class ModelDatabase extends ModelBasic {
-  private constructor(databaseName: string) {
-    super(databaseName);
-  }
-
   public static getInstance(databaseName: string) {
     return new ModelDatabase(databaseName);
   }

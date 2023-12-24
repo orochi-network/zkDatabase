@@ -1,13 +1,9 @@
 import { CreateIndexesOptions, IndexSpecification } from 'mongodb';
 import { isOk } from '../helper/common';
-import { ModelBasic } from './abstract/basic';
+import ModelBasic from './abstract/basic';
 import { ModelDocument } from './document';
 
 export class ModelCollection extends ModelBasic {
-  private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, collectionName);
-  }
-
   public static getInstance(databaseName: string, collectionName: string) {
     return new ModelCollection(databaseName, collectionName);
   }
@@ -37,8 +33,9 @@ export class ModelCollection extends ModelBasic {
   }
 
   public async isIndexed(indexName: string): Promise<boolean> {
-    for await (const index of this.collection.listIndexes()) {
-      if (index.name === indexName) {
+    const indexArray = await this.collection.listIndexes().toArray();
+    for (let i = 0; i < indexArray.length; i += 1) {
+      if (indexArray[i].name === indexName) {
         return true;
       }
     }

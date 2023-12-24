@@ -6,7 +6,6 @@ import {
   CollectionRequest,
   TCollectionCreateRequest,
 } from './collection';
-import { AppContext } from '../../helper/common';
 import { collectionName, databaseName, indexName, indexField } from './common';
 import { ModelCollection } from '../../model/collection';
 
@@ -56,7 +55,7 @@ extend type Mutation {
 // Query
 const indexList = resolverWrapper(
   IndexListRequest,
-  async (_root: unknown, args: TIndexListRequest, _context: AppContext) =>
+  async (_root: unknown, args: TIndexListRequest) =>
     ModelCollection.getInstance(
       args.databaseName,
       args.collectionName
@@ -65,7 +64,7 @@ const indexList = resolverWrapper(
 
 const indexExist = resolverWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, _context: AppContext) =>
+  async (_root: unknown, args: TIndexDetailRequest) =>
     ModelCollection.getInstance(
       args.databaseName,
       args.collectionName
@@ -76,7 +75,7 @@ const indexExist = resolverWrapper(
 
 const indexCreate = resolverWrapper(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest, _context: AppContext) =>
+  async (_root: unknown, args: TIndexCreateRequest) =>
     ModelCollection.getInstance(args.databaseName, args.collectionName).index(
       args.indexField || []
     )
@@ -84,7 +83,7 @@ const indexCreate = resolverWrapper(
 
 const indexDrop = resolverWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, _context: AppContext) =>
+  async (_root: unknown, args: TIndexDetailRequest) =>
     ModelCollection.getInstance(
       args.databaseName,
       args.collectionName

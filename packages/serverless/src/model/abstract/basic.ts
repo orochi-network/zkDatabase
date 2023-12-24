@@ -2,7 +2,7 @@ import { ClientSession } from 'mongodb';
 import { DatabaseEngine } from './database-engine';
 import logger from '../../helper/logger';
 
-export abstract class ModelBasic {
+export default abstract class ModelBasic {
   protected dbEngine: DatabaseEngine;
 
   protected databaseName: string | undefined;
@@ -27,23 +27,19 @@ export abstract class ModelBasic {
     callback: (session: ClientSession) => Promise<void>
   ): Promise<boolean> {
     const session = this.dbEngine.client.startSession();
-    let result = false;
+    let result: boolean = false;
     try {
-      await session.withTransaction(
-        async () => callback(session)
-        ,
-        {
-          readPreference: 'primary',
-          readConcern: { level: 'local' },
-          writeConcern: { w: 'majority' },
-        }
-      );
+      await session.withTransaction(async () => callback(session), {
+        readPreference: 'primary',
+        readConcern: { level: 'local' },
+        writeConcern: { w: 'majority' },
+      });
       result = true;
     } catch (e) {
       logger.error('DatabaseEngine::withTransaction()', e);
-    } finally {
-      await session.endSession();
-      return result;
+      result = false;
     }
+    await session.endSession();
+    return result;
   }
 }

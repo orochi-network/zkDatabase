@@ -1,11 +1,9 @@
-import {
-  MongoClient,
-  ObjectId,
-  ServerApiVersion,
-} from 'mongodb';
+import { MongoClient, ObjectId, ServerApiVersion, Document } from 'mongodb';
+import logger from '../../helper/logger';
 
 export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';
 export const ZKDATABASE_INDEX_RECORD = '_zkindex';
+export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
 
 type ZKDatabaseIndex = {
   [ZKDATABASE_INDEX_RECORD]: number;
@@ -19,13 +17,17 @@ export type ZKDatabaseIndexRecord = ZKDatabaseIndex & {
 export type IndexedDocument = ZKDatabaseIndex & Document;
 
 export class DatabaseEngine {
-  private static instance: DatabaseEngine;
+  private static innerInstance: any;
 
   private mongoClient: MongoClient;
 
   private connection: MongoClient | undefined;
 
   private indexedCheck: Map<string, boolean> = new Map();
+
+  private static get instance(): DatabaseEngine {
+    return DatabaseEngine.innerInstance;
+  }
 
   public get client() {
     if (!this.connection) {
@@ -49,7 +51,7 @@ export class DatabaseEngine {
       if (typeof url === 'undefined') {
         throw new Error('Database URL was not set');
       }
-      DatabaseEngine.instance = new DatabaseEngine(url);
+      DatabaseEngine.innerInstance = new DatabaseEngine(url);
     }
 
     return DatabaseEngine.instance;
@@ -73,10 +75,12 @@ export class DatabaseEngine {
     database: string,
     collection: string
   ): Promise<boolean> {
-    for await (const iterCollection of this.client
+    const collections = await this.client
       .db(database)
-      .listCollections()) {
-      if (iterCollection.name === collection) {
+      .listCollections()
+      .toArray();
+    for (let i = 0; i < collections.length; i += 1) {
+      if (collections[i].name === collection) {
         return true;
       }
     }
@@ -89,15 +93,18 @@ export class DatabaseEngine {
 
   public async connect() {
     let error = true;
+    let retries = 3;
     do {
       try {
+        // eslint-disable-next-line no-await-in-loop
         this.connection = await this.mongoClient.connect();
         error = false;
       } catch (e) {
-        console.log('DatabaseEngine::connect()', e);
+        logger.info('DatabaseEngine::connect()', e, 'retry', retries);
+        retries -= 1;
         error = true;
       }
-    } while (error);
+    } while (error && retries > 0);
   }
 
   public async disconnect() {

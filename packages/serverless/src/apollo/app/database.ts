@@ -1,10 +1,9 @@
 import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
 import resolverWrapper from '../validation';
-import { AppContext } from '../../helper/common';
 import { DatabaseEngine } from '../../model/abstract/database-engine';
 import { ModelDatabase } from '../../model/database';
 import { databaseName, indexNumber } from './common';
-import Joi from 'joi';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -43,39 +42,26 @@ extend type Mutation {
 // Query
 const dbStats = resolverWrapper(
   Joi.object({
-    databaseName: Joi.string()
-      .trim()
-      .min(4)
-      .max(128)
-      .required()
-      .pattern(/^[a-z]+[\_a-z0-9]+/i),
+    databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) =>
+  async (_root: unknown, args: TDatabaseRequest) =>
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = async (_root: unknown, _args: unknown, _context: AppContext) =>
+const dbList = async () =>
   DatabaseEngine.getInstance().client.db().admin().listDatabases();
 
 const dbFindIndex = resolverWrapper(
   FindIndexRequest,
-  async (_root: unknown, args: TFindIndexRequest, _context: AppContext) =>
+  async (_root: unknown, args: TFindIndexRequest) =>
     ModelDatabase.getInstance(args.databaseName).findIndex(args.index)
 );
 
 // Mutation
 const dbCreate = resolverWrapper(
   DatabaseRequest,
-  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) => {
+  async (_root: unknown, args: TDatabaseRequest) => {
     await ModelDatabase.getInstance(args.databaseName).create();
-    return true;
-  }
-);
-
-const dbDrop = resolverWrapper(
-  DatabaseRequest,
-  async (_root: unknown, args: TDatabaseRequest, _context: AppContext) => {
-    await ModelDatabase.getInstance(args.databaseName).drop();
     return true;
   }
 );
@@ -89,6 +75,5 @@ export const resolversDatabase = {
   },
   Mutation: {
     dbCreate,
-    //dbDrop,
   },
 };

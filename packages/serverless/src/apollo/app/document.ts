@@ -1,8 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
-import { AppContext } from '../../helper/common';
-import { ModelCollection } from '../../model/collection';
 import { TCollectionRequest } from './collection';
 import { ModelDocument } from '../../model/document';
 import { collectionName, databaseName } from './common';
@@ -38,7 +36,6 @@ export const DocumentUpdateRequest = Joi.object<TDocumentUpdateRequest>({
   documentRecord: Joi.object(),
 });
 
-
 export const typeDefsDocument = `#graphql
 scalar JSON
 type Query
@@ -58,15 +55,18 @@ extend type Mutation {
 // Query
 const documentFind = resolverWrapper(
   DocumentFindRequest,
-  async (_root: unknown, args: TDocumentFindRequest, _context: AppContext) => {
-    return ModelDocument.getInstance(args.databaseName, args.collectionName).find(args.documentQuery);
+  async (_root: unknown, args: TDocumentFindRequest) => {
+    return ModelDocument.getInstance(
+      args.databaseName,
+      args.collectionName
+    ).find(args.documentQuery);
   }
 );
 
 // Mutation
 const documentCreate = resolverWrapper(
   DocumentCreateRequest,
-  async (_root: unknown, args: TDocumentCreateRequest, _context: AppContext) => {
+  async (_root: unknown, args: TDocumentCreateRequest) => {
     return ModelDocument.getInstance(
       args.databaseName,
       args.collectionName
@@ -76,7 +76,7 @@ const documentCreate = resolverWrapper(
 
 const documentUpdate = resolverWrapper(
   DocumentUpdateRequest,
-  async (_root: unknown, args: TDocumentUpdateRequest, _context: AppContext) => {
+  async (_root: unknown, args: TDocumentUpdateRequest) => {
     return ModelDocument.getInstance(
       args.databaseName,
       args.collectionName
@@ -86,7 +86,7 @@ const documentUpdate = resolverWrapper(
 
 const documentDrop = resolverWrapper(
   DocumentFindRequest,
-  async (_root: unknown, args: TDocumentFindRequest, _context: AppContext) => {
+  async (_root: unknown, args: TDocumentFindRequest) => {
     return ModelDocument.getInstance(
       args.databaseName,
       args.collectionName
