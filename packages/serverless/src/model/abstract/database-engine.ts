@@ -3,6 +3,7 @@ import logger from '../../helper/logger';
 
 export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';
 export const ZKDATABASE_INDEX_RECORD = '_zkindex';
+export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
 
 type ZKDatabaseIndex = {
   [ZKDATABASE_INDEX_RECORD]: number;

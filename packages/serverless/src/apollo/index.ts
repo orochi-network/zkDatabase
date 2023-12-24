@@ -5,7 +5,7 @@ import {
   resolversCollectionIndex,
   typeDefsCollectionIndex,
 } from './app/collection-index';
-import { resolversLogin, typeDefsLogin } from './app/login';
+import { resolversLogin, typeDefsLogin } from './app/user';
 
 export const TypedefsApp = [
   typeDefsDatabase,
