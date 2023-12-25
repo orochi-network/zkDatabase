@@ -1,9 +1,13 @@
 import { MongoClient, ObjectId, ServerApiVersion, Document } from 'mongodb';
 import logger from '../../helper/logger';
 
-export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';
 export const ZKDATABASE_INDEX_RECORD = '_zkindex';
-export const ZKDATABASE_PERMISSION_COLLECTION = '_zkdatabase_permission';
+export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';
+export const ZKDATABASE_GROUP_PERMISSION_COLLECTION = '_zkdatabase_group';
+export const ZKDATABASE_BASIC_PERMISSION_COLLECTION =
+  '_zkdatabase_basic_permission';
+export const ZKDATABASE_USER_PERMISSION_COLLECTION =
+  '_zkdatabase_basic_permission';
 export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
 
 type ZKDatabaseIndex = {
