@@ -16,7 +16,17 @@ export class ModelCollection extends ModelBasic {
     indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ) {
-    return this.collection.createIndex(indexSpecs, indexOptions);
+    if (
+      this.databaseName &&
+      this.collectionName &&
+      (await this.dbEngine.isCollection(this.databaseName, this.collectionName))
+    ) {
+      return new ModelCollection(
+        this.databaseName,
+        this.collectionName
+      ).collection.createIndex(indexSpecs, indexOptions);
+    }
+    throw new Error('Database and collection was not set');
   }
 
   public async drop() {
