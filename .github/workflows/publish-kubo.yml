@@ -43,9 +43,9 @@ jobs:
 
           FIXED_CURRENT_VERSION=$(echo $CURRENT_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#CURRENT_NUMBER})))))
 
-          FIXED_PREVIOUES_VERSION=$(echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER})))))
+          FIXED_PREVIOUS_VERSION=$(echo $PREVIOUS_NUMBER$(printf -- 0%.s $(seq -s ' ' $((max_length-${#PREVIOUS_NUMBER})))))
 
-          if [ ${FIXED_PREVIOUES_VERSION} -ge ${FIXED_CURRENT_VERSION} ]; then
+          if [ ${FIXED_PREVIOUS_VERSION} -ge ${FIXED_CURRENT_VERSION} ]; then
             echo "Error: Package.json version is not newer than the previous version."
             exit 1
           else
