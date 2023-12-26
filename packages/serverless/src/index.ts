@@ -1,7 +1,7 @@
+import express from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import express from 'express';
 import fileupload from 'express-fileupload';
 import http from 'http';
 import cors from 'cors';
@@ -39,16 +39,16 @@ import { DatabaseEngine } from './model/abstract/database-engine';
       context: async ({ req }) => {
         const token = req.headers.authorization;
         if (token) {
-          //const { uuid } = await JWTAuthenInstance.verifyHeader(token);
+          // const { uuid } = await JWTAuthenInstance.verifyHeader(token);
         }
         return {};
       },
     })
   );
 
-  await new Promise<void>((resolve) =>
-    httpServer.listen({ port: 4000 }, resolve)
-  );
+  await new Promise<void>((resolve) => {
+    httpServer.listen({ port: 4000 }, resolve);
+  });
 
   logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
 })();

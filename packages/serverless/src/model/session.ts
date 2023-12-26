@@ -1,10 +1,6 @@
-import {
-  DatabaseEngine,
-  ZKDATABASE_MANAGEMENT_DB,
-} from './abstract/database-engine';
+import { ZKDATABASE_MANAGEMENT_DB } from './abstract/database-engine';
 import ModelCollection from './collection';
-
-import { ModelDocument } from './document';
+import { ModelGeneral } from './general';
 
 export type SessionSchema = {
   username: string;
@@ -13,23 +9,17 @@ export type SessionSchema = {
   createdAt: Date;
 };
 
-export class ModelSession extends ModelDocument {
+export class ModelSession extends ModelGeneral {
   constructor() {
     super(ZKDATABASE_MANAGEMENT_DB, 'session');
   }
 
   public async create() {
-    if (
-      await DatabaseEngine.getInstance().isCollection(
-        this.databaseName || '',
-        this.collectionName || ''
-      )
-    ) {
-      return new ModelCollection(this.databaseName, this.collectionName).create(
-        ['username', 'sessionKey', 'sessionId']
-      );
-    }
-    throw new Error('Database and collection was not set');
+    return new ModelCollection(this.databaseName, this.collectionName).create([
+      'username',
+      'sessionKey',
+      'sessionId',
+    ]);
   }
 }
 

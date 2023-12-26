@@ -1,11 +1,8 @@
 import { randomBytes } from 'crypto';
 import ModelCollection from './collection';
-import { ModelDocument } from './document';
-import {
-  DatabaseEngine,
-  ZKDATABASE_MANAGEMENT_DB,
-} from './abstract/database-engine';
+import { ZKDATABASE_MANAGEMENT_DB } from './abstract/database-engine';
 import ModelSession, { SessionSchema } from './session';
+import { ModelGeneral } from './general';
 
 export type UserSchema = {
   username: string;
@@ -16,23 +13,16 @@ export type UserSchema = {
   updatedAt: Date;
 };
 
-export class ModelUser extends ModelDocument {
+export class ModelUser extends ModelGeneral {
   constructor() {
     super(ZKDATABASE_MANAGEMENT_DB, 'user');
   }
 
   public async create() {
-    if (
-      await DatabaseEngine.getInstance().isCollection(
-        this.databaseName || '',
-        this.collectionName || ''
-      )
-    ) {
-      return new ModelCollection(this.databaseName, this.collectionName).create(
-        ['username', 'email', 'publicKey']
-      );
-    }
-    throw new Error('Database and collection was not set');
+    return new ModelCollection(this.databaseName, this.collectionName).create(
+      ['username', 'email', 'publicKey'],
+      { unique: true }
+    );
   }
 
   public async signUp(
