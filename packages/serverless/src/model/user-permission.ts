@@ -28,10 +28,10 @@ export class ModelGroupPermission extends ModelGeneral {
     const modelUserGroup = new ModelUserGroup(this.databaseName!);
     const permission = await this.findOne({ docId, collection });
     if (permission) {
-      const actors = await modelUserGroup.find({
+      const userGroups = await modelUserGroup.find({
         username: actor,
       });
-      const actorGroupIds = actors.map((userGroup) => userGroup.groupId);
+      const actorGroupIds = userGroups.map((userGroup) => userGroup.groupId);
       if (permission.username === actor) {
         return {
           read: permission.read,

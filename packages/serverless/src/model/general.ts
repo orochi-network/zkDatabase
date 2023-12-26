@@ -4,6 +4,8 @@ import {
   Filter,
   OptionalUnlessRequiredId,
   InsertOneResult,
+  OptionalId,
+  InsertManyResult,
 } from 'mongodb';
 import ModelBasic from './abstract/basic';
 import { IndexedDocument } from './abstract/database-engine';
@@ -48,6 +50,17 @@ export class ModelGeneral extends ModelBasic {
         await this.collection.insertOne(data as any, { session });
       insertResult = result;
       logger.debug(`ModelGeneral::insertOne()`, result);
+    });
+    return insertResult;
+  }
+
+  public async insertMany<T extends any>(data: OptionalId<T>[]) {
+    let insertResult;
+    await this.withTransaction(async (session: ClientSession) => {
+      const result: InsertManyResult<IndexedDocument> =
+        await this.collection.insertMany(data as any[], { session });
+      insertResult = result;
+      logger.debug(`ModelGeneral::insertMany()`, result);
     });
     return insertResult;
   }

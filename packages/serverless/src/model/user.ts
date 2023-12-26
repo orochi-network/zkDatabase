@@ -19,11 +19,10 @@ export class ModelUser extends ModelGeneral {
   }
 
   public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'username',
-      'email',
-      'publicKey',
-    ]);
+    return new ModelCollection(this.databaseName, this.collectionName).create(
+      ['username', 'email', 'publicKey'],
+      { unique: true }
+    );
   }
 
   public async signUp(
