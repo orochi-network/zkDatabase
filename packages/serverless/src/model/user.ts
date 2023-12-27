@@ -42,19 +42,23 @@ export class ModelUser extends ModelGeneral {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  public async signIn(username: string): Promise<SessionSchema> {
-    const newSession = await new ModelSession().insertOne({
+  public async signIn(username: string): Promise<SessionSchema | null> {
+    const modelSession = new ModelSession();
+    const sessionData: SessionSchema = {
       username,
       sessionId: randomBytes(32).toString('hex'),
       sessionKey: randomBytes(32).toString('hex'),
       createdAt: new Date(),
-    });
-    return newSession as any;
+      lastAccess: new Date(),
+    };
+    const newSession = await modelSession.insertOne(sessionData);
+
+    return newSession.acknowledged ? sessionData : null;
   }
 
   // eslint-disable-next-line class-methods-use-this
   public async signOut(sessionId: string) {
-    return new ModelSession().drop({
+    return new ModelSession().deleteOne({
       sessionId,
     });
   }

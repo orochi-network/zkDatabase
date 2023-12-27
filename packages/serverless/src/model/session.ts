@@ -7,6 +7,7 @@ export type SessionSchema = {
   sessionId: string;
   sessionKey: string;
   createdAt: Date;
+  lastAccess: Date;
 };
 
 export class ModelSession extends ModelGeneral {
@@ -20,6 +21,15 @@ export class ModelSession extends ModelGeneral {
       'sessionKey',
       'sessionId',
     ]);
+  }
+
+  public async refresh(sessionId: string) {
+    return this.updateOne(
+      { sessionId },
+      {
+        $set: { lastAccess: new Date() },
+      }
+    );
   }
 }
 

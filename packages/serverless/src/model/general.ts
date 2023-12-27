@@ -1,89 +1,73 @@
-/* eslint-disable no-await-in-loop */
 import {
-  ClientSession,
   Filter,
   OptionalUnlessRequiredId,
   InsertOneResult,
-  OptionalId,
+  BulkWriteOptions,
   InsertManyResult,
+  InsertOneOptions,
+  Document,
+  UpdateFilter,
+  UpdateOptions,
+  WithId,
+  UpdateResult,
+  DeleteOptions,
+  DeleteResult,
 } from 'mongodb';
 import ModelBasic from './abstract/basic';
-import { IndexedDocument } from './abstract/database-engine';
 import logger from '../helper/logger';
 
-export type SessionSchema = {
-  username: string;
-  sessionId: string;
-  sessionKey: string;
-  createdAt: Date;
-};
-
 export class ModelGeneral extends ModelBasic {
-  public async updateOne(filter: Filter<any>, update: any): Promise<boolean> {
-    let updated = false;
-    await this.withTransaction(async (session: ClientSession) => {
-      const result = await this.collection.updateMany(
-        filter,
-        {
-          $set: {
-            ...update,
-          },
-        },
-        {
-          session,
-        }
-      );
-      if (result.modifiedCount === 1) {
-        updated = true;
-        logger.debug(`ModelGeneral::updateOne()`, result);
-      } else {
-        await session.abortTransaction();
-      }
-    });
-    return updated;
+  public async updateOne(
+    filter: Filter<Document>,
+    update: UpdateFilter<Document> | Partial<Document>,
+    options?: UpdateOptions
+  ): Promise<UpdateResult<Document>> {
+    logger.debug(`ModelGeneral::updateOne()`, filter, update);
+    return this.collection.updateOne(filter, { $set: update }, options);
   }
 
-  public async insertOne<T extends any>(
-    data: OptionalUnlessRequiredId<T>
-  ): Promise<InsertOneResult<IndexedDocument>> {
-    let insertResult;
-    await this.withTransaction(async (session: ClientSession) => {
-      const result: InsertOneResult<IndexedDocument> =
-        await this.collection.insertOne(data as any, { session });
-      insertResult = result;
-      logger.debug(`ModelGeneral::insertOne()`, result);
-    });
-    return insertResult as any;
+  public async insertOne(
+    doc: OptionalUnlessRequiredId<Document>,
+    options?: InsertOneOptions
+  ): Promise<InsertOneResult<Document>> {
+    logger.debug(`ModelGeneral::insertOne()`, doc);
+    return this.collection.insertOne(doc, options);
   }
 
-  public async insertMany<T extends any>(data: OptionalId<T>[]) {
-    let insertResult;
-    await this.withTransaction(async (session: ClientSession) => {
-      const result: InsertManyResult<IndexedDocument> =
-        await this.collection.insertMany(data as any[], { session });
-      insertResult = result;
-      logger.debug(`ModelGeneral::insertMany()`, result);
-    });
-    return insertResult;
+  public async insertMany(
+    docs: OptionalUnlessRequiredId<Document>[],
+    options?: BulkWriteOptions
+  ): Promise<InsertManyResult<Document>> {
+    logger.debug(`ModelGeneral::insertMany()`, docs);
+    return this.collection.insertMany(docs, options);
   }
 
-  public async findOne(filter: Filter<any>) {
+  public async findOne(
+    filter: Filter<Document>
+  ): Promise<WithId<Document> | null> {
     logger.debug(`ModelGeneral::findOne()`, filter);
     return this.collection.findOne(filter);
   }
 
-  public async find(filter?: Filter<any>) {
+  public async find(filter?: Filter<Document>): Promise<Document[]> {
     logger.debug(`ModelGeneral::find()`, filter);
     return this.collection.find(filter || {}).toArray();
   }
 
-  public async drop(filter: Filter<any>) {
-    let deletedResult;
-    await this.withTransaction(async (session: ClientSession) => {
-      deletedResult = await this.collection.deleteMany(filter, { session });
-    });
-    logger.debug(`ModelGeneral::drop()`, deletedResult);
-    return deletedResult;
+  public async deleteOne(
+    filter?: Filter<Document>,
+    options?: DeleteOptions
+  ): Promise<DeleteResult> {
+    logger.debug(`ModelGeneral::deleteOne()`, filter);
+    return this.collection.deleteOne(filter, options);
+  }
+
+  public async deleteMany(
+    filter?: Filter<Document>,
+    options?: DeleteOptions
+  ): Promise<DeleteResult> {
+    logger.debug(`ModelGeneral::deleteMany()`, filter);
+    return this.collection.deleteMany(filter, options);
   }
 }
 
