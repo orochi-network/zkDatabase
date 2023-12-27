@@ -35,11 +35,22 @@ export type TSignUpRequest = {
   username: string;
   email: string;
   userData: any;
+  timestamp: number;
 };
 
 export const SignUnRequest = Joi.object<TSignUpRequest>({
   username: Joi.string().required(),
   email: Joi.string().email().required(),
+  timestamp: Joi.number()
+    .custom((value, helper) => {
+      // 5 minutes is the timeout for signing up proof
+      const timeDiff = Math.floor(Date.now() / 1000) - value;
+      if (timeDiff >= 0 && timeDiff < 300) {
+        return value;
+      }
+      return helper.error('Invalid timestamp of time proof');
+    })
+    .required(),
   userData: Joi.object(),
 });
 
@@ -72,6 +83,7 @@ input SignatureProof {
 input SignUp {
   username: String
   email: String
+  timestamp: Int
   userData: JSON
 }
 
@@ -173,6 +185,13 @@ const signUp = resolverWrapper(
   async (_root: unknown, args: TSignUpWrapper) => {
     const client = new Client({ network: 'testnet' });
     if (client.verifyMessage(args.proof)) {
+      const jsonData = JSON.parse(args.proof.data);
+      if (jsonData.username !== args.signUp.username) {
+        throw new Error('Username does not match');
+      }
+      if (jsonData.email !== args.signUp.email) {
+        throw new Error('Email does not match');
+      }
       const modelUser = new ModelUser();
       await modelUser.signUp(
         args.signUp.username,
@@ -180,6 +199,13 @@ const signUp = resolverWrapper(
         args.proof.publicKey,
         args.signUp.userData
       );
+      return {
+        success: true,
+        error: null,
+        username: args.signUp.username,
+        email: args.signUp.email,
+        publicKey: args.proof.publicKey,
+      };
     }
     throw new Error('Signature is not valid');
   }

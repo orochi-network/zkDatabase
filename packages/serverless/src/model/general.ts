@@ -43,7 +43,9 @@ export class ModelGeneral extends ModelBasic {
     return updated;
   }
 
-  public async insertOne<T extends any>(data: OptionalUnlessRequiredId<T>) {
+  public async insertOne<T extends any>(
+    data: OptionalUnlessRequiredId<T>
+  ): Promise<InsertOneResult<IndexedDocument>> {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
       const result: InsertOneResult<IndexedDocument> =
@@ -51,7 +53,7 @@ export class ModelGeneral extends ModelBasic {
       insertResult = result;
       logger.debug(`ModelGeneral::insertOne()`, result);
     });
-    return insertResult;
+    return insertResult as any;
   }
 
   public async insertMany<T extends any>(data: OptionalId<T>[]) {
