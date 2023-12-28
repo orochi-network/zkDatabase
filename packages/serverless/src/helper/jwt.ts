@@ -1,19 +1,18 @@
 import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
-import { Singleton } from '@orochi-network/framework';
 import logger from './logger';
 import config from './config';
+import ModelSession from '../model/session';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
-  uuid: string;
+  username: string;
   email: string;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  zkDatabase?: boolean;
+  // Unix epoch timestamp in seconds
+  timestamp: number;
+  sessionId: string;
 }
 
-export const jwtExpired = 7200;
+export const JWTF_EXPIRED = 7200;
 
 export class JWTAuthentication<T extends jose.JWTPayload> {
   private secret: Uint8Array;
@@ -37,22 +36,63 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
       .sign(this.secret);
   }
 
-  public async verify(
+  public static async verify<T extends jose.JWTPayload>(
     token: string
   ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, 'protectedHeader'>> {
+    const decodedPayload = jose.decodeJwt(token) as IJWTAuthenticationPayload;
+    if (
+      !decodedPayload ||
+      !decodedPayload.sessionId ||
+      !decodedPayload.timestamp ||
+      !decodedPayload.username ||
+      !decodedPayload.email
+    ) {
+      throw new GraphQLError('Token is invalid', {
+        extensions: {
+          code: 'UNAUTHENTICATED',
+          http: { status: 401 },
+        },
+      });
+    }
+    const timeDiff = Math.floor(Date.now() / 1000) - decodedPayload.timestamp;
+    // Check if token is expired
+    if (timeDiff < 0 && timeDiff > JWTF_EXPIRED) {
+      throw new GraphQLError('Token is expired', {
+        extensions: {
+          code: 'UNAUTHENTICATED',
+          http: { status: 401 },
+        },
+      });
+    }
+    const modelSession = new ModelSession();
+    const session = await modelSession.findOne({
+      sessionId: decodedPayload.sessionId,
+    });
+    // Check if session is valid
+    if (!session || (session && session.username !== decodedPayload.username)) {
+      throw new GraphQLError('Username mismatch', {
+        extensions: {
+          code: 'UNAUTHENTICATED',
+          http: { status: 401 },
+        },
+      });
+    }
+    // Recover the session key and verify the token
     const { payload, protectedHeader } = await jose.jwtVerify(
       token,
-      this.secret
+      Buffer.from(session.sessionKey, 'hex')
     );
     return { payload: payload as T, protectedHeader };
   }
 
-  public async verifyHeader(header: string): Promise<T> {
+  public static async verifyHeader<T extends jose.JWTPayload>(
+    header: string
+  ): Promise<T> {
     // Skip for development
     try {
       // 7 is length of `Bearer + space`
-      const { payload } = await this.verify(header.substring(7));
-      return payload || undefined;
+      const { payload } = await JWTAuthentication.verify(header.substring(7));
+      return (payload as T) || undefined;
     } catch (e) {
       logger.error(e);
       throw new GraphQLError('User is not authenticated', {
@@ -64,11 +104,3 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     }
   }
 }
-
-export const JWTAuthenInstance = Singleton(
-  'jwt-authentication',
-  JWTAuthentication<IJWTAuthenticationPayload>,
-  config.hmacSecretKey
-);
-
-export default JWTAuthenInstance;

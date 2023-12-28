@@ -15,11 +15,11 @@ export class ModelSession extends ModelGeneral {
     super(ZKDATABASE_MANAGEMENT_DB, 'session');
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'username',
-      'sessionKey',
-      'sessionId',
+  public static async init() {
+    return new ModelCollection(ZKDATABASE_MANAGEMENT_DB, 'session').create([
+      { username: 1 },
+      { sessionKey: 1 },
+      { sessionId: 1 },
     ]);
   }
 

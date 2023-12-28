@@ -36,6 +36,7 @@ export const SignatureProof = Joi.object<TSignatureProof>({
       .required(),
   }).required(),
   publicKey: Joi.string()
+    .min(40)
     .pattern(/^[A-HJ-NP-Za-km-z1-9]*$/)
     .required(),
   data: Joi.string().required(),

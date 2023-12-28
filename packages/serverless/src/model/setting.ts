@@ -24,7 +24,7 @@ export class ModelSetting extends ModelGeneral {
 
   public async create() {
     return new ModelCollection(this.databaseName, this.collectionName).create(
-      ['configKey'],
+      { configKey: 1 },
       { unique: true }
     );
   }
