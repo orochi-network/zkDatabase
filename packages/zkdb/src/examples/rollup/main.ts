@@ -1,6 +1,6 @@
-import { Mina, PrivateKey, AccountUpdate, Provable, Field, UInt64, UInt32, CircuitString } from 'o1js';
-import { TestContract, User } from './test-contract.js';
-import { zkDbPrivateKey, zkdb } from './data.js';
+import { Mina, PrivateKey, AccountUpdate, Provable, UInt64, UInt32, CircuitString } from 'o1js';
+import { zkDbPrivateKey } from './data.js';
+import { Account, TestContract } from './test-contract.js';
 
 let doProofs = false;
 
@@ -17,49 +17,40 @@ let doProofs = false;
 
   const test = new TestContract(zkappAddress);
 
-  // let tx = await test.deployZkDatabaseContract(feePayer);
+  let tx = await test.deployZkDatabaseContract(feePayer);
 
-  // await tx.prove();
-  // await tx.sign([feePayerKey, zkDbPrivateKey]).send();
+  await tx.prove();
+  await tx.sign([feePayerKey, zkDbPrivateKey]).send();
 
-  let tx = await Mina.transaction(feePayer, () => {
+  tx = await Mina.transaction(feePayer, () => {
     AccountUpdate.fundNewAccount(feePayer);
     test.deploy();
   });
 
-  await tx.prove();
-  await tx.sign([feePayerKey, zkappKey]).send();
-
-  const newUser = new User({age: UInt32.from(32), name: CircuitString});
-
-  tx = await Mina.transaction(feePayer, () => {
-    test.saveUser(UInt64.from(1), newUser);
-  });
 
   await tx.prove();
   await tx.sign([feePayerKey, zkappKey]).send();
 
-  // for (let i = 0; i < 5; i++) {
-  //   const newUser = new User({
-  //     accountName: Field(i),
-  //     ticketAmount: Field(i),
-  //   });
+  for (let i = 0; i < 5; i++) {
+    console.log('save account')
+    const newUser = new Account({
+      age: UInt32.from(i),
+      name: CircuitString.fromString("name")
+    });
 
-  //   const index = await zkdb.add(newUser);
+    tx = await Mina.transaction(feePayer, () => {
+      test.saveUser(UInt64.from(i), newUser);
+    });
 
-  //   tx = await Mina.transaction(feePayer, () => {
-  //     test.saveUser(UInt64.from(index), newUser);
-  //   });
+    await tx.prove();
+    await tx.sign([feePayerKey, zkappKey]).send();
+  }
 
-  //   await tx.prove();
-  //   await tx.sign([feePayerKey, zkappKey]).send();
-  // }
+  const tx1 = await test.rollUp(feePayer, 3);
 
-  // const tx1 = await test.rollUp(feePayer, 3);
+  if (tx1) {
+    await tx1.sign([zkappKey, feePayerKey]).send();
+  }
 
-  // if (tx1) {
-  //   await tx1.sign([zkappKey, feePayerKey]).send();
-  // }
-
-  // Provable.log('action state after new user', test.getActionState());
+  Provable.log('action state after new user', test.getActionState());
 })();

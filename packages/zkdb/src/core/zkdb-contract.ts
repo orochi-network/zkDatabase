@@ -1,6 +1,5 @@
 import {
   Field,
-  Provable,
   Reducer,
   SmartContract,
   State,
@@ -23,7 +22,7 @@ export type DatabaseSmartContract<T> = ReturnType<
 >;
 
 function DatabaseSmartContractFunction<T>(type: T, rollup: DatabaseRollUp) {
-  const Document = Schema.create(type);
+  class Document extends Schema.create(type as any) {}
 
   let initialCommitment = Field(0);
 
@@ -45,7 +44,7 @@ function DatabaseSmartContractFunction<T>(type: T, rollup: DatabaseRollUp) {
       this.rootCommitment.set(initialCommitment);
     }
 
-    @method insert(index: UInt64, document: InstanceType<typeof Document>) {
+    @method insert(index: UInt64, document: Document) {
       this.reducer.dispatch(
         new Action({
           type: getOperationIndexByType(OperationType.INSERT),
@@ -78,14 +77,12 @@ function DatabaseSmartContractFunction<T>(type: T, rollup: DatabaseRollUp) {
   return DatabaseContract;
 }
 
-export function getDatabaseZkApp<T extends { [k: string]: Provable<T> }>(
+export function getDatabaseZkApp<T>(
   type: T,
   rollup: DatabaseRollUp
 ): DatabaseZkAppProxy<T> {
-  const DocumentSchema = Schema.create(type);
-
   const zkApp = DatabaseSmartContractFunction<T>(type, rollup);
-  return new DatabaseZkAppProxy(DocumentSchema as any);
+  return new DatabaseZkAppProxy(zkApp);
 }
 
 export class DatabaseZkAppProxy<T> {

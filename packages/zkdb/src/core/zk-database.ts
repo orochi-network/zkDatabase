@@ -6,10 +6,9 @@ import {
   MerkleWitness,
   SmartContract,
   method,
-  Provable,
   Mina,
   PublicKey,
-  UInt64,
+  UInt64
 } from 'o1js';
 import { Action } from '../rollup/action.js';
 import { getDatabaseZkApp } from './zkdb-contract.js';
@@ -19,7 +18,7 @@ import { getDatabaseRollUpFunction } from '../rollup/rollup-program.js';
 import { Schema } from './schema.js';
 
 export class ZKDatabase {
-  static SmartContract<T extends { [k: string]: Provable<T> }>(
+  static SmartContract<T>(
     type: T,
     storage: ZKDatabaseStorage,
     publicKey: PublicKey
@@ -40,16 +39,10 @@ export class ZKDatabase {
 
     const zkdbSmartContract = new CoreDatabaseSmartContract(publicKey);
 
-    const Document = Schema.create(type);
-
-    type DocumentType = InstanceType<typeof Document>;
+    class Document extends Schema.create(type as any) {}
 
     abstract class ZKDatabaseSmartContract extends SmartContract {
-      protected createDocument(entity: T) {
-        return new Document(entity);
-      }
-
-      @method insert(index: UInt64, document: DocumentType) {
+      @method insert(index: UInt64, document: Document) {
         new CoreDatabaseSmartContract(publicKey).insert(index, document);
       }
 

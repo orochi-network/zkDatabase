@@ -13,7 +13,7 @@ import {
   PrivateKey,
   Signature,
   MerkleMapWitness,
-  Struct,
+  Struct
 } from 'o1js';
 export { Field } from 'o1js';
 
@@ -103,11 +103,13 @@ export type SchemaEncoded = [
 ][];
 
 export class Schema {
-  public static create<A>(type: A): SchemaExtendable<A> {
+  public static create<A, T extends InferProvable<A> = InferProvable<A>>(
+    type: A
+  ): SchemaExtendable<A> & (new (...args: T[]) => T) {
     console.log(type);
 
     class Document extends Struct(type) {
-      constructor(...args: any[]) {
+      constructor(...args: T[]) {
         super(...args);
       }
 
@@ -183,7 +185,7 @@ export class Schema {
       }
     }
 
-    return Document as any as SchemaExtendable<A>;
+    return Document as any;
   }
 
   public static fromRecord(record: string[][]) {
