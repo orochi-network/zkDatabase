@@ -7,6 +7,7 @@ export type SessionSchema = {
   sessionId: string;
   sessionKey: string;
   createdAt: Date;
+  lastAccess: Date;
 };
 
 export class ModelSession extends ModelGeneral {
@@ -14,12 +15,21 @@ export class ModelSession extends ModelGeneral {
     super(ZKDATABASE_MANAGEMENT_DB, 'session');
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'username',
-      'sessionKey',
-      'sessionId',
+  public static async init() {
+    return new ModelCollection(ZKDATABASE_MANAGEMENT_DB, 'session').create([
+      { username: 1 },
+      { sessionKey: 1 },
+      { sessionId: 1 },
     ]);
+  }
+
+  public async refresh(sessionId: string) {
+    return this.updateOne(
+      { sessionId },
+      {
+        $set: { lastAccess: new Date() },
+      }
+    );
   }
 }
 

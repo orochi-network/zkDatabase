@@ -18,11 +18,35 @@ export class ModelUser extends ModelGeneral {
     super(ZKDATABASE_MANAGEMENT_DB, 'user');
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create(
-      ['username', 'email', 'publicKey'],
-      { unique: true }
+  public static async init() {
+    const userCollection = new ModelCollection(
+      ZKDATABASE_MANAGEMENT_DB,
+      'user'
     );
+    await userCollection.create(
+      [{ username: 1 }, { email: 1 }, { publicKey: 1 }],
+      {
+        unique: true,
+      }
+    );
+    await new ModelUser().insertMany([
+      {
+        username: 'system',
+        email: '',
+        publicKey: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userData: { description: 'System user' },
+      },
+      {
+        username: 'nobody',
+        email: '',
+        publicKey: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userData: { description: 'Nobody user' },
+      },
+    ]);
   }
 
   public async signUp(
@@ -31,6 +55,9 @@ export class ModelUser extends ModelGeneral {
     publicKey: string,
     userData: any
   ) {
+    if (['system', 'nobody'].includes(username)) {
+      throw new Error('Username is reserved');
+    }
     return this.insertOne({
       username,
       email,
@@ -42,19 +69,26 @@ export class ModelUser extends ModelGeneral {
   }
 
   // eslint-disable-next-line class-methods-use-this
-  public async signIn(username: string): Promise<SessionSchema> {
-    const newSession = await new ModelSession().insertOne({
+  public async signIn(username: string): Promise<SessionSchema | null> {
+    if (['system', 'nobody'].includes(username)) {
+      throw new Error('This username cannot be used');
+    }
+    const modelSession = new ModelSession();
+    const sessionData: SessionSchema = {
       username,
       sessionId: randomBytes(32).toString('hex'),
       sessionKey: randomBytes(32).toString('hex'),
       createdAt: new Date(),
-    });
-    return newSession as any;
+      lastAccess: new Date(),
+    };
+    const newSession = await modelSession.insertOne(sessionData);
+
+    return newSession.acknowledged ? sessionData : null;
   }
 
   // eslint-disable-next-line class-methods-use-this
   public async signOut(sessionId: string) {
-    return new ModelSession().drop({
+    return new ModelSession().deleteOne({
       sessionId,
     });
   }

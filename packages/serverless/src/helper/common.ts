@@ -1,7 +1,9 @@
 import logger from './logger';
 
 export interface AppContext {
-  sessionId?: string;
+  username: string;
+  email: string;
+  sessionId: string;
 }
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {

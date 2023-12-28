@@ -10,6 +10,7 @@ import { TypedefsApp, ResolversApp } from './apollo';
 import { AppContext } from './helper/common';
 import { config } from './helper/config';
 import { DatabaseEngine } from './model/abstract/database-engine';
+import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
 
 (async () => {
   const app = express();
@@ -21,7 +22,7 @@ import { DatabaseEngine } from './model/abstract/database-engine';
   app.use(express.json()).use(fileupload());
 
   const httpServer = http.createServer(app);
-  const server = new ApolloServer<AppContext>({
+  const server = new ApolloServer<Partial<AppContext>>({
     typeDefs: TypedefsApp,
     resolvers: ResolversApp,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
@@ -37,11 +38,18 @@ import { DatabaseEngine } from './model/abstract/database-engine';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        const token = req.headers.authorization;
-        if (token) {
-          // const { uuid } = await JWTAuthenInstance.verifyHeader(token);
+        if (req.headers.authorization) {
+          const { sessionId, username, email } =
+            await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
+              req.headers.authorization
+            );
+          return { sessionId, username, email };
         }
-        return {};
+        return {
+          username: 'nobody',
+          email: '',
+          sessionId: '',
+        };
       },
     })
   );
