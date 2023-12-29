@@ -1,6 +1,5 @@
 import {
   Field,
-  Provable,
   Reducer,
   SmartContract,
   State,
@@ -22,11 +21,8 @@ export type DatabaseSmartContract<T> = ReturnType<
   typeof DatabaseSmartContractFunction<T>
 >;
 
-function DatabaseSmartContractFunction<T>(
-  type: Provable<T>,
-  rollup: DatabaseRollUp
-) {
-  class Document extends Schema({ data: type }) {}
+function DatabaseSmartContractFunction<T>(type: T, rollup: DatabaseRollUp) {
+  class Document extends Schema.create(type as any) {}
 
   let initialCommitment = Field(0);
 
@@ -82,7 +78,7 @@ function DatabaseSmartContractFunction<T>(
 }
 
 export function getDatabaseZkApp<T>(
-  type: Provable<T>,
+  type: T,
   rollup: DatabaseRollUp
 ): DatabaseZkAppProxy<T> {
   const zkApp = DatabaseSmartContractFunction<T>(type, rollup);

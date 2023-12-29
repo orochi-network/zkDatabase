@@ -1,7 +1,6 @@
-import { Mina, PrivateKey, AccountUpdate, Provable, Field, UInt64 } from 'o1js';
-import { User } from './user.js';
-import { TestContract } from './test-contract.js';
-import { zkDbPrivateKey, zkdb } from './data.js';
+import { Mina, PrivateKey, AccountUpdate, Provable, UInt64, UInt32, CircuitString } from 'o1js';
+import { zkDbPrivateKey } from './data.js';
+import { Account, TestContract } from './test-contract.js';
 
 let doProofs = false;
 
@@ -28,19 +27,19 @@ let doProofs = false;
     test.deploy();
   });
 
+
   await tx.prove();
   await tx.sign([feePayerKey, zkappKey]).send();
 
   for (let i = 0; i < 5; i++) {
-    const newUser = new User({
-      accountName: Field(i),
-      ticketAmount: Field(i),
+    console.log('save account')
+    const newUser = new Account({
+      age: UInt32.from(i),
+      name: CircuitString.fromString("name")
     });
 
-    const index = await zkdb.add(newUser);
-
     tx = await Mina.transaction(feePayer, () => {
-      test.saveUser(UInt64.from(index), newUser);
+      test.saveUser(UInt64.from(i), newUser);
     });
 
     await tx.prove();
