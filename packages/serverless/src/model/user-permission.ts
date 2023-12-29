@@ -2,19 +2,21 @@ import { ObjectId } from 'mongodb';
 import { ZKDATABASE_USER_PERMISSION_COLLECTION } from './abstract/database-engine';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
-import { UserPermission } from '../common/permission';
+import { PermissionRecord } from '../common/permission';
 import ModelUserGroup from './user-group';
 
-export type GroupPermissionSchema = {
+export type UserPermissionSchema = {
   username: string;
-  groupId: ObjectId;
+  userPermission: PermissionRecord;
+  groupName: string;
+  groupPermission: PermissionRecord;
   collection: string;
   docId: ObjectId;
   createdAt: Date;
   updatedAt: Date;
-} & UserPermission;
+};
 
-export class ModelGroupPermission extends ModelGeneral {
+export class ModelUserPermission extends ModelGeneral {
   constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_USER_PERMISSION_COLLECTION);
   }
@@ -24,38 +26,18 @@ export class ModelGroupPermission extends ModelGeneral {
     actor: string,
     docId: ObjectId,
     collection: string
-  ): Promise<UserPermission> {
-    const modelUserGroup = new ModelUserGroup(this.databaseName!);
+  ): Promise<PermissionRecord> {
     const permission = await this.findOne({ docId, collection });
     if (permission) {
-      const userGroups = await modelUserGroup.find({
-        username: actor,
-      });
-      const actorGroupIds = userGroups.map((userGroup) => userGroup.groupId);
+      // User == actor -> return user permission
       if (permission.username === actor) {
-        return {
-          read: permission.read,
-          write: permission.write,
-          delete: permission.delete,
-          insert: permission.insert,
-        };
+        return permission.userPermission;
       }
-      // User != actor -> check for group
-      if (actorGroupIds.includes(permission.groupId)) {
-        const newModelGroupPermission = new ModelGroupPermission(
-          this.databaseName!
-        );
-        const groupPermission = await newModelGroupPermission.findOne({
-          _id: permission.groupId,
-        });
-        if (groupPermission) {
-          return {
-            read: groupPermission.read,
-            write: groupPermission.write,
-            delete: groupPermission.delete,
-            insert: groupPermission.insert,
-          };
-        }
+      // User != actor -> check for group permission
+      const modelUserGroup = new ModelUserGroup(this.databaseName!);
+      const actorGroup = await modelUserGroup.listUserGroupName(actor);
+      if (actorGroup.includes(permission.groupName)) {
+        return permission.groupPermission;
       }
     }
     // Default deny all
@@ -67,18 +49,25 @@ export class ModelGroupPermission extends ModelGeneral {
     };
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
+  public static async init(databaseName: string) {
+    return new ModelCollection(
+      databaseName,
+      ZKDATABASE_USER_PERMISSION_COLLECTION
+    ).create([
       'username',
-      'groupId',
+      'userPermission.read',
+      'userPermission.write',
+      'userPermission.delete',
+      'userPermission.insert',
+      'groupName',
+      'groupPermission.read',
+      'groupPermission.write',
+      'groupPermission.delete',
+      'groupPermission.insert',
       'collection',
       'docId',
-      'read',
-      'write',
-      'delete',
-      'insert',
     ]);
   }
 }
 
-export default ModelGroupPermission;
+export default ModelUserPermission;

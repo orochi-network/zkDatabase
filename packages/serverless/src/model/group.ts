@@ -15,10 +15,11 @@ export class ModelGroup extends ModelGeneral {
     super(databaseName, ZKDATABASE_GROUP_COLLECTION);
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'groupName',
-    ]);
+  public static async init(databaseName: string) {
+    return new ModelCollection(
+      databaseName,
+      ZKDATABASE_GROUP_COLLECTION
+    ).create(['groupName']);
   }
 }
 

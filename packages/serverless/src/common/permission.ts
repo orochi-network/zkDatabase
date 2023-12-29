@@ -1,4 +1,4 @@
-export type UserPermission = {
+export type PermissionRecord = {
   insert: boolean;
   read: boolean;
   write: boolean;
@@ -10,7 +10,7 @@ export type UserPermission = {
  * @param data Array of permissions
  * @returns
  */
-export function reducePermssion(data: UserPermission[]) {
+export function reducePermssion(data: PermissionRecord[]) {
   return data.reduce((acc, cur) => {
     const entries = Object.entries(cur);
     for (let i = 0; i < entries.length; i += 1) {
