@@ -62,9 +62,9 @@ export class ModelUser extends ModelGeneral {
       username,
       email,
       publicKey,
+      userData,
       createdAt: new Date(),
       updatedAt: new Date(),
-      userData,
     });
   }
 

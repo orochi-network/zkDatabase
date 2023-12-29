@@ -5,7 +5,7 @@ import { ModelGeneral } from './general';
 import { PermissionRecord } from '../common/permission';
 import ModelUserGroup from './user-group';
 
-export type UserPermissionSchema = {
+export type PermissionSchema = {
   username: string;
   userPermission: PermissionRecord;
   groupName: string;
@@ -16,7 +16,7 @@ export type UserPermissionSchema = {
   updatedAt: Date;
 };
 
-export class ModelUserPermission extends ModelGeneral {
+export class ModelPermission extends ModelGeneral {
   constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_USER_PERMISSION_COLLECTION);
   }
@@ -70,4 +70,4 @@ export class ModelUserPermission extends ModelGeneral {
   }
 }
 
-export default ModelUserPermission;
+export default ModelPermission;
