@@ -2,14 +2,15 @@ import { ObjectId } from 'mongodb';
 import { ZKDATABASE_USER_PERMISSION_COLLECTION } from './abstract/database-engine';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
-import { PermissionRecord } from '../common/permission';
+import { PermissionBinary, PermissionRecord } from '../common/permission';
 import ModelUserGroup from './user-group';
 
 export type PermissionSchema = {
   username: string;
-  userPermission: PermissionRecord;
   groupName: string;
-  groupPermission: PermissionRecord;
+  userPermission: number;
+  groupPermission: number;
+  otherPermission: number;
   collection: string;
   docId: ObjectId;
   createdAt: Date;
@@ -31,13 +32,15 @@ export class ModelPermission extends ModelGeneral {
     if (permission) {
       // User == actor -> return user permission
       if (permission.username === actor) {
-        return permission.userPermission;
+        return PermissionBinary.fromBinaryPermission(permission.userPermission);
       }
       // User != actor -> check for group permission
       const modelUserGroup = new ModelUserGroup(this.databaseName!);
       const actorGroup = await modelUserGroup.listUserGroupName(actor);
       if (actorGroup.includes(permission.groupName)) {
-        return permission.groupPermission;
+        return PermissionBinary.fromBinaryPermission(
+          permission.groupPermission
+        );
       }
     }
     // Default deny all
@@ -46,27 +49,23 @@ export class ModelPermission extends ModelGeneral {
       write: false,
       delete: false,
       insert: false,
+      system: false,
     };
   }
 
   public static async init(databaseName: string) {
-    return new ModelCollection(
+    const modelCollection = new ModelCollection(
       databaseName,
       ZKDATABASE_USER_PERMISSION_COLLECTION
-    ).create([
+    );
+    await modelCollection.create([
       'username',
-      'userPermission.read',
-      'userPermission.write',
-      'userPermission.delete',
-      'userPermission.insert',
       'groupName',
-      'groupPermission.read',
-      'groupPermission.write',
-      'groupPermission.delete',
-      'groupPermission.insert',
-      'collection',
-      'docId',
+      'userPermission',
+      'groupPermission',
+      'otherPermission',
     ]);
+    await modelCollection.create({ collection: 1, docId: 1 }, { unique: true });
   }
 }
 

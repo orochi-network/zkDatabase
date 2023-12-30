@@ -16,6 +16,19 @@ export class ModelUserGroup extends ModelGeneral {
     super(databaseName, ZKDATABASE_USER_GROUP_COLLECTION);
   }
 
+  public async checkMembership(
+    username: string,
+    groupname: string
+  ): Promise<boolean> {
+    const modelGroup = new ModelGroup(this.databaseName!);
+    const group = await modelGroup.findOne({ groupName: groupname });
+    if (!group) {
+      return false;
+    }
+    const matchedRecord = await this.count({ username, groupId: group._id });
+    return matchedRecord === 1;
+  }
+
   public async listUserGroupName(username: string): Promise<string[]> {
     const modelGroup = new ModelGroup(this.databaseName!);
     const groupsList = await modelGroup.find({
