@@ -74,7 +74,7 @@ export const SignUpWrapper = Joi.object<TSignUpWrapper>({
   proof: SignatureProof.required(),
 });
 
-export const typeDefsLogin = `#graphql
+export const typeDefsUser = `#graphql
 scalar JSON
 type Query
 type Mutation
@@ -115,18 +115,22 @@ type SignInResponse {
 }
 
 extend type Query {
-  signInData: SignInResponse
+  userSignInData: SignInResponse
 }
 
 extend type Mutation {
-  signIn(proof: SignatureProof!): SignInResponse
-  signOut: Boolean
-  signUp(signUp: SignUp!, proof: SignatureProof!): SignUpData
+  userSignIn(proof: SignatureProof!): SignInResponse
+  userSignOut: Boolean
+  userSignUp(signUp: SignUp!, proof: SignatureProof!): SignUpData
 }
 `;
 
 // Query
-const signInData = async (_root: unknown, _args: any, context: AppContext) => {
+const userSignInData = async (
+  _root: unknown,
+  _args: any,
+  context: AppContext
+) => {
   const session = await new ModelSession().findOne({
     sessionId: context.sessionId,
   });
@@ -149,7 +153,7 @@ const signInData = async (_root: unknown, _args: any, context: AppContext) => {
 };
 
 // Mutation
-const signIn = resolverWrapper(
+const userSignIn = resolverWrapper(
   SignInRequest,
   async (_root: unknown, args: TSignInRequest) => {
     // We only support testnet for now to prevent the signature from being used on mainnet
@@ -184,7 +188,7 @@ const signIn = resolverWrapper(
   }
 );
 
-const signOut = async (_root: unknown, _args: any, context: AppContext) => {
+const userSignOut = async (_root: unknown, _args: any, context: AppContext) => {
   if (context.sessionId) {
     await new ModelUser().signOut(context.sessionId);
     return true;
@@ -192,7 +196,7 @@ const signOut = async (_root: unknown, _args: any, context: AppContext) => {
   return false;
 };
 
-const signUp = resolverWrapper(
+const userSignUp = resolverWrapper(
   SignUpWrapper,
   async (_root: unknown, args: TSignUpWrapper) => {
     const client = new Client({ network: 'testnet' });
@@ -223,14 +227,14 @@ const signUp = resolverWrapper(
   }
 );
 
-export const resolversLogin = {
+export const resolversUser = {
   JSON: GraphQLJSON,
   Query: {
-    signInData,
+    userSignInData,
   },
   Mutation: {
-    signIn,
-    signOut,
-    signUp,
+    userSignIn,
+    userSignOut,
+    userSignUp,
   },
 };

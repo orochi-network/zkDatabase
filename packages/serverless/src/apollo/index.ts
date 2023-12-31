@@ -5,14 +5,18 @@ import {
   resolversCollectionIndex,
   typeDefsCollectionIndex,
 } from './app/collection-index';
-import { resolversLogin, typeDefsLogin } from './app/user';
+import { resolversUser, typeDefsUser } from './app/user';
+import { resolversGroup, typeDefsGroup } from './app/group';
+import { resolversPermission, typeDefsPermission } from './app/permission';
 
 export const TypedefsApp = [
   typeDefsDatabase,
   typeDefsCollection,
   typeDefsDocument,
   typeDefsCollectionIndex,
-  typeDefsLogin,
+  typeDefsUser,
+  typeDefsGroup,
+  typeDefsPermission,
 ];
 
 export const ResolversApp = [
@@ -20,5 +24,7 @@ export const ResolversApp = [
   resolversCollection,
   resolversDocument,
   resolversCollectionIndex,
-  resolversLogin,
+  resolversUser,
+  resolversGroup,
+  resolversPermission,
 ];

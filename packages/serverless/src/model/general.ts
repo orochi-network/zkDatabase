@@ -54,6 +54,11 @@ export class ModelGeneral extends ModelBasic {
     return this.collection.find(filter || {}).toArray();
   }
 
+  public async count(filter?: Filter<Document>): Promise<number> {
+    logger.debug(`ModelGeneral::count()`, filter);
+    return this.collection.countDocuments(filter || {});
+  }
+
   public async deleteOne(
     filter?: Filter<Document>,
     options?: DeleteOptions

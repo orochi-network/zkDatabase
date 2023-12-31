@@ -15,9 +15,43 @@ export class ModelGroup extends ModelGeneral {
     super(databaseName, ZKDATABASE_GROUP_COLLECTION);
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'groupName',
+  public static async init(databaseName: string) {
+    // Index for group name
+    await new ModelCollection(databaseName, ZKDATABASE_GROUP_COLLECTION).create(
+      { groupName: 1 },
+      { unique: true }
+    );
+
+    // Create default group
+    await new ModelGroup(databaseName).insertMany([
+      {
+        groupName: 'system',
+        description: 'System group',
+        createdBy: 'system',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        groupName: 'admin',
+        description: 'Admin group',
+        createdBy: 'system',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        groupName: 'user',
+        description: 'User group',
+        createdBy: 'system',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        groupName: 'nobody',
+        description: 'Nobody group',
+        createdBy: 'system',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
     ]);
   }
 }
