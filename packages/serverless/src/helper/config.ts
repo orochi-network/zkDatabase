@@ -11,6 +11,7 @@ interface IAppConfiguration {
   nodeEnv: TNodeEnv;
   merkle: string;
   mongodbUrl: string;
+  redisUrl: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
@@ -30,6 +31,7 @@ const configLoader = Singleton<ConfigLoader>(
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),
+    redisUrl: Joi.string(),
   })
 );
 

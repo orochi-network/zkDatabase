@@ -7,6 +7,7 @@ import {
 } from './app/collection-index';
 import { resolversUser, typeDefsUser } from './app/user';
 import { resolversGroup, typeDefsGroup } from './app/group';
+import { resolversPermission, typeDefsPermission } from './app/permission';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -15,6 +16,7 @@ export const TypedefsApp = [
   typeDefsCollectionIndex,
   typeDefsUser,
   typeDefsGroup,
+  typeDefsPermission,
 ];
 
 export const ResolversApp = [
@@ -24,4 +26,5 @@ export const ResolversApp = [
   resolversCollectionIndex,
   resolversUser,
   resolversGroup,
+  resolversPermission,
 ];

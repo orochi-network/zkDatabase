@@ -12,6 +12,22 @@ export type PermissionRecord = {
   delete: boolean;
 };
 
+// Transform partial permission to full permission record
+export function partialToPermission(
+  partial: Partial<PermissionRecord>
+): PermissionRecord {
+  return {
+    ...{
+      system: false,
+      insert: false,
+      read: false,
+      write: false,
+      delete: false,
+    },
+    ...partial,
+  };
+}
+
 // All permission fields
 export const ZKDATABASE_ALL_PERMISSION: (keyof PermissionRecord)[] = [
   'system' as keyof PermissionRecord,

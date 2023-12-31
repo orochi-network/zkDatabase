@@ -12,8 +12,8 @@ type Query
 type Mutation
 
 extend type Query {
-  groupListAll(databaseName: String!): String[]
-  groupListByUser(databaseName: String!, username: String!): String[]
+  groupListAll(databaseName: String!): [String]
+  groupListByUser(databaseName: String!, username: String!): [String]
 }
 `;
 
