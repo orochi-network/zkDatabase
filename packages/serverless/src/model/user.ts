@@ -1,6 +1,6 @@
 import { randomBytes } from 'crypto';
 import ModelCollection from './collection';
-import { ZKDATABASE_MANAGEMENT_DB } from './abstract/database-engine';
+import { ZKDATABASE_MANAGEMENT_DB } from '../common/const';
 import ModelSession, { SessionSchema } from './session';
 import { ModelGeneral } from './general';
 

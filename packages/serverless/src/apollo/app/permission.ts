@@ -61,7 +61,7 @@ type PermissionRecord {
 type Permission {
   username: String
   groupname: String
-  userPermission: PermissionRecord
+  ownerPermission: PermissionRecord
   groupPermission: PermissionRecord
   otherPermission: PermissionRecord
 }
@@ -113,8 +113,8 @@ const permissionList = resolverWrapper(
       return {
         username: result.username,
         groupname: result.groupname,
-        userPermission: PermissionBinary.fromBinaryPermission(
-          result.userPermission
+        ownerPermission: PermissionBinary.fromBinaryPermission(
+          result.ownerPermission
         ),
         groupPermission: PermissionBinary.fromBinaryPermission(
           result.groupPermission
@@ -166,7 +166,7 @@ const permissionSet = resolverWrapper(
           // If actor has permission to set set hasPermission to true
           if (
             PermissionBinary.fromBinaryPermission(
-              permissionRecord.userPermission
+              permissionRecord.ownerPermission
             ).system
           ) {
             hasPermission = true;
@@ -209,8 +209,8 @@ const permissionSet = resolverWrapper(
           return {
             username: permissionRecord.username,
             groupname: permissionRecord.groupname,
-            userPermission: PermissionBinary.fromBinaryPermission(
-              permissionRecord.userPermission
+            ownerPermission: PermissionBinary.fromBinaryPermission(
+              permissionRecord.ownerPermission
             ),
             groupPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.groupPermission
@@ -257,7 +257,7 @@ const permissionOwn = resolverWrapper(
           // If actor has permission to set set hasPermission to true
           if (
             PermissionBinary.fromBinaryPermission(
-              permissionRecord.userPermission
+              permissionRecord.ownerPermission
             ).system
           ) {
             hasPermission = true;
@@ -303,8 +303,8 @@ const permissionOwn = resolverWrapper(
           return {
             username: permissionRecord.username,
             groupname: permissionRecord.groupname,
-            userPermission: PermissionBinary.fromBinaryPermission(
-              permissionRecord.userPermission
+            ownerPermission: PermissionBinary.fromBinaryPermission(
+              permissionRecord.ownerPermission
             ),
             groupPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.groupPermission

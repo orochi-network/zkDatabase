@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import ModelCollection from './collection';
-import { ZKDATABASE_USER_GROUP_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_USER_GROUP_COLLECTION } from '../common/const';
 import { ModelGeneral } from './general';
 import ModelGroup from './group';
 

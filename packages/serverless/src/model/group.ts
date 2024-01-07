@@ -1,4 +1,4 @@
-import { ZKDATABASE_GROUP_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_GROUP_COLLECTION } from '../common/const';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
 

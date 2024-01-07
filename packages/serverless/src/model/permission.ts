@@ -1,14 +1,14 @@
 import { ObjectId } from 'mongodb';
-import { ZKDATABASE_USER_PERMISSION_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_USER_PERMISSION_COLLECTION } from '../common/const';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
 import { PermissionBinary, PermissionRecord } from '../common/permission';
 import ModelUserGroup from './user-group';
 
 export type PermissionSchema = {
-  username: string;
-  groupName: string;
-  userPermission: number;
+  owner: string;
+  group: string;
+  ownerPermission: number;
   groupPermission: number;
   otherPermission: number;
   collection: string;
@@ -31,13 +31,15 @@ export class ModelPermission extends ModelGeneral {
     const permission = await this.findOne({ docId, collection });
     if (permission) {
       // User == actor -> return user permission
-      if (permission.username === actor) {
-        return PermissionBinary.fromBinaryPermission(permission.userPermission);
+      if (permission.owner === actor) {
+        return PermissionBinary.fromBinaryPermission(
+          permission.ownerPermission
+        );
       }
       // User != actor -> check for group permission
       const modelUserGroup = new ModelUserGroup(this.databaseName!);
       const actorGroup = await modelUserGroup.listUserGroupName(actor);
-      if (actorGroup.includes(permission.groupName)) {
+      if (actorGroup.includes(permission.group)) {
         return PermissionBinary.fromBinaryPermission(
           permission.groupPermission
         );
@@ -59,9 +61,9 @@ export class ModelPermission extends ModelGeneral {
       ZKDATABASE_USER_PERMISSION_COLLECTION
     );
     await modelCollection.create([
-      'username',
-      'groupName',
-      'userPermission',
+      'owner',
+      'group',
+      'ownerPermission',
       'groupPermission',
       'otherPermission',
     ]);

@@ -1,5 +1,5 @@
 import ModelCollection from './collection';
-import { ZKDATABASE_SETTING_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_SETTING_COLLECTION } from '../common/const';
 import { ModelGeneral } from './general';
 
 export type AllConfigSchema =

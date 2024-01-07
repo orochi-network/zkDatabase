@@ -3,7 +3,7 @@ import ModelBasic from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
-} from './abstract/database-engine';
+} from '../common/const';
 import { ModelCollection } from './collection';
 import logger from '../helper/logger';
 

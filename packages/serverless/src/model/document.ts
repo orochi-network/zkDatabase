@@ -6,12 +6,12 @@ import {
   OptionalUnlessRequiredId,
 } from 'mongodb';
 import ModelBasic from './abstract/basic';
+import { IndexedDocument } from './abstract/database-engine';
+import logger from '../helper/logger';
 import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
-  IndexedDocument,
-} from './abstract/database-engine';
-import logger from '../helper/logger';
+} from '../common/const';
 
 export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
