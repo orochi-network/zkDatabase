@@ -17,6 +17,18 @@ import ModelBasic from './abstract/basic';
 import logger from '../helper/logger';
 
 export class ModelGeneral extends ModelBasic {
+  public static getInstance(databaseName: string, collectionName: string) {
+    return new Proxy(new ModelGeneral(databaseName, collectionName), {
+      get(target: any, prop: string) {
+        if (typeof target.collection[prop] === 'function') {
+          // eslint-disable-next-line prefer-rest-params
+          target.collection[prop].apply(target, arguments);
+        }
+        return target.collection[prop];
+      },
+    });
+  }
+
   public async updateOne(
     filter: Filter<Document>,
     update: UpdateFilter<Document> | Partial<Document>,
@@ -77,3 +89,16 @@ export class ModelGeneral extends ModelBasic {
 }
 
 export default ModelGeneral;
+
+let a = new Proxy(
+  { collection: { a: () => console.log(true) } },
+  {
+    get(target, prop) {
+      if (typeof target.collection[prop] === 'function') {
+        // eslint-disable-next-line prefer-rest-params
+        return target.collection[prop].apply(target, arguments);
+      }
+      return target.collection[prop];
+    },
+  }
+);

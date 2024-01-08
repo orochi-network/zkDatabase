@@ -13,6 +13,10 @@ import {
   ZKDATABASE_INDEX_RECORD,
 } from '../common/const';
 
+/**
+ * ModelDocument is a class that extends ModelBasic.
+ * Model document handle document of zkDatabase with index hook
+ */
 export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     return new ModelDocument(databaseName, collectionName);
