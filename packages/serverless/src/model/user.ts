@@ -1,6 +1,10 @@
 import { randomBytes } from 'crypto';
 import ModelCollection from './collection';
-import { ZKDATABASE_MANAGEMENT_DB } from '../common/const';
+import {
+  ZKDATABAES_USER_NOBODY,
+  ZKDATABAES_USER_SYSTEM,
+  ZKDATABASE_MANAGEMENT_DB,
+} from '../common/const';
 import ModelSession, { SessionSchema } from './session';
 import { ModelGeneral } from './general';
 
@@ -31,7 +35,7 @@ export class ModelUser extends ModelGeneral {
     );
     await new ModelUser().insertMany([
       {
-        username: 'system',
+        username: ZKDATABAES_USER_SYSTEM,
         email: '',
         publicKey: '',
         createdAt: new Date(),
@@ -39,7 +43,7 @@ export class ModelUser extends ModelGeneral {
         userData: { description: 'System user' },
       },
       {
-        username: 'nobody',
+        username: ZKDATABAES_USER_NOBODY,
         email: '',
         publicKey: '',
         createdAt: new Date(),
@@ -55,7 +59,7 @@ export class ModelUser extends ModelGeneral {
     publicKey: string,
     userData: any
   ) {
-    if (['system', 'nobody'].includes(username)) {
+    if ([ZKDATABAES_USER_NOBODY, ZKDATABAES_USER_SYSTEM].includes(username)) {
       throw new Error('Username is reserved');
     }
     return this.insertOne({
@@ -70,7 +74,7 @@ export class ModelUser extends ModelGeneral {
 
   // eslint-disable-next-line class-methods-use-this
   public async signIn(username: string): Promise<SessionSchema | null> {
-    if (['system', 'nobody'].includes(username)) {
+    if ([ZKDATABAES_USER_NOBODY, ZKDATABAES_USER_SYSTEM].includes(username)) {
       throw new Error('This username cannot be used');
     }
     const modelSession = new ModelSession();

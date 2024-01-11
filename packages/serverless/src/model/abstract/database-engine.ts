@@ -5,7 +5,7 @@ import {
   ZKDATABASE_INDEX_RECORD,
 } from '../../common/const';
 
-type ZKDatabaseIndex = {
+export type ZKDatabaseIndex = {
   [ZKDATABASE_INDEX_RECORD]: number;
 };
 

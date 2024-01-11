@@ -15,11 +15,11 @@ export default abstract class ModelBasic {
     this.collectionName = collectionName;
   }
 
-  protected get db() {
+  public get db() {
     return this.dbEngine.client.db(this.databaseName!);
   }
 
-  protected get collection() {
+  public get collection() {
     return this.db.collection(this.collectionName!);
   }
 
@@ -35,11 +35,12 @@ export default abstract class ModelBasic {
         writeConcern: { w: 'majority' },
       });
       result = true;
+      await session.commitTransaction();
     } catch (e) {
       logger.error('DatabaseEngine::withTransaction()', e);
       result = false;
+      await session.abortTransaction();
     }
-    await session.endSession();
     return result;
   }
 }

@@ -12,6 +12,7 @@ import {
   partialToPermission,
 } from '../../common/permission';
 import { AppContext } from '../../helper/common';
+import { ZKDATABAES_USER_NOBODY } from '../../common/const';
 
 export type TPermissionRequest = TCollectionRequest & {
   docId?: string;
@@ -148,7 +149,7 @@ const permissionSet = resolverWrapper(
   async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
     if (
       typeof context.username !== 'undefined' &&
-      context.username === 'nobody'
+      context.username === ZKDATABAES_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);
@@ -241,7 +242,7 @@ const permissionOwn = resolverWrapper(
   async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
     if (
       typeof context.username !== 'undefined' &&
-      context.username === 'nobody'
+      context.username === ZKDATABAES_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);

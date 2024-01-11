@@ -22,3 +22,9 @@ export const ZKDATABASE_SETTING_COLLECTION = '_zkdatabase_setting';
 
 // System management
 export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
+
+// System user
+export const ZKDATABAES_USER_NOBODY = 'nobody';
+export const ZKDATABAES_USER_SYSTEM = 'system';
+export const ZKDATABAES_GROUP_NOBODY = 'nobody';
+export const ZKDATABAES_GROUP_SYSTEM = 'system';

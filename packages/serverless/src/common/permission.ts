@@ -12,18 +12,30 @@ export type PermissionRecord = {
   delete: boolean;
 };
 
+export const ZKDATABASE_NO_PERMISSION_RECORD = {
+  read: false,
+  write: false,
+  delete: false,
+  insert: false,
+  system: false,
+};
+
+export const ZKDATABASE_NO_PERMISSION_BIN = 0;
+
+export type BasicPermission = {
+  user: string;
+  group: string;
+  ownerPermission: number;
+  groupPermission: number;
+  otherPermission: number;
+};
+
 // Transform partial permission to full permission record
 export function partialToPermission(
   partial: Partial<PermissionRecord>
 ): PermissionRecord {
   return {
-    ...{
-      system: false,
-      insert: false,
-      read: false,
-      write: false,
-      delete: false,
-    },
+    ...ZKDATABASE_NO_PERMISSION_RECORD,
     ...partial,
   };
 }
@@ -127,13 +139,7 @@ export class PermissionBinary {
   public static fromBinaryPermission(
     permissionBinary: number
   ): PermissionRecord {
-    const permission: PermissionRecord = {
-      system: false,
-      insert: false,
-      read: false,
-      write: false,
-      delete: false,
-    };
+    const permission: PermissionRecord = ZKDATABASE_NO_PERMISSION_RECORD;
     for (let i = 0; i < ZKDATABASE_ALL_PERMISSION.length; i += 1) {
       permission[ZKDATABASE_ALL_PERMISSION[i]] =
         (permissionBinary & (1 << i)) !== 0;

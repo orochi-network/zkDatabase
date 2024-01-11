@@ -2,19 +2,28 @@ import { ObjectId } from 'mongodb';
 import { ZKDATABASE_USER_PERMISSION_COLLECTION } from '../common/const';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
-import { PermissionBinary, PermissionRecord } from '../common/permission';
+import {
+  BasicPermission,
+  PermissionBinary,
+  PermissionRecord,
+  ZKDATABASE_NO_PERMISSION_RECORD,
+} from '../common/permission';
 import ModelUserGroup from './user-group';
 
-export type PermissionSchema = {
-  owner: string;
-  group: string;
-  ownerPermission: number;
-  groupPermission: number;
-  otherPermission: number;
+export type PermissionSchema = BasicPermission & {
   collection: string;
   docId: ObjectId;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
+  PermissionSchema,
+  'ownerPermission' | 'groupPermission' | 'otherPermission'
+> = {
+  ownerPermission: 0,
+  groupPermission: 0,
+  otherPermission: 0,
 };
 
 export class ModelPermission extends ModelGeneral {
@@ -46,13 +55,7 @@ export class ModelPermission extends ModelGeneral {
       }
     }
     // Default deny all
-    return {
-      read: false,
-      write: false,
-      delete: false,
-      insert: false,
-      system: false,
-    };
+    return ZKDATABASE_NO_PERMISSION_RECORD;
   }
 
   public static async init(databaseName: string) {

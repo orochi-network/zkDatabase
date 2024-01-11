@@ -1,4 +1,9 @@
-import { ZKDATABASE_GROUP_COLLECTION } from '../common/const';
+import {
+  ZKDATABAES_GROUP_NOBODY,
+  ZKDATABAES_GROUP_SYSTEM,
+  ZKDATABAES_USER_SYSTEM,
+  ZKDATABASE_GROUP_COLLECTION,
+} from '../common/const';
 import ModelCollection from './collection';
 import { ModelGeneral } from './general';
 
@@ -25,30 +30,30 @@ export class ModelGroup extends ModelGeneral {
     // Create default group
     await new ModelGroup(databaseName).insertMany([
       {
-        groupName: 'system',
+        groupName: ZKDATABAES_GROUP_SYSTEM,
         description: 'System group',
-        createdBy: 'system',
+        createdBy: ZKDATABAES_USER_SYSTEM,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         groupName: 'admin',
         description: 'Admin group',
-        createdBy: 'system',
+        createdBy: ZKDATABAES_USER_SYSTEM,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
         groupName: 'user',
         description: 'User group',
-        createdBy: 'system',
+        createdBy: ZKDATABAES_USER_SYSTEM,
         createdAt: new Date(),
         updatedAt: new Date(),
       },
       {
-        groupName: 'nobody',
+        groupName: ZKDATABAES_GROUP_NOBODY,
         description: 'Nobody group',
-        createdBy: 'system',
+        createdBy: ZKDATABAES_USER_SYSTEM,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

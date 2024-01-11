@@ -5,13 +5,18 @@ import {
   InsertOneResult,
   OptionalUnlessRequiredId,
 } from 'mongodb';
+import { O1DataType } from '../common/o1js';
 import ModelBasic from './abstract/basic';
 import { IndexedDocument } from './abstract/database-engine';
 import logger from '../helper/logger';
 import {
+  ZKDATABAES_GROUP_NOBODY,
+  ZKDATABAES_USER_NOBODY,
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
 } from '../common/const';
+import { ModelPermission, PermissionSchema } from './permission';
+import { ZKDATABASE_NO_PERMISSION_BIN } from '../common/permission';
 
 /**
  * ModelDocument is a class that extends ModelBasic.
@@ -61,9 +66,13 @@ export class ModelDocument extends ModelBasic {
     return updated;
   }
 
-  public async insertOne<T extends any>(data: OptionalUnlessRequiredId<T>) {
+  public async insertOne<T extends any>(
+    data: OptionalUnlessRequiredId<T>,
+    inheritPermission: Partial<PermissionSchema>
+  ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
+      const modelPermission = new ModelPermission(this.databaseName!);
       const index = (await this.getMaxIndex()) + 1;
       const result: InsertOneResult<IndexedDocument> =
         await this.collection.insertOne(
@@ -73,6 +82,36 @@ export class ModelDocument extends ModelBasic {
           } as any,
           { session }
         );
+
+      const basicCollectionPermission =
+        await modelPermission.collection.findOne(
+          {
+            collection: this.collectionName,
+            docId: null,
+          },
+          { session }
+        );
+
+      const { userPermission, groupPermission, otherPermission, group, user } =
+        basicCollectionPermission !== null
+          ? basicCollectionPermission
+          : {
+              user: ZKDATABAES_USER_NOBODY,
+              group: ZKDATABAES_GROUP_NOBODY,
+              userPermission: ZKDATABASE_NO_PERMISSION_BIN,
+              groupPermission: ZKDATABASE_NO_PERMISSION_BIN,
+              otherPermission: ZKDATABASE_NO_PERMISSION_BIN,
+            };
+
+      await modelPermission.insertOne({
+        collection: this.collectionName!,
+        docId: result.insertedId,
+        ...{ userPermission, groupPermission, otherPermission, group, user },
+        ...inheritPermission,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
       await this.db.collection(ZKDATABASE_INDEX_COLLECTION).insertOne(
         {
           [ZKDATABASE_INDEX_RECORD]: index,

@@ -89,16 +89,3 @@ export class ModelGeneral extends ModelBasic {
 }
 
 export default ModelGeneral;
-
-let a = new Proxy(
-  { collection: { a: () => console.log(true) } },
-  {
-    get(target, prop) {
-      if (typeof target.collection[prop] === 'function') {
-        // eslint-disable-next-line prefer-rest-params
-        return target.collection[prop].apply(target, arguments);
-      }
-      return target.collection[prop];
-    },
-  }
-);

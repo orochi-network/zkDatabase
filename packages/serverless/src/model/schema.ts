@@ -1,5 +1,7 @@
+import { optional } from 'joi';
 import { O1DataType } from '../common/o1js';
 import { PermissionRecord } from '../common/permission';
+import { ZKDatabaseIndex } from './abstract/database-engine';
 import ModelDocument from './document';
 
 export type SchemaField = {
@@ -20,15 +22,6 @@ export type SchemaDocumentIndex<T> = {
   [Property in keyof T as `${string & Property}.value`]: string;
 };
 
-export type SchemaPermission = {
-  schema: string[];
-  owner: string;
-  group: string;
-  ownerPermission: PermissionRecord;
-  groupPermission: PermissionRecord;
-  otherPermission: PermissionRecord;
-};
-
-export type SchemaDocument = SchemaBasic & SchemaPermission;
+export type SchemaDocument = SchemaBasic & ZKDatabaseIndex;
 
 export class ModelSchema extends ModelDocument {}
