@@ -2,7 +2,7 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import resolverWrapper from '../validation';
 import { DatabaseEngine } from '../../model/abstract/database-engine';
-import { ModelDatabase } from '../../model/database';
+import { ModelDatabase } from '../../model/abstract/database';
 import { databaseName, indexNumber } from './common';
 
 export type TDatabaseRequest = {

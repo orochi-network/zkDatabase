@@ -1,8 +1,12 @@
 import { CreateIndexesOptions, IndexSpecification } from 'mongodb';
-import { isOk } from '../helper/common';
-import ModelBasic from './abstract/basic';
+import { isOk } from '../../helper/common';
+import ModelBasic from './basic';
 import { ModelDocument } from './document';
 
+/**
+ * Build on top of ModelBasic, it handle everything about collection in general
+ * Don't use this directly
+ */
 export class ModelCollection extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     return new ModelCollection(databaseName, collectionName);

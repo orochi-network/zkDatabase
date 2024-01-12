@@ -4,8 +4,8 @@ import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
 import { databaseName, username, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
-import ModelUserGroup from '../../model/user-group';
-import ModelPermission from '../../model/permission';
+import ModelUserGroup from '../../model/global/user-group';
+import ModelPermission from '../../model/global/permission';
 import {
   PermissionBinary,
   PermissionRecord,

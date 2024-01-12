@@ -5,22 +5,23 @@ import {
   InsertOneResult,
   OptionalUnlessRequiredId,
 } from 'mongodb';
-import { O1DataType } from '../common/o1js';
-import ModelBasic from './abstract/basic';
-import { IndexedDocument } from './abstract/database-engine';
-import logger from '../helper/logger';
+import { O1DataType } from '../../common/o1js';
+import ModelBasic from './basic';
+import { IndexedDocument } from './database-engine';
+import logger from '../../helper/logger';
 import {
   ZKDATABAES_GROUP_NOBODY,
   ZKDATABAES_USER_NOBODY,
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
-} from '../common/const';
-import { ModelPermission, PermissionSchema } from './permission';
-import { ZKDATABASE_NO_PERMISSION_BIN } from '../common/permission';
+} from '../../common/const';
+import { ModelPermission, PermissionSchema } from '../global/permission';
+import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
+import { ModelSchemaManegement } from '../database/schema-management';
 
 /**
- * ModelDocument is a class that extends ModelBasic.
- * Model document handle document of zkDatabase with index hook
+ * ModelDocument is a class that extends ModelBasic. ModelDocument handle document of zkDatabase with index hook
+ * We should not use this directly, please use ModelSchema instead
  */
 export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
@@ -72,6 +73,7 @@ export class ModelDocument extends ModelBasic {
   ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
+      const modelSchema = ModelSchemaManegement.getInstance(this.databaseName!);
       const modelPermission = new ModelPermission(this.databaseName!);
       const index = (await this.getMaxIndex()) + 1;
       const result: InsertOneResult<IndexedDocument> =
@@ -83,22 +85,27 @@ export class ModelDocument extends ModelBasic {
           { session }
         );
 
-      const basicCollectionPermission =
-        await modelPermission.collection.findOne(
-          {
-            collection: this.collectionName,
-            docId: null,
-          },
-          { session }
-        );
+      const basicCollectionPermission = await modelSchema.collection.findOne(
+        {
+          collection: this.collectionName,
+          docId: null,
+        },
+        { session }
+      );
 
-      const { userPermission, groupPermission, otherPermission, group, user } =
+      const {
+        ownerPermission,
+        groupPermission,
+        otherPermission,
+        group,
+        owner,
+      } =
         basicCollectionPermission !== null
           ? basicCollectionPermission
           : {
-              user: ZKDATABAES_USER_NOBODY,
+              owner: ZKDATABAES_USER_NOBODY,
               group: ZKDATABAES_GROUP_NOBODY,
-              userPermission: ZKDATABASE_NO_PERMISSION_BIN,
+              ownerPermission: ZKDATABASE_NO_PERMISSION_BIN,
               groupPermission: ZKDATABASE_NO_PERMISSION_BIN,
               otherPermission: ZKDATABASE_NO_PERMISSION_BIN,
             };
@@ -106,7 +113,7 @@ export class ModelDocument extends ModelBasic {
       await modelPermission.insertOne({
         collection: this.collectionName!,
         docId: result.insertedId,
-        ...{ userPermission, groupPermission, otherPermission, group, user },
+        ...{ ownerPermission, groupPermission, otherPermission, group, owner },
         ...inheritPermission,
         createdAt: new Date(),
         updatedAt: new Date(),

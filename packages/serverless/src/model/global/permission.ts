@@ -1,16 +1,16 @@
 import { ObjectId } from 'mongodb';
-import { ZKDATABASE_USER_PERMISSION_COLLECTION } from '../common/const';
-import ModelCollection from './collection';
-import { ModelGeneral } from './general';
+import { ZKDATABASE_USER_PERMISSION_COLLECTION } from '../../common/const';
+import ModelCollection from '../abstract/collection';
+import { ModelGeneral } from '../abstract/general';
 import {
-  BasicPermission,
+  PermissionBasic,
   PermissionBinary,
   PermissionRecord,
   ZKDATABASE_NO_PERMISSION_RECORD,
-} from '../common/permission';
+} from '../../common/permission';
 import ModelUserGroup from './user-group';
 
-export type PermissionSchema = BasicPermission & {
+export type PermissionSchema = PermissionBasic & {
   collection: string;
   docId: ObjectId;
   createdAt: Date;

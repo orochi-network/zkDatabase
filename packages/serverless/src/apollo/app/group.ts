@@ -3,8 +3,8 @@ import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
 import { databaseName, username } from './common';
 import { TDatabaseRequest } from './database';
-import ModelGroup from '../../model/group';
-import ModelUserGroup from '../../model/user-group';
+import ModelGroup from '../../model/global/group';
+import ModelUserGroup from '../../model/global/user-group';
 
 export const typeDefsGroup = `#graphql
 scalar JSON

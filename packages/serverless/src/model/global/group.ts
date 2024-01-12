@@ -3,9 +3,9 @@ import {
   ZKDATABAES_GROUP_SYSTEM,
   ZKDATABAES_USER_SYSTEM,
   ZKDATABASE_GROUP_COLLECTION,
-} from '../common/const';
-import ModelCollection from './collection';
-import { ModelGeneral } from './general';
+} from '../../common/const';
+import ModelCollection from '../abstract/collection';
+import { ModelGeneral } from '../abstract/general';
 
 export type GroupSchema = {
   groupName: string;

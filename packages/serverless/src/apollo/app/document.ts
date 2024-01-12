@@ -2,7 +2,7 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
-import { ModelDocument } from '../../model/document';
+import { ModelDocument } from '../../model/abstract/document';
 import { collectionName, databaseName } from './common';
 
 export type TDocumentFindRequest = TCollectionRequest & {

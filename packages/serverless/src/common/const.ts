@@ -15,7 +15,7 @@ export const ZKDATABASE_USER_GROUP_COLLECTION = '_zkdatabase_user_group';
 
 // User permission
 export const ZKDATABASE_USER_PERMISSION_COLLECTION =
-  '_zkdatabase_USER_permission';
+  '_zkdatabase_user_permission';
 
 // Settings
 export const ZKDATABASE_SETTING_COLLECTION = '_zkdatabase_setting';

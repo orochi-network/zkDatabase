@@ -1,6 +1,6 @@
-import { ZKDATABASE_MANAGEMENT_DB } from '../common/const';
-import ModelCollection from './collection';
-import { ModelGeneral } from './general';
+import { ZKDATABASE_MANAGEMENT_DB } from '../../common/const';
+import ModelCollection from '../abstract/collection';
+import { ModelGeneral } from '../abstract/general';
 
 export type SessionSchema = {
   username: string;

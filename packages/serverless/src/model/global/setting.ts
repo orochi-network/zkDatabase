@@ -1,6 +1,6 @@
-import ModelCollection from './collection';
-import { ZKDATABASE_SETTING_COLLECTION } from '../common/const';
-import { ModelGeneral } from './general';
+import ModelCollection from '../abstract/collection';
+import { ZKDATABASE_SETTING_COLLECTION } from '../../common/const';
+import { ModelGeneral } from '../abstract/general';
 
 export type AllConfigSchema =
   | {

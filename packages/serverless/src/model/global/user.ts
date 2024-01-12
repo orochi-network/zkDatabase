@@ -1,12 +1,12 @@
 import { randomBytes } from 'crypto';
-import ModelCollection from './collection';
+import ModelCollection from '../abstract/collection';
 import {
   ZKDATABAES_USER_NOBODY,
   ZKDATABAES_USER_SYSTEM,
   ZKDATABASE_MANAGEMENT_DB,
-} from '../common/const';
+} from '../../common/const';
 import ModelSession, { SessionSchema } from './session';
-import { ModelGeneral } from './general';
+import { ModelGeneral } from '../abstract/general';
 
 export type UserSchema = {
   username: string;

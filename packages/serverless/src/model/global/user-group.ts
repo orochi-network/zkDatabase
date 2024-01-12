@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
-import ModelCollection from './collection';
-import { ZKDATABASE_USER_GROUP_COLLECTION } from '../common/const';
-import { ModelGeneral } from './general';
+import ModelCollection from '../abstract/collection';
+import { ZKDATABASE_USER_GROUP_COLLECTION } from '../../common/const';
+import { ModelGeneral } from '../abstract/general';
 import ModelGroup from './group';
 
 export type UserGroupSchema = {

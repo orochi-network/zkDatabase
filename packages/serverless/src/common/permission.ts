@@ -22,8 +22,8 @@ export const ZKDATABASE_NO_PERMISSION_RECORD = {
 
 export const ZKDATABASE_NO_PERMISSION_BIN = 0;
 
-export type BasicPermission = {
-  user: string;
+export type PermissionBasic = {
+  owner: string;
   group: string;
   ownerPermission: number;
   groupPermission: number;

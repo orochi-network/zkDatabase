@@ -2,7 +2,7 @@ import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
 import logger from './logger';
 import config from './config';
-import ModelSession from '../model/session';
+import ModelSession from '../model/global/session';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   username: string;

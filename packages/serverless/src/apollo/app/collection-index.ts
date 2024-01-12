@@ -7,7 +7,7 @@ import {
   TCollectionCreateRequest,
 } from './collection';
 import { collectionName, databaseName, indexName, indexField } from './common';
-import { ModelCollection } from '../../model/collection';
+import { ModelCollection } from '../../model/abstract/collection';
 
 // Index request
 export type TIndexNameRequest = {

@@ -2,6 +2,10 @@ import { ClientSession } from 'mongodb';
 import { DatabaseEngine } from './database-engine';
 import logger from '../../helper/logger';
 
+/**
+ * Model basic is the most basic model of data, It interactive directly to DatabaseEngine
+ * And provide .db and .collection allow other model to interactive with database/collection
+ */
 export default abstract class ModelBasic {
   protected dbEngine: DatabaseEngine;
 

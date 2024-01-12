@@ -1,12 +1,16 @@
 import { Document, ObjectId } from 'mongodb';
-import ModelBasic from './abstract/basic';
+import ModelBasic from './basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
-} from '../common/const';
+} from '../../common/const';
 import { ModelCollection } from './collection';
-import logger from '../helper/logger';
+import logger from '../../helper/logger';
 
+/**
+ * Build on top of ModelBasic, it handle everything about database in general
+ * Don't use this directly
+ */
 export class ModelDatabase extends ModelBasic {
   public static getInstance(databaseName: string) {
     return new ModelDatabase(databaseName);
