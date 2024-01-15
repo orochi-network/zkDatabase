@@ -10,6 +10,7 @@ export type TMerkleTreeMetadata = {
 };
 
 export class ModelMerkleTreeMetadata extends ModelGeneral {
+
   private constructor(databaseName: string) {
     super(databaseName, 'merkle-tree-metadata');
   }
@@ -74,5 +75,9 @@ export class ModelMerkleTreeMetadata extends ModelGeneral {
       logger.error('Error updating root:', error);
       throw error;
     }
+  }
+
+  public static getInstance(databaseName: string): ModelMerkleTreeMetadata {
+    return new ModelMerkleTreeMetadata(databaseName);
   }
 }
