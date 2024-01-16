@@ -15,7 +15,7 @@ export class ModelMerkleTreeMetadata extends ModelGeneral {
     super(databaseName, 'merkle-tree-metadata');
   }
 
-  private async doesMetadataExist(): Promise<boolean> {
+  public async doesMetadataExist(): Promise<boolean> {
     const id = new ObjectId(MERKLE_TREE_METADATA_INDEX);
     try {
       return (await this.findOne({ _id: id })) !== null;
