@@ -69,7 +69,16 @@ export class ModelMerkleTree extends ModelGeneral {
     return (await this.modelMerkleTreeMetadata.getMetadata())?.root;
   }
 
-  public async setLeaf(index: bigint, leaf: Field): Promise<void> {
+  public async build(amount: number) {
+    const leaves = await this.modelMerkleTreePool.getLatestLeaves(amount);
+
+    const leafPromises = leaves.map((leaf) =>
+      this.setLeaf(leaf.index, leaf.hash)
+    );
+    await Promise.all(leafPromises);
+  }
+
+  private async setLeaf(index: bigint, leaf: Field): Promise<void> {
     const witnesses = await this.getWitness(index);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
@@ -91,6 +100,10 @@ export class ModelMerkleTree extends ModelGeneral {
     }
 
     await this.updateManyLeaves(updates);
+  }
+
+  public async addLeafToPool(index: bigint, hash: string): Promise<Boolean> {
+    return this.modelMerkleTreePool.saveLeaf(index, Field.from(hash));
   }
 
   public async updateManyLeaves(
