@@ -1,10 +1,12 @@
-import { Field, MerkleTree, Poseidon } from 'o1js';
+import { Field, Poseidon } from 'o1js';
 import { ObjectId } from 'mongodb';
 import ModelGeneral from './general';
 import ModelMerkleTreePool from './merkle-tree-pool';
 import { ModelMerkleTreeMetadata } from './merkle-tree-metadata';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
+
+export const DEFAULT_HEIGHT = 12;
 
 export interface MerkleProof {
   sibling: Field;
@@ -38,7 +40,7 @@ export class ModelMerkleTree extends ModelGeneral {
     this.zeroes = zeroes;
   }
 
-  public static async getInstance(databaseName: string, height: number) {
+  public static async getInstance(databaseName: string, height: number = DEFAULT_HEIGHT) {
     const modelMerkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
     const modelMerkleTreeMetadata =
       ModelMerkleTreeMetadata.getInstance(databaseName);
@@ -62,7 +64,7 @@ export class ModelMerkleTree extends ModelGeneral {
   }
 
   private async create(height: number) {
-    this.modelMerkleTreeMetadata.create(height, '');
+    this.modelMerkleTreeMetadata.create(height, await this.getNode(this.height - 1, 0n));
   }
 
   public async getRoot(): Promise<string | undefined> {
@@ -135,7 +137,7 @@ export class ModelMerkleTree extends ModelGeneral {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNodeOrZero(level, siblingIndex).then((sibling) => {
+        this.getNode(level, siblingIndex).then((sibling) => {
           return { isLeft, sibling };
         })
       );
@@ -146,7 +148,7 @@ export class ModelMerkleTree extends ModelGeneral {
     return Promise.all(witnessPromises);
   }
 
-  protected async getNodeOrZero(level: number, index: bigint): Promise<Field> {
+  public async getNode(level: number, index: bigint): Promise<Field> {
     try {
       const id = new ObjectId(
         ModelMerkleTree.encodeLevelAndIndexToObjectId(level, index)

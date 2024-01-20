@@ -1,3 +1,4 @@
+import { Field } from 'o1js';
 import { ObjectId } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
@@ -10,7 +11,6 @@ export type TMerkleTreeMetadata = {
 };
 
 export class ModelMerkleTreeMetadata extends ModelGeneral {
-
   private constructor(databaseName: string) {
     super(databaseName, 'merkle-tree-metadata');
   }
@@ -25,7 +25,7 @@ export class ModelMerkleTreeMetadata extends ModelGeneral {
     }
   }
 
-  public async create(height: number, root: string): Promise<boolean> {
+  public async create(height: number, root: Field): Promise<boolean> {
     try {
       if (await this.doesMetadataExist()) {
         return false;
@@ -35,7 +35,7 @@ export class ModelMerkleTreeMetadata extends ModelGeneral {
       const result = await this.insertOne({
         _id: id,
         height,
-        root,
+        root: root.toString(),
       });
 
       return result.acknowledged;
