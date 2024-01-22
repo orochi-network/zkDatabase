@@ -5,7 +5,7 @@ import config from './config';
 import ModelSession from '../model/global/session';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
-  username: string;
+  userName: string;
   email: string;
   // Unix epoch timestamp in seconds
   timestamp: number;
@@ -44,7 +44,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
       !decodedPayload ||
       !decodedPayload.sessionId ||
       !decodedPayload.timestamp ||
-      !decodedPayload.username ||
+      !decodedPayload.userName ||
       !decodedPayload.email
     ) {
       throw new GraphQLError('Token is invalid', {
@@ -69,7 +69,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
       sessionId: decodedPayload.sessionId,
     });
     // Check if session is valid
-    if (!session || (session && session.username !== decodedPayload.username)) {
+    if (!session || (session && session.userName !== decodedPayload.userName)) {
       throw new GraphQLError('Username mismatch', {
         extensions: {
           code: 'UNAUTHENTICATED',

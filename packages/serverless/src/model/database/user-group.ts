@@ -1,14 +1,14 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, Timestamp } from 'mongodb';
 import ModelCollection from '../abstract/collection';
 import { ZKDATABASE_USER_GROUP_COLLECTION } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import ModelGroup from './group';
 
-export type UserGroupSchema = {
-  username: string;
+export type DocumentUserGroup = {
+  userName: string;
   groupId: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 };
 
 export class ModelUserGroup extends ModelGeneral {
@@ -17,7 +17,7 @@ export class ModelUserGroup extends ModelGeneral {
   }
 
   public async checkMembership(
-    username: string,
+    userName: string,
     groupname: string
   ): Promise<boolean> {
     const modelGroup = new ModelGroup(this.databaseName!);
@@ -25,20 +25,20 @@ export class ModelUserGroup extends ModelGeneral {
     if (!group) {
       return false;
     }
-    const matchedRecord = await this.count({ username, groupId: group._id });
+    const matchedRecord = await this.count({ userName, groupId: group._id });
     return matchedRecord === 1;
   }
 
-  public async listUserGroupName(username: string): Promise<string[]> {
+  public async listUserGroupName(userName: string): Promise<string[]> {
     const modelGroup = new ModelGroup(this.databaseName!);
     const groupsList = await modelGroup.find({
-      _id: { $in: await this.listUserGroupId(username) },
+      _id: { $in: await this.listUserGroupId(userName) },
     });
     return groupsList.map((group) => group.groupName);
   }
 
-  public async listUserGroupId(username: string): Promise<ObjectId[]> {
-    const userGroups = await this.find({ username });
+  public async listUserGroupId(userName: string): Promise<ObjectId[]> {
+    const userGroups = await this.find({ userName });
     return userGroups.map((userGroup) => userGroup.groupId);
   }
 
@@ -50,8 +50,8 @@ export class ModelUserGroup extends ModelGeneral {
     return availableGroups.map((group) => group._id);
   }
 
-  public async addUserToGroup(username: string, groupName: string[]) {
-    const groupOfUser = await this.listUserGroupId(username);
+  public async addUserToGroup(userName: string, groupName: string[]) {
+    const groupOfUser = await this.listUserGroupId(userName);
     const groupIdToAdd = await this.groupNameToGroupId(groupName);
     const newGroupIdToAdd = groupIdToAdd.filter(
       (g) => !groupOfUser.includes(g)
@@ -59,7 +59,7 @@ export class ModelUserGroup extends ModelGeneral {
 
     return this.insertMany(
       newGroupIdToAdd.map((groupId) => ({
-        username,
+        userName,
         groupId,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -69,7 +69,7 @@ export class ModelUserGroup extends ModelGeneral {
 
   public async create() {
     return new ModelCollection(this.databaseName, this.collectionName).create([
-      'username',
+      'userName',
       'groupId',
     ]);
   }

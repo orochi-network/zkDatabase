@@ -1,32 +1,26 @@
-import ModelCollection from '../abstract/collection';
-import { ZKDATABASE_SETTING_COLLECTION } from '../../common/const';
+import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 
-export type AllConfigSchema =
-  | {
-      configKey: 'user_starting_group';
-      configValue: string[];
-    }
-  | {
-      configKey: 'basic_permission_group';
-      configValue: string;
-    };
+export type DocumentAllSettings = {
+  configKey: 'database_version';
+  configValue: string;
+};
 
-export type SettingSchema = AllConfigSchema & {
+export type DocumentSetting = DocumentAllSettings & {
   createdAt: Date;
   updatedAt: Date;
 };
 
 export class ModelSetting extends ModelGeneral {
-  constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_SETTING_COLLECTION);
+  private isUpdated: boolean = false;
+  static collectionName: string = 'setting';
+
+  constructor() {
+    super(ZKDATABASE_GLOBAL_DB, ModelSetting.collectionName);
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create(
-      { configKey: 1 },
-      { unique: true }
-    );
+  public async load() {
+    await this.find();
   }
 }
 

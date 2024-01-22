@@ -1,4 +1,3 @@
-import { optional } from 'joi';
 import { O1DataType } from '../../common/o1js';
 import { PermissionBasic } from '../../common/permission';
 import { ZKDatabaseIndex } from '../abstract/database-engine';

@@ -4,8 +4,9 @@ import {
   Filter,
   InsertOneResult,
   OptionalUnlessRequiredId,
+  UpdateFilter,
+  Document
 } from 'mongodb';
-import { O1DataType } from '../../common/o1js';
 import ModelBasic from './basic';
 import { IndexedDocument } from './database-engine';
 import logger from '../../helper/logger';
@@ -15,19 +16,23 @@ import {
   ZKDATABASE_INDEX_COLLECTION,
   ZKDATABASE_INDEX_RECORD,
 } from '../../common/const';
-import { ModelPermission, PermissionSchema } from '../global/permission';
+import { ModelPermission, PermissionSchema } from '../database/permission';
 import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
 import { ModelSchemaManegement } from '../database/schema-management';
 
 /**
- * ModelDocument is a class that extends ModelBasic. ModelDocument handle document of zkDatabase with index hook
- * We should not use this directly, please use ModelSchema instead
+ * ModelDocument is a class that extends ModelBasic. ModelDocument handle document of zkDatabase with index hook.
+ * Index hook 
  */
 export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     return new ModelDocument(databaseName, collectionName);
   }
 
+  /**
+   * Get max index value of record
+   * @returns number
+   */
   private async getMaxIndex(): Promise<number> {
     const maxIndexedCursor = await this.db
       .collection(ZKDATABASE_INDEX_COLLECTION)
@@ -44,7 +49,14 @@ export class ModelDocument extends ModelBasic {
       : -1;
   }
 
-  public async updateOne(filter: Filter<any>, update: any): Promise<boolean> {
+  /**
+   * Update the first record that matched the filter
+   * @note We should perform update on Merkle tree that's stored in 
+   * @param filter
+   * @param update 
+   * @returns 
+   */
+  public async updateOne(filter: Filter<Document>, update: UpdateFilter<Document>): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
       const result = await this.collection.updateMany(
@@ -58,6 +70,7 @@ export class ModelDocument extends ModelBasic {
           session,
         }
       );
+      // We need to do this to make sure that only 1 record
       if (result.modifiedCount === 1) {
         updated = true;
       } else {

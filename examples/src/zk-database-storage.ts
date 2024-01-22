@@ -34,7 +34,7 @@ class Account extends Schema({
         port: 5001,
         protocol: 'http',
         authentication: {
-          username: 'N/A',
+          userName: 'N/A',
           secretKey: 'N/A',
         },
       },

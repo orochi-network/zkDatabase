@@ -103,7 +103,7 @@ export const REQUIRED_AUTHENTICATION = [
 ];
 
 export type TKuboAuthentication = {
-  username: string;
+  userName: string;
   secretKey: string;
 };
 
@@ -171,7 +171,7 @@ export class KuboClient {
     this.config = { ...this.config, ...config };
     if (typeof config.authentication !== "undefined") {
       this.jwt = new JWT(
-        config.authentication.username,
+        config.authentication.userName,
         config.authentication.secretKey
       );
     }

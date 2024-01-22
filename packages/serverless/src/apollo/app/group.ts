@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
-import { databaseName, username } from './common';
+import { databaseName, userName } from './common';
 import { TDatabaseRequest } from './database';
-import ModelGroup from '../../model/global/group';
-import ModelUserGroup from '../../model/global/user-group';
+import ModelGroup from '../../model/database/group';
+import ModelUserGroup from '../../model/database/user-group';
 
 export const typeDefsGroup = `#graphql
 scalar JSON
@@ -13,7 +13,7 @@ type Mutation
 
 extend type Query {
   groupListAll(databaseName: String!): [String]
-  groupListByUser(databaseName: String!, username: String!): [String]
+  groupListByUser(databaseName: String!, userName: String!): [String]
 }
 `;
 
@@ -29,17 +29,17 @@ const groupListAll = resolverWrapper(
 );
 
 export type TGroupListByUserRequest = TDatabaseRequest & {
-  username: string;
+  userName: string;
 };
 
 const groupListByUser = resolverWrapper(
   Joi.object({
     databaseName,
-    username,
+    userName,
   }),
   async (_root: unknown, args: TGroupListByUserRequest) => {
     const modelUserGroup = new ModelUserGroup(args.databaseName);
-    return modelUserGroup.listUserGroupName(args.username);
+    return modelUserGroup.listUserGroupName(args.userName);
   }
 );
 

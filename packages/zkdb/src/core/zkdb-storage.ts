@@ -15,9 +15,9 @@ import { LoadInstance } from './loader.js';
  * Represents search results for multile records.
  *
  * ```ts
- * const searchResult = await zkdbStorage.search('username', 'John');
+ * const searchResult = await zkdbStorage.search('userName', 'John');
  * if (!searchResult.isEmpty()) {
- *   await searchResult.update({ username: 'John Doe' });
+ *   await searchResult.update({ userName: 'John Doe' });
  * }
  * ```
  */
@@ -133,9 +133,9 @@ export class SearchResult {
 /**
  * Simular to **SearchResult**, but only for one record.
  * ```ts
- * const searchResult = await zkdbStorage.searchOne('username', 'John');
+ * const searchResult = await zkdbStorage.searchOne('userName', 'John');
  * if (!searchResult.isEmpty()) {
- *   await searchResult.update({ username: 'John Doe' });
+ *   await searchResult.update({ userName: 'John Doe' });
  * }
  * ```
  */

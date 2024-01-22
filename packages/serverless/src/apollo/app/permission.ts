@@ -2,10 +2,10 @@ import Joi from 'joi';
 import { GraphQLError } from 'graphql';
 import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
-import { databaseName, username, collectionName, objectId } from './common';
+import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
-import ModelUserGroup from '../../model/global/user-group';
-import ModelPermission from '../../model/global/permission';
+import ModelUserGroup from '../../model/database/user-group';
+import ModelPermission from '../../model/database/permission';
 import {
   PermissionBinary,
   PermissionRecord,
@@ -60,7 +60,7 @@ type PermissionRecord {
 }
 
 type Permission {
-  username: String
+  userName: String
   groupname: String
   ownerPermission: PermissionRecord
   groupPermission: PermissionRecord
@@ -112,7 +112,7 @@ const permissionList = resolverWrapper(
 
     if (result) {
       return {
-        username: result.username,
+        userName: result.userName,
         groupname: result.groupname,
         ownerPermission: PermissionBinary.fromBinaryPermission(
           result.ownerPermission
@@ -148,8 +148,8 @@ const permissionSet = resolverWrapper(
   }),
   async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
     if (
-      typeof context.username !== 'undefined' &&
-      context.username === ZKDATABAES_USER_NOBODY
+      typeof context.userName !== 'undefined' &&
+      context.userName === ZKDATABAES_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);
@@ -163,7 +163,7 @@ const permissionSet = resolverWrapper(
         docId: args.docId,
       });
       if (permissionRecord) {
-        if (permissionRecord.username === context.username) {
+        if (permissionRecord.userName === context.userName) {
           // If actor has permission to set set hasPermission to true
           if (
             PermissionBinary.fromBinaryPermission(
@@ -176,7 +176,7 @@ const permissionSet = resolverWrapper(
             const modelUserGroup = new ModelUserGroup(args.databaseName);
             if (
               await modelUserGroup.checkMembership(
-                context.username,
+                context.userName,
                 permissionRecord.groupname
               )
             ) {
@@ -208,7 +208,7 @@ const permissionSet = resolverWrapper(
           );
 
           return {
-            username: permissionRecord.username,
+            userName: permissionRecord.userName,
             groupname: permissionRecord.groupname,
             ownerPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.ownerPermission
@@ -237,12 +237,12 @@ const permissionOwn = resolverWrapper(
     collectionName,
     docId: objectId.optional(),
     grouping: permissionGroup,
-    newOwner: username,
+    newOwner: userName,
   }),
   async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
     if (
-      typeof context.username !== 'undefined' &&
-      context.username === ZKDATABAES_USER_NOBODY
+      typeof context.userName !== 'undefined' &&
+      context.userName === ZKDATABAES_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);
@@ -254,7 +254,7 @@ const permissionOwn = resolverWrapper(
         docId: args.docId,
       });
       if (permissionRecord) {
-        if (permissionRecord.username === context.username) {
+        if (permissionRecord.userName === context.userName) {
           // If actor has permission to set set hasPermission to true
           if (
             PermissionBinary.fromBinaryPermission(
@@ -267,7 +267,7 @@ const permissionOwn = resolverWrapper(
             const modelUserGroup = new ModelUserGroup(args.databaseName);
             if (
               await modelUserGroup.checkMembership(
-                context.username,
+                context.userName,
                 permissionRecord.groupname
               )
             ) {
@@ -284,11 +284,11 @@ const permissionOwn = resolverWrapper(
 
         if (hasPermission) {
           if (args.grouping === 'User') {
-            permissionRecord.username = args.newOwner;
+            permissionRecord.userName = args.newOwner;
             await modelPermission.updateOne(
               { collection: args.collectionName, docId: args.docId },
               {
-                username: args.newOwner,
+                userName: args.newOwner,
               }
             );
           } else if (args.grouping === 'Group') {
@@ -302,7 +302,7 @@ const permissionOwn = resolverWrapper(
           }
 
           return {
-            username: permissionRecord.username,
+            userName: permissionRecord.userName,
             groupname: permissionRecord.groupname,
             ownerPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.ownerPermission

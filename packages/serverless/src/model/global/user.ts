@@ -1,100 +1,83 @@
-import { randomBytes } from 'crypto';
-import ModelCollection from '../abstract/collection';
+import { InsertOneResult, WithId } from 'mongodb';
 import {
   ZKDATABAES_USER_NOBODY,
   ZKDATABAES_USER_SYSTEM,
-  ZKDATABASE_MANAGEMENT_DB,
+  ZKDATABASE_GLOBAL_DB,
 } from '../../common/const';
-import ModelSession, { SessionSchema } from './session';
 import { ModelGeneral } from '../abstract/general';
+import { getCurrentTime, objectToLookupPattern } from '../../helper/common';
 
-export type UserSchema = {
-  username: string;
+export type DocumentUser = {
+  userName: string;
   email: string;
   publicKey: string;
+  activated: boolean;
   userData: any;
   createdAt: Date;
   updatedAt: Date;
 };
 
 export class ModelUser extends ModelGeneral {
+  static collectionName: string = 'user';
+  static defaultUsers: string[] = [
+    ZKDATABAES_USER_NOBODY,
+    ZKDATABAES_USER_SYSTEM,
+  ];
+
   constructor() {
-    super(ZKDATABASE_MANAGEMENT_DB, 'user');
+    super(ZKDATABASE_GLOBAL_DB, ModelUser.collectionName);
   }
 
-  public static async init() {
-    const userCollection = new ModelCollection(
-      ZKDATABASE_MANAGEMENT_DB,
-      'user'
-    );
-    await userCollection.create(
-      [{ username: 1 }, { email: 1 }, { publicKey: 1 }],
-      {
-        unique: true,
-      }
-    );
-    await new ModelUser().insertMany([
-      {
-        username: ZKDATABAES_USER_SYSTEM,
-        email: '',
-        publicKey: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userData: { description: 'System user' },
-      },
-      {
-        username: ZKDATABAES_USER_NOBODY,
-        email: '',
-        publicKey: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userData: { description: 'Nobody user' },
-      },
-    ]);
+  public static isValidUser(userName: string) {
+    if (ModelUser.defaultUsers.includes(userName)) {
+      throw new Error('Username is reserved');
+    }
   }
 
-  public async signUp(
-    username: string,
+  public async isUserExist(
+    searchingInfo: Partial<
+      Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
+    >
+  ) {
+    // Search a user for given information is matched
+    return (
+      (await this.collection.countDocuments({
+        $or: objectToLookupPattern(searchingInfo),
+      })) > 0
+    );
+  }
+
+  public async findUser(
+    searchingInfo: Partial<
+      Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
+    >
+  ): Promise<DocumentUser[]> {
+    // Search a user for given information is matched
+    const result = await this.collection.find<WithId<DocumentUser>>({
+      $or: objectToLookupPattern(searchingInfo),
+    });
+
+    return result.toArray();
+  }
+
+  public async createUser(
+    userName: string,
     email: string,
     publicKey: string,
     userData: any
-  ) {
-    if ([ZKDATABAES_USER_NOBODY, ZKDATABAES_USER_SYSTEM].includes(username)) {
-      throw new Error('Username is reserved');
+  ): Promise<InsertOneResult<DocumentUser> | null> {
+    ModelUser.isValidUser(userName);
+    if (await this.isUserExist({ userName, email, publicKey })) {
+      return this.insertOne({
+        userName,
+        email,
+        publicKey,
+        userData,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      });
     }
-    return this.insertOne({
-      username,
-      email,
-      publicKey,
-      userData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public async signIn(username: string): Promise<SessionSchema | null> {
-    if ([ZKDATABAES_USER_NOBODY, ZKDATABAES_USER_SYSTEM].includes(username)) {
-      throw new Error('This username cannot be used');
-    }
-    const modelSession = new ModelSession();
-    const sessionData: SessionSchema = {
-      username,
-      sessionId: randomBytes(32).toString('hex'),
-      sessionKey: randomBytes(32).toString('hex'),
-      createdAt: new Date(),
-      lastAccess: new Date(),
-    };
-    const newSession = await modelSession.insertOne(sessionData);
-
-    return newSession.acknowledged ? sessionData : null;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  public async signOut(sessionId: string) {
-    return new ModelSession().deleteOne({
-      sessionId,
-    });
+    return null;
   }
 }
 

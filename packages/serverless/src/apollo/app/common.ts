@@ -14,7 +14,7 @@ export const databaseName = Joi.string()
   .required()
   .pattern(/^[a-z]+[_a-z0-9]+/i);
 
-export const username = Joi.string()
+export const userName = Joi.string()
   .trim()
   .min(4)
   .max(128)

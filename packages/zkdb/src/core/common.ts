@@ -97,7 +97,7 @@ export type TFileStorage = {
 export type THeliaConfig = TMemoryStorage | TFileStorage;
 
 export type TDeletatedKuboConfig = Partial<TKuboConfig> & {
-  username: string;
+  userName: string;
   secretAPIKey: string;
 };
 

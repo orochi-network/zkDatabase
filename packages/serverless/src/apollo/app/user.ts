@@ -51,14 +51,14 @@ export const SignInRequest = Joi.object<TSignInRequest>({
 });
 
 export type TSignUpRequest = {
-  username: string;
+  userName: string;
   email: string;
   userData: any;
   timestamp: number;
 };
 
 export const SignUnRequest = Joi.object<TSignUpRequest>({
-  username: Joi.string().required(),
+  userName: Joi.string().required(),
   email: Joi.string().email().required(),
   timestamp,
   userData: Joi.object(),
@@ -91,7 +91,7 @@ input SignatureProof {
 }
 
 input SignUp {
-  username: String
+  userName: String
   email: String
   timestamp: Int
   userData: JSON
@@ -100,7 +100,7 @@ input SignUp {
 type SignUpData {
     success: Boolean
     error: String
-    username: String
+    userName: String
     email: String
     publicKey: String
 }
@@ -108,7 +108,7 @@ type SignUpData {
 type SignInResponse {
     success: Boolean
     error: String
-    username: String
+    userName: String
     sessionKey: String
     sessionId: String
     userData: JSON
@@ -136,13 +136,13 @@ const userSignInData = async (
   });
   if (session) {
     const user = await new ModelUser().findOne({
-      username: session.username,
+      userName: session.userName,
     });
     return {
       success: true,
       sessionKey: session.sessionKey,
       sessionId: session.sessionId,
-      username: session.username,
+      userName: session.userName,
       userData: user ? user.userData : null,
     };
   }
@@ -164,17 +164,17 @@ const userSignIn = resolverWrapper(
       const user = await modelUser.findOne({ publicKey: args.proof.publicKey });
       const jsonData = JSON.parse(args.proof.data);
       if (user) {
-        if (jsonData.username !== user.username) {
+        if (jsonData.userName !== user.userName) {
           throw new Error('Username does not match');
         }
         if (timestamp.validate(jsonData.timestamp).error) {
           throw new Error('Timestamp is invalid');
         }
-        const session = await modelUser.signIn(user.username);
-        if (session && session.username === user.username) {
+        const session = await modelUser.signIn(user.userName);
+        if (session && session.userName === user.userName) {
           return {
             success: true,
-            username: user.username,
+            userName: user.userName,
             sessionKey: session.sessionKey,
             sessionId: session.sessionId,
             userData: user.userData,
@@ -202,7 +202,7 @@ const userSignUp = resolverWrapper(
     const client = new Client({ network: 'testnet' });
     if (client.verifyMessage(args.proof)) {
       const jsonData = JSON.parse(args.proof.data);
-      if (jsonData.username !== args.signUp.username) {
+      if (jsonData.userName !== args.signUp.userName) {
         throw new Error('Username does not match');
       }
       if (jsonData.email !== args.signUp.email) {
@@ -210,7 +210,7 @@ const userSignUp = resolverWrapper(
       }
       const modelUser = new ModelUser();
       await modelUser.signUp(
-        args.signUp.username,
+        args.signUp.userName,
         args.signUp.email,
         args.proof.publicKey,
         args.signUp.userData
@@ -218,7 +218,7 @@ const userSignUp = resolverWrapper(
       return {
         success: true,
         error: null,
-        username: args.signUp.username,
+        userName: args.signUp.userName,
         email: args.signUp.email,
         publicKey: args.proof.publicKey,
       };

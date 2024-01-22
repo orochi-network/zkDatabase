@@ -7,21 +7,12 @@ export const ZKDATABASE_SCHEMA_COLLECTION = '_zkdatabase_management';
 
 // Group
 export const ZKDATABASE_GROUP_COLLECTION = '_zkdatabase_group';
-export const ZKDATABASE_GROUP_PERMISSION_COLLECTION =
-  '_zkdatabase_group_permission';
 
 // User -> Group mapping
 export const ZKDATABASE_USER_GROUP_COLLECTION = '_zkdatabase_user_group';
 
-// User permission
-export const ZKDATABASE_USER_PERMISSION_COLLECTION =
-  '_zkdatabase_user_permission';
-
-// Settings
-export const ZKDATABASE_SETTING_COLLECTION = '_zkdatabase_setting';
-
 // System management
-export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
+export const ZKDATABASE_GLOBAL_DB = '_zkdatabase_management';
 
 // System user
 export const ZKDATABAES_USER_NOBODY = 'nobody';

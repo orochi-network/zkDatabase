@@ -40,14 +40,14 @@ import { ZKDATABAES_USER_NOBODY } from './common/const';
     expressMiddleware(server, {
       context: async ({ req }) => {
         if (req.headers.authorization) {
-          const { sessionId, username, email } =
+          const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
               req.headers.authorization
             );
-          return { sessionId, username, email };
+          return { sessionId, userName, email };
         }
         return {
-          username: ZKDATABAES_USER_NOBODY,
+          userName: ZKDATABAES_USER_NOBODY,
           email: '',
           sessionId: '',
         };

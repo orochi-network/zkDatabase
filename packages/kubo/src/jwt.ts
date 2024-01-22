@@ -8,18 +8,18 @@ const {
 export type TWordArray = typeof WordArray;
 
 export class JWT {
-  private username: string;
+  private userName: string;
   private secretKey: any;
 
   // Init a instance of OrandHmac
   // Key need to be a hex string or based64
-  constructor(username: string, secretKey: string) {
+  constructor(userName: string, secretKey: string) {
     if (/^(0x|)[0-9a-f]+$/gi.test(secretKey)) {
       this.secretKey = enc.Hex.parse(secretKey.replace(/^0x/gi, ""));
     } else {
       this.secretKey = enc.Base64.parse(secretKey);
     }
-    this.username = username;
+    this.userName = userName;
   }
 
   // Sign message with a secret key
@@ -36,7 +36,7 @@ export class JWT {
         );*/
     const payload = enc.Utf8.parse(
       JSON.stringify({
-        username: this.username,
+        userName: this.userName,
         nonce: (Math.random() * 0xffffffff) >>> 0,
         timestamp: Date.now(),
       })
