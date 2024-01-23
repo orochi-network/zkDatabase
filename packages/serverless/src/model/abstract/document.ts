@@ -5,7 +5,7 @@ import {
   InsertOneResult,
   OptionalUnlessRequiredId,
   UpdateFilter,
-  Document
+  Document,
 } from 'mongodb';
 import ModelBasic from './basic';
 import { IndexedDocument } from './database-engine';
@@ -18,11 +18,11 @@ import {
 } from '../../common/const';
 import { ModelPermission, PermissionSchema } from '../database/permission';
 import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
-import { ModelSchemaManegement } from '../database/schema-management';
+import { ModelSchema } from '../database/schema';
 
 /**
  * ModelDocument is a class that extends ModelBasic. ModelDocument handle document of zkDatabase with index hook.
- * Index hook 
+ * Index hook
  */
 export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
@@ -51,12 +51,15 @@ export class ModelDocument extends ModelBasic {
 
   /**
    * Update the first record that matched the filter
-   * @note We should perform update on Merkle tree that's stored in 
+   * @note We should perform update on Merkle tree that's stored in
    * @param filter
-   * @param update 
-   * @returns 
+   * @param update
+   * @returns
    */
-  public async updateOne(filter: Filter<Document>, update: UpdateFilter<Document>): Promise<boolean> {
+  public async updateOne(
+    filter: Filter<Document>,
+    update: UpdateFilter<Document>
+  ): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
       const result = await this.collection.updateMany(
@@ -86,7 +89,7 @@ export class ModelDocument extends ModelBasic {
   ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
-      const modelSchema = ModelSchemaManegement.getInstance(this.databaseName!);
+      const modelSchema = ModelSchema.getInstance(this.databaseName!);
       const modelPermission = new ModelPermission(this.databaseName!);
       const index = (await this.getMaxIndex()) + 1;
       const result: InsertOneResult<IndexedDocument> =

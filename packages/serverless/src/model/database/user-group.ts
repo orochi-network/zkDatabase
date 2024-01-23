@@ -12,16 +12,18 @@ export type DocumentUserGroup = {
 };
 
 export class ModelUserGroup extends ModelGeneral {
+  static collectionName = ZKDATABASE_USER_GROUP_COLLECTION;
+
   constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_USER_GROUP_COLLECTION);
+    super(databaseName, ModelUserGroup.collectionName);
   }
 
   public async checkMembership(
     userName: string,
-    groupname: string
+    groupName: string
   ): Promise<boolean> {
     const modelGroup = new ModelGroup(this.databaseName!);
-    const group = await modelGroup.findOne({ groupName: groupname });
+    const group = await modelGroup.findOne({ groupName: groupName });
     if (!group) {
       return false;
     }
@@ -29,15 +31,15 @@ export class ModelUserGroup extends ModelGeneral {
     return matchedRecord === 1;
   }
 
-  public async listUserGroupName(userName: string): Promise<string[]> {
+  public async listGroupName(userName: string): Promise<string[]> {
     const modelGroup = new ModelGroup(this.databaseName!);
     const groupsList = await modelGroup.find({
-      _id: { $in: await this.listUserGroupId(userName) },
+      _id: { $in: await this.listGroupId(userName) },
     });
     return groupsList.map((group) => group.groupName);
   }
 
-  public async listUserGroupId(userName: string): Promise<ObjectId[]> {
+  public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
     return userGroups.map((userGroup) => userGroup.groupId);
   }
@@ -51,7 +53,7 @@ export class ModelUserGroup extends ModelGeneral {
   }
 
   public async addUserToGroup(userName: string, groupName: string[]) {
-    const groupOfUser = await this.listUserGroupId(userName);
+    const groupOfUser = await this.listGroupId(userName);
     const groupIdToAdd = await this.groupNameToGroupId(groupName);
     const newGroupIdToAdd = groupIdToAdd.filter(
       (g) => !groupOfUser.includes(g)

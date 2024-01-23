@@ -43,7 +43,7 @@ export class ModelSession extends ModelGeneral {
     return this.updateOne(
       { sessionId },
       {
-        $set: { lastAccess: new Date() },
+        $set: { lastAccess: getCurrentTime() },
       }
     );
   }

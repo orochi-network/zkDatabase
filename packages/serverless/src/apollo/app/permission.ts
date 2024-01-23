@@ -61,7 +61,7 @@ type PermissionRecord {
 
 type Permission {
   userName: String
-  groupname: String
+  groupName: String
   ownerPermission: PermissionRecord
   groupPermission: PermissionRecord
   otherPermission: PermissionRecord
@@ -113,7 +113,7 @@ const permissionList = resolverWrapper(
     if (result) {
       return {
         userName: result.userName,
-        groupname: result.groupname,
+        groupName: result.groupName,
         ownerPermission: PermissionBinary.fromBinaryPermission(
           result.ownerPermission
         ),
@@ -177,7 +177,7 @@ const permissionSet = resolverWrapper(
             if (
               await modelUserGroup.checkMembership(
                 context.userName,
-                permissionRecord.groupname
+                permissionRecord.groupName
               )
             ) {
               if (
@@ -209,7 +209,7 @@ const permissionSet = resolverWrapper(
 
           return {
             userName: permissionRecord.userName,
-            groupname: permissionRecord.groupname,
+            groupName: permissionRecord.groupName,
             ownerPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.ownerPermission
             ),
@@ -268,7 +268,7 @@ const permissionOwn = resolverWrapper(
             if (
               await modelUserGroup.checkMembership(
                 context.userName,
-                permissionRecord.groupname
+                permissionRecord.groupName
               )
             ) {
               if (
@@ -303,7 +303,7 @@ const permissionOwn = resolverWrapper(
 
           return {
             userName: permissionRecord.userName,
-            groupname: permissionRecord.groupname,
+            groupName: permissionRecord.groupName,
             ownerPermission: PermissionBinary.fromBinaryPermission(
               permissionRecord.ownerPermission
             ),

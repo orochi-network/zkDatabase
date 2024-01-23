@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { ZKDATABASE_USER_PERMISSION_COLLECTION } from '../../common/const';
+import { ZKDATABASE_PERMISSION_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import { ModelGeneral } from '../abstract/general';
 import {
@@ -27,8 +27,10 @@ export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
 };
 
 export class ModelPermission extends ModelGeneral {
+  static collectionName: string = ZKDATABASE_PERMISSION_COLLECTION;
+
   constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_USER_PERMISSION_COLLECTION);
+    super(databaseName, ModelPermission.collectionName);
   }
 
   // @dev: Do we need to do map reduce here?
@@ -47,7 +49,7 @@ export class ModelPermission extends ModelGeneral {
       }
       // User != actor -> check for group permission
       const modelUserGroup = new ModelUserGroup(this.databaseName!);
-      const actorGroup = await modelUserGroup.listUserGroupName(actor);
+      const actorGroup = await modelUserGroup.listGroupName(actor);
       if (actorGroup.includes(permission.group)) {
         return PermissionBinary.fromBinaryPermission(
           permission.groupPermission
@@ -56,21 +58,6 @@ export class ModelPermission extends ModelGeneral {
     }
     // Default deny all
     return ZKDATABASE_NO_PERMISSION_RECORD;
-  }
-
-  public static async init(databaseName: string) {
-    const modelCollection = new ModelCollection(
-      databaseName,
-      ZKDATABASE_USER_PERMISSION_COLLECTION
-    );
-    await modelCollection.create([
-      'owner',
-      'group',
-      'ownerPermission',
-      'groupPermission',
-      'otherPermission',
-    ]);
-    await modelCollection.create({ collection: 1, docId: 1 }, { unique: true });
   }
 }
 

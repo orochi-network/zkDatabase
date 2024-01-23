@@ -39,7 +39,7 @@ const groupListByUser = resolverWrapper(
   }),
   async (_root: unknown, args: TGroupListByUserRequest) => {
     const modelUserGroup = new ModelUserGroup(args.databaseName);
-    return modelUserGroup.listUserGroupName(args.userName);
+    return modelUserGroup.listGroupName(args.userName);
   }
 );
 

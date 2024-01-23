@@ -1,3 +1,4 @@
+import { ZKDATABAES_USER_SYSTEM } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 
 export type GroupSchema = {
@@ -13,6 +14,18 @@ export class ModelGroup extends ModelGeneral {
 
   constructor(databaseName: string) {
     super(databaseName, ModelGroup.collectionName);
+  }
+
+  public async createGroup(
+    groupName: string,
+    description?: string,
+    createBy?: string
+  ) {
+    return this.insertOne({
+      groupName,
+      description: description || `Group ${groupName}`,
+      createBy: '' || ZKDATABAES_USER_SYSTEM,
+    });
   }
 }
 

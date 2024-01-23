@@ -5,6 +5,7 @@ import ModelGeneral from '../abstract/general';
 import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import ModelDocument from '../abstract/document';
+import { getCurrentTime } from '../../helper/common';
 
 export type SchemaField = {
   order: number;
@@ -41,42 +42,44 @@ export type SchemaIndex<T> = {
 
 export type SchemaDocument = SchemaDef & ZKDatabaseIndex;
 
-export class ModelSchemaManegement extends ModelGeneral {
-  private static instances: { [key: string]: ModelSchemaManegement } = {};
+export class ModelSchema extends ModelGeneral {
+  static collectionName: string = ZKDATABASE_SCHEMA_COLLECTION;
 
-  private constructor(databasName: string) {
-    super(databasName, ZKDATABASE_SCHEMA_COLLECTION);
-  }
+  private static instances: { [key: string]: ModelSchema } = {};
 
-  public getDocumentSchema(collectionName: string) {
+  public static isValidCollectionName(collectionName: string) {
     if (/^\_zkdatabase/i.test(collectionName)) {
       throw new Error('Collection name is invalid');
     }
-    return new ModelDocument(collectionName);
+  }
+
+  private constructor(databaseName: string) {
+    super(databaseName, ModelSchema.collectionName);
   }
 
   public static getInstance(databaseName: string) {
-    if (typeof ModelSchemaManegement.instances[databaseName] === 'undefined') {
-      ModelSchemaManegement.instances[databaseName] = new ModelSchemaManegement(
-        databaseName
-      );
+    if (typeof ModelSchema.instances[databaseName] === 'undefined') {
+      ModelSchema.instances[databaseName] = new ModelSchema(databaseName);
     }
-    return ModelSchemaManegement.instances[databaseName];
+    return ModelSchema.instances[databaseName];
   }
 
-  public async newSchema(
+  public getDocument(collectionName: string) {
+    ModelSchema.isValidCollectionName(collectionName);
+    return new ModelDocument(this.databaseName, collectionName);
+  }
+
+  public async createSchema(
     collectionName: string,
     schemaBuilder: SchemaDefBuilder
   ) {
-    if (/^\_zkdatabase/i.test(collectionName)) {
-      throw new Error('Collection name is invalid');
-    }
+    ModelSchema.isValidCollectionName(collectionName);
     const schemaDef: SchemaDef = {
       collection: collectionName,
       ...schemaBuilder.permission,
       fields: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
     } as any;
     const indexKeys = [];
     for (let i = 0; i < schemaBuilder.schemas.length; i += 1) {
