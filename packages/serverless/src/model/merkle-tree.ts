@@ -5,6 +5,7 @@ import ModelMerkleTreePool from './merkle-tree-pool';
 import { ModelMerkleTreeMetadata } from './merkle-tree-metadata';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
+import SmartContractService from '../service/SmartContractService';
 
 export const DEFAULT_HEIGHT = 12;
 
@@ -18,6 +19,8 @@ export class ModelMerkleTree extends ModelGeneral {
 
   private modelMerkleTreeMetadata: ModelMerkleTreeMetadata;
 
+  private smartContractService: SmartContractService;
+
   private zeroes: Field[];
 
   private height: number;
@@ -26,11 +29,13 @@ export class ModelMerkleTree extends ModelGeneral {
     databaseName: string,
     height: number,
     modelMerkleTreePool: ModelMerkleTreePool,
-    modelMerkleTreeMetadata: ModelMerkleTreeMetadata
+    modelMerkleTreeMetadata: ModelMerkleTreeMetadata,
+    smartContractService: SmartContractService
   ) {
     super(databaseName, 'merkle-tree');
     this.modelMerkleTreePool = modelMerkleTreePool;
     this.modelMerkleTreeMetadata = modelMerkleTreeMetadata;
+    this.smartContractService = smartContractService;
     this.height = height;
 
     const zeroes = [Field(0)];
@@ -40,16 +45,22 @@ export class ModelMerkleTree extends ModelGeneral {
     this.zeroes = zeroes;
   }
 
-  public static async getInstance(databaseName: string, height: number = DEFAULT_HEIGHT) {
+  public static async getInstance(
+    databaseName: string,
+    height: number = DEFAULT_HEIGHT
+  ) {
     const modelMerkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
     const modelMerkleTreeMetadata =
       ModelMerkleTreeMetadata.getInstance(databaseName);
+
+    const smartContractService = SmartContractService.getInstance();
 
     const merkleTreeModel = new ModelMerkleTree(
       databaseName,
       height,
       modelMerkleTreePool,
-      modelMerkleTreeMetadata
+      modelMerkleTreeMetadata,
+      smartContractService
     );
 
     if (!(await merkleTreeModel.isCreated())) {
@@ -64,7 +75,10 @@ export class ModelMerkleTree extends ModelGeneral {
   }
 
   private async create(height: number) {
-    this.modelMerkleTreeMetadata.create(height, await this.getNode(this.height - 1, 0n));
+    this.modelMerkleTreeMetadata.create(
+      height,
+      await this.getNode(this.height - 1, 0n)
+    );
   }
 
   public async getRoot(): Promise<string | undefined> {
