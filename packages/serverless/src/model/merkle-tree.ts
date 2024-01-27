@@ -6,6 +6,7 @@ import { ModelMerkleTreeMetadata } from './merkle-tree-metadata';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
 import SmartContractService from '../service/SmartContractService';
+import { ZKDATABASE_MERKLE_TREE_COLLECTION } from './abstract/database-engine';
 
 export const DEFAULT_HEIGHT = 12;
 
@@ -32,7 +33,12 @@ export class ModelMerkleTree extends ModelGeneral {
     modelMerkleTreeMetadata: ModelMerkleTreeMetadata,
     smartContractService: SmartContractService
   ) {
-    super(databaseName, 'merkle-tree');
+    super(databaseName, ZKDATABASE_MERKLE_TREE_COLLECTION, {
+      timeseries: {
+        timeField: 'timestamp',
+        granularity: 'seconds',
+      },
+    });
     this.modelMerkleTreePool = modelMerkleTreePool;
     this.modelMerkleTreeMetadata = modelMerkleTreeMetadata;
     this.smartContractService = smartContractService;
@@ -64,7 +70,7 @@ export class ModelMerkleTree extends ModelGeneral {
     );
 
     if (!(await merkleTreeModel.isCreated())) {
-      await merkleTreeModel.create(height);
+      await merkleTreeModel.createMetadata(height);
     }
 
     return merkleTreeModel;
@@ -74,7 +80,7 @@ export class ModelMerkleTree extends ModelGeneral {
     return this.modelMerkleTreeMetadata.doesMetadataExist();
   }
 
-  private async create(height: number) {
+  private async createMetadata(height: number) {
     this.modelMerkleTreeMetadata.create(
       height,
       await this.getNode(this.height - 1, 0n)
@@ -87,53 +93,52 @@ export class ModelMerkleTree extends ModelGeneral {
 
   public async build(amount: number) {
     const leaves = await this.modelMerkleTreePool.getLatestLeaves(amount);
+    const buildTime = new Date();
 
     const leafPromises = leaves.map((leaf) =>
-      this.setLeaf(leaf.index, leaf.hash)
+      this.setLeaf(leaf.index, leaf.hash, buildTime)
     );
     await Promise.all(leafPromises);
   }
 
-  private async setLeaf(index: bigint, leaf: Field): Promise<void> {
+  private async setLeaf(
+    index: bigint,
+    leaf: Field,
+    timestamp: Date
+  ): Promise<void> {
     const witnesses = await this.getWitness(index);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
 
     let currIndex = index;
-    const updates = [];
+    const inserts = [];
 
     for (let level = 1; level < this.height; level += 1) {
       currIndex /= 2n;
 
-      const query = {
+      const dataToInsert = {
         _id: new ObjectId(
           ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex)
         ),
+        timestamp,
+        hash: path[level].toString(),
+        level,
+        index: currIndex,
       };
-      const update = { $set: { hash: path[level].toString() } };
-      updates.push({ query, update });
+
+      inserts.push(dataToInsert);
     }
 
-    await this.updateManyLeaves(updates);
+    await this.insertManyLeaves(inserts);
+  }
+
+  public async insertManyLeaves(leaves: Array<any>): Promise<void> {
+    await this.collection.insertMany(leaves);
   }
 
   public async addLeafToPool(index: bigint, hash: string): Promise<Boolean> {
     return this.modelMerkleTreePool.saveLeaf(index, Field.from(hash));
-  }
-
-  public async updateManyLeaves(
-    updates: Array<{ query: any; update: any }>
-  ): Promise<void> {
-    const bulkOperations = updates.map((update) => ({
-      updateOne: {
-        filter: update.query,
-        update: update.update,
-        upsert: true,
-      },
-    }));
-
-    await this.collection.bulkWrite(bulkOperations);
   }
 
   public async getWitness(index: bigint): Promise<MerkleProof[]> {

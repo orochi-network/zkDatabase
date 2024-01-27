@@ -2,6 +2,7 @@ import { Field } from 'o1js';
 import { ObjectId } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
+import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from './abstract/database-engine';
 
 const MERKLE_TREE_METADATA_INDEX = 'merkle_metadata_index';
 
@@ -12,7 +13,7 @@ export type TMerkleTreeMetadata = {
 
 export class ModelMerkleTreeMetadata extends ModelGeneral {
   private constructor(databaseName: string) {
-    super(databaseName, 'merkle-tree-metadata');
+    super(databaseName, ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION);
   }
 
   public async doesMetadataExist(): Promise<boolean> {

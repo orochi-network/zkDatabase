@@ -2,6 +2,8 @@ import { Field } from 'o1js';
 import { InsertOneResult, Document } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
+import ModelCollection from './collection';
+import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from './abstract/database-engine';
 
 export type PooledLeaf = {
   index: bigint;
@@ -10,7 +12,7 @@ export type PooledLeaf = {
 
 export class ModelMerkleTreePool extends ModelGeneral {
   private constructor(databaseName: string) {
-    super(databaseName, 'merkle-tree-pool');
+    super(databaseName, ZKDATABASE_MERKLE_TREE_POOL_COLLECTION);
   }
 
   public static getInstance(databaseName: string): ModelMerkleTreePool {
@@ -47,6 +49,12 @@ export class ModelMerkleTreePool extends ModelGeneral {
       logger.error('ModelMerkleTreePool::getLatestLeaves()', e);
       throw e;
     }
+  }
+
+  public async create() {
+    return new ModelCollection(this.databaseName, this.collectionName).create({
+      hash: 1,
+    });
   }
 }
 
