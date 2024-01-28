@@ -11,7 +11,7 @@ export default class SmartContractService {
     Mina.setActiveInstance(network);
   }
 
-  public async getActions(zkAppAddress: string): Promise<string[][]> {
+  public async getActions(zkAppAddress: string, amount: number = 10): Promise<string[][]> {
     const result = await fetchAccount({
       publicKey: PublicKey.fromBase58(zkAppAddress),
     });
@@ -34,7 +34,7 @@ export default class SmartContractService {
       throw Error(JSON.stringify(result));
     }
 
-    return actions[0].actions;
+    return actions[0].actions.slice(0, amount);
   }
 
   public static getInstance(): SmartContractService {

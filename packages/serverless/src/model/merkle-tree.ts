@@ -1,14 +1,9 @@
 import { Field, Poseidon } from 'o1js';
 import { ObjectId } from 'mongodb';
 import ModelGeneral from './general';
-import ModelMerkleTreePool from './merkle-tree-pool';
-import { ModelMerkleTreeMetadata } from './merkle-tree-metadata';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
-import SmartContractService from '../service/SmartContractService';
 import { ZKDATABASE_MERKLE_TREE_COLLECTION } from './abstract/database-engine';
-
-export const DEFAULT_HEIGHT = 12;
 
 export interface MerkleProof {
   sibling: Field;
@@ -16,34 +11,25 @@ export interface MerkleProof {
 }
 
 export class ModelMerkleTree extends ModelGeneral {
-  private modelMerkleTreePool: ModelMerkleTreePool;
+  private zeroes!: Field[];
 
-  private modelMerkleTreeMetadata: ModelMerkleTreeMetadata;
+  private height!: number;
 
-  private smartContractService: SmartContractService;
-
-  private zeroes: Field[];
-
-  private height: number;
-
-  private constructor(
-    databaseName: string,
-    height: number,
-    modelMerkleTreePool: ModelMerkleTreePool,
-    modelMerkleTreeMetadata: ModelMerkleTreeMetadata,
-    smartContractService: SmartContractService
-  ) {
+  private constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_MERKLE_TREE_COLLECTION, {
       timeseries: {
         timeField: 'timestamp',
         granularity: 'seconds',
       },
     });
-    this.modelMerkleTreePool = modelMerkleTreePool;
-    this.modelMerkleTreeMetadata = modelMerkleTreeMetadata;
-    this.smartContractService = smartContractService;
-    this.height = height;
+  }
 
+  public setHeight(newHeight: number): void {
+    this.height = newHeight;
+    this.generateZeroNodes(newHeight);
+  }
+
+  public generateZeroNodes(height: number) {
     const zeroes = [Field(0)];
     for (let i = 1; i < height; i += 1) {
       zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
@@ -51,62 +37,23 @@ export class ModelMerkleTree extends ModelGeneral {
     this.zeroes = zeroes;
   }
 
-  public static async getInstance(
-    databaseName: string,
-    height: number = DEFAULT_HEIGHT
+  public static getInstance(
+    databaseName: string
   ) {
-    const modelMerkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
-    const modelMerkleTreeMetadata =
-      ModelMerkleTreeMetadata.getInstance(databaseName);
-
-    const smartContractService = SmartContractService.getInstance();
-
-    const merkleTreeModel = new ModelMerkleTree(
-      databaseName,
-      height,
-      modelMerkleTreePool,
-      modelMerkleTreeMetadata,
-      smartContractService
-    );
-
-    if (!(await merkleTreeModel.isCreated())) {
-      await merkleTreeModel.createMetadata(height);
-    }
-
-    return merkleTreeModel;
+    return new ModelMerkleTree(databaseName);
   }
 
-  public async isCreated(): Promise<Boolean> {
-    return this.modelMerkleTreeMetadata.doesMetadataExist();
+  public async getRoot(timestamp: Date): Promise<Field> {
+    const root = await this.getNode(this.height - 1, 0n, timestamp);
+    return Field(root);
   }
 
-  private async createMetadata(height: number) {
-    this.modelMerkleTreeMetadata.create(
-      height,
-      await this.getNode(this.height - 1, 0n)
-    );
-  }
-
-  public async getRoot(): Promise<string | undefined> {
-    return (await this.modelMerkleTreeMetadata.getMetadata())?.root;
-  }
-
-  public async build(amount: number) {
-    const leaves = await this.modelMerkleTreePool.getLatestLeaves(amount);
-    const buildTime = new Date();
-
-    const leafPromises = leaves.map((leaf) =>
-      this.setLeaf(leaf.index, leaf.hash, buildTime)
-    );
-    await Promise.all(leafPromises);
-  }
-
-  private async setLeaf(
+  public async setLeaf(
     index: bigint,
     leaf: Field,
     timestamp: Date
   ): Promise<void> {
-    const witnesses = await this.getWitness(index);
+    const witnesses = await this.getWitness(index, timestamp);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
@@ -137,11 +84,10 @@ export class ModelMerkleTree extends ModelGeneral {
     await this.collection.insertMany(leaves);
   }
 
-  public async addLeafToPool(index: bigint, hash: string): Promise<Boolean> {
-    return this.modelMerkleTreePool.saveLeaf(index, Field.from(hash));
-  }
-
-  public async getWitness(index: bigint): Promise<MerkleProof[]> {
+  public async getWitness(
+    index: bigint,
+    timestamp: Date
+  ): Promise<MerkleProof[]> {
     if (index >= this.leafCount) {
       throw new Error(
         `index ${index} is out of range for ${this.leafCount} leaves.`
@@ -156,7 +102,7 @@ export class ModelMerkleTree extends ModelGeneral {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNode(level, siblingIndex).then((sibling) => {
+        this.getNode(level, siblingIndex, timestamp).then((sibling) => {
           return { isLeft, sibling };
         })
       );
@@ -167,17 +113,35 @@ export class ModelMerkleTree extends ModelGeneral {
     return Promise.all(witnessPromises);
   }
 
-  public async getNode(level: number, index: bigint): Promise<Field> {
+  public async getNode(
+    level: number,
+    index: bigint,
+    timestamp: Date = new Date()
+  ): Promise<Field> {
     try {
-      const id = new ObjectId(
-        ModelMerkleTree.encodeLevelAndIndexToObjectId(level, index)
+      const nodeId = ModelMerkleTree.encodeLevelAndIndexToObjectId(
+        level,
+        index
       );
 
-      const node = (await this.findOne({ _id: id })) as any;
+      const query = {
+        nodeId,
+        timestamp: { $lte: timestamp },
+      };
 
-      return Field(node.hash) ?? this.zeroes[level];
+      const node = await this.collection
+        .find(query)
+        .sort({ timestamp: -1 }) // Gets the latest state at or before the specified timestamp
+        .limit(1)
+        .toArray();
+
+      if (node.length === 0) {
+        return this.zeroes[level];
+      }
+
+      return Field(node[0].hash);
     } catch (error) {
-      logger.error('Error in getNodeOrZero:', error);
+      logger.error('Error in getNode:', error);
       throw error;
     }
   }

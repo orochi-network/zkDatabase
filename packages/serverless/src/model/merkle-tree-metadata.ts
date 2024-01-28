@@ -1,40 +1,48 @@
 import { Field } from 'o1js';
-import { ObjectId } from 'mongodb';
-import ModelGeneral from './general';
 import logger from '../helper/logger';
 import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from './abstract/database-engine';
-
-const MERKLE_TREE_METADATA_INDEX = 'merkle_metadata_index';
+import ModelBasic from './abstract/basic';
 
 export type TMerkleTreeMetadata = {
+  date: Date;
+  root: Field;
   height: number;
-  root: string;
 };
 
-export class ModelMerkleTreeMetadata extends ModelGeneral {
+export class ModelMerkleTreeMetadata extends ModelBasic {
   private constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION);
   }
 
-  public async doesMetadataExist(): Promise<boolean> {
-    const id = new ObjectId(MERKLE_TREE_METADATA_INDEX);
+  public async setInitialHeight(height: number): Promise<boolean> {
+    const initialHeightData = { height };
     try {
-      return (await this.findOne({ _id: id })) !== null;
+      const result = await this.collection.insertOne(initialHeightData);
+      return result.acknowledged;
     } catch (error) {
-      logger.error('Error checking metadata existence:', error);
+      logger.error('Error setting initial tree height:', error);
       throw error;
     }
   }
 
-  public async create(height: number, root: Field): Promise<boolean> {
+  public async getHeight(): Promise<number | null> {
     try {
-      if (await this.doesMetadataExist()) {
-        return false;
-      }
+      const heightData = await this.collection.findOne(
+        {},
+        { projection: { height: 1 } }
+      );
+      return heightData ? heightData.height : null;
+    } catch (error) {
+      logger.error('Error retrieving tree height:', error);
+      throw error;
+    }
+  }
 
-      const id = new ObjectId(MERKLE_TREE_METADATA_INDEX);
-      const result = await this.insertOne({
-        _id: id,
+  public async createMetadata(root: Field, date: Date): Promise<boolean> {
+    const height = await this.getHeight();
+    try {
+      const result = await this.collection.insertOne({
+        date,
         height,
         root: root.toString(),
       });
@@ -46,34 +54,51 @@ export class ModelMerkleTreeMetadata extends ModelGeneral {
     }
   }
 
-  public async getMetadata(): Promise<TMerkleTreeMetadata | null> {
+  public async getLatestMetadata(): Promise<TMerkleTreeMetadata | null> {
     try {
-      const id = new ObjectId(MERKLE_TREE_METADATA_INDEX);
-      const metadata = await this.findOne({ _id: id });
-      if (!metadata) return null;
+      const result = await this.collection
+        .find({})
+        .sort({ date: -1 })
+        .limit(1)
+        .toArray();
+      if (result.length === 0) {
+        return null;
+      }
 
-      return metadata as any as TMerkleTreeMetadata;
+      const latestMetadataDocument = result[0];
+      const latestMetadata: TMerkleTreeMetadata = {
+        date: latestMetadataDocument.date,
+        root: Field(latestMetadataDocument.root),
+        height: latestMetadataDocument.height,
+      };
+
+      return latestMetadata;
     } catch (error) {
-      logger.error('Error retrieving metadata:', error);
+      logger.error('Error retrieving latest metadata:', error);
       throw error;
     }
   }
 
-  public async updateRoot(newRoot: string): Promise<boolean> {
+  public async getMetadataByRoot(
+    root: Field
+  ): Promise<TMerkleTreeMetadata | null> {
     try {
-      if (!(await this.doesMetadataExist())) {
-        return false;
+      const metadataDocument = await this.collection.findOne({
+        root: root.toString(),
+      });
+      if (!metadataDocument) {
+        return null;
       }
 
-      const id = new ObjectId(MERKLE_TREE_METADATA_INDEX);
-      const updateResult = await this.updateOne(
-        { _id: id },
-        { $set: { root: newRoot } }
-      );
+      const metadata: TMerkleTreeMetadata = {
+        date: metadataDocument.date,
+        root: Field(metadataDocument.root),
+        height: metadataDocument.height,
+      };
 
-      return updateResult.modifiedCount === 1;
+      return metadata;
     } catch (error) {
-      logger.error('Error updating root:', error);
+      logger.error('Error retrieving metadata by root:', error);
       throw error;
     }
   }

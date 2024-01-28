@@ -1,17 +1,22 @@
+import { Field } from 'o1js';
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { BigIntResolver } from 'graphql-scalars';
 import resolverWrapper from '../validation';
 import { databaseName, indexNumber } from './common';
 import { TDatabaseRequest } from './database';
-import ModelMerkleTree from '../../model/merkle-tree';
 import DistributedLock from '../../helper/distributed-lock';
+import MerkleTreeService from '../../service/MerkleTreeService';
 
 export type TMerkleTreeInitializeRequest = TDatabaseRequest & {
   height: number;
 };
 
-export type TMerkleTreeIndexRequest = TDatabaseRequest & {
+export type TMerkleTreeStateRequest = TDatabaseRequest & {
+  root: string;
+};
+
+export type TMerkleTreeIndexRequest = TMerkleTreeStateRequest & {
   index: string;
 };
 
@@ -23,9 +28,9 @@ export type TMerkleTreeBuildRequest = TMerkleTreeIndexRequest & {
   amount: number;
 };
 
-export type TMerkleTreeGetNodeRequest = TDatabaseRequest & {
+export type TMerkleTreeGetNodeRequest = TMerkleTreeStateRequest & {
   index: string;
-  height: number;
+  level: number;
 };
 
 export const MerkleTreeInitializeRequest =
@@ -36,6 +41,7 @@ export const MerkleTreeInitializeRequest =
 
 export const MerkleTreeIndexRequest = Joi.object<TMerkleTreeIndexRequest>({
   databaseName,
+  root: Joi.string().required(),
   index: indexNumber,
 });
 
@@ -53,8 +59,9 @@ export const MerkleTreeBuildRequest = Joi.object<TMerkleTreeBuildRequest>({
 
 export const MerkleTreeGetNodeRequest = Joi.object<TMerkleTreeGetNodeRequest>({
   databaseName,
+  root: Joi.string().required(),
   index: indexNumber,
-  height: Joi.number().required(),
+  level: Joi.number().required(),
 });
 
 export const typeDefsMerkleTree = `#graphql
@@ -70,7 +77,6 @@ type MerkleProof {
 
 extend type Query {
   getNode(databaseName: String!, level: Int!, index: BigInt!): String!
-  getRoot(databaseName: String!): String!
   getWitness(databaseName: String!, index: BigInt!): [MerkleProof]!
 }
 
@@ -81,15 +87,6 @@ extend type Mutation {
 }
 `;
 
-const getRoot = resolverWrapper(
-  Joi.object({
-    databaseName,
-  }),
-  async (_root: unknown, args: TDatabaseRequest) => {
-    return (await ModelMerkleTree.getInstance(args.databaseName)).getRoot();
-  }
-);
-
 const create = resolverWrapper(
   MerkleTreeInitializeRequest,
   async (_root: unknown, args: TMerkleTreeInitializeRequest) => {
@@ -97,7 +94,10 @@ const create = resolverWrapper(
 
     if (await distributedLock.acquireLock()) {
       try {
-        await ModelMerkleTree.getInstance(args.databaseName, args.height);
+        const merkleTreeService = await MerkleTreeService.getInstance(
+          args.databaseName
+        );
+        await merkleTreeService.create(args.height);
       } finally {
         await distributedLock.releaseLock();
       }
@@ -112,9 +112,10 @@ const build = resolverWrapper(
 
     if (await distributedLock.acquireLock()) {
       try {
-        (await ModelMerkleTree.getInstance(args.databaseName)).build(
-          args.amount
+        const merkleTreeService = await MerkleTreeService.getInstance(
+          args.databaseName
         );
+        await merkleTreeService.build(args.amount);
       } finally {
         await distributedLock.releaseLock();
       }
@@ -125,18 +126,22 @@ const build = resolverWrapper(
 const getWitness = resolverWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
-    return (await ModelMerkleTree.getInstance(args.databaseName)).getWitness(
-      BigInt(args.index)
+    const merkleTreeService = await MerkleTreeService.getInstance(
+      args.databaseName
     );
+    return merkleTreeService.getWitness(Field(args.root), BigInt(args.index));
   }
 );
 
 const setLeaf = resolverWrapper(
   MerkleTreeSetLeafRequest,
   async (_root: unknown, args: TMerkleTreeSetLeafRequest) => {
-    return (await ModelMerkleTree.getInstance(args.databaseName)).addLeafToPool(
+    const merkleTreeService = await MerkleTreeService.getInstance(
+      args.databaseName
+    );
+    return merkleTreeService.addLeafToPool(
       BigInt(args.index),
-      args.hash
+      Field(args.hash)
     );
   }
 );
@@ -144,8 +149,12 @@ const setLeaf = resolverWrapper(
 const getNode = resolverWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
-    return (await ModelMerkleTree.getInstance(args.databaseName)).getNode(
-      args.height,
+    const merkleTreeService = await MerkleTreeService.getInstance(
+      args.databaseName
+    );
+    return merkleTreeService.getNode(
+      Field(args.root),
+      args.level,
       BigInt(args.index)
     );
   }
@@ -161,7 +170,6 @@ export const resolversMerkleTree = {
   },
   Query: {
     getWitness,
-    getRoot,
     getNode,
   },
 };
