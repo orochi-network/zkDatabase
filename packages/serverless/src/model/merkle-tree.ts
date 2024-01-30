@@ -78,7 +78,8 @@ export class ModelMerkleTree extends ModelGeneral {
   }
 
   public async insertManyLeaves(leaves: Array<any>): Promise<void> {
-    await this.collection.insertMany(leaves);
+    const options = this.session ? { session: this.session } : undefined;
+    await this.collection.insertMany(leaves, options);
   }
 
   public async getWitness(
@@ -121,13 +122,15 @@ export class ModelMerkleTree extends ModelGeneral {
         index
       );
 
+      const options = this.session ? { session: this.session } : undefined;
+
       const query = {
         nodeId,
         timestamp: { $lte: timestamp },
       };
 
       const node = await this.collection
-        .find(query)
+        .find(query, options)
         .sort({ timestamp: -1 }) // Gets the latest state at or before the specified timestamp
         .limit(1)
         .toArray();

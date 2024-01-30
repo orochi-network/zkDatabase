@@ -11,6 +11,8 @@ export default abstract class ModelBasic {
 
   protected collectionOptions: CreateCollectionOptions | undefined;
 
+  protected session?: ClientSession;
+
   constructor(databaseName?: string, collectionName?: string, collectionOptions?: CreateCollectionOptions) {
     this.dbEngine = DatabaseEngine.getInstance();
     this.databaseName = databaseName;
@@ -26,6 +28,14 @@ export default abstract class ModelBasic {
     return this.db.collection(this.collectionName!, this.collectionOptions);
   }
 
+  public setSession(session: ClientSession | undefined): void {
+    this.session = session;
+  }
+
+  public removeSession() {
+    this.setSession(undefined);
+  }
+
   public async withTransaction(
     callback: (session: ClientSession) => Promise<void>
   ): Promise<boolean> {
@@ -38,11 +48,12 @@ export default abstract class ModelBasic {
         writeConcern: { w: 'majority' },
       });
       result = true;
+      await session.commitTransaction();
     } catch (e) {
       logger.error('DatabaseEngine::withTransaction()', e);
       result = false;
+      await session.abortTransaction();
     }
-    await session.endSession();
     return result;
   }
 }

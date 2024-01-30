@@ -2,6 +2,7 @@ import { Field } from 'o1js';
 import ModelMerkleTree from '../model/merkle-tree';
 import { ModelMerkleTreeMetadata } from '../model/merkle-tree-metadata';
 import ModelMerkleTreePool from '../model/merkle-tree-pool';
+import logger from '../helper/logger';
 
 export default class MerkleTreeService {
   private merkleTree: ModelMerkleTree;
@@ -20,12 +21,14 @@ export default class MerkleTreeService {
     this.merkleTreeMetadata = merkleTreeMetadata;
   }
 
-  public static async getInstance(databaseName: string): Promise<MerkleTreeService> {
+  public static async getInstance(
+    databaseName: string
+  ): Promise<MerkleTreeService> {
     const merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
     const merkleTreeMetadata =
       ModelMerkleTreeMetadata.getInstance(databaseName);
     const merkleTree = ModelMerkleTree.getInstance(databaseName);
-    const merkleTreeService =  new MerkleTreeService(
+    const merkleTreeService = new MerkleTreeService(
       merkleTree,
       merkleTreePool,
       merkleTreeMetadata
@@ -60,26 +63,48 @@ export default class MerkleTreeService {
     return this.merkleTreeMetadata.getHeight();
   }
 
-  public async build(amount: number) {
-    const height = await this.getHeight();
-    if (!height) {
-      throw Error('Merkle Tree is not created');
+  public async build(amount: number): Promise<boolean> {
+    let transactionResult = false;
+
+    try {
+      await this.merkleTree.withTransaction(async (session) => {
+        this.merkleTree.setSession(session);
+        this.merkleTreePool.setSession(session);
+        this.merkleTreeMetadata.setSession(session);
+
+        const height = await this.getHeight();
+        if (!height) {
+          throw new Error('Merkle Tree is not created');
+        }
+
+        const leaves = await this.merkleTreePool.getOldestLeaves(amount);
+        const buildTime = new Date();
+
+        const leafPromises = leaves.map((leaf) =>
+          this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime)
+        );
+
+        await Promise.all(leafPromises);
+        await this.merkleTreePool.removeLeaves(leaves);
+        const newRoot = await this.merkleTree.getNode(
+          height - 1,
+          0n,
+          buildTime
+        );
+        await this.merkleTreeMetadata.createMetadata(newRoot, buildTime);
+
+        transactionResult = true;
+      });
+    } catch (error) {
+      logger.error('Error during build:', error);
+      transactionResult = false;
+    } finally {
+      this.merkleTree.removeSession();
+      this.merkleTreePool.removeSession();
+      this.merkleTreeMetadata.removeSession();
     }
 
-    const leaves = await this.merkleTreePool.getOldestLeaves(amount);
-    const buildTime = new Date();
-
-    const leafPromises = leaves.map((leaf) =>
-      this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime)
-    );
-
-    await Promise.all(leafPromises);
-
-    await this.merkleTreePool.removeLeaves(leaves);
-
-    const newRoot = await this.merkleTree.getNode(height - 1, 0n, buildTime);
-
-    await this.merkleTreeMetadata.createMetadata(newRoot, buildTime);
+    return transactionResult;
   }
 
   public async getWitness(root: Field, index: bigint) {

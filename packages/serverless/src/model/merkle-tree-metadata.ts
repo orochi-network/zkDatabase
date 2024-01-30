@@ -39,13 +39,18 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
   }
 
   public async createMetadata(root: Field, date: Date): Promise<boolean> {
+    const options = this.session ? { session: this.session } : undefined;
+
     const height = await this.getHeight();
     try {
-      const result = await this.collection.insertOne({
-        date,
-        height,
-        root: root.toString(),
-      });
+      const result = await this.collection.insertOne(
+        {
+          date,
+          height,
+          root: root.toString(),
+        },
+        options
+      );
 
       return result.acknowledged;
     } catch (error) {
@@ -56,8 +61,10 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
 
   public async getLatestMetadata(): Promise<TMerkleTreeMetadata | null> {
     try {
+      const options = this.session ? { session: this.session } : undefined;
+
       const result = await this.collection
-        .find({})
+        .find({}, options)
         .sort({ date: -1 })
         .limit(1)
         .toArray();
@@ -83,9 +90,14 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
     root: Field
   ): Promise<TMerkleTreeMetadata | null> {
     try {
-      const metadataDocument = await this.collection.findOne({
-        root: root.toString(),
-      });
+      const options = this.session ? { session: this.session } : undefined;
+
+      const metadataDocument = await this.collection.findOne(
+        {
+          root: root.toString(),
+        },
+        options
+      );
       if (!metadataDocument) {
         return null;
       }

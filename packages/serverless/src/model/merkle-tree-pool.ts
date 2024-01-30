@@ -1,5 +1,4 @@
 import { Field } from 'o1js';
-import { InsertOneResult, Document } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
 import ModelCollection from './collection';
@@ -20,48 +19,56 @@ export class ModelMerkleTreePool extends ModelGeneral {
   }
 
   public async saveLeaf(index: bigint, leaf: Field): Promise<boolean> {
-    let result: InsertOneResult<Document>;
-
     try {
-      result = await this.insertOne({
-        index,
-        hash: leaf.toString(),
-        created: new Date(Date.now()),
-      });
+      const options = this.session ? { session: this.session } : undefined;
+      const result = await this.collection.insertOne(
+        {
+          index,
+          hash: leaf.toString(),
+          created: new Date(),
+        },
+        options
+      );
+
+      return result.acknowledged;
     } catch (e) {
-      logger.error('ModelMerkleTreePool::setLeaf()', e);
+      logger.error('ModelMerkleTreePool::saveLeaf()', e);
       return false;
     }
-
-    return result.acknowledged;
   }
 
   public async getOldestLeaves(amount: number): Promise<PooledLeaf[]> {
     try {
+      const options = this.session ? { session: this.session } : undefined;
       const documents = await this.collection
-        .find()
+        .find({}, options)
         .sort({ created: 1 })
         .limit(amount)
         .toArray();
 
-      const leaves = documents.map(doc => ({
+      return documents.map((doc) => ({
         index: doc.index,
-        hash: Field(doc.hash)
+        hash: Field(doc.hash),
       }));
-
-      return leaves as PooledLeaf[];
     } catch (e) {
-      logger.error(`ModelMerkleTreePool::getOldestLeaves() - Error fetching earliest ${amount} leaves:`, e);
+      logger.error(
+        `ModelMerkleTreePool::getOldestLeaves() - Error fetching earliest ${amount} leaves:`,
+        e
+      );
       throw e;
     }
   }
 
   public async removeLeaves(leaves: PooledLeaf[]): Promise<void> {
     try {
-      const leafHashes = leaves.map(leaf => leaf.hash.toString());
-      await this.collection.deleteMany({
-        hash: { $in: leafHashes }
-      });
+      const options = this.session ? { session: this.session } : undefined;
+      const leafHashes = leaves.map((leaf) => leaf.hash.toString());
+      await this.collection.deleteMany(
+        {
+          hash: { $in: leafHashes },
+        },
+        options
+      );
     } catch (e) {
       logger.error('ModelMerkleTreePool::removeLeaves()', e);
       throw e;
