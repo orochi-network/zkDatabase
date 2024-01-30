@@ -1,4 +1,5 @@
 import { Field, Poseidon } from 'o1js';
+import crypto from 'crypto';
 import { ObjectId } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
@@ -37,9 +38,7 @@ export class ModelMerkleTree extends ModelGeneral {
     this.zeroes = zeroes;
   }
 
-  public static getInstance(
-    databaseName: string
-  ) {
+  public static getInstance(databaseName: string) {
     return new ModelMerkleTree(databaseName);
   }
 
@@ -58,16 +57,14 @@ export class ModelMerkleTree extends ModelGeneral {
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
 
-    let currIndex = index;
+    let currIndex = BigInt(index);
     const inserts = [];
 
     for (let level = 1; level < this.height; level += 1) {
       currIndex /= 2n;
 
       const dataToInsert = {
-        _id: new ObjectId(
-          ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex)
-        ),
+        nodeId: ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex),
         timestamp,
         hash: path[level].toString(),
         level,
@@ -94,7 +91,7 @@ export class ModelMerkleTree extends ModelGeneral {
       );
     }
 
-    let currIndex = index;
+    let currIndex = BigInt(index);
 
     const witnessPromises: Promise<MerkleProof>[] = [];
     for (let level = 0; level < this.height - 1; level += 1) {
@@ -149,8 +146,10 @@ export class ModelMerkleTree extends ModelGeneral {
   private static encodeLevelAndIndexToObjectId(
     level: number,
     index: bigint
-  ): string {
-    return level.toString() + index.toString();
+  ): ObjectId {
+    const hash = crypto.createHash('md5');
+    hash.update(level.toString() + index.toString());
+    return new ObjectId(hash.digest('hex').substring(0, 24));
   }
 
   public get leafCount() {

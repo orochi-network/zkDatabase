@@ -66,7 +66,7 @@ export default class MerkleTreeService {
       throw Error('Merkle Tree is not created');
     }
 
-    const leaves = await this.merkleTreePool.getLatestLeaves(amount);
+    const leaves = await this.merkleTreePool.getOldestLeaves(amount);
     const buildTime = new Date();
 
     const leafPromises = leaves.map((leaf) =>
@@ -74,6 +74,8 @@ export default class MerkleTreeService {
     );
 
     await Promise.all(leafPromises);
+
+    await this.merkleTreePool.removeLeaves(leaves);
 
     const newRoot = await this.merkleTree.getNode(height - 1, 0n, buildTime);
 

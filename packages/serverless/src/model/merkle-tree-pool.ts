@@ -36,17 +36,34 @@ export class ModelMerkleTreePool extends ModelGeneral {
     return result.acknowledged;
   }
 
-  public async getLatestLeaves(amount: number): Promise<PooledLeaf[]> {
+  public async getOldestLeaves(amount: number): Promise<PooledLeaf[]> {
     try {
-      const leaves = await this.collection
+      const documents = await this.collection
         .find()
-        .sort({ created: -1 })
+        .sort({ created: 1 })
         .limit(amount)
         .toArray();
 
-      return leaves as any;
+      const leaves = documents.map(doc => ({
+        index: doc.index,
+        hash: Field(doc.hash)
+      }));
+
+      return leaves as PooledLeaf[];
     } catch (e) {
-      logger.error('ModelMerkleTreePool::getLatestLeaves()', e);
+      logger.error(`ModelMerkleTreePool::getOldestLeaves() - Error fetching earliest ${amount} leaves:`, e);
+      throw e;
+    }
+  }
+
+  public async removeLeaves(leaves: PooledLeaf[]): Promise<void> {
+    try {
+      const leafHashes = leaves.map(leaf => leaf.hash.toString());
+      await this.collection.deleteMany({
+        hash: { $in: leafHashes }
+      });
+    } catch (e) {
+      logger.error('ModelMerkleTreePool::removeLeaves()', e);
       throw e;
     }
   }

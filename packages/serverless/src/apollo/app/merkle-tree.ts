@@ -12,6 +12,10 @@ export type TMerkleTreeInitializeRequest = TDatabaseRequest & {
   height: number;
 };
 
+export type TMerkleTreeBuildRequest = TDatabaseRequest & {
+  amount: number;
+};
+
 export type TMerkleTreeStateRequest = TDatabaseRequest & {
   root: string;
 };
@@ -22,10 +26,6 @@ export type TMerkleTreeIndexRequest = TMerkleTreeStateRequest & {
 
 export type TMerkleTreeSetLeafRequest = TMerkleTreeIndexRequest & {
   hash: string;
-};
-
-export type TMerkleTreeBuildRequest = TMerkleTreeIndexRequest & {
-  amount: number;
 };
 
 export type TMerkleTreeGetNodeRequest = TMerkleTreeStateRequest & {
@@ -53,7 +53,6 @@ export const MerkleTreeSetLeafRequest = Joi.object<TMerkleTreeSetLeafRequest>({
 
 export const MerkleTreeBuildRequest = Joi.object<TMerkleTreeBuildRequest>({
   databaseName,
-  index: indexNumber,
   amount: Joi.number().required(),
 });
 
@@ -71,23 +70,23 @@ type Query
 type Mutation
 
 type MerkleProof {
-  digest: String!
   isLeft: Boolean!
+  sibling: String!
 }
 
 extend type Query {
   getNode(databaseName: String!, level: Int!, index: BigInt!): String!
-  getWitness(databaseName: String!, index: BigInt!): [MerkleProof]!
+  getWitness(databaseName: String!, root: String!, index: BigInt!): [MerkleProof]!
 }
 
 extend type Mutation {
-  create(databaseName: String!, height: Int!): Boolean
-  build(databaseName: String!, amount: Int!): Boolean
-  setLeaf(databaseName: String!, index: BigInt!, leaf: String!): Boolean
+  createMerkleTree(databaseName: String!, height: Int!): Boolean
+  buildMerkleTree(databaseName: String!, amount: Int!): Boolean
+  setLeaf(databaseName: String!, index: BigInt!, hash: String!): Boolean
 }
 `;
 
-const create = resolverWrapper(
+const createMerkleTree = resolverWrapper(
   MerkleTreeInitializeRequest,
   async (_root: unknown, args: TMerkleTreeInitializeRequest) => {
     const distributedLock = DistributedLock.getInstance();
@@ -105,7 +104,7 @@ const create = resolverWrapper(
   }
 );
 
-const build = resolverWrapper(
+const buildMerkleTree = resolverWrapper(
   MerkleTreeBuildRequest,
   async (_root: unknown, args: TMerkleTreeBuildRequest) => {
     const distributedLock = DistributedLock.getInstance();
@@ -165,8 +164,8 @@ export const resolversMerkleTree = {
   JSON: GraphQLJSON,
   Mutation: {
     setLeaf,
-    create,
-    build,
+    createMerkleTree,
+    buildMerkleTree,
   },
   Query: {
     getWitness,
