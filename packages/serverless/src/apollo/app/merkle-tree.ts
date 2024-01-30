@@ -21,15 +21,14 @@ export type TMerkleTreeStateRequest = TDatabaseRequest & {
 };
 
 export type TMerkleTreeIndexRequest = TMerkleTreeStateRequest & {
-  index: string;
+  index: bigint;
 };
 
 export type TMerkleTreeSetLeafRequest = TMerkleTreeIndexRequest & {
   hash: string;
 };
 
-export type TMerkleTreeGetNodeRequest = TMerkleTreeStateRequest & {
-  index: string;
+export type TMerkleTreeGetNodeRequest = TMerkleTreeIndexRequest & {
   level: number;
 };
 
@@ -139,7 +138,7 @@ const setLeaf = resolverWrapper(
       args.databaseName
     );
     return merkleTreeService.addLeafToPool(
-      BigInt(args.index),
+      args.index,
       Field(args.hash)
     );
   }
@@ -154,7 +153,7 @@ const getNode = resolverWrapper(
     return merkleTreeService.getNode(
       Field(args.root),
       args.level,
-      BigInt(args.index)
+      args.index
     );
   }
 );
