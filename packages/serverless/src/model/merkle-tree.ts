@@ -1,6 +1,6 @@
 import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
-import { ObjectId } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
@@ -50,9 +50,10 @@ export class ModelMerkleTree extends ModelGeneral {
   public async setLeaf(
     index: bigint,
     leaf: Field,
-    timestamp: Date
+    timestamp: Date,
+    session?: ClientSession
   ): Promise<void> {
-    const witnesses = await this.getWitness(index, timestamp);
+    const witnesses = await this.getWitness(index, timestamp, session);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
@@ -74,17 +75,17 @@ export class ModelMerkleTree extends ModelGeneral {
       inserts.push(dataToInsert);
     }
 
-    await this.insertManyLeaves(inserts);
+    await this.insertManyLeaves(inserts, session);
   }
 
-  public async insertManyLeaves(leaves: Array<any>): Promise<void> {
-    const options = this.session ? { session: this.session } : undefined;
-    await this.collection.insertMany(leaves, options);
+  public async insertManyLeaves(leaves: Array<any>, session?: ClientSession): Promise<void> {
+    await this.collection.insertMany(leaves, { session });
   }
 
   public async getWitness(
     index: bigint,
-    timestamp: Date
+    timestamp: Date,
+    session?: ClientSession
   ): Promise<MerkleProof[]> {
     if (index >= this.leafCount) {
       throw new Error(
@@ -100,7 +101,7 @@ export class ModelMerkleTree extends ModelGeneral {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNode(level, siblingIndex, timestamp).then((sibling) => {
+        this.getNode(level, siblingIndex, timestamp, session).then((sibling) => {
           return { isLeft, sibling };
         })
       );
@@ -114,7 +115,8 @@ export class ModelMerkleTree extends ModelGeneral {
   public async getNode(
     level: number,
     index: bigint,
-    timestamp: Date = new Date()
+    timestamp: Date,
+    session?: ClientSession,
   ): Promise<Field> {
     try {
       const nodeId = ModelMerkleTree.encodeLevelAndIndexToObjectId(
@@ -122,15 +124,13 @@ export class ModelMerkleTree extends ModelGeneral {
         index
       );
 
-      const options = this.session ? { session: this.session } : undefined;
-
       const query = {
         nodeId,
         timestamp: { $lte: timestamp },
       };
 
       const node = await this.collection
-        .find(query, options)
+        .find(query, { session })
         .sort({ timestamp: -1 }) // Gets the latest state at or before the specified timestamp
         .limit(1)
         .toArray();

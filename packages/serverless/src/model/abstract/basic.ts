@@ -11,8 +11,6 @@ export default abstract class ModelBasic {
 
   protected collectionOptions: CreateCollectionOptions | undefined;
 
-  protected session?: ClientSession;
-
   constructor(databaseName?: string, collectionName?: string, collectionOptions?: CreateCollectionOptions) {
     this.dbEngine = DatabaseEngine.getInstance();
     this.databaseName = databaseName;
@@ -26,14 +24,6 @@ export default abstract class ModelBasic {
 
   protected get collection() {
     return this.db.collection(this.collectionName!, this.collectionOptions);
-  }
-
-  public setSession(session: ClientSession | undefined): void {
-    this.session = session;
-  }
-
-  public removeSession() {
-    this.setSession(undefined);
   }
 
   public async withTransaction(

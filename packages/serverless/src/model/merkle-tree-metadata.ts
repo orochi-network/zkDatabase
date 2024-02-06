@@ -1,4 +1,5 @@
 import { Field } from 'o1js';
+import { ClientSession } from 'mongodb';
 import logger from '../helper/logger';
 import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from './abstract/database-engine';
 import ModelBasic from './abstract/basic';
@@ -38,9 +39,11 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
     }
   }
 
-  public async createMetadata(root: Field, date: Date): Promise<boolean> {
-    const options = this.session ? { session: this.session } : undefined;
-
+  public async createMetadata(
+    root: Field,
+    date: Date,
+    session?: ClientSession
+  ): Promise<boolean> {
     const height = await this.getHeight();
     try {
       const result = await this.collection.insertOne(
@@ -49,7 +52,7 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
           height,
           root: root.toString(),
         },
-        options
+        { session }
       );
 
       return result.acknowledged;
@@ -59,12 +62,12 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
     }
   }
 
-  public async getLatestMetadata(): Promise<TMerkleTreeMetadata | null> {
+  public async getLatestMetadata(
+    session?: ClientSession
+  ): Promise<TMerkleTreeMetadata | null> {
     try {
-      const options = this.session ? { session: this.session } : undefined;
-
       const result = await this.collection
-        .find({}, options)
+        .find({}, { session })
         .sort({ date: -1 })
         .limit(1)
         .toArray();
@@ -87,16 +90,15 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
   }
 
   public async getMetadataByRoot(
-    root: Field
+    root: Field,
+    session?: ClientSession
   ): Promise<TMerkleTreeMetadata | null> {
     try {
-      const options = this.session ? { session: this.session } : undefined;
-
       const metadataDocument = await this.collection.findOne(
         {
           root: root.toString(),
         },
-        options
+        { session }
       );
       if (!metadataDocument) {
         return null;

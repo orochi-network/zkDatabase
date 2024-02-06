@@ -54,7 +54,7 @@ export default class MerkleTreeService {
 
     this.merkleTree.setHeight(height);
 
-    const root = await this.merkleTree.getNode(height - 1, 0n);
+    const root = await this.merkleTree.getNode(height - 1, 0n, new Date());
 
     await this.merkleTreeMetadata.createMetadata(root, new Date());
   }
@@ -68,40 +68,33 @@ export default class MerkleTreeService {
 
     try {
       await this.merkleTree.withTransaction(async (session) => {
-        this.merkleTree.setSession(session);
-        this.merkleTreePool.setSession(session);
-        this.merkleTreeMetadata.setSession(session);
-
         const height = await this.getHeight();
         if (!height) {
           throw new Error('Merkle Tree is not created');
         }
 
-        const leaves = await this.merkleTreePool.getOldestLeaves(amount);
+        const leaves = await this.merkleTreePool.getOldestLeaves(amount, session);
         const buildTime = new Date();
 
         const leafPromises = leaves.map((leaf) =>
-          this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime)
+          this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime, session)
         );
 
         await Promise.all(leafPromises);
-        await this.merkleTreePool.removeLeaves(leaves);
+        await this.merkleTreePool.removeLeaves(leaves, session);
         const newRoot = await this.merkleTree.getNode(
           height - 1,
           0n,
-          buildTime
+          buildTime,
+          session
         );
-        await this.merkleTreeMetadata.createMetadata(newRoot, buildTime);
+        await this.merkleTreeMetadata.createMetadata(newRoot, buildTime, session);
 
         transactionResult = true;
       });
     } catch (error) {
       logger.error('Error during build:', error);
       transactionResult = false;
-    } finally {
-      this.merkleTree.removeSession();
-      this.merkleTreePool.removeSession();
-      this.merkleTreeMetadata.removeSession();
     }
 
     return transactionResult;

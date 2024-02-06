@@ -1,4 +1,5 @@
 import { Field } from 'o1js';
+import { ClientSession } from 'mongodb';
 import ModelGeneral from './general';
 import logger from '../helper/logger';
 import ModelCollection from './collection';
@@ -18,16 +19,19 @@ export class ModelMerkleTreePool extends ModelGeneral {
     return new ModelMerkleTreePool(databaseName);
   }
 
-  public async saveLeaf(index: bigint, leaf: Field): Promise<boolean> {
+  public async saveLeaf(
+    index: bigint,
+    leaf: Field,
+    session?: ClientSession
+  ): Promise<boolean> {
     try {
-      const options = this.session ? { session: this.session } : undefined;
       const result = await this.collection.insertOne(
         {
           index,
           hash: leaf.toString(),
           created: new Date(),
         },
-        options
+        { session }
       );
 
       return result.acknowledged;
@@ -37,11 +41,13 @@ export class ModelMerkleTreePool extends ModelGeneral {
     }
   }
 
-  public async getOldestLeaves(amount: number): Promise<PooledLeaf[]> {
+  public async getOldestLeaves(
+    amount: number,
+    session?: ClientSession
+  ): Promise<PooledLeaf[]> {
     try {
-      const options = this.session ? { session: this.session } : undefined;
       const documents = await this.collection
-        .find({}, options)
+        .find({}, { session })
         .sort({ created: 1 })
         .limit(amount)
         .toArray();
@@ -59,15 +65,17 @@ export class ModelMerkleTreePool extends ModelGeneral {
     }
   }
 
-  public async removeLeaves(leaves: PooledLeaf[]): Promise<void> {
+  public async removeLeaves(
+    leaves: PooledLeaf[],
+    session?: ClientSession
+  ): Promise<void> {
     try {
-      const options = this.session ? { session: this.session } : undefined;
       const leafHashes = leaves.map((leaf) => leaf.hash.toString());
       await this.collection.deleteMany(
         {
           hash: { $in: leafHashes },
         },
-        options
+        { session }
       );
     } catch (e) {
       logger.error('ModelMerkleTreePool::removeLeaves()', e);
