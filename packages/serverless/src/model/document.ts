@@ -1,74 +1,120 @@
+/* eslint-disable max-classes-per-file */
 /* eslint-disable no-await-in-loop */
+import { Provable } from 'o1js';
 import {
   ClientSession,
   Filter,
   InsertOneResult,
   OptionalUnlessRequiredId,
+  UpdateFilter,
 } from 'mongodb';
 import ModelBasic from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
-  ZKDATABASE_INDEX_RECORD,
-  IndexedDocument,
+  ZKDATABASE_INDEX_RECORD
 } from './abstract/database-engine';
 import logger from '../helper/logger';
+import ModelMerkleTreePool from './merkle-tree-pool';
+import { Schema } from '../core/schema';
 
 export class ModelDocument extends ModelBasic {
-  public static getInstance(databaseName: string, collectionName: string) {
-    return new ModelDocument(databaseName, collectionName);
+  private merkleTreePool: ModelMerkleTreePool;
+
+  private constructor(
+    databaseName: string,
+    collectionName: string,
+    merkleTreePool: ModelMerkleTreePool
+  ) {
+    super(databaseName, collectionName);
+    this.merkleTreePool = merkleTreePool;
   }
 
-  private async getMaxIndex(): Promise<number> {
+  public static async getInstance(
+    databaseName: string,
+    collectionName: string
+  ) {
+    const merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
+    return new ModelDocument(databaseName, collectionName, merkleTreePool);
+  }
+
+  private async getMaxIndex(session?: ClientSession): Promise<number> {
+    const options = session ? { session } : {};
     const maxIndexedCursor = await this.db
       .collection(ZKDATABASE_INDEX_COLLECTION)
-      .find()
+      .find({}, options)
       .sort({ [ZKDATABASE_INDEX_RECORD]: -1 })
-      .limit(1);
-    const maxIndexedRecord: any = (await maxIndexedCursor.hasNext())
-      ? await maxIndexedCursor.next()
-      : { [ZKDATABASE_INDEX_RECORD]: -1 };
+      .limit(1)
+      .toArray();
 
-    return maxIndexedRecord !== null &&
-      typeof maxIndexedRecord[ZKDATABASE_INDEX_RECORD] === 'number'
-      ? maxIndexedRecord[ZKDATABASE_INDEX_RECORD]
-      : -1;
+    return maxIndexedCursor.length === 0
+      ? -1
+      : maxIndexedCursor[0][ZKDATABASE_INDEX_RECORD];
   }
 
-  public async updateOne(filter: Filter<any>, update: any): Promise<boolean> {
-    let updated = false;
-    await this.withTransaction(async (session: ClientSession) => {
-      const result = await this.collection.updateMany(
-        filter,
-        {
-          $set: {
-            ...update,
-          },
-        },
-        {
-          session,
+  public async updateOne<T>(
+    filter: Filter<T>,
+    update: UpdateFilter<T> & { [ZKDATABASE_INDEX_RECORD]?: never },
+    session?: ClientSession
+  ): Promise<boolean> {
+    if (update.$set && ZKDATABASE_INDEX_RECORD in update.$set) {
+      throw new Error(`Modifying ${ZKDATABASE_INDEX_RECORD} is not allowed`);
+    }
+
+    // TODO: Calculate hash of the object
+  
+    try {
+      const result = await this.collection.updateOne(filter as Filter<any>, update, { session });
+      return result.modifiedCount === 1;
+    } catch (error) {
+      logger.error('Error updating document', error);
+      throw error;
+    }
+  }
+
+  public async insertOneWithTransaction<
+    T extends OptionalUnlessRequiredId<{ [key: string]: any }>,
+  >(data: T): Promise<number> {
+    let index = -1;
+
+    try {
+      await this.withTransaction(async (session) => {
+        const result = await this.insertOne(data, session);
+
+        if (!result) {
+          throw new Error('Insertion failed');
         }
-      );
-      if (result.modifiedCount === 1) {
-        updated = true;
-      } else {
-        await session.abortTransaction();
-      }
-    });
-    return updated;
+
+        index = result[ZKDATABASE_INDEX_RECORD];
+      });
+    } catch (error) {
+      logger.error('Transaction failed:', error);
+    }
+
+    return index;
   }
 
-  public async insertOne<T extends any>(data: OptionalUnlessRequiredId<T>) {
-    let insertResult;
-    await this.withTransaction(async (session: ClientSession) => {
-      const index = (await this.getMaxIndex()) + 1;
-      const result: InsertOneResult<IndexedDocument> =
-        await this.collection.insertOne(
-          {
-            [ZKDATABASE_INDEX_RECORD]: index,
-            ...data,
-          } as any,
-          { session }
-        );
+  public async insertOne<
+    T extends OptionalUnlessRequiredId<{ [key: string]: any }>,
+  >(
+    data: T,
+    session: ClientSession
+  ): Promise<T & { [ZKDATABASE_INDEX_RECORD]: number }> {
+    try {
+      const index = (await this.getMaxIndex(session)) + 1;
+      const result: InsertOneResult<T> = await this.collection.insertOne(
+        {
+          [ZKDATABASE_INDEX_RECORD]: index,
+          ...data,
+        } as any,
+        { session }
+      );
+
+      class Document extends Schema.fromRecord(data as any) {};
+
+      const document = Document.deserialize(data as any);
+
+      await this.merkleTreePool.saveLeaf(BigInt(index), document.hash())
+
       await this.db.collection(ZKDATABASE_INDEX_COLLECTION).insertOne(
         {
           [ZKDATABASE_INDEX_RECORD]: index,
@@ -77,13 +123,13 @@ export class ModelDocument extends ModelBasic {
         },
         { session }
       );
-      insertResult = {
-        [ZKDATABASE_INDEX_RECORD]: index,
-        ...data,
-      };
-      logger.debug(`ModelDocument::insertOne()`, { result, insertResult });
-    });
-    return insertResult;
+
+      logger.debug(`ModelDocument::insertOne()`, { index, data });
+      return { ...data, [ZKDATABASE_INDEX_RECORD]: index };
+    } catch (error) {
+      logger.error('Error inserting document', error);
+      throw error;
+    }
   }
 
   public async findOne(filter: Filter<any>) {

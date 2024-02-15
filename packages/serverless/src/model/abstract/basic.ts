@@ -1,4 +1,4 @@
-import { ClientSession } from 'mongodb';
+import { ClientSession, CreateCollectionOptions } from 'mongodb';
 import { DatabaseEngine } from './database-engine';
 import logger from '../../helper/logger';
 
@@ -9,10 +9,13 @@ export default abstract class ModelBasic {
 
   protected collectionName: string | undefined;
 
-  constructor(databaseName?: string, collectionName?: string) {
+  protected collectionOptions: CreateCollectionOptions | undefined;
+
+  constructor(databaseName?: string, collectionName?: string, collectionOptions?: CreateCollectionOptions) {
     this.dbEngine = DatabaseEngine.getInstance();
     this.databaseName = databaseName;
     this.collectionName = collectionName;
+    this.collectionOptions = collectionOptions;
   }
 
   protected get db() {
@@ -20,7 +23,7 @@ export default abstract class ModelBasic {
   }
 
   protected get collection() {
-    return this.db.collection(this.collectionName!);
+    return this.db.collection(this.collectionName!, this.collectionOptions);
   }
 
   public async withTransaction(
@@ -35,11 +38,12 @@ export default abstract class ModelBasic {
         writeConcern: { w: 'majority' },
       });
       result = true;
+      await session.commitTransaction();
     } catch (e) {
       logger.error('DatabaseEngine::withTransaction()', e);
       result = false;
+      await session.abortTransaction();
     }
-    await session.endSession();
     return result;
   }
 }

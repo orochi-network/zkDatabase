@@ -14,6 +14,12 @@ export const ZKDATABASE_USER_PERMISSION_COLLECTION =
   '_zkdatabase_USER_permission';
 // Settings
 export const ZKDATABASE_SETTING_COLLECTION = '_zkdatabase_setting';
+// Merkle Tree
+export const ZKDATABASE_MERKLE_TREE_COLLECTION = '_zkdatabase_merkle_tree';
+// Merkle Tree Pool
+export const ZKDATABASE_MERKLE_TREE_POOL_COLLECTION = '_zkdatabase_merkle_tree_pool';
+// Merkle Tree Metadata
+export const ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION = '_zkdatabase_merkle_tree_metadata';
 // System management
 export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
 

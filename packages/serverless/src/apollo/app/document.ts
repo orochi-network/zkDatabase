@@ -56,9 +56,8 @@ extend type Mutation {
 const documentFind = resolverWrapper(
   DocumentFindRequest,
   async (_root: unknown, args: TDocumentFindRequest) => {
-    return ModelDocument.getInstance(
-      args.databaseName,
-      args.collectionName
+    return (
+      await ModelDocument.getInstance(args.databaseName, args.collectionName)
     ).find(args.documentQuery);
   }
 );
@@ -67,19 +66,17 @@ const documentFind = resolverWrapper(
 const documentCreate = resolverWrapper(
   DocumentCreateRequest,
   async (_root: unknown, args: TDocumentCreateRequest) => {
-    return ModelDocument.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).insertOne(args.documentRecord);
+    return (
+      await ModelDocument.getInstance(args.databaseName, args.collectionName)
+    ).insertOneWithTransaction(args.documentRecord);
   }
 );
 
 const documentUpdate = resolverWrapper(
   DocumentUpdateRequest,
   async (_root: unknown, args: TDocumentUpdateRequest) => {
-    return ModelDocument.getInstance(
-      args.databaseName,
-      args.collectionName
+    return (
+      await ModelDocument.getInstance(args.databaseName, args.collectionName)
     ).updateOne(args.documentQuery, args.documentRecord);
   }
 );
@@ -87,9 +84,8 @@ const documentUpdate = resolverWrapper(
 const documentDrop = resolverWrapper(
   DocumentFindRequest,
   async (_root: unknown, args: TDocumentFindRequest) => {
-    return ModelDocument.getInstance(
-      args.databaseName,
-      args.collectionName
+    return (
+      await ModelDocument.getInstance(args.databaseName, args.collectionName)
     ).drop(args.documentQuery);
   }
 );

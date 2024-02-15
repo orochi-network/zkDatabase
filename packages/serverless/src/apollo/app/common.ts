@@ -35,6 +35,6 @@ export const indexName = Joi.string()
   .required()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
 
-export const indexNumber = Joi.number().required();
+export const indexNumber = Joi.string().regex(/^[0-9]+$/).required();
 
 export const indexField = Joi.array().items(Joi.string().required());
