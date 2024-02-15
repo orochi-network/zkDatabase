@@ -1,7 +1,6 @@
 import { Field } from 'o1js';
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { BigIntResolver } from 'graphql-scalars';
 import resolverWrapper from '../validation';
 import { databaseName, indexNumber } from './common';
 import { TDatabaseRequest } from './database';
@@ -63,7 +62,6 @@ export const MerkleTreeGetNodeRequest = Joi.object<TMerkleTreeGetNodeRequest>({
 });
 
 export const typeDefsMerkleTree = `#graphql
-scalar BigInt
 scalar JSON
 type Query
 type Mutation
@@ -74,14 +72,14 @@ type MerkleProof {
 }
 
 extend type Query {
-  getNode(databaseName: String!, level: Int!, index: BigInt!): String!
-  getWitness(databaseName: String!, root: String!, index: BigInt!): [MerkleProof]!
+  getNode(databaseName: String!, level: Int!, index: String!): String!
+  getWitness(databaseName: String!, root: String!, index: String!): [MerkleProof]!
 }
 
 extend type Mutation {
   createMerkleTree(databaseName: String!, height: Int!): Boolean
   buildMerkleTree(databaseName: String!, amount: Int!): Boolean
-  setLeaf(databaseName: String!, index: BigInt!, hash: String!): Boolean
+  setLeaf(databaseName: String!, index: String!, hash: String!): Boolean
 }
 `;
 
@@ -159,7 +157,6 @@ const getNode = resolverWrapper(
 );
 
 export const resolversMerkleTree = {
-  BigInt: BigIntResolver,
   JSON: GraphQLJSON,
   Mutation: {
     setLeaf,

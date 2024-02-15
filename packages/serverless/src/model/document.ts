@@ -113,9 +113,7 @@ export class ModelDocument extends ModelBasic {
 
       const document = Document.deserialize(data as any);
 
-      Provable.log('document', document);
-
-      // await this.merkleTreePool.saveLeaf(BigInt(index), )
+      await this.merkleTreePool.saveLeaf(BigInt(index), document.hash())
 
       await this.db.collection(ZKDATABASE_INDEX_COLLECTION).insertOne(
         {
