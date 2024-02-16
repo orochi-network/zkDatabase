@@ -1,6 +1,5 @@
 import { O1DataType } from '../../common/o1js';
 import { PermissionBasic } from '../../common/permission';
-import { ZKDatabaseIndex } from '../abstract/database-engine';
 import ModelGeneral from '../abstract/general';
 import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
@@ -39,8 +38,6 @@ export type SchemaDefBuilder = {
 export type SchemaIndex<T> = {
   [Property in keyof T as `${string & Property}.name`]: string;
 };
-
-export type SchemaDocument = SchemaDef & ZKDatabaseIndex;
 
 export class ModelSchema extends ModelGeneral {
   static collectionName: string = ZKDATABASE_SCHEMA_COLLECTION;

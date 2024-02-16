@@ -1,5 +1,8 @@
 import { ObjectId } from 'mongodb';
-import { ZKDATABASE_PERMISSION_COLLECTION } from '../../common/const';
+import {
+  ZKDATABASE_MERKLE_INDEX_COLLECTION,
+  ZKDATABASE_PERMISSION_COLLECTION,
+} from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import { ModelGeneral } from '../abstract/general';
 import {
@@ -26,11 +29,11 @@ export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
   otherPermission: 0,
 };
 
-export class ModelPermission extends ModelGeneral {
-  static collectionName: string = ZKDATABASE_PERMISSION_COLLECTION;
+export class ModelMerkleIndex extends ModelGeneral {
+  static collectionName: string = ZKDATABASE_MERKLE_INDEX_COLLECTION;
 
   constructor(databaseName: string) {
-    super(databaseName, ModelPermission.collectionName);
+    super(databaseName, ModelMerkleIndex.collectionName);
   }
 
   // @dev: Do we need to do map reduce here?
@@ -61,4 +64,4 @@ export class ModelPermission extends ModelGeneral {
   }
 }
 
-export default ModelPermission;
+export default ModelMerkleIndex;

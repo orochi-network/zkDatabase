@@ -1,20 +1,5 @@
-import { MongoClient, ObjectId, ServerApiVersion, Document } from 'mongodb';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 import logger from '../../helper/logger';
-import {
-  ZKDATABASE_INDEX_COLLECTION,
-  ZKDATABASE_INDEX_RECORD,
-} from '../../common/const';
-
-export type ZKDatabaseIndex = {
-  [ZKDATABASE_INDEX_RECORD]: number;
-};
-
-export type ZKDatabaseIndexRecord = ZKDatabaseIndex & {
-  collection: string;
-  link: ObjectId;
-};
-
-export type IndexedDocument = ZKDatabaseIndex & Document;
 
 export class DatabaseEngine {
   private static innerInstance: any;
@@ -23,10 +8,15 @@ export class DatabaseEngine {
 
   private connection: MongoClient | undefined;
 
-  private indexedCheck: Map<string, boolean> = new Map();
-
   private static get instance(): DatabaseEngine {
     return DatabaseEngine.innerInstance;
+  }
+
+  public get db() {
+    if (!this.connection) {
+      throw new Error('Database was not connected');
+    }
+    return this.connection.db;
   }
 
   public get client() {
@@ -57,18 +47,14 @@ export class DatabaseEngine {
     return DatabaseEngine.instance;
   }
 
-  public async sync(database: string) {
-    if (!this.indexedCheck.get(database)) {
-      if (!(await this.isCollection(database, ZKDATABASE_INDEX_COLLECTION))) {
-        await this.client
-          .db(database)
-          .collection(ZKDATABASE_INDEX_COLLECTION)
-          .createIndex(ZKDATABASE_INDEX_RECORD, {
-            unique: true,
-          });
-        this.indexedCheck.set(database, true);
+  public async isDatabase(database: string) {
+    const databases = await this.client.db().admin().listDatabases();
+    for (let i = 0; i < databases.databases.length; i += 1) {
+      if (databases.databases[i].name === database) {
+        return true;
       }
     }
+    return false;
   }
 
   public async isCollection(

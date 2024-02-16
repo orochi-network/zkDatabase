@@ -8,60 +8,53 @@ import {
   Document,
 } from 'mongodb';
 import ModelBasic from './basic';
-import { IndexedDocument } from './database-engine';
 import logger from '../../helper/logger';
 import {
   ZKDATABAES_GROUP_NOBODY,
   ZKDATABAES_USER_NOBODY,
-  ZKDATABASE_INDEX_COLLECTION,
-  ZKDATABASE_INDEX_RECORD,
+  ZKDATABASE_MERKLE_INDEX_COLLECTION,
 } from '../../common/const';
 import { ModelPermission, PermissionSchema } from '../database/permission';
 import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
 import { ModelSchema } from '../database/schema';
+import ModelDatabase from './database';
+import ModelCollection from './collection';
 
 /**
- * ModelDocument is a class that extends ModelBasic. ModelDocument handle document of zkDatabase with index hook.
- * Index hook
+ * ModelDocument is a class that extends ModelBasic.
+ * ModelDocument handle document of zkDatabase with index hook.
  */
 export class ModelDocument extends ModelBasic {
+  public static instances = new Map<string, ModelDocument>();
+
+  get modelDatabase() {
+    return ModelDatabase.getInstance(this.databaseName!);
+  }
+
+  get modelCollection() {
+    return ModelCollection.getInstance(
+      this.databaseName!,
+      this.collectionName!
+    );
+  }
+
   public static getInstance(databaseName: string, collectionName: string) {
-    return new ModelDocument(databaseName, collectionName);
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelDocument.instances.has(key)) {
+      ModelDocument.instances.set(key, new ModelDocument(key));
+    }
+    return ModelDocument.instances.get(key)!;
   }
 
-  /**
-   * Get max index value of record
-   * @returns number
-   */
-  private async getMaxIndex(): Promise<number> {
-    const maxIndexedCursor = await this.db
-      .collection(ZKDATABASE_INDEX_COLLECTION)
-      .find()
-      .sort({ [ZKDATABASE_INDEX_RECORD]: -1 })
-      .limit(1);
-    const maxIndexedRecord: any = (await maxIndexedCursor.hasNext())
-      ? await maxIndexedCursor.next()
-      : { [ZKDATABASE_INDEX_RECORD]: -1 };
-
-    return maxIndexedRecord !== null &&
-      typeof maxIndexedRecord[ZKDATABASE_INDEX_RECORD] === 'number'
-      ? maxIndexedRecord[ZKDATABASE_INDEX_RECORD]
-      : -1;
-  }
-
-  /**
-   * Update the first record that matched the filter
-   * @note We should perform update on Merkle tree that's stored in
-   * @param filter
-   * @param update
-   * @returns
-   */
   public async updateOne(
     filter: Filter<Document>,
     update: UpdateFilter<Document>
   ): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
+      const oldRecord = await this.collection.findOne(filter, { session });
+      if (oldRecord !== null) {
+      }
       const result = await this.collection.updateMany(
         filter,
         {
@@ -135,7 +128,7 @@ export class ModelDocument extends ModelBasic {
         updatedAt: new Date(),
       });
 
-      await this.db.collection(ZKDATABASE_INDEX_COLLECTION).insertOne(
+      await this.db.collection(ZKDATABASE_MERKLE_INDEX_COLLECTION).insertOne(
         {
           [ZKDATABASE_INDEX_RECORD]: index,
           collection: this.collectionName,
@@ -171,7 +164,7 @@ export class ModelDocument extends ModelBasic {
           const record = await filteredRecords.next();
           if (record) {
             await this.db
-              .collection(ZKDATABASE_INDEX_COLLECTION)
+              .collection(ZKDATABASE_MERKLE_INDEX_COLLECTION)
               .deleteOne(
                 { [ZKDATABASE_INDEX_RECORD]: record[ZKDATABASE_INDEX_RECORD] },
                 { session }
