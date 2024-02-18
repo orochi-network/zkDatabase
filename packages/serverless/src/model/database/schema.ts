@@ -61,11 +61,6 @@ export class ModelSchema extends ModelGeneral {
     return ModelSchema.instances[databaseName];
   }
 
-  public getDocument(collectionName: string) {
-    ModelSchema.isValidCollectionName(collectionName);
-    return new ModelDocument(this.databaseName, collectionName);
-  }
-
   public async createSchema(
     collectionName: string,
     schemaBuilder: SchemaDefBuilder
@@ -97,5 +92,15 @@ export class ModelSchema extends ModelGeneral {
       indexKeys
     );
     return this.insertOne(schemaDef);
+  }
+
+  public static async init(databaseName: string) {
+    const collection = ModelCollection.getInstance(
+      databaseName,
+      ModelSchema.collectionName
+    );
+    if (!(await collection.isExist())) {
+      await collection.create({ collection: 1 }, { unique: true });
+    }
   }
 }

@@ -22,6 +22,10 @@ export class ModelCollection extends ModelBasic {
     return ModelCollection.instances.get(key)!;
   }
 
+  public async isExist(): Promise<boolean> {
+    return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
+  }
+
   public async create(
     indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions

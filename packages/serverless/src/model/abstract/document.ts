@@ -12,9 +12,11 @@ import logger from '../../helper/logger';
 import {
   ZKDATABAES_GROUP_NOBODY,
   ZKDATABAES_USER_NOBODY,
-  ZKDATABASE_MERKLE_INDEX_COLLECTION,
 } from '../../common/const';
-import { ModelPermission, PermissionSchema } from '../database/permission';
+import {
+  ModelDocumentMetadata,
+  DocumentMetadataSchema,
+} from '../database/document-metadata';
 import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
 import { ModelSchema } from '../database/schema';
 import ModelDatabase from './database';
@@ -78,21 +80,19 @@ export class ModelDocument extends ModelBasic {
 
   public async insertOne<T extends any>(
     data: OptionalUnlessRequiredId<T>,
-    inheritPermission: Partial<PermissionSchema>
+    inheritPermission: Partial<DocumentMetadataSchema>
   ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
       const modelSchema = ModelSchema.getInstance(this.databaseName!);
-      const modelPermission = new ModelPermission(this.databaseName!);
-      const index = (await this.getMaxIndex()) + 1;
-      const result: InsertOneResult<IndexedDocument> =
-        await this.collection.insertOne(
-          {
-            [ZKDATABASE_INDEX_RECORD]: index,
-            ...data,
-          } as any,
-          { session }
-        );
+      const modelDocumentMetadata = new ModelDocumentMetadata(
+        this.databaseName!
+      );
+      const index = (await modelDocumentMetadata.getMaxIndex()) + 1;
+      const result: InsertOneResult<Document> = await this.collection.insertOne(
+        data,
+        { session }
+      );
 
       const basicCollectionPermission = await modelSchema.collection.findOne(
         {
@@ -119,28 +119,15 @@ export class ModelDocument extends ModelBasic {
               otherPermission: ZKDATABASE_NO_PERMISSION_BIN,
             };
 
-      await modelPermission.insertOne({
+      await modelDocumentMetadata.insertOne({
         collection: this.collectionName!,
         docId: result.insertedId,
+        fmerkleIndex: index,
         ...{ ownerPermission, groupPermission, otherPermission, group, owner },
         ...inheritPermission,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-
-      await this.db.collection(ZKDATABASE_MERKLE_INDEX_COLLECTION).insertOne(
-        {
-          [ZKDATABASE_INDEX_RECORD]: index,
-          collection: this.collectionName,
-          link: result.insertedId,
-        },
-        { session }
-      );
-      insertResult = {
-        [ZKDATABASE_INDEX_RECORD]: index,
-        ...data,
-      };
-      logger.debug(`ModelDocument::insertOne()`, { result, insertResult });
     });
     return insertResult;
   }
@@ -156,31 +143,8 @@ export class ModelDocument extends ModelBasic {
   }
 
   public async drop(filter: Filter<any>) {
-    let deletedCount = 0;
-    const acknowledged = await this.withTransaction(
-      async (session: ClientSession) => {
-        const filteredRecords = await this.collection.find(filter);
-        while (await filteredRecords.hasNext()) {
-          const record = await filteredRecords.next();
-          if (record) {
-            await this.db
-              .collection(ZKDATABASE_MERKLE_INDEX_COLLECTION)
-              .deleteOne(
-                { [ZKDATABASE_INDEX_RECORD]: record[ZKDATABASE_INDEX_RECORD] },
-                { session }
-              );
-            await this.collection.deleteOne({ _id: record._id }, { session });
-            deletedCount += 1;
-          }
-        }
-      }
-    );
-    logger.debug(`ModelDocument::drop()`, {
-      filter,
-      acknowledged,
-      deletedCount,
-    });
-    return { acknowledged, deletedCount };
+    // @dev: We need to drop the metadata first
+    // And merkle tree index and other related data
   }
 }
 

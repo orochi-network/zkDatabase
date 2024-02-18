@@ -31,7 +31,7 @@ export class ModelUserGroup extends ModelGeneral {
     return matchedRecord === 1;
   }
 
-  public async listGroupName(userName: string): Promise<string[]> {
+  public async listGroupByUserName(userName: string): Promise<string[]> {
     const modelGroup = new ModelGroup(this.databaseName!);
     const groupsList = await modelGroup.find({
       _id: { $in: await this.listGroupId(userName) },
@@ -69,11 +69,14 @@ export class ModelUserGroup extends ModelGeneral {
     );
   }
 
-  public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create([
-      'userName',
-      'groupId',
-    ]);
+  public static async init(databaseName: string) {
+    const collection = ModelCollection.getInstance(
+      databaseName,
+      ModelUserGroup.collectionName
+    );
+    if (!(await collection.isExist())) {
+      await collection.create({ collection: 1 }, { unique: true });
+    }
   }
 }
 

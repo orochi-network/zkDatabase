@@ -5,7 +5,7 @@ import resolverWrapper from '../validation';
 import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
 import ModelUserGroup from '../../model/database/user-group';
-import ModelPermission from '../../model/database/permission';
+import ModelPermission from '../../model/database/document-metadata';
 import {
   PermissionBinary,
   PermissionRecord,

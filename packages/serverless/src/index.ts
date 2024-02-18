@@ -59,5 +59,8 @@ import { ZKDATABAES_USER_NOBODY } from './common/const';
     httpServer.listen({ port: 4000 }, resolve);
   });
 
-  logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
+  logger.debug('🚀 Server ready at http://localhost:4000/graphql');
+  if (config.nodeEnv !== 'production') {
+    logger.warn('Server environment is:', config.nodeEnv);
+  }
 })();
