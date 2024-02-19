@@ -24,5 +24,5 @@ export const ZKDATABASE_METADATA = [
 // System user
 export const ZKDATABAES_USER_NOBODY = 'nobody';
 export const ZKDATABAES_USER_SYSTEM = 'system';
-export const ZKDATABAES_GROUP_NOBODY = 'nobody';
-export const ZKDATABAES_GROUP_SYSTEM = 'system';
+export const ZKDATABASE_GROUP_NOBODY = 'nobody';
+export const ZKDATABASE_GROUP_SYSTEM = 'system';

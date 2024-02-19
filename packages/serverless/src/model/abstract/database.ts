@@ -1,6 +1,10 @@
 import { ObjectId } from 'mongodb';
 import ModelBasic from './basic';
 import { ZKDATABASE_METADATA } from '../../common/const';
+import ModelDocumentMetadata from '../database/document-metadata';
+import { ModelSchema } from '../database/schema';
+import ModelGroup from '../database/group';
+import ModelUserGroup from '../database/user-group';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -36,6 +40,10 @@ export class ModelDatabase extends ModelBasic {
     if (await this.dbEngine.isDatabase(databaseName)) {
       throw new Error('Database already exist');
     }
+    await ModelDocumentMetadata.init(databaseName);
+    await ModelSchema.init(databaseName);
+    await ModelGroup.init(databaseName);
+    await ModelUserGroup.init(databaseName);
   }
 
   public async drop() {
