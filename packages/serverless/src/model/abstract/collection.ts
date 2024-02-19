@@ -1,15 +1,29 @@
 import { CreateIndexesOptions, IndexSpecification } from 'mongodb';
-import { isOk } from '../helper/common';
-import ModelBasic from './abstract/basic';
-import { ModelDocument } from './document';
+import { isOk } from '../../helper/common';
+import ModelBasic from './basic';
+import ModelDatabase from './database';
 
+/**
+ * Build on top of ModelBasic, it handle everything about collection in general
+ * Don't use this directly
+ */
 export class ModelCollection extends ModelBasic {
-  public static getInstance(databaseName: string, collectionName: string) {
-    return new ModelCollection(databaseName, collectionName);
+  public static instances = new Map<string, ModelCollection>();
+
+  get modelDatabase() {
+    return ModelDatabase.getInstance(this.databaseName!);
   }
 
-  public getDocument() {
-    return ModelDocument.getInstance(this.databaseName!, this.collectionName!);
+  public static getInstance(databaseName: string, collectionName: string) {
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelCollection.instances.has(key)) {
+      ModelCollection.instances.set(key, new ModelCollection(key));
+    }
+    return ModelCollection.instances.get(key)!;
+  }
+
+  public async isExist(): Promise<boolean> {
+    return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
   }
 
   public async create(

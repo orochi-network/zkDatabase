@@ -1,38 +1,5 @@
-import { MongoClient, ObjectId, ServerApiVersion, Document } from 'mongodb';
+import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
 import logger from '../../helper/logger';
-
-export const ZKDATABASE_INDEX_RECORD = '_zkindex';
-export const ZKDATABASE_INDEX_COLLECTION = '_zkdatabase_index';
-// Group
-export const ZKDATABASE_GROUP_COLLECTION = '_zkdatabase_group';
-export const ZKDATABASE_GROUP_PERMISSION_COLLECTION =
-  '_zkdatabase_group_permission';
-// User -> Group mapping
-export const ZKDATABASE_USER_GROUP_COLLECTION = '_zkdatabase_user_group';
-// User permission
-export const ZKDATABASE_USER_PERMISSION_COLLECTION =
-  '_zkdatabase_USER_permission';
-// Settings
-export const ZKDATABASE_SETTING_COLLECTION = '_zkdatabase_setting';
-// Merkle Tree
-export const ZKDATABASE_MERKLE_TREE_COLLECTION = '_zkdatabase_merkle_tree';
-// Merkle Tree Pool
-export const ZKDATABASE_MERKLE_TREE_POOL_COLLECTION = '_zkdatabase_merkle_tree_pool';
-// Merkle Tree Metadata
-export const ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION = '_zkdatabase_merkle_tree_metadata';
-// System management
-export const ZKDATABASE_MANAGEMENT_DB = '_zkdatabase_management';
-
-type ZKDatabaseIndex = {
-  [ZKDATABASE_INDEX_RECORD]: number;
-};
-
-export type ZKDatabaseIndexRecord = ZKDatabaseIndex & {
-  collection: string;
-  link: ObjectId;
-};
-
-export type IndexedDocument = ZKDatabaseIndex & Document;
 
 export class DatabaseEngine {
   private static innerInstance: any;
@@ -41,10 +8,15 @@ export class DatabaseEngine {
 
   private connection: MongoClient | undefined;
 
-  private indexedCheck: Map<string, boolean> = new Map();
-
   private static get instance(): DatabaseEngine {
     return DatabaseEngine.innerInstance;
+  }
+
+  public get db() {
+    if (!this.connection) {
+      throw new Error('Database was not connected');
+    }
+    return this.connection.db;
   }
 
   public get client() {
@@ -75,18 +47,14 @@ export class DatabaseEngine {
     return DatabaseEngine.instance;
   }
 
-  public async sync(database: string) {
-    if (!this.indexedCheck.get(database)) {
-      if (!(await this.isCollection(database, ZKDATABASE_INDEX_COLLECTION))) {
-        await this.client
-          .db(database)
-          .collection(ZKDATABASE_INDEX_COLLECTION)
-          .createIndex(ZKDATABASE_INDEX_RECORD, {
-            unique: true,
-          });
-        this.indexedCheck.set(database, true);
+  public async isDatabase(database: string) {
+    const databases = await this.client.db().admin().listDatabases();
+    for (let i = 0; i < databases.databases.length; i += 1) {
+      if (databases.databases[i].name === database) {
+        return true;
       }
     }
+    return false;
   }
 
   public async isCollection(

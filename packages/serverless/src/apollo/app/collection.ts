@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelCollection } from '../../model/collection';
+import { ModelCollection } from '../../model/abstract/collection';
 import { databaseName, collectionName, indexField } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
-import { ModelDatabase } from '../../model/database';
+import { ModelDatabase } from '../../model/abstract/database';
 import logger from '../../helper/logger';
 
 export type TCollectionRequest = TDatabaseRequest & {

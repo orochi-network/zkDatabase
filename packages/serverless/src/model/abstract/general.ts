@@ -13,10 +13,26 @@ import {
   DeleteOptions,
   DeleteResult,
 } from 'mongodb';
-import ModelBasic from './abstract/basic';
-import logger from '../helper/logger';
+import ModelBasic from './basic';
+import logger from '../../helper/logger';
 
+/**
+ * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing
+ * to do with zkDatabase or record of zkDatabase
+ */
 export class ModelGeneral extends ModelBasic {
+  public static getInstance(databaseName: string, collectionName: string) {
+    return new Proxy(new ModelGeneral(databaseName, collectionName), {
+      get(target: any, prop: string) {
+        if (typeof target.collection[prop] === 'function') {
+          // eslint-disable-next-line prefer-rest-params
+          target.collection[prop].apply(target, arguments);
+        }
+        return target.collection[prop];
+      },
+    });
+  }
+
   public async updateOne(
     filter: Filter<Document>,
     update: UpdateFilter<Document> | Partial<Document>,

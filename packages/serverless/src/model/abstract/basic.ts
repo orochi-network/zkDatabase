@@ -2,6 +2,10 @@ import { ClientSession, CreateCollectionOptions } from 'mongodb';
 import { DatabaseEngine } from './database-engine';
 import logger from '../../helper/logger';
 
+/**
+ * Model basic is the most basic model of data, It interactive directly to DatabaseEngine
+ * And provide .db and .collection allow other model to interactive with database/collection
+ */
 export default abstract class ModelBasic {
   protected dbEngine: DatabaseEngine;
 
@@ -11,19 +15,23 @@ export default abstract class ModelBasic {
 
   protected collectionOptions: CreateCollectionOptions | undefined;
 
-  constructor(databaseName?: string, collectionName?: string, collectionOptions?: CreateCollectionOptions) {
+  constructor(
+    databaseName?: string,
+    collectionName?: string,
+    collectionOptions?: CreateCollectionOptions
+  ) {
     this.dbEngine = DatabaseEngine.getInstance();
     this.databaseName = databaseName;
     this.collectionName = collectionName;
     this.collectionOptions = collectionOptions;
   }
 
-  protected get db() {
+  public get db() {
     return this.dbEngine.client.db(this.databaseName!);
   }
 
-  protected get collection() {
-    return this.db.collection(this.collectionName!, this.collectionOptions);
+  public get collection() {
+    return this.db.collection(this.collectionName!);
   }
 
   public async withTransaction(

@@ -1,5 +1,5 @@
 {
-  "name": "zkdb",
+  "name": "zkdb-serverless",
   "version": "0.1.1",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
@@ -9,6 +9,7 @@
     "database",
     "zk-database",
     "zkdb",
+    "serverless",
     "zkdatabase"
   ],
   "repository": {
@@ -73,7 +74,7 @@
     "joi": "^17.10.1",
     "jose": "^4.14.6",
     "mina-signer": "^2.1.1",
-    "mongodb": "^6.0.0",
+    "mongodb": "^6.3.0",
     "o1js": "^0.15.1",
     "redis": "^4.6.11",
     "uuid": "^9.0.1"

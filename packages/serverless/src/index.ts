@@ -11,6 +11,7 @@ import { AppContext } from './helper/common';
 import { config } from './helper/config';
 import { DatabaseEngine } from './model/abstract/database-engine';
 import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
+import { ZKDATABAES_USER_NOBODY } from './common/const';
 
 (async () => {
   const app = express();
@@ -39,14 +40,14 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
     expressMiddleware(server, {
       context: async ({ req }) => {
         if (req.headers.authorization) {
-          const { sessionId, username, email } =
+          const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
               req.headers.authorization
             );
-          return { sessionId, username, email };
+          return { sessionId, userName, email };
         }
         return {
-          username: 'nobody',
+          userName: ZKDATABAES_USER_NOBODY,
           email: '',
           sessionId: '',
         };
@@ -58,5 +59,8 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
     httpServer.listen({ port: 4000 }, resolve);
   });
 
-  logger.debug(`🚀 Server ready at http://localhost:4000/graphql`);
+  logger.debug('🚀 Server ready at http://localhost:4000/graphql');
+  if (config.nodeEnv !== 'production') {
+    logger.warn('Server environment is:', config.nodeEnv);
+  }
 })();

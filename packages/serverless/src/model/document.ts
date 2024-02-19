@@ -11,7 +11,7 @@ import {
 import ModelBasic from './abstract/basic';
 import {
   ZKDATABASE_INDEX_COLLECTION,
-  ZKDATABASE_INDEX_RECORD
+  ZKDATABASE_INDEX_RECORD,
 } from './abstract/database-engine';
 import logger from '../helper/logger';
 import ModelMerkleTreePool from './merkle-tree-pool';
@@ -61,9 +61,13 @@ export class ModelDocument extends ModelBasic {
     }
 
     // TODO: Calculate hash of the object
-  
+
     try {
-      const result = await this.collection.updateOne(filter as Filter<any>, update, { session });
+      const result = await this.collection.updateOne(
+        filter as Filter<any>,
+        update,
+        { session }
+      );
       return result.modifiedCount === 1;
     } catch (error) {
       logger.error('Error updating document', error);
@@ -109,11 +113,11 @@ export class ModelDocument extends ModelBasic {
         { session }
       );
 
-      class Document extends Schema.fromRecord(data as any) {};
+      class Document extends Schema.fromRecord(data as any) {}
 
       const document = Document.deserialize(data as any);
 
-      await this.merkleTreePool.saveLeaf(BigInt(index), document.hash())
+      await this.merkleTreePool.saveLeaf(BigInt(index), document.hash());
 
       await this.db.collection(ZKDATABASE_INDEX_COLLECTION).insertOne(
         {
