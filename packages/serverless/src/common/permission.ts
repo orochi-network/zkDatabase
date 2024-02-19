@@ -163,7 +163,7 @@ export class PermissionBinary {
  * @param data Array of permissions
  * @returns
  */
-export function reducePermssion(data: PermissionRecord[]) {
+export function reducePermission(data: PermissionRecord[]) {
   return data.reduce((acc, cur) => {
     const entries = Object.entries(cur);
     for (let i = 0; i < entries.length; i += 1) {

@@ -1,10 +1,10 @@
 import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelGeneral from './general';
-import logger from '../helper/logger';
-import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
-import { ZKDATABASE_MERKLE_TREE_COLLECTION } from './abstract/database-engine';
+import logger from '../../helper/logger';
+import createExtendedMerkleWitness from '../../helper/extended-merkle-witness';
+import ModelGeneral from '../abstract/general';
+import { ZKDATABASE_MERKLE_TREE_COLLECTION } from '../../common/const';
 
 export interface MerkleProof {
   sibling: Field;
@@ -12,6 +12,8 @@ export interface MerkleProof {
 }
 
 export class ModelMerkleTree extends ModelGeneral {
+  public static instances = new Map<string, ModelMerkleTree>();
+
   private zeroes!: Field[];
 
   private height!: number;
@@ -25,6 +27,14 @@ export class ModelMerkleTree extends ModelGeneral {
     });
   }
 
+  public static getInstance(databaseName: string, collectionName: string) {
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelMerkleTree.instances.has(key)) {
+      ModelMerkleTree.instances.set(key, new ModelMerkleTree(databaseName));
+    }
+    return ModelMerkleTree.instances.get(key)!;
+  }
+
   public setHeight(newHeight: number): void {
     this.height = newHeight;
     this.generateZeroNodes(newHeight);
@@ -36,10 +46,6 @@ export class ModelMerkleTree extends ModelGeneral {
       zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
     }
     this.zeroes = zeroes;
-  }
-
-  public static getInstance(databaseName: string) {
-    return new ModelMerkleTree(databaseName);
   }
 
   public async getRoot(timestamp: Date): Promise<Field> {

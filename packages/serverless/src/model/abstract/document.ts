@@ -1,4 +1,5 @@
 /* eslint-disable no-await-in-loop */
+// eslint-disable-next-line max-classes-per-file
 import {
   ClientSession,
   Filter,
@@ -22,6 +23,8 @@ import { ModelSchema } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
+import { Schema } from '../../core/schema';
+import ModelMerkleTreePool from '../merkle/merkle-tree-pool';
 
 /**
  * ModelDocument is a class that extends ModelBasic.
@@ -29,6 +32,17 @@ import { getCurrentTime } from '../../helper/common';
  */
 export class ModelDocument extends ModelBasic {
   public static instances = new Map<string, ModelDocument>();
+
+  private merkleTreePool: ModelMerkleTreePool;
+
+  private constructor(
+    databaseName: string,
+    collectionName: string,
+    merkleTreePool: ModelMerkleTreePool
+  ) {
+    super(databaseName, collectionName);
+    this.merkleTreePool = merkleTreePool;
+  }
 
   get modelDatabase() {
     return ModelDatabase.getInstance(this.databaseName!);
@@ -44,7 +58,14 @@ export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelDocument.instances.has(key)) {
-      ModelDocument.instances.set(key, new ModelDocument(key));
+      ModelDocument.instances.set(
+        key,
+        new ModelDocument(
+          databaseName,
+          collectionName,
+          ModelMerkleTreePool.getInstance(databaseName)
+        )
+      );
     }
     return ModelDocument.instances.get(key)!;
   }
@@ -76,7 +97,7 @@ export class ModelDocument extends ModelBasic {
         }
       );
       // We need to do this to make sure that only 1 record
-      if (1 === result.modifiedCount) {
+      if (result.modifiedCount === 1) {
         updated = true;
       } else {
         await session.abortTransaction();
@@ -108,6 +129,15 @@ export class ModelDocument extends ModelBasic {
           docId: null,
         },
         { session }
+      );
+
+      class SchemaDocument extends Schema.fromRecord(data as any) {}
+      const document = SchemaDocument.deserialize(data as any);
+
+      await this.merkleTreePool.saveLeaf(
+        BigInt(index),
+        document.hash(),
+        session
       );
 
       const { ownerPermission, groupPermission, otherPermission } =

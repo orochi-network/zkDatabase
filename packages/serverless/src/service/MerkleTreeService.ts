@@ -1,7 +1,7 @@
 import { Field } from 'o1js';
-import ModelMerkleTree from '../model/merkle-tree';
-import { ModelMerkleTreeMetadata } from '../model/merkle-tree-metadata';
-import ModelMerkleTreePool from '../model/merkle-tree-pool';
+import ModelMerkleTree from '../model/merkle/merkle-tree';
+import { ModelMerkleTreeMetadata } from '../model/merkle/merkle-tree-metadata';
+import ModelMerkleTreePool from '../model/merkle/merkle-tree-pool';
 import logger from '../helper/logger';
 
 export default class MerkleTreeService {
