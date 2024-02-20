@@ -6,6 +6,32 @@ import ModelCollection from '../abstract/collection';
 import ModelDocument from '../abstract/document';
 import { getCurrentTime } from '../../helper/common';
 
+/*
+const exampleSchemaDef: SchemaDef = {
+  collection: 'myCollection',
+  fields: ['name', 'age'],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  system: false,
+  insert: true,
+  read: true,
+  write: true,
+  delete: false,
+  name: {
+    order: 0,
+    name: 'name',
+    type: 'Field',
+    indexed: true
+  },
+  age: {
+    order: 1,
+    name: 'age',
+    type: 'number',
+    indexed: false
+  }
+};
+
+*/
 export type SchemaField = {
   order: number;
   name: string;
@@ -92,6 +118,12 @@ export class ModelSchema extends ModelGeneral {
       indexKeys
     );
     return this.insertOne(schemaDef);
+  }
+
+  public async getSchema(collectionName: string): Promise<SchemaDef> {
+    return this.findOne({
+      collection: collectionName,
+    }) as any;
   }
 
   public static async init(databaseName: string) {

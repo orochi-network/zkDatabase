@@ -6,7 +6,7 @@ import {
   InsertOneResult,
   OptionalUnlessRequiredId,
   UpdateFilter,
-  Document,
+  Document
 } from 'mongodb';
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
@@ -25,6 +25,13 @@ import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import { Schema } from '../../core/schema';
 import ModelMerkleTreePool from '../merkle/merkle-tree-pool';
+import SchemaValidator from '../../common/schema-validator';
+
+export type ParameterList = {
+  data: [string, string, string][];
+};
+
+export type ParameterListWithId = OptionalUnlessRequiredId<ParameterList>;
 
 /**
  * ModelDocument is a class that extends ModelBasic.
@@ -35,13 +42,17 @@ export class ModelDocument extends ModelBasic {
 
   private merkleTreePool: ModelMerkleTreePool;
 
+  private schemaValidator: SchemaValidator;
+
   private constructor(
     databaseName: string,
     collectionName: string,
-    merkleTreePool: ModelMerkleTreePool
+    merkleTreePool: ModelMerkleTreePool,
+    schemaValidator: SchemaValidator
   ) {
     super(databaseName, collectionName);
     this.merkleTreePool = merkleTreePool;
+    this.schemaValidator = schemaValidator;
   }
 
   get modelDatabase() {
@@ -63,7 +74,7 @@ export class ModelDocument extends ModelBasic {
         new ModelDocument(
           databaseName,
           collectionName,
-          ModelMerkleTreePool.getInstance(databaseName)
+          ModelMerkleTreePool.getInstance(databaseName),
         )
       );
     }
@@ -106,14 +117,15 @@ export class ModelDocument extends ModelBasic {
     return updated;
   }
 
-  public async insertOne<T extends any>(
-    data: OptionalUnlessRequiredId<T>,
+  public async insertOne<T extends ParameterListWithId>(
+    data: T,
     inheritPermission: Partial<DocumentMetadataSchema>
   ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
       // @todo We need to check for schema here
-      const modelSchema = ModelSchema.getInstance(this.databaseName!);
+      this.schemaValidator.createSchema(this.collectionName ?? "", data, "" as any)
+      
       const modelDocumentMetadata = new ModelDocumentMetadata(
         this.databaseName!
       );
