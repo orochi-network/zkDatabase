@@ -1,5 +1,5 @@
 import { Field } from 'o1js';
-import { ClientSession } from 'mongodb';
+import { ClientSession, FindOptions, InsertOneOptions } from 'mongodb';
 import ModelGeneral from './abstract/general';
 import logger from '../helper/logger';
 import ModelCollection from './abstract/collection';
@@ -22,7 +22,7 @@ export class ModelMerkleTreePool extends ModelGeneral {
   public async saveLeaf(
     index: bigint,
     leaf: Field,
-    session?: ClientSession
+    opt?: InsertOneOptions
   ): Promise<boolean> {
     try {
       const result = await this.collection.insertOne(
@@ -31,7 +31,7 @@ export class ModelMerkleTreePool extends ModelGeneral {
           hash: leaf.toString(),
           created: new Date(),
         },
-        { session }
+        opt
       );
 
       return result.acknowledged;
@@ -43,11 +43,11 @@ export class ModelMerkleTreePool extends ModelGeneral {
 
   public async getOldestLeaves(
     amount: number,
-    session?: ClientSession
+    option?: FindOptions
   ): Promise<PooledLeaf[]> {
     try {
       const documents = await this.collection
-        .find({}, { session })
+        .find({}, option)
         .sort({ created: 1 })
         .limit(amount)
         .toArray();

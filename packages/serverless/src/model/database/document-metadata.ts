@@ -20,11 +20,11 @@ export type DocumentMetadataSchema = PermissionBasic & {
 
 export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
   DocumentMetadataSchema,
-  'ownerPermission' | 'groupPermission' | 'otherPermission'
+  'permissionOwner' | 'permissionGroup' | 'permissionOther'
 > = {
-  ownerPermission: 0,
-  groupPermission: 0,
-  otherPermission: 0,
+  permissionOwner: 0,
+  permissionGroup: 0,
+  permissionOther: 0,
 };
 
 export class ModelDocumentMetadata extends ModelGeneral {
@@ -59,13 +59,13 @@ export class ModelDocumentMetadata extends ModelGeneral {
     if (metadata) {
       // User == actor -> return user permission
       if (metadata.owner === actor) {
-        return PermissionBinary.fromBinaryPermission(metadata.ownerPermission);
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
       }
       // User != actor -> check for group permission
       const modelUserGroup = new ModelUserGroup(this.databaseName!);
       const actorGroup = await modelUserGroup.listGroupByUserName(actor);
       if (actorGroup.includes(metadata.group)) {
-        return PermissionBinary.fromBinaryPermission(metadata.groupPermission);
+        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
       }
     }
     // Default deny all

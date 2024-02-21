@@ -122,13 +122,13 @@ export class ModelDocument extends ModelBasic {
         { session }
       );
 
-      const { ownerPermission, groupPermission, otherPermission } =
+      const { permissionOwner, permissionGroup, permissionOther } =
         basicCollectionPermission !== null
           ? basicCollectionPermission
           : {
-              ownerPermission: ZKDATABASE_NO_PERMISSION_BIN,
-              groupPermission: ZKDATABASE_NO_PERMISSION_BIN,
-              otherPermission: ZKDATABASE_NO_PERMISSION_BIN,
+              permissionOwner: ZKDATABASE_NO_PERMISSION_BIN,
+              permissionGroup: ZKDATABASE_NO_PERMISSION_BIN,
+              permissionOther: ZKDATABASE_NO_PERMISSION_BIN,
             };
 
       await modelDocumentMetadata.insertOne({
@@ -136,9 +136,9 @@ export class ModelDocument extends ModelBasic {
         docId: result.insertedId,
         fmerkleIndex: index,
         ...{
-          ownerPermission,
-          groupPermission,
-          otherPermission,
+          permissionOwner,
+          permissionGroup,
+          permissionOther,
           // I'm set these to system user and group as default
           // In case this permission don't override by the user
           // this will prevent the user from accessing the data
