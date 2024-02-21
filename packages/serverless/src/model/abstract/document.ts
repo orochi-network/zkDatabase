@@ -22,13 +22,21 @@ import { ModelSchema } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
+import ModelMerkleTreePool from '../merkle-tree-pool';
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
 export class ModelDocument extends ModelBasic {
+  private merkleTreePool: ModelMerkleTreePool;
+
   public static instances = new Map<string, ModelDocument>();
+
+  private constructor(databaseName: string, collectionName: string) {
+    super(databaseName, collectionName);
+    this.merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
+  }
 
   get modelDatabase() {
     return ModelDatabase.getInstance(this.databaseName!);
@@ -44,7 +52,11 @@ export class ModelDocument extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelDocument.instances.has(key)) {
-      ModelDocument.instances.set(key, new ModelDocument(key));
+      const merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
+      ModelDocument.instances.set(
+        key,
+        new ModelDocument(databaseName, collectionName)
+      );
     }
     return ModelDocument.instances.get(key)!;
   }

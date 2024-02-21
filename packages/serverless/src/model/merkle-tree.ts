@@ -1,10 +1,10 @@
 import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelGeneral from './general';
+import ModelGeneral from './abstract/general';
 import logger from '../helper/logger';
 import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
-import { ZKDATABASE_MERKLE_TREE_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_MERKLE_TREE_COLLECTION } from '../common/const';
 
 export interface MerkleProof {
   sibling: Field;
@@ -78,7 +78,10 @@ export class ModelMerkleTree extends ModelGeneral {
     await this.insertManyLeaves(inserts, session);
   }
 
-  public async insertManyLeaves(leaves: Array<any>, session?: ClientSession): Promise<void> {
+  public async insertManyLeaves(
+    leaves: Array<any>,
+    session?: ClientSession
+  ): Promise<void> {
     await this.collection.insertMany(leaves, { session });
   }
 
@@ -101,9 +104,11 @@ export class ModelMerkleTree extends ModelGeneral {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNode(level, siblingIndex, timestamp, session).then((sibling) => {
-          return { isLeft, sibling };
-        })
+        this.getNode(level, siblingIndex, timestamp, session).then(
+          (sibling) => {
+            return { isLeft, sibling };
+          }
+        )
       );
 
       currIndex /= 2n;
@@ -116,7 +121,7 @@ export class ModelMerkleTree extends ModelGeneral {
     level: number,
     index: bigint,
     timestamp: Date,
-    session?: ClientSession,
+    session?: ClientSession
   ): Promise<Field> {
     try {
       const nodeId = ModelMerkleTree.encodeLevelAndIndexToObjectId(

@@ -1,7 +1,7 @@
 import { Field } from 'o1js';
 import { ClientSession } from 'mongodb';
 import logger from '../helper/logger';
-import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from './abstract/database-engine';
+import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../common/const';
 import ModelBasic from './abstract/basic';
 
 export type TMerkleTreeMetadata = {

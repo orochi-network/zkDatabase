@@ -17,7 +17,10 @@ export class ModelCollection extends ModelBasic {
   public static getInstance(databaseName: string, collectionName: string) {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelCollection.instances.has(key)) {
-      ModelCollection.instances.set(key, new ModelCollection(key));
+      ModelCollection.instances.set(
+        key,
+        new ModelCollection(databaseName, collectionName)
+      );
     }
     return ModelCollection.instances.get(key)!;
   }

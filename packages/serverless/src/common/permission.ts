@@ -2,11 +2,11 @@
 export type PermissionRecord = {
   // Permission to change permission and ownership
   system: boolean;
-  // Permission to insert new record
-  insert: boolean;
+  // Permission to create new record
+  create: boolean;
   // Permission to read record
   read: boolean;
-  // Permission to write record
+  // Permission to write on existing record
   write: boolean;
   // Permission to delete record
   delete: boolean;
@@ -16,7 +16,7 @@ export const ZKDATABASE_NO_PERMISSION_RECORD = {
   read: false,
   write: false,
   delete: false,
-  insert: false,
+  create: false,
   system: false,
 };
 
@@ -70,11 +70,11 @@ export class PermissionBinary {
   }
 
   set insert(value: boolean) {
-    this.set('insert', value);
+    this.set('create', value);
   }
 
   get insert(): boolean {
-    return this.permission.insert;
+    return this.permission.create;
   }
 
   set read(value: boolean) {

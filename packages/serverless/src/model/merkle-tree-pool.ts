@@ -1,9 +1,9 @@
 import { Field } from 'o1js';
 import { ClientSession } from 'mongodb';
-import ModelGeneral from './general';
+import ModelGeneral from './abstract/general';
 import logger from '../helper/logger';
-import ModelCollection from './collection';
-import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from './abstract/database-engine';
+import ModelCollection from './abstract/collection';
+import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from '../common/const';
 
 export type PooledLeaf = {
   index: bigint;

@@ -13,12 +13,26 @@ export const ZKDATABASE_METADATA_COLLECTION = '_zkdatabase_permission';
 // System management
 export const ZKDATABASE_GLOBAL_DB = '_zkdatabase_metadata';
 
+// Merkle tree metadata collection
+export const ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION =
+  '_zkdatabase_merkle_tree_metadata';
+
+// Merkle tree pool collection
+export const ZKDATABASE_MERKLE_TREE_POOL_COLLECTION =
+  '_zkdatabase_merkle_tree_pool';
+
+// Merkle tree collection
+export const ZKDATABASE_MERKLE_TREE_COLLECTION = '_zkdatabase_merkle_tree';
+
 // Metadata collections
 export const ZKDATABASE_METADATA = [
   ZKDATABASE_SCHEMA_COLLECTION,
   ZKDATABASE_GROUP_COLLECTION,
   ZKDATABASE_USER_GROUP_COLLECTION,
   ZKDATABASE_METADATA_COLLECTION,
+  ZKDATABASE_MERKLE_TREE_COLLECTION,
+  ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION,
+  ZKDATABASE_MERKLE_TREE_POOL_COLLECTION,
 ];
 
 // System user
