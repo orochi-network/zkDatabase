@@ -17,7 +17,10 @@ import {
   ModelDocumentMetadata,
   DocumentMetadataSchema,
 } from '../database/document-metadata';
-import { ZKDATABASE_NO_PERMISSION_BIN } from '../../common/permission';
+import {
+  PermissionInherit,
+  ZKDATABASE_NO_PERMISSION_BIN,
+} from '../../common/permission';
 import { ModelSchema } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
@@ -91,7 +94,7 @@ export class ModelDocument<T extends Document> extends ModelBasic<T> {
 
   public async insertOne(
     data: OptionalUnlessRequiredId<T>,
-    inheritPermission: Partial<DocumentMetadataSchema>
+    documentPermission: Partial<PermissionInherit> = {}
   ) {
     let insertResult;
     await this.withTransaction(async (session: ClientSession) => {
@@ -136,7 +139,8 @@ export class ModelDocument<T extends Document> extends ModelBasic<T> {
           group: ZKDATABASE_GROUP_SYSTEM,
           owner: ZKDATABAES_USER_SYSTEM,
         },
-        ...inheritPermission,
+        // Overwrite inherited permission with the new one
+        ...documentPermission,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       });

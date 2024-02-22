@@ -1,15 +1,14 @@
-import { O1DataType } from '../../common/o1js';
+import { ProvableTypeString } from '../common/schema';
 import { PermissionBasic, PermissionInherit } from '../../common/permission';
 import ModelGeneral from '../abstract/general';
 import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import { getCurrentTime } from '../../helper/common';
-import { FindOptions, WithId } from 'mongodb';
 
 export type SchemaField = {
   order: number;
   name: string;
-  type: O1DataType;
+  kind: ProvableTypeString;
   value: string;
   indexed: boolean;
 };
@@ -23,7 +22,7 @@ export type SchemaBasic = {
 
 export type SchemaFieldDef = Omit<SchemaField, 'value'>;
 
-export type SchemaBuilder = Pick<SchemaField, 'name' | 'type' | 'indexed'>;
+export type SchemaBuilder = Pick<SchemaField, 'name' | 'kind' | 'indexed'>;
 
 export interface SchemaDefinition
   extends Document,
@@ -77,12 +76,12 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     };
     const indexKeys = [];
     for (let i = 0; i < schemaBuilder.schemas.length; i += 1) {
-      const { name, type, indexed } = schemaBuilder.schemas[i];
+      const { name, kind, indexed } = schemaBuilder.schemas[i];
       schemaDef.fields.push(name);
       schemaDef[name] = {
         order: i,
         name,
-        type,
+        kind,
         indexed,
       };
       if (indexed) {
