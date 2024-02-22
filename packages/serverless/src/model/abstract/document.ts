@@ -22,7 +22,7 @@ import { ModelSchema } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
-import ModelMerkleTreePool from '../merkle-tree-pool';
+import ModelMerkleTreePool from '../database/merkle-tree-pool';
 
 /**
  * ModelDocument is a class that extends ModelBasic.

@@ -1,8 +1,8 @@
 import { Field } from 'o1js';
 import { Document, FindOptions, InsertOneOptions } from 'mongodb';
-import logger from '../helper/logger';
-import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../common/const';
-import ModelBasic from './abstract/basic';
+import logger from '../../helper/logger';
+import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../../common/const';
+import ModelBasic from '../abstract/basic';
 
 // This is data type for merkle tree metadata to be able to store in database
 export interface MerkleTreeMetadata extends Document {

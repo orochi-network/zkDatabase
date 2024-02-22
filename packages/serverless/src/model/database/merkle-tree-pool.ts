@@ -5,10 +5,10 @@ import {
   Document,
   DeleteOptions,
 } from 'mongodb';
-import ModelGeneral from './abstract/general';
-import logger from '../helper/logger';
-import ModelCollection from './abstract/collection';
-import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from '../common/const';
+import ModelGeneral from '../abstract/general';
+import logger from '../../helper/logger';
+import ModelCollection from '../abstract/collection';
+import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from '../../common/const';
 
 // Data type for merkle tree pool to be able to store in database
 export interface PooledLeaf extends Document {
