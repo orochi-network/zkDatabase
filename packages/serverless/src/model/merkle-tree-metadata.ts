@@ -1,8 +1,15 @@
 import { Field } from 'o1js';
-import { ClientSession } from 'mongodb';
+import { Document, FindOptions, InsertOneOptions } from 'mongodb';
 import logger from '../helper/logger';
 import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../common/const';
 import ModelBasic from './abstract/basic';
+
+// This is data type for merkle tree metadata to be able to store in database
+export interface MerkleTreeMetadata extends Document {
+  date: Date;
+  root: string;
+  height: number;
+}
 
 export type TMerkleTreeMetadata = {
   date: Date;
@@ -10,7 +17,9 @@ export type TMerkleTreeMetadata = {
   height: number;
 };
 
-export class ModelMerkleTreeMetadata extends ModelBasic {
+export class ModelMerkleTreeMetadata extends ModelBasic<
+  Partial<MerkleTreeMetadata>
+> {
   private constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION);
   }
@@ -26,13 +35,13 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
     }
   }
 
-  public async getHeight(): Promise<number | null> {
+  public async getHeight(): Promise<number | undefined> {
     try {
       const heightData = await this.collection.findOne(
         {},
         { projection: { height: 1 } }
       );
-      return heightData ? heightData.height : null;
+      return heightData ? heightData.height! : undefined;
     } catch (error) {
       logger.error('Error retrieving tree height:', error);
       throw error;
@@ -42,7 +51,7 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
   public async createMetadata(
     root: Field,
     date: Date,
-    session?: ClientSession
+    options?: InsertOneOptions
   ): Promise<boolean> {
     const height = await this.getHeight();
     try {
@@ -52,7 +61,7 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
           height,
           root: root.toString(),
         },
-        { session }
+        options
       );
 
       return result.acknowledged;
@@ -63,11 +72,11 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
   }
 
   public async getLatestMetadata(
-    session?: ClientSession
+    options?: FindOptions
   ): Promise<TMerkleTreeMetadata | null> {
     try {
       const result = await this.collection
-        .find({}, { session })
+        .find({}, options)
         .sort({ date: -1 })
         .limit(1)
         .toArray();
@@ -77,9 +86,10 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
 
       const latestMetadataDocument = result[0];
       const latestMetadata: TMerkleTreeMetadata = {
-        date: latestMetadataDocument.date,
-        root: Field(latestMetadataDocument.root),
-        height: latestMetadataDocument.height,
+        // Date will be stored as string
+        date: new Date(latestMetadataDocument.date!),
+        root: Field(latestMetadataDocument.root!),
+        height: latestMetadataDocument.height!,
       };
 
       return latestMetadata;
@@ -91,23 +101,23 @@ export class ModelMerkleTreeMetadata extends ModelBasic {
 
   public async getMetadataByRoot(
     root: Field,
-    session?: ClientSession
+    options?: FindOptions
   ): Promise<TMerkleTreeMetadata | null> {
     try {
       const metadataDocument = await this.collection.findOne(
         {
           root: root.toString(),
         },
-        { session }
+        options
       );
       if (!metadataDocument) {
         return null;
       }
 
       const metadata: TMerkleTreeMetadata = {
-        date: metadataDocument.date,
-        root: Field(metadataDocument.root),
-        height: metadataDocument.height,
+        date: new Date(metadataDocument.date!),
+        root: Field(metadataDocument.root!),
+        height: metadataDocument.height!,
       };
 
       return metadata;

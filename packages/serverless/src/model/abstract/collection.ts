@@ -7,8 +7,8 @@ import ModelDatabase from './database';
  * Build on top of ModelBasic, it handle everything about collection in general
  * Don't use this directly
  */
-export class ModelCollection extends ModelBasic {
-  public static instances = new Map<string, ModelCollection>();
+export class ModelCollection<T extends Document> extends ModelBasic<T> {
+  public static instances = new Map<string, ModelCollection<any>>();
 
   get modelDatabase() {
     return ModelDatabase.getInstance(this.databaseName!);

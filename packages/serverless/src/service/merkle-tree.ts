@@ -59,7 +59,7 @@ export default class MerkleTreeService {
     await this.merkleTreeMetadata.createMetadata(root, new Date());
   }
 
-  public async getHeight(): Promise<number | null> {
+  public async getHeight(): Promise<number | undefined> {
     return this.merkleTreeMetadata.getHeight();
   }
 
@@ -73,22 +73,26 @@ export default class MerkleTreeService {
           throw new Error('Merkle Tree is not created');
         }
 
-        const leaves = await this.merkleTreePool.getOldestLeaves(amount, session);
+        const leaves = await this.merkleTreePool.getOldestLeaves(amount, {
+          session,
+        });
         const buildTime = new Date();
 
         const leafPromises = leaves.map((leaf) =>
-          this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime, session)
+          this.merkleTree.setLeaf(leaf.index, leaf.hash, buildTime, { session })
         );
 
         await Promise.all(leafPromises);
-        await this.merkleTreePool.removeLeaves(leaves, session);
+        await this.merkleTreePool.removeLeaves(leaves, { session });
         const newRoot = await this.merkleTree.getNode(
           height - 1,
           0n,
           buildTime,
-          session
+          { session }
         );
-        await this.merkleTreeMetadata.createMetadata(newRoot, buildTime, session);
+        await this.merkleTreeMetadata.createMetadata(newRoot, buildTime, {
+          session,
+        });
 
         transactionResult = true;
       });

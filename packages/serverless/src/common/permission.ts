@@ -30,6 +30,12 @@ export type PermissionBasic = {
   permissionOther: number;
 };
 
+export type PermissionInherit = {
+  permissionOwner: number;
+  permissionGroup: number;
+  permissionOther: number;
+};
+
 // Transform partial permission to full permission record
 export function partialToPermission(
   partial: Partial<PermissionRecord>

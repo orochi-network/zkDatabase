@@ -28,10 +28,10 @@ import ModelMerkleTreePool from '../merkle-tree-pool';
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
-export class ModelDocument extends ModelBasic {
+export class ModelDocument<T extends Document> extends ModelBasic<T> {
   private merkleTreePool: ModelMerkleTreePool;
 
-  public static instances = new Map<string, ModelDocument>();
+  public static instances = new Map<string, ModelDocument<any>>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
@@ -62,8 +62,8 @@ export class ModelDocument extends ModelBasic {
   }
 
   public async updateOne(
-    filter: Filter<Document>,
-    update: UpdateFilter<Document>
+    filter: Filter<T>,
+    update: UpdateFilter<T>
   ): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
@@ -76,17 +76,9 @@ export class ModelDocument extends ModelBasic {
       // - We need to check for permission
       // - We need to check for the index in document metadata
       // - Update the merkle tree
-      const result = await this.collection.updateMany(
-        filter,
-        {
-          $set: {
-            ...update,
-          },
-        },
-        {
-          session,
-        }
-      );
+      const result = await this.collection.updateMany(filter, update, {
+        session,
+      });
       // We need to do this to make sure that only 1 record
       if (1 === result.modifiedCount) {
         updated = true;
@@ -97,7 +89,7 @@ export class ModelDocument extends ModelBasic {
     return updated;
   }
 
-  public async insertOne<T extends any>(
+  public async insertOne(
     data: OptionalUnlessRequiredId<T>,
     inheritPermission: Partial<DocumentMetadataSchema>
   ) {
@@ -114,10 +106,9 @@ export class ModelDocument extends ModelBasic {
         { session }
       );
 
-      const basicCollectionPermission = await modelSchema.collection.findOne(
+      const basicCollectionPermission = await modelSchema.findOne(
         {
           collection: this.collectionName,
-          docId: null,
         },
         { session }
       );
@@ -134,7 +125,7 @@ export class ModelDocument extends ModelBasic {
       await modelDocumentMetadata.insertOne({
         collection: this.collectionName!,
         docId: result.insertedId,
-        fmerkleIndex: index,
+        merkleIndex: index,
         ...{
           permissionOwner,
           permissionGroup,

@@ -1,4 +1,4 @@
-import { InsertOneResult, WithId } from 'mongodb';
+import { Document } from 'mongodb';
 import {
   ZKDATABAES_USER_NOBODY,
   ZKDATABAES_USER_SYSTEM,
@@ -7,7 +7,7 @@ import {
 import { ModelGeneral } from '../abstract/general';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common';
 
-export type DocumentUser = {
+export interface DocumentUser extends Document {
   userName: string;
   email: string;
   publicKey: string;
@@ -15,9 +15,9 @@ export type DocumentUser = {
   userData: any;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
-export class ModelUser extends ModelGeneral {
+export class ModelUser extends ModelGeneral<DocumentUser> {
   static collectionName: string = 'user';
   static defaultUsers: string[] = [
     ZKDATABAES_USER_NOBODY,
@@ -51,9 +51,9 @@ export class ModelUser extends ModelGeneral {
     searchingInfo: Partial<
       Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
     >
-  ): Promise<DocumentUser[]> {
+  ) {
     // Search a user for given information is matched
-    const result = await this.collection.find<WithId<DocumentUser>>({
+    const result = await this.collection.find({
       $or: objectToLookupPattern(searchingInfo),
     });
 
@@ -65,7 +65,7 @@ export class ModelUser extends ModelGeneral {
     email: string,
     publicKey: string,
     userData: any
-  ): Promise<InsertOneResult<DocumentUser> | null> {
+  ) {
     ModelUser.isValidUser(userName);
     if (await this.isUserExist({ userName, email, publicKey })) {
       return this.insertOne({
@@ -73,6 +73,7 @@ export class ModelUser extends ModelGeneral {
         email,
         publicKey,
         userData,
+        activated: true,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       });

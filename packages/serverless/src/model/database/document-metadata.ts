@@ -1,4 +1,4 @@
-import { FindOptions, ObjectId } from 'mongodb';
+import { FindOptions, ObjectId, Document, Filter } from 'mongodb';
 import { ZKDATABASE_METADATA_COLLECTION } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import {
@@ -10,13 +10,13 @@ import {
 import ModelUserGroup from './user-group';
 import ModelCollection from '../abstract/collection';
 
-export type DocumentMetadataSchema = PermissionBasic & {
+export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
   docId: ObjectId;
   merkleIndex: number;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
   DocumentMetadataSchema,
@@ -27,7 +27,7 @@ export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
   permissionOther: 0,
 };
 
-export class ModelDocumentMetadata extends ModelGeneral {
+export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
   static collectionName: string = ZKDATABASE_METADATA_COLLECTION;
 
   constructor(databaseName: string) {

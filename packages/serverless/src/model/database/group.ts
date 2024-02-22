@@ -1,3 +1,4 @@
+import { Document } from 'mongodb';
 import {
   ZKDATABAES_USER_SYSTEM,
   ZKDATABASE_GROUP_COLLECTION,
@@ -5,15 +6,15 @@ import {
 import ModelCollection from '../abstract/collection';
 import { ModelGeneral } from '../abstract/general';
 
-export type GroupSchema = {
+export interface GroupSchema extends Document {
   groupName: string;
   description: string;
   createdBy: string;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
-export class ModelGroup extends ModelGeneral {
+export class ModelGroup extends ModelGeneral<Partial<GroupSchema>> {
   static collectionName: string = ZKDATABASE_GROUP_COLLECTION;
 
   constructor(databaseName: string) {

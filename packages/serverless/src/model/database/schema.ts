@@ -1,10 +1,10 @@
 import { O1DataType } from '../../common/o1js';
-import { PermissionBasic } from '../../common/permission';
+import { PermissionBasic, PermissionInherit } from '../../common/permission';
 import ModelGeneral from '../abstract/general';
 import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
-import ModelDocument from '../abstract/document';
 import { getCurrentTime } from '../../helper/common';
+import { FindOptions, WithId } from 'mongodb';
 
 export type SchemaField = {
   order: number;
@@ -25,10 +25,12 @@ export type SchemaFieldDef = Omit<SchemaField, 'value'>;
 
 export type SchemaBuilder = Pick<SchemaField, 'name' | 'type' | 'indexed'>;
 
-export type SchemaDef = SchemaBasic &
-  PermissionBasic & {
-    [key: string]: SchemaFieldDef;
-  };
+export interface SchemaDefinition
+  extends Document,
+    SchemaBasic,
+    PermissionInherit {
+  [key: string]: any;
+}
 
 export type SchemaDefBuilder = {
   schemas: SchemaBuilder[];
@@ -39,7 +41,7 @@ export type SchemaIndex<T> = {
   [Property in keyof T as `${string & Property}.name`]: string;
 };
 
-export class ModelSchema extends ModelGeneral {
+export class ModelSchema extends ModelGeneral<SchemaDefinition> {
   static collectionName: string = ZKDATABASE_SCHEMA_COLLECTION;
 
   private static instances: { [key: string]: ModelSchema } = {};
@@ -66,7 +68,7 @@ export class ModelSchema extends ModelGeneral {
     schemaBuilder: SchemaDefBuilder
   ) {
     ModelSchema.isValidCollectionName(collectionName);
-    const schemaDef: SchemaDef = {
+    const schemaDef: any = {
       collection: collectionName,
       ...schemaBuilder.permission,
       fields: [],
