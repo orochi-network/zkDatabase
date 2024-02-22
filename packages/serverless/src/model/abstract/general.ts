@@ -13,6 +13,7 @@ import {
   DeleteOptions,
   DeleteResult,
   FindOptions,
+  CountDocumentsOptions,
 } from 'mongodb';
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
@@ -47,7 +48,7 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
     filter: Filter<T>,
     update: UpdateFilter<T>,
     options?: UpdateOptions
-  ): Promise<UpdateResult<Document>> {
+  ): Promise<UpdateResult<T>> {
     logger.debug(`ModelGeneral::updateOne()`, filter, update);
     return this.collection.updateMany(filter, update, options);
   }
@@ -69,21 +70,24 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
   }
 
   public async findOne(
-    filter: Filter<T>,
+    filter?: Filter<T>,
     options?: FindOptions
   ): Promise<WithId<T> | null> {
     logger.debug(`ModelGeneral::findOne()`, filter);
-    return this.collection.findOne(filter, options);
+    return this.collection.findOne(filter || {}, options);
   }
 
-  public async find(filter?: Filter<T>): Promise<WithId<T>[]> {
+  public async find(filter?: Filter<T>, options?: FindOptions) {
     logger.debug(`ModelGeneral::find()`, filter);
-    return this.collection.find(filter || {}).toArray();
+    return this.collection.find(filter || {}, options);
   }
 
-  public async count(filter?: Filter<T>): Promise<number> {
+  public async count(
+    filter?: Filter<T>,
+    options?: CountDocumentsOptions
+  ): Promise<number> {
     logger.debug(`ModelGeneral::count()`, filter);
-    return this.collection.countDocuments(filter || {});
+    return this.collection.countDocuments(filter || {}, options);
   }
 
   public async deleteOne(

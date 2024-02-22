@@ -5,16 +5,17 @@ import {
 } from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import { ModelGeneral } from '../abstract/general';
+import { getCurrentTime } from '../../helper/common';
 
 export interface GroupSchema extends Document {
   groupName: string;
   description: string;
-  createdBy: string;
+  createBy: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class ModelGroup extends ModelGeneral<Partial<GroupSchema>> {
+export class ModelGroup extends ModelGeneral<GroupSchema> {
   static collectionName: string = ZKDATABASE_GROUP_COLLECTION;
 
   constructor(databaseName: string) {
@@ -30,6 +31,8 @@ export class ModelGroup extends ModelGeneral<Partial<GroupSchema>> {
       groupName,
       description: description || `Group ${groupName}`,
       createBy: createBy || ZKDATABAES_USER_SYSTEM,
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
     });
   }
 

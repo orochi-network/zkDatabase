@@ -39,7 +39,7 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
       .find({}, findOpt)
       .sort({ index: -1 })
       .limit(1);
-    const maxIndexedRecord: any = (await maxIndexedCursor.hasNext())
+    const maxIndexedRecord = (await maxIndexedCursor.hasNext())
       ? await maxIndexedCursor.next()
       : { index: -1 };
 

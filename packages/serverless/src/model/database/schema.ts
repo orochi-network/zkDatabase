@@ -74,7 +74,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
       fields: [],
       createdAt: getCurrentTime(),
       updatedAt: getCurrentTime(),
-    } as any;
+    };
     const indexKeys = [];
     for (let i = 0; i < schemaBuilder.schemas.length; i += 1) {
       const { name, type, indexed } = schemaBuilder.schemas[i];

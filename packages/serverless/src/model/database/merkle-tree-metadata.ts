@@ -3,6 +3,7 @@ import { Document, FindOptions, InsertOneOptions } from 'mongodb';
 import logger from '../../helper/logger';
 import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../../common/const';
 import ModelBasic from '../abstract/basic';
+import { getCurrentTime } from '../../helper/common';
 
 // This is data type for merkle tree metadata to be able to store in database
 export interface MerkleTreeMetadata extends Document {
@@ -17,17 +18,18 @@ export type TMerkleTreeMetadata = {
   height: number;
 };
 
-export class ModelMerkleTreeMetadata extends ModelBasic<
-  Partial<MerkleTreeMetadata>
-> {
+export class ModelMerkleTreeMetadata extends ModelBasic<MerkleTreeMetadata> {
   private constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION);
   }
 
   public async setInitialHeight(height: number): Promise<boolean> {
-    const initialHeightData = { height };
     try {
-      const result = await this.collection.insertOne(initialHeightData);
+      const result = await this.collection.insertOne({
+        height,
+        date: getCurrentTime(),
+        root: '',
+      });
       return result.acknowledged;
     } catch (error) {
       logger.error('Error setting initial tree height:', error);
@@ -37,10 +39,9 @@ export class ModelMerkleTreeMetadata extends ModelBasic<
 
   public async getHeight(): Promise<number | undefined> {
     try {
-      const heightData = await this.collection.findOne(
-        {},
-        { projection: { height: 1 } }
-      );
+      const heightData = await this.collection.findOne({
+        root: '',
+      });
       return heightData ? heightData.height! : undefined;
     } catch (error) {
       logger.error('Error retrieving tree height:', error);
@@ -54,6 +55,9 @@ export class ModelMerkleTreeMetadata extends ModelBasic<
     options?: InsertOneOptions
   ): Promise<boolean> {
     const height = await this.getHeight();
+    if (typeof height !== 'number') {
+      throw new Error('Tree height is not set');
+    }
     try {
       const result = await this.collection.insertOne(
         {
