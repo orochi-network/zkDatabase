@@ -1,18 +1,10 @@
 import { MongoClient, Collection } from 'mongodb';
-import { DATABASE_URL, GLOBAL_DATABASE_NAME, GLOBAL_QUEUE_COLLECTION_NAME } from '../database/const';
-
-export type Task = {
-  id: bigint;
-  index: bigint;
-  hash: string;
-};
-
-export interface ITaskQueue {
-  connect(): Promise<void>;
-  isConnected(): boolean;
-  getNextTask(): Promise<Task | null>;
-  markTaskProcessed(task: Task): Promise<void>;
-}
+import {
+  DATABASE_URL,
+  GLOBAL_DATABASE_NAME,
+  GLOBAL_QUEUE_COLLECTION_NAME,
+} from '../database/const';
+import { ITaskQueue, Task } from './ITaskQueue';
 
 export class TaskQueue implements ITaskQueue {
   private client: MongoClient | null = null;
@@ -51,5 +43,4 @@ export class TaskQueue implements ITaskQueue {
       { $set: { processed: true } }
     );
   }
-
 }
