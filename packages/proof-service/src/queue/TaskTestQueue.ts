@@ -1,3 +1,4 @@
+import { Field } from 'o1js';
 import { ITaskQueue, Task } from './ITaskQueue';
 
 export class TaskTestQueue implements ITaskQueue {
@@ -8,16 +9,8 @@ export class TaskTestQueue implements ITaskQueue {
     this.tasks = Array.from({ length: numTasks }, (_, i) => ({
       id: BigInt(i + 1),
       index: BigInt(i + 1),
-      hash: `${i + 1}`,
+      hash: Field(`${i + 1}`),
     }));
-  }
-
-  connect(): Promise<void> {
-    return Promise.resolve();
-  }
-
-  isConnected(): boolean {
-    return true;
   }
 
   async getNextTask(): Promise<Task | null> {

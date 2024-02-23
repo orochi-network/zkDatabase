@@ -1,12 +1,12 @@
+import { Field } from "o1js";
+
 export type Task = {
   id: bigint;
   index: bigint;
-  hash: string;
+  hash: Field;
 };
 
 export interface ITaskQueue {
-  connect(): Promise<void>;
-  isConnected(): boolean;
   getNextTask(): Promise<Task | null>;
   markTaskProcessed(task: Task): Promise<void>;
 }

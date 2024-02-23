@@ -19,7 +19,7 @@ export default class TaskQueueProcessor {
 
     class RollUpProof extends ZkProgram.Proof(this.rollUpProxy.getProgram()) {}
 
-    while (this.taskQueue.isConnected()) {
+    while (true) {
       const task = await this.taskQueue.getNextTask();
 
       let proof: RollUpProof | undefined = undefined;
@@ -32,7 +32,7 @@ export default class TaskQueueProcessor {
               this.merkleTree.getRoot(),
               new DatabaseMerkleWitness(this.merkleTree.getWitness(task.id)),
               Field(0),
-              Field(task.hash)
+              task.hash
             );
         } else if (proof) {
           proof = await this.rollUpProxy
@@ -42,7 +42,7 @@ export default class TaskQueueProcessor {
               proof,
               new DatabaseMerkleWitness(this.merkleTree.getWitness(task.id)),
               Field(0),
-              Field(task.hash)
+              task.hash
             );
         }
 

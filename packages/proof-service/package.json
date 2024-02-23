@@ -35,6 +35,11 @@
     "ts-jest": "^27.0.7",
     "typescript": "^4.7.2"
   },
+  "dependencies": {
+    "@orochi-network/framework": "^1.1.8",
+    "express": "^4.18.2",
+    "mongodb": "^6.3.0"
+  },
   "peerDependencies": {
     "o1js": "0.16.*"
   }
