@@ -55,6 +55,7 @@ export interface SchemaDefinition
   extends Document,
     SchemaBasic,
     DocumentPermission {
+  //SchemaFieldDef
   [key: string]: any;
 }
 
@@ -89,13 +90,28 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     return ModelSchema.instances[databaseName];
   }
 
-  public static validate(
+  public static validateDocument(
+    schema: SchemaDefinition,
+    document: DocumentRecord
+  ) {
+    return ModelSchema.validateFields(schema.fields, schema, document);
+  }
+
+  public static validateUpdate(
+    schema: SchemaDefinition,
+    document: DocumentRecord
+  ) {
+    return ModelSchema.validateFields(Object.keys(document), schema, document);
+  }
+
+  private static validateFields(
+    fields: string[],
     schema: SchemaDefinition,
     document: DocumentRecord
   ): boolean {
     let result = true;
-    for (let i = 0; i < schema.fields.length; i += 1) {
-      const field = schema.fields[i];
+    for (let i = 0; i < fields.length; i += 1) {
+      const field = fields[i];
       const kind = schema[field].kind;
       // Check if kind is supported
       if (schemaVerification.has(kind) === false) {

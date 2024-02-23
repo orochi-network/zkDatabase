@@ -2,8 +2,7 @@
 import {
   ClientSession,
   Filter,
-  InsertOneResult,
-  UpdateFilter,
+  UpdateResult,
   Document,
   ObjectId,
 } from 'mongodb';
@@ -20,6 +19,8 @@ import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import ModelMerkleTreePool from '../database/merkle-tree-pool';
 import { PermissionBasic } from '../../common/permission';
+import { SchemaEncoded, Schema, ProvableTypeString } from '../common/schema';
+import { ProvableTypeMap } from '../../common/schema';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -74,43 +75,76 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     const schema = await modelSchema.findOne({
       collection: this.collectionName,
     });
+    const encodedDocument: SchemaEncoded = [];
+    const structType: { [key: string]: any } = {};
     const document = await this.findOne({ _id: documentId });
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
-        const field = schema.fields[i];
-        const { kind } = schema[field].kind;
-        const value = document[field].value;
+        const schemaField = schema.fields[i];
+        const { name, kind, value } = document[schemaField];
+        if (
+          schema[schemaField].name !== name &&
+          schema[schemaField].kind !== kind
+        ) {
+          throw new Error('Invalid formatted document');
+        }
+        structType[name] = ProvableTypeMap[name as ProvableTypeString];
+        encodedDocument.push([name, kind, value]);
       }
-      return { documentMetadata, schema };
+      const structedSchema = Schema.create(structType);
+      structedSchema.deserialize(encodedDocument).hash();
+      return {
+        schema,
+        document,
+        structedSchema,
+        structedDocument: structedSchema.deserialize(encodedDocument),
+      };
     }
+    return null;
   }
 
   public async updateOne(
     filter: Filter<DocumentRecord>,
-    update: UpdateFilter<DocumentRecord>
-  ): Promise<boolean> {
-    let updated = false;
-    await this.withTransaction(async (session: ClientSession) => {
-      const oldRecord = await this.collection.findOne(filter, { session });
-      if (oldRecord === null) {
-        throw new Error('Record not found');
+    update: DocumentRecord
+  ): Promise<UpdateResult<DocumentRecord> | null> {
+    let updateResult: UpdateResult<DocumentRecord> | null = null;
+    const success = await this.withTransaction(
+      async (session: ClientSession) => {
+        const modelSchema = ModelSchema.getInstance(this.databaseName!);
+        const schema = await modelSchema.findOne(
+          {
+            collection: this.collectionName,
+          },
+          { session }
+        );
+        // Schema not found
+        if (schema === null) {
+          throw new Error('Schema not found');
+        }
+        // Validate the update
+        if (!ModelSchema.validateUpdate(schema, update)) {
+          throw new Error('Invalid update, schema validation failed');
+        }
+
+        // Update the document
+        updateResult = await this.collection.updateMany(
+          filter,
+          { $set: update },
+          {
+            session,
+          }
+        );
+
+        // We need to do this to make sure that only 1 record
+        if (
+          1 !== updateResult.modifiedCount &&
+          1 !== updateResult.matchedCount
+        ) {
+          throw new Error('Invalid update, modified count not equal to 1');
+        }
       }
-      // @todo I think we need to make sure that the update is valid
-      // - We need to check the schema
-      // - We need to check for permission
-      // - We need to check for the index in document metadata
-      // - Update the merkle tree
-      const result = await this.collection.updateMany(filter, update, {
-        session,
-      });
-      // We need to do this to make sure that only 1 record
-      if (1 === result.modifiedCount) {
-        updated = true;
-      } else {
-        await session.abortTransaction();
-      }
-    });
-    return updated;
+    );
+    return success ? updateResult : null;
   }
 
   public async insertOne(
@@ -143,7 +177,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           throw new Error('Schema not found');
         }
 
-        if (ModelSchema.validate(documentSchema, documentRecord)) {
+        if (ModelSchema.validateDocument(documentSchema, documentRecord)) {
           throw new Error('Invalid document schema');
         }
 

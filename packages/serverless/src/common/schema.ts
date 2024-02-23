@@ -49,7 +49,7 @@ export type ProvableTypeString =
   | 'Signature'
   | 'MerkleMapWitness';
 
-const ProvableTypeMap = {
+export const ProvableTypeMap = {
   CircuitString: CircuitString,
   UInt32: UInt32,
   UInt64: UInt64,
@@ -69,11 +69,11 @@ export type ProvableMapped<T extends { [key: string]: ProvableTypeString }> = {
 };
 
 export function toInnerStructure<
-  T extends { [key: string]: ProvableTypeString }
+  T extends { [key: string]: ProvableTypeString },
 >(schema: T): ProvableMapped<T> {
   const result: any = {};
   const keys: ProvableTypeString[] = Object.keys(schema) as any;
-  for (let i = 0; i < keys.length; i+=1) {
+  for (let i = 0; i < keys.length; i += 1) {
     result[keys[i]] = ProvableTypeMap[schema[keys[i]]];
   }
   return result;
@@ -86,7 +86,7 @@ export type SchemaDefinition = {
 export type SchemaEncoded = [
   name: string,
   kind: ProvableTypeString,
-  value: string
+  value: string,
 ][];
 
 export class Schema {
@@ -138,7 +138,7 @@ export class Schema {
 
       static deserialize(doc: SchemaEncoded): Document {
         const result: any = {};
-        for (let i = 0; i < doc.length; i+=1) {
+        for (let i = 0; i < doc.length; i += 1) {
           const [key, kind, value] = doc[i];
           switch (kind) {
             case 'PrivateKey':
@@ -180,9 +180,7 @@ export class Schema {
       record.map(([name, kind, _value]) => [name, kind as ProvableTypeString])
     );
     console.log('entries', entries);
-    return Schema.fromSchema(
-      entries
-    );
+    return Schema.fromSchema(entries);
   }
 
   public static fromSchema(schema: SchemaDefinition) {

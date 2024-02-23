@@ -86,8 +86,6 @@ export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
     type: A
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
-    console.log(type);
-
     class Document extends Struct(type) {
       constructor(...args: T[]) {
         super(...args);
