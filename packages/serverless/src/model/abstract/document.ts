@@ -3,9 +3,9 @@ import {
   ClientSession,
   Filter,
   InsertOneResult,
-  OptionalUnlessRequiredId,
   UpdateFilter,
   Document,
+  ObjectId,
 } from 'mongodb';
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
@@ -13,28 +13,33 @@ import {
   ZKDATABAES_USER_SYSTEM,
   ZKDATABASE_GROUP_SYSTEM,
 } from '../../common/const';
-import {
-  ModelDocumentMetadata,
-  DocumentMetadataSchema,
-} from '../database/document-metadata';
-import {
-  PermissionInherit,
-  ZKDATABASE_NO_PERMISSION_BIN,
-} from '../../common/permission';
-import { ModelSchema } from '../database/schema';
+import { ModelDocumentMetadata } from '../database/document-metadata';
+import { ModelSchema, SchemaField } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import ModelMerkleTreePool from '../database/merkle-tree-pool';
+import { PermissionBasic } from '../../common/permission';
+
+export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
+
+export type DocumentPermission = Pick<
+  PermissionBasic,
+  'permissionOwner' | 'permissionGroup' | 'permissionOther'
+>;
+
+export interface DocumentRecord extends Document {
+  [key: string]: DocumentField;
+}
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
-export class ModelDocument<T extends Document> extends ModelBasic<T> {
+export class ModelDocument extends ModelBasic<DocumentRecord> {
   private merkleTreePool: ModelMerkleTreePool;
 
-  public static instances = new Map<string, ModelDocument<any>>();
+  public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
@@ -64,9 +69,25 @@ export class ModelDocument<T extends Document> extends ModelBasic<T> {
     return ModelDocument.instances.get(key)!;
   }
 
+  public async getDocumentDetail(documentId: ObjectId) {
+    const modelSchema = ModelSchema.getInstance(this.databaseName!);
+    const schema = await modelSchema.findOne({
+      collection: this.collectionName,
+    });
+    const document = await this.findOne({ _id: documentId });
+    if (schema !== null && document !== null) {
+      for (let i = 0; i < schema.fields.length; i += 1) {
+        const field = schema.fields[i];
+        const { kind } = schema[field].kind;
+        const value = document[field].value;
+      }
+      return { documentMetadata, schema };
+    }
+  }
+
   public async updateOne(
-    filter: Filter<T>,
-    update: UpdateFilter<T>
+    filter: Filter<DocumentRecord>,
+    update: UpdateFilter<DocumentRecord>
   ): Promise<boolean> {
     let updated = false;
     await this.withTransaction(async (session: ClientSession) => {
@@ -93,59 +114,68 @@ export class ModelDocument<T extends Document> extends ModelBasic<T> {
   }
 
   public async insertOne(
-    data: OptionalUnlessRequiredId<T>,
-    documentPermission: Partial<PermissionInherit> = {}
+    documentRecord: DocumentRecord,
+    documentPermission: Partial<DocumentPermission> = {}
   ) {
     let insertResult;
-    await this.withTransaction(async (session: ClientSession) => {
-      // @todo We need to check for schema here
-      const modelSchema = ModelSchema.getInstance(this.databaseName!);
-      const modelDocumentMetadata = new ModelDocumentMetadata(
-        this.databaseName!
-      );
-      const index = (await modelDocumentMetadata.getMaxIndex({ session })) + 1;
-      const result: InsertOneResult<Document> = await this.collection.insertOne(
-        data,
-        { session }
-      );
+    const success = await this.withTransaction(
+      async (session: ClientSession) => {
+        const modelSchema = ModelSchema.getInstance(this.databaseName!);
+        const modelDocumentMetadata = new ModelDocumentMetadata(
+          this.databaseName!
+        );
+        const index =
+          (await modelDocumentMetadata.getMaxIndex({ session })) + 1;
 
-      const basicCollectionPermission = await modelSchema.findOne(
-        {
-          collection: this.collectionName,
-        },
-        { session }
-      );
+        // Insert document to collection
+        const insertResult = await this.collection.insertOne(documentRecord, {
+          session,
+        });
 
-      const { permissionOwner, permissionGroup, permissionOther } =
-        basicCollectionPermission !== null
-          ? basicCollectionPermission
-          : {
-              permissionOwner: ZKDATABASE_NO_PERMISSION_BIN,
-              permissionGroup: ZKDATABASE_NO_PERMISSION_BIN,
-              permissionOther: ZKDATABASE_NO_PERMISSION_BIN,
-            };
+        const documentSchema = await modelSchema.findOne(
+          {
+            collection: this.collectionName,
+          },
+          { session }
+        );
 
-      await modelDocumentMetadata.insertOne({
-        collection: this.collectionName!,
-        docId: result.insertedId,
-        merkleIndex: index,
-        ...{
-          permissionOwner,
-          permissionGroup,
-          permissionOther,
-          // I'm set these to system user and group as default
-          // In case this permission don't override by the user
-          // this will prevent the user from accessing the data
-          group: ZKDATABASE_GROUP_SYSTEM,
-          owner: ZKDATABAES_USER_SYSTEM,
-        },
-        // Overwrite inherited permission with the new one
-        ...documentPermission,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      });
-    });
-    return insertResult;
+        if (documentSchema === null) {
+          throw new Error('Schema not found');
+        }
+
+        if (ModelSchema.validate(documentSchema, documentRecord)) {
+          throw new Error('Invalid document schema');
+        }
+
+        const { permissionOwner, permissionGroup, permissionOther } =
+          documentSchema;
+
+        // Insert document metadata
+        await modelDocumentMetadata.insertOne(
+          {
+            collection: this.collectionName!,
+            docId: insertResult.insertedId,
+            merkleIndex: index,
+            ...{
+              permissionOwner,
+              permissionGroup,
+              permissionOther,
+              // I'm set these to system user and group as default
+              // In case this permission don't override by the user
+              // this will prevent the user from accessing the data
+              group: ZKDATABASE_GROUP_SYSTEM,
+              owner: ZKDATABAES_USER_SYSTEM,
+            },
+            // Overwrite inherited permission with the new one
+            ...documentPermission,
+            createdAt: getCurrentTime(),
+            updatedAt: getCurrentTime(),
+          },
+          { session }
+        );
+      }
+    );
+    return success ? insertResult : null;
   }
 
   public async findOne(filter: Filter<any>) {

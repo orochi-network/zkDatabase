@@ -1,9 +1,36 @@
+import Joi from 'joi';
 import { ProvableTypeString } from '../common/schema';
-import { PermissionBasic, PermissionInherit } from '../../common/permission';
+import { PermissionBasic } from '../../common/permission';
 import ModelGeneral from '../abstract/general';
 import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
 import ModelCollection from '../abstract/collection';
 import { getCurrentTime } from '../../helper/common';
+import { DocumentPermission, DocumentRecord } from '../abstract/document';
+import logger from '../../helper/logger';
+
+const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
+
+// Every data type will be treaded as string when store/transfer
+if (schemaVerification.size === 0) {
+  schemaVerification.set('CircuitString', Joi.string().length(1024));
+  schemaVerification.set('UInt32', Joi.string().pattern(/^[0-9]{1,10}$/));
+  schemaVerification.set('UInt64', Joi.string().pattern(/^[0-9]{1,20}$/));
+  schemaVerification.set('Bool', Joi.string().valid('true', 'false'));
+  schemaVerification.set('Sign', Joi.string().length(256));
+  // O1js don't support UTF-8 or Unicode
+  schemaVerification.set('Character', Joi.string().length(1));
+  schemaVerification.set(
+    'Int64',
+    Joi.string()
+      .pattern(/^(-|)[0-9]{1,20}$/)
+      .length(64)
+  );
+  schemaVerification.set('Field', Joi.string().length(256));
+  schemaVerification.set('PrivateKey', Joi.string().length(256));
+  schemaVerification.set('PublicKey', Joi.string().length(256));
+  schemaVerification.set('Signature', Joi.string().length(256));
+  schemaVerification.set('MerkleMapWitness', Joi.string());
+}
 
 export type SchemaField = {
   order: number;
@@ -27,7 +54,7 @@ export type SchemaBuilder = Pick<SchemaField, 'name' | 'kind' | 'indexed'>;
 export interface SchemaDefinition
   extends Document,
     SchemaBasic,
-    PermissionInherit {
+    DocumentPermission {
   [key: string]: any;
 }
 
@@ -62,6 +89,31 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     return ModelSchema.instances[databaseName];
   }
 
+  public static validate(
+    schema: SchemaDefinition,
+    document: DocumentRecord
+  ): boolean {
+    let result = true;
+    for (let i = 0; i < schema.fields.length; i += 1) {
+      const field = schema.fields[i];
+      const kind = schema[field].kind;
+      // Check if kind is supported
+      if (schemaVerification.has(kind) === false) {
+        throw new Error(`Schema kind ${kind} is not supported`);
+      }
+      // Check field is exist on document
+      if (typeof document[field] === 'undefined') {
+        throw new Error(`Document is missing field ${field}`);
+      }
+      const { error } = schemaVerification.get(kind)!.validate(document[field]);
+      if (error) {
+        logger.error('Schema validation error:', error);
+        result = false;
+      }
+    }
+    return result;
+  }
+
   public async createSchema(
     collectionName: string,
     schemaBuilder: SchemaDefBuilder
@@ -85,7 +137,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
         indexed,
       };
       if (indexed) {
-        indexKeys.push(`${name}.value`);
+        indexKeys.push(`${name}.name`);
       }
     }
     // Create index and collection
