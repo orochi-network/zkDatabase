@@ -1,4 +1,4 @@
-import { FindOptions, ObjectId } from 'mongodb';
+import { FindOptions, ObjectId, Document, Filter } from 'mongodb';
 import { ZKDATABASE_METADATA_COLLECTION } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import {
@@ -10,24 +10,24 @@ import {
 import ModelUserGroup from './user-group';
 import ModelCollection from '../abstract/collection';
 
-export type DocumentMetadataSchema = PermissionBasic & {
+export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
   docId: ObjectId;
   merkleIndex: number;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
   DocumentMetadataSchema,
-  'ownerPermission' | 'groupPermission' | 'otherPermission'
+  'permissionOwner' | 'permissionGroup' | 'permissionOther'
 > = {
-  ownerPermission: 0,
-  groupPermission: 0,
-  otherPermission: 0,
+  permissionOwner: 0,
+  permissionGroup: 0,
+  permissionOther: 0,
 };
 
-export class ModelDocumentMetadata extends ModelGeneral {
+export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
   static collectionName: string = ZKDATABASE_METADATA_COLLECTION;
 
   constructor(databaseName: string) {
@@ -39,7 +39,7 @@ export class ModelDocumentMetadata extends ModelGeneral {
       .find({}, findOpt)
       .sort({ index: -1 })
       .limit(1);
-    const maxIndexedRecord: any = (await maxIndexedCursor.hasNext())
+    const maxIndexedRecord = (await maxIndexedCursor.hasNext())
       ? await maxIndexedCursor.next()
       : { index: -1 };
 
@@ -59,13 +59,13 @@ export class ModelDocumentMetadata extends ModelGeneral {
     if (metadata) {
       // User == actor -> return user permission
       if (metadata.owner === actor) {
-        return PermissionBinary.fromBinaryPermission(metadata.ownerPermission);
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
       }
       // User != actor -> check for group permission
       const modelUserGroup = new ModelUserGroup(this.databaseName!);
       const actorGroup = await modelUserGroup.listGroupByUserName(actor);
       if (actorGroup.includes(metadata.group)) {
-        return PermissionBinary.fromBinaryPermission(metadata.groupPermission);
+        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
       }
     }
     // Default deny all

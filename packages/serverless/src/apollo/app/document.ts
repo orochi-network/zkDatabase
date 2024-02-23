@@ -3,7 +3,8 @@ import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
 import { ModelDocument } from '../../model/abstract/document';
-import { collectionName, databaseName } from './common';
+import { collectionName, databaseName, permissionDetail } from './common';
+import { PermissionInherit } from '../../common/permission';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -11,6 +12,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: { [key: string]: any };
+  documentPermission: PermissionInherit;
 };
 
 export type TDocumentUpdateRequest = TDocumentFindRequest & {
@@ -26,6 +28,7 @@ export const DocumentFindRequest = Joi.object<TDocumentFindRequest>({
 export const DocumentCreateRequest = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
+  documentPermission: permissionDetail.required(),
   documentRecord: Joi.object().required(),
 });
 
@@ -41,12 +44,26 @@ scalar JSON
 type Query
 type Mutation
 
+type PermissionRecord {
+  system: Boolean
+  create: Boolean
+  read: Boolean
+  write: Boolean
+  delete: Boolean
+}
+
+input PermissionDetail {
+  permissionOwner: PermissionRecord
+  permissionGroup: PermissionRecord
+  permissionOthers: PermissionRecord
+}
+
 extend type Query {
   documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!): JSON
+  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!, documentPermission: PermissionDetail): JSON
   documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
   documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
@@ -68,7 +85,7 @@ const documentCreate = resolverWrapper(
   async (_root: unknown, args: TDocumentCreateRequest) => {
     return (
       await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).insertOneWithTransaction(args.documentRecord);
+    ).insertOne(args.documentRecord, args.documentPermission);
   }
 );
 

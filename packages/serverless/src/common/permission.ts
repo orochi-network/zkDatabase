@@ -2,11 +2,11 @@
 export type PermissionRecord = {
   // Permission to change permission and ownership
   system: boolean;
-  // Permission to insert new record
-  insert: boolean;
+  // Permission to create new record
+  create: boolean;
   // Permission to read record
   read: boolean;
-  // Permission to write record
+  // Permission to write on existing record
   write: boolean;
   // Permission to delete record
   delete: boolean;
@@ -16,7 +16,7 @@ export const ZKDATABASE_NO_PERMISSION_RECORD = {
   read: false,
   write: false,
   delete: false,
-  insert: false,
+  create: false,
   system: false,
 };
 
@@ -25,9 +25,9 @@ export const ZKDATABASE_NO_PERMISSION_BIN = 0;
 export type PermissionBasic = {
   owner: string;
   group: string;
-  ownerPermission: number;
-  groupPermission: number;
-  otherPermission: number;
+  permissionOwner: number;
+  permissionGroup: number;
+  permissionOther: number;
 };
 
 // Transform partial permission to full permission record
@@ -43,7 +43,7 @@ export function partialToPermission(
 // All permission fields
 export const ZKDATABASE_ALL_PERMISSION: (keyof PermissionRecord)[] = [
   'system' as keyof PermissionRecord,
-  'insert' as keyof PermissionRecord,
+  'create' as keyof PermissionRecord,
   'read' as keyof PermissionRecord,
   'write' as keyof PermissionRecord,
   'delete' as keyof PermissionRecord,
@@ -69,12 +69,12 @@ export class PermissionBinary {
     return this.permission.system;
   }
 
-  set insert(value: boolean) {
-    this.set('insert', value);
+  set create(value: boolean) {
+    this.set('create', value);
   }
 
-  get insert(): boolean {
-    return this.permission.insert;
+  get create(): boolean {
+    return this.permission.create;
   }
 
   set read(value: boolean) {

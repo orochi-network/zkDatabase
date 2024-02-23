@@ -14,7 +14,7 @@
     "declaration": false,
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node"]
   },
   "include": ["**/*.ts"],
   "exclude": [

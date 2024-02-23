@@ -5,6 +5,7 @@ import ModelDocumentMetadata from '../database/document-metadata';
 import { ModelSchema } from '../database/schema';
 import ModelGroup from '../database/group';
 import ModelUserGroup from '../database/user-group';
+import { DatabaseEngine } from './database-engine';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -16,8 +17,8 @@ export type DocumentMetaIndex = {
  * Build on top of ModelBasic, it handle everything about database in general
  * Don't use this directly
  */
-export class ModelDatabase extends ModelBasic {
-  public static instances = new Map<string, ModelDatabase>();
+export class ModelDatabase<T extends Document> extends ModelBasic<T> {
+  public static instances = new Map<string, ModelDatabase<any>>();
 
   public static getInstance(databaseName: string) {
     if (!ModelDatabase.instances.has(databaseName)) {
@@ -36,14 +37,15 @@ export class ModelDatabase extends ModelBasic {
     );
   }
 
-  public async create(databaseName: string) {
-    if (await this.dbEngine.isDatabase(databaseName)) {
+  public static async create(databaseName: string): Promise<boolean> {
+    if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
       throw new Error('Database already exist');
     }
     await ModelDocumentMetadata.init(databaseName);
     await ModelSchema.init(databaseName);
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
+    return true;
   }
 
   public async drop() {
