@@ -1,4 +1,4 @@
-import ModelBasic from './database/basic';
+import { ModelBasic } from 'storage';
 
 export type TaskEntity = {
   id: bigint;
