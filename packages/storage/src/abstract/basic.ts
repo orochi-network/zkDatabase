@@ -1,6 +1,5 @@
 import { ClientSession, CreateCollectionOptions } from 'mongodb';
-import { DatabaseEngine } from './database-engine';
-import logger from '../helper/logger';
+import { DatabaseEngine } from './database-engine.js';
 
 /**
  * Model basic is the most basic model of data, It interactive directly to DatabaseEngine
@@ -48,7 +47,7 @@ export default abstract class ModelBasic {
       result = true;
       await session.commitTransaction();
     } catch (e) {
-      logger.error('DatabaseEngine::withTransaction()', e);
+      // logger.error('DatabaseEngine::withTransaction()', e);
       result = false;
       await session.abortTransaction();
     }

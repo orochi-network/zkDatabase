@@ -1,3 +1,3 @@
-import { LoggerLoader } from '@orochi-network/framework';
+// import { LoggerLoader } from '@orochi-network/framework';
 
-export default new LoggerLoader('Storage', 'debug', 'string');
+// export default new LoggerLoader('Storage', 'debug', 'string');

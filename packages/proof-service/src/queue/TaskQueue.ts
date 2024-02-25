@@ -1,5 +1,5 @@
-import { ITaskQueue, Task } from './ITaskQueue';
-import { ModelTask } from '../model/ModelTask';
+import { ModelTask } from 'storage';
+import { ITaskQueue, Task } from './ITaskQueue.js';
 import { Field } from 'o1js';
 
 export class TaskQueue implements ITaskQueue {
@@ -15,7 +15,9 @@ export class TaskQueue implements ITaskQueue {
     return {
       id: entity.id,
       index: entity.index,
-      hash: Field(entity.hash)
+      hash: Field(entity.hash),
+      database: "",
+      collection: ""
     }
   }
 

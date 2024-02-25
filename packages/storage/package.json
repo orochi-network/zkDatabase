@@ -10,7 +10,10 @@
     "mina-dapp",
     "zkapp"
   ],
-  "type": "module",
+  "files": [
+    "build/src",
+    "!**/*.tsbuildinfo"
+  ],
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
   "scripts": {

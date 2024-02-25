@@ -4,6 +4,8 @@ export type Task = {
   id: bigint;
   index: bigint;
   hash: Field;
+  database: string,
+  collection: string
 };
 
 export interface ITaskQueue {

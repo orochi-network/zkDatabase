@@ -1,13 +1,29 @@
-import { ModelBasic } from 'storage';
+import ModelBasic from "../abstract/basic.js";
 
 export type TaskEntity = {
   id: bigint;
   index: bigint;
   hash: string;
   processed?: boolean;
+  database: string,
+  collection: string
 };
 
 export class ModelTask extends ModelBasic {
+  private static instance: ModelTask | null = null;
+
+  private constructor(databaseName: string, collectionName: string) {
+    super(databaseName, collectionName);
+  }
+  
+  public static getInstance(databaseName: string, collectionName: string): ModelTask {
+    if (!ModelTask.instance) {
+      ModelTask.instance = new ModelTask(databaseName, collectionName);
+    }
+    return ModelTask.instance;
+  }
+
+
   public async createTask(task: TaskEntity): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
@@ -22,14 +38,15 @@ export class ModelTask extends ModelBasic {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    const task = await this.collection.findOneAndUpdate(
+    const result = await this.collection.findOne(
       { processed: false },
-      { $set: { processed: true } },
-      { sort: { createdAt: 1 }, returnDocument: 'after' }
+      { sort: { createdAt: 1 }}
     );
-
-    return task as any;
+  
+    const task = result?.value as TaskEntity | null;
+    return task;
   }
+  
 
   public async markTaskProcessed(taskId: bigint): Promise<void> {
     if (!this.collection) {

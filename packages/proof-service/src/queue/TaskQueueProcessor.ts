@@ -1,10 +1,10 @@
 import { Field, MerkleTree, MerkleWitness, ZkProgram } from 'o1js';
-import { ITaskQueue } from './ITaskQueue';
+import { ITaskQueue } from './ITaskQueue.js';
 import {
   RollUpProxy,
   getDatabaseRollUpFunction,
-} from '../proof-system/rollup-program';
-
+} from '../proof-system/rollup-program.js';
+import { ModelProof } from 'storage';
 export default class TaskQueueProcessor {
   private rollUpProxy: RollUpProxy;
 
@@ -13,19 +13,33 @@ export default class TaskQueueProcessor {
   }
 
   async processTasks(): Promise<void> {
+    console.log('Compile roll up program');
     await this.rollUpProxy.compile();
 
     class DatabaseMerkleWitness extends MerkleWitness(this.merkleTree.height) {}
 
     class RollUpProof extends ZkProgram.Proof(this.rollUpProxy.getProgram()) {}
+    
+    let proof: RollUpProof | undefined = undefined;
 
+    console.log('waiting')
     while (true) {
       const task = await this.taskQueue.getNextTask();
 
-      let proof: RollUpProof | undefined = undefined;
+      console.log('task', task)
 
       if (task) {
-        if (task.id === 1n) {
+        console.log(`Processing task ${task.id}`);
+
+        const modelProof = ModelProof.getInstance(task.database, task.collection)!;
+
+        const zkProof = await modelProof.getProof();
+
+        if (zkProof) {
+          proof = RollUpProof.fromJSON(zkProof);
+        }
+      
+        if (task.id === 1n || !proof) {
           proof = await this.rollUpProxy
             .getProgram()
             .init(
@@ -46,6 +60,7 @@ export default class TaskQueueProcessor {
             );
         }
 
+        await modelProof.saveProof(proof!.toJSON())
         this.merkleTree.setLeaf(task.index, Field(task.hash));
         await this.taskQueue.markTaskProcessed(task);
       } else {
