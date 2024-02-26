@@ -1,4 +1,4 @@
-import ModelBasic from "../abstract/basic.js";
+import ModelBasic from "./abstract/basic.js";
 
 export type TaskEntity = {
   id: bigint;

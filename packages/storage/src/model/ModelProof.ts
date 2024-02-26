@@ -1,4 +1,5 @@
-import ModelBasic from '../abstract/basic.js';
+import logger from '../helper/logger.js';
+import ModelBasic from './abstract/basic.js';
 
 export type ZkProof = {
   publicInput: string[];
@@ -31,7 +32,7 @@ export class ModelProof extends ModelBasic {
       }
       return true;
     } catch (error) {
-      // logger.error('Error saving proof:', error);
+      logger.error('Error saving proof:', error);
       return false;
     }
   }
