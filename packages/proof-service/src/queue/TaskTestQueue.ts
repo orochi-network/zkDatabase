@@ -1,5 +1,5 @@
 import { Field } from 'o1js';
-import { ITaskQueue, Task } from './ITaskQueue';
+import { ITaskQueue, Task } from './ITaskQueue.js';
 
 export class TaskTestQueue implements ITaskQueue {
   private tasks: Task[];
@@ -10,6 +10,8 @@ export class TaskTestQueue implements ITaskQueue {
       id: BigInt(i + 1),
       index: BigInt(i + 1),
       hash: Field(`${i + 1}`),
+      database: "",
+      collection: ""
     }));
   }
 

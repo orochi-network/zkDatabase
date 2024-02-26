@@ -75,7 +75,7 @@ export class RollUpProxy {
     }
 
     const circuitCache = new CircuitCache();
-    const cache = circuitCache.getCache('database-rollup');
+    const cache = circuitCache.getCache(`database-rollup/${this.rollUp.name}`);
     await this.rollUp.compile({ cache });
     this.isCompiled = true;
   }

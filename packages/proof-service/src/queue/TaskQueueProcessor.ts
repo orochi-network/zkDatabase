@@ -1,68 +1,81 @@
-import { Field, MerkleTree, MerkleWitness, ZkProgram } from 'o1js';
+import { Field, MerkleWitness, ZkProgram } from 'o1js';
 import { ITaskQueue } from './ITaskQueue.js';
-import {
-  RollUpProxy,
-  getDatabaseRollUpFunction,
-} from '../proof-system/rollup-program.js';
-import { ModelProof } from 'storage';
-export default class TaskQueueProcessor {
-  private rollUpProxy: RollUpProxy;
+import { ModelMerkleTree, ModelMerkleTreeMetadata, ModelProof } from 'storage';
+import CircuitFactory from '../proof-system/circuit-factory.js';
 
-  constructor(private taskQueue: ITaskQueue, private merkleTree: MerkleTree) {
-    this.rollUpProxy = getDatabaseRollUpFunction('', this.merkleTree.height);
-  }
+export default class TaskQueueProcessor {
+  constructor(private taskQueue: ITaskQueue) {}
 
   async processTasks(): Promise<void> {
-    console.log('Compile roll up program');
-    await this.rollUpProxy.compile();
-
-    class DatabaseMerkleWitness extends MerkleWitness(this.merkleTree.height) {}
-
-    class RollUpProof extends ZkProgram.Proof(this.rollUpProxy.getProgram()) {}
-    
-    let proof: RollUpProof | undefined = undefined;
-
-    console.log('waiting')
+    console.log('processing');
     while (true) {
       const task = await this.taskQueue.getNextTask();
 
-      console.log('task', task)
-
       if (task) {
+        const circuitName = `${task.database}.${task.collection}`;
+
+        const merkleHeight = await ModelMerkleTreeMetadata.getInstance(
+          task.database,
+          task.collection
+        ).getHeight();
+
+        const merkleTree = ModelMerkleTree.getInstance(
+          task.database,
+          task.collection
+        );
+
+        if (!merkleHeight) {
+          throw new Error('Merkle Tree height is null');
+        }
+
+        if (!CircuitFactory.contains(circuitName)) {
+          await CircuitFactory.createCircuit(circuitName, merkleHeight);
+        }
+
+        const circuit = CircuitFactory.getCircuit(circuitName).getProgram();
+
+        class RollUpProof extends ZkProgram.Proof(circuit) {}
+
+        class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
+
         console.log(`Processing task ${task.id}`);
 
-        const modelProof = ModelProof.getInstance(task.database, task.collection)!;
+        const modelProof = ModelProof.getInstance(
+          task.database,
+          task.collection
+        )!;
 
         const zkProof = await modelProof.getProof();
+
+        let proof: RollUpProof | undefined = undefined;
 
         if (zkProof) {
           proof = RollUpProof.fromJSON(zkProof);
         }
-      
+
+        const merkleRoot = await merkleTree.getRoot(new Date());
+        const witness = new DatabaseMerkleWitness(
+          await merkleTree.getWitness(task.id, new Date())
+        );
+
         if (task.id === 1n || !proof) {
-          proof = await this.rollUpProxy
-            .getProgram()
-            .init(
-              this.merkleTree.getRoot(),
-              new DatabaseMerkleWitness(this.merkleTree.getWitness(task.id)),
-              Field(0),
-              task.hash
-            );
+          proof = await circuit.init(merkleRoot, witness, Field(0), task.hash);
         } else if (proof) {
-          proof = await this.rollUpProxy
-            .getProgram()
-            .update(
-              this.merkleTree.getRoot(),
-              proof,
-              new DatabaseMerkleWitness(this.merkleTree.getWitness(task.id)),
-              Field(0),
-              task.hash
-            );
+          const oldLeaf = await merkleTree.getNode(0, task.index, new Date());
+          proof = await circuit.update(
+            merkleRoot,
+            proof,
+            witness,
+            oldLeaf,
+            task.hash
+          );
         }
 
-        await modelProof.saveProof(proof!.toJSON())
-        this.merkleTree.setLeaf(task.index, Field(task.hash));
-        await this.taskQueue.markTaskProcessed(task);
+        if (proof) {
+          await modelProof.saveProof(proof.toJSON());
+          await merkleTree.setLeaf(task.index, Field(task.hash), new Date());
+          await this.taskQueue.markTaskProcessed(task);
+        }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }
