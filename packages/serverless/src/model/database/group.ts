@@ -1,6 +1,6 @@
 import { Document } from 'mongodb';
 import {
-  ZKDATABAES_USER_SYSTEM,
+  ZKDATABASE_USER_SYSTEM,
   ZKDATABASE_GROUP_COLLECTION,
 } from '../../common/const';
 import ModelCollection from '../abstract/collection';
@@ -30,7 +30,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
     return this.insertOne({
       groupName,
       description: description || `Group ${groupName}`,
-      createBy: createBy || ZKDATABAES_USER_SYSTEM,
+      createBy: createBy || ZKDATABASE_USER_SYSTEM,
       createdAt: getCurrentTime(),
       updatedAt: getCurrentTime(),
     });

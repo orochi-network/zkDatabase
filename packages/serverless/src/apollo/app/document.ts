@@ -2,9 +2,18 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
-import { ModelDocument } from '../../model/abstract/document';
-import { collectionName, databaseName, permissionDetail } from './common';
-import { PermissionInherit } from '../../common/permission';
+import {
+  DocumentPermission,
+  DocumentRecord,
+  ModelDocument,
+} from '../../model/abstract/document';
+import {
+  collectionName,
+  databaseName,
+  permissionDetail,
+  permissionRecord,
+} from './common';
+import { Filter } from 'mongodb';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -12,27 +21,26 @@ export type TDocumentFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: { [key: string]: any };
-  documentPermission: PermissionInherit;
+  documentPermission: DocumentPermission;
 };
 
-export type TDocumentUpdateRequest = TDocumentFindRequest & {
-  documentRecord: { [key: string]: any };
-};
+export type TDocumentUpdateRequest = TCollectionRequest &
+  Filter<DocumentRecord>;
 
-export const DocumentFindRequest = Joi.object<TDocumentFindRequest>({
+export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
 });
 
-export const DocumentCreateRequest = Joi.object<TDocumentCreateRequest>({
+export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
   documentPermission: permissionDetail.required(),
   documentRecord: Joi.object().required(),
 });
 
-export const DocumentUpdateRequest = Joi.object<TDocumentUpdateRequest>({
+export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
@@ -71,7 +79,7 @@ extend type Mutation {
 
 // Query
 const documentFind = resolverWrapper(
-  DocumentFindRequest,
+  DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest) => {
     return (
       await ModelDocument.getInstance(args.databaseName, args.collectionName)
@@ -81,7 +89,7 @@ const documentFind = resolverWrapper(
 
 // Mutation
 const documentCreate = resolverWrapper(
-  DocumentCreateRequest,
+  DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest) => {
     return (
       await ModelDocument.getInstance(args.databaseName, args.collectionName)
@@ -90,8 +98,17 @@ const documentCreate = resolverWrapper(
 );
 
 const documentUpdate = resolverWrapper(
-  DocumentUpdateRequest,
+  DOCUMENT_UPDATE_REQUEST,
   async (_root: unknown, args: TDocumentUpdateRequest) => {
+    const keys = Object.keys(args.documentRecord);
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      const { error } = permissionRecord.validate(args.documentRecord[key]);
+      if (error)
+        throw new Error(
+          `PermissionRecord ${key} is not valid ${error.message}`
+        );
+    }
     return (
       await ModelDocument.getInstance(args.databaseName, args.collectionName)
     ).updateOne(args.documentQuery, args.documentRecord);
@@ -99,7 +116,7 @@ const documentUpdate = resolverWrapper(
 );
 
 const documentDrop = resolverWrapper(
-  DocumentFindRequest,
+  DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest) => {
     return (
       await ModelDocument.getInstance(args.databaseName, args.collectionName)

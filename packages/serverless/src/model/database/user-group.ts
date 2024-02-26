@@ -36,12 +36,12 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     const groupsList = await modelGroup.find({
       _id: { $in: await this.listGroupId(userName) },
     });
-    return groupsList.map((group) => group.groupName!);
+    return groupsList.map((group) => group.groupName!).toArray();
   }
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupId);
+    return userGroups.map((userGroup) => userGroup.groupId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
@@ -49,7 +49,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     const availableGroups = await modelGroup.find({
       groupName: { $in: groupName },
     });
-    return availableGroups.map((group) => group._id);
+    return availableGroups.map((group) => group._id).toArray();
   }
 
   public async addUserToGroup(userName: string, groupName: string[]) {
