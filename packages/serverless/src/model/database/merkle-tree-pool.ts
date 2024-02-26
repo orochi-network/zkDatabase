@@ -1,16 +1,27 @@
 import { Field } from 'o1js';
-import { ClientSession } from 'mongodb';
-import ModelGeneral from './general';
-import logger from '../helper/logger';
-import ModelCollection from './collection';
-import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from './abstract/database-engine';
+import {
+  FindOptions,
+  InsertOneOptions,
+  Document,
+  DeleteOptions,
+} from 'mongodb';
+import ModelGeneral from '../abstract/general';
+import logger from '../../helper/logger';
+import ModelCollection from '../abstract/collection';
+import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from '../../common/const';
 
-export type PooledLeaf = {
+// Data type for merkle tree pool to be able to store in database
+export interface PooledLeaf extends Document {
+  index: string;
+  hash: string;
+}
+
+export type TPooledLeaf = {
   index: bigint;
   hash: Field;
 };
 
-export class ModelMerkleTreePool extends ModelGeneral {
+export class ModelMerkleTreePool extends ModelGeneral<PooledLeaf> {
   private constructor(databaseName: string) {
     super(databaseName, ZKDATABASE_MERKLE_TREE_POOL_COLLECTION);
   }
@@ -22,16 +33,16 @@ export class ModelMerkleTreePool extends ModelGeneral {
   public async saveLeaf(
     index: bigint,
     leaf: Field,
-    session?: ClientSession
+    opt?: InsertOneOptions
   ): Promise<boolean> {
     try {
       const result = await this.collection.insertOne(
         {
-          index,
+          index: index.toString(),
           hash: leaf.toString(),
           created: new Date(),
         },
-        { session }
+        opt
       );
 
       return result.acknowledged;
@@ -43,17 +54,17 @@ export class ModelMerkleTreePool extends ModelGeneral {
 
   public async getOldestLeaves(
     amount: number,
-    session?: ClientSession
-  ): Promise<PooledLeaf[]> {
+    option?: FindOptions
+  ): Promise<TPooledLeaf[]> {
     try {
       const documents = await this.collection
-        .find({}, { session })
+        .find({}, option)
         .sort({ created: 1 })
         .limit(amount)
         .toArray();
 
       return documents.map((doc) => ({
-        index: doc.index,
+        index: BigInt(doc.index),
         hash: Field(doc.hash),
       }));
     } catch (e) {
@@ -66,8 +77,8 @@ export class ModelMerkleTreePool extends ModelGeneral {
   }
 
   public async removeLeaves(
-    leaves: PooledLeaf[],
-    session?: ClientSession
+    leaves: TPooledLeaf[],
+    options?: DeleteOptions
   ): Promise<void> {
     try {
       const leafHashes = leaves.map((leaf) => leaf.hash.toString());
@@ -75,7 +86,7 @@ export class ModelMerkleTreePool extends ModelGeneral {
         {
           hash: { $in: leafHashes },
         },
-        { session }
+        options
       );
     } catch (e) {
       logger.error('ModelMerkleTreePool::removeLeaves()', e);

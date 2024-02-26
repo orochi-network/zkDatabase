@@ -5,7 +5,7 @@ import resolverWrapper from '../validation';
 import { databaseName, indexNumber } from './common';
 import { TDatabaseRequest } from './database';
 import DistributedLock from '../../helper/distributed-lock';
-import MerkleTreeService from '../../service/MerkleTreeService';
+import MerkleTreeService from '../../service/merkle-tree';
 
 export type TMerkleTreeInitializeRequest = TDatabaseRequest & {
   height: number;
@@ -135,10 +135,7 @@ const setLeaf = resolverWrapper(
     const merkleTreeService = await MerkleTreeService.getInstance(
       args.databaseName
     );
-    return merkleTreeService.addLeafToPool(
-      args.index,
-      Field(args.hash)
-    );
+    return merkleTreeService.addLeafToPool(args.index, Field(args.hash));
   }
 );
 
@@ -148,11 +145,7 @@ const getNode = resolverWrapper(
     const merkleTreeService = await MerkleTreeService.getInstance(
       args.databaseName
     );
-    return merkleTreeService.getNode(
-      Field(args.root),
-      args.level,
-      args.index
-    );
+    return merkleTreeService.getNode(Field(args.root), args.level, args.index);
   }
 );
 

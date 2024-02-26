@@ -1,17 +1,23 @@
 import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
-import { ClientSession, ObjectId } from 'mongodb';
-import ModelGeneral from './general';
-import logger from '../helper/logger';
-import createExtendedMerkleWitness from '../helper/extended-merkle-witness';
-import { ZKDATABASE_MERKLE_TREE_COLLECTION } from './abstract/database-engine';
+import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
+import ModelGeneral from '../abstract/general';
+import logger from '../../helper/logger';
+import createExtendedMerkleWitness from '../../helper/extended-merkle-witness';
+import { ZKDATABASE_MERKLE_TREE_COLLECTION } from '../../common/const';
 
-export interface MerkleProof {
-  sibling: Field;
+// Data type for merkle tree to be able to store in database
+export interface MerkleProof extends Document {
+  sibling: string;
   isLeft: boolean;
 }
 
-export class ModelMerkleTree extends ModelGeneral {
+export type TMerkleProof = {
+  sibling: Field;
+  isLeft: boolean;
+};
+
+export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
   private zeroes!: Field[];
 
   private height!: number;
@@ -51,9 +57,9 @@ export class ModelMerkleTree extends ModelGeneral {
     index: bigint,
     leaf: Field,
     timestamp: Date,
-    session?: ClientSession
+    options?: FindOptions
   ): Promise<void> {
-    const witnesses = await this.getWitness(index, timestamp, session);
+    const witnesses = await this.getWitness(index, timestamp, options);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
@@ -75,18 +81,24 @@ export class ModelMerkleTree extends ModelGeneral {
       inserts.push(dataToInsert);
     }
 
-    await this.insertManyLeaves(inserts, session);
+    await this.insertManyLeaves(
+      inserts,
+      typeof options !== 'undefined' ? { session: options.session } : undefined
+    );
   }
 
-  public async insertManyLeaves(leaves: Array<any>, session?: ClientSession): Promise<void> {
-    await this.collection.insertMany(leaves, { session });
+  public async insertManyLeaves(
+    leaves: Array<any>,
+    options?: BulkWriteOptions
+  ): Promise<void> {
+    await this.collection.insertMany(leaves, options);
   }
 
   public async getWitness(
     index: bigint,
     timestamp: Date,
-    session?: ClientSession
-  ): Promise<MerkleProof[]> {
+    options?: FindOptions
+  ): Promise<TMerkleProof[]> {
     if (index >= this.leafCount) {
       throw new Error(
         `index ${index} is out of range for ${this.leafCount} leaves.`
@@ -95,15 +107,17 @@ export class ModelMerkleTree extends ModelGeneral {
 
     let currIndex = BigInt(index);
 
-    const witnessPromises: Promise<MerkleProof>[] = [];
+    const witnessPromises: Promise<TMerkleProof>[] = [];
     for (let level = 0; level < this.height - 1; level += 1) {
       const isLeft = currIndex % 2n === 0n;
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNode(level, siblingIndex, timestamp, session).then((sibling) => {
-          return { isLeft, sibling };
-        })
+        this.getNode(level, siblingIndex, timestamp, options).then(
+          (sibling) => {
+            return { isLeft, sibling };
+          }
+        )
       );
 
       currIndex /= 2n;
@@ -116,7 +130,7 @@ export class ModelMerkleTree extends ModelGeneral {
     level: number,
     index: bigint,
     timestamp: Date,
-    session?: ClientSession,
+    options?: FindOptions
   ): Promise<Field> {
     try {
       const nodeId = ModelMerkleTree.encodeLevelAndIndexToObjectId(
@@ -130,7 +144,7 @@ export class ModelMerkleTree extends ModelGeneral {
       };
 
       const node = await this.collection
-        .find(query, { session })
+        .find(query, options)
         .sort({ timestamp: -1 }) // Gets the latest state at or before the specified timestamp
         .limit(1)
         .toArray();

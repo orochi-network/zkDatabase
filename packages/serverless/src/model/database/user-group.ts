@@ -1,17 +1,17 @@
-import { ObjectId, Timestamp } from 'mongodb';
+import { ObjectId, Document } from 'mongodb';
 import ModelCollection from '../abstract/collection';
 import { ZKDATABASE_USER_GROUP_COLLECTION } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import ModelGroup from './group';
 
-export type DocumentUserGroup = {
+export interface DocumentUserGroup extends Document {
   userName: string;
   groupId: ObjectId;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-};
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-export class ModelUserGroup extends ModelGeneral {
+export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
   static collectionName = ZKDATABASE_USER_GROUP_COLLECTION;
 
   constructor(databaseName: string) {
@@ -36,12 +36,12 @@ export class ModelUserGroup extends ModelGeneral {
     const groupsList = await modelGroup.find({
       _id: { $in: await this.listGroupId(userName) },
     });
-    return groupsList.map((group) => group.groupName);
+    return groupsList.map((group) => group.groupName!).toArray();
   }
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupId);
+    return userGroups.map((userGroup) => userGroup.groupId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
@@ -49,7 +49,7 @@ export class ModelUserGroup extends ModelGeneral {
     const availableGroups = await modelGroup.find({
       groupName: { $in: groupName },
     });
-    return availableGroups.map((group) => group._id);
+    return availableGroups.map((group) => group._id).toArray();
   }
 
   public async addUserToGroup(userName: string, groupName: string[]) {
