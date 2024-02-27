@@ -1,7 +1,6 @@
 import { Field } from 'o1js';
 import { Document, FindOptions, InsertOneOptions } from 'mongodb';
 import logger from '../../helper/logger';
-import { ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION } from '../../common/const';
 import ModelBasic from '../abstract/basic';
 import { getCurrentTime } from '../../helper/common';
 
@@ -19,9 +18,20 @@ export type TMerkleTreeMetadata = {
 };
 
 export class ModelMerkleTreeMetadata extends ModelBasic<MerkleTreeMetadata> {
-  private constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION);
+  public static instances = new Map<string, ModelMerkleTreeMetadata>();
+
+
+  public static getInstance(databaseName: string, collectionName: string) {
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelMerkleTreeMetadata.instances.has(key)) {
+      ModelMerkleTreeMetadata.instances.set(
+        key,
+        new ModelMerkleTreeMetadata(databaseName, collectionName)
+      );
+    }
+    return ModelMerkleTreeMetadata.instances.get(key)!;
   }
+
 
   public async setInitialHeight(height: number): Promise<boolean> {
     try {
@@ -129,9 +139,5 @@ export class ModelMerkleTreeMetadata extends ModelBasic<MerkleTreeMetadata> {
       logger.error('Error retrieving metadata by root:', error);
       throw error;
     }
-  }
-
-  public static getInstance(databaseName: string): ModelMerkleTreeMetadata {
-    return new ModelMerkleTreeMetadata(databaseName);
   }
 }

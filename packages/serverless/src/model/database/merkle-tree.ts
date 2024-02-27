@@ -4,7 +4,6 @@ import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
 import ModelGeneral from '../abstract/general';
 import logger from '../../helper/logger';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness';
-import { ZKDATABASE_MERKLE_TREE_COLLECTION } from '../../common/const';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
@@ -18,17 +17,30 @@ export type TMerkleProof = {
 };
 
 export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
+  public static instances = new Map<string, ModelMerkleTree>();
+
   private zeroes!: Field[];
 
   private height!: number;
 
-  private constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_MERKLE_TREE_COLLECTION, {
+  private constructor(databaseName: string, collectionName: string) {
+    super(databaseName, collectionName, {
       timeseries: {
         timeField: 'timestamp',
         granularity: 'seconds',
       },
     });
+  }
+
+  public static getInstance(databaseName: string, collectionName: string) {
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelMerkleTree.instances.has(key)) {
+      ModelMerkleTree.instances.set(
+        key,
+        new ModelMerkleTree(databaseName, collectionName)
+      );
+    }
+    return ModelMerkleTree.instances.get(key)!;
   }
 
   public setHeight(newHeight: number): void {
@@ -42,10 +54,6 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
       zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
     }
     this.zeroes = zeroes;
-  }
-
-  public static getInstance(databaseName: string) {
-    return new ModelMerkleTree(databaseName);
   }
 
   public async getRoot(timestamp: Date): Promise<Field> {

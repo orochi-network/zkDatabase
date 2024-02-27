@@ -8,7 +8,6 @@ import {
 import ModelGeneral from '../abstract/general';
 import logger from '../../helper/logger';
 import ModelCollection from '../abstract/collection';
-import { ZKDATABASE_MERKLE_TREE_POOL_COLLECTION } from '../../common/const';
 
 // Data type for merkle tree pool to be able to store in database
 export interface PooledLeaf extends Document {
@@ -22,12 +21,17 @@ export type TPooledLeaf = {
 };
 
 export class ModelMerkleTreePool extends ModelGeneral<PooledLeaf> {
-  private constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_MERKLE_TREE_POOL_COLLECTION);
-  }
+  public static instances = new Map<string, ModelMerkleTreePool>();
 
-  public static getInstance(databaseName: string): ModelMerkleTreePool {
-    return new ModelMerkleTreePool(databaseName);
+  public static getInstance(databaseName: string, collectionName: string) {
+    const key = `${databaseName}.${collectionName}`;
+    if (!ModelMerkleTreePool.instances.has(key)) {
+      ModelMerkleTreePool.instances.set(
+        key,
+        new ModelMerkleTreePool(databaseName, collectionName)
+      );
+    }
+    return ModelMerkleTreePool.instances.get(key)!;
   }
 
   public async saveLeaf(
