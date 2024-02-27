@@ -10,7 +10,7 @@ import {
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
 import {
-  ZKDATABAES_USER_SYSTEM,
+  ZKDATABASE_USER_SYSTEM,
   ZKDATABASE_GROUP_SYSTEM,
 } from '../../common/const';
 import { ModelDocumentMetadata } from '../database/document-metadata';
@@ -92,13 +92,13 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         structType[name] = ProvableTypeMap[name as ProvableTypeString];
         encodedDocument.push([name, kind, value]);
       }
-      const structedSchema = Schema.create(structType);
-      structedSchema.deserialize(encodedDocument).hash();
+      const structuredSchema = Schema.create(structType);
+      structuredSchema.deserialize(encodedDocument).hash();
       return {
         schema,
         document,
-        structedSchema,
-        structedDocument: structedSchema.deserialize(encodedDocument),
+        structuredSchema,
+        structuredDocument: structuredSchema.deserialize(encodedDocument),
       };
     }
     return null;
@@ -199,7 +199,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
               // In case this permission don't override by the user
               // this will prevent the user from accessing the data
               group: ZKDATABASE_GROUP_SYSTEM,
-              owner: ZKDATABAES_USER_SYSTEM,
+              owner: ZKDATABASE_USER_SYSTEM,
             },
             // Overwrite inherited permission with the new one
             ...documentPermission,

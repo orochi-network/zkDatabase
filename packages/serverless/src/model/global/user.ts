@@ -1,7 +1,7 @@
 import { Document } from 'mongodb';
 import {
-  ZKDATABAES_USER_NOBODY,
-  ZKDATABAES_USER_SYSTEM,
+  ZKDATABASE_USER_NOBODY,
+  ZKDATABASE_USER_SYSTEM,
   ZKDATABASE_GLOBAL_DB,
 } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
@@ -20,8 +20,8 @@ export interface DocumentUser extends Document {
 export class ModelUser extends ModelGeneral<DocumentUser> {
   static collectionName: string = 'user';
   static defaultUsers: string[] = [
-    ZKDATABAES_USER_NOBODY,
-    ZKDATABAES_USER_SYSTEM,
+    ZKDATABASE_USER_NOBODY,
+    ZKDATABASE_USER_SYSTEM,
   ];
 
   constructor() {
@@ -60,7 +60,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     return result.toArray();
   }
 
-  public async createUser(
+  public async create(
     userName: string,
     email: string,
     publicKey: string,

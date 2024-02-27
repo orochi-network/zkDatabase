@@ -160,8 +160,10 @@ const userSignIn = resolverWrapper(
     const client = new Client({ network: 'testnet' });
 
     if (client.verifyMessage(args.proof)) {
-      const modelUser = new ModelUser();
-      const user = await modelUser.findOne({ publicKey: args.proof.publicKey });
+      const modelSession = new ModelSession();
+      const user = await modelSession.findOne({
+        publicKey: args.proof.publicKey,
+      });
       const jsonData = JSON.parse(args.proof.data);
       if (user) {
         if (jsonData.userName !== user.userName) {
@@ -170,7 +172,7 @@ const userSignIn = resolverWrapper(
         if (timestamp.validate(jsonData.timestamp).error) {
           throw new Error('Timestamp is invalid');
         }
-        const session = await modelUser.signIn(user.userName);
+        const session = await modelSession.create(user.userName);
         if (session && session.userName === user.userName) {
           return {
             success: true,
@@ -190,7 +192,7 @@ const userSignIn = resolverWrapper(
 
 const userSignOut = async (_root: unknown, _args: any, context: AppContext) => {
   if (context.sessionId) {
-    await new ModelUser().signOut(context.sessionId);
+    await new ModelSession().delete(context.sessionId);
     return true;
   }
   return false;
@@ -209,7 +211,7 @@ const userSignUp = resolverWrapper(
         throw new Error('Email does not match');
       }
       const modelUser = new ModelUser();
-      await modelUser.signUp(
+      await modelUser.create(
         args.signUp.userName,
         args.signUp.email,
         args.proof.publicKey,

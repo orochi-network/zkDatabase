@@ -20,7 +20,7 @@ export class ModelSession extends ModelGeneral<DocumentSession> {
     super(ZKDATABASE_GLOBAL_DB, ModelSession.collectionName);
   }
 
-  public async createNew(userName: string): Promise<DocumentSession | null> {
+  public async create(userName: string): Promise<DocumentSession | null> {
     ModelUser.isValidUser(userName);
     const sessionData = {
       userName,

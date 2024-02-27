@@ -1,5 +1,7 @@
 import Joi from 'joi';
 import { PermissionRecord } from '../../common/permission';
+import { DocumentField } from '../../model/abstract/document';
+import { O1JS_VALID_TYPE } from '../../common/const';
 
 export const objectId = Joi.string()
   .trim()
@@ -54,4 +56,12 @@ export const permissionDetail = Joi.object({
   permissionOwner: permissionRecord,
   permissionGroup: permissionRecord,
   permissionOthers: permissionRecord,
+});
+
+export const documentField = Joi.object<DocumentField>({
+  name: Joi.string()
+    .pattern(/^[a-z][a-zA-Z0-9\_]+$/gi)
+    .required(),
+  kind: Joi.string().valid(O1JS_VALID_TYPE).required(),
+  value: Joi.string().raw().required(),
 });

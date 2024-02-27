@@ -12,10 +12,12 @@ import {
   partialToPermission,
 } from '../../common/permission';
 import { AppContext } from '../../helper/common';
-import { ZKDATABAES_USER_NOBODY } from '../../common/const';
+import { ZKDATABASE_USER_NOBODY } from '../../common/const';
+import { ObjectID } from 'graphql-scalars/typings/mocks';
+import { ObjectId } from 'mongodb';
 
 export type TPermissionRequest = TCollectionRequest & {
-  docId?: string;
+  docId: string;
 };
 
 export type TPermissionGroup = 'User' | 'Group' | 'Other';
@@ -101,13 +103,13 @@ const permissionList = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId: objectId.required(),
   }),
   async (_root: unknown, args: TPermissionRequest) => {
     const modelPermission = new ModelPermission(args.databaseName);
     const result = await modelPermission.findOne({
       collection: args.collectionName,
-      docId: args.docId,
+      docId: new ObjectId(args.docId),
     });
 
     if (result) {
@@ -136,7 +138,7 @@ const permissionSet = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId: objectId.required(),
     grouping: permissionGroup,
     permission: Joi.object({
       read: Joi.boolean(),
@@ -149,7 +151,7 @@ const permissionSet = resolverWrapper(
   async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
     if (
       typeof context.userName !== 'undefined' &&
-      context.userName === ZKDATABAES_USER_NOBODY
+      context.userName === ZKDATABASE_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);
@@ -160,7 +162,7 @@ const permissionSet = resolverWrapper(
 
       const permissionRecord = await permission.findOne({
         collection: args.collectionName,
-        docId: args.docId,
+        docId: new ObjectId(args.docId),
       });
       if (permissionRecord) {
         if (permissionRecord.userName === context.userName) {
@@ -201,7 +203,10 @@ const permissionSet = resolverWrapper(
             PermissionBinary.toBinaryPermission(newPermission);
 
           await modelPermission.updateOne(
-            { collection: args.collectionName, docId: args.docId },
+            {
+              collection: args.collectionName,
+              docId: new ObjectId(args.docId),
+            },
             {
               [fieldName]: permissionRecord[fieldName],
             }
@@ -235,14 +240,14 @@ const permissionOwn = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId: objectId.required(),
     grouping: permissionGroup,
     newOwner: userName,
   }),
   async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
     if (
       typeof context.userName !== 'undefined' &&
-      context.userName === ZKDATABAES_USER_NOBODY
+      context.userName === ZKDATABASE_USER_NOBODY
     ) {
       let hasPermission = false;
       const modelPermission = new ModelPermission(args.databaseName);
@@ -251,7 +256,7 @@ const permissionOwn = resolverWrapper(
 
       const permissionRecord = await permission.findOne({
         collection: args.collectionName,
-        docId: args.docId,
+        docId: new ObjectId(args.docId),
       });
       if (permissionRecord) {
         if (permissionRecord.userName === context.userName) {
@@ -286,7 +291,10 @@ const permissionOwn = resolverWrapper(
           if (args.grouping === 'User') {
             permissionRecord.userName = args.newOwner;
             await modelPermission.updateOne(
-              { collection: args.collectionName, docId: args.docId },
+              {
+                collection: args.collectionName,
+                docId: new ObjectId(args.docId),
+              },
               {
                 userName: args.newOwner,
               }
@@ -294,7 +302,10 @@ const permissionOwn = resolverWrapper(
           } else if (args.grouping === 'Group') {
             permissionRecord.groupName = args.newOwner;
             await modelPermission.updateOne(
-              { collection: args.collectionName, docId: args.docId },
+              {
+                collection: args.collectionName,
+                docId: new ObjectId(args.docId),
+              },
               {
                 groupName: args.newOwner,
               }

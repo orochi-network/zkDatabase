@@ -11,7 +11,7 @@ import { AppContext } from './helper/common';
 import { config } from './helper/config';
 import { DatabaseEngine } from './model/abstract/database-engine';
 import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
-import { ZKDATABAES_USER_NOBODY } from './common/const';
+import { ZKDATABASE_USER_NOBODY } from './common/const';
 
 (async () => {
   const app = express();
@@ -47,7 +47,7 @@ import { ZKDATABAES_USER_NOBODY } from './common/const';
           return { sessionId, userName, email };
         }
         return {
-          userName: ZKDATABAES_USER_NOBODY,
+          userName: ZKDATABASE_USER_NOBODY,
           email: '',
           sessionId: '',
         };
