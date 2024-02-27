@@ -1,12 +1,13 @@
-import ModelBasic from "./abstract/basic.js";
+import ModelBasic from './abstract/basic.js';
 
 export type TaskEntity = {
   id: bigint;
   index: bigint;
   hash: string;
   processed?: boolean;
-  database: string,
-  collection: string
+  createdAt?: Date,
+  database: string;
+  collection: string;
 };
 
 export class ModelTask extends ModelBasic {
@@ -15,14 +16,17 @@ export class ModelTask extends ModelBasic {
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
   }
-  
-  public static getInstance(databaseName: string, collectionName: string): ModelTask {
+
+  public static getInstance(
+    databaseName: string,
+    collectionName: string
+  ): ModelTask {
     if (!ModelTask.instance) {
       ModelTask.instance = new ModelTask(databaseName, collectionName);
+      ModelTask.instance.collection.createIndex({ id: 1 }, { unique: true });
     }
     return ModelTask.instance;
   }
-
 
   public async createTask(task: TaskEntity): Promise<void> {
     if (!this.collection) {
@@ -30,6 +34,7 @@ export class ModelTask extends ModelBasic {
     }
     await this.collection.insertOne({
       ...task,
+      createdAt: new Date(),
       processed: false,
     });
   }
@@ -40,13 +45,12 @@ export class ModelTask extends ModelBasic {
     }
     const result = await this.collection.findOne(
       { processed: false },
-      { sort: { createdAt: 1 }}
+      { sort: { createdAt: 1 } }
     );
-  
+
     const task = result?.value as TaskEntity | null;
     return task;
   }
-  
 
   public async markTaskProcessed(taskId: bigint): Promise<void> {
     if (!this.collection) {
