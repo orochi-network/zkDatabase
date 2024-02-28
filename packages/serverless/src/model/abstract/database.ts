@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import ModelBasic from './basic';
-import { ZKDATABASE_METADATA } from '../../common/const';
+import { ZKDATABASE_GLOBAL_DB, ZKDATABASE_METADATA } from '../../common/const';
 import ModelDocumentMetadata from '../database/document-metadata';
 import { ModelSchema } from '../database/schema';
 import ModelGroup from '../database/group';
@@ -19,6 +19,10 @@ export type DocumentMetaIndex = {
  */
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   public static instances = new Map<string, ModelDatabase<any>>();
+
+  constructor(databaseName?: string) {
+    super(databaseName || ZKDATABASE_GLOBAL_DB);
+  }
 
   public static getInstance(databaseName: string) {
     if (!ModelDatabase.instances.has(databaseName)) {

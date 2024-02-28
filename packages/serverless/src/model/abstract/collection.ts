@@ -36,14 +36,17 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     if (
       this.databaseName &&
       this.collectionName &&
-      (await this.dbEngine.isCollection(this.databaseName, this.collectionName))
+      !(await this.dbEngine.isCollection(
+        this.databaseName,
+        this.collectionName
+      ))
     ) {
       return new ModelCollection(
         this.databaseName,
         this.collectionName
       ).collection.createIndex(indexSpecs, indexOptions);
     }
-    throw new Error('Database and collection was not set');
+    throw new Error('Database and collection was not set or collection exist');
   }
 
   public async drop() {

@@ -60,8 +60,10 @@ export const permissionDetail = Joi.object({
 
 export const documentField = Joi.object<DocumentField>({
   name: Joi.string()
-    .pattern(/^[a-z][a-zA-Z0-9\_]+$/gi)
+    .pattern(/^[a-z][a-zA-Z0-9\_]+$/)
     .required(),
-  kind: Joi.string().valid(O1JS_VALID_TYPE).required(),
+  kind: Joi.string()
+    .valid(...O1JS_VALID_TYPE)
+    .required(),
   value: Joi.string().raw().required(),
 });
