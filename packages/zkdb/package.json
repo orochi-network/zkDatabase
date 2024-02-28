@@ -23,7 +23,7 @@
   "types": "./build/src/core/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
-    "build": "npx tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "buildw": "tsc -p tsconfig.json --watch",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
