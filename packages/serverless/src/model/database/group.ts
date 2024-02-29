@@ -38,7 +38,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
       ModelGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.create({ grouName: 1 }, { unique: true });
+      await collection.index({ grouName: 1 }, { unique: true });
     }
   }
 }

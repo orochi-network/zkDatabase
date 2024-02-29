@@ -68,6 +68,9 @@ const before = async () => {
   // Clean up before test
   const userInfo = { email: 'user@example.com', userName: 'user' };
   await modelUser.deleteOne({ email: userInfo.email });
+  await new ModelSession().collection.deleteMany({
+    userName: userInfo.userName,
+  });
 
   // Generate keys
   // client.genKeys();
@@ -109,11 +112,10 @@ const before = async () => {
   } = <any>result;
 
   const jwt = new JWTAuthentication<IJWTAuthenticationPayload>(sessionKey);
-  const accessToken = jwt.sign({
+  const accessToken = await jwt.sign({
     sessionId,
     userName: userInfo.userName,
     email: userInfo.email,
-    timestamp: timestamp(),
   });
 
   // Test sign out

@@ -23,8 +23,8 @@ export class ModelSession extends ModelGeneral<DocumentSession> {
     ModelUser.isValidUser(userName);
     const sessionData = {
       userName,
-      sessionId: randomBytes(32).toString('hex'),
-      sessionKey: randomBytes(32).toString('hex'),
+      sessionId: jose.base64url.encode(randomBytes(32)),
+      sessionKey: jose.base64url.encode(randomBytes(32)),
       createdAt: getCurrentTime(),
       lastAccess: getCurrentTime(),
     };
