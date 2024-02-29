@@ -158,10 +158,10 @@ const userSignIn = resolverWrapper(
   async (_root: unknown, args: TSignInRequest) => {
     // We only support testnet for now to prevent the signature from being used on mainnet
     const client = new Client({ network: 'testnet' });
-
     if (client.verifyMessage(args.proof)) {
       const modelSession = new ModelSession();
-      const user = await modelSession.findOne({
+      const modelUser = new ModelUser();
+      const user = await modelUser.findOne({
         publicKey: args.proof.publicKey,
       });
       const jsonData = JSON.parse(args.proof.data);

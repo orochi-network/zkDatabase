@@ -29,26 +29,6 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
   }
 
-  public async create(
-    indexSpecs: IndexSpecification,
-    indexOptions?: CreateIndexesOptions
-  ) {
-    if (
-      this.databaseName &&
-      this.collectionName &&
-      !(await this.dbEngine.isCollection(
-        this.databaseName,
-        this.collectionName
-      ))
-    ) {
-      return new ModelCollection(
-        this.databaseName,
-        this.collectionName
-      ).collection.createIndex(indexSpecs, indexOptions);
-    }
-    throw new Error('Database and collection was not set or collection exist');
-  }
-
   public async drop() {
     return this.db.dropCollection(this.collectionName!);
   }
