@@ -39,6 +39,7 @@ import { ZKDATABASE_USER_NOBODY } from './common/const';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
+        logger.debug(req.headers);
         if (req.headers.authorization) {
           const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(

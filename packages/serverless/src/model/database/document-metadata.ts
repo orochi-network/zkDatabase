@@ -78,8 +78,8 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
       ModelDocumentMetadata.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.create({ collection: 1, docId: 1 }, { unique: true });
-      await collection.create({ merkleIndex: 1 }, { unique: true });
+      await collection.index({ collection: 1, docId: 1 }, { unique: true });
+      await collection.index({ merkleIndex: 1 }, { unique: true });
     }
   }
 }

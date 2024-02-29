@@ -7,8 +7,6 @@ import ModelSession from '../model/global/session';
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   userName: string;
   email: string;
-  // Unix epoch timestamp in seconds
-  timestamp: number;
   sessionId: string;
 }
 
@@ -27,12 +25,13 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
       return new jose.SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
+        .setExpirationTime('30d')
         .sign(this.secret);
     }
     return new jose.SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('2h')
+      .setExpirationTime('60s')
       .sign(this.secret);
   }
 
@@ -43,21 +42,10 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     if (
       !decodedPayload ||
       !decodedPayload.sessionId ||
-      !decodedPayload.timestamp ||
       !decodedPayload.userName ||
       !decodedPayload.email
     ) {
       throw new GraphQLError('Token is invalid', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-    const timeDiff = Math.floor(Date.now() / 1000) - decodedPayload.timestamp;
-    // Check if token is expired
-    if (timeDiff < 0 && timeDiff > JWTF_EXPIRED) {
-      throw new GraphQLError('Token is expired', {
         extensions: {
           code: 'UNAUTHENTICATED',
           http: { status: 401 },
@@ -80,7 +68,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     // Recover the session key and verify the token
     const { payload, protectedHeader } = await jose.jwtVerify(
       token,
-      Buffer.from(session.sessionKey, 'hex')
+      jose.base64url.decode(session.sessionKey)
     );
     return { payload: payload as T, protectedHeader };
   }

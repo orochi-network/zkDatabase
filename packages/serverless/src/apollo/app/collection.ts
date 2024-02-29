@@ -57,7 +57,7 @@ const collectionCreate = resolverWrapper(
       await ModelCollection.getInstance(
         args.databaseName,
         args.collectionName
-      ).create(args.indexField || []);
+      ).index(args.indexField || []);
       return true;
     } catch (e) {
       logger.error(e);
