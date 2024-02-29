@@ -5,6 +5,7 @@ import {
   ZKDATABASE_USER_SYSTEM
 } from '../../common/const';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common';
+import ModelCollection from '../abstract/collection';
 
 export interface DocumentUser extends Document {
   userName: string;
@@ -26,6 +27,18 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
 
   constructor() {
     super(zkDatabaseConstants.globalDatabase, ModelUser.collectionName);
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      ZKDATABASE_GLOBAL_DB,
+      ModelUser.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ user: 1 }, { unique: true });
+      collection.index({ publicKey: 1 }, { unique: true });
+      collection.index({ email: 1 }, { unique: true });
+    }
   }
 
   public static isValidUser(userName: string) {
@@ -67,7 +80,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     userData: any
   ) {
     ModelUser.isValidUser(userName);
-    if (await this.isUserExist({ userName, email, publicKey })) {
+    if (!(await this.isUserExist({ userName, email, publicKey }))) {
       return this.insertOne({
         userName,
         email,

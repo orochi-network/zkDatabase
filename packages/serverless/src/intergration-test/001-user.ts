@@ -10,6 +10,37 @@ import { randomBytes } from 'crypto';
 import ModelDatabase from '../model/abstract/database';
 import { ZKDATABASE_GLOBAL_DB } from '../common/const';
 import ModelCollection from '../model/abstract/collection';
+import logger from '../helper/logger';
+import { ModelSchema } from '../model/database/schema';
+import { Schema } from '../common/schema';
+import { CircuitString, Field } from 'o1js';
+import ModelSession from '../model/global/session';
+import { IJWTAuthenticationPayload, JWTAuthentication } from '../helper/jwt';
+
+const mutationSignUp = gql`
+  mutation UserSignUp($proof: SignatureProof!, $signUp: SignUp!) {
+    userSignUp(proof: $proof, signUp: $signUp) {
+      email
+      error
+      publicKey
+      success
+      userName
+    }
+  }
+`;
+
+const mutationSignIn = gql`
+  mutation UserSignIn($proof: SignatureProof!) {
+    userSignIn(proof: $proof) {
+      success
+      error
+      userName
+      sessionKey
+      sessionId
+      userData
+    }
+  }
+`;
 
 const quick = async (document: any, variables: any) =>
   request({
@@ -20,22 +51,23 @@ const quick = async (document: any, variables: any) =>
 
 const timestamp = () => Math.floor(Date.now() / 1000);
 
-(async () => {
+const before = async () => {
   const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
-  const modelDb = new ModelDatabase();
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }
 
-  const client = new Client({ network: 'testnet' });
-  const userInfo = { email: 'user@example.com', userName: 'user' };
-  const modelUser = new ModelUser();
-  await modelUser.deleteOne({ email: userInfo.email });
+  ModelUser.init();
+};
 
-  const modelCollection = new ModelCollection(ZKDATABASE_GLOBAL_DB, 'user');
-  modelCollection.create({ user: 1 }, { unique: true });
-  modelCollection.create({ publicKey: 1 }, { unique: true });
-  modelCollection.create({ email: 1 }, { unique: true });
+(async () => {
+  await before();
+  const client = new Client({ network: 'testnet' });
+  const modelUser = new ModelUser();
+
+  // Clean up before test
+  const userInfo = { email: 'user@example.com', userName: 'user' };
+  await modelUser.deleteOne({ email: userInfo.email });
 
   // Generate keys
   // client.genKeys();
@@ -49,54 +81,55 @@ const timestamp = () => Math.floor(Date.now() / 1000);
     JSON.stringify(userInfo),
     keypair.privateKey
   );
-  let result = await quick(
-    gql`
-      mutation UserSignUp($proof: SignatureProof!, $signUp: SignUp!) {
-        userSignUp(proof: $proof, signUp: $signUp) {
-          email
-          error
-          publicKey
-          success
-          userName
-        }
-      }
-    `,
-    {
-      proof: signUpProof,
-      signUp: {
-        ...userInfo,
-        timestamp: Math.floor(Date.now() / 1000),
-        userData: {},
-      },
-    }
-  );
+  let result = await quick(mutationSignUp, {
+    proof: signUpProof,
+    signUp: {
+      ...userInfo,
+      timestamp: Math.floor(Date.now() / 1000),
+      userData: {},
+    },
+  });
 
-  console.log(result);
+  logger.debug(result);
 
+  // Test sign in
   const signInProof = client.signMessage(
     JSON.stringify({ userName: userInfo.userName, timestamp: timestamp() }),
     keypair.privateKey
   );
 
-  console.log('Find user:', await (await modelUser.find({})).toArray());
+  logger.debug('Find user:', await (await modelUser.find({})).toArray());
 
-  result = await quick(
-    gql`
-      mutation UserSignIn($proof: SignatureProof!) {
-        userSignIn(proof: $proof) {
-          success
-          error
-          userName
-          sessionKey
-          sessionId
-          userData
+  result = await quick(mutationSignIn, { proof: signInProof });
+
+  logger.debug(result);
+
+  const {
+    userSignIn: { sessionKey, sessionId },
+  } = <any>result;
+
+  const jwt = new JWTAuthentication<IJWTAuthenticationPayload>(sessionKey);
+  const accessToken = jwt.sign({
+    sessionId,
+    userName: userInfo.userName,
+    email: userInfo.email,
+    timestamp: timestamp(),
+  });
+
+  // Test sign out
+  logger.debug(
+    await request({
+      url: 'http://localhost:4000/graphql',
+      document: gql`
+        mutation Mutation {
+          userSignOut
         }
-      }
-    `,
-    { proof: signInProof }
+      `,
+      requestHeaders: {
+        authorization: `Bearer ${accessToken}`,
+      },
+    })
   );
-
-  console.log(result);
 
   await DatabaseEngine.getInstance().disconnect();
 })();

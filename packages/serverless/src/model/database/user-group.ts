@@ -73,7 +73,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
       ModelUserGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.create({ collection: 1 }, { unique: true });
+      await collection.index({ collection: 1 }, { unique: true });
     }
   }
 }
