@@ -9,6 +9,8 @@ export interface AppContext {
   sessionId: string;
 }
 
+// @todo Have better validation for JWT
+// temporary solution to add { iat?: number; exp?: number }
 export const APP_JWT_VALIDATION = Joi.object<
   AppContext & { iat?: number; exp?: number }
 >({

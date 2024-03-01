@@ -1,10 +1,7 @@
 import { Document } from 'mongodb';
-import { randomBytes } from 'crypto';
-import * as jose from 'jose';
 import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
-import ModelUser from './user';
-import { getCurrentTime } from '../../helper/common';
+import ModelCollection from '../abstract/collection';
 
 export interface DocumentOwnership extends Document {
   databaseName: string;
@@ -18,6 +15,17 @@ export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
 
   constructor() {
     super(ZKDATABASE_GLOBAL_DB, ModelOwnership.collectionName);
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      ZKDATABASE_GLOBAL_DB,
+      ModelOwnership.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ owner: 1 }, { unique: true });
+      collection.index({ databaseName: 1 }, { unique: true });
+    }
   }
 }
 
