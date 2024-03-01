@@ -12,7 +12,7 @@ import {
   PermissionRecord,
   partialToPermission,
 } from '../../common/permission';
-import { AppContext } from '../../helper/common';
+import { AppContext } from '../../common/types';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const';
 
 export type TPermissionRequest = TCollectionRequest & {

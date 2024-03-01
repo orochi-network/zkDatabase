@@ -42,7 +42,7 @@ const dbStats = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest) =>
+  async (_root: unknown, args: TDatabaseRequest, ctx: AppContext) =>
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 

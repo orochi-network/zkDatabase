@@ -1,10 +1,7 @@
 import Joi from 'joi';
-import { GraphQLResolveInfo } from 'graphql';
-import { AppContext } from '../helper/common';
-
-interface IBaseAuthRequest {
-  apiKey: string;
-}
+import { GraphQLError, GraphQLResolveInfo } from 'graphql';
+import { ZKDATABASE_USER_NOBODY } from '../common/const';
+import { AppContext } from '../common/types';
 
 export type THandler<T = any> = (
   _root: any,
@@ -37,16 +34,30 @@ export type TWrapperMap<T = any> = TResolver<Joi.ObjectSchema<T>>;
 export const resolverWrapper = <T>(
   schema: Joi.ObjectSchema<T>,
   resolver: THandler<T>
-): THandler<T & IBaseAuthRequest> => {
-  return async (
-    root: any,
-    args: T & IBaseAuthRequest,
-    context: any,
-    info: GraphQLResolveInfo
-  ) => {
+): THandler<T> => {
+  return async (root: any, args: T, context: any, info: GraphQLResolveInfo) => {
     const { error } = schema.validate(args);
     if (error) {
-      throw new Error(error.message);
+      throw error;
+    }
+    return resolver(root, args, context, info);
+  };
+};
+
+export const authorizeWrapper = <T>(resolver: THandler<T>): THandler<T> => {
+  return async (
+    root: any,
+    args: T,
+    context: AppContext,
+    info: GraphQLResolveInfo
+  ) => {
+    if (context.userName === ZKDATABASE_USER_NOBODY) {
+      throw new GraphQLError('This method required authorized user', {
+        extensions: {
+          code: 'UNAUTHENTICATED',
+          http: { status: 401 },
+        },
+      });
     }
     return resolver(root, args, context, info);
   };
