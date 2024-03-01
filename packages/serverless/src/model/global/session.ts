@@ -5,6 +5,7 @@ import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import ModelUser from './user';
 import { getCurrentTime } from '../../helper/common';
+import { mod } from 'o1js/dist/node/bindings/crypto/finite_field';
 
 export interface DocumentSession extends Document {
   userName: string;
@@ -15,10 +16,18 @@ export interface DocumentSession extends Document {
 }
 
 export class ModelSession extends ModelGeneral<DocumentSession> {
+  static instance: ModelSession | undefined = undefined;
   static collectionName: string = 'session';
 
   constructor() {
     super(ZKDATABASE_GLOBAL_DB, ModelSession.collectionName);
+  }
+
+  public static getInstance() {
+    if (typeof ModelSession.instance === 'undefined') {
+      ModelSession.instance = new ModelSession();
+    }
+    return ModelSession.instance;
   }
 
   public async create(userName: string): Promise<DocumentSession | null> {

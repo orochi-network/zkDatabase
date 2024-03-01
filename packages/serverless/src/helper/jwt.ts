@@ -3,14 +3,13 @@ import * as jose from 'jose';
 import logger from './logger';
 import config from './config';
 import ModelSession from '../model/global/session';
+import { APP_JWT_VALIDATION } from '../common/types';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   userName: string;
   email: string;
   sessionId: string;
 }
-
-export const JWTF_EXPIRED = 7200;
 
 export class JWTAuthentication<T extends jose.JWTPayload> {
   private secret: Uint8Array;
@@ -39,12 +38,9 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     token: string
   ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, 'protectedHeader'>> {
     const decodedPayload = jose.decodeJwt(token) as IJWTAuthenticationPayload;
-    if (
-      !decodedPayload ||
-      !decodedPayload.sessionId ||
-      !decodedPayload.userName ||
-      !decodedPayload.email
-    ) {
+    const { error } = APP_JWT_VALIDATION.validate(decodedPayload);
+    if (error) {
+      logger.error(error);
       throw new GraphQLError('Token is invalid', {
         extensions: {
           code: 'UNAUTHENTICATED',
@@ -52,8 +48,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
         },
       });
     }
-    const modelSession = new ModelSession();
-    const session = await modelSession.findOne({
+    const session = await ModelSession.getInstance().findOne({
       sessionId: decodedPayload.sessionId,
     });
     // Check if session is valid

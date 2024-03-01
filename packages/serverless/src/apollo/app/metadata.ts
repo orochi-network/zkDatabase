@@ -11,9 +11,8 @@ import {
   PermissionRecord,
   partialToPermission,
 } from '../../common/permission';
-import { AppContext } from '../../helper/common';
+import { AppContext } from '../../common/types';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const';
-import { ObjectID } from 'graphql-scalars/typings/mocks';
 import { ObjectId } from 'mongodb';
 
 export type TPermissionRequest = TCollectionRequest & {
