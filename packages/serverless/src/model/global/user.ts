@@ -35,7 +35,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
-      collection.index({ user: 1 }, { unique: true });
+      collection.index({ userName: 1 }, { unique: true });
       collection.index({ publicKey: 1 }, { unique: true });
       collection.index({ email: 1 }, { unique: true });
     }

@@ -3,7 +3,7 @@ import { randomBytes } from 'crypto';
 import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import ModelUser from './user';
 import { getCurrentTime } from '../../helper/common';
-import { mod } from 'o1js/dist/node/bindings/crypto/finite_field';
+import ModelCollection from '../abstract/collection';
 
 export interface DocumentSession extends Document {
   userName: string;
@@ -18,6 +18,17 @@ export class ModelSession extends ModelGeneral<DocumentSession> {
 
   constructor() {
     super(zkDatabaseConstants.globalDatabase, ModelSession.collectionName);
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      ZKDATABASE_GLOBAL_DB,
+      ModelSession.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ userName: 1 }, { unique: true });
+      collection.index({ sessionId: 1 }, { unique: true });
+    }
   }
 
   public static getInstance() {
