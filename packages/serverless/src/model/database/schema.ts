@@ -157,7 +157,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
       }
     }
     // Create index and collection
-    await new ModelCollection(this.databaseName, collectionName).create(
+    await new ModelCollection(this.databaseName, collectionName).index(
       indexKeys
     );
     return this.insertOne(schemaDef);
@@ -169,7 +169,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
       ModelSchema.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.create({ collection: 1 }, { unique: true });
+      await collection.index({ collection: 1 }, { unique: true });
     }
   }
 }

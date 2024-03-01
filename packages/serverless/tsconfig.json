@@ -12,16 +12,15 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": false,
+    "typeRoots": ["node_modules/@types"],
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node"]
+    "types": ["node","jest"]
   },
   "include": ["**/*.ts"],
   "exclude": [
     "build",
     "node_modules",
-    "**/*.spec.ts",
-    "**/*.test.ts",
     "typechain/**/*.ts"
   ]
 }

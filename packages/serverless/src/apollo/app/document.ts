@@ -52,7 +52,7 @@ scalar JSON
 type Query
 type Mutation
 
-type PermissionRecord {
+input PermissionRecordInput {
   system: Boolean
   create: Boolean
   read: Boolean
@@ -60,10 +60,10 @@ type PermissionRecord {
   delete: Boolean
 }
 
-input PermissionDetail {
-  permissionOwner: PermissionRecord
-  permissionGroup: PermissionRecord
-  permissionOthers: PermissionRecord
+input PermissionDetailInput {
+  permissionOwner: PermissionRecordInput
+  permissionGroup: PermissionRecordInput
+  permissionOthers: PermissionRecordInput
 }
 
 extend type Query {
@@ -71,7 +71,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!, documentPermission: PermissionDetail): JSON
+  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!, documentPermission: PermissionDetailInput): JSON
   documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
   documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }

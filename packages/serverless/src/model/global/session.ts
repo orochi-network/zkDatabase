@@ -1,9 +1,11 @@
 import { Document } from 'mongodb';
 import { randomBytes } from 'crypto';
+import * as jose from 'jose';
 import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import ModelUser from './user';
 import { getCurrentTime } from '../../helper/common';
+import ModelCollection from '../abstract/collection';
 
 export interface DocumentSession extends Document {
   userName: string;
@@ -14,18 +16,37 @@ export interface DocumentSession extends Document {
 }
 
 export class ModelSession extends ModelGeneral<DocumentSession> {
+  static instance: ModelSession | undefined = undefined;
   static collectionName: string = 'session';
 
   constructor() {
     super(ZKDATABASE_GLOBAL_DB, ModelSession.collectionName);
   }
 
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      ZKDATABASE_GLOBAL_DB,
+      ModelSession.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ userName: 1 }, { unique: true });
+      collection.index({ sessionId: 1 }, { unique: true });
+    }
+  }
+
+  public static getInstance() {
+    if (typeof ModelSession.instance === 'undefined') {
+      ModelSession.instance = new ModelSession();
+    }
+    return ModelSession.instance;
+  }
+
   public async create(userName: string): Promise<DocumentSession | null> {
     ModelUser.isValidUser(userName);
     const sessionData = {
       userName,
-      sessionId: randomBytes(32).toString('hex'),
-      sessionKey: randomBytes(32).toString('hex'),
+      sessionId: jose.base64url.encode(randomBytes(32)),
+      sessionKey: jose.base64url.encode(randomBytes(32)),
       createdAt: getCurrentTime(),
       lastAccess: getCurrentTime(),
     };

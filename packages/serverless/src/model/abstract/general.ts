@@ -23,18 +23,6 @@ import logger from '../../helper/logger';
  * to do with zkDatabase or record of zkDatabase
  */
 export class ModelGeneral<T extends Document> extends ModelBasic<T> {
-  public static getInstance<P>(databaseName: string, collectionName: string) {
-    return new Proxy(new ModelGeneral(databaseName, collectionName), {
-      get(target: any, prop: string) {
-        if (typeof target.collection[prop] === 'function') {
-          // eslint-disable-next-line prefer-rest-params
-          target.collection[prop].apply(target, arguments);
-        }
-        return target.collection[prop];
-      },
-    });
-  }
-
   public async updateOne(
     filter: Filter<T>,
     update: UpdateFilter<T>,

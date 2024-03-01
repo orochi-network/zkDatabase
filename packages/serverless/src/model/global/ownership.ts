@@ -3,32 +3,24 @@ import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import ModelCollection from '../abstract/collection';
 
-export type DocumentAllSettings = {
-  configKey: 'database_version';
-  configValue: string;
-};
-
-export interface DocumentSetting extends Document, DocumentAllSettings {
+export interface DocumentOwnership extends Document {
+  databaseName: string;
+  owner: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class ModelSetting extends ModelGeneral<DocumentSetting> {
-  private isUpdated: boolean = false;
-  static collectionName: string = 'setting';
+export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
+  static collectionName: string = 'ownership';
 
   constructor() {
-    super(ZKDATABASE_GLOBAL_DB, ModelSetting.collectionName);
-  }
-
-  public async load() {
-    await this.find();
+    super(ZKDATABASE_GLOBAL_DB, ModelOwnership.collectionName);
   }
 
   public static async init() {
     const collection = ModelCollection.getInstance(
       ZKDATABASE_GLOBAL_DB,
-      ModelSetting.collectionName
+      ModelOwnership.collectionName
     );
     if (!(await collection.isExist())) {
       collection.index({ owner: 1 }, { unique: true });
@@ -37,4 +29,4 @@ export class ModelSetting extends ModelGeneral<DocumentSetting> {
   }
 }
 
-export default ModelSetting;
+export default ModelOwnership;

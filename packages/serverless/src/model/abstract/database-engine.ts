@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion, ObjectId } from 'mongodb';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 import logger from '../../helper/logger';
 
 export class DatabaseEngine {
@@ -82,8 +82,15 @@ export class DatabaseEngine {
     let retries = 3;
     do {
       try {
+        const time = Date.now();
         // eslint-disable-next-line no-await-in-loop
         this.connection = await this.mongoClient.connect();
+        logger.info(
+          'DatabaseEngine::connect()',
+          'Connected',
+          Date.now() - time,
+          'ms'
+        );
         error = false;
       } catch (e) {
         logger.info('DatabaseEngine::connect()', e, 'retry', retries);

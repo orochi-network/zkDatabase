@@ -95,7 +95,7 @@ export class ModelMerkleTreePool extends ModelGeneral<PooledLeaf> {
   }
 
   public async create() {
-    return new ModelCollection(this.databaseName, this.collectionName).create({
+    return new ModelCollection(this.databaseName, this.collectionName).index({
       hash: 1,
     });
   }
