@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
+import { Filter } from 'mongodb';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
 import {
@@ -13,14 +14,13 @@ import {
   permissionDetail,
   permissionRecord,
 } from './common';
-import { Filter } from 'mongodb';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  documentRecord: { [key: string]: any };
+  documentRecord: DocumentRecord;
   documentPermission: DocumentPermission;
 };
 
@@ -37,7 +37,7 @@ export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
   documentPermission: permissionDetail.required(),
-  documentRecord: Joi.object().required(),
+  documentRecord: Joi.required(),
 });
 
 export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
@@ -66,12 +66,18 @@ input PermissionDetail {
   permissionOthers: PermissionRecord
 }
 
+input DocumentRecord {
+  name: String!
+  kind: String!
+  value: String!
+}
+
 extend type Query {
   documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: JSON!, documentPermission: PermissionDetail): JSON
+  documentCreate(databaseName: String!, collectionName: String!, documentRecord: [DocumentRecord!]!, documentPermission: PermissionDetail): JSON
   documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
   documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
