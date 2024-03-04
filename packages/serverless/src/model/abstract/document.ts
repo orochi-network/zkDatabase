@@ -1,12 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import {
-  ClientSession,
-  Filter,
-  UpdateResult,
-  Document,
-  ObjectId,
-} from 'mongodb';
+import { ClientSession, Filter, UpdateResult, ObjectId } from 'mongodb';
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
 import {
@@ -18,10 +12,10 @@ import { ModelSchema, SchemaField } from '../database/schema';
 import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
-import ModelMerkleTreePool from '../database/merkle-tree-pool';
 import { PermissionBasic } from '../../common/permission';
 import { SchemaEncoded, Schema, ProvableTypeString } from '../common/schema';
 import { ProvableTypeMap } from '../../common/schema';
+import ModelMerkleTree from '../database/merkle-tree';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -30,22 +24,20 @@ export type DocumentPermission = Pick<
   'permissionOwner' | 'permissionGroup' | 'permissionOther'
 >;
 
-export interface DocumentRecord extends Document {
-  [key: string]: DocumentField;
-}
+export type DocumentRecord = DocumentField[];
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
 export class ModelDocument extends ModelBasic<DocumentRecord> {
-  private merkleTreePool: ModelMerkleTreePool;
+  private merkleTree: ModelMerkleTree;
 
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
-    this.merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
+    this.merkleTree = ModelMerkleTree.getInstance(databaseName);
   }
 
   get modelDatabase() {
@@ -62,7 +54,6 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public static getInstance(databaseName: string, collectionName: string) {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelDocument.instances.has(key)) {
-      const merkleTreePool = ModelMerkleTreePool.getInstance(databaseName);
       ModelDocument.instances.set(
         key,
         new ModelDocument(databaseName, collectionName)
@@ -71,18 +62,28 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     return ModelDocument.instances.get(key)!;
   }
 
-  public async getDocumentDetail(documentId: ObjectId) {
+  public async getDocumentDetail(
+    documentId: ObjectId,
+    session?: ClientSession
+  ) {
     const modelSchema = ModelSchema.getInstance(this.databaseName!);
-    const schema = await modelSchema.findOne({
-      collection: this.collectionName,
-    });
+    const schema = await modelSchema.findOne(
+      {
+        collection: this.collectionName,
+      },
+      { session }
+    );
     const encodedDocument: SchemaEncoded = [];
     const structType: { [key: string]: any } = {};
-    const document = await this.findOne({ _id: documentId });
+    const document = await this.collection.findOne(
+      { _id: documentId },
+      { session }
+    );
+
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
         const schemaField = schema.fields[i];
-        const { name, kind, value } = document[schemaField];
+        const { name, kind, value } = document[i];
         if (
           schema[schemaField].name !== name &&
           schema[schemaField].kind !== kind
@@ -138,11 +139,44 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
         // We need to do this to make sure that only 1 record
         if (
-          1 !== updateResult.modifiedCount &&
-          1 !== updateResult.matchedCount
+          (updateResult.modifiedCount !== 1 &&
+            updateResult.matchedCount !== 1) ||
+          !updateResult
         ) {
           throw new Error('Invalid update, modified count not equal to 1');
         }
+
+        const documentDetails = await this.getDocumentDetail(
+          updateResult.upsertedId!
+        );
+
+        if (!documentDetails) {
+          throw Error('Document details is empty');
+        }
+
+        const newHash = documentDetails.structuredDocument.hash();
+
+        const modelDocumentMetadata = new ModelDocumentMetadata(
+          this.databaseName!
+        );
+
+        const documentMetadata = await modelDocumentMetadata.findOne(
+          { docId: updateResult.upsertedId! },
+          { session }
+        );
+
+        if (!documentMetadata) {
+          throw Error('Document metadata is empty');
+        }
+
+        await this.merkleTree.setLeaf(
+          BigInt(documentMetadata.merkleIndex),
+          newHash,
+          new Date(),
+          {
+            session,
+          }
+        );
       }
     );
     return success ? updateResult : null;
@@ -186,7 +220,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           documentSchema;
 
         // Insert document metadata
-        await modelDocumentMetadata.insertOne(
+        const document = await modelDocumentMetadata.insertOne(
           {
             collection: this.collectionName!,
             docId: insertResult.insertedId,
@@ -208,6 +242,20 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           },
           { session }
         );
+
+        const documentDetails = await this.getDocumentDetail(
+          document.insertedId
+        );
+
+        if (!documentDetails) {
+          throw Error('Document details is empty');
+        }
+
+        const newHash = documentDetails.structuredDocument.hash();
+
+        await this.merkleTree.setLeaf(BigInt(index), newHash, new Date(), {
+          session,
+        });
       }
     );
     return success ? insertResult : null;

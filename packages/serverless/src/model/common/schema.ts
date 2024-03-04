@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import {
   Poseidon,
   InferProvable,
@@ -13,8 +14,7 @@ import {
   PrivateKey,
   Signature,
   MerkleMapWitness,
-  Struct,
-  Provable,
+  Struct
 } from 'o1js';
 
 export interface SchemaExtend {
@@ -58,6 +58,7 @@ const ProvableTypeMap = {
   Signature: Signature,
   MerkleMapWitness: MerkleMapWitness,
 };
+
 export type SchemaFieldDefinition = {
   name: string;
   kind: ProvableTypeString;
@@ -67,7 +68,7 @@ export type SchemaFieldDefinition = {
 export type SchemaDefinition = SchemaFieldDefinition[];
 
 export type ProvableMapped<T extends SchemaDefinition> = {
-  [Property in T[number]['name']]?: typeof ProvableTypeMap[ProvableTypeString];
+  [Property in T[number]['name']]?: (typeof ProvableTypeMap)[ProvableTypeString];
 };
 
 export function toInnerStructure<T extends SchemaDefinition>(
@@ -86,7 +87,6 @@ type Indexes<T> = Array<keyof T>;
 export type SchemaEncoded = [
   name: string,
   kind: ProvableTypeString,
-  indexed: boolean,
   value: string,
 ][];
 
@@ -119,7 +119,7 @@ export class Schema {
         const anyThis = <any>this;
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
-          const { name, kind, indexed } = Document.schemaEntries[i];
+          const { name, kind } = Document.schemaEntries[i];
           let value = 'N/A';
           switch (kind) {
             case 'PrivateKey':
@@ -130,7 +130,7 @@ export class Schema {
             default:
               value = anyThis[name].toString();
           }
-          result.push([name, kind, indexed, value]);
+          result.push([name, kind, value]);
         }
         return result;
       }
@@ -142,14 +142,9 @@ export class Schema {
 
       static deserialize(doc: SchemaEncoded): Document {
         const result: any = {};
-        result.indexes = [];
 
         for (let i = 0; i < doc.length; i += 1) {
-          const [name, kind, indexed, value] = doc[i];
-
-          if (indexed) {
-            result.indexes.push(name);
-          }
+          const [name, kind, value] = doc[i];
 
           switch (kind) {
             case 'PrivateKey':
@@ -186,17 +181,17 @@ export class Schema {
     return Document as any;
   }
 
-  public static fromRecord(record: string[][]): SchemaDefinition {
-    return record.map(([name, kind, indexed]) => ({
-      name,
-      kind: kind as ProvableTypeString,
-      indexed: indexed === 'true',
-    }));
+  public static fromRecord(record: string[][]) {
+    return this.fromSchema(
+      record.map(([name, kind, indexed]) => ({
+        name,
+        kind: kind as ProvableTypeString,
+        indexed: indexed === 'true',
+      }))
+    );
   }
 
   public static fromSchema(schema: SchemaDefinition) {
-    const innerStruct = toInnerStructure(schema);
-    Provable.log('innerStruct', innerStruct);
-    return Schema.create(innerStruct);
+    return Schema.create(toInnerStructure(schema));
   }
 }

@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { Document } from 'mongodb';
 import { ProvableTypeString } from '../common/schema';
 import { PermissionBasic } from '../../common/permission';
 import ModelGeneral from '../abstract/general';
@@ -81,7 +82,7 @@ export interface SchemaDefinition
   extends Document,
     SchemaBasic,
     DocumentPermission {
-  //SchemaFieldDef
+  // SchemaFieldDef
   [key: string]: any;
 }
 
@@ -138,16 +139,16 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     let result = true;
     for (let i = 0; i < fields.length; i += 1) {
       const field = fields[i];
-      const kind = schema[field].kind;
+      const { kind } = schema[field];
       // Check if kind is supported
       if (schemaVerification.has(kind) === false) {
         throw new Error(`Schema kind ${kind} is not supported`);
       }
       // Check field is exist on document
-      if (typeof document[field] === 'undefined') {
+      if (typeof document[i] === 'undefined') {
         throw new Error(`Document is missing field ${field}`);
       }
-      const { error } = schemaVerification.get(kind)!.validate(document[field]);
+      const { error } = schemaVerification.get(kind)!.validate(document[i]);
       if (error) {
         logger.error('Schema validation error:', error);
         result = false;
@@ -189,7 +190,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     return this.insertOne(schemaDef);
   }
 
-  public async getSchema(collectionName: string): Promise<SchemaDef> {
+  public async getSchema(collectionName: string): Promise<SchemaDefinition> {
     return this.findOne({
       collection: collectionName,
     }) as any;
