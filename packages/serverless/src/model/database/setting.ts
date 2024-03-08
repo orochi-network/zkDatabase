@@ -20,7 +20,20 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     return ModelDbSetting.instances.get(key)!;
   }
 
-  public async setSetting(setting: DbSetting) {
-    return this.collection.insertOne(setting);
+  public async updateSetting(setting: DbSetting) {
+    const filter = {};
+    const update = { $set: setting };
+    const options = { upsert: true };
+    return this.collection.updateOne(filter, update, options);
+  }
+
+  public async getSetting(): Promise<DbSetting | null> {
+    const setting = await this.collection.findOne({});
+    return setting;
+  }
+
+  public async getHeight(): Promise<number | null> {
+    const setting = await this.getSetting();
+    return setting ? setting.merkleHeight : null;
   }
 }
