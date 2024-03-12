@@ -2,7 +2,7 @@ import { CreateIndexesOptions, IndexSpecification, Document } from 'mongodb';
 import { isOk } from '../../helper/common';
 import ModelBasic from './basic';
 import ModelDatabase from './database';
-import { ModelSchema, SchemaDefBuilder } from '../database/schema';
+import { SchemaDefinition } from '../common/schema';
 
 /**
  * Build on top of ModelBasic, it handle everything about collection in general
@@ -30,52 +30,37 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
   }
 
+  public async createWithSchema(schema: SchemaDefinition) {
+    const indexSpecs: IndexSpecification = schema
+      .filter((field) => field.indexed)
+      .reduce(
+        (acc, field) => ({
+          ...acc,
+          [field.name]: 1,
+        }),
+        {}
+      );
+
+    if (Object.keys(indexSpecs).length > 0) {
+      this.create(indexSpecs);
+    }
+  }
+
   public async create(
-    indexSpecsOrSchema: IndexSpecification | SchemaDefBuilder,
+    indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions
-  ): Promise<string | undefined> {
+  ) {
     if (
       this.databaseName &&
       this.collectionName &&
       (await this.dbEngine.isCollection(this.databaseName, this.collectionName))
     ) {
-      let finalIndexSpecs: IndexSpecification;
-
-      if (ModelCollection.isSchemaDefBuilder(indexSpecsOrSchema)) {
-        const schema = indexSpecsOrSchema;
-        finalIndexSpecs = schema.schemas
-          .filter((field) => field.indexed)
-          .reduce(
-            (acc, field) => ({
-              ...acc,
-              [field.name]: 1,
-            }),
-            {}
-          );
-
-        await ModelSchema.getInstance(this.databaseName).createSchema(
-          this.collectionName,
-          schema
-        );
-      } else {
-        finalIndexSpecs = indexSpecsOrSchema;
-      }
-
-      if (Object.keys(finalIndexSpecs).length > 0) {
-        return new ModelCollection(
-          this.databaseName,
-          this.collectionName
-        ).collection.createIndex(finalIndexSpecs, indexOptions);
-      }
-    } else {
-      throw new Error('Database and collection were not set');
+      return new ModelCollection(
+        this.databaseName,
+        this.collectionName
+      ).collection.createIndex(indexSpecs, indexOptions);
     }
-
-    return undefined;
-  }
-
-  private static isSchemaDefBuilder(obj: any): obj is SchemaDefBuilder {
-    return 'schemas' in obj && 'permission' in obj;
+    throw new Error('Database and collection was not set');
   }
 
   public async drop() {
