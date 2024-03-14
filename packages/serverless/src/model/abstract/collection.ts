@@ -2,7 +2,6 @@ import { CreateIndexesOptions, IndexSpecification, Document } from 'mongodb';
 import { isOk } from '../../helper/common';
 import ModelBasic from './basic';
 import ModelDatabase from './database';
-import { SchemaDefinition } from '../common/schema';
 
 /**
  * Build on top of ModelBasic, it handle everything about collection in general
@@ -30,30 +29,11 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
   }
 
-  public async createWithSchema(schema: SchemaDefinition) {
-    const indexSpecs: IndexSpecification = schema
-      .filter((field) => field.indexed)
-      .reduce(
-        (acc, field) => ({
-          ...acc,
-          [field.name]: 1,
-        }),
-        {}
-      );
-
-    if (Object.keys(indexSpecs).length > 0) {
-      this.create(indexSpecs);
-    }
-  }
-
   public async create(
     indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ) {
-    if (
-      this.databaseName &&
-      this.collectionName
-    ) {
+    if (this.databaseName && this.collectionName) {
       return new ModelCollection(
         this.databaseName,
         this.collectionName
