@@ -52,8 +52,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   ) {
     if (
       this.databaseName &&
-      this.collectionName &&
-      (await this.dbEngine.isCollection(this.databaseName, this.collectionName))
+      this.collectionName
     ) {
       return new ModelCollection(
         this.databaseName,
