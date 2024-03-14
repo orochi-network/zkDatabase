@@ -4,6 +4,7 @@ import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
 import ModelGeneral from '../abstract/general';
 import logger from '../../helper/logger';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness';
+import { ZKDATABASE_MERKLE_TREE_COLLECTION } from '../../common/const';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
@@ -23,8 +24,8 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
 
   private height!: number;
 
-  private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, collectionName, {
+  private constructor(databaseName: string) {
+    super(databaseName, ZKDATABASE_MERKLE_TREE_COLLECTION, {
       timeseries: {
         timeField: 'timestamp',
         granularity: 'seconds',
@@ -32,18 +33,18 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     });
   }
 
-  public static getInstance(databaseName: string, collectionName: string) {
-    const key = `${databaseName}.${collectionName}`;
+  public static getInstance(databaseName: string) {
+    const key = databaseName;
     if (!ModelMerkleTree.instances.has(key)) {
-      ModelMerkleTree.instances.set(
-        key,
-        new ModelMerkleTree(databaseName, collectionName)
-      );
+      ModelMerkleTree.instances.set(key, new ModelMerkleTree(databaseName));
     }
     return ModelMerkleTree.instances.get(key)!;
   }
 
   public setHeight(newHeight: number): void {
+    if (this.height) {
+      return
+    }
     this.height = newHeight;
     this.generateZeroNodes(newHeight);
   }
@@ -75,7 +76,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     let currIndex = BigInt(index);
     const inserts = [];
 
-    for (let level = 1; level < this.height; level += 1) {
+    for (let level = 0; level < this.height; level += 1) {
       currIndex /= 2n;
 
       const dataToInsert = {
