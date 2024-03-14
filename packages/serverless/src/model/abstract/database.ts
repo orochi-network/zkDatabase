@@ -49,7 +49,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     await ModelSchema.init(databaseName);
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
-    await ModelDbSetting.getInstance(databaseName).setSetting({ merkleHeight });
+    await ModelDbSetting.getInstance(databaseName).updateSetting({ merkleHeight });
     return true;
   }
 
