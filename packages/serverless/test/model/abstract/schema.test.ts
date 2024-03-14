@@ -23,20 +23,20 @@ describe('ModelSchema', () => {
     await dbEngine.disconnect();
   });
 
-  function dropDatabase() {
+  async function dropDatabase() {
     const db = dbEngine.client.db(DB_NAME);
     if (db) {
-      db.dropDatabase();
+      await db.dropDatabase();
     }
   }
 
   beforeEach(async () => {
-    dropDatabase();
+    await dropDatabase();
     await ModelDatabase.create(DB_NAME, MERKLE_HEIGHT);
   });
 
   afterEach(async () => {
-    dropDatabase();
+    await dropDatabase();
   });
 
   it('create new collection with schema, handle schema properly', async () => {
