@@ -13,23 +13,23 @@ const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
 // Every data type will be treaded as string when store/transfer
 if (schemaVerification.size === 0) {
-  schemaVerification.set('CircuitString', Joi.string().length(1024));
+  schemaVerification.set('CircuitString', Joi.string().max(1024));
   schemaVerification.set('UInt32', Joi.string().pattern(/^[0-9]{1,10}$/));
   schemaVerification.set('UInt64', Joi.string().pattern(/^[0-9]{1,20}$/));
   schemaVerification.set('Bool', Joi.string().valid('true', 'false'));
-  schemaVerification.set('Sign', Joi.string().length(256));
+  schemaVerification.set('Sign', Joi.string().max(256));
   // O1js don't support UTF-8 or Unicode
   schemaVerification.set('Character', Joi.string().length(1));
   schemaVerification.set(
     'Int64',
     Joi.string()
       .pattern(/^(-|)[0-9]{1,20}$/)
-      .length(64)
+      .max(64)
   );
-  schemaVerification.set('Field', Joi.string().length(256));
-  schemaVerification.set('PrivateKey', Joi.string().length(256));
-  schemaVerification.set('PublicKey', Joi.string().length(256));
-  schemaVerification.set('Signature', Joi.string().length(256));
+  schemaVerification.set('Field', Joi.string().max(256));
+  schemaVerification.set('PrivateKey', Joi.string().max(256));
+  schemaVerification.set('PublicKey', Joi.string().max(256));
+  schemaVerification.set('Signature', Joi.string().max(256));
   schemaVerification.set('MerkleMapWitness', Joi.string());
 }
 
@@ -136,26 +136,37 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     schema: SchemaDefinition,
     document: DocumentRecord
   ): boolean {
-    let result = true;
-    for (let i = 0; i < fields.length; i += 1) {
-      const field = fields[i];
-      const { kind } = schema[field];
-      // Check if kind is supported
-      if (schemaVerification.has(kind) === false) {
-        throw new Error(`Schema kind ${kind} is not supported`);
+    return fields.every(field => {
+      const schemaField = schema[field];
+  
+      if (!schemaField) {
+        logger.error(`Field '${field}' is not defined in the schema.`);
+        return false;
       }
-      // Check field is exist on document
-      if (typeof document[i] === 'undefined') {
-        throw new Error(`Document is missing field ${field}`);
+  
+      const { kind } = schemaField;
+      const validationSchema = schemaVerification.get(kind);
+  
+      if (!validationSchema) {
+        logger.error(`Schema kind '${kind}' is not supported.`);
+        return false;
       }
-      const { error } = schemaVerification.get(kind)!.validate(document[i]);
+  
+      const documentField = document[field];
+      if (typeof documentField === 'undefined') {
+        logger.error(`Document is missing field '${field}'.`);
+        return false;
+      }
+  
+      const { error } = validationSchema.validate(documentField.value);
       if (error) {
-        logger.error('Schema validation error:', error);
-        result = false;
+        logger.error(`Schema validation error for field '${field}': ${error.message}`);
+        return false;
       }
-    }
-    return result;
-  }
+  
+      return true;
+    });
+  }  
 
   public async createSchema(
     collectionName: string,
