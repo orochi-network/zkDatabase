@@ -155,8 +155,11 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           throw new Error('Invalid update, modified count not equal to 1');
         }
 
+        const document = await this.collection.findOne(filter, { session });
+
         const documentDetails = await this.getDocumentDetail(
-          updateResult.upsertedId!
+          document!._id,
+          session
         );
 
         if (!documentDetails) {
@@ -170,7 +173,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         );
 
         const documentMetadata = await modelDocumentMetadata.findOne(
-          { docId: updateResult.upsertedId! },
+          { docId: document?._id },
           { session }
         );
 
