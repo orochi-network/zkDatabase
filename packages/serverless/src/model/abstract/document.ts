@@ -1,6 +1,13 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { ClientSession, Filter, UpdateResult, ObjectId } from 'mongodb';
+import {
+  ClientSession,
+  Filter,
+  UpdateResult,
+  ObjectId,
+  InsertOneResult,
+  Document,
+} from 'mongodb';
 import ModelBasic from './basic';
 import logger from '../../helper/logger';
 import {
@@ -13,9 +20,9 @@ import ModelDatabase from './database';
 import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import { PermissionBasic } from '../../common/permission';
-import { SchemaEncoded, Schema, ProvableTypeString } from '../common/schema';
-import { ProvableTypeMap } from '../../common/schema';
+import { SchemaEncoded, Schema, ProvableTypeString, ProvableTypeMap } from '../common/schema';
 import ModelMerkleTree from '../database/merkle-tree';
+import { ModelDbSetting } from '../database/setting';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -24,7 +31,11 @@ export type DocumentPermission = Pick<
   'permissionOwner' | 'permissionGroup' | 'permissionOther'
 >;
 
-export type DocumentRecord = DocumentField[];
+export type DocumentRecord = Document & {
+  _id: ObjectId;
+} & {
+  [key: string]: DocumentField;
+};
 
 /**
  * ModelDocument is a class that extends ModelBasic.
@@ -75,22 +86,20 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     );
     const encodedDocument: SchemaEncoded = [];
     const structType: { [key: string]: any } = {};
-    const document = await this.collection.findOne(
-      { _id: documentId },
-      { session }
-    );
-
+    const document = await this.collection.findOne({ _id: documentId }, { session });
+    
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
         const schemaField = schema.fields[i];
-        const { name, kind, value } = document[i];
+
+        const { name, kind, value } = document[schemaField];
         if (
           schema[schemaField].name !== name &&
           schema[schemaField].kind !== kind
         ) {
           throw new Error('Invalid formatted document');
         }
-        structType[name] = ProvableTypeMap[name as ProvableTypeString];
+        structType[name] = ProvableTypeMap[kind as ProvableTypeString];
         encodedDocument.push([name, kind, value]);
       }
       const structuredSchema = Schema.create(structType);
@@ -169,6 +178,17 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           throw Error('Document metadata is empty');
         }
 
+        // TODO: Should be improved
+        const height = await ModelDbSetting.getInstance(
+          this.databaseName!
+        ).getHeight();
+
+        if (!height) {
+          throw Error('The merkle tree height is null');
+        }
+
+        this.merkleTree.setHeight(height);
+
         await this.merkleTree.setLeaf(
           BigInt(documentMetadata.merkleIndex),
           newHash,
@@ -185,8 +205,9 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public async insertOne(
     documentRecord: DocumentRecord,
     documentPermission: Partial<DocumentPermission> = {}
-  ) {
-    let insertResult;
+  ): Promise<InsertOneResult<DocumentRecord> | null> {
+    let insertResult: InsertOneResult<DocumentRecord> | null = null;
+
     const success = await this.withTransaction(
       async (session: ClientSession) => {
         const modelSchema = ModelSchema.getInstance(this.databaseName!);
@@ -197,7 +218,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           (await modelDocumentMetadata.getMaxIndex({ session })) + 1;
 
         // Insert document to collection
-        const insertResult = await this.collection.insertOne(documentRecord, {
+        insertResult = await this.collection.insertOne(documentRecord, {
           session,
         });
 
@@ -212,7 +233,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           throw new Error('Schema not found');
         }
 
-        if (ModelSchema.validateDocument(documentSchema, documentRecord)) {
+        if (!ModelSchema.validateDocument(documentSchema, documentRecord)) {
           throw new Error('Invalid document schema');
         }
 
@@ -220,7 +241,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           documentSchema;
 
         // Insert document metadata
-        const document = await modelDocumentMetadata.insertOne(
+        await modelDocumentMetadata.insertOne(
           {
             collection: this.collectionName!,
             docId: insertResult.insertedId,
@@ -244,12 +265,24 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         );
 
         const documentDetails = await this.getDocumentDetail(
-          document.insertedId
+          insertResult.insertedId,
+          session
         );
 
         if (!documentDetails) {
           throw Error('Document details is empty');
         }
+
+        // TODO: Should be improved
+        const height = await ModelDbSetting.getInstance(
+          this.databaseName!
+        ).getHeight();
+
+        if (!height) {
+          throw Error('The merkle tree height is null');
+        }
+
+        this.merkleTree.setHeight(height);
 
         const newHash = documentDetails.structuredDocument.hash();
 
@@ -258,7 +291,8 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         });
       }
     );
-    return success ? insertResult : null;
+
+    return success && insertResult ? insertResult : null;
   }
 
   public async findOne(filter: Filter<any>) {
