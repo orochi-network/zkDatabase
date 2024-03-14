@@ -13,10 +13,10 @@ import ModelMerkleTree from '../../../src/model/database/merkle-tree';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
 
-const DB_NAME = 'test-db';
+const DB_NAME = 'test-db-document';
 const MERKLE_HEIGHT = 8;
 
-describe('MongoDB Operations', () => {
+describe('ModelDocument', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {

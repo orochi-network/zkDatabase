@@ -6,7 +6,7 @@ import ModelDatabase from '../../../src/model/abstract/database';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
 
-const DB_NAME = 'test-db';
+const DB_NAME = 'test-db-schema';
 const MERKLE_HEIGHT = 8;
 
 describe('ModelSchema', () => {
