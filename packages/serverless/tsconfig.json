@@ -15,7 +15,9 @@
     "typeRoots": ["node_modules/@types"],
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": ["**/*.ts"],
   "exclude": [
