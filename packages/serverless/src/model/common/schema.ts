@@ -14,7 +14,7 @@ import {
   PrivateKey,
   Signature,
   MerkleMapWitness,
-  Struct
+  Struct,
 } from 'o1js';
 
 export interface SchemaExtend {
@@ -30,21 +30,7 @@ export interface SchemaStaticExtend<A> {
 export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
   SchemaStaticExtend<A>;
 
-export type ProvableTypeString =
-  | 'CircuitString'
-  | 'UInt32'
-  | 'UInt64'
-  | 'Bool'
-  | 'Sign'
-  | 'Character'
-  | 'Int64'
-  | 'Field'
-  | 'PrivateKey'
-  | 'PublicKey'
-  | 'Signature'
-  | 'MerkleMapWitness';
-
-const ProvableTypeMap = {
+export const ProvableTypeMap = {
   CircuitString: CircuitString,
   UInt32: UInt32,
   UInt64: UInt64,
@@ -57,7 +43,9 @@ const ProvableTypeMap = {
   PublicKey: PublicKey,
   Signature: Signature,
   MerkleMapWitness: MerkleMapWitness,
-};
+} as const;
+
+export type ProvableTypeString = keyof typeof ProvableTypeMap;
 
 export type SchemaFieldDefinition = {
   name: string;
