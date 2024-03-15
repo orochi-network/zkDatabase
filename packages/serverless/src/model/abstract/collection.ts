@@ -1,4 +1,4 @@
-import { CreateIndexesOptions, IndexSpecification } from 'mongodb';
+import { CreateIndexesOptions, IndexSpecification, Document } from 'mongodb';
 import { isOk } from '../../helper/common';
 import ModelBasic from './basic';
 import ModelDatabase from './database';
@@ -33,11 +33,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     indexSpecs: IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ) {
-    if (
-      this.databaseName &&
-      this.collectionName &&
-      (await this.dbEngine.isCollection(this.databaseName, this.collectionName))
-    ) {
+    if (this.databaseName && this.collectionName) {
       return new ModelCollection(
         this.databaseName,
         this.collectionName

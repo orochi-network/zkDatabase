@@ -14,37 +14,29 @@ export default function createExtendedMerkleWitness(height: number): any {
   const BaseWitness = MerkleWitness(height);
 
   class ExtendedMerkleWitness extends BaseWitness {
-    calculatePath(leaf: Field): ExtendedMerkleWitness {
-      const path = [];
-      path.push({
-        isLeft: this.isLeft[0],
-        sibling: leaf,
-      });
+    calculatePath(leaf: Field): Field[] {
+      const path: Field[] = leaf.toFields();
 
-      for (let i = 1; i < this.height(); i += 1) {
-        const isLeftChild = this.isLeft[i - 1];
-        const siblingHash = this.path[i - 1];
+      const n = this.height();
 
+      path.push(leaf);
+      
+      for (let i = 1; i < n; i += 1) {
         const left = Provable.if(
-          isLeftChild,
-          path[path.length - 1].sibling!,
-          siblingHash
+          this.isLeft[i - 1],
+          path[path.length - 1],
+          this.path[i - 1]
         );
-
         const right = Provable.if(
-          isLeftChild,
-          siblingHash,
-          path[path.length - 1].sibling!
+          this.isLeft[i - 1],
+          this.path[i - 1],
+          path[path.length - 1]
         );
         const hash = Poseidon.hash([left, right]);
-
-        path.push({
-          isLeft: isLeftChild,
-          hash,
-        });
+        path.push(hash);
       }
 
-      return new ExtendedMerkleWitness(path as []);
+      return path;
     }
 
     merge(leaf: Field, other: ExtendedMerkleWitness): ExtendedMerkleWitness {

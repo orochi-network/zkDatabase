@@ -7,6 +7,7 @@ import { databaseName } from './common';
 
 export type TDatabaseRequest = {
   databaseName: string;
+  merkleHeight: number
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -29,7 +30,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!): Boolean
+  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
@@ -50,7 +51,7 @@ const dbList = async () =>
 const dbCreate = resolverWrapper(
   DatabaseRequest,
   async (_root: unknown, args: TDatabaseRequest) =>
-    ModelDatabase.create(args.databaseName)
+    ModelDatabase.create(args.databaseName, args.merkleHeight)
 );
 
 export const resolversDatabase = {
