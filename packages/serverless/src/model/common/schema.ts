@@ -1,8 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-useless-constructor */
-/* eslint-disable object-shorthand */
-/* eslint-disable no-use-before-define */
-/* eslint-disable max-classes-per-file */
 import {
   Poseidon,
   InferProvable,
@@ -20,8 +15,6 @@ import {
   MerkleMapWitness,
   Struct,
 } from 'o1js';
-
-export { Field } from 'o1js';
 
 export interface SchemaExtend {
   serialize(): SchemaEncoded;
@@ -69,11 +62,11 @@ export type ProvableMapped<T extends { [key: string]: ProvableTypeString }> = {
 };
 
 export function toInnerStructure<
-  T extends { [key: string]: ProvableTypeString }
+  T extends { [key: string]: ProvableTypeString },
 >(schema: T): ProvableMapped<T> {
   const result: any = {};
   const keys: ProvableTypeString[] = Object.keys(schema) as any;
-  for (let i = 0; i < keys.length; i+=1) {
+  for (let i = 0; i < keys.length; i++) {
     result[keys[i]] = ProvableTypeMap[schema[keys[i]]];
   }
   return result;
@@ -86,15 +79,13 @@ export type SchemaDefinition = {
 export type SchemaEncoded = [
   name: string,
   kind: ProvableTypeString,
-  value: string
+  value: string,
 ][];
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
     type: A
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
-    console.log(type);
-
     class Document extends Struct(type) {
       constructor(...args: T[]) {
         super(...args);
@@ -138,7 +129,7 @@ export class Schema {
 
       static deserialize(doc: SchemaEncoded): Document {
         const result: any = {};
-        for (let i = 0; i < doc.length; i+=1) {
+        for (let i = 0; i < doc.length; i++) {
           const [key, kind, value] = doc[i];
           switch (kind) {
             case 'PrivateKey':
@@ -176,12 +167,10 @@ export class Schema {
   }
 
   public static fromRecord(record: string[][]) {
-    const entries = Object.fromEntries(
-      record.map(([name, kind, _value]) => [name, kind as ProvableTypeString])
-    );
-    console.log('entries', entries);
     return Schema.fromSchema(
-      entries
+      Object.fromEntries(
+        record.map(([name, kind, _value]) => [name, kind as ProvableTypeString])
+      )
     );
   }
 
