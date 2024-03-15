@@ -1,12 +1,6 @@
 import { ObjectId, Document } from 'mongodb';
 import ModelBasic from './basic';
 import { ZKDATABASE_METADATA } from '../../common/const';
-import ModelDocumentMetadata from '../database/document-metadata';
-import { ModelSchema } from '../database/schema';
-import ModelGroup from '../database/group';
-import ModelUserGroup from '../database/user-group';
-import { DatabaseEngine } from './database-engine';
-import { ModelDbSetting } from '../database/setting';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -36,21 +30,6 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return (await collections.toArray()).filter(
       (e) => !ZKDATABASE_METADATA.includes(e.name)
     );
-  }
-
-  public static async create(
-    databaseName: string,
-    merkleHeight: number
-  ): Promise<boolean> {
-    if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
-      throw new Error('Database already exist');
-    }
-    await ModelDocumentMetadata.init(databaseName);
-    await ModelSchema.init(databaseName);
-    await ModelGroup.init(databaseName);
-    await ModelUserGroup.init(databaseName);
-    await ModelDbSetting.getInstance(databaseName).updateSetting({ merkleHeight });
-    return true;
   }
 
   public async drop() {

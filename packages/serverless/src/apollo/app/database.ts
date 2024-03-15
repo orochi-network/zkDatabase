@@ -4,10 +4,13 @@ import resolverWrapper from '../validation';
 import { DatabaseEngine } from '../../model/abstract/database-engine';
 import { ModelDatabase } from '../../model/abstract/database';
 import { databaseName } from './common';
+import {
+  CreateGlobalDatabaseUseCase,
+} from '../../domain/use-case/create-global-database';
 
 export type TDatabaseRequest = {
   databaseName: string;
-  merkleHeight: number
+  merkleHeight: number;
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -51,7 +54,10 @@ const dbList = async () =>
 const dbCreate = resolverWrapper(
   DatabaseRequest,
   async (_root: unknown, args: TDatabaseRequest) =>
-    ModelDatabase.create(args.databaseName, args.merkleHeight)
+    new CreateGlobalDatabaseUseCase().execute({
+      databaseName: args.databaseName,
+      merkleHeight: args.merkleHeight,
+    })
 );
 
 export const resolversDatabase = {
