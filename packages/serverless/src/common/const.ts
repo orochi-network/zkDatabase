@@ -13,6 +13,9 @@ export const ZKDATABASE_METADATA_COLLECTION = '_zkdatabase_permission';
 // System management
 export const ZKDATABASE_GLOBAL_DB = '_zkdatabase_metadata';
 
+// Database settings
+export const ZKDATABASE_DB_SETTING_COLLECTION = '_zkdatabase_db_setting';
+
 // Merkle tree metadata collection
 export const ZKDATABASE_MERKLE_TREE_METADATA_COLLECTION =
   '_zkdatabase_merkle_tree_metadata';

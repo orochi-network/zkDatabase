@@ -1,4 +1,4 @@
-import { FindOptions, ObjectId, Document, Filter } from 'mongodb';
+import { FindOptions, ObjectId, Document } from 'mongodb';
 import { ZKDATABASE_METADATA_COLLECTION } from '../../common/const';
 import { ModelGeneral } from '../abstract/general';
 import {
@@ -35,19 +35,11 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
   }
 
   public async getMaxIndex(findOpt?: FindOptions): Promise<number> {
-    const maxIndexedCursor = await this.collection
-      .find({}, findOpt)
-      .sort({ index: -1 })
-      .limit(1);
-    const maxIndexedRecord = (await maxIndexedCursor.hasNext())
-      ? await maxIndexedCursor.next()
-      : { index: -1 };
-
-    return maxIndexedRecord !== null &&
-      typeof maxIndexedRecord.index === 'number'
-      ? maxIndexedRecord.index
-      : -1;
-  }
+    const maxIndexedRecord = await this.collection
+      .findOne({}, { ...findOpt, sort: { merkleIndex: -1 } });
+  
+    return typeof maxIndexedRecord?.merkleIndex === 'number' ? maxIndexedRecord.merkleIndex : -1;
+  }  
 
   // @dev: Do we need to do map reduce here?
   public async getPermission(

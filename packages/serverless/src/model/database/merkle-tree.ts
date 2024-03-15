@@ -18,6 +18,8 @@ export type TMerkleProof = {
 };
 
 export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
+  public static instances = new Map<string, ModelMerkleTree>();
+
   private zeroes!: Field[];
 
   private height!: number;
@@ -31,7 +33,18 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     });
   }
 
+  public static getInstance(databaseName: string) {
+    const key = databaseName;
+    if (!ModelMerkleTree.instances.has(key)) {
+      ModelMerkleTree.instances.set(key, new ModelMerkleTree(databaseName));
+    }
+    return ModelMerkleTree.instances.get(key)!;
+  }
+
   public setHeight(newHeight: number): void {
+    if (this.height) {
+      return
+    }
     this.height = newHeight;
     this.generateZeroNodes(newHeight);
   }
@@ -42,10 +55,6 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
       zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
     }
     this.zeroes = zeroes;
-  }
-
-  public static getInstance(databaseName: string) {
-    return new ModelMerkleTree(databaseName);
   }
 
   public async getRoot(timestamp: Date): Promise<Field> {
@@ -67,7 +76,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     let currIndex = BigInt(index);
     const inserts = [];
 
-    for (let level = 1; level < this.height; level += 1) {
+    for (let level = 0; level < this.height; level += 1) {
       currIndex /= 2n;
 
       const dataToInsert = {
