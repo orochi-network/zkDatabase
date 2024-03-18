@@ -1,11 +1,12 @@
-import { ClientSession, CreateCollectionOptions } from 'mongodb';
-import { DatabaseEngine } from './database-engine.js';
+import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
+import { DatabaseEngine } from './database-engine';
+import logger from '../../helper/logger';
 
 /**
  * Model basic is the most basic model of data, It interactive directly to DatabaseEngine
  * And provide .db and .collection allow other model to interactive with database/collection
  */
-export default abstract class ModelBasic {
+export default abstract class ModelBasic<T extends Document> {
   protected dbEngine: DatabaseEngine;
 
   protected databaseName: string | undefined;
@@ -26,11 +27,11 @@ export default abstract class ModelBasic {
   }
 
   public get db() {
-    return this.dbEngine.client.db(this.databaseName);
+    return this.dbEngine.client.db(this.databaseName!);
   }
 
   public get collection() {
-    return this.db.collection(this.collectionName!);
+    return this.db.collection<T>(this.collectionName!);
   }
 
   public async withTransaction(
@@ -47,7 +48,7 @@ export default abstract class ModelBasic {
       result = true;
       await session.commitTransaction();
     } catch (e) {
-      // logger.error('DatabaseEngine::withTransaction()', e);
+      logger.error('DatabaseEngine::withTransaction()', e);
       result = false;
       await session.abortTransaction();
     }

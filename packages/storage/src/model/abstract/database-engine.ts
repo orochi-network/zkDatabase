@@ -1,4 +1,5 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
+import logger from '../../helper/logger';
 
 export class DatabaseEngine {
   private static innerInstance: any;
@@ -85,7 +86,7 @@ export class DatabaseEngine {
         this.connection = await this.mongoClient.connect();
         error = false;
       } catch (e) {
-        // logger.info('DatabaseEngine::connect()', e, 'retry', retries);
+        logger.info('DatabaseEngine::connect()', e, 'retry', retries);
         retries -= 1;
         error = true;
       }
