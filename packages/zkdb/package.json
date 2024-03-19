@@ -1,5 +1,5 @@
 {
-  "name": "zkdb-client",
+  "name": "@zkdb/client",
   "version": "1.0.0",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
