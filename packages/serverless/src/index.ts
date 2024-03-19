@@ -5,11 +5,11 @@ import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHt
 import fileupload from 'express-fileupload';
 import http from 'http';
 import cors from 'cors';
+import { DatabaseEngine } from '@zkdb/storage';
 import logger from './helper/logger';
 import { TypedefsApp, ResolversApp } from './apollo';
 import { AppContext } from './helper/common';
 import { config } from './helper/config';
-import { DatabaseEngine } from './model/abstract/database-engine';
 import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
 import { ZKDATABASE_USER_NOBODY } from './common/const';
 

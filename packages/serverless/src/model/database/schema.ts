@@ -1,10 +1,8 @@
 import Joi from 'joi';
 import { Document } from 'mongodb';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import { ProvableTypeString } from '../common/schema';
 import { PermissionBasic } from '../../common/permission';
-import ModelGeneral from '../abstract/general';
-import { ZKDATABASE_SCHEMA_COLLECTION } from '../../common/const';
-import ModelCollection from '../abstract/collection';
 import { getCurrentTime } from '../../helper/common';
 import { DocumentPermission, DocumentRecord } from '../abstract/document';
 import logger from '../../helper/logger';
@@ -96,12 +94,12 @@ export type SchemaIndex<T> = {
 };
 
 export class ModelSchema extends ModelGeneral<SchemaDefinition> {
-  static collectionName: string = ZKDATABASE_SCHEMA_COLLECTION;
+  private static collectionName: string = zkDatabaseConstants.databaseCollections.schema;
 
-  private static instances: { [key: string]: ModelSchema } = {};
+  private static instances: { [key: string]: any } = {};
 
   public static isValidCollectionName(collectionName: string) {
-    if (/^\_zkdatabase/i.test(collectionName)) {
+    if (/^_zkdatabase/i.test(collectionName)) {
       throw new Error('Collection name is invalid');
     }
   }
@@ -110,7 +108,7 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     super(databaseName, ModelSchema.collectionName);
   }
 
-  public static getInstance(databaseName: string) {
+  public static getInstance(databaseName: string): ModelSchema {
     if (typeof ModelSchema.instances[databaseName] === 'undefined') {
       ModelSchema.instances[databaseName] = new ModelSchema(databaseName);
     }

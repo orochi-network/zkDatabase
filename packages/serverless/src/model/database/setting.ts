@@ -1,5 +1,4 @@
-import { ZKDATABASE_DB_SETTING_COLLECTION } from '../../common/const';
-import ModelBasic from '../abstract/basic';
+import { ModelBasic, zkDatabaseConstants } from '@zkdb/storage';
 
 export type DbSetting = {
   merkleHeight: number;
@@ -9,7 +8,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   private static instances = new Map<string, ModelDbSetting>();
 
   private constructor(databaseName: string) {
-    super(databaseName, ZKDATABASE_DB_SETTING_COLLECTION);
+    super(databaseName, zkDatabaseConstants.databaseCollections.setting);
   }
 
   public static getInstance(databaseName: string) {

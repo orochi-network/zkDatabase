@@ -12,17 +12,17 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": false,
-    "typeRoots": ["node_modules/@types"],
+    "baseUrl": ".",
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node", "jest"],
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "types": ["node", "jest"]
   },
   "include": ["**/*.ts"],
   "exclude": [
     "build",
     "node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts",
     "typechain/**/*.ts"
   ]
 }

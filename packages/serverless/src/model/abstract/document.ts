@@ -8,7 +8,7 @@ import {
   InsertOneResult,
   Document,
 } from 'mongodb';
-import ModelBasic from './basic';
+import { ModelBasic, ModelDatabase, ModelTask, ModelCollection } from '@zkdb/storage';
 import logger from '../../helper/logger';
 import {
   ZKDATABASE_USER_SYSTEM,
@@ -16,11 +16,14 @@ import {
 } from '../../common/const';
 import { ModelDocumentMetadata } from '../database/document-metadata';
 import { ModelSchema, SchemaField } from '../database/schema';
-import ModelDatabase from './database';
-import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import { PermissionBasic } from '../../common/permission';
-import { SchemaEncoded, Schema, ProvableTypeString, ProvableTypeMap } from '../common/schema';
+import {
+  SchemaEncoded,
+  Schema,
+  ProvableTypeString,
+  ProvableTypeMap,
+} from '../common/schema';
 import ModelMerkleTree from '../database/merkle-tree';
 import { ModelDbSetting } from '../database/setting';
 
@@ -44,11 +47,14 @@ export type DocumentRecord = Document & {
 export class ModelDocument extends ModelBasic<DocumentRecord> {
   private merkleTree: ModelMerkleTree;
 
+  private modelTask: ModelTask;
+
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
     this.merkleTree = ModelMerkleTree.getInstance(databaseName);
+    this.modelTask = ModelTask.getInstance();
   }
 
   get modelDatabase() {
@@ -86,8 +92,11 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     );
     const encodedDocument: SchemaEncoded = [];
     const structType: { [key: string]: any } = {};
-    const document = await this.collection.findOne({ _id: documentId }, { session });
-    
+    const document = await this.collection.findOne(
+      { _id: documentId },
+      { session }
+    );
+
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
         const schemaField = schema.fields[i];
@@ -200,6 +209,19 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
             session,
           }
         );
+
+        await this.modelTask.createTask(
+          {
+            merkleIndex: BigInt(documentMetadata.merkleIndex),
+            hash: newHash.toString(),
+            createdAt: new Date(),
+            database: this.databaseName!,
+            collection: this.collectionName!,
+          },
+          {
+            session,
+          } as any
+        );
       }
     );
     return success ? updateResult : null;
@@ -292,6 +314,19 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         await this.merkleTree.setLeaf(BigInt(index), newHash, new Date(), {
           session,
         });
+
+        await this.modelTask.createTask(
+          {
+            merkleIndex: BigInt(index),
+            hash: newHash.toString(),
+            createdAt: new Date(),
+            database: this.databaseName!,
+            collection: this.collectionName!,
+          },
+          {
+            session,
+          } as any
+        );
       }
     );
 

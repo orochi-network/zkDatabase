@@ -1,7 +1,6 @@
 import { Document } from 'mongodb';
 import { randomBytes } from 'crypto';
-import { ZKDATABASE_GLOBAL_DB } from '../../common/const';
-import { ModelGeneral } from '../abstract/general';
+import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import ModelUser from './user';
 import { getCurrentTime } from '../../helper/common';
 
@@ -14,10 +13,10 @@ export interface DocumentSession extends Document {
 }
 
 export class ModelSession extends ModelGeneral<DocumentSession> {
-  static collectionName: string = 'session';
+  private static collectionName: string = zkDatabaseConstants.globalCollections.session;
 
   constructor() {
-    super(ZKDATABASE_GLOBAL_DB, ModelSession.collectionName);
+    super(zkDatabaseConstants.globalDatabase, ModelSession.collectionName);
   }
 
   public async create(userName: string): Promise<DocumentSession | null> {

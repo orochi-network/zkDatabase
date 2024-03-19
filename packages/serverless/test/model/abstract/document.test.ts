@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable max-classes-per-file */
 import { Field, MerkleTree, UInt32 } from 'o1js';
-import { DatabaseEngine } from '../../../src/model/abstract/database-engine';
+import { DatabaseEngine } from '@zkdb/storage';
 import ModelDocument, {
   DocumentRecord,
 } from '../../../src/model/abstract/document';
