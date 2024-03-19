@@ -3,8 +3,26 @@ export const zkDatabaseConstants = {
   // Global database for system management
   globalDatabase: '_zkdatabase_metadata',
 
-  // Collections within the global database
-  collections: {
+  // Global collections within the global database
+  globalCollections: {
+    // Global settings
+    setting: 'setting',
+
+    // Session
+    session: 'session',
+
+    // User
+    user: 'user',
+    
+    // Proof queue
+    proofQueue: '_zkdatabase_proof_queue',
+
+    // Proof storage
+    proofStorage: '_zkdatabase_proof_storage',
+  },
+
+  // Collections that are common across different databases
+  databaseCollections: {
     // Schema metadata
     schema: '_zkdatabase_management',
 
@@ -18,26 +36,15 @@ export const zkDatabaseConstants = {
     permission: '_zkdatabase_permission',
 
     // Database settings
-    dbSetting: '_zkdatabase_db_setting',
+    setting: '_zkdatabase_db_setting',
 
     // Merkle tree collection
-    merkleTree: '_zkdatabase_merkle_tree',
-
-    // Proof queue
-    proofQueue: '_zkdatabase_proof_queue',
-
-    // Proof storage
-    proofStorage: '_zkdatabase_proof_storage',
+    merkleTree: '_zkdatabase_merkle_tree'
   },
 };
 
 // Metadata collections
 export const zkDatabaseMetadataCollections = [
-  zkDatabaseConstants.collections.schema,
-  zkDatabaseConstants.collections.group,
-  zkDatabaseConstants.collections.userGroup,
-  zkDatabaseConstants.collections.permission,
-  zkDatabaseConstants.collections.merkleTree,
-  zkDatabaseConstants.collections.proofQueue,
-  zkDatabaseConstants.collections.proofStorage,
+  ...Object.values(zkDatabaseConstants.globalCollections),
+  ...Object.values(zkDatabaseConstants.databaseCollections),
 ];
