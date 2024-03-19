@@ -2,14 +2,41 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import logger from '../helper/logger';
 
 export class DatabaseEngine {
-  private static innerInstance: any;
-
+  private static instance: DatabaseEngine | null = null;
   private mongoClient: MongoClient;
+  private connection: MongoClient | null = null;
 
-  private connection: MongoClient | undefined;
+  private constructor(uri: string) {
+    this.mongoClient = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      },
+    });
+  }
 
-  private static get instance(): DatabaseEngine {
-    return DatabaseEngine.innerInstance;
+  public static getInstance(uri?: string): DatabaseEngine {
+    if (!DatabaseEngine.instance) {
+      if (!uri) {
+        throw new Error('Database URL was not set');
+      }
+      DatabaseEngine.instance = new DatabaseEngine(uri);
+    }
+    return DatabaseEngine.instance;
+  }
+
+  public async isDatabase(database: string): Promise<boolean> {
+    const databases = await this.client.db().admin().listDatabases();
+    return databases.databases.some((db) => db.name === database);
+  }
+
+  public async isCollection(
+    database: string,
+    collection: string
+  ): Promise<boolean> {
+    const collections = await this.client.db(database).listCollections().toArray();
+    return collections.some((col) => col.name === collection);
   }
 
   public get db() {
@@ -26,75 +53,30 @@ export class DatabaseEngine {
     return this.connection;
   }
 
-  private constructor(uri: string) {
-    this.mongoClient = new MongoClient(uri, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      },
-    });
+  public isConnected(): boolean {
+    return this.connection !== null;
   }
 
-  public static getInstance(url?: string): DatabaseEngine {
-    if (!DatabaseEngine.instance) {
-      if (typeof url === 'undefined') {
-        throw new Error('Database URL was not set');
-      }
-      DatabaseEngine.innerInstance = new DatabaseEngine(url);
-    }
-
-    return DatabaseEngine.instance;
-  }
-
-  public async isDatabase(database: string) {
-    const databases = await this.client.db().admin().listDatabases();
-    for (let i = 0; i < databases.databases.length; i += 1) {
-      if (databases.databases[i].name === database) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public async isCollection(
-    database: string,
-    collection: string
-  ): Promise<boolean> {
-    const collections = await this.client
-      .db(database)
-      .listCollections()
-      .toArray();
-    for (let i = 0; i < collections.length; i += 1) {
-      if (collections[i].name === collection) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public isConnected() {
-    return this.connection !== undefined;
-  }
-
-  public async connect() {
-    let error = true;
+  public async connect(): Promise<void> {
     let retries = 3;
-    do {
+    while (retries > 0) {
       try {
-        // eslint-disable-next-line no-await-in-loop
         this.connection = await this.mongoClient.connect();
-        error = false;
+        return;
       } catch (e) {
         logger.info('DatabaseEngine::connect()', e, 'retry', retries);
         retries -= 1;
-        error = true;
+        if (retries === 0) {
+          throw e;
+        }
       }
-    } while (error && retries > 0);
+    }
   }
 
-  public async disconnect() {
-    await this.mongoClient.close();
-    this.connection = undefined;
+  public async disconnect(): Promise<void> {
+    if (this.connection) {
+      await this.mongoClient.close();
+      this.connection = null;
+    }
   }
 }
