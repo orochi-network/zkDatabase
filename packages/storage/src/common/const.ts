@@ -15,10 +15,10 @@ export const zkDatabaseConstants = {
     user: 'user',
     
     // Proof queue
-    proofQueue: '_zkdatabase_proof_queue',
+    queue: 'queue',
 
     // Proof storage
-    proofStorage: '_zkdatabase_proof_storage',
+    proof: 'proof',
   },
 
   // Collections that are common across different databases

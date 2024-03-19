@@ -15,7 +15,7 @@ export class ModelTask extends ModelBasic<TaskEntity> {
   private static instance: ModelTask | null = null;
 
   private constructor() {
-    super(zkDatabaseConstants.globalDatabase, zkDatabaseConstants.globalCollections.proofQueue);
+    super(zkDatabaseConstants.globalDatabase, zkDatabaseConstants.globalCollections.queue);
   }
 
   public static getInstance(): ModelTask {
