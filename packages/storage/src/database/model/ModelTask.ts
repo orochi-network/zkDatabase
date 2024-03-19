@@ -1,42 +1,46 @@
-import ModelBasic from './abstract/basic.js';
+import { InsertOneOptions } from 'mongodb';
+import ModelBasic from '../base/basic.js';
+import { ZKDATABASE_DB_QUEUE_COLLECTION, ZKDATABASE_GLOBAL_DB } from '../../common/const.js';
 
 export type TaskEntity = {
-  id: bigint;
-  index: bigint;
+  merkleIndex: bigint;
   hash: string;
   processed?: boolean;
-  createdAt?: Date,
+  createdAt?: Date;
   database: string;
   collection: string;
 };
 
-export class ModelTask extends ModelBasic {
+export class ModelTask extends ModelBasic<TaskEntity> {
   private static instance: ModelTask | null = null;
 
-  private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, collectionName);
+  private constructor() {
+    super(ZKDATABASE_GLOBAL_DB, ZKDATABASE_DB_QUEUE_COLLECTION);
   }
 
-  public static getInstance(
-    databaseName: string,
-    collectionName: string
-  ): ModelTask {
+  public static getInstance(): ModelTask {
     if (!ModelTask.instance) {
-      ModelTask.instance = new ModelTask(databaseName, collectionName);
-      ModelTask.instance.collection.createIndex({ id: 1 }, { unique: true });
+      ModelTask.instance = new ModelTask();
+      ModelTask.instance.collection.createIndex({ merkleIndex: 1 }, { unique: true });
     }
     return ModelTask.instance;
   }
 
-  public async createTask(task: TaskEntity): Promise<void> {
+  public async createTask(
+    task: TaskEntity,
+    options?: InsertOneOptions
+  ): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.insertOne({
-      ...task,
-      createdAt: new Date(),
-      processed: false,
-    });
+    await this.collection.insertOne(
+      {
+        ...task,
+        createdAt: new Date(),
+        processed: false,
+      },
+      options
+    );
   }
 
   public async getNewTask(): Promise<TaskEntity | null> {
@@ -48,7 +52,7 @@ export class ModelTask extends ModelBasic {
       { sort: { createdAt: 1 } }
     );
 
-    const task = result?.value as TaskEntity | null;
+    const task = result as TaskEntity | null;
     return task;
   }
 

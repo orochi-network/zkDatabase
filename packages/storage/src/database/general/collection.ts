@@ -1,6 +1,6 @@
 import { CreateIndexesOptions, IndexSpecification, Document } from 'mongodb';
 import { isOk } from '../../helper/common';
-import ModelBasic from './basic';
+import ModelBasic from '../base/basic';
 import ModelDatabase from './database';
 
 /**

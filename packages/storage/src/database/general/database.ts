@@ -1,5 +1,5 @@
 import { ObjectId, Document } from 'mongodb';
-import ModelBasic from './basic';
+import ModelBasic from '../base/basic';
 import { ZKDATABASE_METADATA } from '../../common/const';
 
 export type DocumentMetaIndex = {

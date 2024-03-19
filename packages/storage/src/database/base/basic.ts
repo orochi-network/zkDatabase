@@ -1,5 +1,5 @@
 import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import { DatabaseEngine } from './database-engine';
+import { DatabaseEngine } from '../database-engine';
 import logger from '../../helper/logger';
 
 /**

@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import logger from '../../helper/logger';
+import logger from '../helper/logger';
 
 export class DatabaseEngine {
   private static innerInstance: any;
