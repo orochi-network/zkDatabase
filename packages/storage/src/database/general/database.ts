@@ -1,6 +1,6 @@
 import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
 import ModelBasic from '../base/basic';
-import { ZKDATABASE_METADATA } from '../../common/const';
+import { zkDatabaseMetadataCollections } from '../../common';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -15,16 +15,23 @@ export type DocumentMetaIndex = {
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
-  public static getInstance<T extends Document>(databaseName: string): ModelDatabase<T> {
+  public static getInstance<T extends Document>(
+    databaseName: string
+  ): ModelDatabase<T> {
     if (!ModelDatabase.instances.has(databaseName)) {
-      ModelDatabase.instances.set(databaseName, new ModelDatabase<T>(databaseName));
+      ModelDatabase.instances.set(
+        databaseName,
+        new ModelDatabase<T>(databaseName)
+      );
     }
     return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
   }
 
   public async listCollections(): Promise<string[]> {
     const collections = await this.db.listCollections().toArray();
-    return collections.filter((collection) => !ZKDATABASE_METADATA.includes(collection.name)).map((collection) => collection.name);
+    return collections
+      .filter((collection) => !zkDatabaseMetadataCollections.includes(collection.name))
+      .map((collection) => collection.name);
   }
 
   public async drop(): Promise<boolean> {

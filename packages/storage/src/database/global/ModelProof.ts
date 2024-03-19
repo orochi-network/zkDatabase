@@ -1,7 +1,4 @@
-import {
-  ZKDATABASE_DB_PROOF_COLLECTION,
-  ZKDATABASE_GLOBAL_DB,
-} from '../../common/const.js';
+import { zkDatabaseConstants } from '../../common/const.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 
@@ -26,8 +23,8 @@ export class ModelProof extends ModelBasic<ProofDetails> {
   public static getInstance(): ModelProof {
     if (!this.instance) {
       this.instance = new ModelProof(
-        ZKDATABASE_GLOBAL_DB,
-        ZKDATABASE_DB_PROOF_COLLECTION
+        zkDatabaseConstants.globalDatabase,
+        zkDatabaseConstants.collections.proofStorage
       );
     }
     return this.instance;

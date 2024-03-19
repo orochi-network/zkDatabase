@@ -1,3 +1,3 @@
-import { zkDatabaseCollections, zkDatabaseMetadataCollections } from './const';
+import { zkDatabaseConstants, zkDatabaseMetadataCollections } from './const';
 
-export { zkDatabaseCollections, zkDatabaseMetadataCollections };
+export { zkDatabaseConstants, zkDatabaseMetadataCollections };

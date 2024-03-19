@@ -1,6 +1,6 @@
 import { InsertOneOptions } from 'mongodb';
 import ModelBasic from '../base/basic.js';
-import { ZKDATABASE_DB_QUEUE_COLLECTION, ZKDATABASE_GLOBAL_DB } from '../../common/const.js';
+import { zkDatabaseConstants } from '../../common/const.js';
 
 export type TaskEntity = {
   merkleIndex: bigint;
@@ -15,7 +15,7 @@ export class ModelTask extends ModelBasic<TaskEntity> {
   private static instance: ModelTask | null = null;
 
   private constructor() {
-    super(ZKDATABASE_GLOBAL_DB, ZKDATABASE_DB_QUEUE_COLLECTION);
+    super(zkDatabaseConstants.globalDatabase, zkDatabaseConstants.collections.proofQueue);
   }
 
   public static getInstance(): ModelTask {
