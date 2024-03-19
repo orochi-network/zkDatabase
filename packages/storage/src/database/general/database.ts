@@ -1,4 +1,4 @@
-import { ObjectId, Document } from 'mongodb';
+import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
 import ModelBasic from '../base/basic';
 import { ZKDATABASE_METADATA } from '../../common/const';
 
@@ -9,38 +9,34 @@ export type DocumentMetaIndex = {
 };
 
 /**
- * Build on top of ModelBasic, it handle everything about database in general
- * Don't use this directly
+ * Handles database operations. Extends ModelBasic.
+ * This class should not be used directly.
  */
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
-  public static instances = new Map<string, ModelDatabase<any>>();
+  private static instances: Map<string, ModelDatabase<any>> = new Map();
 
-  public static getInstance(databaseName: string) {
+  public static getInstance<T extends Document>(databaseName: string): ModelDatabase<T> {
     if (!ModelDatabase.instances.has(databaseName)) {
-      ModelDatabase.instances.set(
-        databaseName,
-        new ModelDatabase(databaseName)
-      );
+      ModelDatabase.instances.set(databaseName, new ModelDatabase<T>(databaseName));
     }
-    return ModelDatabase.instances.get(databaseName)!;
+    return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
   }
 
-  public async listCollections() {
-    const collections = await this.db.listCollections();
-    return (await collections.toArray()).filter(
-      (e) => !ZKDATABASE_METADATA.includes(e.name)
-    );
+  public async listCollections(): Promise<string[]> {
+    const collections = await this.db.listCollections().toArray();
+    return collections.filter((collection) => !ZKDATABASE_METADATA.includes(collection.name)).map((collection) => collection.name);
   }
 
-  public async drop() {
-    return this.db.dropDatabase();
+  public async drop(): Promise<boolean> {
+    await this.db.dropDatabase();
+    return true;
   }
 
-  public async stats() {
+  public async stats(): Promise<Document> {
     return this.db.stats();
   }
 
-  public async list() {
+  public async list(): Promise<ListDatabasesResult> {
     return this.dbEngine.client.db().admin().listDatabases();
   }
 }

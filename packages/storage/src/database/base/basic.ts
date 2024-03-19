@@ -3,20 +3,20 @@ import { DatabaseEngine } from '../database-engine';
 import logger from '../../helper/logger';
 
 /**
- * Model basic is the most basic model of data, It interactive directly to DatabaseEngine
- * And provide .db and .collection allow other model to interactive with database/collection
+ * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine
+ * and provides .db and .collection to allow other models to interact with the database/collection.
  */
 export default abstract class ModelBasic<T extends Document> {
   protected dbEngine: DatabaseEngine;
 
-  protected databaseName: string | undefined;
+  protected databaseName: string;
 
   protected collectionName: string | undefined;
 
   protected collectionOptions: CreateCollectionOptions | undefined;
 
   constructor(
-    databaseName?: string,
+    databaseName: string,
     collectionName?: string,
     collectionOptions?: CreateCollectionOptions
   ) {
@@ -27,11 +27,14 @@ export default abstract class ModelBasic<T extends Document> {
   }
 
   public get db() {
-    return this.dbEngine.client.db(this.databaseName!);
+    return this.dbEngine.client.db(this.databaseName);
   }
 
   public get collection() {
-    return this.db.collection<T>(this.collectionName!);
+    if (!this.collectionName) {
+      throw Error('Collection was not provided');
+    }
+    return this.db.collection<T>(this.collectionName);
   }
 
   public async withTransaction(

@@ -2,74 +2,64 @@ import { CreateIndexesOptions, IndexSpecification, Document } from 'mongodb';
 import { isOk } from '../../helper/common';
 import ModelBasic from '../base/basic';
 import ModelDatabase from './database';
+import logger from '../../helper/logger';
 
 /**
- * Build on top of ModelBasic, it handle everything about collection in general
- * Don't use this directly
+ * Handles collection operations. Extends ModelBasic.
+ * This class should not be used directly.
  */
 export class ModelCollection<T extends Document> extends ModelBasic<T> {
-  public static instances = new Map<string, ModelCollection<any>>();
+  private static instances: Map<string, ModelCollection<any>> = new Map();
 
-  get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName!);
+  public get modelDatabase() {
+    return ModelDatabase.getInstance(this.databaseName);
   }
 
-  public static getInstance(databaseName: string, collectionName: string) {
+  public static getInstance<T extends Document>(databaseName: string, collectionName: string): ModelCollection<T> {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelCollection.instances.has(key)) {
-      ModelCollection.instances.set(
-        key,
-        new ModelCollection(databaseName, collectionName)
-      );
+      ModelCollection.instances.set(key, new ModelCollection<T>(databaseName, collectionName));
     }
-    return ModelCollection.instances.get(key)!;
+    return ModelCollection.instances.get(key) as ModelCollection<T>;
   }
 
   public async isExist(): Promise<boolean> {
-    return this.dbEngine.isCollection(this.databaseName!, this.collectionName!);
-  }
-
-  public async create(
-    indexSpecs: IndexSpecification,
-    indexOptions?: CreateIndexesOptions
-  ) {
-    if (this.databaseName && this.collectionName) {
-      return new ModelCollection(
-        this.databaseName,
-        this.collectionName
-      ).collection.createIndex(indexSpecs, indexOptions);
+    if (!this.collectionName) {
+      return false;
     }
-    throw new Error('Database and collection was not set');
+    return this.dbEngine.isCollection(this.databaseName, this.collectionName);
   }
 
-  public async drop() {
-    return this.db.dropCollection(this.collectionName!);
+  public async create(indexSpecs: IndexSpecification, indexOptions?: CreateIndexesOptions): Promise<string> {
+    if (!this.databaseName || !this.collectionName) {
+      throw new Error('Database and collection were not set');
+    }
+    return this.collection.createIndex(indexSpecs, indexOptions);
   }
 
-  public async index(
-    indexSpec: IndexSpecification,
-    indexOptions?: CreateIndexesOptions
-  ) {
-    return isOk(async () =>
-      this.collection.createIndex(indexSpec, indexOptions)
-    );
+  public async drop(): Promise<boolean> {
+    if (!this.collectionName) {
+      logger.debug('collectionName is null')
+      return false;
+    }
+    await this.db.dropCollection(this.collectionName);
+    return true;
+  }
+
+  public async index(indexSpec: IndexSpecification, indexOptions?: CreateIndexesOptions): Promise<boolean> {
+    return isOk(async () => this.collection.createIndex(indexSpec, indexOptions));
   }
 
   public async isIndexed(indexName: string): Promise<boolean> {
     const indexArray = await this.collection.listIndexes().toArray();
-    for (let i = 0; i < indexArray.length; i += 1) {
-      if (indexArray[i].name === indexName) {
-        return true;
-      }
-    }
-    return false;
+    return indexArray.some((index) => index.name === indexName);
   }
 
-  public async dropIndex(indexName: string) {
+  public async dropIndex(indexName: string): Promise<boolean> {
     return isOk(async () => this.collection.dropIndex(indexName));
   }
 
-  public async listIndexes() {
+  public async listIndexes(): Promise<any[]> {
     return this.collection.listIndexes().toArray();
   }
 }
