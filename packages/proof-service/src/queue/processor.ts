@@ -1,28 +1,28 @@
 import { Field, MerkleWitness, ZkProgram } from 'o1js';
-import { ITaskQueue } from './ITaskQueue.js';
-import { ModelMerkleTree, ModelMerkleTreeMetadata, ModelProof } from 'storage';
+import { ITaskQueue, Task } from './i-task-queue.js';
+import { ModelDbSetting, ModelMerkleTree, ModelProof } from '@zkdb/storage';
 import CircuitFactory from '../proof-system/circuit-factory.js';
 
 export default class TaskQueueProcessor {
   constructor(private taskQueue: ITaskQueue) {}
 
-  async processTasks(): Promise<void> {
-    console.log('processing');
+  async processTasks(callback?: (task: Task | null) => void): Promise<void> {
     while (true) {
       const task = await this.taskQueue.getNextTask();
 
       if (task) {
         const circuitName = `${task.database}.${task.collection}`;
 
-        const merkleHeight = await ModelMerkleTreeMetadata.getInstance(
-          task.database,
-          task.collection
+        const merkleHeight = await ModelDbSetting.getInstance(
+          task.database
         ).getHeight();
 
-        const merkleTree = ModelMerkleTree.getInstance(
-          task.database,
-          task.collection
-        );
+        if (!merkleHeight) {
+          throw Error('Merkle height is undefined');
+        }
+
+        const merkleTree = ModelMerkleTree.getInstance(task.database);
+        merkleTree.setHeight(merkleHeight);
 
         if (!merkleHeight) {
           throw new Error('Merkle Tree height is null');
@@ -38,14 +38,14 @@ export default class TaskQueueProcessor {
 
         class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
-        console.log(`Processing task ${task.id}`);
+        console.log(`Processing task ${task.merkleIndex}`);
 
-        const modelProof = ModelProof.getInstance(
+        const modelProof = ModelProof.getInstance();
+
+        const zkProof = await modelProof.getProof(
           task.database,
           task.collection
-        )!;
-
-        const zkProof = await modelProof.getProof();
+        );
 
         let proof: RollUpProof | undefined = undefined;
 
@@ -55,13 +55,17 @@ export default class TaskQueueProcessor {
 
         const merkleRoot = await merkleTree.getRoot(new Date());
         const witness = new DatabaseMerkleWitness(
-          await merkleTree.getWitness(task.id, new Date())
+          await merkleTree.getWitness(task.merkleIndex, new Date())
         );
 
-        if (task.id === 1n || !proof) {
+        if (task.merkleIndex === 0n || !proof) {
           proof = await circuit.init(merkleRoot, witness, Field(0), task.hash);
         } else if (proof) {
-          const oldLeaf = await merkleTree.getNode(0, task.index, new Date());
+          const oldLeaf = await merkleTree.getNode(
+            0,
+            task.merkleIndex,
+            new Date()
+          );
           proof = await circuit.update(
             merkleRoot,
             proof,
@@ -72,9 +76,20 @@ export default class TaskQueueProcessor {
         }
 
         if (proof) {
-          await modelProof.saveProof(proof.toJSON());
-          await merkleTree.setLeaf(task.index, Field(task.hash), new Date());
+          await modelProof.saveProof({
+            ...proof.toJSON(),
+            database: task.database,
+            collection: task.collection,
+          });
+          await merkleTree.setLeaf(
+            task.merkleIndex,
+            Field(task.hash),
+            new Date()
+          );
           await this.taskQueue.markTaskProcessed(task);
+          if (callback !== undefined) {
+            callback(task);
+          }
         }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 5000));

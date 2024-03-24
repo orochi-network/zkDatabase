@@ -1,25 +1,38 @@
-import { MerkleTree } from "o1js";
 import config from "./helper/config";
-import { DatabaseEngine } from "./model/database/database-engine";
-import { TaskQueue } from "./queue/TaskQueue";
-import TaskQueueProcessor from "./queue/TaskQueueProcessor";
-import { ModelTask } from "./model/ModelTask";
-
-let DEFAULT_MERKLE_HEIGHT = 12;
+import { DatabaseEngine, ModelTask } from "@zkdb/storage";
+import { TaskQueue } from "./queue/task_queue";
+import TaskQueueProcessor from "./queue/processor";
+import logger from "./helper/logger"; // Assume you have a logger module
 
 async function processQueue() {
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
+  try {
+    const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    if (!dbEngine.isConnected()) {
+      await dbEngine.connect();
+    }
+
+    const modelTask = ModelTask.getInstance();
+    const taskQueue = new TaskQueue(modelTask);
+    const taskQueueProcessor = new TaskQueueProcessor(taskQueue);
+
+    await taskQueueProcessor.processTasks();
+  } catch (error) {
+    logger.error("An error occurred while processing the queue:", error);
+    process.exit(1);
   }
-
-  const modelTask = new ModelTask("global", "queue");
-
-  const taskQueue = new TaskQueue(modelTask);
-
-  const taskQueueProcessor = new TaskQueueProcessor(taskQueue, new MerkleTree(DEFAULT_MERKLE_HEIGHT));
-
-  await taskQueueProcessor.processTasks();
 }
+
+// Handle graceful shutdown
+process.on("SIGINT", async () => {
+  logger.info("Received SIGINT, gracefully shutting down...");
+  await DatabaseEngine.getInstance().disconnect();
+  process.exit(0); // Exit gracefully
+});
+
+process.on("SIGTERM", async () => {
+  logger.info("Received SIGTERM, gracefully shutting down...");
+  await DatabaseEngine.getInstance().disconnect();
+  process.exit(0); // Exit gracefully
+});
 
 processQueue();
