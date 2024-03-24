@@ -8,7 +8,7 @@ import {
   InsertOneResult,
   Document,
 } from 'mongodb';
-import { ModelBasic, ModelDatabase, ModelTask, ModelCollection, ModelMerkleTree } from '@zkdb/storage';
+import { ModelBasic, ModelDatabase, ModelTask, ModelCollection, ModelMerkleTree, ModelDbSetting } from '@zkdb/storage';
 import logger from '../../helper/logger';
 import {
   ZKDATABASE_USER_SYSTEM,
@@ -24,7 +24,6 @@ import {
   ProvableTypeString,
   ProvableTypeMap,
 } from '../common/schema';
-import { ModelDbSetting } from '../database/setting';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 

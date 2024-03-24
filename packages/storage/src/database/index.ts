@@ -6,6 +6,7 @@ import { ModelProof } from './global/proof.js';
 import { ModelDatabase, DocumentMetaIndex } from './general/database.js';
 import { ModelCollection } from './general/collection.js';
 import { ModelMerkleTree } from './common/merkle-tree.js';
+import { ModelDbSetting, DbSetting } from './common/setting.js';
 
 export {
   DatabaseEngine,
@@ -17,4 +18,6 @@ export {
   ModelCollection,
   ModelGeneral,
   ModelMerkleTree,
+  ModelDbSetting,
+  DbSetting,
 };

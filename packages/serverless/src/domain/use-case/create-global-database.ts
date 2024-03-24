@@ -1,9 +1,8 @@
-import { DatabaseEngine } from 'storage';
+import { DatabaseEngine, ModelDbSetting } from '@zkdb/storage';
 import { UseCase } from './use-case';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import ModelGroup from '../../model/database/group';
 import { ModelSchema } from '../../model/database/schema';
-import { ModelDbSetting } from '../../model/database/setting';
 import ModelUserGroup from '../../model/database/user-group';
 
 export type CreateGlobalDatabaseInput = {

@@ -1,4 +1,5 @@
-import { ModelBasic, zkDatabaseConstants } from '@zkdb/storage';
+import { zkDatabaseConstants } from "../../common/const.js";
+import ModelBasic from "../base/basic.js";
 
 export type DbSetting = {
   merkleHeight: number;
