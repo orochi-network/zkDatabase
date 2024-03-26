@@ -5,6 +5,7 @@
     "strict": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "noImplicitAny": true,
     "resolveJsonModule": true,
@@ -12,9 +13,9 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": false,
-    "baseUrl": ".",
+    "baseUrl": "./src",
     "outDir": "./build/",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
   },
   "include": ["**/*.ts"],
   "exclude": [
