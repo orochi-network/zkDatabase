@@ -18,15 +18,12 @@ export default class TaskQueueProcessor {
         ).getHeight();
 
         if (!merkleHeight) {
-          throw Error('Merkle height is undefined');
+          throw Error('Merkle Tree height is null');
         }
 
         const merkleTree = ModelMerkleTree.getInstance(task.database);
         merkleTree.setHeight(merkleHeight);
 
-        if (!merkleHeight) {
-          throw new Error('Merkle Tree height is null');
-        }
 
         if (!CircuitFactory.contains(circuitName)) {
           await CircuitFactory.createCircuit(circuitName, merkleHeight);
