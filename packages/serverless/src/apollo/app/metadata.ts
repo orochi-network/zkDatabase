@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { GraphQLError } from 'graphql';
 import GraphQLJSON from 'graphql-type-json';
+import { ObjectId } from 'mongodb';
 import resolverWrapper from '../validation';
 import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
@@ -13,8 +14,6 @@ import {
 } from '../../common/permission';
 import { AppContext } from '../../helper/common';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const';
-import { ObjectID } from 'graphql-scalars/typings/mocks';
-import { ObjectId } from 'mongodb';
 
 export type TPermissionRequest = TCollectionRequest & {
   docId: string;

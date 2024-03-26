@@ -1,6 +1,5 @@
 import { FindOptions, ObjectId, Document } from 'mongodb';
-import { ZKDATABASE_METADATA_COLLECTION } from '../../common/const';
-import { ModelGeneral } from '../abstract/general';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import {
   PermissionBasic,
   PermissionBinary,
@@ -8,7 +7,6 @@ import {
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission';
 import ModelUserGroup from './user-group';
-import ModelCollection from '../abstract/collection';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
@@ -28,7 +26,7 @@ export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
 };
 
 export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
-  static collectionName: string = ZKDATABASE_METADATA_COLLECTION;
+  static collectionName: string = zkDatabaseConstants.databaseCollections.permission;
 
   constructor(databaseName: string) {
     super(databaseName, ModelDocumentMetadata.collectionName);

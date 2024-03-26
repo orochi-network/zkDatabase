@@ -1,5 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
+import { ModelCollection } from '@zkdb/storage';
 import { resolverWrapper } from '../validation';
 import {
   TCollectionRequest,
@@ -7,7 +8,6 @@ import {
   TCollectionCreateRequest,
 } from './collection';
 import { collectionName, databaseName, indexName, indexField } from './common';
-import { ModelCollection } from '../../model/abstract/collection';
 
 // Index request
 export type TIndexNameRequest = {

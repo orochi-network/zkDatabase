@@ -2,9 +2,9 @@ import { Field, UInt32 } from 'o1js';
 import { DatabaseEngine } from '../../../src/model/abstract/database-engine';
 import { ModelSchema } from '../../../src/model/database/schema';
 import { PermissionBasic } from '../../../src/common/permission';
-import ModelDatabase from '../../../src/model/abstract/database';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
+import { CreateGlobalDatabaseUseCase } from '../../../src/domain/use-case/create-global-database';
 
 const DB_NAME = 'test-db-schema';
 const MERKLE_HEIGHT = 8;
@@ -32,7 +32,10 @@ describe('ModelSchema', () => {
 
   beforeEach(async () => {
     await dropDatabase();
-    await ModelDatabase.create(DB_NAME, MERKLE_HEIGHT);
+    await new CreateGlobalDatabaseUseCase().execute({
+      databaseName: DB_NAME,
+      merkleHeight: MERKLE_HEIGHT,
+    });
   });
 
   afterEach(async () => {

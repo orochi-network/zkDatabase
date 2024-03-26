@@ -1,17 +1,17 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable max-classes-per-file */
 import { Field, MerkleTree, UInt32 } from 'o1js';
-import { DatabaseEngine } from '../../../src/model/abstract/database-engine';
+import { DatabaseEngine } from '@zkdb/storage';
 import ModelDocument, {
   DocumentRecord,
 } from '../../../src/model/abstract/document';
 import { ModelSchema } from '../../../src/model/database/schema';
-import ModelDatabase from '../../../src/model/abstract/database';
 import { PermissionBasic } from '../../../src/common/permission';
 import ModelDocumentMetadata from '../../../src/model/database/document-metadata';
 import ModelMerkleTree from '../../../src/model/database/merkle-tree';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
+import { CreateGlobalDatabaseUseCase } from '../../../src/domain/use-case/create-global-database';
 
 const DB_NAME = 'test-db-document';
 const MERKLE_HEIGHT = 8;
@@ -39,7 +39,10 @@ describe('ModelDocument', () => {
 
   beforeEach(async () => {
     await dropDatabase();
-    await ModelDatabase.create(DB_NAME, MERKLE_HEIGHT);
+    await new CreateGlobalDatabaseUseCase().execute({
+      databaseName: DB_NAME,
+      merkleHeight: MERKLE_HEIGHT,
+    });
   });
 
   afterEach(async () => {

@@ -1,10 +1,6 @@
 import { Document } from 'mongodb';
-import {
-  ZKDATABASE_USER_SYSTEM,
-  ZKDATABASE_GROUP_COLLECTION,
-} from '../../common/const';
-import ModelCollection from '../abstract/collection';
-import { ModelGeneral } from '../abstract/general';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ZKDATABASE_USER_SYSTEM } from '../../common/const';
 import { getCurrentTime } from '../../helper/common';
 
 export interface GroupSchema extends Document {
@@ -16,7 +12,7 @@ export interface GroupSchema extends Document {
 }
 
 export class ModelGroup extends ModelGeneral<GroupSchema> {
-  static collectionName: string = ZKDATABASE_GROUP_COLLECTION;
+  private static collectionName: string = zkDatabaseConstants.databaseCollections.group;
 
   constructor(databaseName: string) {
     super(databaseName, ModelGroup.collectionName);

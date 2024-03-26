@@ -1,10 +1,9 @@
 import { Document } from 'mongodb';
+import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import {
   ZKDATABASE_USER_NOBODY,
-  ZKDATABASE_USER_SYSTEM,
-  ZKDATABASE_GLOBAL_DB,
+  ZKDATABASE_USER_SYSTEM
 } from '../../common/const';
-import { ModelGeneral } from '../abstract/general';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common';
 
 export interface DocumentUser extends Document {
@@ -18,14 +17,15 @@ export interface DocumentUser extends Document {
 }
 
 export class ModelUser extends ModelGeneral<DocumentUser> {
-  static collectionName: string = 'user';
+  private static collectionName: string = zkDatabaseConstants.globalCollections.user;
+  
   static defaultUsers: string[] = [
     ZKDATABASE_USER_NOBODY,
     ZKDATABASE_USER_SYSTEM,
   ];
 
   constructor() {
-    super(ZKDATABASE_GLOBAL_DB, ModelUser.collectionName);
+    super(zkDatabaseConstants.globalDatabase, ModelUser.collectionName);
   }
 
   public static isValidUser(userName: string) {
