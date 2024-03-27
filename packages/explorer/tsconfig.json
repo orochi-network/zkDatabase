@@ -1,5 +1,17 @@
 {
   "compilerOptions": {
+    "baseUrl": "src/",
+    "paths": {
+      "@/assets/*": ["app/assets/*"],
+      "@/components/*": ["app/components/*"],
+      "@/contexts/*": ["app/contexts/*"],
+      "@/graphql/*": ["app/graphql/*"],
+      "@/hooks/*": ["app/hooks/*"],
+      "@/pages/*": ["app/pages/*"],
+      "@/styles/*": ["app/styles/*"],
+      "@/types/*": ["app/types/*"],
+      "@/utils/*": ["app/utils/*"],
+    },
     "target": "es5",
     "lib": [
       "dom",
@@ -18,9 +30,19 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
-    "src"
+    "src",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
