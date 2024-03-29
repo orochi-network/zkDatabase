@@ -199,10 +199,12 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
         this.merkleTree.setHeight(height);
 
+        const currentDate = new Date();
+
         await this.merkleTree.setLeaf(
           BigInt(documentMetadata.merkleIndex),
           newHash,
-          new Date(),
+          currentDate,
           {
             session,
           }
@@ -212,7 +214,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           {
             merkleIndex: BigInt(documentMetadata.merkleIndex),
             hash: newHash.toString(),
-            createdAt: new Date(),
+            createdAt: currentDate,
             database: this.databaseName!,
             collection: this.collectionName!,
           },
@@ -309,7 +311,9 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
         const newHash = documentDetails.structuredDocument.hash();
 
-        await this.merkleTree.setLeaf(BigInt(index), newHash, new Date(), {
+        const currDate = new Date();
+
+        await this.merkleTree.setLeaf(BigInt(index), newHash, currDate, {
           session,
         });
 
@@ -317,7 +321,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
           {
             merkleIndex: BigInt(index),
             hash: newHash.toString(),
-            createdAt: new Date(),
+            createdAt: currDate,
             database: this.databaseName!,
             collection: this.collectionName!,
           },
