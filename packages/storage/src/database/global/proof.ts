@@ -1,3 +1,4 @@
+import { FindOptions, InsertOneOptions } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
@@ -30,12 +31,18 @@ export class ModelProof extends ModelBasic<ProofDetails> {
     return this.instance;
   }
 
-  public async saveProof(proofDetails: ProofDetails): Promise<boolean> {
+  public async saveProof(
+    proofDetails: ProofDetails,
+    options?: InsertOneOptions
+  ): Promise<boolean> {
     try {
-      await this.collection.insertOne({
-        ...proofDetails,
-        createdAt: new Date(),
-      });
+      await this.collection.insertOne(
+        {
+          ...proofDetails,
+          createdAt: new Date(),
+        },
+        options
+      );
       return true;
     } catch (error) {
       logger.error('Error saving proof:', error);
@@ -45,11 +52,12 @@ export class ModelProof extends ModelBasic<ProofDetails> {
 
   public async getProof(
     database: string,
-    collection: string
+    collection: string,
+    options?: FindOptions
   ): Promise<ZKProof | null> {
     const proof = await this.collection.findOne(
       { database, collection },
-      { sort: { createdAt: -1 } }
+      { ...options, sort: { createdAt: -1 } }
     );
     return proof as ProofDetails | null;
   }
