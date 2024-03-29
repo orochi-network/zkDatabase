@@ -1,4 +1,4 @@
-import { Field, MerkleTree, Poseidon } from 'o1js';
+import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
 import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
 import logger from '../../helper/logger';
@@ -35,7 +35,10 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
 
   public static getInstance(databaseName: string): ModelMerkleTree {
     if (!ModelMerkleTree.instances.has(databaseName)) {
-      ModelMerkleTree.instances.set(databaseName, new ModelMerkleTree(databaseName));
+      ModelMerkleTree.instances.set(
+        databaseName,
+        new ModelMerkleTree(databaseName)
+      );
     }
     return ModelMerkleTree.instances.get(databaseName)!;
   }
@@ -71,12 +74,11 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
-    MerkleTree
 
     let currIndex = BigInt(index);
     const inserts = [];
-
-    for (let level = 0; level < this.height - 1; level += 1) {
+    
+    for (let level = 0; level < this.height; level += 1) {
       currIndex /= 2n;
 
       const dataToInsert = {
