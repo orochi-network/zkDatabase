@@ -1,14 +1,13 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable max-classes-per-file */
+import { DatabaseEngine, ModelMerkleTree } from '@zkdb/storage';
 import { Field, MerkleTree, UInt32 } from 'o1js';
-import { DatabaseEngine } from '@zkdb/storage';
 import ModelDocument, {
   DocumentRecord,
 } from '../../../src/model/abstract/document';
 import { ModelSchema } from '../../../src/model/database/schema';
 import { PermissionBasic } from '../../../src/common/permission';
 import ModelDocumentMetadata from '../../../src/model/database/document-metadata';
-import ModelMerkleTree from '../../../src/model/database/merkle-tree';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
 import { CreateGlobalDatabaseUseCase } from '../../../src/domain/use-case/create-global-database';
@@ -30,15 +29,28 @@ describe('ModelDocument', () => {
     await dbEngine.disconnect();
   });
 
-  async function dropDatabase() {
-    const db = dbEngine.client.db(DB_NAME);
-    if (db) {
+  async function dropDatabases() {
+    const adminDb = dbEngine.client.db().admin();
+  
+    // List all databases
+    const { databases } = await adminDb.listDatabases();
+  
+    // Filter out system databases
+    const userDatabases = databases.filter(dbInfo => !['admin', 'local', 'config'].includes(dbInfo.name));
+  
+    // Drop each user database
+    await Promise.all(userDatabases.map(async (dbInfo) => {
+      console.log(`Dropping database: ${dbInfo.name}`);
+      const db = dbEngine.client.db(dbInfo.name);
       await db.dropDatabase();
-    }
+    }));
+  
+    console.log('All user databases have been dropped.');
   }
+  
 
   beforeEach(async () => {
-    await dropDatabase();
+    await dropDatabases();
     await new CreateGlobalDatabaseUseCase().execute({
       databaseName: DB_NAME,
       merkleHeight: MERKLE_HEIGHT,
@@ -46,7 +58,7 @@ describe('ModelDocument', () => {
   });
 
   afterEach(async () => {
-    await dropDatabase();
+    await dropDatabases();
   });
 
   it('should insert a new user document, update metadata, and verify merkle witness', async () => {

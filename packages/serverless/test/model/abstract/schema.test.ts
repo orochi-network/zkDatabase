@@ -1,5 +1,5 @@
 import { Field, UInt32 } from 'o1js';
-import { DatabaseEngine } from '../../../src/model/abstract/database-engine';
+import { DatabaseEngine } from '@zkdb/storage';
 import { ModelSchema } from '../../../src/model/database/schema';
 import { PermissionBasic } from '../../../src/common/permission';
 import { Schema } from '../../../src/model/common/schema';
@@ -23,15 +23,27 @@ describe('ModelSchema', () => {
     await dbEngine.disconnect();
   });
 
-  async function dropDatabase() {
-    const db = dbEngine.client.db(DB_NAME);
-    if (db) {
+  async function dropDatabases() {
+    const adminDb = dbEngine.client.db().admin();
+  
+    // List all databases
+    const { databases } = await adminDb.listDatabases();
+  
+    // Filter out system databases
+    const userDatabases = databases.filter(dbInfo => !['admin', 'local', 'config'].includes(dbInfo.name));
+  
+    // Drop each user database
+    await Promise.all(userDatabases.map(async (dbInfo) => {
+      console.log(`Dropping database: ${dbInfo.name}`);
+      const db = dbEngine.client.db(dbInfo.name);
       await db.dropDatabase();
-    }
+    }));
+  
+    console.log('All user databases have been dropped.');
   }
 
   beforeEach(async () => {
-    await dropDatabase();
+    await dropDatabases();
     await new CreateGlobalDatabaseUseCase().execute({
       databaseName: DB_NAME,
       merkleHeight: MERKLE_HEIGHT,
@@ -39,7 +51,7 @@ describe('ModelSchema', () => {
   });
 
   afterEach(async () => {
-    await dropDatabase();
+    await dropDatabases();
   });
 
   it('create new collection with schema, handle schema properly', async () => {
