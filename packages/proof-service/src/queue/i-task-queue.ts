@@ -4,7 +4,8 @@ export type Task = {
   merkleIndex: bigint;
   hash: Field;
   database: string,
-  collection: string
+  collection: string,
+  createdAt: Date
 };
 
 export interface ITaskQueue {

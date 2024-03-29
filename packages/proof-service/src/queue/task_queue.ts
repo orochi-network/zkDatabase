@@ -10,6 +10,7 @@ export class TaskQueue implements ITaskQueue {
     if (!entity) {
       return null;
     }
+    
     return { ...entity, hash: Field(entity.hash) };
   }
 

@@ -1,13 +1,15 @@
-import { Field, MerkleWitness, ZkProgram } from 'o1js';
+import { MerkleWitness, ZkProgram } from 'o1js';
 import { ITaskQueue, Task } from './i-task-queue.js';
 import { ModelDbSetting, ModelMerkleTree, ModelProof } from '@zkdb/storage';
 import CircuitFactory from '../proof-system/circuit-factory.js';
 
 export default class TaskQueueProcessor {
+  private isRunning = true;
+
   constructor(private taskQueue: ITaskQueue) {}
 
   async processTasks(callback?: (task: Task | null) => void): Promise<void> {
-    while (true) {
+    while (this.isRunning) {
       const task = await this.taskQueue.getNextTask();
 
       if (task) {
@@ -24,7 +26,6 @@ export default class TaskQueueProcessor {
         const merkleTree = ModelMerkleTree.getInstance(task.database);
         merkleTree.setHeight(merkleHeight);
 
-
         if (!CircuitFactory.contains(circuitName)) {
           await CircuitFactory.createCircuit(circuitName, merkleHeight);
         }
@@ -34,8 +35,6 @@ export default class TaskQueueProcessor {
         class RollUpProof extends ZkProgram.Proof(circuit) {}
 
         class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
-
-        console.log(`Processing task ${task.merkleIndex}`);
 
         const modelProof = ModelProof.getInstance();
 
@@ -50,19 +49,19 @@ export default class TaskQueueProcessor {
           proof = RollUpProof.fromJSON(zkProof);
         }
 
-        const merkleRoot = await merkleTree.getRoot(new Date());
         const witness = new DatabaseMerkleWitness(
-          await merkleTree.getWitness(task.merkleIndex, new Date())
+          await merkleTree.getWitness(task.merkleIndex, new Date(task.createdAt.getTime() - 1))
+        );
+        const merkleRoot = await merkleTree.getRoot(new Date(task.createdAt.getTime() - 1));
+        const oldLeaf = await merkleTree.getNode(
+          0,
+          task.merkleIndex,
+          new Date(task.createdAt.getTime() - 1)
         );
 
-        if (task.merkleIndex === 0n || !proof) {
-          proof = await circuit.init(merkleRoot, witness, Field(0), task.hash);
-        } else if (proof) {
-          const oldLeaf = await merkleTree.getNode(
-            0,
-            task.merkleIndex,
-            new Date()
-          );
+        if (!proof) {
+          proof = await circuit.init(merkleRoot, witness, oldLeaf, task.hash);
+        } else {
           proof = await circuit.update(
             merkleRoot,
             proof,
@@ -78,19 +77,19 @@ export default class TaskQueueProcessor {
             database: task.database,
             collection: task.collection,
           });
-          await merkleTree.setLeaf(
-            task.merkleIndex,
-            Field(task.hash),
-            new Date()
-          );
           await this.taskQueue.markTaskProcessed(task);
-          if (callback !== undefined) {
-            callback(task);
-          }
         }
       } else {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       }
+
+      if (callback !== undefined) {
+        callback(task);
+      }
     }
+  }
+
+  public stop() {
+    this.isRunning = false;
   }
 }
