@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
+    "module": "CommonJS",
+    "outDir": "./build",
+    "rootDir": ".",
     "strict": true,
+    "sourceMap": true,
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
@@ -13,7 +16,10 @@
     "skipLibCheck": true,
     "declaration": false,
     "baseUrl": ".",
-    "outDir": "./build/",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false, 
+    "noFallthroughCasesInSwitch": true,
     "types": ["node", "jest"]
   },
   "include": ["**/*.ts"],
