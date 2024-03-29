@@ -19,8 +19,6 @@ export default function createExtendedMerkleWitness(height: number): any {
 
       const n = this.height();
 
-      path.push(leaf);
-      
       for (let i = 1; i < n; i += 1) {
         const left = Provable.if(
           this.isLeft[i - 1],
