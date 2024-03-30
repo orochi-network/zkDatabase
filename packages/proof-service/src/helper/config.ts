@@ -9,9 +9,7 @@ type TNodeEnv = (typeof nodeEnvValue)[number];
 
 interface IAppConfiguration {
   nodeEnv: TNodeEnv;
-  merkle: string;
   mongodbUrl: string;
-  redisUrl: string;
 }
 
 export const envLocation = `${Utilities.File.getRootFolder(
@@ -30,8 +28,7 @@ const configLoader = Singleton<ConfigLoader>(
     mongodbUrl: Joi.string()
       .trim()
       .required()
-      .regex(/^mongodb([+a-z]+|):\/\//),
-    redisUrl: Joi.string(),
+      .regex(/^mongodb([+a-z]+|):\/\//)
   })
 );
 
