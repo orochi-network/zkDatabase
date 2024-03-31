@@ -40,12 +40,9 @@ describe('ModelDocument', () => {
   
     // Drop each user database
     await Promise.all(userDatabases.map(async (dbInfo) => {
-      console.log(`Dropping database: ${dbInfo.name}`);
       const db = dbEngine.client.db(dbInfo.name);
       await db.dropDatabase();
     }));
-  
-    console.log('All user databases have been dropped.');
   }
   
 
@@ -207,7 +204,7 @@ describe('ModelDocument', () => {
       });
 
       expect(metadataResult).toBeDefined();
-
+      
       // Check merkle tree
       const merkleWitness = await modelMerkleTree.getWitness(
         BigInt(metadataResult!.merkleIndex),
