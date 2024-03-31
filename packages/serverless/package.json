@@ -27,7 +27,7 @@
     "buildw": "tsc -p tsconfig.json --watch",
     "format": "prettier --write --ignore-unknown **/*",
     "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
-    "test": "node ../../node_modules/jest/bin/jest.js",
+    "test": "node ../../node_modules/jest/bin/jest.js --runInBand",
     "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"

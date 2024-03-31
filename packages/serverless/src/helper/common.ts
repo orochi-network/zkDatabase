@@ -20,6 +20,7 @@ const cache: {
   timestamp?: Date;
 } = {};
 
+// During tests causing: Jest has detected the following 1 open handle potentially keeping Jest from exiting
 export function getCurrentTime(): Date {
   if (typeof cache.timestamp === 'undefined') {
     cache.timestamp = new Date();
