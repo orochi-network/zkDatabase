@@ -135,6 +135,11 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
     document: DocumentRecord
   ): boolean {
     return fields.every(field => {
+      // Skip validation for the _id field
+      if (field === '_id') {
+        return true; 
+      }
+
       const schemaField = schema[field];
   
       if (!schemaField) {
@@ -144,15 +149,21 @@ export class ModelSchema extends ModelGeneral<SchemaDefinition> {
   
       const { kind } = schemaField;
       const validationSchema = schemaVerification.get(kind);
-  
+
       if (!validationSchema) {
         logger.error(`Schema kind '${kind}' is not supported.`);
         return false;
       }
   
       const documentField = document[field];
+
       if (typeof documentField === 'undefined') {
         logger.error(`Document is missing field '${field}'.`);
+        return false;
+      }
+      
+      if (documentField.kind !== schemaField.kind) {
+        logger.error(`Field '${field}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`);
         return false;
       }
   

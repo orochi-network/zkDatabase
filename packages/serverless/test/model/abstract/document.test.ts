@@ -118,7 +118,6 @@ describe('ModelDocument', () => {
     expect(Field(details?.structuredDocument.name.value)).toEqual(Field(0));
     expect(details?.structuredDocument.age.value).toEqual(Field(2));
   });
-  
 
   it('should insert a new user document, update metadata, and verify merkle witness', async () => {
     // Set up
@@ -198,7 +197,6 @@ describe('ModelDocument', () => {
 
   it('should insert 3 new users documents, update metadata, and verify merkle witness', async () => {
     // Set up
-    
 
     // Define modules which are used in the test
     const modelDocument = ModelDocument.getInstance(DB_NAME, COLLECTION_NAME);

@@ -1,10 +1,12 @@
 import { Field, UInt32 } from 'o1js';
 import { DatabaseEngine } from '@zkdb/storage';
+import { ObjectId } from 'mongodb';
 import { ModelSchema } from '../../../src/model/database/schema';
 import { PermissionBasic } from '../../../src/common/permission';
 import { Schema } from '../../../src/model/common/schema';
 import config from '../../../src/helper/config';
 import { CreateGlobalDatabaseUseCase } from '../../../src/domain/use-case/create-global-database';
+import { DocumentRecord } from '../../../src/model/abstract/document';
 
 const DB_NAME = 'test-db-schema';
 const MERKLE_HEIGHT = 8;
@@ -34,12 +36,9 @@ describe('ModelSchema', () => {
   
     // Drop each user database
     await Promise.all(userDatabases.map(async (dbInfo) => {
-      console.log(`Dropping database: ${dbInfo.name}`);
       const db = dbEngine.client.db(dbInfo.name);
       await db.dropDatabase();
     }));
-  
-    console.log('All user databases have been dropped.');
   }
 
   beforeEach(async () => {
@@ -88,4 +87,90 @@ describe('ModelSchema', () => {
     expect(createdSchema.fields).toContain('name');
     expect(createdSchema.fields).toContain('age');
   });
+
+  const mockSchema = {
+    collection: 'testCollection',
+    fields: ['name', 'age'],
+    name: { kind: 'Field', indexed: false },
+    age: { kind: 'Field', indexed: false },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    permissionOwner: 7,
+    permissionGroup: 6,
+    permissionOther: 4,
+  };
+
+  describe('validateDocument', () => {
+    it('should return true for a valid document', () => {
+      const fields = [
+        { name: 'name', kind: 'Field', value: 'Alice' },
+        { name: 'age', kind: 'Field', value: '30' },
+      ];
+  
+      const validDocument: DocumentRecord = fields.reduce((acc, field) => {
+        acc[field.name] = { name: field.name, kind: field.kind, value: field.value };
+        return acc;
+      }, { _id: new ObjectId() } as DocumentRecord);
+  
+      expect(ModelSchema.validateDocument(mockSchema, validDocument)).toBe(true);
+    });
+  
+    it('should return false for an invalid document kind', () => {
+      const fields = [
+        { name: 'name', kind: 'Field', value: 'Alice' },
+        { name: 'age', kind: 'CircuitValue', value: 'thirty' }, // Invalid value
+      ];
+  
+      const invalidDocument: DocumentRecord = fields.reduce((acc, field) => {
+        acc[field.name] = { name: field.name, kind: field.kind, value: field.value };
+        return acc;
+      }, { _id: new ObjectId() } as DocumentRecord);
+  
+      expect(ModelSchema.validateDocument(mockSchema, invalidDocument)).toBe(false);
+    });
+
+    it('should return false for an invalid document name', () => {
+      const fields = [
+        { name: 'name', kind: 'Field', value: 'Alice' },
+        { name: 'age123', kind: 'Field', value: 'thirty' }, // Invalid name
+      ];
+  
+      const invalidDocument: DocumentRecord = fields.reduce((acc, field) => {
+        acc[field.name] = { name: field.name, kind: field.kind, value: field.value };
+        return acc;
+      }, { _id: new ObjectId() } as DocumentRecord);
+  
+      expect(ModelSchema.validateDocument(mockSchema, invalidDocument)).toBe(false);
+    });
+  
+    it('should return false for a document with missing fields', () => {
+      const fields = [
+        { name: 'name', kind: 'Field', value: 'Alice' }, // Missing 'age' field
+      ];
+  
+      const incompleteDocument: DocumentRecord = fields.reduce((acc, field) => {
+        acc[field.name] = { name: field.name, kind: field.kind, value: field.value };
+        return acc;
+      }, { _id: new ObjectId() } as DocumentRecord);
+  
+      expect(ModelSchema.validateDocument(mockSchema, incompleteDocument)).toBe(false);
+    });
+  });
+  
+  describe('validateUpdate', () => {
+    it('should return true for a valid update', () => {
+      const fields = [
+        { name: 'name', kind: 'Field', value: 'Alice' },
+        { name: 'age', kind: 'Field', value: '31' }, // Valid update
+      ];
+  
+      const validUpdate: DocumentRecord = fields.reduce((acc, field) => {
+        acc[field.name] = { name: field.name, kind: field.kind, value: field.value };
+        return acc;
+      }, { _id: new ObjectId() } as DocumentRecord);
+  
+      expect(ModelSchema.validateUpdate(mockSchema, validUpdate)).toBe(true);
+    });
+  });
+
 });
