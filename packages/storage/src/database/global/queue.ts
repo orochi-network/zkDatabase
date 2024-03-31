@@ -11,8 +11,8 @@ export type TaskEntity = {
   collection: string;
 };
 
-export class ModelTask extends ModelBasic<TaskEntity> {
-  private static instance: ModelTask | null = null;
+export class ModelQueueTask extends ModelBasic<TaskEntity> {
+  private static instance: ModelQueueTask | null = null;
 
   private constructor() {
     super(
@@ -21,15 +21,15 @@ export class ModelTask extends ModelBasic<TaskEntity> {
     );
   }
 
-  public static getInstance(): ModelTask {
-    if (!ModelTask.instance) {
-      ModelTask.instance = new ModelTask();
-      ModelTask.instance.collection.createIndex(
+  public static getInstance(): ModelQueueTask {
+    if (!ModelQueueTask.instance) {
+      ModelQueueTask.instance = new ModelQueueTask();
+      ModelQueueTask.instance.collection.createIndex(
         { merkleIndex: 1 },
         { unique: true }
       );
     }
-    return ModelTask.instance;
+    return ModelQueueTask.instance;
   }
 
   public async createTask(

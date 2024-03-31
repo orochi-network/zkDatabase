@@ -1,7 +1,7 @@
 import { DatabaseEngine } from './database-engine';
 import { ModelGeneral } from './base/general.js';
 import ModelBasic from './base/basic.js';
-import { ModelTask, TaskEntity } from './global/queue.js';
+import { ModelQueueTask, TaskEntity } from './global/queue.js';
 import { ModelProof } from './global/proof.js';
 import { ModelDatabase, DocumentMetaIndex } from './general/database.js';
 import { ModelCollection } from './general/collection.js';
@@ -11,7 +11,7 @@ import { ModelDbSetting, DbSetting } from './common/setting.js';
 export {
   DatabaseEngine,
   ModelBasic,
-  ModelTask,
+  ModelQueueTask,
   ModelProof,
   ModelDatabase,
   DocumentMetaIndex,
