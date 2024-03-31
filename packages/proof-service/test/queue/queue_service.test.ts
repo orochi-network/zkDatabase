@@ -1,14 +1,13 @@
-import { DatabaseEngine, ModelDbSetting, ModelMerkleTree, ModelProof, ModelTask, TaskEntity } from '@zkdb/storage';
-import TaskQueueProcessor from '../../src/queue/processor';
-import { TaskQueue } from '../../src/queue/task_queue';
+import { DatabaseEngine, ModelDbSetting, ModelMerkleTree, ModelProof, ModelQueueTask, TaskEntity } from '@zkdb/storage';
 import { Field, Poseidon } from 'o1js';
 import { config } from '../../src/helper/config';
+import QueueService from '../../src/queue/queue-service'
 
 const DB_NAME = 'test-db-document';
 const TEST_COLLECTION = 'test-collection';
 const MERKLE_HEIGHT = 12;
 
-describe('TaskQueueProcessor', () => {
+describe('QueueService', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
@@ -47,9 +46,8 @@ describe('TaskQueueProcessor', () => {
   });
 
   it('should process tasks correctly and create valid proofs', async () => {
-    const modelTask = ModelTask.getInstance();
-    const queue = new TaskQueue(modelTask);
-    const processor = new TaskQueueProcessor(queue);
+    const queue = ModelQueueTask.getInstance();
+    const processor = new QueueService(queue);
 
     await ModelDbSetting.getInstance(DB_NAME).updateSetting({
       merkleHeight: MERKLE_HEIGHT
@@ -77,12 +75,12 @@ describe('TaskQueueProcessor', () => {
         collection: TEST_COLLECTION,
         createdAt: currDate
       }
-      await modelTask.createTask(task);
+      await queue.createTask(task);
       tasks.push(task);
     }
 
     // Check if task is in the queue and processed is set to FALSE
-    let storedTasks = await modelTask.collection.find({}).toArray();
+    let storedTasks = await queue.collection.find({}).toArray();
     expect(storedTasks.length).toEqual(tasks.length);
 
     storedTasks.forEach(task => {
@@ -108,24 +106,15 @@ describe('TaskQueueProcessor', () => {
       ])
     );
 
-
-    let isProcesssing = true;
-
     // Handle tasks
-    processor.processTasks((task) => {
-      if (!task) {
-        console.log(`Processing task ${task}`)
-        isProcesssing = false;
-        processor.stop();
-      }
-    })
+    processor.start()
 
-    while (isProcesssing) {
+    while (processor.running) {
       await new Promise((resolve) => setTimeout(resolve, 5000)) 
     }
 
     // Check if task is in the queue and processed is set to TRUE
-    storedTasks = await modelTask.collection.find({}).toArray();
+    storedTasks = await queue.collection.find({}).toArray();
     expect(storedTasks.length).toEqual(tasks.length);
 
     storedTasks.forEach(task => {

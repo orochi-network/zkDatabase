@@ -4,7 +4,7 @@ import {
   SelfProof,
   MerkleWitness,
 } from 'o1js';
-import { CircuitCache } from '../cache/circuit-cache.js';
+import { CircuitCache } from './cache/circuit-cache.js';
 
 export type DatabaseRollUp = ReturnType<typeof RollUpProgram>;
 

@@ -1,7 +1,6 @@
 import config from "./helper/config";
-import { DatabaseEngine, ModelTask } from "@zkdb/storage";
-import { TaskQueue } from "./queue/task_queue";
-import TaskQueueProcessor from "./queue/processor";
+import { DatabaseEngine, ModelQueueTask } from "@zkdb/storage";
+import QueueService from "./queue/queue-service";
 import logger from "./helper/logger"; // Assume you have a logger module
 
 async function processQueue() {
@@ -11,11 +10,10 @@ async function processQueue() {
       await dbEngine.connect();
     }
 
-    const modelTask = ModelTask.getInstance();
-    const taskQueue = new TaskQueue(modelTask);
-    const taskQueueProcessor = new TaskQueueProcessor(taskQueue);
+    const queue = ModelQueueTask.getInstance();
+    const taskQueueProcessor = new QueueService(queue);
 
-    await taskQueueProcessor.processTasks();
+    await taskQueueProcessor.start();
   } catch (error) {
     logger.error("An error occurred while processing the queue:", error);
     process.exit(1);
