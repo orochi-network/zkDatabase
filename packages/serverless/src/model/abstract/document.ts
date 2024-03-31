@@ -8,7 +8,14 @@ import {
   InsertOneResult,
   Document,
 } from 'mongodb';
-import { ModelBasic, ModelDatabase, ModelTask, ModelCollection, ModelMerkleTree, ModelDbSetting } from '@zkdb/storage';
+import {
+  ModelBasic,
+  ModelDatabase,
+  ModelQueueTask,
+  ModelCollection,
+  ModelMerkleTree,
+  ModelDbSetting,
+} from '@zkdb/storage';
 import logger from '../../helper/logger';
 import {
   ZKDATABASE_USER_SYSTEM,
@@ -45,14 +52,14 @@ export type DocumentRecord = Document & {
 export class ModelDocument extends ModelBasic<DocumentRecord> {
   private merkleTree: ModelMerkleTree;
 
-  private modelTask: ModelTask;
+  private modelTask: ModelQueueTask;
 
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
     this.merkleTree = ModelMerkleTree.getInstance(databaseName);
-    this.modelTask = ModelTask.getInstance();
+    this.modelTask = ModelQueueTask.getInstance();
   }
 
   get modelDatabase() {
@@ -95,6 +102,8 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
       { session }
     );
 
+    const indexes = [];
+
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
         const schemaField = schema.fields[i];
@@ -106,10 +115,16 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         ) {
           throw new Error('Invalid formatted document');
         }
+
         structType[name] = ProvableTypeMap[kind as ProvableTypeString];
         encodedDocument.push([name, kind, value]);
+
+        if(schema[schemaField].indexed) {
+          indexes.push(name)
+        }
       }
-      const structuredSchema = Schema.create(structType);
+      
+      const structuredSchema = Schema.create(structType, indexes);
       structuredSchema.deserialize(encodedDocument).hash();
       return {
         schema,
