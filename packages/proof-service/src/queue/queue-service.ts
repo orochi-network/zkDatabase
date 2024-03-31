@@ -13,6 +13,8 @@ function sleep(ms: number) {
 
 export default class QueueService {
   private isRunning = true;
+  private isIdle = false;
+  private processingComplete = true;
 
   constructor(private queue: ModelQueueTask) {}
 
@@ -20,14 +22,23 @@ export default class QueueService {
     return this.isRunning;
   }
 
+  get idle(): boolean {
+    return this.isIdle;
+  }
+
   private async processNext(): Promise<void> {
+    this.processingComplete = false;
+
     while (this.isRunning) {
       const task = await this.queue.getNewTask();
 
       if (!task) {
+        this.isIdle = true;
         await sleep(1000);
         continue;
       }
+      
+      this.isIdle = false;
 
       try {
         const circuitName = `${task.database}.${task.collection}`;
@@ -92,6 +103,8 @@ export default class QueueService {
         console.error('Error processing task:', error);
       }
     }
+
+    this.processingComplete = true;
   }
 
   public async start() {
@@ -99,7 +112,11 @@ export default class QueueService {
     this.processNext();
   }
 
-  public stop() {
+  public async stop() {
     this.isRunning = false;
+
+    while (!this.processingComplete) {
+      await sleep(100);
+    }
   }
 }

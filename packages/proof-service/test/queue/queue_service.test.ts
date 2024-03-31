@@ -109,10 +109,12 @@ describe('QueueService', () => {
     // Handle tasks
     processor.start()
 
-    while (processor.running) {
+    while (!processor.idle) {
       await new Promise((resolve) => setTimeout(resolve, 5000)) 
     }
 
+    await processor.stop();
+    
     // Check if task is in the queue and processed is set to TRUE
     storedTasks = await queue.collection.find({}).toArray();
     expect(storedTasks.length).toEqual(tasks.length);

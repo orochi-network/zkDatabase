@@ -3,6 +3,7 @@ import {
   Field,
   SelfProof,
   MerkleWitness,
+  Provable,
 } from 'o1js';
 import { CircuitCache } from './cache/circuit-cache.js';
 
@@ -45,7 +46,7 @@ function RollUpProgram(name: string, merkleTreeHeight: number) {
 
           proof.publicOutput.assertEquals(state);
           witness.calculateRoot(oldLeaf).assertEquals(state);
-
+          
           return witness.calculateRoot(newLeaf);
         },
       },
