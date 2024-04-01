@@ -1,8 +1,12 @@
 {
   "name": "zkdb-monorepo",
   "private": true,
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "resolutions": {
-    "jest": "^28.0.3"
+    "jest": "^28.0.3",
+    "wrap-ansi": "7.0.0",
+    "string-width": "4.1.0"
   }
 }
