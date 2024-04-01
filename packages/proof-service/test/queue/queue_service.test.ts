@@ -45,6 +45,7 @@ describe('QueueService', () => {
     await dropDatabases();
   });
 
+  // Takes up to 3 minutes
   it('should process tasks correctly and create valid proofs', async () => {
     const queue = ModelQueueTask.getInstance();
     const processor = new QueueService(queue);
