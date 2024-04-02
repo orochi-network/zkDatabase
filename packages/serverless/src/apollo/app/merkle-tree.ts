@@ -1,9 +1,9 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
+import { ModelMerkleTree } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName, indexNumber } from './common';
 import { TDatabaseRequest } from './database';
-import ModelMerkleTree from '../../model/database/merkle-tree';
 
 export type TMerkleTreeIndexRequest = TDatabaseRequest & {
   index: bigint;
@@ -43,9 +43,7 @@ extend type Query {
 const getWitness = resolverWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
-    const merkleTreeService = ModelMerkleTree.getInstance(
-      args.databaseName
-    );
+    const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
     return merkleTreeService.getWitness(BigInt(args.index), new Date());
   }
 );
@@ -53,9 +51,7 @@ const getWitness = resolverWrapper(
 const getNode = resolverWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
-    const merkleTreeService = ModelMerkleTree.getInstance(
-      args.databaseName
-    );
+    const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
     return merkleTreeService.getNode(args.level, args.index, new Date());
   }
 );
