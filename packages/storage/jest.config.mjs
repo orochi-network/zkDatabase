@@ -15,7 +15,7 @@ export default {
   },
   resolver: '<rootDir>/jest-resolver.cjs',
   transformIgnorePatterns: [
-    '<rootDir>/../../node_modules/(?!(tslib|o1js/node_modules/tslib|punycode|tr46|whatwg-url|fecha|no-case|lower-case|mongodb-connection-string-url)/)'
+    '<rootDir>/../../node_modules/(?!(tslib|o1js/node_modules/tslib|punycode|tr46|whatwg-url|fecha|no-case|lower-case|mongodb-connection-string-url|node-fetch)/)'
   ],   
   modulePathIgnorePatterns: ['<rootDir>/build/'],
   moduleNameMapper: {
