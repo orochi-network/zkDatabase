@@ -51,7 +51,7 @@
   "typescript": "^5.4.3"
   },
   "peerDependencies": {
-    "o1js": "0.16.*"
+    "o1js": "0.17.*"
   },
   "dependencies": {
     "@orochi-network/framework": "1.1.8",
