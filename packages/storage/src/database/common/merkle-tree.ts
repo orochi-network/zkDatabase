@@ -56,6 +56,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     for (let i = 1; i < height; i += 1) {
       zeroes.push(Poseidon.hash([zeroes[i - 1], zeroes[i - 1]]));
     }
+
     this.zeroes = zeroes;
   }
 
@@ -77,10 +78,8 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
 
     let currIndex = BigInt(index);
     const inserts = [];
-    
-    for (let level = 0; level < this.height; level += 1) {
-      currIndex /= 2n;
 
+    for (let level = 0; level < this.height; level += 1) {
       const dataToInsert = {
         nodeId: ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex),
         timestamp,
@@ -90,6 +89,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
       };
 
       inserts.push(dataToInsert);
+      currIndex /= 2n;
     }
 
     await this.insertManyLeaves(
@@ -176,7 +176,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     index: bigint
   ): ObjectId {
     const hash = crypto.createHash('md5');
-    hash.update(level.toString() + index.toString());
+    hash.update(`${level}:${index.toString()}`);
     return new ObjectId(hash.digest('hex').substring(0, 24));
   }
 
