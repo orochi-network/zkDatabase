@@ -1,5 +1,4 @@
 import { Field } from 'o1js';
-import { TKuboConfig } from '@zkdb/kubo';
 
 /**
  * Common interface for file system
@@ -96,15 +95,15 @@ export type TFileStorage = {
  */
 export type THeliaConfig = TMemoryStorage | TFileStorage;
 
-export type TDeletatedKuboConfig = Partial<TKuboConfig> & {
-  userName: string;
-  secretAPIKey: string;
-};
+// export type TDeletatedKuboConfig = Partial<TKuboConfig> & {
+//   userName: string;
+//   secretAPIKey: string;
+// };
 
-export type TDelegatedIPFSConfig = {
-  kubo: Partial<TKuboConfig>;
-  database: string;
-};
+// export type TDelegatedIPFSConfig = {
+//   kubo: Partial<TKuboConfig>;
+//   database: string;
+// };
 
 export type TLocalConfig = {
   location: string;
@@ -152,11 +151,6 @@ export type TZKDatabaseConfig =
       storageEngine: 'local';
       merkleHeight: number;
       storageEngineCfg: TLocalConfig;
-    }
-  | {
-      storageEngine: 'delegated-ipfs';
-      merkleHeight: number;
-      storageEngineCfg: TDelegatedIPFSConfig;
     }
   | {
       storageEngine: 'memory';
