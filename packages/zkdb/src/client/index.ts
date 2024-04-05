@@ -8,12 +8,12 @@ import {
   DatabaseStatusResult,
 } from './requests/database.js';
 
-export const getDbList = async (): Promise<DatabaseListResult> => {
+export const listDatabases = async (): Promise<DatabaseListResult> => {
   const data = await client.request<DatabaseListResult>(LIST_DATABASE);
   return data;
 };
 
-export const getDbStats = async (
+export const getDatabaseStatistics = async (
   databaseName: string
 ): Promise<DatabaseStatusResult> => {
   const variables = { databaseName };
@@ -24,7 +24,7 @@ export const getDbStats = async (
   return data;
 };
 
-export const dbCreate = async (
+export const createDatabase = async (
   databaseName: string,
   merkleHeight: number
 ): Promise<boolean> => {

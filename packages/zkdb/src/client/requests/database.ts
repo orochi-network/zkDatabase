@@ -15,6 +15,7 @@ export const LIST_DATABASE = `
 export const GET_DATABASE_STATUS = `
   query GetDbStats($databaseName: String!) {
     dbStats(databaseName: $databaseName)
+  }
 `;
 
 export const CREATE_DATABASE = `

@@ -18,6 +18,7 @@ export type TFindIndexRequest = TDatabaseRequest & {
 
 const DatabaseRequest = Joi.object<TDatabaseRequest>({
   databaseName,
+  merkleHeight
 });
 
 export const typeDefsDatabase = `#graphql

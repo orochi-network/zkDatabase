@@ -67,3 +67,5 @@ export const documentField = Joi.object<DocumentField>({
     .required(),
   value: Joi.string().raw().required(),
 });
+
+export const merkleHeight = Joi.number().integer().positive().required();
