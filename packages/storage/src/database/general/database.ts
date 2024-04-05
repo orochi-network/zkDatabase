@@ -1,6 +1,6 @@
 import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
 import ModelBasic from '../base/basic';
-import { zkDatabaseMetadataCollections } from '../../common';
+import { zkDatabaseConstants, zkDatabaseMetadataCollections } from '../../common';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -15,6 +15,10 @@ export type DocumentMetaIndex = {
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
+  constructor(databaseName?: string) {
+    super(databaseName || zkDatabaseConstants.globalDatabase);
+  }
+  
   public static getInstance<T extends Document>(
     databaseName: string
   ): ModelDatabase<T> {

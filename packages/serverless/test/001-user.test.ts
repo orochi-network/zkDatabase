@@ -1,4 +1,4 @@
-import { DatabaseEngine } from '../src/model/abstract/database-engine';
+import { DatabaseEngine } from '@zkdb/storage';
 import config from '../src/helper/config';
 
 beforeAll(async () => {

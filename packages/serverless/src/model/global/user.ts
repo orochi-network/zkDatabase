@@ -1,11 +1,10 @@
 import { Document } from 'mongodb';
-import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM
 } from '../../common/const';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common';
-import ModelCollection from '../abstract/collection';
 
 export interface DocumentUser extends Document {
   userName: string;
@@ -31,7 +30,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
 
   public static async init() {
     const collection = ModelCollection.getInstance(
-      ZKDATABASE_GLOBAL_DB,
+      zkDatabaseConstants.globalDatabase,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
