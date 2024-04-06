@@ -2,7 +2,7 @@ FROM node:21.6.1
 
 WORKDIR /usr/src/app
 
-COPY package.json yarn.lock ./
+COPY package.json yarn.lock .env ./
 
 COPY packages/storage packages/storage
 COPY packages/proof-service packages/proof-service
