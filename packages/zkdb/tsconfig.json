@@ -19,7 +19,6 @@
     "sourceMap": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "baseUrl": "./src",
     "paths": {}
   },
   "include": ["./src", "./tests"],
