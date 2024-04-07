@@ -1,7 +1,5 @@
 import { ObjectId, Document } from 'mongodb';
-import ModelCollection from '../abstract/collection';
-import { ZKDATABASE_USER_GROUP_COLLECTION } from '../../common/const';
-import { ModelGeneral } from '../abstract/general';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import ModelGroup from './group';
 
 export interface DocumentUserGroup extends Document {
@@ -12,7 +10,7 @@ export interface DocumentUserGroup extends Document {
 }
 
 export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
-  static collectionName = ZKDATABASE_USER_GROUP_COLLECTION;
+  private static collectionName = zkDatabaseConstants.databaseCollections.userGroup;
 
   constructor(databaseName: string) {
     super(databaseName, ModelUserGroup.collectionName);
@@ -23,7 +21,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     groupName: string
   ): Promise<boolean> {
     const modelGroup = new ModelGroup(this.databaseName!);
-    const group = await modelGroup.findOne({ groupName: groupName });
+    const group = await modelGroup.findOne({ groupName });
     if (!group) {
       return false;
     }

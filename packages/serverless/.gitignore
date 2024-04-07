@@ -12,3 +12,6 @@ coverage
 # Never commit keys to Git!
 keys
 docs/
+
+# Mongo
+mongo-keyfile

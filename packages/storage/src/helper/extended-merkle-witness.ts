@@ -19,20 +19,20 @@ export default function createExtendedMerkleWitness(height: number): any {
 
       const n = this.height();
 
-      path.push(leaf);
-      
       for (let i = 1; i < n; i += 1) {
-        const left = Provable.if(
+        const left: Field = Provable.if(
           this.isLeft[i - 1],
+          Field,
           path[path.length - 1],
           this.path[i - 1]
         );
-        const right = Provable.if(
+        const right: Field = Provable.if(
           this.isLeft[i - 1],
+          Field,
           this.path[i - 1],
           path[path.length - 1]
         );
-        const hash = Poseidon.hash([left, right]);
+        const hash: Field = Poseidon.hash([left, right]);
         path.push(hash);
       }
 
@@ -48,7 +48,8 @@ export default function createExtendedMerkleWitness(height: number): any {
       const index = Number(this.calculateIndex().toString());
       const otherIndex = Number(other.calculateIndex().toString());
 
-      let levelWithDivergance: number = 0;
+      let levelWithDivergance = 0;
+      
       let x = 2 ** (this.height() - 1) / 2;
       for (let i = 1; i < this.height(); i += 1) {
         const bothUpperHalf = index > x && otherIndex > x;

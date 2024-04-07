@@ -8,7 +8,14 @@ import {
   InsertOneResult,
   Document,
 } from 'mongodb';
-import ModelBasic from './basic';
+import {
+  ModelBasic,
+  ModelDatabase,
+  ModelQueueTask,
+  ModelCollection,
+  ModelMerkleTree,
+  ModelDbSetting,
+} from '@zkdb/storage';
 import logger from '../../helper/logger';
 import {
   ZKDATABASE_USER_SYSTEM,
@@ -16,13 +23,14 @@ import {
 } from '../../common/const';
 import { ModelDocumentMetadata } from '../database/document-metadata';
 import { ModelSchema, SchemaField } from '../database/schema';
-import ModelDatabase from './database';
-import ModelCollection from './collection';
 import { getCurrentTime } from '../../helper/common';
 import { PermissionBasic } from '../../common/permission';
-import { SchemaEncoded, Schema, ProvableTypeString, ProvableTypeMap } from '../common/schema';
-import ModelMerkleTree from '../database/merkle-tree';
-import { ModelDbSetting } from '../database/setting';
+import {
+  SchemaEncoded,
+  Schema,
+  ProvableTypeString,
+  ProvableTypeMap,
+} from '../common/schema';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -44,11 +52,14 @@ export type DocumentRecord = Document & {
 export class ModelDocument extends ModelBasic<DocumentRecord> {
   private merkleTree: ModelMerkleTree;
 
+  private modelTask: ModelQueueTask;
+
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, collectionName);
     this.merkleTree = ModelMerkleTree.getInstance(databaseName);
+    this.modelTask = ModelQueueTask.getInstance();
   }
 
   get modelDatabase() {
@@ -86,8 +97,13 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     );
     const encodedDocument: SchemaEncoded = [];
     const structType: { [key: string]: any } = {};
-    const document = await this.collection.findOne({ _id: documentId }, { session });
-    
+    const document = await this.collection.findOne(
+      { _id: documentId },
+      { session }
+    );
+
+    const indexes = [];
+
     if (schema !== null && document !== null) {
       for (let i = 0; i < schema.fields.length; i += 1) {
         const schemaField = schema.fields[i];
@@ -99,10 +115,16 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         ) {
           throw new Error('Invalid formatted document');
         }
+
         structType[name] = ProvableTypeMap[kind as ProvableTypeString];
         encodedDocument.push([name, kind, value]);
+
+        if(schema[schemaField].indexed) {
+          indexes.push(name)
+        }
       }
-      const structuredSchema = Schema.create(structType);
+      
+      const structuredSchema = Schema.create(structType, indexes);
       structuredSchema.deserialize(encodedDocument).hash();
       return {
         schema,
@@ -192,13 +214,28 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
         this.merkleTree.setHeight(height);
 
+        const currentDate = new Date();
+
         await this.merkleTree.setLeaf(
           BigInt(documentMetadata.merkleIndex),
           newHash,
-          new Date(),
+          currentDate,
           {
             session,
           }
+        );
+
+        await this.modelTask.createTask(
+          {
+            merkleIndex: BigInt(documentMetadata.merkleIndex),
+            hash: newHash.toString(),
+            createdAt: currentDate,
+            database: this.databaseName!,
+            collection: this.collectionName!,
+          },
+          {
+            session,
+          } as any
         );
       }
     );
@@ -289,9 +326,24 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
         const newHash = documentDetails.structuredDocument.hash();
 
-        await this.merkleTree.setLeaf(BigInt(index), newHash, new Date(), {
+        const currDate = new Date();
+
+        await this.merkleTree.setLeaf(BigInt(index), newHash, currDate, {
           session,
         });
+
+        await this.modelTask.createTask(
+          {
+            merkleIndex: BigInt(index),
+            hash: newHash.toString(),
+            createdAt: currDate,
+            database: this.databaseName!,
+            collection: this.collectionName!,
+          },
+          {
+            session,
+          } as any
+        );
       }
     );
 
