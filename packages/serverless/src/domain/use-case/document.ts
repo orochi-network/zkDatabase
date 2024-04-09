@@ -96,7 +96,7 @@ async function createDocument(
   );
 
   // 1. Save document
-  const insertResult = await modelDocument.collection.insertOne(documentRecord);
+  const insertResult = await modelDocument.insertDocument(documentRecord);
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
@@ -148,7 +148,7 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  document: Document
+  update: Document
 ) {
   if (!(await checkPermission(databaseName, collectionName, actor, 'write'))) {
     throw new Error(
@@ -158,18 +158,38 @@ async function updateDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const oldDocumentRecord = await modelDocument.findOne(filter);
+  const documentRecord: DocumentRecord = {};
 
-  if (!oldDocumentRecord) {
-    throw new Error('Document not found.');
+  update.forEach((field) => {
+    documentRecord[field.name] = {
+      name: field.name,
+      kind: field.kind,
+      value: field.value,
+    };
+  });
+
+  const updateResult = await modelDocument.collection.updateMany(
+    filter,
+    { $set: documentRecord }
+  );
+
+  // We need to do this to make sure that only 1 record
+  if (
+    (updateResult.modifiedCount !== 1 &&
+      updateResult.matchedCount !== 1) ||
+    !updateResult
+  ) {
+    throw new Error('Invalid update, modified count not equal to 1');
   }
+
+  const oldDocumentRecord = await modelDocument.findOne(filter);
 
   if (
     !(await checkDocumentPermission(
       databaseName,
       collectionName,
       actor,
-      oldDocumentRecord._id,
+      oldDocumentRecord!._id,
       'write'
     ))
   ) {
@@ -178,17 +198,7 @@ async function updateDocument(
     );
   }
 
-  const documentRecord: DocumentRecord = {};
-
-  document.forEach((field) => {
-    documentRecord[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value: field.value,
-    };
-  });
-
-  await modelDocument.updateOne(filter, documentRecord);
+  await modelDocument.updateDocument(filter, documentRecord);
 }
 
 async function deleteDocument(
@@ -231,7 +241,7 @@ async function deleteDocument(
     document._id
   );
 
-  await modelDocument.collection.deleteOne({ _id: document._id });
+  await modelDocument.drop({ _id: document._id });
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
