@@ -1,8 +1,17 @@
+import { ModelSequencer } from '@zkdb/storage';
 import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
 import { Permissions } from '../types/permission';
 import { checkDocumentPermission, checkPermission } from './permission';
+import { proveCreateDocument, proveDeleteDocument } from './prover';
+import ModelDocumentMetadata from '../../model/database/document-metadata';
+import {
+  ZKDATABASE_GROUP_SYSTEM,
+  ZKDATABASE_USER_SYSTEM,
+} from '../../common/const';
+import { getCurrentTime } from '../../helper/common';
+import { ModelSchema } from '../../model/database/schema';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -14,9 +23,9 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  if (!checkPermission(databaseName, collectionName, actor, 'read')) {
+  if (!(await checkPermission(databaseName, collectionName, actor, 'read'))) {
     throw new Error(
-      'Access denied: The actor does not have read permission to read this collection'
+      `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
     );
   }
 
@@ -38,11 +47,11 @@ async function readDocument(
 
   if (!hasReadPermission) {
     throw new Error(
-      'Access denied: The actor does not have read permission for the specified document.'
+      `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
     );
   }
 
-  const document: Document = Object.keys(documentRecord).map(key => ({
+  const document: Document = Object.keys(documentRecord).map((key) => ({
     name: documentRecord[key].name,
     kind: documentRecord[key].kind,
     value: documentRecord[key].value,
@@ -58,9 +67,9 @@ async function createDocument(
   document: Document,
   permissions: Permissions
 ) {
-  if (!checkPermission(databaseName, collectionName, actor, 'create')) {
+  if (!(await checkPermission(databaseName, collectionName, actor, 'create'))) {
     throw new Error(
-      'Access denied: The actor does not have read permission to create document to this collection'
+      `Access denied: Actor '${actor}' does not have 'create' permission for collection '${collectionName}'.`
     );
   }
 
@@ -68,25 +77,70 @@ async function createDocument(
 
   const documentRecord: DocumentRecord = {};
 
-  document.forEach(field => {
-    documentRecord[field.name] = { name: field.name, kind: field.kind, value: field.value };
+  document.forEach((field) => {
+    documentRecord[field.name] = {
+      name: field.name,
+      kind: field.kind,
+      value: field.value,
+    };
   });
 
-  const permissionOwner = PermissionBinary.toBinaryPermission(
+  const documentPermissionOwner = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionOwner)
   );
-  const permissionGroup = PermissionBinary.toBinaryPermission(
+  const documentPermissionGroup = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionGroup)
   );
-  const permissionOther = PermissionBinary.toBinaryPermission(
+  const documentPermissionOther = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionOthers)
   );
-  
-  await modelDocument.insertOne(documentRecord, {
-    permissionOwner,
-    permissionGroup,
-    permissionOther
-  })
+
+  // 1. Save document
+  const insertResult = await modelDocument.collection.insertOne(documentRecord);
+
+  // 2. Create new sequence value
+  const sequencer = ModelSequencer.getInstance(databaseName);
+  const merkleIndex = await sequencer.getNextValue('merkle-index');
+
+  // 3. Create Metadata
+  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+  const modelSchema = ModelSchema.getInstance(databaseName);
+
+  const documentSchema = await modelSchema.getMetadata(collectionName);
+
+  const { permissionOwner, permissionGroup, permissionOther } = documentSchema;
+
+  await modelDocumentMetadata.insertOne({
+    collection: collectionName,
+    docId: insertResult.insertedId,
+    merkleIndex,
+    ...{
+      permissionOwner,
+      permissionGroup,
+      permissionOther,
+      // I'm set these to system user and group as default
+      // In case this permission don't override by the user
+      // this will prevent the user from accessing the data
+      group: ZKDATABASE_GROUP_SYSTEM,
+      owner: ZKDATABASE_USER_SYSTEM,
+    },
+    // Overwrite inherited permission with the new one
+    permissionOwner: documentPermissionOwner,
+    permissionGroup: documentPermissionGroup,
+    permissionOther: documentPermissionOther,
+    createdAt: getCurrentTime(),
+    updatedAt: getCurrentTime(),
+  });
+
+  // 4. Prove document creation
+  const witness = await proveCreateDocument(
+    databaseName,
+    collectionName,
+    document
+  );
+
+  return witness;
 }
 
 async function updateDocument(
@@ -96,26 +150,94 @@ async function updateDocument(
   filter: FilterCriteria,
   document: Document
 ) {
-  if (!checkPermission(databaseName, collectionName, actor, 'write')) {
+  if (!(await checkPermission(databaseName, collectionName, actor, 'write'))) {
     throw new Error(
-      'Access denied: The actor does not have read permission to write document to this collection'
+      `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
     );
   }
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
+  const oldDocumentRecord = await modelDocument.findOne(filter);
+
+  if (!oldDocumentRecord) {
+    throw new Error('Document not found.');
+  }
+
+  if (
+    !(await checkDocumentPermission(
+      databaseName,
+      collectionName,
+      actor,
+      oldDocumentRecord._id,
+      'write'
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
+    );
+  }
+
   const documentRecord: DocumentRecord = {};
 
-  document.forEach(field => {
-    documentRecord[field.name] = { name: field.name, kind: field.kind, value: field.value };
+  document.forEach((field) => {
+    documentRecord[field.name] = {
+      name: field.name,
+      kind: field.kind,
+      value: field.value,
+    };
   });
 
-  await modelDocument.updateOne(filter, documentRecord)
+  await modelDocument.updateOne(filter, documentRecord);
 }
 
+async function deleteDocument(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  filter: FilterCriteria
+) {
+  if (!(await checkPermission(databaseName, collectionName, actor, 'delete'))) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'delete' permission for collection '${collectionName}'.`
+    );
+  }
 
-export {
-  readDocument,
-  createDocument,
-  updateDocument
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+  const document = await modelDocument.findOne(filter);
+
+  if (!document) {
+    throw Error('Document does not exist');
+  }
+
+  if (
+    !(await checkDocumentPermission(
+      databaseName,
+      collectionName,
+      actor,
+      document._id,
+      'delete'
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
+    );
+  }
+
+  const witness = await proveDeleteDocument(
+    databaseName,
+    collectionName,
+    document._id
+  );
+
+  await modelDocument.collection.deleteOne({ _id: document._id });
+
+  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+  await modelDocumentMetadata.deleteOne({ docId: document._id });
+
+  return witness;
 }
+
+export { readDocument, createDocument, updateDocument, deleteDocument };
