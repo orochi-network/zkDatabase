@@ -7,6 +7,7 @@ import { ModelDatabase, DocumentMetaIndex } from './general/database.js';
 import { ModelCollection } from './general/collection.js';
 import { ModelMerkleTree, TMerkleProof } from './common/merkle-tree.js';
 import { ModelDbSetting, DbSetting } from './common/setting.js';
+import { ModelSequencer, SequencedItem } from './common/sequencer';
 
 export {
   DatabaseEngine,
@@ -21,5 +22,7 @@ export {
   TMerkleProof,
   ModelDbSetting,
   DbSetting,
-  TaskEntity
+  TaskEntity,
+  ModelSequencer,
+  SequencedItem
 };

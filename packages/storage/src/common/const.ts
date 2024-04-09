@@ -13,7 +13,7 @@ export const zkDatabaseConstants = {
 
     // User
     user: 'user',
-    
+
     // Proof queue
     queue: 'queue',
 
@@ -39,7 +39,10 @@ export const zkDatabaseConstants = {
     setting: '_zkdatabase_db_setting',
 
     // Merkle tree collection
-    merkleTree: '_zkdatabase_merkle_tree'
+    merkleTree: '_zkdatabase_merkle_tree',
+
+    // Sequencer
+    sequencer: '_zkdatabase_sequencer',
   },
 };
 
