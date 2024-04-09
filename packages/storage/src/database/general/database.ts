@@ -1,6 +1,9 @@
 import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
 import ModelBasic from '../base/basic';
-import { zkDatabaseConstants, zkDatabaseMetadataCollections } from '../../common';
+import {
+  zkDatabaseConstants,
+  zkDatabaseMetadataCollections,
+} from '../../common';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -18,7 +21,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   constructor(databaseName?: string) {
     super(databaseName || zkDatabaseConstants.globalDatabase);
   }
-  
+
   public static getInstance<T extends Document>(
     databaseName: string
   ): ModelDatabase<T> {
@@ -34,9 +37,34 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   public async listCollections(): Promise<string[]> {
     const collections = await this.db.listCollections().toArray();
     return collections
-      .filter((collection) => !zkDatabaseMetadataCollections.includes(collection.name))
+      .filter(
+        (collection) => !zkDatabaseMetadataCollections.includes(collection.name)
+      )
       .map((collection) => collection.name);
   }
+
+  public async isCollectionExist(collectionName: string): Promise<boolean> {
+    return (await this.listCollections()).some(
+      (collection) => collection === collectionName
+    );
+  }
+
+  public async createCollection(collectionName: string): Promise<void> {
+    const isExist = await this.isCollectionExist(collectionName);
+    if (!isExist) {
+      await this.db.createCollection(collectionName);
+    }
+  }
+
+  public async dropCollection(collectionName: string): Promise<boolean> {
+    const isExist = await this.isCollectionExist(collectionName);
+    if (isExist) {
+      await this.db.collection(collectionName).drop();
+      return true;
+    }
+    return false;
+  }
+  
 
   public async drop(): Promise<boolean> {
     await this.db.dropDatabase();
