@@ -22,7 +22,7 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
     return ModelSequencer.instances.get(key)!;
   }
 
-  async getNextValue(sequenceName: string, session: ClientSession): Promise<number> {
+  async getNextValue(sequenceName: string, session?: ClientSession): Promise<number> {
     const updateResult = await this.collection.findOneAndUpdate(
       { _id: sequenceName },
       { $inc: { seq: 1 } },
