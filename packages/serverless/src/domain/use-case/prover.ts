@@ -30,6 +30,7 @@ async function setMerkleTreeHeight(
 export async function proveCreateDocument(
   databaseName: string,
   collectionName: string,
+  documentId: ObjectId,
   document: Document
 ): Promise<TMerkleProof[]> {
   const merkleTree = ModelMerkleTree.getInstance(databaseName);
@@ -37,7 +38,17 @@ export async function proveCreateDocument(
 
   const schema = await buildSchema(databaseName, collectionName, document);
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-  const index = (await modelDocumentMetadata.getMaxIndex()) + 1;
+
+  const documentMetadata = await modelDocumentMetadata.findOne({
+    docId: documentId,
+  });
+
+  if (!documentMetadata) {
+    throw Error('Metadata is missed')
+  }
+
+  const index = documentMetadata.merkleIndex;
+
   const currDate = new Date();
 
   const hash = schema.hash();
