@@ -1,8 +1,8 @@
 import { ModelDatabase } from '@zkdb/storage';
-import { Schema } from '../types/schema';
+import { DocumentSchema } from '../types/schema';
 import { Permissions } from '../types/permission';
-import { PermissionBinary, partialToPermission } from '../../common/permission';
-import { ModelSchema } from '../../model/database/schema';
+import logger from '../../helper/logger';
+import { createCollectionMetadata } from './collection-metadata';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollection(
@@ -10,37 +10,27 @@ export async function createCollection(
   collectionName: string,
   owner: string,
   group: string,
-  schema: Schema,
+  schema: DocumentSchema,
   permissions: Permissions
-) {
+): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
-  const modelSchema = ModelSchema.getInstance(databaseName);
 
   try {
     await modelDatabase.createCollection(collectionName);
 
-    const permissionOwner = PermissionBinary.toBinaryPermission(
-      partialToPermission(permissions.permissionOwner)
-    );
-    const permissionGroup = PermissionBinary.toBinaryPermission(
-      partialToPermission(permissions.permissionGroup)
-    );
-    const permissionOther = PermissionBinary.toBinaryPermission(
-      partialToPermission(permissions.permissionOthers)
+    await createCollectionMetadata(
+      databaseName,
+      collectionName,
+      schema,
+      permissions,
+      owner,
+      group
     );
 
-    await modelSchema.createSchema(collectionName, {
-      schemas: schema,
-      permission: {
-        owner,
-        group,
-        permissionGroup,
-        permissionOwner,
-        permissionOther,
-      },
-    });
+    return true;
   } catch (error) {
     await modelDatabase.dropCollection(collectionName);
-    throw error;
+    logger.error(error);
+    return false;
   }
 }
