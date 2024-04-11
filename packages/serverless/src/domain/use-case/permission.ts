@@ -1,7 +1,46 @@
 import { ObjectId } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
-import { PermissionBinary, PermissionRecord, PermissionType } from '../../common/permission';
-import { ModelSchema } from '../../model/database/schema';
+import {
+  PermissionBinary,
+  PermissionRecord,
+  PermissionType,
+  ZKDATABASE_NO_PERMISSION_RECORD,
+} from '../../common/permission';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import ModelUserGroup from '../../model/database/user-group';
+
+export async function readDocumentPermission(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  documentId: ObjectId
+): Promise<PermissionRecord> {
+  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+  const documentMetadata = await modelDocumentMetadata.findOne({
+    docId: documentId,
+    collection: collectionName,
+  });
+
+  if (documentMetadata) {
+    // User == actor -> return user permission
+    if (documentMetadata.owner === actor) {
+      return PermissionBinary.fromBinaryPermission(
+        documentMetadata.permissionOwner
+      );
+    }
+    // User != actor -> check for group permission
+    const modelUserGroup = new ModelUserGroup(databaseName!);
+    const actorGroup = await modelUserGroup.listGroupByUserName(actor);
+    if (actorGroup.includes(documentMetadata.group)) {
+      return PermissionBinary.fromBinaryPermission(
+        documentMetadata.permissionGroup
+      );
+    }
+  }
+  // Default deny all
+  return ZKDATABASE_NO_PERMISSION_RECORD;
+}
 
 async function checkDocumentPermission(
   databaseName: string,
@@ -10,40 +49,45 @@ async function checkDocumentPermission(
   docId: ObjectId,
   type: PermissionType
 ): Promise<boolean> {
-  const modelMetadata = new ModelDocumentMetadata(databaseName);
-
-  const permission: PermissionRecord = await modelMetadata.getPermission(
-    actor,
+  const permission = await readDocumentPermission(
+    databaseName,
     collectionName,
+    actor,
     docId
   );
 
   return permission[type];
 }
 
-async function checkPermission(
+async function checkCollectionPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
   type: PermissionType
 ): Promise<boolean> {
-  const modelMetadata = ModelSchema.getInstance(databaseName);
+  const modelCollectionMetadata =
+    ModelCollectionMetadata.getInstance(databaseName);
 
-  const permissionMetadata = await modelMetadata.getMetadata(collectionName);
+  const collectionMetadata =
+    await modelCollectionMetadata.getMetadata(collectionName);
 
-  if (actor === permissionMetadata.owner) {
-    return PermissionBinary.fromBinary(permissionMetadata.permissionOwner)[type];
+  if (!collectionMetadata) {
+    return false;
   }
 
-  if (actor === permissionMetadata.group) {
-    return PermissionBinary.fromBinary(permissionMetadata.permissionGroup)[type];
+  if (actor === collectionMetadata.owner) {
+    return PermissionBinary.fromBinary(collectionMetadata.permissionOwner)[
+      type
+    ];
   }
 
-  return PermissionBinary.fromBinary(permissionMetadata.permissionOther)[type];
+  if (actor === collectionMetadata.group) {
+    return PermissionBinary.fromBinary(collectionMetadata.permissionGroup)[
+      type
+    ];
+  }
+
+  return PermissionBinary.fromBinary(collectionMetadata.permissionOther)[type];
 }
 
-
-export {
-  checkDocumentPermission,
-  checkPermission
-}
+export { checkDocumentPermission, checkCollectionPermission };
