@@ -14,6 +14,13 @@ import {
   permissionDetail,
   permissionRecord,
 } from './common';
+import {
+  createDocument,
+  deleteDocument,
+  readDocument,
+  updateDocument,
+} from '../../domain/use-case/document';
+import { PermissionBinary } from '../../common/permission';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -52,6 +59,17 @@ scalar JSON
 type Query
 type Mutation
 
+type MerkleWitness {
+  isLeft: Boolean!
+  sibling: String!
+}
+
+input DocumentInput {
+  name: String!
+  kind: String!
+  value: String!
+}
+
 input PermissionRecordInput {
   system: Boolean
   create: Boolean
@@ -87,9 +105,12 @@ extend type Mutation {
 const documentFind = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).find(args.documentQuery);
+    return readDocument(
+      args.databaseName,
+      args.collectionName,
+      "actor",
+      args.documentQuery
+    )
   }
 );
 
@@ -97,9 +118,23 @@ const documentFind = resolverWrapper(
 const documentCreate = resolverWrapper(
   DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).insertOne(args.documentRecord, args.documentPermission);
+    return createDocument(
+      args.databaseName,
+      args.collectionName,
+      'actor',
+      args.documentRecord as any,
+      {
+        permissionOwner: PermissionBinary.fromBinary(
+          args.documentPermission.permissionOwner
+        ),
+        permissionGroup: PermissionBinary.fromBinary(
+          args.documentPermission.permissionGroup
+        ),
+        permissionOther: PermissionBinary.fromBinary(
+          args.documentPermission.permissionOther
+        ),
+      }
+    );
   }
 );
 
@@ -115,18 +150,26 @@ const documentUpdate = resolverWrapper(
           `PermissionRecord ${key} is not valid ${error.message}`
         );
     }
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).updateOne(args.documentQuery, args.documentRecord);
+
+    return updateDocument(
+      args.databaseName,
+      args.collectionName,
+      'actor',
+      args.documentQuery,
+      args.documentRecord
+    );
   }
 );
 
 const documentDrop = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).drop(args.documentQuery);
+    return deleteDocument(
+      args.databaseName,
+      args.collectionName,
+      'actor',
+      args.documentQuery
+    );
   }
 );
 
