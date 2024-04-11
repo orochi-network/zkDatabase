@@ -12,7 +12,7 @@ import {
   ModelCollection,
 } from '@zkdb/storage';
 import logger from '../../helper/logger';
-import {SchemaField } from '../database/schema';
+import {SchemaField } from '../database/collection-metadata';
 import { PermissionBasic } from '../../common/permission';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
@@ -62,7 +62,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     document: DocumentRecord,
     session?: ClientSession
   ) {
-    logger.debug(`ModelDocument::updateDocument()`, { filter });
+    logger.debug(`ModelDocument::updateDocument()`);
     return this.collection.insertOne(document, { session });
   }
 

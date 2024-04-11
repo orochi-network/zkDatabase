@@ -28,8 +28,8 @@ const exampleSchemaDef: SchemaDef = {
     indexed: false
   }
 };
-
 */
+
 export type SchemaField = {
   order: number;
   name: string;
@@ -66,7 +66,7 @@ export type SchemaIndex<T> = {
   [Property in keyof T as `${string & Property}.name`]: string;
 };
 
-export class CollectionMetadata extends ModelGeneral<SchemaDefinition> {
+export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   private static collectionName: string = zkDatabaseConstants.databaseCollections.schema;
 
   private static instances: { [key: string]: any } = {};
@@ -78,14 +78,14 @@ export class CollectionMetadata extends ModelGeneral<SchemaDefinition> {
   }
 
   private constructor(databaseName: string) {
-    super(databaseName, CollectionMetadata.collectionName);
+    super(databaseName, ModelCollectionMetadata.collectionName);
   }
 
-  public static getInstance(databaseName: string): CollectionMetadata {
-    if (typeof CollectionMetadata.instances[databaseName] === 'undefined') {
-      CollectionMetadata.instances[databaseName] = new CollectionMetadata(databaseName);
+  public static getInstance(databaseName: string): ModelCollectionMetadata {
+    if (typeof ModelCollectionMetadata.instances[databaseName] === 'undefined') {
+      ModelCollectionMetadata.instances[databaseName] = new ModelCollectionMetadata(databaseName);
     }
-    return CollectionMetadata.instances[databaseName];
+    return ModelCollectionMetadata.instances[databaseName];
   }
 
   public async getMetadata(collectionName: string): Promise<SchemaDefinition> {
@@ -97,7 +97,7 @@ export class CollectionMetadata extends ModelGeneral<SchemaDefinition> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      CollectionMetadata.collectionName
+      ModelCollectionMetadata.collectionName
     );
     if (!(await collection.isExist())) {
       await collection.index({ collection: 1 }, { unique: true });
