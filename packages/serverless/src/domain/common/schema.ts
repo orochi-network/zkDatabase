@@ -72,11 +72,11 @@ export function toInnerStructure<T extends SchemaDefinition>(
 
 type Indexes<T> = Array<keyof T>;
 
-export type SchemaEncoded = [
+export type SchemaEncoded = {
   name: string,
   kind: ProvableTypeString,
   value: string,
-][];
+}[];
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
@@ -118,7 +118,7 @@ export class Schema {
             default:
               value = anyThis[name].toString();
           }
-          result.push([name, kind, value]);
+          result.push({name, kind, value});
         }
         return result;
       }
@@ -132,7 +132,7 @@ export class Schema {
         const result: any = {};
 
         for (let i = 0; i < doc.length; i += 1) {
-          const [name, kind, value] = doc[i];
+          const {name, kind, value} = doc[i];
 
           switch (kind) {
             case 'PrivateKey':
