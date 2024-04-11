@@ -1,17 +1,25 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelCollection, ModelDatabase } from '@zkdb/storage';
-import { databaseName, collectionName, indexField } from './common';
+import { ModelDatabase } from '@zkdb/storage';
+import {
+  databaseName,
+  collectionName,
+  permissionDetail,
+  schemaFields,
+} from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
-import logger from '../../helper/logger';
+import { PermissionsData } from '../types/permission';
+import { SchemaData } from '../types/schema';
+import { createCollection } from '../../domain/use-case/collection';
 
 export type TCollectionRequest = TDatabaseRequest & {
   collectionName: string;
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  indexField?: string[];
+  schema: SchemaData;
+  permissions: PermissionsData;
 };
 
 export const CollectionRequest = Joi.object<TCollectionRequest>({
@@ -22,7 +30,8 @@ export const CollectionRequest = Joi.object<TCollectionRequest>({
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
-  indexField,
+  schema: schemaFields,
+  permissions: permissionDetail,
 });
 
 export const typeDefsCollection = `#graphql
@@ -30,12 +39,37 @@ scalar JSON
 type Query
 type Mutation
 
+input SchemaFieldInput {
+  name: String!
+  kind: String!
+  indexed: Boolean
+}
+
+input PermissionRecordInput {
+  system: Boolean
+  create: Boolean
+  read: Boolean
+  write: Boolean
+  delete: Boolean
+}
+
+input PermissionDetailInput {
+  permissionOwner: PermissionRecordInput
+  permissionGroup: PermissionRecordInput
+  permissionOthers: PermissionRecordInput
+}
+
 extend type Query {
   collectionList(databaseName: String!): JSON
 }
 
 extend type Mutation {
-  collectionCreate(databaseName: String!, collectionName: String!,  indexField: [String]): Boolean
+  collectionCreate(
+    databaseName: String!, 
+    collectionName: String!, 
+    schema: [SchemaFieldInput!]!, 
+    permissions: PermissionDetailInput
+  ): Boolean
 }
 `;
 
@@ -52,16 +86,14 @@ const collectionList = resolverWrapper(
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest) => {
-    try {
-      await ModelCollection.getInstance(
-        args.databaseName,
-        args.collectionName
-      ).index(args.indexField || []);
-      return true;
-    } catch (e) {
-      logger.error(e);
-      return false;
-    }
+    return createCollection(
+      args.databaseName,
+      args.collectionName,
+      'actor',
+      'user',
+      args.schema,
+      args.permissions
+    );
   }
 );
 
