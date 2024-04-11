@@ -9,7 +9,7 @@ export interface GetDatabaseStatusResponse {
 }
 
 export interface CreateDatabaseResponse {
-  created: boolean
+  dbCreate: boolean
 }
 
 export const DATABASE_LIST_QUERY = `

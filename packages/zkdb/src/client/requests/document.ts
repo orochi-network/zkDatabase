@@ -1,15 +1,31 @@
+import { DocumentEncoded } from '../../core/schema.js';
 import client from '../graphql-client.js';
+import { MerkleWitness } from '../types/merkle-tree.js';
+
+export interface PermissionRecord {
+  system?: boolean;
+  create?: boolean;
+  read?: boolean;
+  write?: boolean;
+  delete?: boolean;
+}
+
+export interface PermissionDetail {
+  permissionOwner?: PermissionRecord;
+  permissionGroup?: PermissionRecord;
+  permissionOthers?: PermissionRecord;
+}
 
 export interface FindDocumentResponse {
-  document: JSON;
+  findDocument: DocumentEncoded;
 }
 
 export interface CreateDocumentResponse {
-  created: boolean;
+  documentCreate: MerkleWitness;
 }
 
 export interface UpdateDocumentResponse {
-  updated: boolean;
+  documentUpdate: MerkleWitness;
 }
 
 export const DOCUMENT_FIND_QUERY = `
@@ -22,7 +38,7 @@ export const DOCUMENT_CREATE_MUTATION = `
   mutation DocumentCreate(
     $databaseName: String!,
     $collectionName: String!,
-    $documentRecord: JSON!,
+    $documentRecord: [DocumentInput!]!,
     $documentPermission: PermissionDetailInput
   ) {
     documentCreate(
@@ -30,7 +46,10 @@ export const DOCUMENT_CREATE_MUTATION = `
       collectionName: $collectionName,
       documentRecord: $documentRecord,
       documentPermission: $documentPermission
-    )
+    ) {
+      isLeft
+      sibling
+    }
   }
 `;
 
@@ -38,19 +57,22 @@ export const DOCUMENT_UPDATE_MUTATION = `
   mutation DocumentUpdate(
     $databaseName: String!,
     $collectionName: String!,
-    $documentQuery: JSON!,
-    $documentRecord: JSON!
+    $documentQuery: JSON,
+    $documentRecord: [DocumentInput!]!
   ) {
     documentUpdate(
       databaseName: $databaseName,
       collectionName: $collectionName,
       documentQuery: $documentQuery,
       documentRecord: $documentRecord
-    )
+    ) {
+      isLeft
+      sibling
+    }
   }
 `;
 
-export const findDocument = async (
+export const readDocument = async (
   databaseName: string,
   collectionName: string,
   documentQuery: any
@@ -65,9 +87,9 @@ export const findDocument = async (
 export const createDocument = async (
   databaseName: string,
   collectionName: string,
-  documentRecord: any,
-  documentPermission: any
-): Promise<any> => {
+  documentRecord: DocumentEncoded,
+  documentPermission: PermissionDetail
+): Promise<CreateDocumentResponse> => {
   const variables = {
     databaseName,
     collectionName,
