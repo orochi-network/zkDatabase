@@ -1,3 +1,4 @@
+/* eslint-disable max-classes-per-file */
 import {
   Poseidon,
   InferProvable,
@@ -15,35 +16,21 @@ import {
   MerkleMapWitness,
   Struct,
 } from 'o1js';
-export { Field } from 'o1js';
 
 export interface SchemaExtend {
-  serialize(): SchemaEncoded;
+  serialize(): DocumentEncoded;
   hash(): Field;
 }
 
 export interface SchemaStaticExtend<A> {
-  deserialize(_doc: SchemaEncoded): InstanceType<SchemaExtendable<A>>;
+  deserialize(_doc: DocumentEncoded): InstanceType<SchemaExtendable<A>>;
+  getSchema(): SchemaDefinition;
 }
 
 export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
   SchemaStaticExtend<A>;
 
-export type ProvableTypeString =
-  | 'CircuitString'
-  | 'UInt32'
-  | 'UInt64'
-  | 'Bool'
-  | 'Sign'
-  | 'Character'
-  | 'Int64'
-  | 'Field'
-  | 'PrivateKey'
-  | 'PublicKey'
-  | 'Signature'
-  | 'MerkleMapWitness';
-
-const ProvableTypeMap = {
+export const ProvableTypeMap = {
   CircuitString: CircuitString,
   UInt32: UInt32,
   UInt64: UInt64,
@@ -56,90 +43,82 @@ const ProvableTypeMap = {
   PublicKey: PublicKey,
   Signature: Signature,
   MerkleMapWitness: MerkleMapWitness,
+} as const;
+
+export type ProvableTypeString = keyof typeof ProvableTypeMap;
+
+export type SchemaFieldDefinition = {
+  name: string;
+  kind: ProvableTypeString;
+  indexed: boolean;
 };
 
-export type ProvableMapped<T extends { [key: string]: ProvableTypeString }> = {
-  [Property in keyof T]: (typeof ProvableTypeMap)[T[Property]];
+export type SchemaDefinition = SchemaFieldDefinition[];
+
+export type ProvableMapped<T extends SchemaDefinition> = {
+  [Property in T[number]['name']]?: (typeof ProvableTypeMap)[ProvableTypeString];
 };
 
-export function toInnerStructure<
-  T extends { [key: string]: ProvableTypeString }
->(schema: T): ProvableMapped<T> {
-  const result: any = {};
-  const keys: ProvableTypeString[] = Object.keys(schema) as any;
-  for (let i = 0; i < keys.length; i++) {
-    result[keys[i]] = ProvableTypeMap[schema[keys[i]]];
-  }
-  return result;
+export function toInnerStructure<T extends SchemaDefinition>(
+  schema: T
+): ProvableMapped<T> {
+  const result: Partial<ProvableMapped<T>> = {};
+  schema.forEach(({ name, kind }) => {
+    const key = name as keyof ProvableMapped<T>;
+    result[key] = ProvableTypeMap[kind];
+  });
+  return result as ProvableMapped<T>;
 }
 
-/*
-const ProvableTypeMap = new Map<
-  ProvableType,
-  (typeof ProvableMap)[ProvableType]
->([
-  ['CircuitString', CircuitString],
-  ['UInt32', UInt32],
-  ['UInt64', UInt64],
-  ['Bool', Bool],
-  ['Sign', Sign],
-  ['Character', Character],
-  ['Int64', Int64],
-  ['Field', Field],
-  ['PrivateKey', PrivateKey],
-  ['PublicKey', PublicKey],
-  ['Signature', Signature],
-  ['MerkleMapWitness', MerkleMapWitness],
-]);*/
+type Indexes<T> = Array<keyof T>;
 
-export type SchemaDefinition = {
-  [k: string]: ProvableTypeString;
-};
-
-export type SchemaEncoded = [
-  name: string,
-  kind: ProvableTypeString,
-  value: string
-][];
+export type DocumentEncoded = {
+  name: string;
+  kind: ProvableTypeString;
+  value: string;
+}[];
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
-    type: A
+    type: A,
+    indexes: Indexes<A> = []
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
-    console.log(type);
-
     class Document extends Struct(type) {
-      constructor(...args: T[]) {
-        super(...args);
+      private static schemaEntries: SchemaFieldDefinition[] = Object.entries(
+        type as any
+      ).map(([name, kind]): SchemaFieldDefinition => {
+        return {
+          name,
+          kind: (kind as any).name.replace(/^_/, ''),
+          indexed: indexes.includes(name as keyof A),
+        };
+      });
+
+      public static getSchema(): SchemaDefinition {
+        return Document.schemaEntries.map(({ name, kind, indexed }) => ({
+          name,
+          kind,
+          indexed,
+        }));
       }
 
-      private static schemaEntries = Object.entries(type as any).map(
-        ([key, value]): [string, ProvableTypeString] => {
-          return [key, (value as any).name];
-        }
-      );
-
-      public static schema: SchemaDefinition = Object.fromEntries(
-        Document.schemaEntries
-      );
-
       // Serialize the document to a Uint8Array
-      serialize(): SchemaEncoded {
+      serialize(): DocumentEncoded {
         const anyThis = <any>this;
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
-          const [key, kind] = Document.schemaEntries[i];
+          const { name, kind } = Document.schemaEntries[i];
           let value = 'N/A';
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
             case 'Signature':
-              value = anyThis[key].toBase58();
+              value = anyThis[name].toBase58();
               break;
             default:
-              value = anyThis[key].toString();
+              value = anyThis[name].toString();
           }
-          result.push([key, kind, value]);
+          result.push({ name, kind, value });
         }
         return result;
       }
@@ -149,15 +128,17 @@ export class Schema {
         return Poseidon.hash(Document.toFields(<any>this));
       }
 
-      static deserialize(doc: SchemaEncoded): Document {
+      static deserialize(doc: DocumentEncoded): Document {
         const result: any = {};
-        for (let i = 0; i < doc.length; i++) {
-          const [key, kind, value] = doc[i];
+
+        for (let i = 0; i < doc.length; i += 1) {
+          const { name, kind, value } = doc[i];
+
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
             case 'Signature':
-              result[key] = ProvableTypeMap[kind].fromBase58(value);
+              result[name] = ProvableTypeMap[kind].fromBase58(value);
               break;
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
@@ -165,20 +146,20 @@ export class Schema {
             case 'UInt64':
             case 'Int64':
             case 'Field':
-              result[key] = ProvableTypeMap[kind].from(value);
+              result[name] = ProvableTypeMap[kind].from(value);
               break;
             case 'Bool':
-              result[key] =
+              result[name] =
                 value.toLowerCase() === 'true'
                   ? new Bool(true)
                   : new Bool(false);
               break;
             case 'Sign':
-              result[key] =
+              result[name] =
                 value.toLowerCase() === 'true' ? Sign.minusOne : Sign.one;
               break;
             default:
-              result[key] = ProvableTypeMap[kind].fromString(value);
+              result[name] = ProvableTypeMap[kind].fromString(value);
           }
         }
         return new Document(result);
@@ -189,10 +170,12 @@ export class Schema {
   }
 
   public static fromRecord(record: string[][]) {
-    return Schema.fromSchema(
-      Object.fromEntries(
-        record.map(([name, kind, _value]) => [name, kind as ProvableTypeString])
-      )
+    return this.fromSchema(
+      record.map(([name, kind, indexed]) => ({
+        name,
+        kind: kind as ProvableTypeString,
+        indexed: indexed === 'true',
+      }))
     );
   }
 
