@@ -1,7 +1,7 @@
 import fs from 'fs';
 import * as path from 'path';
 import { StorageEngineBase } from './base.js';
-import { TLocalConfig } from 'core/common.js';
+import { TLocalConfig } from '../core/common.js';
 import { Readable, Writable } from 'stream';
 
 export interface IDirRecord {
