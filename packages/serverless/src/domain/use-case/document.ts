@@ -3,7 +3,10 @@ import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
 import { Permissions } from '../types/permission';
-import { checkDocumentPermission, checkPermission } from './permission';
+import {
+  checkDocumentPermission,
+  checkCollectionPermission,
+} from './permission';
 import { proveCreateDocument, proveDeleteDocument } from './prover';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import {
@@ -11,7 +14,7 @@ import {
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const';
 import { getCurrentTime } from '../../helper/common';
-import { ModelSchema } from '../../model/database/schema';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -23,7 +26,14 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  if (!(await checkPermission(databaseName, collectionName, actor, 'read'))) {
+  if (
+    !(await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read'
+    ))
+  ) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
     );
@@ -67,7 +77,14 @@ async function createDocument(
   document: Document,
   permissions: Permissions
 ) {
-  if (!(await checkPermission(databaseName, collectionName, actor, 'create'))) {
+  if (
+    !(await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'create'
+    ))
+  ) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'create' permission for collection '${collectionName}'.`
     );
@@ -92,7 +109,7 @@ async function createDocument(
     partialToPermission(permissions.permissionGroup)
   );
   const documentPermissionOther = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOthers)
+    partialToPermission(permissions.permissionOther)
   );
 
   // 1. Save document
@@ -105,7 +122,7 @@ async function createDocument(
   // 3. Create Metadata
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
-  const modelSchema = ModelSchema.getInstance(databaseName);
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
 
   const documentSchema = await modelSchema.getMetadata(collectionName);
 
@@ -137,6 +154,7 @@ async function createDocument(
   const witness = await proveCreateDocument(
     databaseName,
     collectionName,
+    insertResult.insertedId,
     document
   );
 
@@ -150,7 +168,14 @@ async function updateDocument(
   filter: FilterCriteria,
   update: Document
 ) {
-  if (!(await checkPermission(databaseName, collectionName, actor, 'write'))) {
+  if (
+    !(await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'write'
+    ))
+  ) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
     );
@@ -168,15 +193,13 @@ async function updateDocument(
     };
   });
 
-  const updateResult = await modelDocument.collection.updateMany(
-    filter,
-    { $set: documentRecord }
-  );
+  const updateResult = await modelDocument.collection.updateMany(filter, {
+    $set: documentRecord,
+  });
 
   // We need to do this to make sure that only 1 record
   if (
-    (updateResult.modifiedCount !== 1 &&
-      updateResult.matchedCount !== 1) ||
+    (updateResult.modifiedCount !== 1 && updateResult.matchedCount !== 1) ||
     !updateResult
   ) {
     throw new Error('Invalid update, modified count not equal to 1');
@@ -207,7 +230,14 @@ async function deleteDocument(
   actor: string,
   filter: FilterCriteria
 ) {
-  if (!(await checkPermission(databaseName, collectionName, actor, 'delete'))) {
+  if (
+    !(await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'delete'
+    ))
+  ) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'delete' permission for collection '${collectionName}'.`
     );
