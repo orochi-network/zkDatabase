@@ -14,14 +14,13 @@ import {
 } from '../../common/permission';
 import { AppContext } from '../../common/types';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const';
+import { TPermissionGroup } from '../types/permission';
+
+const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
 
 export type TPermissionRequest = TCollectionRequest & {
   docId: string;
 };
-
-export type TPermissionGroup = 'User' | 'Group' | 'Other';
-
-const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
 
 export type TPermissionSetRequest = TPermissionRequest & {
   grouping: TPermissionGroup;
