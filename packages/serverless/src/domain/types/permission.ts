@@ -14,5 +14,5 @@ export type PermissionSet = {
 export type Permissions = {
   permissionOwner?: Partial<PermissionSet>;
   permissionGroup?: Partial<PermissionSet>;
-  permissionOthers?: Partial<PermissionSet>;
+  permissionOther?: Partial<PermissionSet>;
 };
