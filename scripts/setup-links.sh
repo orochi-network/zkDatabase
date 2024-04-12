@@ -3,6 +3,7 @@
 cd ..
 
 cd packages/storage
+yarn run build
 yarn link
 cd ../..
 
