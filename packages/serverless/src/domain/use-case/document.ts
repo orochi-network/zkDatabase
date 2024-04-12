@@ -69,11 +69,13 @@ async function readDocument(
     );
   }
 
-  const document: Document = Object.keys(documentRecord).map((key) => ({
-    name: documentRecord[key].name,
-    kind: documentRecord[key].kind,
-    value: documentRecord[key].value,
-  }));
+  const document: Document = Object.keys(documentRecord)
+    .filter((key) => key !== '_id') // Exclude '_id'
+    .map((key) => ({
+      name: documentRecord[key].name,
+      kind: documentRecord[key].kind,
+      value: documentRecord[key].value,
+    }));
 
   return document;
 }
