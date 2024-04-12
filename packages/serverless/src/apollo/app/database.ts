@@ -1,6 +1,7 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase } from '@zkdb/storage'
+import { ClientSession } from 'mongodb';
 import resolverWrapper from '../validation';
 import { databaseName } from './common';
 import {
@@ -37,6 +38,8 @@ extend type Mutation {
   #dbDrop(databaseName: String!): Boolean
 }
 `;
+
+export const merkleHeight = Joi.number().integer().positive().required();
 
 // Query
 const dbStats = resolverWrapper(
