@@ -20,6 +20,14 @@ export interface FilterCriteria {
   [key: string]: any;
 }
 
+function parseQuery(input: FilterCriteria): FilterCriteria {
+  const query: FilterCriteria = {};
+  Object.keys(input).forEach((key) => {
+    query[`${key}.value`] = input[key];
+  });
+  return query;
+}
+
 async function readDocument(
   databaseName: string,
   collectionName: string,
@@ -41,10 +49,10 @@ async function readDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord = await modelDocument.findOne(filter);
+  const documentRecord = await modelDocument.findOne(parseQuery(filter));
 
   if (!documentRecord) {
-    throw new Error('Document not found.');
+    return null;
   }
 
   const hasReadPermission = await checkDocumentPermission(
