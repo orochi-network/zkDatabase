@@ -8,6 +8,8 @@ import {
   CreateGlobalDatabaseUseCase,
 } from '../../domain/use-case/create-global-database';
 
+export const merkleHeight = Joi.number().integer().positive().required();
+
 export type TDatabaseRequest = {
   databaseName: string;
   merkleHeight: number;
