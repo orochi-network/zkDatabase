@@ -31,6 +31,23 @@ export const collectionName = Joi.string()
   .required()
   .pattern(/^[a-z]+[_a-z0-9]+/i);
 
+export const groupName = Joi.string()
+  .trim()
+  .min(4)
+  .max(128)
+  .required()
+  .pattern(/^[a-z]+[_a-z0-9]+/i);
+
+export const groupDescription = Joi.string()
+  .trim()
+  .min(10)
+  .max(256)
+  .allow('')
+  .optional()
+  .description(
+    'Optional description of the group, providing additional context.'
+  );
+
 export const indexName = Joi.string()
   .trim()
   .min(2)

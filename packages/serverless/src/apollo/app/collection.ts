@@ -4,7 +4,9 @@ import { ModelDatabase } from '@zkdb/storage';
 import {
   databaseName,
   collectionName,
-  permissionDetail
+  permissionDetail,
+  groupName,
+  groupDescription
 } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
@@ -30,6 +32,8 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
+  groupName: string,
+  groupDescription: string,
   schema: SchemaData;
   permissions: PermissionsData;
 };
@@ -42,6 +46,8 @@ export const CollectionRequest = Joi.object<TCollectionRequest>({
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
+  groupName,
+  groupDescription,
   schema: schemaFields,
   permissions: permissionDetail,
 });
@@ -78,7 +84,9 @@ extend type Query {
 extend type Mutation {
   collectionCreate(
     databaseName: String!, 
-    collectionName: String!, 
+    collectionName: String!,
+    groupName: String!,
+    groupDescription: String,
     schema: [SchemaFieldInput!]!, 
     permissions: PermissionDetailInput
   ): Boolean
@@ -102,7 +110,7 @@ const collectionCreate = resolverWrapper(
       args.databaseName,
       args.collectionName,
       'actor',
-      'user',
+      args.groupName,
       args.schema,
       args.permissions
     );
