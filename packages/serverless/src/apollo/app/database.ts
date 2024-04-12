@@ -1,14 +1,10 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { DatabaseEngine, ModelDatabase } from '@zkdb/storage'
-import { ClientSession } from 'mongodb';
+import { DatabaseEngine, ModelDatabase } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName } from './common';
-import {
-  CreateGlobalDatabaseUseCase,
-} from '../../domain/use-case/create-global-database';
-
-export const merkleHeight = Joi.number().integer().positive().required();
+import { createDatabase } from '../../domain/use-case/database';
+import { AppContext } from '../../common/types';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -21,7 +17,7 @@ export type TFindIndexRequest = TDatabaseRequest & {
 
 const DatabaseRequest = Joi.object<TDatabaseRequest>({
   databaseName,
-  merkleHeight
+  merkleHeight: Joi.number().integer().positive().required()
 });
 
 export const typeDefsDatabase = `#graphql
@@ -59,10 +55,7 @@ const dbList = async () =>
 const dbCreate = resolverWrapper(
   DatabaseRequest,
   async (_root: unknown, args: TDatabaseRequest) =>
-    new CreateGlobalDatabaseUseCase().execute({
-      databaseName: args.databaseName,
-      merkleHeight: args.merkleHeight,
-    })
+    createDatabase(args.databaseName, args.merkleHeight)
 );
 
 export const resolversDatabase = {

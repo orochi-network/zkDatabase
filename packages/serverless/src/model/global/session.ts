@@ -1,9 +1,9 @@
 import { Document } from 'mongodb';
 import { randomBytes } from 'crypto';
-import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import * as jose from 'jose';
 import ModelUser from './user';
 import { getCurrentTime } from '../../helper/common';
-import ModelCollection from '../abstract/collection';
 
 export interface DocumentSession extends Document {
   userName: string;
@@ -14,6 +14,8 @@ export interface DocumentSession extends Document {
 }
 
 export class ModelSession extends ModelGeneral<DocumentSession> {
+  private static instance: ModelSession | undefined;
+
   private static collectionName: string = zkDatabaseConstants.globalCollections.session;
 
   constructor() {
@@ -22,7 +24,7 @@ export class ModelSession extends ModelGeneral<DocumentSession> {
 
   public static async init() {
     const collection = ModelCollection.getInstance(
-      ZKDATABASE_GLOBAL_DB,
+      zkDatabaseConstants.globalDatabase,
       ModelSession.collectionName
     );
     if (!(await collection.isExist())) {

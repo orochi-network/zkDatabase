@@ -5,8 +5,7 @@ import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
 import {
   DocumentPermission,
-  DocumentRecord,
-  ModelDocument,
+  DocumentRecord
 } from '../../model/abstract/document';
 import {
   collectionName,
@@ -84,7 +83,7 @@ input PermissionDetailInput {
   permissionOthers: PermissionRecordInput
 }
 
-input DocumentRecord {
+input DocumentRecordInput {
   name: String!
   kind: String!
   value: String!
@@ -95,7 +94,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: [DocumentRecord!]!, documentPermission: PermissionDetail): JSON
+  documentCreate(databaseName: String!, collectionName: String!, documentRecord: [DocumentRecordInput!]!, documentPermission: PermissionDetailInput): JSON
   documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
   documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
 }
