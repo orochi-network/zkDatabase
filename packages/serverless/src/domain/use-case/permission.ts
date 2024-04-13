@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
-import ModelUserGroup from '../../model/database/user-group';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 import {
   PermissionBasic,
@@ -9,6 +8,7 @@ import {
   PermissionType,
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission';
+import { checkUserGroupMembership } from './group';
 
 async function fetchPermissionDetails(
   databaseName: string,
@@ -23,10 +23,7 @@ async function fetchPermissionDetails(
     return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
   }
 
-  const modelUserGroup = new ModelUserGroup(databaseName);
-  const actorGroups = await modelUserGroup.listGroupByUserName(actor);
-
-  if (actorGroups.includes(metadata.group)) {
+  if (await checkUserGroupMembership(databaseName, actor, metadata.group)) {
     return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
   }
 
