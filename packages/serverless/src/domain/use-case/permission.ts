@@ -1,93 +1,102 @@
 import { ObjectId } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
+import ModelUserGroup from '../../model/database/user-group';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 import {
+  PermissionBasic,
   PermissionBinary,
   PermissionRecord,
   PermissionType,
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
-import ModelUserGroup from '../../model/database/user-group';
 
-export async function readDocumentPermission(
+async function fetchPermissionDetails(
+  databaseName: string,
+  actor: string,
+  metadata: PermissionBasic | null
+): Promise<PermissionRecord> {
+  if (!metadata) {
+    return ZKDATABASE_NO_PERMISSION_RECORD;
+  }
+
+  if (metadata.owner === actor) {
+    return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
+  }
+
+  const modelUserGroup = new ModelUserGroup(databaseName);
+  const actorGroups = await modelUserGroup.listGroupByUserName(actor);
+
+  if (actorGroups.includes(metadata.group)) {
+    return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
+  }
+
+  return PermissionBinary.fromBinary(metadata.permissionOther);
+}
+
+async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  documentId: ObjectId
+  documentId?: ObjectId
 ): Promise<PermissionRecord> {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelMetadata = documentId
+    ? new ModelDocumentMetadata(databaseName)
+    : ModelCollectionMetadata.getInstance(databaseName);
 
-  const documentMetadata = await modelDocumentMetadata.findOne({
-    docId: documentId,
-    collection: collectionName,
-  });
+  const key = documentId
+    ? { docId: documentId, collection: collectionName }
+    : { collection: collectionName };
+  const metadata = await modelMetadata.findOne(key);
 
-  if (documentMetadata) {
-    // User == actor -> return user permission
-    if (documentMetadata.owner === actor) {
-      return PermissionBinary.fromBinaryPermission(
-        documentMetadata.permissionOwner
-      );
-    }
-    // User != actor -> check for group permission
-    const modelUserGroup = new ModelUserGroup(databaseName!);
-    const actorGroup = await modelUserGroup.listGroupByUserName(actor);
-    if (actorGroup.includes(documentMetadata.group)) {
-      return PermissionBinary.fromBinaryPermission(
-        documentMetadata.permissionGroup
-      );
-    }
-  }
-  // Default deny all
-  return ZKDATABASE_NO_PERMISSION_RECORD;
+  return fetchPermissionDetails(databaseName, actor, metadata);
 }
 
-async function checkDocumentPermission(
+async function checkPermission(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  docId: ObjectId | undefined,
+  type: PermissionType,
+  isDocument: boolean
+): Promise<boolean> {
+  const permission = await readPermission(
+    databaseName,
+    collectionName,
+    actor,
+    isDocument ? docId : undefined
+  );
+  return permission[type];
+}
+
+export async function checkDocumentPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
   docId: ObjectId,
   type: PermissionType
 ): Promise<boolean> {
-  const permission = await readDocumentPermission(
+  return checkPermission(
     databaseName,
     collectionName,
     actor,
-    docId
+    docId,
+    type,
+    true
   );
-
-  return permission[type];
 }
 
-async function checkCollectionPermission(
+export async function checkCollectionPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
   type: PermissionType
 ): Promise<boolean> {
-  const modelCollectionMetadata =
-    ModelCollectionMetadata.getInstance(databaseName);
-
-  const collectionMetadata =
-    await modelCollectionMetadata.getMetadata(collectionName);
-
-  if (!collectionMetadata) {
-    return false;
-  }
-
-  if (actor === collectionMetadata.owner) {
-    return PermissionBinary.fromBinary(collectionMetadata.permissionOwner)[
-      type
-    ];
-  }
-
-  if (actor === collectionMetadata.group) {
-    return PermissionBinary.fromBinary(collectionMetadata.permissionGroup)[
-      type
-    ];
-  }
-
-  return PermissionBinary.fromBinary(collectionMetadata.permissionOther)[type];
+  return checkPermission(
+    databaseName,
+    collectionName,
+    actor,
+    undefined,
+    type,
+    false
+  );
 }
-
-export { checkDocumentPermission, checkCollectionPermission };
