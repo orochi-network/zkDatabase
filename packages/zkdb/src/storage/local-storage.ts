@@ -1,4 +1,6 @@
-import { Storage, JWT_TOKEN } from './storage.js';
+import { UserInfo } from '../types/user.js';
+import { Storage, SESSION_KEY, USER_KEY } from './storage.js';
+import { Session } from './types/session.js';
 
 export default class LocalStorage implements Storage {
   private static instance: LocalStorage;
@@ -15,11 +17,19 @@ export default class LocalStorage implements Storage {
     return LocalStorage.instance;
   }
 
-  public getAccessToken(): string {
-    return this.storage[JWT_TOKEN];
+  public getSession(): Session {
+    return this.storage[SESSION_KEY];
   }
 
-  public setAccessToken(token: string): void {
-    this.storage[JWT_TOKEN] = token;
+  public setSession(session: Session | undefined): void {
+    this.storage[SESSION_KEY] = session;
+  }
+
+  getUserInfo(): UserInfo {
+    return this.storage[USER_KEY];
+  }
+
+  setUserInfo(userInfo: UserInfo | undefined): void {
+    this.storage[USER_KEY] = userInfo;
   }
 }
