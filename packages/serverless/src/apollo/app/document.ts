@@ -20,6 +20,7 @@ import {
   updateDocument,
 } from '../../domain/use-case/document';
 import { PermissionBinary } from '../../common/permission';
+import { AppContext } from '../../common/types';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -94,20 +95,36 @@ extend type Query {
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: [DocumentRecordInput!]!, documentPermission: PermissionDetailInput): JSON
-  documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
-  documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
+  documentCreate(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentRecord: [DocumentRecordInput!]!, 
+    documentPermission: PermissionDetailInput
+  ): [MerkleWitness!]!
+
+  documentUpdate(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentQuery: JSON!, 
+    documentRecord: JSON!
+  ): [MerkleWitness!]!
+
+  documentDrop(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentQuery: JSON!
+  ): [MerkleWitness!]!
 }
 `;
 
 // Query
 const documentFind = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest) => {
+  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
     return readDocument(
       args.databaseName,
       args.collectionName,
-      "actor",
+      ctx.userName,
       args.documentQuery
     )
   }
@@ -116,11 +133,11 @@ const documentFind = resolverWrapper(
 // Mutation
 const documentCreate = resolverWrapper(
   DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest) => {
+  async (_root: unknown, args: TDocumentCreateRequest, ctx: AppContext) => {
     return createDocument(
       args.databaseName,
       args.collectionName,
-      'actor',
+      ctx.userName,
       args.documentRecord as any,
       {
         permissionOwner: PermissionBinary.fromBinary(
@@ -139,7 +156,7 @@ const documentCreate = resolverWrapper(
 
 const documentUpdate = resolverWrapper(
   DOCUMENT_UPDATE_REQUEST,
-  async (_root: unknown, args: TDocumentUpdateRequest) => {
+  async (_root: unknown, args: TDocumentUpdateRequest, ctx: AppContext) => {
     const keys = Object.keys(args.documentRecord);
     for (let i = 0; i < keys.length; i += 1) {
       const key = keys[i];
@@ -153,7 +170,7 @@ const documentUpdate = resolverWrapper(
     return updateDocument(
       args.databaseName,
       args.collectionName,
-      'actor',
+      ctx.userName,
       args.documentQuery,
       args.documentRecord
     );
