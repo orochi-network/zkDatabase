@@ -1,11 +1,9 @@
-import client from '../graphql-client.js';
+import { PermissionRecord } from '../../common/permission.js';
+import { mutate, query } from '../graphql-client.js';
+import { PermissionsData } from '../types/permissions.js';
 
 export interface ListPermissionResponse {
-  permissions: JSON;
-}
-
-export interface GetPermissionResponse {
-  permissions: JSON;
+  permissions: PermissionsData;
 }
 
 export const PERMISSION_LIST_QUERY = `
@@ -87,33 +85,75 @@ export const PERMISSION_OWN_MUTATION = `
   }
 `;
 
-export const listPermissions = async (
+export const listDocumentPermissions = async (
   databaseName: string,
   collection: string,
-  docId?: string
+  docId: string
 ): Promise<ListPermissionResponse> => {
   const variables = { databaseName, collection, docId };
-  return client.request<ListPermissionResponse>(PERMISSION_LIST_QUERY, variables);
+  try {
+    const response = await query<{ permissionList: ListPermissionResponse }>(
+      PERMISSION_LIST_QUERY,
+      variables
+    );
+    const { permissionList } = response;
+
+    return {
+      ...permissionList,
+    };
+  } catch (error) {
+    throw new Error('ListPermissions failed: ' + error);
+  }
 };
 
-export const setPermission = async (
+export const setDocumentPermission = async (
   databaseName: string,
   collectionName: string,
   docId: string,
   grouping: string,
-  permission: any
-): Promise<GetPermissionResponse> => {
-  const variables = { databaseName, collectionName, docId, grouping, permission };
-  return client.request(PERMISSION_SET_MUTATION, variables);
+  permission: PermissionRecord
+): Promise<ListPermissionResponse> => {
+  const variables = {
+    databaseName,
+    collectionName,
+    docId,
+    grouping,
+    permission,
+  };
+  try {
+    const response = await mutate<{ permissionSet: ListPermissionResponse }>(
+      PERMISSION_SET_MUTATION,
+      variables
+    );
+    const { permissionSet } = response;
+
+    return {
+      ...permissionSet,
+    };
+  } catch (error) {
+    throw new Error('SetPermissions failed: ' + error);
+  }
 };
 
-export const ownPermission = async (
+export const setDocumentOwnership = async (
   databaseName: string,
-  collection: string,
+  collectionName: string,
   docId: string,
   grouping: string,
   newOwner: string
-): Promise<GetPermissionResponse> => {
-  const variables = { databaseName, collection, docId, grouping, newOwner };
-  return client.request(PERMISSION_OWN_MUTATION, variables);
+): Promise<ListPermissionResponse> => {
+  const variables = { databaseName, collectionName, docId, grouping, newOwner };
+  try {
+    const response = await mutate<{ permissionOwn: ListPermissionResponse }>(
+      PERMISSION_OWN_MUTATION,
+      variables
+    );
+    const { permissionOwn } = response;
+
+    return {
+      ...permissionOwn,
+    };
+  } catch (error) {
+    throw new Error('OwnPermissions failed: ' + error);
+  }
 };
