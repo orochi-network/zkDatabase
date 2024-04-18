@@ -1,4 +1,4 @@
-import client from '../graphql-client.js';
+import { query } from '../graphql-client.js';
 
 export interface ListGroupResponse {
   groups: JSON;
@@ -16,9 +16,11 @@ export const GROUP_LIST_BY_USER_QUERY = `
   }
 `;
 
-export const listAllGroups = async (databaseName: string): Promise<ListGroupResponse> => {
+export const listAllGroups = async (
+  databaseName: string
+): Promise<ListGroupResponse> => {
   const variables = { databaseName };
-  return client.request<ListGroupResponse>(GROUP_LIST_ALL_QUERY, variables);
+  return query<ListGroupResponse>(GROUP_LIST_ALL_QUERY, variables);
 };
 
 export const listGroupsByUser = async (
@@ -26,5 +28,5 @@ export const listGroupsByUser = async (
   userName: string
 ): Promise<ListGroupResponse> => {
   const variables = { databaseName, userName };
-  return client.request<ListGroupResponse>(GROUP_LIST_BY_USER_QUERY, variables);
+  return query<ListGroupResponse>(GROUP_LIST_BY_USER_QUERY, variables);
 };

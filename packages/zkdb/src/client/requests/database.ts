@@ -1,4 +1,4 @@
-import client from '../graphql-client.js';
+import {query, mutate} from '../graphql-client.js';
 
 export interface ListDatabaseResponse {
   databases: JSON;
@@ -31,14 +31,14 @@ export const DATABASE_CREATE_MUTATION = `
 `;
 
 export const listDatabases = async (): Promise<ListDatabaseResponse> => {
-  return client.request<ListDatabaseResponse>(DATABASE_LIST_QUERY);
+  return query<ListDatabaseResponse>(DATABASE_LIST_QUERY, {});
 };
 
 export const getDatabaseStatus = async (
   databaseName: string
 ): Promise<GetDatabaseStatusResponse> => {
   const variables = { databaseName };
-  const data = await client.request<GetDatabaseStatusResponse>(
+  const data = await query<GetDatabaseStatusResponse>(
     DATABASE_GET_STATUS_QUERY,
     variables
   );
@@ -50,7 +50,7 @@ export const createDatabase = async (
   merkleHeight: number
 ): Promise<CreateDatabaseResponse> => {
   const variables = { databaseName, merkleHeight };
-  return client.request<CreateDatabaseResponse>(
+  return mutate<CreateDatabaseResponse>(
     DATABASE_CREATE_MUTATION,
     variables
   );

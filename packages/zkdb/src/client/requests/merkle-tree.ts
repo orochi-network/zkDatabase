@@ -1,4 +1,4 @@
-import client from '../graphql-client.js';
+import { query } from '../graphql-client.js';
 
 export interface GetMerkleNodeResponse {
   node: JSON;
@@ -29,7 +29,7 @@ export const getNode = async (
   index: string
 ): Promise<GetMerkleNodeResponse> => {
   const variables = { databaseName, level, index };
-  return client.request<GetMerkleNodeResponse>(GET_NODE_QUERY, variables);
+  return query<GetMerkleNodeResponse>(GET_NODE_QUERY, variables);
 };
 
 export const getWitness = async (
@@ -38,5 +38,5 @@ export const getWitness = async (
   index: string
 ): Promise<GetMerkleWitnessResponse> => {
   const variables = { databaseName, root, index };
-  return client.request<GetMerkleWitnessResponse>(GET_WITNESS_QUERY, variables);
+  return query<GetMerkleWitnessResponse>(GET_WITNESS_QUERY, variables);
 };
