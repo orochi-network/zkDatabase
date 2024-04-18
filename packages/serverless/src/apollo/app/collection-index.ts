@@ -4,8 +4,7 @@ import { ModelCollection } from '@zkdb/storage';
 import { resolverWrapper } from '../validation';
 import {
   TCollectionRequest,
-  CollectionRequest,
-  TCollectionCreateRequest,
+  CollectionRequest
 } from './collection';
 import { collectionName, databaseName, indexName, indexField } from './common';
 
@@ -20,7 +19,9 @@ export const IndexListRequest = CollectionRequest;
 
 export type TIndexRequest = TCollectionRequest;
 
-export type TIndexCreateRequest = TCollectionCreateRequest;
+export type TIndexCreateRequest = TIndexRequest & {
+  indexField: string[]
+};
 
 export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
 
@@ -42,7 +43,7 @@ type Query
 type Mutation
 
 extend type Query {
-  indexList(databaseName: String!, collectionName: String!): JSON
+  indexList(databaseName: String!, collectionName: String!): [String]!
   indexExist(databaseName: String!, collectionName: String!, indexName: String!): Boolean
 }
 
@@ -72,7 +73,6 @@ const indexExist = resolverWrapper(
 );
 
 // Mutation
-
 const indexCreate = resolverWrapper(
   IndexCreateRequest,
   async (_root: unknown, args: TIndexCreateRequest) =>
