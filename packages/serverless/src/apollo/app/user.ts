@@ -165,8 +165,8 @@ const userSignIn = resolverWrapper(
       });
       const jsonData = JSON.parse(args.proof.data);
       if (user) {
-        if (jsonData.userName !== user.userName) {
-          throw new Error('Username does not match');
+        if (jsonData.email !== user.email) {
+          throw new Error('Email does not match');
         }
         if (timestamp.validate(jsonData.timestamp).error) {
           throw new Error('Timestamp is invalid');
