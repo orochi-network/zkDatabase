@@ -14,6 +14,7 @@ import { PermissionsData } from '../types/permission';
 import { SchemaData } from '../types/schema';
 import { createCollection } from '../../domain/use-case/collection';
 import { O1JS_VALID_TYPE } from '../../common/const';
+import { AppContext } from '../../common/types';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -105,11 +106,11 @@ const collectionList = resolverWrapper(
 // Mutation
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
-  async (_root: unknown, args: TCollectionCreateRequest) => {
+  async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
     return createCollection(
       args.databaseName,
       args.collectionName,
-      'actor',
+      ctx.userName,
       args.groupName,
       args.schema,
       args.permissions
