@@ -4,7 +4,6 @@ import { Filter } from 'mongodb';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
 import {
-  DocumentPermission,
   DocumentRecord
 } from '../../model/abstract/document';
 import {
@@ -19,8 +18,8 @@ import {
   readDocument,
   updateDocument,
 } from '../../domain/use-case/document';
-import { PermissionBinary } from '../../common/permission';
 import { AppContext } from '../../common/types';
+import { PermissionsData } from '../types/permission';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -28,7 +27,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: DocumentRecord;
-  documentPermission: DocumentPermission;
+  documentPermission: PermissionsData;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest &
@@ -105,8 +104,8 @@ extend type Mutation {
   documentUpdate(
     databaseName: String!, 
     collectionName: String!, 
-    documentQuery: JSON!, 
-    documentRecord: JSON!
+    documentQuery: JSON!,
+    documentRecord: [DocumentRecordInput!]!
   ): [MerkleWitness!]!
 
   documentDrop(
@@ -139,17 +138,7 @@ const documentCreate = resolverWrapper(
       args.collectionName,
       ctx.userName,
       args.documentRecord as any,
-      {
-        permissionOwner: PermissionBinary.fromBinary(
-          args.documentPermission.permissionOwner
-        ),
-        permissionGroup: PermissionBinary.fromBinary(
-          args.documentPermission.permissionGroup
-        ),
-        permissionOther: PermissionBinary.fromBinary(
-          args.documentPermission.permissionOther
-        ),
-      }
+      args.documentPermission
     );
   }
 );
@@ -179,11 +168,11 @@ const documentUpdate = resolverWrapper(
 
 const documentDrop = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest) => {
+  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
     return deleteDocument(
       args.databaseName,
       args.collectionName,
-      'actor',
+      ctx.userName,
       args.documentQuery
     );
   }
