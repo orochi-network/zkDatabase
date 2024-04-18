@@ -10,7 +10,8 @@ export async function createDatabase(
   merkleHeight: number
 ) {
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
-    throw new Error('Database already exist');
+    // Ensure database existing
+    return true;
   }
   await ModelDocumentMetadata.init(databaseName);
   await ModelCollectionMetadata.init(databaseName);

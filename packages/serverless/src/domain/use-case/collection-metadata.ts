@@ -1,9 +1,9 @@
-import { ModelCollection } from "@zkdb/storage";
-import { DocumentSchema } from "../types/schema";
-import { getCurrentTime } from "../../helper/common";
-import { Permissions } from "../types/permission";
-import { PermissionBinary, partialToPermission } from "../../common/permission";
-import { ModelCollectionMetadata } from "../../model/database/collection-metadata";
+import { ModelCollection } from '@zkdb/storage';
+import { DocumentSchema } from '../types/schema';
+import { getCurrentTime } from '../../helper/common';
+import { Permissions } from '../types/permission';
+import { PermissionBinary, partialToPermission } from '../../common/permission';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollectionMetadata(
@@ -23,9 +23,9 @@ export async function createCollectionMetadata(
   const permissionOther = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionOther)
   );
-  
+
   const schemaDef: any = {
-    owner, 
+    owner,
     group,
     collection: collectionName,
     permissionOwner,
@@ -50,9 +50,7 @@ export async function createCollectionMetadata(
     }
   }
   // Create index and collection
-  await new ModelCollection(databaseName, collectionName).index(
-    indexKeys
-  );
+  await new ModelCollection(databaseName, collectionName).index(indexKeys);
 
-  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef)
+  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef);
 }

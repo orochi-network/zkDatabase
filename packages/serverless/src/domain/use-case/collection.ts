@@ -17,13 +17,24 @@ export async function createCollection(
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
+  if (await modelDatabase.isCollectionExist(collectionName)) {
+    throw Error(
+      `Collection ${collectionName}already exist in database ${databaseName}`
+    );
+  }
+
   try {
     await modelDatabase.createCollection(collectionName);
 
-    const isGroupCreated = await createGroup(databaseName, owner, group, groupDescription);
+    const isGroupCreated = await createGroup(
+      databaseName,
+      owner,
+      group,
+      groupDescription
+    );
 
     if (!isGroupCreated) {
-      throw Error('Failed to create a group')
+      throw Error('Failed to create a group');
     }
 
     await createCollectionMetadata(
