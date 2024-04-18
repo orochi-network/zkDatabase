@@ -85,10 +85,10 @@ export const PERMISSION_OWN_MUTATION = `
   }
 `;
 
-export const listDocumentPermissions = async (
+export const listPermissions = async (
   databaseName: string,
   collection: string,
-  docId: string
+  docId: string | undefined
 ): Promise<ListPermissionResponse> => {
   const variables = { databaseName, collection, docId };
   try {
@@ -106,10 +106,10 @@ export const listDocumentPermissions = async (
   }
 };
 
-export const setDocumentPermission = async (
+export const setPermission = async (
   databaseName: string,
   collectionName: string,
-  docId: string,
+  docId: string | undefined,
   grouping: string,
   permission: PermissionRecord
 ): Promise<ListPermissionResponse> => {
@@ -135,10 +135,10 @@ export const setDocumentPermission = async (
   }
 };
 
-export const setDocumentOwnership = async (
+export const setOwnership = async (
   databaseName: string,
   collectionName: string,
-  docId: string,
+  docId: string | undefined,
   grouping: string,
   newOwner: string
 ): Promise<ListPermissionResponse> => {
