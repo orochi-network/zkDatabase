@@ -38,7 +38,7 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        if (req.headers.authorization) {
+        if (req.headers.authorization && req.headers.authorization !== "") {
           const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
               req.headers.authorization
