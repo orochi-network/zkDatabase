@@ -12,6 +12,8 @@ async function setAuthorizationHeader() {
   if (session !== undefined && userInfo !== undefined) {
     const token = await signRequest(session, userInfo);
     client.setHeader('Authorization', `Bearer ${token}`)
+  } else {
+    client.setHeader('Authorization', "")
   }
 }
 
