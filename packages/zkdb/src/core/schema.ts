@@ -78,11 +78,13 @@ export type DocumentEncoded = {
   value: string;
 }[];
 
+export type SchemaType<A, T extends InferProvable<A> = InferProvable<A>> = SchemaExtendable<A> & (new (..._args: T[]) => T);
+
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
     type: A,
     indexes: Indexes<A> = []
-  ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
+  ): SchemaType<A, T> {
     class Document extends Struct(type) {
       private static schemaEntries: SchemaFieldDefinition[] = Object.entries(
         type as any
