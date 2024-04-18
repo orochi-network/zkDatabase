@@ -1,4 +1,6 @@
-import { PermissionRecord } from "../common/permission.js";
+import { PermissionRecord } from '../common/permission.js';
+
+export type PermissionGroup = 'User' | 'Group' | 'Other';
 
 export type Permissions = {
   permissionOwner?: Partial<PermissionRecord>;
