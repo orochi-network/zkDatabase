@@ -9,6 +9,7 @@ import {
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission';
 import { checkUserGroupMembership } from './group';
+import { PermissionGroup, Permissions } from '../types/permission';
 
 async function fetchPermissionDetails(
   databaseName: string,
@@ -96,4 +97,56 @@ export async function checkCollectionPermission(
     type,
     false
   );
+}
+
+export async function changePermissions(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  docId: ObjectId | null,
+  group: PermissionGroup,
+  permissions: PermissionRecord
+) {
+  const hasSystemPermission = docId
+    ? await checkDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
+        docId!,
+        'system'
+      )
+    : await checkCollectionPermission(
+        databaseName,
+        collectionName,
+        actor,
+        'system'
+      );
+
+  if (!hasSystemPermission) {
+    const targetDescription = docId ? 'document' : 'collection';
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'system' permission for the specified ${targetDescription}.`
+    );
+  }
+
+  const modelPermission = docId
+    ? new ModelDocumentMetadata(databaseName)
+    : ModelCollectionMetadata.getInstance(databaseName);
+
+  let updatedPermission: Permissions = {
+    permissionOwner: {
+      ...permissions,
+      system: group === 'Other' ? false : permissions.system,
+    },
+  };
+
+  if (group === 'Group') {
+    updatedPermission = { permissionGroup: permissions };
+  }
+
+  const updateQuery = docId
+    ? { collection: collectionName, docId }
+    : { collection: collectionName };
+
+  await modelPermission.updateOne(updateQuery, updatedPermission);
 }

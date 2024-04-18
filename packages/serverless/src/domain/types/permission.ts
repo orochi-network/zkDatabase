@@ -16,3 +16,11 @@ export type Permissions = {
   permissionGroup?: Partial<PermissionSet>;
   permissionOther?: Partial<PermissionSet>;
 };
+
+export type FullPermissions = {
+  permissionOwner: PermissionSet;
+  permissionGroup: PermissionSet;
+  permissionOther: PermissionSet;
+};
+
+export type PermissionGroup = 'User' | 'Group' | 'Other';
