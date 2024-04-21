@@ -185,10 +185,11 @@ export const createCollection = async (
   databaseName: string,
   collectionName: string,
   groupName: string,
+  groupDescription: string | undefined,
   schema: SchemaFields,
   permissions?: Permissions
 ): Promise<CreateCollectionResponse> => {
-  const variables = { databaseName, collectionName, groupName, schema, permissions };
+  const variables = { databaseName, collectionName, groupName, groupDescription, schema, permissions };
   return mutate<CreateCollectionResponse>(
     COLLECTION_CREATE_MUTATION,
     variables

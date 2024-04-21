@@ -24,12 +24,13 @@ export default class Collection {
     T extends Schema & {
       getSchema(): SchemaDefinition;
     },
-  >(schema: T, groupName: string, permissions: Permissions): Promise<Collection> {
+  >(schema: T, groupName: string, description: string | undefined, permissions: Permissions): Promise<Collection> {
     const isCreated = (
       await createCollection(
         this.databaseName,
         this.collectionName,
         groupName,
+        description,
         schema.getSchema(),
         permissions as any
       )
