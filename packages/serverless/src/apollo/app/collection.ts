@@ -115,7 +115,7 @@ const collectionCreate = resolverWrapper(
         args.groupName,
         args.schema,
         args.permissions,
-        'description',
+        args.groupDescription,
         session
       )
     );
