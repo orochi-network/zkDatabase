@@ -24,7 +24,7 @@ export interface FilterCriteria {
 function parseQuery(input: FilterCriteria): FilterCriteria {
   const query: FilterCriteria = {};
   Object.keys(input).forEach((key) => {
-    query[`${key}.value`] = input[key];
+    query[`${key}.value`] = `${input[key]}`;
   });
   return query;
 }
@@ -152,27 +152,30 @@ async function createDocument(
 
   const { permissionOwner, permissionGroup, permissionOther } = documentSchema;
 
-  await modelDocumentMetadata.insertOne({
-    collection: collectionName,
-    docId: insertResult.insertedId,
-    merkleIndex,
-    ...{
-      permissionOwner,
-      permissionGroup,
-      permissionOther,
-      // I'm set these to system user and group as default
-      // In case this permission don't override by the user
-      // this will prevent the user from accessing the data
-      group: ZKDATABASE_GROUP_SYSTEM,
-      owner: ZKDATABASE_USER_SYSTEM,
+  await modelDocumentMetadata.insertOne(
+    {
+      collection: collectionName,
+      docId: insertResult.insertedId,
+      merkleIndex,
+      ...{
+        permissionOwner,
+        permissionGroup,
+        permissionOther,
+        // I'm set these to system user and group as default
+        // In case this permission don't override by the user
+        // this will prevent the user from accessing the data
+        group: ZKDATABASE_GROUP_SYSTEM,
+        owner: ZKDATABASE_USER_SYSTEM,
+      },
+      // Overwrite inherited permission with the new one
+      permissionOwner: documentPermissionOwner,
+      permissionGroup: documentPermissionGroup,
+      permissionOther: documentPermissionOther,
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
     },
-    // Overwrite inherited permission with the new one
-    permissionOwner: documentPermissionOwner,
-    permissionGroup: documentPermissionGroup,
-    permissionOther: documentPermissionOther,
-    createdAt: getCurrentTime(),
-    updatedAt: getCurrentTime(),
-  });
+    { session }
+  );
 
   // 4. Prove document creation
   const witness = await proveCreateDocument(
