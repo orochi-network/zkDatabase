@@ -52,9 +52,11 @@ export async function createCollectionMetadata(
     }
   }
   // Create index and collection
-  await new ModelCollection(databaseName, collectionName).index(indexKeys, {
-    session,
-  });
+  if (indexKeys.length > 0) {
+    await new ModelCollection(databaseName, collectionName).index(indexKeys, {
+      session,
+    });
+  }
 
   await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef, {
     session,
