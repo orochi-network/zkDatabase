@@ -1,5 +1,5 @@
 import { ModelSequencer } from '@zkdb/storage';
-import { ClientSession } from 'mongodb';
+import { ClientSession, WithId } from 'mongodb';
 import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
@@ -35,7 +35,7 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<Document | null> {
+): Promise<WithId<Document> | null> {
   if (
     !(await checkCollectionPermission(
       databaseName,
@@ -84,7 +84,10 @@ async function readDocument(
       value: documentRecord[key].value,
     }));
 
-  return document;
+  return {
+    _id: documentRecord._id,
+    ...document,
+  };
 }
 
 async function createDocument(

@@ -1,6 +1,6 @@
 import { DocumentEncoded } from '../../core/schema.js';
 import { Permissions } from '../../types/permission.js';
-import {query, mutate} from '../graphql-client.js';
+import { query, mutate } from '../graphql-client.js';
 import { MerkleWitness } from '../types/merkle-tree.js';
 
 export interface PermissionRecord {
@@ -18,7 +18,8 @@ export interface PermissionDetail {
 }
 
 export interface FindDocumentResponse {
-  findDocument: DocumentEncoded;
+  _id: string,
+  document: DocumentEncoded;
 }
 
 export interface CreateDocumentResponse {
@@ -34,10 +35,25 @@ export interface DropDocumentResponse {
 }
 
 export const DOCUMENT_FIND_QUERY = `
-  query DocumentFind($databaseName: String!, $collectionName: String!, $documentQuery: JSON!) {
-    documentFind(databaseName: $databaseName, collectionName: $collectionName, documentQuery: $documentQuery)
-  }
-`; 
+  query DocumentFind(
+    $databaseName: String!, 
+    $collectionName: String!, 
+    $documentQuery: JSON!) 
+    {
+      documentFind(
+        databaseName: $databaseName, 
+        collectionName: $collectionName, 
+        documentQuery: $documentQuery
+      ) {
+          _id
+          document {
+            name
+            kind
+            value
+          }
+        }
+    }
+`;
 
 export const DOCUMENT_CREATE_MUTATION = `
   mutation DocumentCreate(
@@ -99,11 +115,24 @@ export const readDocument = async (
   collectionName: string,
   documentQuery: any
 ): Promise<FindDocumentResponse> => {
-  const variables = { databaseName, collectionName, documentQuery };
-  return query<FindDocumentResponse>(
-    DOCUMENT_FIND_QUERY,
-    variables
-  );
+  const variables = {
+    databaseName,
+    collectionName,
+    documentQuery
+  };
+  try {
+    const response = await query<{ documentFind: FindDocumentResponse }>(
+      DOCUMENT_FIND_QUERY,
+      variables
+    );
+    const { documentFind } = response;
+
+    return {
+      ...documentFind,
+    };
+  } catch (error) {
+    throw new Error('readDocument failed: ' + error);
+  }
 };
 
 export const createDocument = async (
@@ -118,10 +147,7 @@ export const createDocument = async (
     documentRecord,
     documentPermission,
   };
-  return mutate<CreateDocumentResponse>(
-    DOCUMENT_CREATE_MUTATION,
-    variables
-  );
+  return mutate<CreateDocumentResponse>(DOCUMENT_CREATE_MUTATION, variables);
 };
 
 export const updateDocument = async (
@@ -136,24 +162,18 @@ export const updateDocument = async (
     documentQuery,
     documentRecord,
   };
-  return mutate<UpdateDocumentResponse>(
-    DOCUMENT_UPDATE_MUTATION,
-    variables
-  );
+  return mutate<UpdateDocumentResponse>(DOCUMENT_UPDATE_MUTATION, variables);
 };
 
 export const dropDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: any,
+  documentQuery: any
 ): Promise<DropDocumentResponse> => {
   const variables = {
     databaseName,
     collectionName,
-    documentQuery
+    documentQuery,
   };
-  return mutate<DropDocumentResponse>(
-    DOCUMENT_DROP_MUTATION,
-    variables
-  );
-}
+  return mutate<DropDocumentResponse>(DOCUMENT_DROP_MUTATION, variables);
+};

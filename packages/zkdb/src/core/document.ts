@@ -42,18 +42,21 @@ export default class Document {
       deserialize: (_doc: DocumentEncoded) => any;
     },
   >(filter: FilterCriteria, documentSchema: T): Promise<InstanceType<T> | null> {
-    const document = (
+    const response = (
       await readDocument(this.databaseName, this.collectionName, filter)
-    ).findDocument;
+    );
 
-    if (document === undefined) {
+    if (Object.keys(response).length === 0) {
       return null;
     }
-    // Set _id
 
-    console.log('document', document)
+    if (response.document === undefined) {
+      return null;
+    }
+    
+    this._id = response._id;
 
-    return new documentSchema(documentSchema.deserialize(document));
+    return new documentSchema(documentSchema.deserialize(response.document));
   }
 
   public async new<A extends Schema & { serialize: () => DocumentEncoded }>(

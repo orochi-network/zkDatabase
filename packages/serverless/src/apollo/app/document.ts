@@ -62,10 +62,21 @@ type MerkleWitness {
   sibling: String!
 }
 
+type Document {
+  name: String!
+  kind: String!
+  value: String!
+}
+
 input DocumentInput {
   name: String!
   kind: String!
   value: String!
+}
+
+type DocumentOutput {
+  _id: String!,
+  document: [Document!]!
 }
 
 input PermissionRecordInput {
@@ -89,7 +100,7 @@ input DocumentRecordInput {
 }
 
 extend type Query {
-  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
+  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): DocumentOutput
 }
 
 extend type Mutation {
@@ -119,7 +130,7 @@ extend type Mutation {
 const documentFind = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
-    return withTransaction((session) =>
+    const document = await withTransaction((session) =>
       readDocument(
         args.databaseName,
         args.collectionName,
@@ -128,6 +139,17 @@ const documentFind = resolverWrapper(
         session
       )
     );
+
+    if (!document) {
+      return null;
+    }
+
+    const { _id, ...pureDocument } = document;
+
+    return {
+      _id,
+      document: Object.values(pureDocument),
+    };
   }
 );
 
