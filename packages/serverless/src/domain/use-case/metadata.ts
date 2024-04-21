@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 import { Metadata } from '../types/metadata';
@@ -14,7 +14,9 @@ export async function readMetadata(
   collectionName: string,
   docId: ObjectId | null,
   actor: string,
-  checkPermissions: boolean = false
+  // eslint-disable-next-line default-param-last
+  checkPermissions: boolean = false,
+  session?: ClientSession
 ): Promise<Metadata> {
   if (checkPermissions) {
     const hasReadPermission = docId
@@ -23,7 +25,8 @@ export async function readMetadata(
           collectionName,
           actor,
           docId,
-          'read'
+          'read',
+          session
         )
       : await checkCollectionPermission(
           databaseName,

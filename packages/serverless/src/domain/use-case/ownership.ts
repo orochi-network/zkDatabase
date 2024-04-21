@@ -1,6 +1,9 @@
-import { ObjectId } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 import { OwnershipGroup } from '../types/ownership';
-import { checkCollectionPermission, checkDocumentPermission } from './permission';
+import {
+  checkCollectionPermission,
+  checkDocumentPermission,
+} from './permission';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import ModelUser from '../../model/global/user';
 import { isGroupExist } from './group';
@@ -12,7 +15,8 @@ export async function changeDocumentOwnership(
   docId: ObjectId,
   actor: string,
   group: OwnershipGroup,
-  newOwner: string
+  newOwner: string,
+  session?: ClientSession
 ) {
   if (
     !(await checkDocumentPermission(
@@ -20,7 +24,8 @@ export async function changeDocumentOwnership(
       collectionName,
       actor,
       docId,
-      'system'
+      'system',
+      session
     ))
   ) {
     throw new Error(
@@ -48,10 +53,11 @@ export async function changeDocumentOwnership(
       },
       {
         owner: newOwner,
-      }
+      },
+      { session }
     );
   } else {
-    if (!isGroupExist(databaseName, newOwner)) {
+    if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
     await modelMetadata.updateOne(
@@ -61,7 +67,8 @@ export async function changeDocumentOwnership(
       },
       {
         group: newOwner,
-      }
+      },
+      { session }
     );
   }
 }
@@ -71,14 +78,16 @@ export async function changeCollectionOwnership(
   collectionName: string,
   actor: string,
   group: OwnershipGroup,
-  newOwner: string
+  newOwner: string,
+  session?: ClientSession
 ) {
   if (
     !(await checkCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'system'
+      'system',
+      session
     ))
   ) {
     throw new Error(
@@ -101,23 +110,25 @@ export async function changeCollectionOwnership(
 
     await modelMetadata.updateOne(
       {
-        collection: collectionName
+        collection: collectionName,
       },
       {
         owner: newOwner,
-      }
+      },
+      { session }
     );
   } else {
-    if (!isGroupExist(databaseName, newOwner)) {
+    if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
     await modelMetadata.updateOne(
       {
-        collection: collectionName
+        collection: collectionName,
       },
       {
         group: newOwner,
-      }
+      },
+      { session }
     );
   }
 }

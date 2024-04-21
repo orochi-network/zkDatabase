@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ObjectId } from 'mongodb';
+import { withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
@@ -110,12 +111,15 @@ const permissionList = resolverWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionRequest, ctx: AppContext) => {
-    return readMetadata(
-      args.databaseName,
-      args.collectionName,
-      args.docId ? new ObjectId(args.docId) : null,
-      ctx.userName,
-      true
+    return withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        ctx.userName,
+        true,
+        session
+      )
     );
   }
 );
@@ -138,13 +142,16 @@ const permissionSet = resolverWrapper(
     }),
   }),
   async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
-    await changePermissions(
-      args.databaseName,
-      args.collectionName,
-      context.userName,
-      args.docId ? new ObjectId(args.docId) : null,
-      args.grouping,
-      args.permission as any
+    await withTransaction((session) =>
+      changePermissions(
+        args.databaseName,
+        args.collectionName,
+        context.userName,
+        args.docId ? new ObjectId(args.docId) : null,
+        args.grouping,
+        args.permission as any,
+        session
+      )
     );
 
     return readMetadata(
@@ -167,21 +174,27 @@ const permissionOwn = resolverWrapper(
   }),
   async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
     if (args.docId) {
-      await changeDocumentOwnership(
-        args.databaseName,
-        args.collectionName,
-        new ObjectId(args.docId),
-        context.userName,
-        args.grouping,
-        args.newOwner
+      await withTransaction((session) =>
+        changeDocumentOwnership(
+          args.databaseName,
+          args.collectionName,
+          new ObjectId(args.docId),
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        )
       );
     } else {
-      await changeCollectionOwnership(
-        args.databaseName,
-        args.collectionName,
-        context.userName,
-        args.grouping,
-        args.newOwner
+      await withTransaction((session) =>
+        changeCollectionOwnership(
+          args.databaseName,
+          args.collectionName,
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        )
       );
     }
 

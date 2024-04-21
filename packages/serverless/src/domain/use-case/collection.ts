@@ -1,4 +1,5 @@
 import { ModelDatabase } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
 import { DocumentSchema } from '../types/schema';
 import { Permissions } from '../types/permission';
 import logger from '../../helper/logger';
@@ -13,7 +14,8 @@ export async function createCollection(
   group: string,
   schema: DocumentSchema,
   permissions: Permissions,
-  groupDescription?: string
+  groupDescription?: string,
+  session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
@@ -30,7 +32,8 @@ export async function createCollection(
       databaseName,
       owner,
       group,
-      groupDescription
+      groupDescription,
+      session
     );
 
     if (!isGroupCreated) {
@@ -43,7 +46,8 @@ export async function createCollection(
       schema,
       permissions,
       owner,
-      group
+      group,
+      session
     );
 
     return true;

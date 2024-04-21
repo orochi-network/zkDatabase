@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 import {
@@ -14,7 +14,8 @@ import { PermissionGroup, Permissions } from '../types/permission';
 async function fetchPermissionDetails(
   databaseName: string,
   actor: string,
-  metadata: PermissionBasic | null
+  metadata: PermissionBasic | null,
+  session?: ClientSession
 ): Promise<PermissionRecord> {
   if (!metadata) {
     return ZKDATABASE_NO_PERMISSION_RECORD;
@@ -24,7 +25,9 @@ async function fetchPermissionDetails(
     return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
   }
 
-  if (await checkUserGroupMembership(databaseName, actor, metadata.group)) {
+  if (
+    await checkUserGroupMembership(databaseName, actor, metadata.group, session)
+  ) {
     return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
   }
 
@@ -35,7 +38,8 @@ async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  documentId?: ObjectId
+  documentId?: ObjectId,
+  session?: ClientSession
 ): Promise<PermissionRecord> {
   const modelMetadata = documentId
     ? new ModelDocumentMetadata(databaseName)
@@ -44,7 +48,7 @@ async function readPermission(
   const key = documentId
     ? { docId: documentId, collection: collectionName }
     : { collection: collectionName };
-  const metadata = await modelMetadata.findOne(key);
+  const metadata = await modelMetadata.findOne(key, { session });
 
   return fetchPermissionDetails(databaseName, actor, metadata);
 }
@@ -55,13 +59,15 @@ async function checkPermission(
   actor: string,
   docId: ObjectId | undefined,
   type: PermissionType,
-  isDocument: boolean
+  isDocument: boolean,
+  session?: ClientSession
 ): Promise<boolean> {
   const permission = await readPermission(
     databaseName,
     collectionName,
     actor,
-    isDocument ? docId : undefined
+    isDocument ? docId : undefined,
+    session
   );
   return permission[type];
 }
@@ -71,7 +77,8 @@ export async function checkDocumentPermission(
   collectionName: string,
   actor: string,
   docId: ObjectId,
-  type: PermissionType
+  type: PermissionType,
+  session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(
     databaseName,
@@ -79,7 +86,8 @@ export async function checkDocumentPermission(
     actor,
     docId,
     type,
-    true
+    true,
+    session
   );
 }
 
@@ -87,7 +95,8 @@ export async function checkCollectionPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  type: PermissionType
+  type: PermissionType,
+  session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(
     databaseName,
@@ -95,7 +104,8 @@ export async function checkCollectionPermission(
     actor,
     undefined,
     type,
-    false
+    false,
+    session
   );
 }
 
@@ -105,7 +115,8 @@ export async function changePermissions(
   actor: string,
   docId: ObjectId | null,
   group: PermissionGroup,
-  permissions: PermissionRecord
+  permissions: PermissionRecord,
+  session?: ClientSession
 ) {
   const hasSystemPermission = docId
     ? await checkDocumentPermission(
@@ -113,13 +124,15 @@ export async function changePermissions(
         collectionName,
         actor,
         docId!,
-        'system'
+        'system',
+        session
       )
     : await checkCollectionPermission(
         databaseName,
         collectionName,
         actor,
-        'system'
+        'system',
+        session
       );
 
   if (!hasSystemPermission) {
@@ -148,5 +161,5 @@ export async function changePermissions(
     ? { collection: collectionName, docId }
     : { collection: collectionName };
 
-  await modelPermission.updateOne(updateQuery, updatedPermission);
+  await modelPermission.updateOne(updateQuery, updatedPermission, { session });
 }

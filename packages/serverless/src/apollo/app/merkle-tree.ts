@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelMerkleTree } from '@zkdb/storage';
+import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName, indexNumber } from './common';
 import { TDatabaseRequest } from './database';
@@ -44,7 +44,9 @@ const getWitness = resolverWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
     const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
-    return merkleTreeService.getWitness(BigInt(args.index), new Date());
+    return withTransaction((session) =>
+      merkleTreeService.getWitness(BigInt(args.index), new Date(), { session })
+    );
   }
 );
 
@@ -52,7 +54,9 @@ const getNode = resolverWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
     const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
-    return merkleTreeService.getNode(args.level, args.index, new Date());
+    return withTransaction((session) =>
+      merkleTreeService.getNode(args.level, args.index, new Date(), { session })
+    );
   }
 );
 

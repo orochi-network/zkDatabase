@@ -1,4 +1,5 @@
 import { ModelCollection } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
 import { DocumentSchema } from '../types/schema';
 import { getCurrentTime } from '../../helper/common';
 import { Permissions } from '../types/permission';
@@ -12,7 +13,8 @@ export async function createCollectionMetadata(
   schema: DocumentSchema,
   permissions: Permissions,
   owner: string,
-  group: string
+  group: string,
+  session?: ClientSession
 ) {
   const permissionOwner = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionOwner)
@@ -50,7 +52,11 @@ export async function createCollectionMetadata(
     }
   }
   // Create index and collection
-  await new ModelCollection(databaseName, collectionName).index(indexKeys);
+  await new ModelCollection(databaseName, collectionName).index(indexKeys, {
+    session,
+  });
 
-  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef);
+  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef, {
+    session,
+  });
 }

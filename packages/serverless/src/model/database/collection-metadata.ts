@@ -1,5 +1,9 @@
-import { Document } from 'mongodb';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { Document, FindOptions } from 'mongodb';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import { ProvableTypeString } from '../../domain/common/schema';
 import { PermissionBasic } from '../../common/permission';
 
@@ -67,7 +71,8 @@ export type SchemaIndex<T> = {
 };
 
 export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
-  private static collectionName: string = zkDatabaseConstants.databaseCollections.schema;
+  private static collectionName: string =
+    zkDatabaseConstants.databaseCollections.schema;
 
   private static instances: { [key: string]: any } = {};
 
@@ -82,16 +87,25 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   }
 
   public static getInstance(databaseName: string): ModelCollectionMetadata {
-    if (typeof ModelCollectionMetadata.instances[databaseName] === 'undefined') {
-      ModelCollectionMetadata.instances[databaseName] = new ModelCollectionMetadata(databaseName);
+    if (
+      typeof ModelCollectionMetadata.instances[databaseName] === 'undefined'
+    ) {
+      ModelCollectionMetadata.instances[databaseName] =
+        new ModelCollectionMetadata(databaseName);
     }
     return ModelCollectionMetadata.instances[databaseName];
   }
 
-  public async getMetadata(collectionName: string): Promise<SchemaDefinition> {
-    return this.findOne({
-      collection: collectionName,
-    }) as any;
+  public async getMetadata(
+    collectionName: string,
+    options?: FindOptions
+  ): Promise<SchemaDefinition> {
+    return this.findOne(
+      {
+        collection: collectionName,
+      },
+      options
+    ) as any;
   }
 
   public static async init(databaseName: string) {

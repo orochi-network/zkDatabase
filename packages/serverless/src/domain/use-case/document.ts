@@ -1,4 +1,5 @@
 import { ModelSequencer } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
 import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
@@ -32,14 +33,16 @@ async function readDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  filter: FilterCriteria
+  filter: FilterCriteria,
+  session?: ClientSession
 ): Promise<Document | null> {
   if (
     !(await checkCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'read'
+      'read',
+      session
     ))
   ) {
     throw new Error(
@@ -49,7 +52,10 @@ async function readDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord = await modelDocument.findOne(parseQuery(filter));
+  const documentRecord = await modelDocument.findOne(
+    parseQuery(filter),
+    session
+  );
 
   if (!documentRecord) {
     return null;
@@ -60,7 +66,8 @@ async function readDocument(
     collectionName,
     actor,
     documentRecord._id,
-    'read'
+    'read',
+    session
   );
 
   if (!hasReadPermission) {
@@ -85,14 +92,16 @@ async function createDocument(
   collectionName: string,
   actor: string,
   document: Document,
-  permissions: Permissions
+  permissions: Permissions,
+  session?: ClientSession
 ) {
   if (
     !(await checkCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'create'
+      'create',
+      session
     ))
   ) {
     throw new Error(
@@ -123,18 +132,23 @@ async function createDocument(
   );
 
   // 1. Save document
-  const insertResult = await modelDocument.insertDocument(documentRecord);
+  const insertResult = await modelDocument.insertDocument(
+    documentRecord,
+    session
+  );
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const merkleIndex = await sequencer.getNextValue('merkle-index');
+  const merkleIndex = await sequencer.getNextValue('merkle-index', session);
 
   // 3. Create Metadata
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
 
-  const documentSchema = await modelSchema.getMetadata(collectionName);
+  const documentSchema = await modelSchema.getMetadata(collectionName, {
+    session,
+  });
 
   const { permissionOwner, permissionGroup, permissionOther } = documentSchema;
 
@@ -165,7 +179,8 @@ async function createDocument(
     databaseName,
     collectionName,
     insertResult.insertedId,
-    document
+    document,
+    session
   );
 
   return witness;
@@ -176,14 +191,16 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  update: Document
+  update: Document,
+  session?: ClientSession
 ) {
   if (
     !(await checkCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'write'
+      'write',
+      session
     ))
   ) {
     throw new Error(
@@ -203,9 +220,13 @@ async function updateDocument(
     };
   });
 
-  const updateResult = await modelDocument.collection.updateMany(filter, {
-    $set: documentRecord,
-  });
+  const updateResult = await modelDocument.collection.updateMany(
+    filter,
+    {
+      $set: documentRecord,
+    },
+    { session }
+  );
 
   // We need to do this to make sure that only 1 record
   if (
@@ -215,7 +236,7 @@ async function updateDocument(
     throw new Error('Invalid update, modified count not equal to 1');
   }
 
-  const oldDocumentRecord = await modelDocument.findOne(filter);
+  const oldDocumentRecord = await modelDocument.findOne(filter, session);
 
   if (
     !(await checkDocumentPermission(
@@ -223,7 +244,8 @@ async function updateDocument(
       collectionName,
       actor,
       oldDocumentRecord!._id,
-      'write'
+      'write',
+      session
     ))
   ) {
     throw new Error(
@@ -231,21 +253,23 @@ async function updateDocument(
     );
   }
 
-  await modelDocument.updateDocument(filter, documentRecord);
+  await modelDocument.updateDocument(filter, documentRecord, session);
 }
 
 async function deleteDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  filter: FilterCriteria
+  filter: FilterCriteria,
+  session?: ClientSession
 ) {
   if (
     !(await checkCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'delete'
+      'delete',
+      session
     ))
   ) {
     throw new Error(
@@ -255,7 +279,7 @@ async function deleteDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const document = await modelDocument.findOne(filter);
+  const document = await modelDocument.findOne(filter, session);
 
   if (!document) {
     throw Error('Document does not exist');
@@ -267,7 +291,8 @@ async function deleteDocument(
       collectionName,
       actor,
       document._id,
-      'delete'
+      'delete',
+      session
     ))
   ) {
     throw new Error(
@@ -278,14 +303,15 @@ async function deleteDocument(
   const witness = await proveDeleteDocument(
     databaseName,
     collectionName,
-    document._id
+    document._id,
+    session
   );
 
-  await modelDocument.drop({ _id: document._id });
+  await modelDocument.drop({ _id: document._id }, session);
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
-  await modelDocumentMetadata.deleteOne({ docId: document._id });
+  await modelDocumentMetadata.deleteOne({ docId: document._id }, { session });
 
   return witness;
 }

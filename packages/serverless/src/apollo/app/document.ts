@@ -1,11 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { Filter } from 'mongodb';
+import { withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
-import {
-  DocumentRecord
-} from '../../model/abstract/document';
+import { DocumentRecord } from '../../model/abstract/document';
 import {
   collectionName,
   databaseName,
@@ -120,12 +119,15 @@ extend type Mutation {
 const documentFind = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
-    return readDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentQuery
-    )
+    return withTransaction((session) =>
+      readDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        session
+      )
+    );
   }
 );
 
@@ -133,12 +135,15 @@ const documentFind = resolverWrapper(
 const documentCreate = resolverWrapper(
   DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx: AppContext) => {
-    return createDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentRecord as any,
-      args.documentPermission
+    return withTransaction((session) =>
+      createDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentRecord as any,
+        args.documentPermission,
+        session
+      )
     );
   }
 );
@@ -156,12 +161,15 @@ const documentUpdate = resolverWrapper(
         );
     }
 
-    return updateDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentQuery,
-      args.documentRecord
+    return withTransaction((session) =>
+      updateDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        args.documentRecord,
+        session
+      )
     );
   }
 );
@@ -169,11 +177,14 @@ const documentUpdate = resolverWrapper(
 const documentDrop = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
-    return deleteDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentQuery
+    return withTransaction((session) =>
+      deleteDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        session
+      )
     );
   }
 );

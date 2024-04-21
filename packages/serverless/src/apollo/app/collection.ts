@@ -1,12 +1,12 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelDatabase } from '@zkdb/storage';
+import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import {
   databaseName,
   collectionName,
   permissionDetail,
   groupName,
-  groupDescription
+  groupDescription,
 } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
@@ -24,7 +24,7 @@ export const schemaField = Joi.object({
     .valid(...O1JS_VALID_TYPE)
     .required(),
   indexed: Joi.boolean(),
-})
+});
 
 export const schemaFields = Joi.array().items(schemaField);
 
@@ -33,8 +33,8 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  groupName: string,
-  groupDescription: string,
+  groupName: string;
+  groupDescription: string;
   schema: SchemaData;
   permissions: PermissionsData;
 };
@@ -107,13 +107,17 @@ const collectionList = resolverWrapper(
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
-    return createCollection(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.groupName,
-      args.schema,
-      args.permissions
+    return withTransaction((session) =>
+      createCollection(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.groupName,
+        args.schema,
+        args.permissions,
+        'description',
+        session
+      )
     );
   }
 );

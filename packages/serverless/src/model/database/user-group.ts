@@ -1,5 +1,9 @@
-import { ObjectId, Document } from 'mongodb';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ObjectId, Document, FindOptions } from 'mongodb';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import ModelGroup from './group';
 
 export interface DocumentUserGroup extends Document {
@@ -10,7 +14,8 @@ export interface DocumentUserGroup extends Document {
 }
 
 export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
-  private static collectionName = zkDatabaseConstants.databaseCollections.userGroup;
+  private static collectionName =
+    zkDatabaseConstants.databaseCollections.userGroup;
 
   constructor(databaseName: string) {
     super(databaseName, ModelUserGroup.collectionName);
@@ -29,11 +34,17 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     return matchedRecord === 1;
   }
 
-  public async listGroupByUserName(userName: string): Promise<string[]> {
+  public async listGroupByUserName(
+    userName: string,
+    options?: FindOptions
+  ): Promise<string[]> {
     const modelGroup = new ModelGroup(this.databaseName!);
-    const groupsList = await modelGroup.find({
-      _id: { $in: await this.listGroupId(userName) },
-    });
+    const groupsList = await modelGroup.find(
+      {
+        _id: { $in: await this.listGroupId(userName) },
+      },
+      options
+    );
     return groupsList.map((group) => group.groupName!).toArray();
   }
 

@@ -1,4 +1,5 @@
 import Joi from 'joi';
+import { ClientSession } from 'mongodb';
 import logger from '../../helper/logger';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
 import {
@@ -37,10 +38,11 @@ if (schemaVerification.size === 0) {
 export async function validateDocumentSchema(
   databaseName: string,
   collectionName: string,
-  document: Document
+  document: Document,
+  session?: ClientSession
 ): Promise<boolean> {
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName);
+  const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
     throw new Error('Schema not found');
@@ -96,14 +98,15 @@ export async function validateDocumentSchema(
 export async function buildSchema(
   databaseName: string,
   collectionName: string,
-  document: Document
+  document: Document,
+  session?: ClientSession
 ) {
   if (!(await validateDocumentSchema(databaseName, collectionName, document))) {
     throw new Error('Invalid schema');
   }
 
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName);
+  const schema = await modelSchema.getMetadata(collectionName, { session });
 
   const encodedDocument: SchemaEncoded = [];
   const structType: { [key: string]: any } = {};

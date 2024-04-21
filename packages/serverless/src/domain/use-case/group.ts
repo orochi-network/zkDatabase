@@ -4,11 +4,12 @@ import ModelUserGroup from '../../model/database/user-group';
 
 async function isGroupExist(
   databaseName: string,
-  groupName: string
+  groupName: string,
+  session?: ClientSession
 ): Promise<boolean> {
   const modelGroup = new ModelGroup(databaseName);
 
-  const group = await modelGroup.findGroup(groupName);
+  const group = await modelGroup.findGroup(groupName, session);
 
   return group != null;
 }
@@ -20,7 +21,7 @@ async function createGroup(
   groupDescription?: string,
   session?: ClientSession
 ): Promise<boolean> {
-  if (await isGroupExist(databaseName, groupName)) {
+  if (await isGroupExist(databaseName, groupName, session)) {
     throw Error(
       `Group ${groupName} is already exist for database ${databaseName}`
     );
@@ -41,10 +42,13 @@ async function createGroup(
 async function checkUserGroupMembership(
   databaseName: string,
   actor: string,
-  group: string
+  group: string,
+  session?: ClientSession
 ): Promise<boolean> {
   const modelUserGroup = new ModelUserGroup(databaseName);
-  const actorGroups = await modelUserGroup.listGroupByUserName(actor);
+  const actorGroups = await modelUserGroup.listGroupByUserName(actor, {
+    session,
+  });
   return actorGroups.includes(group);
 }
 
