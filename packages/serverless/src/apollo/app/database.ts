@@ -8,6 +8,9 @@ import { AppContext } from '../../common/types';
 
 export type TDatabaseRequest = {
   databaseName: string;
+};
+
+export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
 
@@ -15,7 +18,7 @@ export type TFindIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
-const DatabaseRequest = Joi.object<TDatabaseRequest>({
+const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().required()
 });
@@ -53,8 +56,8 @@ const dbList = async () =>
 
 // Mutation
 const dbCreate = resolverWrapper(
-  DatabaseRequest,
-  async (_root: unknown, args: TDatabaseRequest) =>
+  DatabaseCreateRequest,
+  async (_root: unknown, args: TDatabaseCreateRequest) =>
     createDatabase(args.databaseName, args.merkleHeight)
 );
 
