@@ -7,8 +7,8 @@ export interface ListPermissionResponse {
 }
 
 export const PERMISSION_LIST_QUERY = `
-  query PermissionList($databaseName: String!, $collection: String!, $docId: String) {
-    permissionList(databaseName: $databaseName, collection: $collection, docId: $docId) {
+  query PermissionList($databaseName: String!, $collectionName: String!, $docId: String) {
+    permissionList(databaseName: $databaseName, collectionName: $collectionName, docId: $docId) {
       userName
       groupName
       permissionOwner {
@@ -87,17 +87,21 @@ export const PERMISSION_OWN_MUTATION = `
 
 export const listPermissions = async (
   databaseName: string,
-  collection: string,
+  collectionName: string,
   docId: string | undefined
 ): Promise<ListPermissionResponse> => {
-  const variables = { databaseName, collection, docId };
+  const variables = { databaseName, collectionName, docId };
   try {
     const response = await query<{ permissionList: ListPermissionResponse }>(
       PERMISSION_LIST_QUERY,
       variables
     );
+
+    console.log('response', response)
+
     const { permissionList } = response;
 
+    console.log('permissionList', permissionList)
     return {
       ...permissionList,
     };

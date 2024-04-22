@@ -78,7 +78,7 @@ type Permission {
 extend type Query {
   permissionList(
     databaseName: String!
-    collection: String!
+    collectionName: String!
     docId: String
   ): Permission
 }
@@ -94,7 +94,7 @@ extend type Mutation {
 
   permissionOwn(
     databaseName: String!
-    collection: String!
+    collectionName: String!
     docId: String
     grouping: OwnershipGroup!
     newOwner: String!
@@ -111,6 +111,7 @@ const permissionList = resolverWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionRequest, ctx: AppContext) => {
+    console.log('doc id', args.docId);
     return withTransaction((session) =>
       readMetadata(
         args.databaseName,
