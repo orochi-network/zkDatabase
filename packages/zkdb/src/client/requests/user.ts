@@ -84,7 +84,6 @@ export const USER_SIGN_IN_DATA_QUERY = `
 export const signIn = async (
   signature: SignatureProofData
 ): Promise<UserSignInResponse> => {
-  console.log('sign in')
   try {
     const variables = { proof: signature };
     const response = await mutate<{ userSignIn: UserSignInResponse }>(
