@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { Filter } from 'mongodb';
 import { withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
@@ -8,8 +7,8 @@ import { DocumentRecord } from '../../model/abstract/document';
 import {
   collectionName,
   databaseName,
+  documentField,
   permissionDetail,
-  permissionRecord,
 } from './common';
 import {
   createDocument,
@@ -19,6 +18,7 @@ import {
 } from '../../domain/use-case/document';
 import { AppContext } from '../../common/types';
 import { PermissionsData } from '../types/permission';
+import { TDocumentFields } from '../types/document';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -29,8 +29,10 @@ export type TDocumentCreateRequest = TCollectionRequest & {
   documentPermission: PermissionsData;
 };
 
-export type TDocumentUpdateRequest = TCollectionRequest &
-  Filter<DocumentRecord>;
+export type TDocumentUpdateRequest = TCollectionRequest & {
+  documentQuery: { [key: string]: string };
+  documentRecord: TDocumentFields;
+};
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -49,7 +51,7 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
-  documentRecord: Joi.object(),
+  documentRecord: Joi.required(),
 });
 
 export const typeDefsDocument = `#graphql
@@ -173,13 +175,11 @@ const documentCreate = resolverWrapper(
 const documentUpdate = resolverWrapper(
   DOCUMENT_UPDATE_REQUEST,
   async (_root: unknown, args: TDocumentUpdateRequest, ctx: AppContext) => {
-    const keys = Object.keys(args.documentRecord);
-    for (let i = 0; i < keys.length; i += 1) {
-      const key = keys[i];
-      const { error } = permissionRecord.validate(args.documentRecord[key]);
+    for (let i = 0; i < args.documentRecord.length; i += 1) {
+      const { error } = documentField.validate(args.documentRecord[i]);
       if (error)
         throw new Error(
-          `PermissionRecord ${key} is not valid ${error.message}`
+          `DocumentRecord ${args.documentRecord[i].name} is not valid ${error.message}`
         );
     }
 
@@ -189,7 +189,7 @@ const documentUpdate = resolverWrapper(
         args.collectionName,
         ctx.userName,
         args.documentQuery,
-        args.documentRecord,
+        args.documentRecord as any,
         session
       )
     );
