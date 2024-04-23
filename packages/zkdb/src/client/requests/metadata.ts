@@ -15,21 +15,21 @@ export const PERMISSION_LIST_QUERY = `
         read
         write
         delete
-        insert
+        create
         system
       }
       permissionGroup {
         read
         write
         delete
-        insert
+        create
         system
       }
       permissionOther {
         read
         write
         delete
-        insert
+        create
         system
       }
     }
@@ -57,7 +57,7 @@ export const PERMISSION_SET_MUTATION = `
         read
         write
         delete
-        insert
+        create
         system
       }
     }
@@ -97,13 +97,10 @@ export const listPermissions = async (
       variables
     );
 
-    console.log('response', response)
-
     const { permissionList } = response;
 
-    console.log('permissionList', permissionList)
     return {
-      ...permissionList,
+      permissions: permissionList as any
     };
   } catch (error) {
     throw new Error('ListPermissions failed: ' + error);
