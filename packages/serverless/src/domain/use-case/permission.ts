@@ -9,7 +9,8 @@ import {
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission';
 import { checkUserGroupMembership } from './group';
-import { PermissionGroup, Permissions } from '../types/permission';
+import { PermissionGroup } from '../types/permission';
+import logger from '../../helper/logger';
 
 async function fetchPermissionDetails(
   databaseName: string,
@@ -146,20 +147,37 @@ export async function changePermissions(
     ? new ModelDocumentMetadata(databaseName)
     : ModelCollectionMetadata.getInstance(databaseName);
 
-  let updatedPermission: Permissions = {
-    permissionOwner: {
-      ...permissions,
-      system: group === 'Other' ? false : permissions.system,
-    },
-  };
+  let update: any;
 
-  if (group === 'Group') {
-    updatedPermission = { permissionGroup: permissions };
+  if (group === 'User') {
+    update = {
+      permissionOwner: PermissionBinary.toBinaryPermission({
+        ...permissions,
+      }),
+    };
+  } else if (group === 'Group') {
+    update = {
+      permissionGroup: PermissionBinary.toBinaryPermission(permissions),
+    };
+  } else {
+    update = {
+      permissionOther: PermissionBinary.toBinaryPermission({
+        ...permissions,
+        system: false,
+      }),
+    };
   }
 
-  const updateQuery = docId
-    ? { collection: collectionName, docId }
-    : { collection: collectionName };
+  const updateQuery = { collection: collectionName, ...(docId && { docId }) };
 
-  await modelPermission.updateOne(updateQuery, updatedPermission, { session });
+  try {
+    await modelPermission.updateMany(
+      updateQuery,
+      { $set: update },
+      { session }
+    );
+  } catch (error) {
+    logger.error('Failed to update permissions:', error);
+    throw new Error('Error updating permissions.');
+  }
 }
