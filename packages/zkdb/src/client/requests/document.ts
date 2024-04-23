@@ -18,20 +18,20 @@ export interface PermissionDetail {
 }
 
 export interface FindDocumentResponse {
-  _id: string,
+  _id: string;
   document: DocumentEncoded;
 }
 
 export interface CreateDocumentResponse {
-  documentCreate: MerkleWitness;
+  witness: MerkleWitness;
 }
 
 export interface UpdateDocumentResponse {
-  documentUpdate: MerkleWitness;
+  witness: MerkleWitness;
 }
 
 export interface DropDocumentResponse {
-  merkleWitness: MerkleWitness;
+  witness: MerkleWitness;
 }
 
 export const DOCUMENT_FIND_QUERY = `
@@ -78,8 +78,8 @@ export const DOCUMENT_UPDATE_MUTATION = `
   mutation DocumentUpdate(
     $databaseName: String!,
     $collectionName: String!,
-    $documentQuery: JSON,
-    $documentRecord: [DocumentRecordInput!!]!
+    $documentQuery: JSON!,
+    $documentRecord: [DocumentRecordInput!]!
   ) {
     documentUpdate(
       databaseName: $databaseName,
@@ -94,12 +94,12 @@ export const DOCUMENT_UPDATE_MUTATION = `
 `;
 
 export const DOCUMENT_DROP_MUTATION = `
-  mutation DocumentUpdate(
+  mutation DocumentDrop(
     $databaseName: String!,
     $collectionName: String!,
-    $documentQuery: JSON
+    $documentQuery: JSON!
   ) {
-    documentUpdate(
+    documentDrop(
       databaseName: $databaseName,
       collectionName: $collectionName,
       documentQuery: $documentQuery
@@ -118,7 +118,7 @@ export const readDocument = async (
   const variables = {
     databaseName,
     collectionName,
-    documentQuery
+    documentQuery,
   };
   try {
     const response = await query<{ documentFind: FindDocumentResponse }>(
@@ -147,14 +147,26 @@ export const createDocument = async (
     documentRecord,
     documentPermission,
   };
-  return mutate<CreateDocumentResponse>(DOCUMENT_CREATE_MUTATION, variables);
+  try {
+    const response = await mutate<{ documentCreate: CreateDocumentResponse }>(
+      DOCUMENT_CREATE_MUTATION,
+      variables
+    );
+    const { documentCreate } = response;
+
+    return {
+      witness: documentCreate as any,
+    };
+  } catch (error) {
+    throw new Error('createDocument failed: ' + error);
+  }
 };
 
 export const updateDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: any,
-  documentRecord: any
+  documentQuery: JSON,
+  documentRecord: DocumentEncoded
 ): Promise<UpdateDocumentResponse> => {
   const variables = {
     databaseName,
@@ -162,18 +174,42 @@ export const updateDocument = async (
     documentQuery,
     documentRecord,
   };
-  return mutate<UpdateDocumentResponse>(DOCUMENT_UPDATE_MUTATION, variables);
+  try {
+    const response = await mutate<{ documentUpdate: UpdateDocumentResponse }>(
+      DOCUMENT_UPDATE_MUTATION,
+      variables
+    );
+    const { documentUpdate } = response;
+
+    return {
+      witness: documentUpdate as any,
+    };
+  } catch (error) {
+    throw new Error('updateDocument failed: ' + error);
+  }
 };
 
 export const dropDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: any
+  documentQuery: JSON
 ): Promise<DropDocumentResponse> => {
   const variables = {
     databaseName,
     collectionName,
     documentQuery,
   };
-  return mutate<DropDocumentResponse>(DOCUMENT_DROP_MUTATION, variables);
+  try {
+    const response = await mutate<{ documentDrop: DropDocumentResponse }>(
+      DOCUMENT_DROP_MUTATION,
+      variables
+    );
+    const { documentDrop } = response;
+
+    return {
+      witness: documentDrop as any,
+    };
+  } catch (error) {
+    throw new Error('dropDocument failed: ' + error);
+  }
 };
