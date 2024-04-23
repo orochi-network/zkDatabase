@@ -14,13 +14,13 @@ export type PermissionRecord = {
 
 export type PermissionType = keyof PermissionRecord;
 
-export const ZKDATABASE_NO_PERMISSION_RECORD = {
+export const ZKDATABASE_NO_PERMISSION_RECORD = Object.freeze({
   read: false,
   write: false,
   delete: false,
   create: false,
   system: false,
-};
+});
 
 export const ZKDATABASE_NO_PERMISSION_BIN = 0;
 
@@ -141,7 +141,7 @@ export class PermissionBinary {
   public static fromBinaryPermission(
     permissionBinary: number
   ): PermissionRecord {
-    const permission: PermissionRecord = ZKDATABASE_NO_PERMISSION_RECORD;
+    const permission: PermissionRecord = { ...ZKDATABASE_NO_PERMISSION_RECORD };
     for (let i = 0; i < ZKDATABASE_ALL_PERMISSION.length; i += 1) {
       permission[ZKDATABASE_ALL_PERMISSION[i]] =
         (permissionBinary & (1 << i)) !== 0;
