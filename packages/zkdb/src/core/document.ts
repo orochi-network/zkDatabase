@@ -23,7 +23,7 @@ export default class Document {
   private _id: string | undefined;
 
   get id() {
-    return this._id
+    return this._id;
   }
 
   constructor(
@@ -41,9 +41,14 @@ export default class Document {
       new (..._args: any): InstanceType<T>;
       deserialize: (_doc: DocumentEncoded) => any;
     },
-  >(filter: FilterCriteria, documentSchema: T): Promise<InstanceType<T> | null> {
-    const response = (
-      await readDocument(this.databaseName, this.collectionName, filter)
+  >(
+    filter: FilterCriteria,
+    documentSchema: T
+  ): Promise<InstanceType<T> | null> {
+    const response = await readDocument(
+      this.databaseName,
+      this.collectionName,
+      filter
     );
 
     if (Object.keys(response).length === 0) {
@@ -53,7 +58,7 @@ export default class Document {
     if (response.document === undefined) {
       return null;
     }
-    
+
     this._id = response._id;
 
     return new documentSchema(documentSchema.deserialize(response.document));
@@ -63,19 +68,28 @@ export default class Document {
     documentInstance: A,
     permissions: Permissions = {}
   ): Promise<MerkleWitness> {
-    return (
-      await createDocument(
+    try {
+      const response = await createDocument(
         this.databaseName,
         this.collectionName,
         documentInstance.serialize(),
         permissions
-      )
-    ).documentCreate.map((witness) => {
-      return {
-        isLeft: witness.isLeft,
-        sibling: Field(witness.sibling),
-      };
-    });
+      );
+
+      if (!response || !response.witness) {
+        throw new Error('Invalid or missing witness data');
+      }
+
+      return response.witness.map((witness) => {
+        return {
+          isLeft: witness.isLeft,
+          sibling: Field(witness.sibling),
+        };
+      });
+    } catch (error) {
+      console.error('Failed to create document:', error);
+      throw error;
+    }
   }
 
   public async update<A extends Schema & { serialize: () => DocumentEncoded }>(
@@ -86,10 +100,10 @@ export default class Document {
       await updateDocument(
         this.databaseName,
         this.collectionName,
-        filter,
+        filter as any,
         documentInstance.serialize()
       )
-    ).documentUpdate.map((witness) => {
+    ).witness.map((witness) => {
       return {
         isLeft: witness.isLeft,
         sibling: Field(witness.sibling),
@@ -99,8 +113,8 @@ export default class Document {
 
   public async remove(filter: FilterCriteria): Promise<MerkleWitness> {
     return (
-      await dropDocument(this.databaseName, this.collectionName, filter)
-    ).merkleWitness.map((witness) => {
+      await dropDocument(this.databaseName, this.collectionName, filter as any)
+    ).witness.map((witness) => {
       return {
         isLeft: witness.isLeft,
         sibling: Field(witness.sibling),
