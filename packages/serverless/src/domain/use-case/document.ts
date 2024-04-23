@@ -8,7 +8,11 @@ import {
   checkDocumentPermission,
   checkCollectionPermission,
 } from './permission';
-import { proveCreateDocument, proveDeleteDocument } from './prover';
+import {
+  proveCreateDocument,
+  proveDeleteDocument,
+  proveUpdateDocument,
+} from './prover';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import {
   ZKDATABASE_GROUP_SYSTEM,
@@ -174,6 +178,8 @@ async function createDocument(
       permissionOwner: documentPermissionOwner,
       permissionGroup: documentPermissionGroup,
       permissionOther: documentPermissionOther,
+      owner: actor,
+      group: documentSchema.group,
       createdAt: getCurrentTime(),
       updatedAt: getCurrentTime(),
     },
@@ -226,8 +232,13 @@ async function updateDocument(
     };
   });
 
+  const oldDocumentRecord = await modelDocument.findOne(
+    parseQuery(filter),
+    session
+  );
+
   const updateResult = await modelDocument.collection.updateMany(
-    filter,
+    parseQuery(filter),
     {
       $set: documentRecord,
     },
@@ -241,8 +252,6 @@ async function updateDocument(
   ) {
     throw new Error('Invalid update, modified count not equal to 1');
   }
-
-  const oldDocumentRecord = await modelDocument.findOne(filter, session);
 
   if (
     !(await checkDocumentPermission(
@@ -259,7 +268,21 @@ async function updateDocument(
     );
   }
 
-  await modelDocument.updateDocument(filter, documentRecord, session);
+  await modelDocument.updateDocument(
+    parseQuery(filter),
+    documentRecord,
+    session
+  );
+
+  const witness = await proveUpdateDocument(
+    databaseName,
+    collectionName,
+    oldDocumentRecord!._id,
+    update,
+    session
+  );
+
+  return witness;
 }
 
 async function deleteDocument(
@@ -285,7 +308,7 @@ async function deleteDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const document = await modelDocument.findOne(filter, session);
+  const document = await modelDocument.findOne(parseQuery(filter), session);
 
   if (!document) {
     throw Error('Document does not exist');
