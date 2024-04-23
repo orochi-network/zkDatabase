@@ -2,6 +2,7 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ObjectId } from 'mongodb';
 import { withTransaction } from '@zkdb/storage';
+import { GraphQLError } from 'graphql';
 import resolverWrapper from '../validation';
 import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
@@ -54,7 +55,7 @@ input PermissionInput {
   read: Boolean
   write: Boolean
   delete: Boolean
-  insert: Boolean
+  create: Boolean
   system: Boolean
 }
 
@@ -62,7 +63,7 @@ type PermissionRecord {
   read: Boolean
   write: Boolean
   delete: Boolean
-  insert: Boolean
+  create: Boolean
   system: Boolean
 }
 
@@ -111,8 +112,7 @@ const permissionList = resolverWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionRequest, ctx: AppContext) => {
-    console.log('doc id', args.docId);
-    return withTransaction((session) =>
+    const metadata = await withTransaction((session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -122,6 +122,19 @@ const permissionList = resolverWrapper(
         session
       )
     );
+
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
+    }
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 
@@ -138,7 +151,7 @@ const permissionSet = resolverWrapper(
       read: Joi.boolean(),
       write: Joi.boolean(),
       delete: Joi.boolean(),
-      insert: Joi.boolean(),
+      create: Joi.boolean(),
       system: Joi.boolean(),
     }),
   }),
@@ -155,13 +168,29 @@ const permissionSet = resolverWrapper(
       )
     );
 
-    return readMetadata(
-      args.databaseName,
-      args.collectionName,
-      args.docId ? new ObjectId(args.docId) : null,
-      context.userName,
-      true
+    const metadata = await withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        context.userName,
+        true,
+        session
+      )
     );
+
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
+    }
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 
@@ -199,13 +228,31 @@ const permissionOwn = resolverWrapper(
       );
     }
 
-    return readMetadata(
-      args.databaseName,
-      args.collectionName,
-      args.docId ? new ObjectId(args.docId) : null,
-      context.userName,
-      true
+    const metadata = await withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        context.userName,
+        true,
+        session
+      )
     );
+
+    console.log('metadata', metadata)
+
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
+    }
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 
