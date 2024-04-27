@@ -4,99 +4,79 @@
 
 ## Introduction
 
-Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase uses a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to ensure the correctness of data in a verifiable manner. With zkDatabase, it allows developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
+Welcome to the future of decentralized application development with **zkDatabase**. In a world where sluggish client-side operations often hinder innovation, zkDatabase is set to revolutionize the landscape. As pioneers in the field, we understand the challenges of slow development speeds and are dedicated to transforming them with our innovative solutions. **zkDatabase as a service** is more than just an enhancement; it represents a significant leap forward in ensuring **data integrity and ease** of use, propelling the pace of development forward and setting new standards in the industry.
+
+Leveraging our deep expertise, we are addressing one of the **most critical challenges** faced by decentralized databases: slow client-side proving and data retrieval. With **zkDatabase as a service**, we provide a platform that allows users to offload complex tasks, ensuring **data privacy and verifiability**. This not only enhances the user experience but also accelerates the development of zkApps, paving the way for their broader adoption and reshaping the future of decentralized applications.
 
 **It's time for provable data.**
 
 ## Problem Statement
 
-### Single point of failure
+### Cost and Complexity
 
-The current off-chain storage approach is plagued by a single point of failure issue, where data is not replicated, making it impossible to recover from faults.
+Small and middle-sized zkApps may find the costs prohibitive when considering the development of their own Layer 2 solutions. However, zkDatabase as a Service (AaS) can offer significant long-term cost savings through techniques like replication sets or sharding. Furthermore, the complexity associated with managing interactions between blockchain systems and proof systems can be significantly reduced through user-friendly APIs that abstract away the underlying details.
 
+### Scalability and Performance
 
-_For instance, a centralized cloud storage provider experiences a downtime or data loss. This can result in a major loss of data for users who solely rely on this provider. Additionally, if the provider's backup and recovery systems are not robust enough, the data may be permanently lost. This can be a critical issue for businesses and organizations that store sensitive and important data._
+Although scalability remains a challenge within Web3 technologies, zkDatabase AaS has the potential to integrate traditional scalability solutions with the unique properties of Zero-Knowledge Proofs. This combination maintains the performance benefits of centralized systems while incorporating the verifiable and trustless properties of ZKPs.
 
-### Accessibility
+### Web3 Potential, Web2 Reality
 
-Achieving off-chain storage through ZKP and Merkle trees can ensure the immutability of the data, but it may limit accessibility to the public. Despite the data being public, not everyone can access it.
+The vision of Web3 promises a decentralized and secure infrastructure, which holds immense potential. However, the current state of Web3 infrastructure is often complex and incomplete, making it daunting and impractical for many developers and users to adopt and implement effectively.
 
-_For instance you have a public records need for everyone to audit but the data itself isn't available. Only merkle root was committed to public blockchain, we need to improve this by allowing the public data to be synced and accessible._
+### The limitation of client side proving
 
-### Inconsistent data structure
+Client-side proving is undoubtedly a future milestone for zkApp development; however, it currently faces substantial limitations in practical implementation, such as issues with hardware acceleration, parallelization capabilities, and memory requirements.
 
-Raw data needs to be structured and sorted to be useful. However, leaving this task to individual zkApps may result in inconsistent and unextendable data structures.
+### Lack of usabilities and toolkit
 
-_To ensure consistency and extendability of the data structure, it is important to have a standardized approach to structuring and sorting the data. When every zkApp handles this individually, it can lead to fragmentation and inconsistency of the data structure, making it challenging to manage and extend the database over time._
+In the pursuit of decentralization and the technological edge, many projects overlook the critical aspect of usability. This oversight makes it challenging to onboard new developers to zkApp development in the short term. A focused effort on enhancing the usability and providing comprehensive toolkits and documentation is essential for bridging this gap, ensuring developers can efficiently leverage the full potential of zkApps and Zero-Knowledge Proofs in their applications.
 
-### Lack of indexing
+### Lack of Secure Authentication in Decentralized Systems
 
-zkApps currently rely on key-value lookups and lack the ability to index structured data, which limits the potential of off-chain data storage and zkApps' capabilities.
+In the realm of decentralized applications (dApps) and databases, ensuring secure and reliable user authentication is paramount. Traditional authentication methods often fall short in providing the necessary security and privacy for users in a decentralized environment. Without a robust authentication mechanism like Public Key Authentication, systems are vulnerable to a range of security threats, including:
 
-_This limitation leads to inefficient data retrieval and reduces the overall efficiency of the application. Without proper indexing, zkApps struggle to manage large amounts of data, which can result in slow and inefficient data processing. Additionally, the lack of indexing makes it challenging to perform complex queries, limiting the types of analyses that can be performed on the data. As a result, there is a need for a more sophisticated storage system that can provide indexing capabilities to allow for more efficient data retrieval and analysis._
+1. **Man-in-the-Middle Attacks**: Attackers can intercept and manipulate communication between users and the system, leading to potential data breaches and unauthorized access.
 
-### Unextendibility
+2. **Replay Attacks**: Without proper authentication, attackers can reuse valid data transmission to gain unauthorized access or perform unauthorized actions.
 
-Managing a database involves not only ensuring its functionality but also evolving it to meet the changing demands of a business. There is no single tool that can entirely solve this issue.
+3. **Phishing Attacks**: Users can be tricked into revealing sensitive information, such as passwords, which can be exploited in the absence of a secure authentication method.
 
-_Maintaining a database is an ongoing process that requires constant attention as business needs change and evolve. However, there is no one-size-fits-all solution to evolving and adapting a database to meet changing demands, leading businesses to rely on a combination of tools and manual effort for effective management._
-
-### The overhead in development
-
-The overhead of managing off-chain and on-chain states slows down development and contributes to data fractionalization.
-
-_Managing off-chain and on-chain states can be complex and time-consuming, leading to a slowdown in the development process and data fractionalization, where data is divided and spread across multiple locations, making it difficult to maintain consistency and accuracy._
+4. **Impersonation**: Without Public Key Authentication, it's challenging to verify the identity of users, leading to risks of impersonation and fraudulent activities.
 
 ### Inconvenient data management
 
 Manual data management can be time-consuming and error-prone, making it difficult to identify and fix errors that could have significant consequences for a project or business.
 
-_Manual data management is time-consuming, error-prone, and inefficient. The complexity of modern data systems and the need for precise organization and management make manual data management a challenging task, which may result in severe consequences for a project or business if errors go unnoticed._
-
 ## Solution
 
 <p align="center">
-    <img src="./assets/zkdatabase-architecture.jpg" alt="Zero-Knowledge Database architecture">
+    <img src="./assets/zkdatabase-ass-architecture.jpg" alt="Zero-Knowledge Database architecture">
 </p>
 
-### Distributed storage engine
+### zkDatabase in serverless fashion
 
-To prevent single point failure and ensure the availability of data, a distributed storage engine will be exploited. This engine will enable anyone with a replica of the data to reconstruct the database and its Merkle tree, ensuring that recovery from faults is possible.
+zkDatabase manages the underlying infrastructure, including servers, storage, networking and proof generating. This frees developers from the burden of managing and maintaining their own infrastructure, allowing them to focus on building their applications.
 
+### Scaling Decentralized Applications with zkDatabase AaaS
 
-_The distributed storage engine will provide redundancy and prevent data loss in the event of a single node failure. It also enables users to access and update data from any location, improving accessibility. Additionally, the use of Merkle trees allows for efficient verification of data integrity, ensuring that any alterations or inconsistencies can be easily identified and corrected. This feature enhances the security of the data, making it less susceptible to tampering or unauthorized access. Overall, the use of a distributed storage engine provides a reliable and secure way to manage and store data._
+zkDatabase AaaS leverages traditional scalability solutions and Zero-Knowledge Proof (ZKP) properties to maintain the performance advantages of centralized systems while ensuring verifiable security.
 
-### Cryptographic authorization & encryption
+### Bridging Web3 Potential and Web2 Reality with zkDatabase
 
-Accessible to the public will be all public data while private data will be encrypted and only accessible through authorization.
+zkDatabase aims to bridge the gap between Web3's potential and Web2's reality by providing a more accessible and user-friendly platform for decentralized application development.
 
-_To ensure the security and privacy of private data, cryptographic authorization and encryption will be employed. This means that only authorized individuals will be able to access private data, and all communication and data exchange will be protected through encryption. Public data, on the other hand, will be freely accessible to anyone who needs it. This approach ensures that sensitive information is kept secure and only accessible to authorized parties, while still allowing for open access to non-sensitive information._
+### Overcoming Client-Side Proving Limitations with zkDatabase
 
-### BSON document
+zkDatabase addresses these limitations by offloading some of the proving responsibilities to the server-side, reducing the computational burden on the client-side.
 
-To maintain the consistency of the database, a predefined schema must be enforced using BSON documents to ensure that all data conforms to the same structure.
+### Enhancing Usability and Toolkits for zkApp Development with zkDatabase
 
-_The use of BSON documents to enforce a predefined schema ensures that all data adheres to the same structure, promoting consistency in the database. By establishing a set structure for the data, it becomes easier to manage and maintain the database. In addition, this approach can help prevent data inconsistencies and errors that can arise when data is not structured properly. BSON documents are a flexible and efficient way to enforce schema, making it easier to manage the database and ensure its accuracy and reliability over time._
-
-### B-tree lookup
-
-The use of B-tree indexing enables efficient data lookup, and its link to the Merkle tree must be established to validate the lookup process.
-
-_By using B-tree indexing, data can be easily found and retrieved, making the database more efficient. However, it is important to check the integrity of the search process to ensure the accuracy and consistency of the retrieved data. To do this, you need to create a link between the B-tree and the Merkle tree. The Merkle tree provides a cryptographic proof of the integrity of the data, and the relationship between the B-tree and the Merkle tree provides a way to verify that the data retrieved from the B-tree is consistent with the data in the Merkle tree. This validation process helps prevent any potential errors or inconsistencies in the data._
-
-### Proof of transformation
-
-We enable users to update their document's schema by providing a proof of migration/ transformation.
-
-_By providing proof of migration/transformation, users can easily update the schema of their documents. This feature provides greater flexibility in data management as users can make changes to their schema as needed to adapt to changing business needs._
-
-**Note:** This process requires effort in R&D
+zkDatabase aims to improve usability by providing comprehensive toolkits, documentation, and support to streamline the development process and make it more accessible to newcomers.
  
-### Standardization
+### Public Key Authentication for Enhanced Security
 
-The zkDatabase provides a standardized and developer-friendly library for creating, updating, and managing database, freeing up developers to focus on developing their ideas instead of wasting time managing state.
-
-_The zkDatabase provides a standardized and user-friendly library that simplifies the process of creating, updating, and managing database. By providing a consistent and reliable approach, developers can reduce the time and effort required to manage states, allowing them to focus on developing their ideas and applications. This standardized library eliminates time-consuming and error-prone manual data management by providing consistent database management and maintenance for optimal performance._
+zkDatabase employs Public Key Authentication to securely authenticate user sessions, ensuring only authorized access. It also uses session keys to efficiently verify asymmetric signatures, enhancing security without sacrificing performance.
 
 ### Graphical User Interface
 
@@ -106,55 +86,53 @@ _The graphical user interface provided by zkDatabase offers an intuitive and use
 
 ## Architecture
 
-### Distributed Storage Engine
+**The zkDBaaS architecture consists of the following key components:**
 
-This module is the frontend of distributed storage, it provides a unified interface for multiple backends. This module solves the issue of the  single point  failure and also provides the flexibility to switch between distributed storage backend.
+- zkApp:
+  - Client-side application that interacts with zkDBaaS.
+  - Includes a user interface (zkApp UI) and an application-specific smart contract (App Smart Contract) for managing application-level logic.
 
-Fault tolerance is also the purpose of this module, recovery from error state is the feature that other off-chain storage is missing.
+- zkDatabase Smart Contract:
+  - Manages data commitment and proof generation on the Mina blockchain.
+  - Interacts with zkDatabase Client for data updates and queries.
 
-### Poseidon Merkle Tree
+- zkDatabase Client:
+  - Provides an interface for applications to interact with zkDBaaS.
+  - Handles data updates and queries, interacting with the zkDatabase Smart Contract and zkDatabaser aaS.
 
-Poseidon Merkle Tree and ZKP are used to prove the immutability of zkDatabase, we follow the practice from zkApp Document for off-chain storage. Unlike other approaches, our Merkle tree is available publicly and it is also allowed to be reconstructed after fault.
+- zkDatabaser aaS:
+  - Core service layer responsible for:
+    - Data commitment to the Mina blockchain
+    - Proof accumulation and verification
+    - Data storage and retrieval using MongoDB
+    - Public key authorization
+    - Permission management
 
-### B-Tree
+- MongoDB Replica Set:
+  - Underlying database for storing committed data.
+  - Provides high availability and scalability.
+ 
+**Component Interactions:**
 
-B-Tree is used to index the BSON document which speeds up the lookup process without the overhead.
+  - Data Updates:
+    - zkApp initiates a data update request through the zkDatabase Client.
+    - zkDatabase Client forwards the request to zkDatabaser aaS.
 
-**Note:** The field we use to index the BSON document needs to be unique and it's better to be stored in 31 bytes due to the infrastructure limit.
+  - zkDatabaser aaS:
+    - Verifies authorization using public key authentication.
+    - Persists data to MongoDB.
+    - Generates a zero-knowledge proof of the update.
+    - Commits the proof to the Mina blockchain through the zkDatabase Smart Contract.
 
-### Storage Management
+  - Data Queries:
+    - zkApp initiates a data query request through the zkDatabase Client.
+    - zkDatabase Client forwards the request to zkDatabaser aaS.
 
-This module is used to automate the process to store the data for the corresponding backend like IFPS, S3, FileCoin, etc. It also performs the indexing process and recomputes the Merkle tree whenever a new BSON document was inserted.
-
-### Lookup Prover
-
-This module creates a link between the Merkle tree and B-tree to prove the correctness of the lookup process. This module is necessary to prevent malicious action where the operator tries to feed the wrong BSON document.
-
-### Transforming Prover
-
-This is the most complex module, it proves the transformation and compatibility of database schemas. E.g: Reindexing is also a puzzle that affects the database schema.
-
-### Data Processing
-
-This module defines how we treat the data and how we have the conclusion of the data state. Every action like, insert, and update is required to be proven as well.
-
-### Authorization
-
-This module specifies the permission and the role of each user, we consider supporting DID and underlying MPC keyring to support permission grant and revoke.
-
-**Note:** Need more R&D effort to clarify the need and choose the right solution.
-
-### Data De/Encryption
-
-This module guarantees that private data is secure and can't be accessible by an unwanted entity. Our first idea is to use AES encryption combine with Diffie Hellman key exchange to share the standard secret key.
-
-**Note:** Need more R&D effort to allow a party to revoke a decrypt key.
-
-### zkDatabase ODM
-
-Instead of SQL, we build this project in a noSQL fashion, learned from two successful projects MongoDB and Mongoose. In our conclusion, a language like SQL needs the parser and ORM to leverage its potential meanwhile ODM and non-related documents are better candidates with lower complexity. Besides, ODM and BSON documents are super effective when combined with TypeScript the main language for zkApp.
-
-**Note:** A verifiable sampling module can turn zkDatabase into a passive zkOracle, it's the potential of the zkDatabase project that we want to explore in the future.
+  - zkDatabaser aaS:
+    - Retrieves data from MongoDB.
+    - Generates a zero-knowledge proof of the query result (Lookup Prover).
+    - Returns the proof to the zkDatabase Client.
+    - zkDatabase Client verifies the proof and returns the verified data to zkApp.
 
 ## Specification
 
