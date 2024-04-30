@@ -39,7 +39,7 @@ async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  documentId?: ObjectId,
+  documentId: ObjectId | null,
   session?: ClientSession
 ): Promise<PermissionRecord> {
   const modelMetadata = documentId
@@ -58,7 +58,7 @@ async function checkPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  docId: ObjectId | undefined,
+  docId: ObjectId | null,
   type: PermissionType,
   isDocument: boolean,
   session?: ClientSession
@@ -67,7 +67,7 @@ async function checkPermission(
     databaseName,
     collectionName,
     actor,
-    isDocument ? docId : undefined,
+    isDocument ? docId : null,
     session
   );
   return permission[type];
@@ -103,7 +103,7 @@ export async function checkCollectionPermission(
     databaseName,
     collectionName,
     actor,
-    undefined,
+    null,
     type,
     false,
     session
