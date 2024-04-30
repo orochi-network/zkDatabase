@@ -48,7 +48,19 @@ export async function validateDocumentSchema(
     throw new Error('Schema not found');
   }
 
-  return schema.fields.every((field) => {
+  const schemaFieldNames = new Set(schema.fields.filter(name => name !== '_id'));
+
+  const allFieldsDefined = document.every(docField => schemaFieldNames.has(docField.name));
+  if (!allFieldsDefined) {
+    document.forEach(docField => {
+      if (!schemaFieldNames.has(docField.name)) {
+        logger.error(`Document contains an undefined field '${docField.name}'.`);
+      }
+    });
+    return false;
+  }
+
+  const isValid = schema.fields.every((field) => {
     // Skip validation for the _id field
     if (field === '_id') {
       return true;
@@ -93,7 +105,10 @@ export async function validateDocumentSchema(
 
     return true;
   });
+
+  return isValid;
 }
+
 
 export async function buildSchema(
   databaseName: string,
