@@ -42,14 +42,35 @@ async function createGroup(
 async function checkUserGroupMembership(
   databaseName: string,
   actor: string,
-  group: string,
+  groupName: string,
   session?: ClientSession
 ): Promise<boolean> {
+  if (!await isGroupExist(databaseName, groupName, session)) {
+    throw Error(
+      `Group ${groupName} does not exist for database ${databaseName}`
+    );
+  }
+
+
   const modelUserGroup = new ModelUserGroup(databaseName);
   const actorGroups = await modelUserGroup.listGroupByUserName(actor, {
     session,
   });
-  return actorGroups.includes(group);
+  return actorGroups.includes(groupName);
+}
+
+export async function addUserToGroups(
+  databaseName: string,
+  actor: string,
+  groups: string[],
+  session?: ClientSession
+): Promise<boolean> {
+  const modelUserGroup = new ModelUserGroup(databaseName);
+  const result = await modelUserGroup.addUserToGroup(actor, groups, {
+    session,
+  });
+
+  return result.isOk();
 }
 
 export { isGroupExist, createGroup, checkUserGroupMembership };

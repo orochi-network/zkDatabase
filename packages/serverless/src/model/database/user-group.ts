@@ -1,4 +1,4 @@
-import { ObjectId, Document, FindOptions } from 'mongodb';
+import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
 import {
   ModelCollection,
   ModelGeneral,
@@ -61,21 +61,25 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     return availableGroups.map((group) => group._id).toArray();
   }
 
-  public async addUserToGroup(userName: string, groupName: string[]) {
+  public async addUserToGroup(userName: string, groupName: string[], options?: BulkWriteOptions) {
     const groupOfUser = await this.listGroupId(userName);
     const groupIdToAdd = await this.groupNameToGroupId(groupName);
     const newGroupIdToAdd = groupIdToAdd.filter(
       (g) => !groupOfUser.includes(g)
     );
 
-    return this.insertMany(
-      newGroupIdToAdd.map((groupId) => ({
-        userName,
-        groupId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }))
-    );
+    const operations = newGroupIdToAdd.map((groupId) => ({
+      updateOne: {
+        filter: { userName, groupId },
+        update: {
+          $set: { updatedAt: new Date() },
+          $setOnInsert: { createdAt: new Date() },
+        },
+        upsert: true,
+      },
+    }));
+
+    return this.collection.bulkWrite(operations, options);
   }
 
   public static async init(databaseName: string) {
@@ -84,7 +88,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
       ModelUserGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1 }, { unique: true });
+      await collection.index({ collection: 1 }, { unique: false });
     }
   }
 }
