@@ -5,8 +5,10 @@ import { ModelQueueTask, TaskEntity } from './global/queue.js';
 import { ModelProof } from './global/proof.js';
 import { ModelDatabase, DocumentMetaIndex } from './general/database.js';
 import { ModelCollection } from './general/collection.js';
-import { ModelMerkleTree } from './common/merkle-tree.js';
+import { ModelMerkleTree, TMerkleProof } from './common/merkle-tree.js';
 import { ModelDbSetting, DbSetting } from './common/setting.js';
+import { ModelSequencer, SequencedItem } from './common/sequencer';
+import withTransaction from './transaction/transaction-manager';
 
 export {
   DatabaseEngine,
@@ -18,7 +20,11 @@ export {
   ModelCollection,
   ModelGeneral,
   ModelMerkleTree,
+  TMerkleProof,
   ModelDbSetting,
   DbSetting,
-  TaskEntity
+  TaskEntity,
+  ModelSequencer,
+  SequencedItem,
+  withTransaction
 };

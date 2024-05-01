@@ -3,16 +3,13 @@ import * as jose from 'jose';
 import logger from './logger';
 import config from './config';
 import ModelSession from '../model/global/session';
+import { APP_JWT_VALIDATION } from '../common/types';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   userName: string;
   email: string;
-  // Unix epoch timestamp in seconds
-  timestamp: number;
   sessionId: string;
 }
-
-export const JWTF_EXPIRED = 7200;
 
 export class JWTAuthentication<T extends jose.JWTPayload> {
   private secret: Uint8Array;
@@ -27,12 +24,13 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
       return new jose.SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
+        .setExpirationTime('30d')
         .sign(this.secret);
     }
     return new jose.SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('2h')
+      .setExpirationTime('60s')
       .sign(this.secret);
   }
 
@@ -40,13 +38,9 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     token: string
   ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, 'protectedHeader'>> {
     const decodedPayload = jose.decodeJwt(token) as IJWTAuthenticationPayload;
-    if (
-      !decodedPayload ||
-      !decodedPayload.sessionId ||
-      !decodedPayload.timestamp ||
-      !decodedPayload.userName ||
-      !decodedPayload.email
-    ) {
+    const { error } = APP_JWT_VALIDATION.validate(decodedPayload);
+    if (error) {
+      logger.error(error);
       throw new GraphQLError('Token is invalid', {
         extensions: {
           code: 'UNAUTHENTICATED',
@@ -54,18 +48,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
         },
       });
     }
-    const timeDiff = Math.floor(Date.now() / 1000) - decodedPayload.timestamp;
-    // Check if token is expired
-    if (timeDiff < 0 && timeDiff > JWTF_EXPIRED) {
-      throw new GraphQLError('Token is expired', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-    const modelSession = new ModelSession();
-    const session = await modelSession.findOne({
+    const session = await ModelSession.getInstance().findOne({
       sessionId: decodedPayload.sessionId,
     });
     // Check if session is valid
@@ -80,7 +63,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     // Recover the session key and verify the token
     const { payload, protectedHeader } = await jose.jwtVerify(
       token,
-      Buffer.from(session.sessionKey, 'hex')
+      jose.base64url.decode(session.sessionKey)
     );
     return { payload: payload as T, protectedHeader };
   }

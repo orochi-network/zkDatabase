@@ -108,3 +108,5 @@ data/
 
 # Circuit Cache files
 circuit-cache/
+
+.vscode/

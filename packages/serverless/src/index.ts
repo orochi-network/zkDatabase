@@ -8,10 +8,9 @@ import cors from 'cors';
 import { DatabaseEngine } from '@zkdb/storage';
 import logger from './helper/logger';
 import { TypedefsApp, ResolversApp } from './apollo';
-import { AppContext } from './helper/common';
+import { APP_CONTEXT_NOBODY, AppContext } from './common/types';
 import { config } from './helper/config';
 import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
-import { ZKDATABASE_USER_NOBODY } from './common/const';
 
 (async () => {
   const app = express();
@@ -39,18 +38,14 @@ import { ZKDATABASE_USER_NOBODY } from './common/const';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        if (req.headers.authorization) {
+        if (req.headers.authorization && req.headers.authorization !== "") {
           const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
               req.headers.authorization
             );
           return { sessionId, userName, email };
         }
-        return {
-          userName: ZKDATABASE_USER_NOBODY,
-          email: '',
-          sessionId: '',
-        };
+        return APP_CONTEXT_NOBODY;
       },
     })
   );

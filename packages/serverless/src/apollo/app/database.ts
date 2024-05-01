@@ -1,14 +1,16 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { DatabaseEngine, ModelDatabase } from '@zkdb/storage'
+import { DatabaseEngine, ModelDatabase } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName } from './common';
-import {
-  CreateGlobalDatabaseUseCase,
-} from '../../domain/use-case/create-global-database';
+import { createDatabase } from '../../domain/use-case/database';
+import { AppContext } from '../../common/types';
 
 export type TDatabaseRequest = {
   databaseName: string;
+};
+
+export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
 
@@ -16,8 +18,9 @@ export type TFindIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
-const DatabaseRequest = Joi.object<TDatabaseRequest>({
+const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
+  merkleHeight: Joi.number().integer().positive().required()
 });
 
 export const typeDefsDatabase = `#graphql
@@ -37,12 +40,14 @@ extend type Mutation {
 }
 `;
 
+export const merkleHeight = Joi.number().integer().positive().required();
+
 // Query
 const dbStats = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest) =>
+  async (_root: unknown, args: TDatabaseRequest, ctx: AppContext) =>
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
@@ -51,12 +56,9 @@ const dbList = async () =>
 
 // Mutation
 const dbCreate = resolverWrapper(
-  DatabaseRequest,
-  async (_root: unknown, args: TDatabaseRequest) =>
-    new CreateGlobalDatabaseUseCase().execute({
-      databaseName: args.databaseName,
-      merkleHeight: args.merkleHeight,
-    })
+  DatabaseCreateRequest,
+  async (_root: unknown, args: TDatabaseCreateRequest) =>
+    createDatabase(args.databaseName, args.merkleHeight)
 );
 
 export const resolversDatabase = {

@@ -1,19 +1,24 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { Filter } from 'mongodb';
+import { withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { TCollectionRequest } from './collection';
-import {
-  DocumentPermission,
-  DocumentRecord,
-  ModelDocument,
-} from '../../model/abstract/document';
+import { DocumentRecord } from '../../model/abstract/document';
 import {
   collectionName,
   databaseName,
+  documentField,
   permissionDetail,
-  permissionRecord,
 } from './common';
+import {
+  createDocument,
+  deleteDocument,
+  readDocument,
+  updateDocument,
+} from '../../domain/use-case/document';
+import { AppContext } from '../../common/types';
+import { PermissionsData } from '../types/permission';
+import { TDocumentFields } from '../types/document';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -21,11 +26,13 @@ export type TDocumentFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: DocumentRecord;
-  documentPermission: DocumentPermission;
+  documentPermission: PermissionsData;
 };
 
-export type TDocumentUpdateRequest = TCollectionRequest &
-  Filter<DocumentRecord>;
+export type TDocumentUpdateRequest = TCollectionRequest & {
+  documentQuery: { [key: string]: string };
+  documentRecord: TDocumentFields;
+};
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -44,7 +51,7 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
-  documentRecord: Joi.object(),
+  documentRecord: Joi.required(),
 });
 
 export const typeDefsDocument = `#graphql
@@ -52,7 +59,29 @@ scalar JSON
 type Query
 type Mutation
 
-type PermissionRecord {
+type MerkleWitness {
+  isLeft: Boolean!
+  sibling: String!
+}
+
+type Document {
+  name: String!
+  kind: String!
+  value: String!
+}
+
+input DocumentInput {
+  name: String!
+  kind: String!
+  value: String!
+}
+
+type DocumentOutput {
+  _id: String!,
+  document: [Document!]!
+}
+
+input PermissionRecordInput {
   system: Boolean
   create: Boolean
   read: Boolean
@@ -60,73 +89,125 @@ type PermissionRecord {
   delete: Boolean
 }
 
-input PermissionDetail {
-  permissionOwner: PermissionRecord
-  permissionGroup: PermissionRecord
-  permissionOthers: PermissionRecord
+input PermissionDetailInput {
+  permissionOwner: PermissionRecordInput
+  permissionGroup: PermissionRecordInput
+  permissionOthers: PermissionRecordInput
 }
 
-input DocumentRecord {
+input DocumentRecordInput {
   name: String!
   kind: String!
   value: String!
 }
 
 extend type Query {
-  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
+  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): DocumentOutput
 }
 
 extend type Mutation {
-  documentCreate(databaseName: String!, collectionName: String!, documentRecord: [DocumentRecord!]!, documentPermission: PermissionDetail): JSON
-  documentUpdate(databaseName: String!, collectionName: String!, documentQuery: JSON!, documentRecord: JSON!): Boolean
-  documentDrop(databaseName: String!, collectionName: String!, documentQuery: JSON!): JSON
+  documentCreate(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentRecord: [DocumentRecordInput!]!, 
+    documentPermission: PermissionDetailInput
+  ): [MerkleWitness!]!
+
+  documentUpdate(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentQuery: JSON!,
+    documentRecord: [DocumentRecordInput!]!
+  ): [MerkleWitness!]!
+
+  documentDrop(
+    databaseName: String!, 
+    collectionName: String!, 
+    documentQuery: JSON!
+  ): [MerkleWitness!]!
 }
 `;
 
 // Query
 const documentFind = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).find(args.documentQuery);
+  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
+    const document = await withTransaction((session) =>
+      readDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        session
+      )
+    );
+
+    if (!document) {
+      return null;
+    }
+
+    const { _id, ...pureDocument } = document;
+
+    return {
+      _id,
+      document: Object.values(pureDocument),
+    };
   }
 );
 
 // Mutation
 const documentCreate = resolverWrapper(
   DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).insertOne(args.documentRecord, args.documentPermission);
+  async (_root: unknown, args: TDocumentCreateRequest, ctx: AppContext) => {
+    return withTransaction((session) =>
+      createDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentRecord as any,
+        args.documentPermission,
+        session
+      )
+    );
   }
 );
 
 const documentUpdate = resolverWrapper(
   DOCUMENT_UPDATE_REQUEST,
-  async (_root: unknown, args: TDocumentUpdateRequest) => {
-    const keys = Object.keys(args.documentRecord);
-    for (let i = 0; i < keys.length; i += 1) {
-      const key = keys[i];
-      const { error } = permissionRecord.validate(args.documentRecord[key]);
+  async (_root: unknown, args: TDocumentUpdateRequest, ctx: AppContext) => {
+    for (let i = 0; i < args.documentRecord.length; i += 1) {
+      const { error } = documentField.validate(args.documentRecord[i]);
       if (error)
         throw new Error(
-          `PermissionRecord ${key} is not valid ${error.message}`
+          `DocumentRecord ${args.documentRecord[i].name} is not valid ${error.message}`
         );
     }
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).updateOne(args.documentQuery, args.documentRecord);
+
+    return withTransaction((session) =>
+      updateDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        args.documentRecord as any,
+        session
+      )
+    );
   }
 );
 
 const documentDrop = resolverWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest) => {
-    return (
-      await ModelDocument.getInstance(args.databaseName, args.collectionName)
-    ).drop(args.documentQuery);
+  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
+    return withTransaction((session) =>
+      deleteDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        session
+      )
+    );
   }
 );
 

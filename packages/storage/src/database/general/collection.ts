@@ -59,8 +59,12 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return isOk(async () => this.collection.dropIndex(indexName));
   }
 
-  public async listIndexes(): Promise<any[]> {
-    return this.collection.listIndexes().toArray();
+  public async listIndexes(): Promise<string[]> {
+    const keySet = new Set<string>();
+    (await this.collection.listIndexes().toArray()).forEach(index => {
+        Object.keys(index.key).forEach(key => keySet.add(key));
+    });
+    return Array.from(keySet);
   }
 }
 

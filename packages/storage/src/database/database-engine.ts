@@ -61,7 +61,15 @@ export class DatabaseEngine {
     let retries = 3;
     while (retries > 0) {
       try {
+        const time = Date.now();
+        // eslint-disable-next-line no-await-in-loop
         this.connection = await this.mongoClient.connect();
+        logger.info(
+          'DatabaseEngine::connect()',
+          'Connected',
+          Date.now() - time,
+          'ms'
+        );
         return;
       } catch (e) {
         logger.info('DatabaseEngine::connect()', e, 'retry', retries);

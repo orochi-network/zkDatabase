@@ -25,8 +25,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     if (!ModelQueueTask.instance) {
       ModelQueueTask.instance = new ModelQueueTask();
       ModelQueueTask.instance.collection.createIndex(
-        { merkleIndex: 1 },
-        { unique: true }
+        { merkleIndex: 1 }
       );
     }
     return ModelQueueTask.instance;

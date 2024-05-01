@@ -1,27 +1,29 @@
 import Joi from 'joi';
-import { GraphQLError } from 'graphql';
 import GraphQLJSON from 'graphql-type-json';
 import { ObjectId } from 'mongodb';
+import { withTransaction } from '@zkdb/storage';
+import { GraphQLError } from 'graphql';
 import resolverWrapper from '../validation';
 import { databaseName, userName, collectionName, objectId } from './common';
 import { TCollectionRequest } from './collection';
-import ModelUserGroup from '../../model/database/user-group';
-import ModelPermission from '../../model/database/document-metadata';
+import { PermissionRecord } from '../../common/permission';
+import { AppContext } from '../../common/types';
+import { TPermissionGroup } from '../types/permission';
+import { changePermissions } from '../../domain/use-case/permission';
 import {
-  PermissionBinary,
-  PermissionRecord,
-  partialToPermission,
-} from '../../common/permission';
-import { AppContext } from '../../helper/common';
-import { ZKDATABASE_USER_NOBODY } from '../../common/const';
+  changeCollectionOwnership,
+  changeDocumentOwnership,
+} from '../../domain/use-case/ownership';
+import { TOwnershipGroup } from '../types/ownership';
+import { readMetadata } from '../../domain/use-case/metadata';
+
+const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
+
+const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
 export type TPermissionRequest = TCollectionRequest & {
   docId: string;
 };
-
-export type TPermissionGroup = 'User' | 'Group' | 'Other';
-
-const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
 
 export type TPermissionSetRequest = TPermissionRequest & {
   grouping: TPermissionGroup;
@@ -29,7 +31,7 @@ export type TPermissionSetRequest = TPermissionRequest & {
 };
 
 export type TPermissionOwnRequest = TPermissionRequest & {
-  grouping: TPermissionGroup;
+  grouping: TOwnershipGroup;
   newOwner: string;
 };
 
@@ -44,11 +46,16 @@ enum PermissionGroup {
   Other
 }
 
+enum OwnershipGroup {
+  User
+  Group
+}
+
 input PermissionInput {
   read: Boolean
   write: Boolean
   delete: Boolean
-  insert: Boolean
+  create: Boolean
   system: Boolean
 }
 
@@ -56,7 +63,7 @@ type PermissionRecord {
   read: Boolean
   write: Boolean
   delete: Boolean
-  insert: Boolean
+  create: Boolean
   system: Boolean
 }
 
@@ -72,7 +79,7 @@ type Permission {
 extend type Query {
   permissionList(
     databaseName: String!
-    collection: String!
+    collectionName: String!
     docId: String
   ): Permission
 }
@@ -88,9 +95,9 @@ extend type Mutation {
 
   permissionOwn(
     databaseName: String!
-    collection: String!
+    collectionName: String!
     docId: String
-    grouping: PermissionGroup!
+    grouping: OwnershipGroup!
     newOwner: String!
   ): Permission
 }
@@ -102,31 +109,32 @@ const permissionList = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.required(),
+    docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TPermissionRequest) => {
-    const modelPermission = new ModelPermission(args.databaseName);
-    const result = await modelPermission.findOne({
-      collection: args.collectionName,
-      docId: new ObjectId(args.docId),
-    });
+  async (_root: unknown, args: TPermissionRequest, ctx: AppContext) => {
+    const metadata = await withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        ctx.userName,
+        true,
+        session
+      )
+    );
 
-    if (result) {
-      return {
-        userName: result.userName,
-        groupName: result.groupName,
-        permissionOwner: PermissionBinary.fromBinaryPermission(
-          result.permissionOwner
-        ),
-        permissionGroup: PermissionBinary.fromBinaryPermission(
-          result.permissionGroup
-        ),
-        permissionOther: PermissionBinary.fromBinaryPermission(
-          result.permissionOther
-        ),
-      };
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
     }
-    return null;
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 
@@ -137,101 +145,52 @@ const permissionSet = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.required(),
+    docId: objectId.optional(),
     grouping: permissionGroup,
     permission: Joi.object({
       read: Joi.boolean(),
       write: Joi.boolean(),
       delete: Joi.boolean(),
-      insert: Joi.boolean(),
+      create: Joi.boolean(),
       system: Joi.boolean(),
     }),
   }),
   async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
-    if (
-      typeof context.userName !== 'undefined' &&
-      context.userName === ZKDATABASE_USER_NOBODY
-    ) {
-      let hasPermission = false;
-      const modelPermission = new ModelPermission(args.databaseName);
-      const fieldName =
-        `${args.grouping.toLowerCase()}Permission` as keyof PermissionRecord;
-      // Make user has permission to set permission
-      const permission = new ModelPermission(args.databaseName);
+    await withTransaction((session) =>
+      changePermissions(
+        args.databaseName,
+        args.collectionName,
+        context.userName,
+        args.docId ? new ObjectId(args.docId) : null,
+        args.grouping,
+        args.permission as any,
+        session
+      )
+    );
 
-      const permissionRecord = await permission.findOne({
-        collection: args.collectionName,
-        docId: new ObjectId(args.docId),
-      });
-      if (permissionRecord) {
-        if (permissionRecord.userName === context.userName) {
-          // If actor has permission to set set hasPermission to true
-          if (
-            PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOwner
-            ).system
-          ) {
-            hasPermission = true;
-            // Otherwise check if actor is in the group that has permission to set
-          } else {
-            const modelUserGroup = new ModelUserGroup(args.databaseName);
-            if (
-              await modelUserGroup.checkMembership(
-                context.userName,
-                permissionRecord.groupName
-              )
-            ) {
-              if (
-                PermissionBinary.fromBinaryPermission(
-                  permissionRecord.permissionGroup
-                ).system
-              ) {
-                hasPermission = true;
-              }
-            }
-          }
-        }
+    const metadata = await withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        context.userName,
+        true,
+        session
+      )
+    );
 
-        if (hasPermission) {
-          const newPermission = partialToPermission(args.permission);
-          if (fieldName === ('permissionOther' as keyof PermissionRecord)) {
-            // If set other permission, set system to false
-            newPermission.system = false;
-          }
-          permissionRecord[fieldName] =
-            PermissionBinary.toBinaryPermission(newPermission);
-
-          await modelPermission.updateOne(
-            {
-              collection: args.collectionName,
-              docId: new ObjectId(args.docId),
-            },
-            {
-              [fieldName]: permissionRecord[fieldName],
-            }
-          );
-
-          return {
-            userName: permissionRecord.userName,
-            groupName: permissionRecord.groupName,
-            permissionOwner: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOwner
-            ),
-            permissionGroup: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionGroup
-            ),
-            permissionOther: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOther
-            ),
-          };
-        }
-      }
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
     }
-    throw new GraphQLError('Permission denied', {
-      extensions: {
-        code: 'PERMISSION_DENIED',
-      },
-    });
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 
@@ -239,99 +198,61 @@ const permissionOwn = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.required(),
-    grouping: permissionGroup,
+    docId: objectId.optional(),
+    grouping: ownershipGroup,
     newOwner: userName,
   }),
   async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
-    if (
-      typeof context.userName !== 'undefined' &&
-      context.userName === ZKDATABASE_USER_NOBODY
-    ) {
-      let hasPermission = false;
-      const modelPermission = new ModelPermission(args.databaseName);
-      // Make user has permission to set permission
-      const permission = new ModelPermission(args.databaseName);
-
-      const permissionRecord = await permission.findOne({
-        collection: args.collectionName,
-        docId: new ObjectId(args.docId),
-      });
-      if (permissionRecord) {
-        if (permissionRecord.userName === context.userName) {
-          // If actor has permission to set set hasPermission to true
-          if (
-            PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOwner
-            ).system
-          ) {
-            hasPermission = true;
-            // Otherwise check if actor is in the group that has permission to set
-          } else {
-            const modelUserGroup = new ModelUserGroup(args.databaseName);
-            if (
-              await modelUserGroup.checkMembership(
-                context.userName,
-                permissionRecord.groupName
-              )
-            ) {
-              if (
-                PermissionBinary.fromBinaryPermission(
-                  permissionRecord.permissionGroup
-                ).system
-              ) {
-                hasPermission = true;
-              }
-            }
-          }
-        }
-
-        if (hasPermission) {
-          if (args.grouping === 'User') {
-            permissionRecord.userName = args.newOwner;
-            await modelPermission.updateOne(
-              {
-                collection: args.collectionName,
-                docId: new ObjectId(args.docId),
-              },
-              {
-                userName: args.newOwner,
-              }
-            );
-          } else if (args.grouping === 'Group') {
-            permissionRecord.groupName = args.newOwner;
-            await modelPermission.updateOne(
-              {
-                collection: args.collectionName,
-                docId: new ObjectId(args.docId),
-              },
-              {
-                groupName: args.newOwner,
-              }
-            );
-          }
-
-          return {
-            userName: permissionRecord.userName,
-            groupName: permissionRecord.groupName,
-            permissionOwner: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOwner
-            ),
-            permissionGroup: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionGroup
-            ),
-            permissionOther: PermissionBinary.fromBinaryPermission(
-              permissionRecord.permissionOther
-            ),
-          };
-        }
-      }
+    if (args.docId) {
+      await withTransaction((session) =>
+        changeDocumentOwnership(
+          args.databaseName,
+          args.collectionName,
+          new ObjectId(args.docId),
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        )
+      );
+    } else {
+      await withTransaction((session) =>
+        changeCollectionOwnership(
+          args.databaseName,
+          args.collectionName,
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        )
+      );
     }
-    throw new GraphQLError('Permission denied', {
-      extensions: {
-        code: 'PERMISSION_DENIED',
-      },
-    });
+
+    const metadata = await withTransaction((session) =>
+      readMetadata(
+        args.databaseName,
+        args.collectionName,
+        args.docId ? new ObjectId(args.docId) : null,
+        context.userName,
+        true,
+        session
+      )
+    );
+
+    console.log('metadata', metadata)
+
+    if (!metadata) {
+      const message = args.docId
+        ? `document with id ${args.docId}`
+        : `collection ${args.collectionName}`;
+      throw new GraphQLError(`Metadata for ${message} has not been found`);
+    }
+
+    return {
+      userName: metadata.owners.owner,
+      groupName: metadata.owners.group,
+      ...metadata.permissions,
+    };
   }
 );
 

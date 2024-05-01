@@ -1,5 +1,5 @@
 import { Document } from 'mongodb';
-import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM
@@ -26,6 +26,18 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
 
   constructor() {
     super(zkDatabaseConstants.globalDatabase, ModelUser.collectionName);
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstants.globalDatabase,
+      ModelUser.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ userName: 1 }, { unique: true });
+      collection.index({ publicKey: 1 }, { unique: true });
+      collection.index({ email: 1 }, { unique: true });
+    }
   }
 
   public static isValidUser(userName: string) {
@@ -67,7 +79,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     userData: any
   ) {
     ModelUser.isValidUser(userName);
-    if (await this.isUserExist({ userName, email, publicKey })) {
+    if (!(await this.isUserExist({ userName, email, publicKey }))) {
       return this.insertOne({
         userName,
         email,

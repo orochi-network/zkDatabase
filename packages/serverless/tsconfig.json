@@ -15,7 +15,6 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": false,
-    "baseUrl": ".",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false, 
@@ -26,8 +25,6 @@
   "exclude": [
     "build",
     "node_modules",
-    "**/*.spec.ts",
-    "**/*.test.ts",
     "typechain/**/*.ts"
   ]
 }

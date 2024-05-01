@@ -1,5 +1,5 @@
 import { Document } from 'mongodb';
-import { ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 
 export type DocumentAllSettings = {
   configKey: 'database_version';
@@ -22,6 +22,17 @@ export class ModelSetting extends ModelGeneral<DocumentSetting> {
 
   public async load() {
     await this.find();
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstants.globalDatabase,
+      ModelSetting.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ owner: 1 }, { unique: true });
+      collection.index({ databaseName: 1 }, { unique: true });
+    }
   }
 }
 

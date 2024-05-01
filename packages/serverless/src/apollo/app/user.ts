@@ -1,9 +1,9 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import Client from 'mina-signer';
-import resolverWrapper from '../validation';
+import resolverWrapper, { authorizeWrapper } from '../validation';
 import ModelUser from '../../model/global/user';
-import { AppContext } from '../../helper/common';
+import { AppContext } from '../../common/types';
 import ModelSession from '../../model/global/session';
 
 const timestamp = Joi.number()
@@ -57,7 +57,7 @@ export type TSignUpRequest = {
   timestamp: number;
 };
 
-export const SignUnRequest = Joi.object<TSignUpRequest>({
+export const SignUpRequest = Joi.object<TSignUpRequest>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
   timestamp,
@@ -70,7 +70,7 @@ export type TSignUpWrapper = {
 };
 
 export const SignUpWrapper = Joi.object<TSignUpWrapper>({
-  signUp: SignUnRequest.required(),
+  signUp: SignUpRequest.required(),
   proof: SignatureProof.required(),
 });
 
@@ -131,7 +131,7 @@ const userSignInData = async (
   _args: any,
   context: AppContext
 ) => {
-  const session = await new ModelSession().findOne({
+  const session = await ModelSession.getInstance().findOne({
     sessionId: context.sessionId,
   });
   if (session) {
@@ -158,21 +158,20 @@ const userSignIn = resolverWrapper(
   async (_root: unknown, args: TSignInRequest) => {
     // We only support testnet for now to prevent the signature from being used on mainnet
     const client = new Client({ network: 'testnet' });
-
     if (client.verifyMessage(args.proof)) {
-      const modelSession = new ModelSession();
-      const user = await modelSession.findOne({
+      const modelUser = new ModelUser();
+      const user = await modelUser.findOne({
         publicKey: args.proof.publicKey,
       });
       const jsonData = JSON.parse(args.proof.data);
       if (user) {
-        if (jsonData.userName !== user.userName) {
-          throw new Error('Username does not match');
+        if (jsonData.email !== user.email) {
+          throw new Error('Email does not match');
         }
         if (timestamp.validate(jsonData.timestamp).error) {
           throw new Error('Timestamp is invalid');
         }
-        const session = await modelSession.create(user.userName);
+        const session = await ModelSession.getInstance().create(user.userName);
         if (session && session.userName === user.userName) {
           return {
             success: true,
@@ -190,13 +189,12 @@ const userSignIn = resolverWrapper(
   }
 );
 
-const userSignOut = async (_root: unknown, _args: any, context: AppContext) => {
-  if (context.sessionId) {
-    await new ModelSession().delete(context.sessionId);
-    return true;
+const userSignOut = authorizeWrapper(
+  async (_root: unknown, _args: any, context: AppContext) => {
+    return (await ModelSession.getInstance().delete(context.sessionId))
+      .acknowledged;
   }
-  return false;
-};
+);
 
 const userSignUp = resolverWrapper(
   SignUpWrapper,
@@ -211,15 +209,24 @@ const userSignUp = resolverWrapper(
         throw new Error('Email does not match');
       }
       const modelUser = new ModelUser();
-      await modelUser.create(
+      const result = await modelUser.create(
         args.signUp.userName,
         args.signUp.email,
         args.proof.publicKey,
         args.signUp.userData
       );
+      if (result && result.acknowledged) {
+        return {
+          success: true,
+          error: null,
+          userName: args.signUp.userName,
+          email: args.signUp.email,
+          publicKey: args.proof.publicKey,
+        };
+      }
       return {
-        success: true,
-        error: null,
+        success: false,
+        error: 'Cannot create user',
         userName: args.signUp.userName,
         email: args.signUp.email,
         publicKey: args.proof.publicKey,

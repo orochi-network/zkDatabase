@@ -1,5 +1,9 @@
-import { Document } from 'mongodb';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import { ClientSession, Document, InsertOneOptions } from 'mongodb';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const';
 import { getCurrentTime } from '../../helper/common';
 
@@ -12,7 +16,8 @@ export interface GroupSchema extends Document {
 }
 
 export class ModelGroup extends ModelGeneral<GroupSchema> {
-  private static collectionName: string = zkDatabaseConstants.databaseCollections.group;
+  private static collectionName: string =
+    zkDatabaseConstants.databaseCollections.group;
 
   constructor(databaseName: string) {
     super(databaseName, ModelGroup.collectionName);
@@ -21,15 +26,26 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
   public async createGroup(
     groupName: string,
     description?: string,
-    createBy?: string
+    createBy?: string,
+    options?: InsertOneOptions
   ) {
-    return this.insertOne({
-      groupName,
-      description: description || `Group ${groupName}`,
-      createBy: createBy || ZKDATABASE_USER_SYSTEM,
-      createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
-    });
+    return this.insertOne(
+      {
+        groupName,
+        description: description || `Group ${groupName}`,
+        createBy: createBy || ZKDATABASE_USER_SYSTEM,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+      options
+    );
+  }
+
+  public async findGroup(
+    groupName: string,
+    session?: ClientSession
+  ): Promise<GroupSchema | null> {
+    return this.collection.findOne({ groupName }, { session });
   }
 
   public static async init(databaseName: string) {
@@ -38,7 +54,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
       ModelGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.create({ grouName: 1 }, { unique: true });
+      await collection.index({ groupName: 1 }, { unique: true });
     }
   }
 }
