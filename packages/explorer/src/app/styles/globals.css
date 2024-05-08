@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url("https://fonts.googleapis.com/css?family=Nunito");
+
+@layer base {
+  .nav-header {
+    background: linear-gradient(302deg, #BB3135 0%, #ED4525 39%, #EE6149 100%);
+  }
+
+  .page-wrapper {
+    padding: 40px;
+  }
+
+  .shadow {
+    box-shadow: 0px 0px 12px 1px rgba(25, 36, 49, 0.04);
+  }
+
+  body, html {
+    height: 100vh;
+  }
+}
+
+@layer components {
+  .card {
+    border-width: 1.5px;
+    border-radius: 10px;
+  }
+
+  button {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem; 
+    padding-left: 1rem;
+    padding-right: 1rem; 
+    column-gap: 0.5rem; 
+    align-items: center; 
+    border-radius: 0.75rem; 
+    font-size: 0.875rem;
+    line-height: 1.25rem; 
+    font-weight: 600; 
+  }
+}
+
+@layer utilities {
+  .vertical-divider {
+    border: 0.5px solid #ABAFC7;
+    border-top-width: 0;
+    border-left-width: 0;
+  }
+}
