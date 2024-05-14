@@ -17,6 +17,13 @@ import {
   Struct,
 } from 'o1js';
 
+/**
+  * The Schema defines the structure and behavior of documents in the zkDB system, 
+  * including their serialization, deserialization, and hashing. 
+  * It maps field names to provable types, enabling the creation of documents 
+  * with cryptographic proof capabilities.
+  */
+ 
 export interface SchemaExtend {
   serialize(): DocumentEncoded;
   hash(): Field;
