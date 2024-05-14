@@ -11,6 +11,7 @@ import { PermissionGroup, Permissions } from '../types/permission.js';
 import { MerkleWitness } from '../types/merkle-tree.js';
 import { PermissionRecord } from '../common/permission.js';
 import {
+  getWitnessByDocumentId,
   listPermissions,
   setOwnership,
   setPermission,
@@ -50,7 +51,7 @@ export default class Document {
       this.collectionName,
       filter
     );
-
+    
     if (Object.keys(response).length === 0) {
       return null;
     }
@@ -92,10 +93,9 @@ export default class Document {
     }
   }
 
-  public async update<A extends Schema & { serialize: () => DocumentEncoded }>(
-    documentInstance: A,
-    filter: FilterCriteria
-  ): Promise<MerkleWitness> {
+  public async findAndUpdate<
+    A extends Schema & { serialize: () => DocumentEncoded },
+  >(documentInstance: A, filter: FilterCriteria): Promise<MerkleWitness> {
     return (
       await updateDocument(
         this.databaseName,
@@ -111,9 +111,45 @@ export default class Document {
     });
   }
 
+  public async update<A extends Schema & { serialize: () => DocumentEncoded }>(
+    documentInstance: A
+  ): Promise<MerkleWitness> {
+    if (this.isEmpty()) {
+      throw Error('Document is not defined');
+    }
+    return (
+      await updateDocument(
+        this.databaseName,
+        this.collectionName,
+        { _id: this._id! } as any,
+        documentInstance.serialize()
+      )
+    ).witness.map((witness) => {
+      return {
+        isLeft: witness.isLeft,
+        sibling: Field(witness.sibling),
+      };
+    });
+  }
+
   public async remove(filter: FilterCriteria): Promise<MerkleWitness> {
     return (
       await dropDocument(this.databaseName, this.collectionName, filter as any)
+    ).witness.map((witness) => {
+      return {
+        isLeft: witness.isLeft,
+        sibling: Field(witness.sibling),
+      };
+    });
+  }
+
+  public async getWitness(): Promise<MerkleWitness> {
+    if (this.isEmpty()) {
+      throw Error('The document is empty');
+    }
+
+    return (
+      await getWitnessByDocumentId(this.databaseName, this._id!)
     ).witness.map((witness) => {
       return {
         isLeft: witness.isLeft,
