@@ -66,7 +66,7 @@ export default class QueueService {
           task.database,
           task.collection
         );
-        let proof = zkProof ? RollUpProof.fromJSON(zkProof) : undefined;
+        let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
         const witness = new DatabaseMerkleWitness(
           await merkleTree.getWitness(

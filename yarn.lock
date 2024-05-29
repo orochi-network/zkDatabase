@@ -11333,10 +11333,10 @@ nth-check@^2.0.1:
   dependencies:
     boolbase "^1.0.0"
 
-o1js@^0.17.0:
-  version "0.17.0"
-  resolved "https://registry.yarnpkg.com/o1js/-/o1js-0.17.0.tgz#4c7173f160e60cdb3224a96f4f734d7ad95003e7"
-  integrity sha512-OPQc3jBG2X5z7yI2mcovzRVbd91Q2D/npep14+g0wBdGXpyyAFdaz59YjVlEsPcY1Gmh2L+LCFhVA2fQ+1ogIg==
+o1js@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/o1js/-/o1js-1.1.0.tgz#74af17bc41d5262d455568c9d2750ef433a68e60"
+  integrity sha512-rq+ndUFZBzC+Gk3VbXGNu97uFZJTLDmqglP1J8gGWP3Bdchjj+huCtPVvezfiw6+RyjPePaBVSbPWO11HMZiaQ==
   dependencies:
     blakejs "1.2.1"
     cachedir "^2.4.0"
