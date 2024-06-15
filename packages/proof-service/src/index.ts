@@ -1,36 +1,15 @@
-import config from "./helper/config";
-import { DatabaseEngine, ModelQueueTask } from "@zkdb/storage";
-import QueueService from "./queue/queue-service";
-import logger from "./helper/logger"; // Assume you have a logger module
+import express from 'express';
+import proofRouter from './router/proof.js';
 
-async function processQueue() {
-  try {
-    const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
-    if (!dbEngine.isConnected()) {
-      await dbEngine.connect();
-    }
+(async () => {
+  const app = express();
 
-    const queue = ModelQueueTask.getInstance();
-    const taskQueueProcessor = new QueueService(queue);
-
-    await taskQueueProcessor.start();
-  } catch (error) {
-    logger.error("An error occurred while processing the queue:", error);
-    process.exit(1);
-  }
-}
-
-// Handle graceful shutdown
-process.on("SIGINT", async () => {
-  logger.info("Received SIGINT, gracefully shutting down...");
-  await DatabaseEngine.getInstance().disconnect();
-  process.exit(0); // Exit gracefully
-});
-
-process.on("SIGTERM", async () => {
-  logger.info("Received SIGTERM, gracefully shutting down...");
-  await DatabaseEngine.getInstance().disconnect();
-  process.exit(0); // Exit gracefully
-});
-
-processQueue();
+  app.use(express.json());
+  
+  app.use("/proof", proofRouter);
+  
+  const port = process.env.PORT || 3000;
+  app.listen(port, () => {
+    console.log(`Server is running at http://localhost:${port}`);
+  });
+})();
