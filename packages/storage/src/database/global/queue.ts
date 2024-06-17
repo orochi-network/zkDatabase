@@ -1,4 +1,4 @@
-import { FindOptions, InsertOneOptions } from 'mongodb';
+import { Filter, FindOptions, InsertOneOptions } from 'mongodb';
 import ModelBasic from '../base/basic.js';
 import { zkDatabaseConstants } from '../../common/const.js';
 
@@ -24,9 +24,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
   public static getInstance(): ModelQueueTask {
     if (!ModelQueueTask.instance) {
       ModelQueueTask.instance = new ModelQueueTask();
-      ModelQueueTask.instance.collection.createIndex(
-        { merkleIndex: 1 }
-      );
+      ModelQueueTask.instance.collection.createIndex({ merkleIndex: 1 });
     }
     return ModelQueueTask.instance;
   }
@@ -53,6 +51,19 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     }
     const result = await this.collection.findOne(
       { processed: false },
+      { sort: { createdAt: 1 }, ...options }
+    );
+
+    const task = result as TaskEntity | null;
+    return task;
+  }
+
+  public async getTask(filter: Filter<TaskEntity>, options?: FindOptions) {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+    const result = await this.collection.findOne(
+      { processed: false, ...filter },
       { sort: { createdAt: 1 }, ...options }
     );
 
