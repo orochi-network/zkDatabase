@@ -1,26 +1,29 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "es2020",
     "module": "NodeNext",
     "lib": ["dom", "esnext"],
     "outDir": "./build",
     "rootDir": ".",
-    "strict": true,
     "declarationMap": false,
-    "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
-    "skipLibCheck": true,
+    "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
     "moduleResolution": "nodenext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "allowJs": true,
     "declaration": false,
     "sourceMap": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "paths": {}
   },
-  "include": ["./src", "./tests"],
-  "exclude": ["node_modules", "build", "examples"]
+  "include": ["./src"],
+  "exclude": [
+    "./node_modules",
+    "./build",
+    "./examples",
+    "**/*.spec.ts",
+    "**/*.test.ts"
+  ]
 }

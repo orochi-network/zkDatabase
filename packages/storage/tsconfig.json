@@ -1,17 +1,10 @@
 {
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "target": "es2020",
     "module": "commonjs",
-    "strict": true,
-    "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "noImplicitAny": true,
-    "resolveJsonModule": true,
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "skipLibCheck": true,
-    "declaration": true,
+    "moduleResolution": "Node",
     "outDir": "./build/",
     "rootDir": ".",
     "types": ["node", "jest"]

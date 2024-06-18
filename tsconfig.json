@@ -16,13 +16,13 @@
     "sourceMap": true
   },
   "references": [
+    { "path": "./packages/storage" },
     { "path": "./packages/explorer" },
     { "path": "./packages/kubo" },
     { "path": "./packages/portal" },
     { "path": "./packages/proof-service" },
-    { "path": "./packages/serverless" },
-    { "path": "./packages/storage" },
-    { "path": "./packages/zkdb" }
+    { "path": "./packages/zkdb" },
+    { "path": "./packages/serverless" }
   ],
   "include": ["./src/"],
   "exclude": [
