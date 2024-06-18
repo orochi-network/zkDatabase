@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "strict": true,
+    "allowJs": true,
+    "moduleResolution": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "declaration": true,
+    "sourceMap": true
+  },
+  "references": [
+    { "path": "./packages/explorer" },
+    { "path": "./packages/kubo" },
+    { "path": "./packages/portal" },
+    { "path": "./packages/proof-service" },
+    { "path": "./packages/serverless" },
+    { "path": "./packages/storage" },
+    { "path": "./packages/zkdb" }
+  ],
+  "include": ["./src/"],
+  "exclude": [
+    "**/build",
+    "**/node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.js"
+  ]
+}
