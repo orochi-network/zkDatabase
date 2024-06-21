@@ -11,7 +11,7 @@
     "types": ["node", "jest"]
   },
   "include": ["**/*.ts"],
-  "references": [{ "path": "../storage" }],
+  "references": [{ "path": "../storage" }, { "path": "../smart-contract" }],
   "exclude": [
     "build",
     "node_modules",
