@@ -3,6 +3,7 @@ import ModelBasic from "../base/basic.js";
 
 export type DbSetting = {
   merkleHeight: number;
+  appPublicKey: string
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
@@ -20,13 +21,22 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     return ModelDbSetting.instances.get(key)!;
   }
 
-  public async updateSetting(setting: DbSetting) {
+  public async updateSetting(setting: Partial<DbSetting>) {
     const filter = {};
-    const update = { $set: setting };
+    const update: { $set: Partial<DbSetting> } = { $set: {} };
+    
+    if (setting.merkleHeight !== undefined) {
+      update.$set.merkleHeight = setting.merkleHeight;
+    }
+    
+    if (setting.appPublicKey !== undefined) {
+      update.$set.appPublicKey = setting.appPublicKey;
+    }
+
     const options = { upsert: true };
+
     return this.collection.updateOne(filter, update, options);
   }
-
   public async getSetting(): Promise<DbSetting | null> {
     const setting = await this.collection.findOne({});
     return setting;
