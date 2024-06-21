@@ -1,14 +1,13 @@
 {
-  "name": "package-name",
-  "version": "0.1.0",
+  "name": "@zkdb/smart-contract",
+  "version": "1.0.0",
   "description": "",
   "author": "",
   "license": "Apache-2.0",
   "keywords": [
-    "mina-zkapp",
-    "mina-zk-app",
-    "mina-dapp",
-    "zkapp"
+    "mina-smart-contract",
+    "zkdb",
+    "zkdatabase"
   ],
   "type": "module",
   "main": "build/src/index.js",
