@@ -1,4 +1,4 @@
-import { Field, MerkleWitness, ZkProgram } from 'o1js';
+import { Field, MerkleWitness, PublicKey, UInt64, ZkProgram } from 'o1js';
 import {
   DatabaseEngine,
   ModelDbSetting,
@@ -9,6 +9,8 @@ import {
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
 import config from '../helper/config.js';
+import { ProofState, getZkDbSmartContract } from '@zkdb/smart-contract';
+import assert from 'assert';
 
 export async function createProof() {
   const taskId = process.argv.slice(2)[0];
@@ -17,7 +19,7 @@ export async function createProof() {
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }
-  
+
   const queue = ModelQueueTask.getInstance();
 
   const task = await queue.getTask({
@@ -31,9 +33,15 @@ export async function createProof() {
 
   try {
     const circuitName = `${task.database}.${task.collection}`;
-    const merkleHeight = await ModelDbSetting.getInstance(
-      task.database
-    ).getHeight();
+    const modelDbSetting = ModelDbSetting.getInstance(task.database);
+    const settings = await modelDbSetting.getSetting();
+
+    if (!settings) {
+      throw Error(`Settings for database ${task.database} are missed`);
+    }
+
+    const merkleHeight = settings.merkleHeight;
+    const appPublicKey = PublicKey.fromBase58(settings.appPublicKey);
 
     if (!merkleHeight) {
       throw new Error('Merkle Tree height is null');
@@ -69,15 +77,34 @@ export async function createProof() {
       new Date(task.createdAt.getTime() - 1)
     );
 
+    class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
+    const zkDbApp = new ZkDbApp(appPublicKey);
+
+    // TODO: Check if app exists
+
+    const onChainRootState = zkDbApp.state.get();
+    const onChainActionState = zkDbApp.actionState.get();
+
+    assert(onChainRootState.equals(merkleRoot));
+
+    const proofState = new ProofState({
+      actionState: onChainActionState,
+      rootState: onChainRootState,
+    });
+
+    const action = (
+      await zkDbApp.reducer.fetchActions({
+        fromActionState: onChainActionState,
+      })
+    )[0][0];
+
+    assert(Field(task.hash).equals(action.hash));
+    assert(UInt64.from(task.merkleIndex).equals(action.index));
+
+    // TODO: Should we consider both on-chain action and off-chain leaf. Off-chain leaf = On-chain action
     proof = proof
-      ? await circuit.update(
-          merkleRoot,
-          proof,
-          witness,
-          oldLeaf,
-          Field(task.hash)
-        )
-      : await circuit.init(merkleRoot, witness, oldLeaf, Field(task.hash));
+      ? await circuit.update(proofState, proof, witness, oldLeaf, action)
+      : await circuit.init(proofState, witness, oldLeaf, action);
 
     await modelProof.saveProof({
       ...proof.toJSON(),

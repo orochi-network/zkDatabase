@@ -1,4 +1,5 @@
 import { DatabaseEngine } from '@zkdb/storage';
+import { CircuitString, Poseidon, PrivateKey, PublicKey, UInt32 } from 'o1js';
 import { createCollection } from '../../../src/domain/use-case/collection';
 import config from '../../../src/helper/config';
 import { createDatabase } from '../../../src/domain/use-case/database';
@@ -6,11 +7,11 @@ import {
   buildSchema,
   validateDocumentSchema,
 } from '../../../src/domain/use-case/schema';
-import { CircuitString, Poseidon, UInt32 } from 'o1js';
 
 const DB_NAME = 'test-db';
 const TEST_COLLECTION = 'users';
 const MERKLE_HEIGHT = 8;
+const PUBLIC_KEY = PublicKey.fromPrivateKey(PrivateKey.random()).toBase58();
 
 const dropDatabase = true;
 
@@ -47,7 +48,7 @@ describe('Schema Use Cases', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
   });
 
   afterEach(async () => {

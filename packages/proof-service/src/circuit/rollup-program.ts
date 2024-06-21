@@ -1,57 +1,5 @@
-import {
-  ZkProgram,
-  Field,
-  SelfProof,
-  MerkleWitness
-} from 'o1js';
-import { CircuitCache } from './cache/circuit-cache.js';
-
-export type DatabaseRollUp = ReturnType<typeof RollUpProgram>;
-
-function RollUpProgram(name: string, merkleTreeHeight: number) {
-  class DatabaseMerkleWitness extends MerkleWitness(merkleTreeHeight) {}
-
-  return ZkProgram({
-    name: name,
-    publicInput: Field,
-    publicOutput: Field,
-
-    methods: {
-      init: {
-        privateInputs: [DatabaseMerkleWitness, Field, Field],
-
-        method(
-          state: Field,
-          witness: DatabaseMerkleWitness,
-          oldLeaf: Field,
-          newLeaf: Field
-        ) {
-          witness.calculateRoot(oldLeaf).assertEquals(state);
-          return witness.calculateRoot(newLeaf);
-        },
-      },
-
-      update: {
-        privateInputs: [SelfProof, DatabaseMerkleWitness, Field, Field],
-
-        method(
-          state: Field,
-          proof: SelfProof<Field, Field>,
-          witness: DatabaseMerkleWitness,
-          oldLeaf: Field,
-          newLeaf: Field
-        ) {
-          proof.verify();
-
-          proof.publicOutput.assertEquals(state);
-          witness.calculateRoot(oldLeaf).assertEquals(state);
-
-          return witness.calculateRoot(newLeaf);
-        },
-      },
-    },
-  });
-}
+import { DatabaseRollUp, RollUpProgram } from '@zkdb/smart-contract';
+import { CircuitCache } from './cache/circuit-cache';
 
 export function getDatabaseRollUpFunction(
   name: string,

@@ -48,6 +48,12 @@ export const groupDescription = Joi.string()
     'Optional description of the group, providing additional context.'
   );
 
+  export const publicKey = Joi.string()
+  .trim()
+  .length(52)
+  .required()
+  .pattern(/^[A-Za-z0-9]{52}$/);
+
 export const indexName = Joi.string()
   .trim()
   .min(2)

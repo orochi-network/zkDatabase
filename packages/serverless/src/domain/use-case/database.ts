@@ -7,7 +7,8 @@ import ModelUserGroup from '../../model/database/user-group';
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
   databaseName: string,
-  merkleHeight: number
+  merkleHeight: number,
+  appPublicKey: string
 ) {
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
     // Ensure database existing
@@ -19,6 +20,7 @@ export async function createDatabase(
   await ModelUserGroup.init(databaseName);
   await ModelDbSetting.getInstance(databaseName).updateSetting({
     merkleHeight,
+    appPublicKey,
   });
   return true;
 }
