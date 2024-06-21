@@ -60,7 +60,7 @@ const dbList = async () =>
 const dbCreate = resolverWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest) =>
-    createDatabase(args.databaseName, args.merkleHeight)
+    createDatabase(args.databaseName, args.merkleHeight, args.publicKey)
 );
 
 export const resolversDatabase = {
