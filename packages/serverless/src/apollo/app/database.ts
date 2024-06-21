@@ -2,7 +2,7 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase } from '@zkdb/storage';
 import resolverWrapper from '../validation';
-import { databaseName } from './common';
+import { databaseName, publicKey } from './common';
 import { createDatabase } from '../../domain/use-case/database';
 import { AppContext } from '../../common/types';
 
@@ -12,6 +12,7 @@ export type TDatabaseRequest = {
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
+  publicKey: string
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -20,7 +21,8 @@ export type TFindIndexRequest = TDatabaseRequest & {
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
-  merkleHeight: Joi.number().integer().positive().required()
+  merkleHeight: Joi.number().integer().positive().required(),
+  publicKey
 });
 
 export const typeDefsDatabase = `#graphql
@@ -35,7 +37,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
+  dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
