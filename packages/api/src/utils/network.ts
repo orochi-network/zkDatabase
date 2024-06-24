@@ -11,11 +11,10 @@ export interface Error {
 }
 
 export async function handleRequest<T>(
-  request: () => Promise<{ data: T }>
+  request: () => Promise<NetworkResult<T>>
 ): Promise<NetworkResult<T>> {
   try {
-    const { data } = await request();
-    return { type: "success", data };
+    return request();
   } catch (error) {
     return {
       type: "error",
