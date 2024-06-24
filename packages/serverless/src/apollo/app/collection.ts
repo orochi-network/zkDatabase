@@ -107,7 +107,7 @@ const collectionList = resolverWrapper(
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
-    return withTransaction((session) =>
+    const isCreated = withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -119,6 +119,10 @@ const collectionCreate = resolverWrapper(
         session
       )
     );
+
+    return {
+      success: isCreated,
+    };
   }
 );
 
