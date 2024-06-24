@@ -7,7 +7,7 @@ import {
 } from "../../types/authentication";
 import { NetworkResult } from "../../../utils/network";
 
-export const SIGN_UP = gql`
+const SIGN_UP = gql`
   mutation UserSignUp($signUp: SignUp!, $proof: SignatureProof!) {
     userSignUp(signUp: $signUp, proof: $proof) {
       success
@@ -19,7 +19,7 @@ export const SIGN_UP = gql`
   }
 `;
 
-export interface UserSignUpResponse {
+interface UserSignUpResponse {
   success: boolean;
   error: string;
   userName: string;

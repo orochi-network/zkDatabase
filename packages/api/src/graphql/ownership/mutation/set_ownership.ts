@@ -1,7 +1,6 @@
 import { gql } from "@apollo/client";
 import { NetworkResult, handleRequest } from "../../../utils/network";
 import client from "../../client";
-import { PermissionSet, Permissions } from "../../types/permission";
 import { Owner } from "../../types/ownership";
 
 const SET_OWNER = gql`
@@ -25,7 +24,7 @@ const SET_OWNER = gql`
   }
 `;
 
-export interface OwnershipResponse {
+interface OwnershipResponse {
   userName: string;
   groupName: string;
 }

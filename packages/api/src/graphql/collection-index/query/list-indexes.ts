@@ -12,7 +12,7 @@ export interface ListIndexesResponse {
   indexes: string[];
 }
 
-export const deleteIndex = async (
+export const listIndexes = async (
   databaseName: string,
   collectionName: string,
   token: string

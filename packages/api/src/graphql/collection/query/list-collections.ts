@@ -2,17 +2,17 @@ import { gql } from "@apollo/client";
 import client from "../../client";
 import { NetworkResult, handleRequest } from "../../../utils/network";
 
-export const LIST_COLLECTION = gql`
+const LIST_COLLECTION = gql`
   query CollectionList($databaseName: String!) {
     collectionList(databaseName: $databaseName)
   }
 `;
 
-export interface ListCollectionResponse {
+interface ListCollectionResponse {
   collections: string[];
 }
 
-export const listCollection = async (
+export const listCollections = async (
   databaseName: string
 ): Promise<NetworkResult<string[]>> => {
   return handleRequest(async () => {

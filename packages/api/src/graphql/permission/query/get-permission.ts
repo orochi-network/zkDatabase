@@ -1,9 +1,7 @@
 import { gql } from "@apollo/client";
 import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
 import client from "../../client";
-import { DocumentEncoded } from "../../types/document";
-import { PermissionSet, Permissions } from "../../types/permission";
+import { Permissions } from "../../types/permission";
 
 const LIST_PERMISSIONS = gql`
   query PermissionList($databaseName: String!, $collectionName: String!, $docId: String) {
@@ -36,7 +34,7 @@ const LIST_PERMISSIONS = gql`
 `;
 
 
-export interface ListPermissionResponse {
+interface ListPermissionResponse {
   permissions: Permissions;
 }
 

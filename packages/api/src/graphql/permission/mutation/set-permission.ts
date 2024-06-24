@@ -31,7 +31,7 @@ const SET_PERMISSION = gql`
   }
 `;
 
-export interface ListPermissionResponse {
+interface ListPermissionResponse {
   permissions: Permissions;
 }
 

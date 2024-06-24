@@ -16,11 +16,11 @@ const EXIST_INDEX = gql`
   }
 `;
 
-export interface ExistIndexResponse {
+interface ExistIndexResponse {
   existed: boolean;
 }
 
-export const deleteIndex = async (
+export const existIndex = async (
   databaseName: string,
   collectionName: string,
   indexName: string,

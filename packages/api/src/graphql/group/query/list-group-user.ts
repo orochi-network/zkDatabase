@@ -2,13 +2,13 @@ import { gql } from "@apollo/client";
 import { NetworkResult, handleRequest } from "../../../utils/network";
 import client from "../../client";
 
-export const LIST_GROUP_BY_USER = gql`
+const LIST_GROUP_BY_USER = gql`
   query GroupListByUser($databaseName: String!, $userName: String!) {
     groupListByUser(databaseName: $databaseName, userName: $userName)
   }
 `;
 
-export interface GroupResponse {
+interface GroupResponse {
   groups: string[];
 }
 

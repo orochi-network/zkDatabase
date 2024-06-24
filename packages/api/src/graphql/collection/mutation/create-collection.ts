@@ -3,7 +3,7 @@ import { Schema } from "../../types/schema";
 import client from "../../client";
 import { NetworkResult, handleRequest } from "../../../utils/network";
 
-export const CREATE_COLLECTION = gql`
+const CREATE_COLLECTION = gql`
   mutation CollectionCreate(
     $databaseName: String!
     $collectionName: String!
@@ -21,7 +21,7 @@ export const CREATE_COLLECTION = gql`
   }
 `;
 
-export interface CreateCollectionResponse {
+interface CreateCollectionResponse {
   success: boolean;
 }
 

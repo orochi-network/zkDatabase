@@ -1,6 +1,5 @@
 import { gql } from "@apollo/client";
 import client from "../../client";
-import { SignInInfo, SignatureProofData } from "../../types/authentication";
 import { NetworkResult } from "../../../utils/network";
 
 export const SIGN_OUT = gql`
