@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { NetworkResult } from "../../../common/result";
 import client from "../../client";
-import { SignInInfo, SignatureProofData } from "../../types/authentication";
+import { SignInInfo } from "../../types/authentication";
+import { NetworkResult } from "../../../utils/network";
 
 const SIGN_IN_DATA = gql`
   query UserSignInData {

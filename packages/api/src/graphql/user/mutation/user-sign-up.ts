@@ -1,11 +1,11 @@
 import { gql } from "@apollo/client";
-import { NetworkResult } from "../../../common/result";
 import client from "../../client";
 import {
   SignUpData,
   SignUpInfo,
   SignatureProofData,
 } from "../../types/authentication";
+import { NetworkResult } from "../../../utils/network";
 
 export const SIGN_UP = gql`
   mutation UserSignUp($signUp: SignUp!, $proof: SignatureProof!) {
