@@ -22,7 +22,8 @@
     { "path": "./packages/portal" },
     { "path": "./packages/proof-service" },
     { "path": "./packages/zkdb" },
-    { "path": "./packages/serverless" }
+    { "path": "./packages/serverless" },
+    { "path": "./packages/broker-service" }
   ],
   "include": ["./src/"],
   "exclude": [
