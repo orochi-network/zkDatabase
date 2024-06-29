@@ -9,6 +9,7 @@
     "strict": true,
     "esModuleInterop": true
   },
+  "references": [{ "path": "../storage" }],
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts"]
 }
