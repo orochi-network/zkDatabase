@@ -1,6 +1,5 @@
 import { Field, MerkleWitness, ZkProgram } from 'o1js';
 import {
-  DatabaseEngine,
   ModelDbSetting,
   ModelMerkleTree,
   ModelProof,
@@ -8,24 +7,21 @@ import {
 } from '@zkdb/storage';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
-import config from '../helper/config.js';
+import logger from '../helper/logger.js';
 
-export async function createProof() {
-  const taskId = process.argv.slice(2)[0];
-
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
+export async function createProof(taskId: string) {
+  if (taskId === undefined) {
+    throw Error('Passed ID is undefined')
   }
   
   const queue = ModelQueueTask.getInstance();
 
-  const task = await queue.getTask({
+  const task = await queue.getQueuedTask({
     _id: new ObjectId(taskId),
   });
 
   if (!task) {
-    console.error('Task has not been found');
+    logger.error('Task has not been found');
     process.exit(1);
   }
 
@@ -93,5 +89,3 @@ export async function createProof() {
     process.exit(1);
   }
 }
-
-createProof();

@@ -63,10 +63,11 @@ export async function proveCreateDocument(
   const hash = schema.hash();
   await merkleTree.setLeaf(BigInt(index), hash, currDate, { session });
 
-  await ModelQueueTask.getInstance().createTask(
+  await ModelQueueTask.getInstance().queueTask(
     {
       merkleIndex: BigInt(index),
       hash: hash.toString(),
+      status: "queued",
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
@@ -123,10 +124,11 @@ export async function proveUpdateDocument(
     { session }
   );
 
-  await ModelQueueTask.getInstance().createTask(
+  await ModelQueueTask.getInstance().queueTask(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: hash.toString(),
+      status: "queued",
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
@@ -176,10 +178,11 @@ export async function proveDeleteDocument(
     { session }
   );
 
-  await ModelQueueTask.getInstance().createTask(
+  await ModelQueueTask.getInstance().queueTask(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: Field(0).toString(),
+      status: "queued",
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
