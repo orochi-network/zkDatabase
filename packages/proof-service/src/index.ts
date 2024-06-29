@@ -1,15 +1,17 @@
-import express from 'express';
-import proofRouter from './router/proof.js';
+import TaskService from './service/task-service.js';
+import logger from './helper/logger.js';
+import { DatabaseEngine } from '@zkdb/storage';
+import config from './helper/config.js';
 
 (async () => {
-  const app = express();
+  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+  if (!dbEngine.isConnected()) {
+    await dbEngine.connect();
+  }
+  
+  const taskService = new TaskService();
 
-  app.use(express.json());
-  
-  app.use("/proof", proofRouter);
-  
-  const port = process.env.PORT || 3000;
-  app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
-  });
+  await taskService.fetchAndProcessTasks()
+
+  logger.info('Proof service stopped.');
 })();
