@@ -1,4 +1,4 @@
-import TaskService from './service/task-service.js';
+import TaskService from './service/task-service.js'
 import logger from './helper/logger.js';
 import { DatabaseEngine } from '@zkdb/storage';
 import config from './helper/config.js';
