@@ -21,7 +21,7 @@ export type TFindIndexRequest = TDatabaseRequest & {
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
-  merkleHeight: Joi.number().integer().positive().required(),
+  merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
   publicKey
 });
 
