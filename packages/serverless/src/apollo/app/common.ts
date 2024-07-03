@@ -52,7 +52,7 @@ export const groupDescription = Joi.string()
   .trim()
   .length(52)
   .required()
-  .pattern(/^[A-Za-z0-9]{52}$/);
+  .pattern(/^[A-HJ-NP-Za-km-z1-9]{52}$/);
 
 export const indexName = Joi.string()
   .trim()
