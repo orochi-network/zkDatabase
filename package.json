@@ -4,9 +4,13 @@
   "workspaces": [
     "packages/*"
   ],
+  "scripts": {
+    "build": "tsc --build tsconfig.json && cd ./packages/explorer && yarn build"
+  },
   "resolutions": {
     "jest": "^28.0.3",
     "wrap-ansi": "7.0.0",
-    "string-width": "4.1.0"
+    "string-width": "4.1.0",
+    "typescript": "5.4.2"
   }
 }
