@@ -1,9 +1,9 @@
-import { zkDatabaseConstants } from "../../common/const.js";
-import ModelBasic from "../base/basic.js";
+import { zkDatabaseConstants } from '../../common/const.js';
+import ModelBasic from '../base/basic.js';
 
 export type DbSetting = {
   merkleHeight: number;
-  appPublicKey: string
+  appPublicKey: string;
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
@@ -22,21 +22,19 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   }
 
   public async updateSetting(setting: Partial<DbSetting>) {
-    const filter = {};
-    const update: { $set: Partial<DbSetting> } = { $set: {} };
-    
-    if (setting.merkleHeight !== undefined) {
-      update.$set.merkleHeight = setting.merkleHeight;
-    }
-    
-    if (setting.appPublicKey !== undefined) {
-      update.$set.appPublicKey = setting.appPublicKey;
-    }
-
-    const options = { upsert: true };
-
-    return this.collection.updateOne(filter, update, options);
+    return this.collection.updateOne(
+      {},
+      {
+        $set: Object.fromEntries(
+          Object.entries(setting).filter(([k]) =>
+            ['merkleHeight', 'appPublicKey'].includes(k)
+          )
+        ),
+      },
+      { upsert: true }
+    );
   }
+
   public async getSetting(): Promise<DbSetting | null> {
     const setting = await this.collection.findOne({});
     return setting;

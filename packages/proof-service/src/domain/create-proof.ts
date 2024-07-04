@@ -35,14 +35,13 @@ export async function createProof() {
   try {
     const circuitName = `${task.database}.${task.collection}`;
     const modelDbSetting = ModelDbSetting.getInstance(task.database);
-    const settings = await modelDbSetting.getSetting();
+    const {merkleHeight, appPublicKey} = await modelDbSetting.getSetting() || {};
 
-    if (!settings) {
-      throw Error(`Settings for database ${task.database} are missed`);
+    if (!merkleHeight || !appPublicKey) {
+      throw new Error('Setting is wrong, unable to deconstruct settings');
     }
 
-    const merkleHeight = settings.merkleHeight;
-    const appPublicKey = PublicKey.fromBase58(settings.appPublicKey);
+    const publicKey = PublicKey.fromBase58(appPublicKey);
 
     if (!merkleHeight) {
       throw new Error('Merkle Tree height is null');
@@ -79,7 +78,7 @@ export async function createProof() {
     );
 
     class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
-    const zkDbApp = new ZkDbApp(appPublicKey);
+    const zkDbApp = new ZkDbApp(publicKey);
 
     // TODO: Check if app exists
 
