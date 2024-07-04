@@ -1,6 +1,8 @@
+import { Field } from 'o1js';
 import {
   createDatabase,
   getDatabaseStatus,
+  getRoot,
   listCollections,
 } from '../client/index.js';
 import Collection from './collection.js';
@@ -25,6 +27,10 @@ export class Database {
 
   public collection(collectionName: string): Collection {
     return new Collection(this.databaseName, collectionName);
+  }
+
+  public async getMerkleRoot(): Promise<Field> {
+    return Field((await getRoot(this.databaseName)).node)
   }
 
   public async status() {

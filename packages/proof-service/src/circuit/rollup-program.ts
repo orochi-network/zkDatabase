@@ -20,7 +20,7 @@ function RollUpProgram(name: string, merkleTreeHeight: number) {
       init: {
         privateInputs: [DatabaseMerkleWitness, Field, Field],
 
-        method(
+        async method(
           state: Field,
           witness: DatabaseMerkleWitness,
           oldLeaf: Field,
@@ -34,7 +34,7 @@ function RollUpProgram(name: string, merkleTreeHeight: number) {
       update: {
         privateInputs: [SelfProof, DatabaseMerkleWitness, Field, Field],
 
-        method(
+        async method(
           state: Field,
           proof: SelfProof<Field, Field>,
           witness: DatabaseMerkleWitness,
