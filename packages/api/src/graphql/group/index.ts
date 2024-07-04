@@ -1,7 +1,2 @@
-import { listGroups } from "./query/list-group";
-import { listGroupsByUser } from "./query/list-group-user";
-
-export {
-  listGroupsByUser,
-  listGroups
-}
+export { listGroups } from "./query/list-group";
+export { listGroupsByUser } from "./query/list-group-user";

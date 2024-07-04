@@ -1,11 +1,4 @@
-import { createDocument } from "./mutation/create-document";
-import { deleteDocument } from "./mutation/delete-document";
-import { updateDocument } from "./mutation/update-document";
-import { findDocument } from "./query/find-documents";
-
-export {
-  createDocument,
-  deleteDocument,
-  updateDocument,
-  findDocument
-}
+export { createDocument } from "./mutation/create-document";
+export { deleteDocument } from "./mutation/delete-document";
+export { updateDocument } from "./mutation/update-document";
+export { findDocument } from "./query/find-documents";

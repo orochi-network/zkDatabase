@@ -1,34 +1,15 @@
-import { Signature } from "typescript";
-import {
-  SignInInfo,
-  SignUpInfo,
-  SignatureProofData,
-  SignUpData,
-} from "./authentication";
-import { Database, DatabaseStatus } from "./database";
-import { DocumentEncoded } from "./document";
-import { MerkleWitness } from "./merkle-tree";
-import { Owner } from "./ownership";
-import { PermissionSet, Permissions } from "./permission";
-import { SchemaField, Schema } from "./schema";
-import { Session } from "./session";
-import { User } from "./user";
-
+export { Signature } from "typescript";
 export {
   SignInInfo,
   SignUpInfo,
   SignatureProofData,
   SignUpData,
-  Database,
-  DatabaseStatus,
-  DocumentEncoded,
-  MerkleWitness,
-  Owner,
-  PermissionSet,
-  Permissions,
-  SchemaField,
-  Schema,
-  Session,
-  Signature,
-  User,
-};
+} from "./authentication";
+export { Database, DatabaseStatus } from "./database";
+export { DocumentEncoded } from "./document";
+export { MerkleWitness } from "./merkle-tree";
+export { Owner } from "./ownership";
+export { PermissionSet, Permissions } from "./permission";
+export { SchemaField, Schema } from "./schema";
+export { Session } from "./session";
+export { User } from "./user";

@@ -1,9 +1,3 @@
-import { createDatabase } from "./mutation/create-database";
-import { getDatabaseStatus } from "./query/get-database-status";
-import { listDatabases } from "./query/list-databases";
-
-export {
-  createDatabase,
-  getDatabaseStatus,
-  listDatabases
-}
+export { createDatabase } from "./mutation/create-database";
+export { getDatabaseStatus } from "./query/get-database-status";
+export { listDatabases } from "./query/list-databases";

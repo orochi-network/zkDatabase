@@ -1,7 +1,1 @@
-import { NetworkResult, Success, Error } from "./network";
-
-export {
-  NetworkResult,
-  Success,
-  Error
-}
+export { NetworkResult, Success, Error } from "./network";

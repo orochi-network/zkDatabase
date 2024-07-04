@@ -1,5 +1,1 @@
-import { setOwner } from "./mutation/set_ownership";
-
-export {
-  setOwner
-}
+export { setOwner } from "./mutation/set_ownership";

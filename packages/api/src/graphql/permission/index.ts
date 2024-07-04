@@ -1,7 +1,2 @@
-import { setPermissions } from "./mutation/set-permission";
-import { listPermissions } from "./query/get-permission";
-
-export {
-  setPermissions,
-  listPermissions
-}
+export { setPermissions } from "./mutation/set-permission";
+export { listPermissions } from "./query/get-permission";
