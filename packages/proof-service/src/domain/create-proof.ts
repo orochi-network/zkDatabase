@@ -11,6 +11,7 @@ import { ObjectId } from 'mongodb';
 import config from '../helper/config.js';
 import { ProofState, getZkDbSmartContract } from '@zkdb/smart-contract';
 import assert from 'assert';
+import { isEmptyArray } from '../helper/utils.js';
 
 export async function createProof() {
   const taskId = process.argv.slice(2)[0];
@@ -92,11 +93,15 @@ export async function createProof() {
       rootState: onChainRootState,
     });
 
-    const action = (
-      await zkDbApp.reducer.fetchActions({
-        fromActionState: onChainActionState,
-      })
-    )[0][0];
+    const allActions = await zkDbApp.reducer.fetchActions({
+      fromActionState: onChainActionState,
+    });
+
+    if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
+      throw new Error('Unformatted action data');
+    }
+
+    const [[action]] = allActions;
 
     assert(Field(task.hash).equals(action.hash));
     assert(UInt64.from(task.merkleIndex).equals(action.index));
