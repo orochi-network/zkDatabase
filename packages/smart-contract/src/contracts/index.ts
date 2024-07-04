@@ -1,5 +1,1 @@
-import { getZkDbSmartContract } from "./zkdb-app";
-
-export {
-  getZkDbSmartContract
-}
+export { getZkDbSmartContract } from "./zkdb-app";

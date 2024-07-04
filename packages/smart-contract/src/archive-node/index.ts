@@ -1,6 +1,1 @@
-import { Action, calculateActionState } from "./action";
-
-export {
-  Action,
-  calculateActionState
-}
+export { Action, calculateActionState } from "./action";

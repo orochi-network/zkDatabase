@@ -1,4 +1,2 @@
-import { DatabaseRollUp, RollUpProgram } from './proof-program';
-import { ProofState } from './proof-state';
-
-export { ProofState, DatabaseRollUp, RollUpProgram };
+export { DatabaseRollUp, RollUpProgram } from './proof-program';
+export { ProofState } from './proof-state';
