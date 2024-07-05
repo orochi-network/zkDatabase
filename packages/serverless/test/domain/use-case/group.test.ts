@@ -1,4 +1,5 @@
 import { DatabaseEngine } from '@zkdb/storage';
+import { PrivateKey, PublicKey } from 'o1js';
 import { createDatabase } from '../../../src/domain/use-case/database';
 import config from '../../../src/helper/config';
 import {
@@ -12,6 +13,7 @@ const DB_NAME = 'test-db-schema';
 const TEST_COLLECTION = 'users';
 const MERKLE_HEIGHT = 8;
 const TEST_GROUP = 'My Group';
+const PUBLIC_KEY = PublicKey.fromPrivateKey(PrivateKey.random()).toBase58();
 
 describe('Group Use Cases', () => {
   let dbEngine: DatabaseEngine;
@@ -49,7 +51,7 @@ describe('Group Use Cases', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
   });
 
   afterEach(async () => {
