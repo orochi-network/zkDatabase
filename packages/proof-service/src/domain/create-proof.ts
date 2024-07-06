@@ -82,10 +82,8 @@ export async function createProof(taskId: string) {
     });
     await queue.markTaskProcessed(task.merkleIndex);
 
-    console.log('Task processed successfully.');
-    process.exit(0);
+    logger.debug('Task processed successfully.');
   } catch (error) {
-    console.error('Error processing task:', error);
-    process.exit(1);
+    logger.error('Error processing task:', error);
   }
 }

@@ -239,8 +239,6 @@ const permissionOwn = resolverWrapper(
       )
     );
 
-    console.log('metadata', metadata)
-
     if (!metadata) {
       const message = args.docId
         ? `document with id ${args.docId}`

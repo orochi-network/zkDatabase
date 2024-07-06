@@ -2,7 +2,7 @@ import express from 'express';
 import taskRouter from './router/task.js';
 import { DatabaseEngine } from '@zkdb/storage';
 import config from './helper/config.js';
-
+import logger from './helper/logger.js';
 (async () => {
   const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
   if (!dbEngine.isConnected()) {
@@ -17,6 +17,6 @@ import config from './helper/config.js';
   
   const port = process.env.PORT || 3000;
   app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+    logger.info(`Server is running at http://localhost:${port}`);
   });
 })();
