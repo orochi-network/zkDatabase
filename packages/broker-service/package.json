@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "dependencies": {
+    "@zkdb/storage": "^1.0.0",
+    "apollo-server": "^3.13.0",
     "express": "^4.19.2",
-    "@zkdb/storage": "^1.0.0"
+    "graphql": "^16.9.0",
+    "graphql-type-json": "^0.3.2"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
