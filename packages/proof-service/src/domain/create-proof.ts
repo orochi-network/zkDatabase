@@ -10,10 +10,6 @@ import { ObjectId } from 'mongodb';
 import logger from '../helper/logger.js';
 
 export async function createProof(taskId: string) {
-  if (taskId === undefined) {
-    throw Error('Passed ID is undefined')
-  }
-  
   const queue = ModelQueueTask.getInstance();
 
   const task = await queue.getQueuedTask({
@@ -22,7 +18,7 @@ export async function createProof(taskId: string) {
 
   if (!task) {
     logger.error('Task has not been found');
-    process.exit(1);
+    throw Error('Task has not been found')
   }
 
   try {
