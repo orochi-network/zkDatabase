@@ -1,4 +1,5 @@
 import { DatabaseEngine } from '@zkdb/storage';
+import { PrivateKey, PublicKey } from 'o1js';
 import config from '../../../src/helper/config';
 import { createDatabase } from '../../../src/domain/use-case/database';
 import {
@@ -13,6 +14,7 @@ import { readMetadata } from '../../../src/domain/use-case/metadata';
 const DB_NAME = 'test-db-schema';
 const TEST_COLLECTION = 'users';
 const MERKLE_HEIGHT = 8;
+const PUBLIC_KEY = PublicKey.fromPrivateKey(PrivateKey.random()).toBase58();
 
 describe('Permission UseCases', () => {
   let dbEngine: DatabaseEngine;
@@ -50,7 +52,7 @@ describe('Permission UseCases', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
   });
 
   afterEach(async () => {

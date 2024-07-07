@@ -1,5 +1,5 @@
 import { ModelSequencer } from '@zkdb/storage';
-import { ClientSession, WithId } from 'mongodb';
+import { ClientSession, WithId, ObjectId } from 'mongodb';
 import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
@@ -27,9 +27,15 @@ export interface FilterCriteria {
 
 function parseQuery(input: FilterCriteria): FilterCriteria {
   const query: FilterCriteria = {};
+
   Object.keys(input).forEach((key) => {
-    query[`${key}.value`] = `${input[key]}`;
+    if (key === "_id") {
+      query[key] = new ObjectId(String(input[key]));
+    } else {
+      query[`${key}.value`] = `${input[key]}`;
+    }
   });
+
   return query;
 }
 
