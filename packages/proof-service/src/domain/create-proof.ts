@@ -1,41 +1,34 @@
 import { Field, MerkleWitness, PublicKey, UInt64, ZkProgram } from 'o1js';
 import {
-  DatabaseEngine,
   ModelDbSetting,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
 } from '@zkdb/storage';
+import { getZkDbSmartContract } from '@zkdb/smart-contract';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
-import config from '../helper/config.js';
-import { ProofState, getZkDbSmartContract } from '@zkdb/smart-contract';
+import logger from '../helper/logger.js';
 import assert from 'assert';
 import { isEmptyArray } from '../helper/utils.js';
 
-export async function createProof() {
-  const taskId = process.argv.slice(2)[0];
-
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
-  }
-
+export async function createProof(taskId: string) {
   const queue = ModelQueueTask.getInstance();
 
-  const task = await queue.getTask({
+  const task = await queue.getQueuedTask({
     _id: new ObjectId(taskId),
   });
 
   if (!task) {
-    console.error('Task has not been found');
-    process.exit(1);
+    logger.error('Task has not been found');
+    throw Error('Task has not been found');
   }
 
   try {
     const circuitName = `${task.database}.${task.collection}`;
     const modelDbSetting = ModelDbSetting.getInstance(task.database);
-    const {merkleHeight, appPublicKey} = await modelDbSetting.getSetting() || {};
+    const { merkleHeight, appPublicKey } =
+      (await modelDbSetting.getSetting()) || {};
 
     if (!merkleHeight || !appPublicKey) {
       throw new Error('Setting is wrong, unable to deconstruct settings');
@@ -117,12 +110,8 @@ export async function createProof() {
     });
     await queue.markTaskProcessed(task.merkleIndex);
 
-    console.log('Task processed successfully.');
-    process.exit(0);
+    logger.debug('Task processed successfully.');
   } catch (error) {
-    console.error('Error processing task:', error);
-    process.exit(1);
+    logger.error('Error processing task:', error);
   }
 }
-
-createProof();

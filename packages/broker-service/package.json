@@ -1,0 +1,26 @@
+{
+  "name": "@zkdb/broker-service",
+  "version": "1.0.0",
+  "main": "src/index.js",
+  "dependencies": {
+    "@zkdb/storage": "^1.0.0",
+    "apollo-server": "^3.13.0",
+    "express": "^4.19.2",
+    "graphql": "^16.9.0",
+    "graphql-type-json": "^0.3.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.2"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "Apache-2.0",
+  "description": ""
+}

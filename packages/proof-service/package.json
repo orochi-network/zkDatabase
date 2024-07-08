@@ -48,11 +48,12 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@apollo/client": "^3.10.8",
     "@orochi-network/framework": "1.1.8",
     "o1js": "^1.1.0",
     "@zkdb/storage": "^1.0.0",
     "@zkdb/smart-contract": "^1.0.0",
-    "express": "^4.19.2",
+    "graphql": "^16.9.0",
     "mongodb": "^6.3.0"
   }
 }

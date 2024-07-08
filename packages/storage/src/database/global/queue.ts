@@ -1,11 +1,13 @@
-import { Filter, FindOptions, InsertOneOptions } from 'mongodb';
+import { ClientSession, Filter, FindOptions, InsertOneOptions, WithId } from 'mongodb';
 import ModelBasic from '../base/basic.js';
 import { zkDatabaseConstants } from '../../common/const.js';
+
+export type Status = 'queued' | 'executing' | 'success' | 'error';
 
 export type TaskEntity = {
   merkleIndex: bigint;
   hash: string;
-  processed?: boolean;
+  status: Status;
   createdAt: Date;
   database: string;
   collection: string;
@@ -29,7 +31,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     return ModelQueueTask.instance;
   }
 
-  public async createTask(
+  public async queueTask(
     task: TaskEntity,
     options?: InsertOneOptions
   ): Promise<void> {
@@ -39,10 +41,67 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     await this.collection.insertOne(
       {
         ...task,
-        processed: false,
+        status: 'queued',
       },
       options
     );
+  }
+
+  public async getLatestQueuedTaskByDatabase(session?: ClientSession): Promise<WithId<TaskEntity> | null> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+
+    const executingDatabases = await this.collection
+      .aggregate(
+        [
+          {
+            $match: {
+              status: 'executing',
+            },
+          },
+          {
+            $group: {
+              _id: '$database',
+            },
+          },
+        ],
+        { session }
+      )
+      .toArray();
+
+    const executingDatabaseList = executingDatabases.map(db => db._id);
+
+    const latestQueuedTasks = await this.collection
+      .aggregate(
+        [
+          {
+            $match: {
+              status: 'queued',
+              database: { $nin: executingDatabaseList },
+            },
+          },
+          {
+            $sort: {
+              database: 1,
+              createdAt: -1,
+            },
+          },
+          {
+            $group: {
+              _id: '$database',
+              latestTask: { $first: '$$ROOT' },
+            },
+          },
+          {
+            $replaceRoot: { newRoot: '$latestTask' },
+          },
+        ],
+        { session }
+      )
+      .toArray();
+
+      return latestQueuedTasks[0] as WithId<TaskEntity>;
   }
 
   public async getNewTask(options?: FindOptions): Promise<TaskEntity | null> {
@@ -50,7 +109,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     const result = await this.collection.findOne(
-      { processed: false },
+      { status: 'queued' },
       { sort: { createdAt: 1 }, ...options }
     );
 
@@ -58,12 +117,12 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     return task;
   }
 
-  public async getTask(filter: Filter<TaskEntity>, options?: FindOptions) {
+  public async getQueuedTask(filter: Filter<TaskEntity>, options?: FindOptions) {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     const result = await this.collection.findOne(
-      { processed: false, ...filter },
+      { ...filter, status: 'queued' },
       { sort: { createdAt: 1 }, ...options }
     );
 
@@ -77,7 +136,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     }
     await this.collection.updateOne(
       { merkleIndex },
-      { $set: { processed: true } }
+      { $set: { status: 'success' } }
     );
   }
 }
