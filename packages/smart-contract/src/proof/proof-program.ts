@@ -16,7 +16,7 @@ export function RollUpProgram(name: string, merkleTreeHeight: number) {
       init: {
         privateInputs: [DatabaseMerkleWitness, Field, Action],
 
-        method(
+        async method(
           state: ProofState,
           witness: DatabaseMerkleWitness,
           oldLeaf: Field,
@@ -40,7 +40,7 @@ export function RollUpProgram(name: string, merkleTreeHeight: number) {
       update: {
         privateInputs: [SelfProof, DatabaseMerkleWitness, Field, Action],
 
-        method(
+        async method(
           state: ProofState,
           proof: SelfProof<ProofState, ProofState>,
           witness: DatabaseMerkleWitness,

@@ -5,7 +5,7 @@ import {
   ModelProof,
   ModelQueueTask,
 } from '@zkdb/storage';
-import { getZkDbSmartContract } from '@zkdb/smart-contract';
+import { getZkDbSmartContract, ProofState } from '@zkdb/smart-contract';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
 import logger from '../helper/logger.js';
@@ -53,7 +53,7 @@ export async function createProof(taskId: string) {
 
     const modelProof = ModelProof.getInstance();
     const zkProof = await modelProof.getProof(task.database, task.collection);
-    let proof = zkProof ? RollUpProof.fromJSON(zkProof) : undefined;
+    let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
       await merkleTree.getWitness(
