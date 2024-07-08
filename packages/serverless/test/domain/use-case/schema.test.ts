@@ -36,10 +36,10 @@ describe('Schema Use Cases', () => {
     const adminDb = dbEngine.client.db().admin();
     const { databases } = await adminDb.listDatabases();
     const userDatabases = databases.filter(
-      (dbInfo) => !['admin', 'local', 'config'].includes(dbInfo.name)
+      (dbInfo: any) => !['admin', 'local', 'config'].includes(dbInfo.name)
     );
     await Promise.all(
-      userDatabases.map(async (dbInfo) => {
+      userDatabases.map(async (dbInfo: any) => {
         const db = dbEngine.client.db(dbInfo.name);
         await db.dropDatabase();
       })
@@ -261,7 +261,7 @@ describe('Schema Use Cases', () => {
 
       const expectedHash = Poseidon.hash(
         CircuitString.fromString('John')
-          .toFields()
+          .values.map((c) => c.toField())
           .concat(UInt32.from(30).toFields())
       );
       expect(schema.hash()).toEqual(expectedHash);

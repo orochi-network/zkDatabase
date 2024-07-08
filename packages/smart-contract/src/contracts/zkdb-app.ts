@@ -33,11 +33,11 @@ export function getZkDbSmartContract(
       this.actionState.set(Reducer.initialActionState);
     }
 
-    @method apply(action: Action) {
+    @method async apply(action: Action) {
       this.reducer.dispatch(action);
     }
 
-    @method rollUp(proof: ZkDbProof) {
+    @method async rollUp(proof: ZkDbProof) {
       this.state.getAndRequireEquals();
       this.actionState.getAndRequireEquals();
 

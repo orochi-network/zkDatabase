@@ -21,7 +21,7 @@ class User extends Schema.create({
 class TestSmartContract extends SmartContract {
   @state(Field) user = State<Field>();
 
-  @method saveUser(user: User) {
+  @method async saveUser(user: User) {
     this.user.getAndRequireEquals();
     this.user.set(user.hash());
   }
@@ -95,21 +95,25 @@ describe('Schema', () => {
     // Set up
     const useProof = false;
 
-    const Local = Mina.LocalBlockchain({ proofsEnabled: useProof });
+    const Local = await Mina.LocalBlockchain({ proofsEnabled: useProof });
     Mina.setActiveInstance(Local);
-    const { privateKey: deployerKey, publicKey: deployerAccount } =
-      Local.testAccounts[0];
-    const { privateKey: senderKey, publicKey: senderAccount } =
-      Local.testAccounts[1];
+    const { key: deployerKey } = Local.testAccounts[0];
+    const { key: senderKey } = Local.testAccounts[1];
 
     const zkAppPrivateKey = PrivateKey.random();
     const zkAppAddress = zkAppPrivateKey.toPublicKey();
 
     const zkAppInstance = new TestSmartContract(zkAppAddress);
-    const deployTxn = await Mina.transaction(deployerAccount, () => {
-      AccountUpdate.fundNewAccount(deployerAccount);
-      zkAppInstance.deploy();
-    });
+
+    const deployTxn = await Mina.transaction(
+      {
+        sender: deployerKey.toPublicKey(),
+      },
+      async () => {
+        AccountUpdate.fundNewAccount(deployerKey.toPublicKey());
+        await zkAppInstance.deploy();
+      }
+    );
     await deployTxn.sign([deployerKey, zkAppPrivateKey]).send();
 
     const myUser = new User({
@@ -122,10 +126,15 @@ describe('Schema', () => {
     );
 
     // Execute
-    const tx = await Mina.transaction(senderAccount, () => {
-      zkAppInstance.saveUser(myUser);
-    })
-    
+    const tx = await Mina.transaction(
+      {
+        sender: deployerKey.toPublicKey(),
+      },
+      async () => {
+        zkAppInstance.saveUser(myUser);
+      }
+    );
+
     await tx.prove();
     await tx.sign([senderKey, zkAppPrivateKey]).send();
 
