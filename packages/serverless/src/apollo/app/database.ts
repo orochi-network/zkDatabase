@@ -1,6 +1,6 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { DatabaseEngine, ModelDatabase } from '@zkdb/storage';
+import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import resolverWrapper from '../validation';
 import { databaseName, publicKey } from './common';
 import { createDatabase } from '../../domain/use-case/database';
@@ -53,8 +53,21 @@ const dbStats = resolverWrapper(
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = async () =>
-  DatabaseEngine.getInstance().client.db().admin().listDatabases();
+const dbList = async () => {
+  const databases = await DatabaseEngine.getInstance()
+    .client.db()
+    .admin()
+    .listDatabases();
+
+  return {
+    databases: databases.databases.map((database) => ({
+      name: database.name,
+      size: database.sizeOnDisk,
+    })),
+    totalSize: databases.totalSize,
+    totalSizeMb: databases.totalSizeMb,
+  };
+};
 
 // Mutation
 const dbCreate = resolverWrapper(
