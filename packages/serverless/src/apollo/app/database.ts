@@ -12,7 +12,7 @@ export type TDatabaseRequest = {
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
-  publicKey: string
+  publicKey: string;
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -22,7 +22,7 @@ export type TFindIndexRequest = TDatabaseRequest & {
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
-  publicKey
+  publicKey,
 });
 
 export const typeDefsDatabase = `#graphql
@@ -49,7 +49,7 @@ const dbStats = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TDatabaseRequest, _ctx: AppContext) =>
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
@@ -63,7 +63,18 @@ const dbCreate = resolverWrapper(
     createDatabase(args.databaseName, args.merkleHeight, args.publicKey)
 );
 
-export const resolversDatabase = {
+type TDatabaseResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    dbStats: typeof dbStats;
+    dbList: typeof dbList;
+  };
+  Mutation: {
+    dbCreate: typeof dbCreate;
+  };
+};
+
+export const resolversDatabase: TDatabaseResolver = {
   JSON: GraphQLJSON,
   Query: {
     dbStats,

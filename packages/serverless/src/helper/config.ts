@@ -17,6 +17,7 @@ interface IAppConfiguration {
 export const envLocation = `${Utilities.File.getRootFolder(
   path.dirname(fileURLToPath(pathToFileURL(__filename).toString()))
 )}/.env`;
+console.log('🚀 ~ envLocation:', envLocation);
 
 const configLoader = Singleton<ConfigLoader>(
   'zkdb-aas',

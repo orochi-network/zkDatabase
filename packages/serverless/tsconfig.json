@@ -11,7 +11,9 @@
     "strictPropertyInitialization": false,
     "noFallthroughCasesInSwitch": true,
     "types": ["node", "jest"],
-    "composite": true
+    "composite": true,
+    "declarationMap": false,
+    "preserveSymlinks": true
   },
   "references": [{ "path": "../storage" }],
   "include": ["**/*.ts"],

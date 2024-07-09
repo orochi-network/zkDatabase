@@ -211,7 +211,19 @@ const documentDrop = resolverWrapper(
   }
 );
 
-export const resolversDocument = {
+type TDocumentResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    documentFind: typeof documentFind;
+  };
+  Mutation: {
+    documentCreate: typeof documentCreate;
+    documentUpdate: typeof documentUpdate;
+    documentDrop: typeof documentDrop;
+  };
+};
+
+export const resolversDocument: TDocumentResolver = {
   JSON: GraphQLJSON,
   Query: {
     documentFind,

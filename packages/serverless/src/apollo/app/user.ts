@@ -236,7 +236,19 @@ const userSignUp = resolverWrapper(
   }
 );
 
-export const resolversUser = {
+type TUserResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    userSignInData: typeof userSignInData;
+  };
+  Mutation: {
+    userSignIn: typeof userSignIn;
+    userSignOut: typeof userSignOut;
+    userSignUp: typeof userSignOut;
+  };
+};
+
+export const resolversUser: TUserResolver = {
   JSON: GraphQLJSON,
   Query: {
     userSignInData,
