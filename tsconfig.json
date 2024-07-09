@@ -16,13 +16,15 @@
     "sourceMap": true
   },
   "references": [
+    { "path": "./packages/smart-contract" },
     { "path": "./packages/storage" },
     { "path": "./packages/explorer" },
     { "path": "./packages/kubo" },
     { "path": "./packages/portal" },
     { "path": "./packages/proof-service" },
     { "path": "./packages/zkdb" },
-    { "path": "./packages/serverless" }
+    { "path": "./packages/serverless" },
+    { "path": "./packages/broker-service" },
   ],
   "include": ["./src/"],
   "exclude": [

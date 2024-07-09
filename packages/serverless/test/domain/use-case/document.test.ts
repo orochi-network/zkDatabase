@@ -1,6 +1,6 @@
 /* eslint-disable max-classes-per-file */
 import { DatabaseEngine } from '@zkdb/storage';
-import { Field, MerkleTree } from 'o1js';
+import { Field, MerkleTree, PrivateKey, PublicKey } from 'o1js';
 import {
   createDocument,
   deleteDocument,
@@ -14,7 +14,8 @@ import { Schema, SchemaEncoded } from '../../../src/domain/common/schema';
 
 const DB_NAME = 'test-db';
 const TEST_COLLECTION = 'users';
-const MERKLE_HEIGHT = 8;
+const MERKLE_HEIGHT = 8; 
+const PUBLIC_KEY = PublicKey.fromPrivateKey(PrivateKey.random()).toBase58();
 
 const dropDatabase = true;
 
@@ -51,7 +52,7 @@ describe('Document Management Integration Tests', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
   });
 
   afterEach(async () => {

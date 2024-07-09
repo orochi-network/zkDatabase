@@ -110,7 +110,7 @@
     "jose": "^4.14.6"
   },
   "peerDependencies": {
-    "o1js": "^0.15.0"
+    "o1js": "^1.1.0"
   },
   "dependencies": {
     "@helia/ipns": "^1.1.3",
