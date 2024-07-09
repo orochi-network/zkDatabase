@@ -24,10 +24,11 @@ export const MerkleTreeIndexRequest = Joi.object<TMerkleTreeIndexRequest>({
   index: indexNumber,
 });
 
-export const MerkleTreeWitnessByDocumentRequest = Joi.object<TMerkleTreeWitnessByDocumentRequest>({
-  databaseName,
-  docId: objectId,
-});
+export const MerkleTreeWitnessByDocumentRequest =
+  Joi.object<TMerkleTreeWitnessByDocumentRequest>({
+    databaseName,
+    docId: objectId,
+  });
 
 export const MerkleTreeGetNodeRequest = Joi.object<TMerkleTreeGetNodeRequest>({
   databaseName,
@@ -67,10 +68,14 @@ const getWitnessByDocument = resolverWrapper(
   MerkleTreeWitnessByDocumentRequest,
   async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) => {
     return withTransaction((session) =>
-      getWitnessByDocumentId(args.databaseName, new ObjectId(args.docId), session)
-    )
+      getWitnessByDocumentId(
+        args.databaseName,
+        new ObjectId(args.docId),
+        session
+      )
+    );
   }
-)
+);
 
 const getNode = resolverWrapper(
   MerkleTreeGetNodeRequest,
@@ -88,16 +93,26 @@ const getRoot = resolverWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest) => {
     const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
-    return merkleTreeService.getRoot(new Date())
+    return merkleTreeService.getRoot(new Date());
   }
 );
 
-export const resolversMerkleTree = {
+type TMerkleTreeResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    getWitness: typeof getWitness;
+    getNode: typeof getNode;
+    getWitnessByDocument: typeof getWitnessByDocument;
+    getRoot: typeof getRoot;
+  };
+};
+
+export const resolversMerkleTree: TMerkleTreeResolver = {
   JSON: GraphQLJSON,
   Query: {
     getWitness,
     getNode,
     getWitnessByDocument,
-    getRoot
+    getRoot,
   },
 };

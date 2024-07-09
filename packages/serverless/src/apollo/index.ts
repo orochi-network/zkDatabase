@@ -21,7 +21,17 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
 ];
 
-export const ResolversApp = [
+type Resolver =
+  | typeof resolversDatabase
+  | typeof resolversCollection
+  | typeof resolversDocument
+  | typeof resolversCollectionIndex
+  | typeof resolversUser
+  | typeof resolversGroup
+  | typeof resolversPermission
+  | typeof resolversMerkleTree;
+
+export const ResolversApp: Resolver[] = [
   resolversDatabase,
   resolversCollection,
   resolversDocument,

@@ -3,22 +3,22 @@
     "commonjs": true,
     "es2020": true,
     "node": true,
-    "jest/globals": true
+    "jest/globals": true,
   },
   "extends": ["airbnb-base", "prettier", "plugin:jest/recommended"],
   "globals": {
     "Atomics": "readonly",
-    "SharedArrayBuffer": "readonly"
+    "SharedArrayBuffer": "readonly",
   },
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx", ".d.ts"]
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".d.ts"],
       },
       "alias": {
-        "map": []
-      }
-    }
+        "map": [],
+      },
+    },
   },
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -26,10 +26,10 @@
     "sourceType": "module",
     "tsconfigRootDir": "./",
     "ecmaFeatures": {
-      "jsx": true
-    }
+      "jsx": true,
+    },
   },
-  "plugins": ["@typescript-eslint",  "jest"],
+  "plugins": ["@typescript-eslint", "jest"],
   "rules": {
     "no-shadow": "off",
     "@typescript-eslint/no-shadow": ["error"],
@@ -40,18 +40,19 @@
         "js": "never",
         "jsx": "never",
         "ts": "never",
-        "tsx": "never"
-      }
+        "tsx": "never",
+      },
     ],
     "class-methods-use-this": [1],
     "no-underscore-dangle": [0],
+    "no-unused-vars": "off",
     "@typescript-eslint/no-unused-vars": [
       2,
       {
         "args": "all",
         "argsIgnorePattern": "^_",
-        "ignoreRestSiblings": true
-      }
+        "ignoreRestSiblings": true,
+      },
     ],
     "camelcase": 2,
     "arrow-body-style": 0,
@@ -61,8 +62,8 @@
       {
         "code": 120,
         "tabWidth": 2,
-        "ignoreUrls": true
-      }
-    ]
-  }
+        "ignoreUrls": true,
+      },
+    ],
+  },
 }

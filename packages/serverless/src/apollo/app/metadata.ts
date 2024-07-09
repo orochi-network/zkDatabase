@@ -254,7 +254,18 @@ const permissionOwn = resolverWrapper(
   }
 );
 
-export const resolversPermission = {
+type TPermissionResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    permissionList: typeof permissionList;
+  };
+  Mutation: {
+    permissionSet: typeof permissionSet;
+    permissionOwn: typeof permissionOwn;
+  };
+};
+
+export const resolversPermission: TPermissionResolver = {
   JSON: GraphQLJSON,
   Query: {
     permissionList,

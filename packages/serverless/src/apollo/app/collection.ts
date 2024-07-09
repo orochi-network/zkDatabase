@@ -126,7 +126,17 @@ const collectionCreate = resolverWrapper(
   }
 );
 
-export const resolversCollection = {
+type TCollectionResolvers = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    collectionList: typeof collectionList;
+  };
+  Mutation: {
+    collectionCreate: typeof collectionCreate;
+  };
+};
+
+export const resolversCollection: TCollectionResolvers = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,

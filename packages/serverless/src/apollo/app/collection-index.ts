@@ -1,11 +1,9 @@
+/// <reference types="graphql-type-json/node_modules/graphql" />
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelCollection } from '@zkdb/storage';
 import { resolverWrapper } from '../validation';
-import {
-  TCollectionRequest,
-  CollectionRequest
-} from './collection';
+import { TCollectionRequest, CollectionRequest } from './collection';
 import { collectionName, databaseName, indexName, indexField } from './common';
 
 // Index request
@@ -20,7 +18,7 @@ export const IndexListRequest = CollectionRequest;
 export type TIndexRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  indexField: string[]
+  indexField: string[];
 };
 
 export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
@@ -90,7 +88,19 @@ const indexDrop = resolverWrapper(
     ).dropIndex(args.indexName)
 );
 
-export const resolversCollectionIndex = {
+type TCollectionIndexResolvers = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    indexList: typeof indexList;
+    indexExist: typeof indexExist;
+  };
+  Mutation: {
+    indexCreate: typeof indexCreate;
+    indexDrop: typeof indexDrop;
+  };
+};
+
+export const resolversCollectionIndex: TCollectionIndexResolvers = {
   JSON: GraphQLJSON,
   Query: {
     indexList,

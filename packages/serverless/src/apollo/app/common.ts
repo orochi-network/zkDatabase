@@ -48,7 +48,7 @@ export const groupDescription = Joi.string()
     'Optional description of the group, providing additional context.'
   );
 
-  export const publicKey = Joi.string()
+export const publicKey = Joi.string()
   .trim()
   .length(52)
   .required()
@@ -83,7 +83,7 @@ export const permissionDetail = Joi.object({
 
 export const documentField = Joi.object<TDocumentField>({
   name: Joi.string()
-    .pattern(/^[a-z][a-zA-Z0-9\_]+$/)
+    .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
     .required(),
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)

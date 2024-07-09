@@ -43,7 +43,15 @@ const groupListByUser = resolverWrapper(
   }
 );
 
-export const resolversGroup = {
+type TGroupResolver = {
+  JSON: typeof GraphQLJSON;
+  Query: {
+    groupListAll: typeof groupListAll;
+    groupListByUser: typeof groupListByUser;
+  };
+};
+
+export const resolversGroup: TGroupResolver = {
   JSON: GraphQLJSON,
   Query: {
     groupListAll,

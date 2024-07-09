@@ -13,7 +13,8 @@
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "preserveSymlinks": true
   },
   "references": [
     { "path": "./packages/smart-contract" },
@@ -24,7 +25,7 @@
     { "path": "./packages/proof-service" },
     { "path": "./packages/zkdb" },
     { "path": "./packages/serverless" },
-    { "path": "./packages/broker-service" },
+    { "path": "./packages/broker-service" }
   ],
   "include": ["./src/"],
   "exclude": [
