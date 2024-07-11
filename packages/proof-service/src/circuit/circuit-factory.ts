@@ -1,5 +1,5 @@
-import logger from '../helper/logger';
-import { RollUpProxy, getDatabaseRollUpFunction } from './rollup-program';
+import logger from '../helper/logger.js';
+import { RollUpProxy, getDatabaseRollUpFunction } from './rollup-program.js';
 
 export default class CircuitFactory {
   private static instance = new Map<string, RollUpProxy>();

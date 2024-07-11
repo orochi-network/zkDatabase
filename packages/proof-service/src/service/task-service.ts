@@ -1,6 +1,6 @@
-import logger from '../helper/logger';
-import { getNextTaskId } from '../api/get-next-task';
-import { createProof } from '../domain/create-proof';
+import logger from '../helper/logger.js';
+import { getNextTaskId } from '../api/get-next-task.js';
+import { createProof } from '../domain/create-proof.js';
 
 class TaskService {
   private maxRetries: number;

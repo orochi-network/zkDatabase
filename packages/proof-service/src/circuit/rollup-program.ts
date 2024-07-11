@@ -1,5 +1,5 @@
 import { DatabaseRollUp, RollUpProgram } from '@zkdb/smart-contract';
-import { CircuitCache } from './cache/circuit-cache';
+import { CircuitCache } from './cache/circuit-cache.js';
 
 export function getDatabaseRollUpFunction(
   name: string,
