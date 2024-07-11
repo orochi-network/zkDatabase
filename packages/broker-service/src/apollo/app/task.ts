@@ -6,7 +6,7 @@ scalar JSON
 type Query
 
 extend type Query {
-  taskGet: String!
+  taskId: String!
 }
 `;
 
