@@ -47,8 +47,8 @@ export async function createProof(taskId: string) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
     }
 
-    const circuit = CircuitFactory.getCircuit(circuitName).getProgram();
-    class RollUpProof extends ZkProgram.Proof(circuit) {}
+    const circuit = await CircuitFactory.getCircuit(circuitName).getProgram();
+    class RollUpProof extends ZkProgram.Proof(circuit as any) {}
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
