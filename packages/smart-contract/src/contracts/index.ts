@@ -1,1 +1,1 @@
-export { getZkDbSmartContract } from "./zkdb-app";
+export { getZkDbSmartContract } from "./zkdb-app.js";
