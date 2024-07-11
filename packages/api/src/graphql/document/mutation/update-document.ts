@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
-import client from "../../client";
-import { DocumentEncoded } from "../../types/document";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { MerkleWitness } from "../../types/merkle-tree.js";
+import client from "../../client.js";
+import { DocumentEncoded } from "../../types/document.js";
 
 const UPDATE_DOCUMENT = gql`
   mutation DocumentUpdate(

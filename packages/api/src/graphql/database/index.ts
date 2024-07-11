@@ -1,3 +1,3 @@
-export { createDatabase } from "./mutation/create-database";
-export { getDatabaseStatus } from "./query/get-database-status";
-export { listDatabases } from "./query/list-databases";
+export { createDatabase } from "./mutation/create-database.js";
+export { getDatabaseStatus } from "./query/get-database-status.js";
+export { listDatabases } from "./query/list-databases.js";

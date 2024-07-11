@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
-import client from "../../client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
+import client from "../../client.js";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const DATABASE_CREATE_MUTATION = gql`
   mutation DbCreate($databaseName: String!, $merkleHeight: Int!) {

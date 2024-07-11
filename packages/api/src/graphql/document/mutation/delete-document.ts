@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
-import client from "../../client";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { MerkleWitness } from "../../types/merkle-tree.js";
+import client from "../../client.js";
 
 const DELETE_DOCUMENT = gql`
   mutation DocumentDrop(

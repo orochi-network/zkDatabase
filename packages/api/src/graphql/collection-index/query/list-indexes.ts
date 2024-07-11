@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 export const LIST_INDEXES = gql`
   query IndexList($databaseName: String!, $collectionName: String!) {

@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Permissions } from "../../types/permission";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Permissions } from "../../types/permission.js";
 
 const LIST_PERMISSIONS = gql`
   query PermissionList($databaseName: String!, $collectionName: String!, $docId: String) {

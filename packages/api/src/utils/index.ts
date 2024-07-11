@@ -1,1 +1,1 @@
-export { NetworkResult, Success, Error } from "./network";
+export { NetworkResult, Success, Error } from "./network.js";

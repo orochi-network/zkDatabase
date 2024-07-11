@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Owner } from "../../types/ownership";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Owner } from "../../types/ownership.js";
 
 const SET_OWNER = gql`
   mutation PermissionOwn(

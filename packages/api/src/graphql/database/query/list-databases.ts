@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { Database } from "../../types/database";
-import client from "../../client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
+import { Database } from "../../types/database.js";
+import client from "../../client.js";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const LIST_DATABASES = gql`
 query GetDbList {

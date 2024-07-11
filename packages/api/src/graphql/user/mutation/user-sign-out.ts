@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
-import client from "../../client";
-import { NetworkResult } from "../../../utils/network";
+import client from "../../client.js";
+import { NetworkResult } from "../../../utils/network.js";
 
 export const SIGN_OUT = gql`
   mutation UserSignOut {

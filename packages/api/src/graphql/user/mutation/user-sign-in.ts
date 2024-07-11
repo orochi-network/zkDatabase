@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import client from "../../client";
-import { SignInInfo, SignatureProofData } from "../../types/authentication";
-import { NetworkResult } from "../../../utils/network";
+import client from "../../client.js";
+import { SignInInfo, SignatureProofData } from "../../types/authentication.js";
+import { NetworkResult } from "../../../utils/network.js";
 
 const SIGN_IN = gql`
   mutation UserSignIn($proof: SignatureProof!) {

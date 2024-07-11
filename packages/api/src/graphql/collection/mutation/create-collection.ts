@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
-import { Schema } from "../../types/schema";
-import client from "../../client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
+import { Schema } from "../../types/schema.js";
+import client from "../../client.js";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const CREATE_COLLECTION = gql`
   mutation CollectionCreate(
