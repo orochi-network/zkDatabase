@@ -1,7 +1,8 @@
-import { NetworkResult } from '../utils/network.js';
-import { gql } from '@apollo/client';
+import pkg from '@apollo/client';
+const { gql } = pkg;
 import client from './client.js';
 import logger from '../helper/logger.js';
+import { NetworkResult } from '../utils/network.js';
 
 const GET_TASK_ID = gql`
   query GetTaskId {
