@@ -32,7 +32,7 @@ import { TypedefsApp, ResolversApp } from './apollo/index.js';
   server.applyMiddleware({ app, path: '/graphql', cors: true });
 
   await new Promise<void>((resolve) => {
-    httpServer.listen({ port: 4000 }, resolve);
+    httpServer.listen({ port: 4001 }, resolve);
   });
 
   logger.debug("🚀 Server ready at http://localhost:4000/graphql");
