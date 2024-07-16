@@ -1,4 +1,11 @@
-import { Field, MerkleWitness, PublicKey, UInt64, ZkProgram } from 'o1js';
+import {
+  fetchAccount,
+  Field,
+  MerkleWitness,
+  PublicKey,
+  UInt64,
+  ZkProgram,
+} from 'o1js';
 import {
   ModelDbSetting,
   ModelMerkleTree,
@@ -36,6 +43,15 @@ export async function createProof(taskId: string) {
 
     const publicKey = PublicKey.fromBase58(appPublicKey);
 
+    const res = await fetchAccount({ publicKey });
+    const accountExists = res.error == null;
+
+    if (!accountExists) {
+      throw Error(
+        'Unable to generate proof because the smart contract for the database does not exist'
+      );
+    }
+
     if (!merkleHeight) {
       throw new Error('Merkle Tree height is null');
     }
@@ -72,8 +88,6 @@ export async function createProof(taskId: string) {
 
     class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
     const zkDbApp = new ZkDbApp(publicKey);
-
-    // TODO: Check if app exists
 
     const onChainRootState = zkDbApp.state.get();
     const onChainActionState = zkDbApp.actionState.get();
