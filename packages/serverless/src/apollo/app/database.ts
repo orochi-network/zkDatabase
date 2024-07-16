@@ -30,9 +30,15 @@ scalar JSON
 type Query
 type Mutation
 
+type DbSetting {
+  merkleHeight: Int!
+  publicKey: String!
+}
+
 extend type Query {
   dbList:JSON
   dbStats(databaseName: String!): JSON
+  dbSetting(databaseName: String!): DbSetting!
   #dbFindIndex(databaseName: String!, index: Int!): JSON
 }
 
@@ -69,6 +75,38 @@ const dbList = async () => {
   };
 };
 
+const dbSetting = resolverWrapper(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root: unknown, args: TDatabaseRequest, _ctx: AppContext) => {
+    const databases = await DatabaseEngine.getInstance()
+      .client.db()
+      .admin()
+      .listDatabases();
+
+    const isDatabaseExist = databases.databases.some(
+      (db) => db.name === args.databaseName
+    );
+
+    if (!isDatabaseExist) {
+      throw Error(`Database ${args.databaseName} does not exist`);
+    }
+
+    const dbSetting = ModelDbSetting.getInstance(args.databaseName);
+
+    const setting = await dbSetting.getSetting();
+
+    if (setting) {
+      return {
+        merkleHeight: setting.merkleHeight,
+        publicKey: setting.appPublicKey,
+      };
+    }
+
+    throw Error(`Settings for ${args.databaseName} does not exist`);
+  }
+);
 // Mutation
 const dbCreate = resolverWrapper(
   DatabaseCreateRequest,
@@ -81,6 +119,7 @@ type TDatabaseResolver = {
   Query: {
     dbStats: typeof dbStats;
     dbList: typeof dbList;
+    dbSetting: typeof dbSetting;
   };
   Mutation: {
     dbCreate: typeof dbCreate;
@@ -92,6 +131,7 @@ export const resolversDatabase: TDatabaseResolver = {
   Query: {
     dbStats,
     dbList,
+    dbSetting,
   },
   Mutation: {
     dbCreate,
