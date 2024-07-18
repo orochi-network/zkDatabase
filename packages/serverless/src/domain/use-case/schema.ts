@@ -9,6 +9,7 @@ import {
   SchemaEncoded,
 } from '../common/schema';
 import { Document } from '../types/document';
+import { DocumentSchema, DocumentSchemaField } from '../types/schema';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -48,13 +49,19 @@ export async function validateDocumentSchema(
     throw new Error('Schema not found');
   }
 
-  const schemaFieldNames = new Set(schema.fields.filter(name => name !== '_id'));
+  const schemaFieldNames = new Set(
+    schema.fields.filter((name) => name !== '_id')
+  );
 
-  const allFieldsDefined = document.every(docField => schemaFieldNames.has(docField.name));
+  const allFieldsDefined = document.every((docField) =>
+    schemaFieldNames.has(docField.name)
+  );
   if (!allFieldsDefined) {
-    document.forEach(docField => {
+    document.forEach((docField) => {
       if (!schemaFieldNames.has(docField.name)) {
-        logger.error(`Document contains an undefined field '${docField.name}'.`);
+        logger.error(
+          `Document contains an undefined field '${docField.name}'.`
+        );
       }
     });
     return false;
@@ -109,7 +116,6 @@ export async function validateDocumentSchema(
   return isValid;
 }
 
-
 export async function buildSchema(
   databaseName: string,
   collectionName: string,
@@ -146,4 +152,22 @@ export async function buildSchema(
   const structuredSchema = Schema.create(structType, indexes);
 
   return structuredSchema.deserialize(encodedDocument);
+}
+
+export async function getSchemaDefinition(
+  databaseName: string,
+  collectionName: string,
+  session?: ClientSession
+): Promise<DocumentSchema> {
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const schema = await modelSchema.getMetadata(collectionName, { session });
+
+  return schema.fields.map(
+    (fieldName) =>
+      ({
+        name: schema[fieldName].name,
+        kind: schema[fieldName].king,
+        indexed: schema[fieldName].indexed,
+      }) as DocumentSchemaField
+  );
 }
