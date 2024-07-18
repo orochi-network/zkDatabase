@@ -12,13 +12,16 @@ import {
 import { RollUpProgram } from '../proof/proof-program.js';
 import { Action } from '../archive-node/action.js';
 
-export function getZkDbSmartContract(
+export async function getZkDbSmartContract(
   databaseName: string,
   merkleHeight: number
 ) {
   const dummyMerkleTree = new MerkleTree(merkleHeight);
 
   const zkdbProgram = RollUpProgram(databaseName, merkleHeight);
+
+  console.log('compile zkdbProgram 1');
+  await zkdbProgram.compile();
 
   class ZkDbProof extends ZkProgram.Proof(zkdbProgram) {}
 
@@ -29,6 +32,7 @@ export function getZkDbSmartContract(
     reducer = Reducer({ actionType: Action });
 
     init() {
+      super.init();
       this.state.set(dummyMerkleTree.getRoot());
       this.actionState.set(Reducer.initialActionState);
     }
@@ -57,5 +61,5 @@ export function getZkDbSmartContract(
     }
   }
 
-  return _
+  return _;
 }
