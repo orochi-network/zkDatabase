@@ -5,30 +5,48 @@ import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const DATABASE_GET_SETTINGS_QUERY = gql`
   query GetDbSettings($databaseName: String!) {
-    dbSetting(databaseName: $databaseName)
+    dbSetting(databaseName: $databaseName) {
+      merkleHeight
+      publicKey
+    }
   }
 `;
+
 
 export const getDatabaseSettings = async (
   databaseName: string
 ): Promise<NetworkResult<DatabaseSettings>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.query<{ dbSetting: any }>({
-      query: DATABASE_GET_SETTINGS_QUERY,
-      variables: { databaseName }
-    });
+    try {
+      const { data, errors } = await client.query<{ dbSetting: any }>({
+        query: DATABASE_GET_SETTINGS_QUERY,
+        variables: { databaseName }
+      });
 
-    const response = data?.dbSetting;
+      if (errors && errors.length > 0) {
+        return {
+          type: "error",
+          message: errors.map(e => e.message).join(", "),
+        };
+      }
 
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
+      const response = data?.dbSetting;
+
+      if (response) {
+        return {
+          type: "success",
+          data: response,
+        };
+      } else {
+        return {
+          type: "error",
+          message: "An unknown error occurred",
+        };
+      }
+    } catch (error) {
       return {
         type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
+        message: (error as any).message ?? "An unknown error occurred",
       };
     }
   });
