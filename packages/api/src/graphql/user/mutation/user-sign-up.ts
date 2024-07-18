@@ -8,7 +8,7 @@ import {
 import { NetworkResult } from "../../../utils/network.js";
 
 const SIGN_UP = gql`
-  mutation UserSignUp($signUp: SignUp!, $proof: SignatureProof!) {
+  mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
     userSignUp(signUp: $signUp, proof: $proof) {
       success
       error
