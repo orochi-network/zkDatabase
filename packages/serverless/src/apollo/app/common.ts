@@ -50,9 +50,9 @@ export const groupDescription = Joi.string()
 
 export const publicKey = Joi.string()
   .trim()
-  .length(52)
+  .length(55)
   .required()
-  .pattern(/^[A-HJ-NP-Za-km-z1-9]{52}$/);
+  .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
 
 export const indexName = Joi.string()
   .trim()
