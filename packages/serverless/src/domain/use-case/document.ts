@@ -361,78 +361,93 @@ async function deleteDocument(
 async function readManyDocuments(
   databaseName: string,
   collectionName: string,
-  actor: string
+  actor: string,
+  session?: ClientSession
 ) {
-  const { client } = DatabaseEngine.getInstance();
+  if (
+    await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    const { client } = DatabaseEngine.getInstance();
 
-  const database = client.db(databaseName);
-  const documentsCollection = database.collection(collectionName);
+    const database = client.db(databaseName);
+    const documentsCollection = database.collection(collectionName);
 
-  const userGroups = await getUsersGroup(databaseName, actor);
-  const tasks =
-    await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+    const userGroups = await getUsersGroup(databaseName, actor);
+    const tasks =
+      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
-  const pipeline = [
-    {
-      $lookup: {
-        from: zkDatabaseConstants.databaseCollections.permission,
-        let: { docId: '$_id' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ['$docId', '$$docId'] },
+    const pipeline = [
+      {
+        $lookup: {
+          from: zkDatabaseConstants.databaseCollections.permission,
+          let: { docId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$docId', '$$docId'] },
+              },
             },
-          },
-          {
-            $project: {
-              permissionOwner: true,
-              permissionGroup: true,
-              permissionOther: true,
-              merkleIndex: true,
-              group: true,
-              owner: true,
+            {
+              $project: {
+                permissionOwner: true,
+                permissionGroup: true,
+                permissionOther: true,
+                merkleIndex: true,
+                group: true,
+                owner: true,
+              },
             },
-          },
-        ],
-        as: 'metadata',
+          ],
+          as: 'metadata',
+        },
       },
-    },
-    {
-      $unwind: '$metadata',
-    },
-  ];
+      {
+        $unwind: '$metadata',
+      },
+    ];
 
-  const documentsWithMetadata = await documentsCollection
-    .aggregate(pipeline)
-    .toArray();
+    const documentsWithMetadata = await documentsCollection
+      .aggregate(pipeline)
+      .toArray();
 
-  const result = documentsWithMetadata
-    .filter(({ metadata }) => {
-      if (!metadata) {
-        return false;
-      }
-      if (metadata.owner === actor) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+    const result = documentsWithMetadata
+      .filter(({ metadata }) => {
+        if (!metadata) {
+          return false;
+        }
+        if (metadata.owner === actor) {
+          return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+            .read;
+        }
+        if (userGroups.includes(metadata.group)) {
+          return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+            .read;
+        }
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
           .read;
-      }
-      if (userGroups.includes(metadata.group)) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-          .read;
-      }
-      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
-        .read;
-    })
-    .map((doc) => {
-      const task = tasks?.find(
-        (task: TaskEntity) => task.docId === doc._id.toString()
-      );
-      if (task) {
-        return { ...doc, proofStatus: task?.status };
-      }
-      return { ...doc, proofStatus: undefined };
-    });
+      })
+      .map((doc) => {
+        const task = tasks?.find(
+          (task: TaskEntity) => task.docId === doc._id.toString()
+        );
+        if (task) {
+          return { ...doc, proofStatus: task?.status };
+        }
+        return { ...doc, proofStatus: undefined };
+      });
 
-  return result;
+    return result;
+  }
+
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
 }
 
 export {
