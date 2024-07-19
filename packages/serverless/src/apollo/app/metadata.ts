@@ -52,7 +52,7 @@ enum OwnershipGroup {
   Group
 }
 
-input SchemaField {
+type SchemaField {
   order: Int!
   name: String!
   kind: String!
