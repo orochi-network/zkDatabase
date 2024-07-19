@@ -2,12 +2,18 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation';
-import { databaseName, groupDescription, groupName, userName } from './common';
+import {
+  databaseName,
+  groupDescription,
+  groupName,
+  groupOptionalDescription,
+  userName,
+} from './common';
 import { TDatabaseRequest } from './database';
 import ModelGroup from '../../model/database/group';
 import ModelUserGroup from '../../model/database/user-group';
 import { TCollectionRequest } from './collection';
-import { addUsersToGroup, createGroup } from '../../domain/use-case/group';
+import { addUsersToGroup, changeGroupDescription, createGroup } from '../../domain/use-case/group';
 import { AppContext } from '../../common/types';
 
 export type TGroupRequest = TCollectionRequest & {
@@ -24,6 +30,12 @@ export type TGroupAddUsersRequest = TGroupRequest & {
 };
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
+  databaseName,
+  groupName,
+  groupDescription: groupOptionalDescription,
+});
+
+export const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
   groupDescription,
@@ -51,6 +63,12 @@ extend type Mutation {
     groupName: String!,
     userNames: [String!]!
   ): Boolean
+
+  groupChangeDescription(
+    databaseName: String!,
+    groupName: String!,
+    newGroupDescription: String!
+  )
 }
 `;
 
@@ -112,6 +130,20 @@ const groupAddUsers = resolverWrapper(
     )
 );
 
+const groupChangeDescription = resolverWrapper(
+  GroupDescriptionChangeRequest,
+  async (_root: unknown, args: TGroupCreateRequest, ctx: AppContext) =>
+    withTransaction(async (session) =>
+      changeGroupDescription(
+        args.databaseName,
+        ctx.userName,
+        args.groupName,
+        args.groupDescription,
+        session
+      )
+    )
+);
+
 type TGroupResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
@@ -121,6 +153,7 @@ type TGroupResolver = {
   Mutation: {
     groupCreate: typeof groupCreate;
     groupAddUsers: typeof groupAddUsers;
+    groupChangeDescription: typeof groupChangeDescription;
   };
 };
 
@@ -133,5 +166,6 @@ export const resolversGroup: TGroupResolver = {
   Mutation: {
     groupCreate,
     groupAddUsers,
+    groupChangeDescription
   },
 };

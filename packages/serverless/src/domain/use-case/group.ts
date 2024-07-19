@@ -72,6 +72,34 @@ async function addUserToGroups(
   return result.isOk();
 }
 
+async function changeGroupDescription(
+  databaseName: string,
+  actor: string,
+  groupName: string,
+  newGroupDescription: string,
+  session?: ClientSession
+): Promise<boolean> {
+  // TODO: Check Database Ownership
+  const modelGroup = new ModelGroup(databaseName);
+  const group = await modelGroup.findGroup(groupName, session);
+
+  if (group) {
+    // TODO: We can update without searching for the group first
+    const result = await modelGroup.updateOne(
+      {
+        _id: (group as any)._id,
+      },
+      {
+        description: newGroupDescription,
+      }
+    );
+
+    return result.modifiedCount === 1
+  }
+
+  throw Error(`Group ${group} does not exist`);
+}
+
 async function addUsersToGroup(
   databaseName: string,
   actor: string,
@@ -79,6 +107,7 @@ async function addUsersToGroup(
   users: string[],
   session?: ClientSession
 ): Promise<boolean> {
+  // TODO: Check Database Ownership
   const modelGroup = new ModelGroup(databaseName);
   const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
@@ -99,6 +128,7 @@ async function getUsersGroup(
   userName: string,
   session?: ClientSession
 ): Promise<string[]> {
+  // TODO: Check Database Ownership
   return new ModelUserGroup(databaseName).listGroupByUserName(userName, {
     session,
   });
@@ -111,4 +141,5 @@ export {
   isGroupExist,
   createGroup,
   checkUserGroupMembership,
+  changeGroupDescription
 };
