@@ -90,11 +90,12 @@ async function changeGroupDescription(
         _id: (group as any)._id,
       },
       {
-        description: newGroupDescription,
-      }
+        $set: { description: newGroupDescription },
+      },
+      { session }
     );
 
-    return result.modifiedCount === 1
+    return result.modifiedCount === 1;
   }
 
   throw Error(`Group ${group} does not exist`);
@@ -141,5 +142,5 @@ export {
   isGroupExist,
   createGroup,
   checkUserGroupMembership,
-  changeGroupDescription
+  changeGroupDescription,
 };
