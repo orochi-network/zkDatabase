@@ -282,11 +282,11 @@ type TPermissionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     permissionList: typeof permissionList;
+    collectionSchema: typeof collectionSchema;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
     permissionOwn: typeof permissionOwn;
-    collectionSchema: typeof collectionSchema;
   };
 };
 
@@ -294,10 +294,10 @@ export const resolversPermission: TPermissionResolver = {
   JSON: GraphQLJSON,
   Query: {
     permissionList,
+    collectionSchema
   },
   Mutation: {
     permissionSet,
-    permissionOwn,
-    collectionSchema,
+    permissionOwn
   },
 };
