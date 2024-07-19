@@ -20,7 +20,7 @@ export type TGroupCreateRequest = TGroupRequest & {
 
 export type TGroupAddUsersRequest = TGroupRequest & {
   groupDescription: string;
-  users: string[];
+  userNames: string[];
 };
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
@@ -98,7 +98,7 @@ const groupAddUsers = resolverWrapper(
   Joi.object({
     databaseName,
     groupName,
-    users: Joi.string().required(),
+    userNames: Joi.array().items(Joi.string().required()).required(),
   }),
   async (_root: unknown, args: TGroupAddUsersRequest, ctx: AppContext) =>
     withTransaction(async (session) =>
@@ -106,7 +106,7 @@ const groupAddUsers = resolverWrapper(
         args.databaseName,
         ctx.userName,
         args.groupName,
-        args.users,
+        args.userNames,
         session
       )
     )
