@@ -7,12 +7,20 @@ import { TDatabaseRequest } from './database';
 import ModelGroup from '../../model/database/group';
 import ModelUserGroup from '../../model/database/user-group';
 import { TCollectionRequest } from './collection';
-import { createGroup } from '../../domain/use-case/group';
+import { addUsersToGroup, createGroup } from '../../domain/use-case/group';
 import { AppContext } from '../../common/types';
 
-export type TGroupCreateRequest = TCollectionRequest & {
+export type TGroupRequest = TCollectionRequest & {
   groupName: string;
+};
+
+export type TGroupCreateRequest = TGroupRequest & {
   groupDescription: string;
+};
+
+export type TGroupAddUsersRequest = TGroupRequest & {
+  groupDescription: string;
+  users: string[];
 };
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
@@ -36,6 +44,12 @@ extend type Mutation {
     databaseName: String!,
     groupName: String!,
     groupDescription: String
+  ): Boolean
+
+  groupAddUsers(
+    databaseName: String!,
+    groupName: String!,
+    userNames: [String!]!
   ): Boolean
 }
 `;
@@ -80,6 +94,24 @@ const groupCreate = resolverWrapper(
     )
 );
 
+const groupAddUsers = resolverWrapper(
+  Joi.object({
+    databaseName,
+    groupName,
+    users: Joi.string().required(),
+  }),
+  async (_root: unknown, args: TGroupAddUsersRequest, ctx: AppContext) =>
+    withTransaction(async (session) =>
+      addUsersToGroup(
+        args.databaseName,
+        ctx.userName,
+        args.groupName,
+        args.users,
+        session
+      )
+    )
+);
+
 type TGroupResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
@@ -88,6 +120,7 @@ type TGroupResolver = {
   };
   Mutation: {
     groupCreate: typeof groupCreate;
+    groupAddUsers: typeof groupAddUsers;
   };
 };
 
@@ -99,5 +132,6 @@ export const resolversGroup: TGroupResolver = {
   },
   Mutation: {
     groupCreate,
+    groupAddUsers,
   },
 };
