@@ -1,4 +1,10 @@
-import { ModelSequencer } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelQueueTask,
+  ModelSequencer,
+  TaskEntity,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import { ClientSession, WithId, ObjectId } from 'mongodb';
 import { PermissionBinary, partialToPermission } from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
@@ -20,6 +26,7 @@ import {
 } from '../../common/const';
 import { getCurrentTime } from '../../helper/common';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import { getUsersGroup } from './group';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -29,7 +36,7 @@ function parseQuery(input: FilterCriteria): FilterCriteria {
   const query: FilterCriteria = {};
 
   Object.keys(input).forEach((key) => {
-    if (key === "_id") {
+    if (key === '_id') {
       query[key] = new ObjectId(String(input[key]));
     } else {
       query[`${key}.value`] = `${input[key]}`;
@@ -351,4 +358,87 @@ async function deleteDocument(
   return witness;
 }
 
-export { readDocument, createDocument, updateDocument, deleteDocument };
+async function readManyDocuments(
+  databaseName: string,
+  collectionName: string,
+  actor: string
+) {
+  const { client } = DatabaseEngine.getInstance();
+
+  const database = client.db(databaseName);
+  const documentsCollection = database.collection(collectionName);
+
+  const userGroups = await getUsersGroup(databaseName, actor);
+  const tasks =
+    await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+
+  const pipeline = [
+    {
+      $lookup: {
+        from: zkDatabaseConstants.databaseCollections.permission,
+        let: { docId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$docId', '$$docId'] },
+            },
+          },
+          {
+            $project: {
+              permissionOwner: true,
+              permissionGroup: true,
+              permissionOther: true,
+              merkleIndex: true,
+              group: true,
+              owner: true,
+            },
+          },
+        ],
+        as: 'metadata',
+      },
+    },
+    {
+      $unwind: '$metadata',
+    },
+  ];
+
+  const documentsWithMetadata = await documentsCollection
+    .aggregate(pipeline)
+    .toArray();
+
+  const result = documentsWithMetadata
+    .filter(({ metadata }) => {
+      if (!metadata) {
+        return false;
+      }
+      if (metadata.owner === actor) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+          .read;
+      }
+      if (userGroups.includes(metadata.group)) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+          .read;
+      }
+      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
+        .read;
+    })
+    .map((doc) => {
+      const task = tasks?.find(
+        (task: TaskEntity) => task.docId === doc._id.toString()
+      );
+      if (task) {
+        return { ...doc, proofStatus: task?.status };
+      }
+      return { ...doc, proofStatus: undefined };
+    });
+
+  return result;
+}
+
+export {
+  readManyDocuments,
+  readDocument,
+  createDocument,
+  updateDocument,
+  deleteDocument,
+};

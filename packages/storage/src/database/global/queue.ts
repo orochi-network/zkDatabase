@@ -1,6 +1,12 @@
-import { ClientSession, Filter, FindOptions, InsertOneOptions, WithId } from 'mongodb';
-import ModelBasic from '../base/basic.js';
+import {
+  ClientSession,
+  Filter,
+  FindOptions,
+  InsertOneOptions,
+  WithId,
+} from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
+import ModelGeneral from '../base/general.js';
 
 export type Status = 'queued' | 'executing' | 'success' | 'error';
 
@@ -11,9 +17,10 @@ export type TaskEntity = {
   createdAt: Date;
   database: string;
   collection: string;
+  docId: string;
 };
 
-export class ModelQueueTask extends ModelBasic<TaskEntity> {
+export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -47,7 +54,9 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     );
   }
 
-  public async getLatestQueuedTaskByDatabase(session?: ClientSession): Promise<WithId<TaskEntity> | null> {
+  public async getLatestQueuedTaskByDatabase(
+    session?: ClientSession
+  ): Promise<WithId<TaskEntity> | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -70,7 +79,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
       )
       .toArray();
 
-    const executingDatabaseList = executingDatabases.map(db => db._id);
+    const executingDatabaseList = executingDatabases.map((db) => db._id);
 
     const latestQueuedTasks = await this.collection
       .aggregate(
@@ -101,7 +110,25 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
       )
       .toArray();
 
-      return latestQueuedTasks[0] as WithId<TaskEntity>;
+    return latestQueuedTasks[0] as WithId<TaskEntity>;
+  }
+
+  public async getTasksByCollection(
+    collectionName: string
+  ): Promise<TaskEntity[] | null> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+
+    try {
+      const result = await this.collection
+        .find({ collection: collectionName })
+        .toArray();
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch tasks', error);
+      return null;
+    }
   }
 
   public async getNewTask(options?: FindOptions): Promise<TaskEntity | null> {
@@ -117,7 +144,10 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     return task;
   }
 
-  public async getQueuedTask(filter: Filter<TaskEntity>, options?: FindOptions) {
+  public async getQueuedTask(
+    filter: Filter<TaskEntity>,
+    options?: FindOptions
+  ) {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
