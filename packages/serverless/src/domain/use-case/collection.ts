@@ -1,13 +1,13 @@
-import { ModelDatabase } from '@zkdb/storage';
+import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { DocumentSchema } from '../types/schema';
 import { Permissions } from '../types/permission';
 import logger from '../../helper/logger';
 import { createCollectionMetadata } from './collection-metadata';
 import { createGroup } from './group';
+import { checkCollectionPermission } from './permission';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function createCollection(
+async function createCollection(
   databaseName: string,
   collectionName: string,
   owner: string,
@@ -57,3 +57,115 @@ export async function createCollection(
     return false;
   }
 }
+
+async function listIndexes(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  session?: ClientSession
+): Promise<string[]> {
+  if (
+    await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(
+      databaseName,
+      collectionName
+    ).listIndexes();
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
+  );
+}
+
+async function doesIndexExist(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  indexName: string,
+  session?: ClientSession
+): Promise<boolean> {
+  if (
+    await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(databaseName, collectionName).isIndexed(
+      indexName
+    );
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
+  );
+}
+
+async function createIndex(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  indexNames: string[],
+  session?: ClientSession
+): Promise<boolean> {
+  if (
+    await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'system',
+      session
+    )
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(databaseName, collectionName).index(
+      indexNames || [],
+      { session }
+    );
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
+  );
+}
+
+async function dropIndex(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  indexName: string,
+  session?: ClientSession
+): Promise<boolean> {
+  if (
+    await checkCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'system',
+      session
+    )
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(databaseName, collectionName).dropIndex(
+      indexName,
+      { session }
+    );
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'system' permission to drop indexes in the '${collectionName}' collection.`
+  );
+}
+
+export { createCollection, createIndex, dropIndex, listIndexes, doesIndexExist };

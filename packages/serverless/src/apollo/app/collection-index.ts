@@ -1,10 +1,16 @@
-/// <reference types="graphql-type-json/node_modules/graphql" />
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelCollection } from '@zkdb/storage';
+import { withTransaction } from '@zkdb/storage';
 import { resolverWrapper } from '../validation';
 import { TCollectionRequest, CollectionRequest } from './collection';
 import { collectionName, databaseName, indexName, indexField } from './common';
+import {
+  createIndex,
+  dropIndex,
+  listIndexes,
+  doesIndexExist,
+} from '../../domain/use-case/collection';
+import { AppContext } from '../../common/types';
 
 // Index request
 export type TIndexNameRequest = {
@@ -54,38 +60,53 @@ extend type Mutation {
 // Query
 const indexList = resolverWrapper(
   IndexListRequest,
-  async (_root: unknown, args: TIndexListRequest) =>
-    ModelCollection.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).listIndexes()
+  async (_root: unknown, args: TIndexListRequest, ctx: AppContext) =>
+    withTransaction((session) =>
+      listIndexes(args.databaseName, ctx.userName, args.collectionName, session)
+    )
 );
 
 const indexExist = resolverWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest) =>
-    ModelCollection.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).isIndexed(args.indexName)
+  async (_root: unknown, args: TIndexDetailRequest, ctx: AppContext) =>
+    withTransaction((session) =>
+      doesIndexExist(
+        args.databaseName,
+        ctx.userName,
+        args.collectionName,
+        args.indexName,
+        session
+      )
+    )
 );
 
 // Mutation
 const indexCreate = resolverWrapper(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest) =>
-    ModelCollection.getInstance(args.databaseName, args.collectionName).index(
-      args.indexField || []
+  async (_root: unknown, args: TIndexCreateRequest, ctx: AppContext) =>
+    withTransaction((session) =>
+      createIndex(
+        args.databaseName,
+        ctx.userName,
+        args.collectionName,
+        args.indexField,
+        session
+      )
     )
 );
 
 const indexDrop = resolverWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest) =>
-    ModelCollection.getInstance(
-      args.databaseName,
-      args.collectionName
-    ).dropIndex(args.indexName)
+  async (_root: unknown, args: TIndexDetailRequest, ctx: AppContext) =>
+    withTransaction((session) =>
+      dropIndex(
+        args.databaseName,
+        ctx.userName,
+        args.collectionName,
+        args.indexName,
+        session
+      )
+    )
 );
 
 type TCollectionIndexResolvers = {
