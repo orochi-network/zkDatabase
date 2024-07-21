@@ -80,6 +80,7 @@ input PermissionDetailInput {
 
 extend type Query {
   collectionList(databaseName: String!): JSON
+  collectionExist(databaseName: String!, collectionName: String!): Boolean
 }
 
 extend type Mutation {
@@ -101,6 +102,17 @@ const collectionList = resolverWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest) =>
     ModelDatabase.getInstance(args.databaseName).listCollections()
+);
+
+const collectionExist = resolverWrapper(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root: unknown, args: TCollectionRequest) =>
+    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
+      (collection) => collection === args.collectionName
+    )
 );
 
 // Mutation
@@ -130,6 +142,7 @@ type TCollectionResolvers = {
   JSON: typeof GraphQLJSON;
   Query: {
     collectionList: typeof collectionList;
+    collectionExist: typeof collectionExist;
   };
   Mutation: {
     collectionCreate: typeof collectionCreate;
@@ -140,6 +153,7 @@ export const resolversCollection: TCollectionResolvers = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,
+    collectionExist
   },
   Mutation: {
     collectionCreate,
