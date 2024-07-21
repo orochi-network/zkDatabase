@@ -13,7 +13,11 @@ import { TDatabaseRequest } from './database';
 import ModelGroup from '../../model/database/group';
 import ModelUserGroup from '../../model/database/user-group';
 import { TCollectionRequest } from './collection';
-import { addUsersToGroup, changeGroupDescription, createGroup } from '../../domain/use-case/group';
+import {
+  addUsersToGroup,
+  changeGroupDescription,
+  createGroup,
+} from '../../domain/use-case/group';
 import { AppContext } from '../../common/types';
 
 export type TGroupRequest = TCollectionRequest & {
@@ -46,9 +50,16 @@ scalar JSON
 type Query
 type Mutation
 
+type GroupInfo {
+  description: String!,
+  createdAt: Int!,
+  createdBy: String!
+}
+
 extend type Query {
   groupListAll(databaseName: String!): [String]
   groupListByUser(databaseName: String!, userName: String!): [String]
+  groupInfo(databaseName: String!, groupName: String!): GroupInfo!
 }
 
 extend type Mutation {
@@ -67,8 +78,8 @@ extend type Mutation {
   groupChangeDescription(
     databaseName: String!,
     groupName: String!,
-    newGroupDescription: String!
-  )
+    groupDescription: String!
+  ): Boolean
 }
 `;
 
@@ -95,6 +106,25 @@ const groupListByUser = resolverWrapper(
   async (_root: unknown, args: TGroupListByUserRequest) => {
     const modelUserGroup = new ModelUserGroup(args.databaseName);
     return modelUserGroup.listGroupByUserName(args.userName);
+  }
+);
+
+const groupInfo = resolverWrapper(
+  Joi.object({
+    databaseName,
+    groupName,
+  }),
+  async (_root: unknown, args: TGroupRequest) => {
+    const modelUserGroup = new ModelGroup(args.databaseName);
+    const group = await modelUserGroup.findGroup(args.groupName);
+    if (group) {
+      return {
+        description: group.description,
+        createdAt: group.createdAt.getSeconds(),
+        createdBy: group.createBy,
+      };
+    }
+    throw Error(`Group ${args.groupName} does not exist`);
   }
 );
 
@@ -149,6 +179,7 @@ type TGroupResolver = {
   Query: {
     groupListAll: typeof groupListAll;
     groupListByUser: typeof groupListByUser;
+    groupInfo: typeof groupInfo;
   };
   Mutation: {
     groupCreate: typeof groupCreate;
@@ -162,10 +193,11 @@ export const resolversGroup: TGroupResolver = {
   Query: {
     groupListAll,
     groupListByUser,
+    groupInfo,
   },
   Mutation: {
     groupCreate,
     groupAddUsers,
-    groupChangeDescription
+    groupChangeDescription,
   },
 };
