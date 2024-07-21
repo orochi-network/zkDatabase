@@ -71,6 +71,7 @@ export async function proveCreateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );
@@ -132,6 +133,7 @@ export async function proveUpdateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );
@@ -186,6 +188,7 @@ export async function proveDeleteDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );
