@@ -11,8 +11,8 @@ import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
 import { Permissions } from '../types/permission';
 import {
-  checkDocumentPermission,
-  checkCollectionPermission,
+  hasDocumentPermission,
+  hasCollectionPermission,
 } from './permission';
 import {
   proveCreateDocument,
@@ -54,7 +54,7 @@ async function readDocument(
   session?: ClientSession
 ): Promise<WithId<Document> | null> {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -78,7 +78,7 @@ async function readDocument(
     return null;
   }
 
-  const hasReadPermission = await checkDocumentPermission(
+  const hasReadPermission = await hasDocumentPermission(
     databaseName,
     collectionName,
     actor,
@@ -116,7 +116,7 @@ async function createDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -220,7 +220,7 @@ async function updateDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -267,7 +267,7 @@ async function updateDocument(
   }
 
   if (
-    !(await checkDocumentPermission(
+    !(await hasDocumentPermission(
       databaseName,
       collectionName,
       actor,
@@ -306,7 +306,7 @@ async function deleteDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -328,7 +328,7 @@ async function deleteDocument(
   }
 
   if (
-    !(await checkDocumentPermission(
+    !(await hasDocumentPermission(
       databaseName,
       collectionName,
       actor,
@@ -365,7 +365,7 @@ async function readManyDocuments(
   session?: ClientSession
 ) {
   if (
-    await checkCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,

@@ -1,8 +1,8 @@
 import { ClientSession, ObjectId } from 'mongodb';
 import { OwnershipGroup } from '../types/ownership';
 import {
-  checkCollectionPermission,
-  checkDocumentPermission,
+  hasCollectionPermission,
+  hasDocumentPermission,
 } from './permission';
 import ModelDocumentMetadata from '../../model/database/document-metadata';
 import ModelUser from '../../model/global/user';
@@ -19,7 +19,7 @@ export async function changeDocumentOwnership(
   session?: ClientSession
 ) {
   if (
-    !(await checkDocumentPermission(
+    !(await hasDocumentPermission(
       databaseName,
       collectionName,
       actor,
@@ -82,7 +82,7 @@ export async function changeCollectionOwnership(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,

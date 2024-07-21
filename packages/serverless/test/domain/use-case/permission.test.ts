@@ -4,7 +4,7 @@ import config from '../../../src/helper/config';
 import { createDatabase } from '../../../src/domain/use-case/database';
 import {
   changePermissions,
-  checkCollectionPermission
+  hasCollectionPermission
 } from '../../../src/domain/use-case/permission';
 import { createCollectionMetadata } from '../../../src/domain/use-case/collection-metadata';
 import { createCollection } from '../../../src/domain/use-case/collection';
@@ -90,7 +90,7 @@ describe('Permission UseCases', () => {
         'users'
       );
 
-      const permitted = await checkCollectionPermission(
+      const permitted = await hasCollectionPermission(
         DB_NAME,
         TEST_COLLECTION,
         'IAM',
@@ -129,7 +129,7 @@ describe('Permission UseCases', () => {
         'users'
       );
 
-      let permitted = await checkCollectionPermission(
+      let permitted = await hasCollectionPermission(
         DB_NAME,
         TEST_COLLECTION,
         'IAM',
@@ -137,7 +137,7 @@ describe('Permission UseCases', () => {
       );
       expect(permitted).toBeTruthy();
 
-      permitted = await checkCollectionPermission(
+      permitted = await hasCollectionPermission(
         DB_NAME,
         TEST_COLLECTION,
         'IAM',

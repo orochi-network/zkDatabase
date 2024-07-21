@@ -5,7 +5,7 @@ import { Permissions } from '../types/permission';
 import logger from '../../helper/logger';
 import { createCollectionMetadata } from './collection-metadata';
 import { createGroup } from './group';
-import { checkCollectionPermission } from './permission';
+import { hasCollectionPermission } from './permission';
 
 async function createCollection(
   databaseName: string,
@@ -65,7 +65,7 @@ async function listIndexes(
   session?: ClientSession
 ): Promise<string[]> {
   if (
-    await checkCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -93,7 +93,7 @@ async function doesIndexExist(
   session?: ClientSession
 ): Promise<boolean> {
   if (
-    await checkCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -120,7 +120,7 @@ async function createIndex(
   session?: ClientSession
 ): Promise<boolean> {
   if (
-    await checkCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -148,7 +148,7 @@ async function dropIndex(
   session?: ClientSession
 ): Promise<boolean> {
   if (
-    await checkCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
