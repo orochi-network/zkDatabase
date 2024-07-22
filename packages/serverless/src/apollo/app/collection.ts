@@ -6,7 +6,6 @@ import {
   collectionName,
   permissionDetail,
   groupName,
-  groupDescription,
 } from './common';
 import { TDatabaseRequest } from './database';
 import resolverWrapper from '../validation';
@@ -34,7 +33,6 @@ export type TCollectionRequest = TDatabaseRequest & {
 
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
-  groupDescription: string;
   schema: SchemaData;
   permissions: PermissionsData;
 };
@@ -48,7 +46,6 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
-  groupDescription,
   schema: schemaFields,
   permissions: permissionDetail,
 });
@@ -88,7 +85,6 @@ extend type Mutation {
     databaseName: String!, 
     collectionName: String!,
     groupName: String!,
-    groupDescription: String,
     schema: [SchemaFieldInput!]!, 
     permissions: PermissionDetailInput
   ): Boolean
@@ -127,7 +123,6 @@ const collectionCreate = resolverWrapper(
         args.groupName,
         args.schema,
         args.permissions,
-        args.groupDescription,
         session
       )
     );
