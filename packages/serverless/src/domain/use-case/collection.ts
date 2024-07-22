@@ -4,57 +4,47 @@ import { DocumentSchema } from '../types/schema';
 import { Permissions } from '../types/permission';
 import logger from '../../helper/logger';
 import { createCollectionMetadata } from './collection-metadata';
-import { createGroup } from './group';
+import { createGroup, isGroupExist } from './group';
 import { hasCollectionPermission } from './permission';
 
 async function createCollection(
   databaseName: string,
   collectionName: string,
-  owner: string,
-  group: string,
+  actor: string,
+  groupName: string,
   schema: DocumentSchema,
   permissions: Permissions,
-  groupDescription?: string,
   session?: ClientSession
-): Promise<boolean> {
+): Promise<void> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelDatabase.isCollectionExist(collectionName)) {
     throw Error(
-      `Collection ${collectionName}already exist in database ${databaseName}`
+      `Collection ${collectionName} already exist in database ${databaseName}`
+    );
+  }
+
+  if (!(await isGroupExist(databaseName, groupName, session))) {
+    throw Error(
+      `Group ${groupName} does not exist in database ${databaseName}`
     );
   }
 
   try {
     await modelDatabase.createCollection(collectionName);
-
-    const isGroupCreated = await createGroup(
-      databaseName,
-      owner,
-      group,
-      groupDescription,
-      session
-    );
-
-    if (!isGroupCreated) {
-      throw Error('Failed to create a group');
-    }
-
     await createCollectionMetadata(
       databaseName,
       collectionName,
       schema,
       permissions,
-      owner,
-      group,
+      actor,
+      groupName,
       session
     );
-
-    return true;
   } catch (error) {
     await modelDatabase.dropCollection(collectionName);
     logger.error(error);
-    return false;
+    throw error;
   }
 }
 
@@ -168,4 +158,10 @@ async function dropIndex(
   );
 }
 
-export { createCollection, createIndex, dropIndex, listIndexes, doesIndexExist };
+export {
+  createCollection,
+  createIndex,
+  dropIndex,
+  listIndexes,
+  doesIndexExist,
+};
