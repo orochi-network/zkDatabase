@@ -14,18 +14,12 @@ export interface ListIndexesResponse {
 
 export const listIndexes = async (
   databaseName: string,
-  collectionName: string,
-  token: string
+  collectionName: string
 ): Promise<NetworkResult<string[]>> => {
   return handleRequest(async () => {
     const { data } = await client.query<{ indexList: ListIndexesResponse }>({
       query: LIST_INDEXES,
-      variables: { databaseName, collectionName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      variables: { databaseName, collectionName }
     });
 
     const response = data?.indexList;

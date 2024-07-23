@@ -34,8 +34,7 @@ export const setOwner = async (
   collectionName: string,
   docId: string | undefined,
   grouping: string,
-  newOwner: string,
-  token: string
+  newOwner: string
 ): Promise<NetworkResult<Owner>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -48,12 +47,7 @@ export const setOwner = async (
         docId,
         grouping,
         newOwner,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.permissionSet;

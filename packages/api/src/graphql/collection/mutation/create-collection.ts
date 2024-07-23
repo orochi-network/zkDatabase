@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 import { Schema } from "../../types/schema.js";
 import client from "../../client.js";
+import { Permissions } from "../../types/permission.js";
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const CREATE_COLLECTION = gql`
@@ -21,22 +22,15 @@ const CREATE_COLLECTION = gql`
   }
 `;
 
-interface CreateCollectionResponse {
-  success: boolean;
-}
-
 export const createCollection = async (
   databaseName: string,
   collectionName: string,
   groupName: string,
   schema: Schema,
-  permissions: Permissions,
-  token: string
+  permissions: Permissions
 ): Promise<NetworkResult<undefined>> => {
   return handleRequest(async () => {
-    const { data } = await client.mutate<{
-      collectionCreate: CreateCollectionResponse;
-    }>({
+    const { data } = await client.mutate({
       mutation: CREATE_COLLECTION,
       variables: {
         databaseName,
@@ -44,11 +38,6 @@ export const createCollection = async (
         groupName,
         schema,
         permissions,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
       },
     });
 
@@ -65,5 +54,5 @@ export const createCollection = async (
         message: "An unknown error occurred",
       };
     }
-  })
+  });
 };

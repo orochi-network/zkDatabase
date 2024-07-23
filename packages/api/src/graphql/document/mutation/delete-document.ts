@@ -28,8 +28,7 @@ interface DocumentResponse {
 export const deleteDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON,
-  token: string
+  documentQuery: JSON
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -40,12 +39,7 @@ export const deleteDocument = async (
         databaseName,
         collectionName,
         documentQuery,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentDrop;

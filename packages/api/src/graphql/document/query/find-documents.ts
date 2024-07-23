@@ -32,8 +32,7 @@ interface DocumentResponse {
 export const findDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON,
-  token: string
+  documentQuery: JSON
 ): Promise<NetworkResult<{ _id: string; document: DocumentEncoded }>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{
@@ -44,12 +43,7 @@ export const findDocument = async (
         databaseName,
         collectionName,
         documentQuery,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentFind;

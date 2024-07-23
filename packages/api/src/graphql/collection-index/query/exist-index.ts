@@ -23,18 +23,12 @@ interface ExistIndexResponse {
 export const existIndex = async (
   databaseName: string,
   collectionName: string,
-  indexName: string,
-  token: string
+  indexName: string
 ): Promise<NetworkResult<{ exist: boolean }>> => {
   return handleRequest(async () => {
     const { data } = await client.query<{ indexExist: ExistIndexResponse }>({
       query: EXIST_INDEX,
       variables: { databaseName, collectionName, indexName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.indexExist;

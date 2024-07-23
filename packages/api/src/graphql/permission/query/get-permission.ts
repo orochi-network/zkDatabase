@@ -41,8 +41,7 @@ interface ListPermissionResponse {
 export const listPermissions = async (
   databaseName: string,
   collectionName: string,
-  docId: string | undefined,
-  token: string
+  docId: string | undefined
 ): Promise<NetworkResult<Permissions>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{
@@ -53,12 +52,7 @@ export const listPermissions = async (
         databaseName,
         collectionName,
         docId,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.permissionList;

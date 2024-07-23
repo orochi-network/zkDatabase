@@ -28,7 +28,7 @@ export const listGroups = async (
     if (response) {
       return {
         type: "success",
-        data: response.groups,
+        data: response as any,
       };
     } else {
       return {

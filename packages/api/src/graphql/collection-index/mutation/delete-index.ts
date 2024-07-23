@@ -23,18 +23,12 @@ interface DeleteIndexResponse {
 export const deleteIndex = async (
   databaseName: string,
   collectionName: string,
-  indexName: string,
-  token: string
-): Promise<NetworkResult<undefined>> => {
+  indexName: string
+): Promise<NetworkResult<boolean>> => {
   return handleRequest(async () => {
     const { data } = await client.mutate<{ indexDrop: DeleteIndexResponse }>({
       mutation: DELETE_INDEX,
       variables: { databaseName, collectionName, indexName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.indexDrop;
@@ -42,7 +36,7 @@ export const deleteIndex = async (
     if (response && response.success) {
       return {
         type: "success",
-        data: undefined,
+        data: response.success,
       };
     } else {
       return {

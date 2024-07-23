@@ -23,18 +23,12 @@ interface CreateIndexResponse {
 export const createIndexes = async (
   databaseName: string,
   collectionName: string,
-  indexes: string[],
-  token: string
-): Promise<NetworkResult<undefined>> => {
+  indexes: string[]
+): Promise<NetworkResult<boolean>> => {
   return handleRequest(async () => {
     const { data } = await client.mutate<{ indexCreate: CreateIndexResponse }>({
       mutation: CREATE_INDEX,
-      variables: { databaseName, collectionName, indexField: indexes },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      variables: { databaseName, collectionName, indexField: indexes }
     });
 
     const response = data?.indexCreate;
@@ -42,7 +36,7 @@ export const createIndexes = async (
     if (response && response.success) {
       return {
         type: "success",
-        data: undefined,
+        data: response.success,
       };
     } else {
       return {

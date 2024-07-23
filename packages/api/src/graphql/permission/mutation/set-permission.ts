@@ -40,8 +40,7 @@ export const setPermissions = async (
   collectionName: string,
   docId: string | undefined,
   grouping: string,
-  permission: PermissionSet,
-  token: string
+  permission: PermissionSet
 ): Promise<NetworkResult<Permissions>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -54,11 +53,6 @@ export const setPermissions = async (
         docId,
         grouping,
         permission,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
       },
     });
 

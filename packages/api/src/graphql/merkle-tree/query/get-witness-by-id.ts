@@ -15,8 +15,7 @@ const GET_WITNESS_BY_DOCUMENT_QUERY = gql`
 
 export const getWitnessByDocumentId = async (
   databaseName: string,
-  docId: string,
-  token: string
+  docId: string
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{
@@ -26,12 +25,7 @@ export const getWitnessByDocumentId = async (
       variables: {
         databaseName,
         docId,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.getWitnessByDocument;

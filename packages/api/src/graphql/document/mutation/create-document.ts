@@ -32,8 +32,7 @@ export const createDocument = async (
   databaseName: string,
   collectionName: string,
   documentRecord: DocumentEncoded,
-  documentPermission: Permissions,
-  token: string
+  documentPermission: Permissions
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -46,11 +45,6 @@ export const createDocument = async (
         documentRecord,
         documentPermission,
       },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.documentCreate;
@@ -58,7 +52,7 @@ export const createDocument = async (
     if (response) {
       return {
         type: "success",
-        data: response.witness,
+        data: response as any,
       };
     } else {
       return {

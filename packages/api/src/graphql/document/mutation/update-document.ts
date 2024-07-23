@@ -23,33 +23,21 @@ const UPDATE_DOCUMENT = gql`
   }
 `;
 
-interface DocumentResponse {
-  witness: MerkleWitness;
-}
-
 export const updateDocument = async (
   databaseName: string,
   collectionName: string,
   documentQuery: JSON,
-  documentRecord: DocumentEncoded,
-  token: string
+  documentRecord: DocumentEncoded
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{
-      documentUpdate: DocumentResponse;
-    }>({
+    const { data, errors } = await client.mutate({
       mutation: UPDATE_DOCUMENT,
       variables: {
         databaseName,
         collectionName,
         documentQuery,
         documentRecord,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentUpdate;
@@ -57,7 +45,7 @@ export const updateDocument = async (
     if (response) {
       return {
         type: "success",
-        data: response.witness,
+        data: response as any,
       };
     } else {
       return {
