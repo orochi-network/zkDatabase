@@ -12,17 +12,10 @@ interface UserSignOutResponse {
   success: boolean;
 }
 
-export const signOut = async (
-  token: string
-): Promise<NetworkResult<undefined>> => {
+export const signOut = async (): Promise<NetworkResult<undefined>> => {
   try {
     const { data } = await client.mutate<{ userSignOut: UserSignOutResponse }>({
       mutation: SIGN_OUT,
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.userSignOut;
@@ -30,7 +23,7 @@ export const signOut = async (
     if (response && response.success) {
       return {
         type: "success",
-        data: undefined
+        data: undefined,
       };
     } else {
       return {
