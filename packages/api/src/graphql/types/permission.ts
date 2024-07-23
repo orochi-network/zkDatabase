@@ -7,7 +7,7 @@ export type PermissionSet = {
 };
 
 export type Permissions = {
-  permissionOwner: PermissionSet;
-  permissionGroup: PermissionSet;
-  permissionOthers: PermissionSet;
+  permissionOwner?: PermissionSet;
+  permissionGroup?: PermissionSet;
+  permissionOthers?: PermissionSet;
 };

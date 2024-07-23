@@ -13,3 +13,4 @@ export { PermissionSet, Permissions } from "./permission.js";
 export { SchemaField, Schema } from "./schema.js";
 export { Session } from "./session.js";
 export { User } from "./user.js";
+export { GroupInfo } from "./group.js";
