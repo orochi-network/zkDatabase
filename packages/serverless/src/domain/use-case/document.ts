@@ -1,25 +1,25 @@
 import { ModelSequencer } from '@zkdb/storage';
 import { ClientSession, WithId, ObjectId } from 'mongodb';
-import { PermissionBinary, partialToPermission } from '../../common/permission';
-import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
-import { Document } from '../types/document';
-import { Permissions } from '../types/permission';
+import { PermissionBinary, partialToPermission } from '../../common/permission.js';
+import ModelDocument, { DocumentRecord } from '../../model/abstract/document.js';
+import { Document } from '../types/document.js';
+import { Permissions } from '../types/permission.js';
 import {
   checkDocumentPermission,
   checkCollectionPermission,
-} from './permission';
+} from './permission.js';
 import {
   proveCreateDocument,
   proveDeleteDocument,
   proveUpdateDocument,
-} from './prover';
-import ModelDocumentMetadata from '../../model/database/document-metadata';
+} from './prover.js';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import {
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
-} from '../../common/const';
-import { getCurrentTime } from '../../helper/common';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+} from '../../common/const.js';
+import { getCurrentTime } from '../../helper/common.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -29,7 +29,7 @@ function parseQuery(input: FilterCriteria): FilterCriteria {
   const query: FilterCriteria = {};
 
   Object.keys(input).forEach((key) => {
-    if (key === "_id") {
+    if (key === '_id') {
       query[key] = new ObjectId(String(input[key]));
     } else {
       query[`${key}.value`] = `${input[key]}`;

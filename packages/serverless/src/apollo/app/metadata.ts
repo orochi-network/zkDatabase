@@ -3,19 +3,19 @@ import GraphQLJSON from 'graphql-type-json';
 import { ObjectId } from 'mongodb';
 import { withTransaction } from '@zkdb/storage';
 import { GraphQLError } from 'graphql';
-import resolverWrapper from '../validation';
-import { databaseName, userName, collectionName, objectId } from './common';
-import { TCollectionRequest } from './collection';
-import { PermissionRecord } from '../../common/permission';
-import { AppContext } from '../../common/types';
-import { TPermissionGroup } from '../types/permission';
-import { changePermissions } from '../../domain/use-case/permission';
+import resolverWrapper from '../validation.js';
+import { databaseName, userName, collectionName, objectId } from './common.js';
+import { TCollectionRequest } from './collection.js';
+import { PermissionRecord } from '../../common/permission.js';
+import { AppContext } from '../../common/types.js';
+import { TPermissionGroup } from '../types/permission.js';
+import { changePermissions } from '../../domain/use-case/permission.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
-} from '../../domain/use-case/ownership';
-import { TOwnershipGroup } from '../types/ownership';
-import { readMetadata } from '../../domain/use-case/metadata';
+} from '../../domain/use-case/ownership.js';
+import { TOwnershipGroup } from '../types/ownership.js';
+import { readMetadata } from '../../domain/use-case/metadata.js';
 
 const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
 

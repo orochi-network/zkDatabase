@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import resolverWrapper from '../validation';
-import { databaseName, userName } from './common';
-import { TDatabaseRequest } from './database';
-import ModelGroup from '../../model/database/group';
-import ModelUserGroup from '../../model/database/user-group';
+import resolverWrapper from '../validation.js';
+import { databaseName, userName } from './common.js';
+import { TDatabaseRequest } from './database.js';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 
 export const typeDefsGroup = `#graphql
 scalar JSON

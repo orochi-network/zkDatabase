@@ -1,4 +1,4 @@
-import { ProvableTypeString } from "../../domain/common/schema";
+import { ProvableTypeString } from '../../domain/common/schema.js';
 
 export type SchemaFieldData = {
   name: string;

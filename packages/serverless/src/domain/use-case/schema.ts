@@ -1,14 +1,14 @@
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
-import logger from '../../helper/logger';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import logger from '../../helper/logger.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import {
   ProvableTypeMap,
   ProvableTypeString,
   Schema,
   SchemaEncoded,
-} from '../common/schema';
-import { Document } from '../types/document';
+} from '../common/schema.js';
+import { Document } from '../types/document.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -48,13 +48,19 @@ export async function validateDocumentSchema(
     throw new Error('Schema not found');
   }
 
-  const schemaFieldNames = new Set(schema.fields.filter(name => name !== '_id'));
+  const schemaFieldNames = new Set(
+    schema.fields.filter((name) => name !== '_id')
+  );
 
-  const allFieldsDefined = document.every(docField => schemaFieldNames.has(docField.name));
+  const allFieldsDefined = document.every((docField) =>
+    schemaFieldNames.has(docField.name)
+  );
   if (!allFieldsDefined) {
-    document.forEach(docField => {
+    document.forEach((docField) => {
       if (!schemaFieldNames.has(docField.name)) {
-        logger.error(`Document contains an undefined field '${docField.name}'.`);
+        logger.error(
+          `Document contains an undefined field '${docField.name}'.`
+        );
       }
     });
     return false;
@@ -108,7 +114,6 @@ export async function validateDocumentSchema(
 
   return isValid;
 }
-
 
 export async function buildSchema(
   databaseName: string,

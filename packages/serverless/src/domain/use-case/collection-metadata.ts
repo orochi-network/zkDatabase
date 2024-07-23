@@ -1,10 +1,10 @@
 import { ModelCollection } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema';
-import { getCurrentTime } from '../../helper/common';
-import { Permissions } from '../types/permission';
-import { PermissionBinary, partialToPermission } from '../../common/permission';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import { DocumentSchema } from '../types/schema.js';
+import { getCurrentTime } from '../../helper/common.js';
+import { Permissions } from '../types/permission.js';
+import { PermissionBinary, partialToPermission } from '../../common/permission.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollectionMetadata(

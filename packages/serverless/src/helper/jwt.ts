@@ -1,9 +1,9 @@
 import { GraphQLError } from 'graphql';
 import * as jose from 'jose';
-import logger from './logger';
-import config from './config';
-import ModelSession from '../model/global/session';
-import { APP_JWT_VALIDATION } from '../common/types';
+import logger from './logger.js';
+import { config } from './config.js';
+import ModelSession from '../model/global/session.js';
+import { APP_JWT_VALIDATION } from '../common/types.js';
 
 export interface IJWTAuthenticationPayload extends jose.JWTPayload {
   userName: string;
@@ -19,7 +19,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
   }
 
   public async sign(payload: T): Promise<string> {
-    if (config.nodeEnv === 'development') {
+    if (config.NODE_ENV === 'development') {
       // Development token won't be expired
       return new jose.SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })

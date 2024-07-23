@@ -1,11 +1,11 @@
 import { DatabaseEngine } from '@zkdb/storage';
 import Client from 'mina-signer';
 import { gql, request } from 'graphql-request';
-import { config } from '../helper/config';
-import ModelUser from '../model/global/user';
-import logger from '../helper/logger';
-import ModelSession from '../model/global/session';
-import { IJWTAuthenticationPayload, JWTAuthentication } from '../helper/jwt';
+import { config } from '../helper/config.js';
+import ModelUser from '../model/global/user.js';
+import logger from '../helper/logger.js';
+import ModelSession from '../model/global/session.js';
+import { IJWTAuthenticationPayload, JWTAuthentication } from '../helper/jwt.js';
 
 const mutationSignUp = gql`
   mutation UserSignUp($proof: SignatureProof!, $signUp: SignUp!) {
@@ -42,7 +42,7 @@ const quick = async (document: any, variables: any) =>
 const timestamp = () => Math.floor(Date.now() / 1000);
 
 const before = async () => {
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }

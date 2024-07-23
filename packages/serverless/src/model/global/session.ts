@@ -1,9 +1,13 @@
 import { Document } from 'mongodb';
 import { randomBytes } from 'crypto';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import * as jose from 'jose';
-import ModelUser from './user';
-import { getCurrentTime } from '../../helper/common';
+import ModelUser from './user.js';
+import { getCurrentTime } from '../../helper/common.js';
 
 export interface DocumentSession extends Document {
   userName: string;
@@ -14,9 +18,11 @@ export interface DocumentSession extends Document {
 }
 
 export class ModelSession extends ModelGeneral<DocumentSession> {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelSession | undefined;
 
-  private static collectionName: string = zkDatabaseConstants.globalCollections.session;
+  private static collectionName: string =
+    zkDatabaseConstants.globalCollections.session;
 
   constructor() {
     super(zkDatabaseConstants.globalDatabase, ModelSession.collectionName);

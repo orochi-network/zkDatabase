@@ -4,8 +4,8 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ProvableTypeString } from '../../domain/common/schema';
-import { PermissionBasic } from '../../common/permission';
+import { ProvableTypeString } from '../../domain/common/schema.js';
+import { PermissionBasic } from '../../common/permission.js';
 
 // Every data type will be treaded as string when store/transfer
 /*

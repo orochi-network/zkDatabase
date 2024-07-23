@@ -1,7 +1,7 @@
 import { DatabaseEngine } from '@zkdb/storage';
 import { CircuitString, Poseidon, PrivateKey, PublicKey, UInt32 } from 'o1js';
 import { createCollection } from '../../../src/domain/use-case/collection';
-import config from '../../../src/helper/config';
+import { config } from '../../../src/helper/config';
 import { createDatabase } from '../../../src/domain/use-case/database';
 import {
   buildSchema,
@@ -19,7 +19,7 @@ describe('Schema Use Cases', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }

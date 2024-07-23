@@ -1,6 +1,6 @@
 import { ClientSession } from 'mongodb';
-import ModelGroup from '../../model/database/group';
-import ModelUserGroup from '../../model/database/user-group';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -45,12 +45,11 @@ async function checkUserGroupMembership(
   groupName: string,
   session?: ClientSession
 ): Promise<boolean> {
-  if (!await isGroupExist(databaseName, groupName, session)) {
+  if (!(await isGroupExist(databaseName, groupName, session))) {
     throw Error(
       `Group ${groupName} does not exist for database ${databaseName}`
     );
   }
-
 
   const modelUserGroup = new ModelUserGroup(databaseName);
   const actorGroups = await modelUserGroup.listGroupByUserName(actor, {
