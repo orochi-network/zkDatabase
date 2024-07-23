@@ -1,8 +1,10 @@
 import { ObjectId, Document } from 'mongodb';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
 import {
-  PermissionBasic,
-} from '../../common/permission';
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
+import { PermissionBasic } from '../../common/permission.js';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
@@ -22,12 +24,12 @@ export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
 };
 
 export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
-  static collectionName: string = zkDatabaseConstants.databaseCollections.permission;
+  static collectionName: string =
+    zkDatabaseConstants.databaseCollections.permission;
 
   constructor(databaseName: string) {
     super(databaseName, ModelDocumentMetadata.collectionName);
   }
-
 
   public static async init(databaseName: string) {
     const collection = new ModelCollection(

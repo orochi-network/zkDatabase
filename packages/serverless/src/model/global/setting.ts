@@ -1,5 +1,9 @@
 import { Document } from 'mongodb';
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 
 export type DocumentAllSettings = {
   configKey: 'database_version';
@@ -14,7 +18,8 @@ export interface DocumentSetting extends Document, DocumentAllSettings {
 export class ModelSetting extends ModelGeneral<DocumentSetting> {
   private isUpdated: boolean = false;
 
-  private static collectionName: string = zkDatabaseConstants.globalCollections.setting;
+  private static collectionName: string =
+    zkDatabaseConstants.globalCollections.setting;
 
   constructor() {
     super(zkDatabaseConstants.globalDatabase, ModelSetting.collectionName);

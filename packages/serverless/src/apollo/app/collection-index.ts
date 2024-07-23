@@ -1,10 +1,9 @@
-/// <reference types="graphql-type-json/node_modules/graphql" />
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelCollection } from '@zkdb/storage';
-import { resolverWrapper } from '../validation';
-import { TCollectionRequest, CollectionRequest } from './collection';
-import { collectionName, databaseName, indexName, indexField } from './common';
+import { resolverWrapper } from '../validation.js';
+import { TCollectionRequest, CollectionRequest } from './collection.js';
+import { collectionName, databaseName, indexName, indexField } from './common.js';
 
 // Index request
 export type TIndexNameRequest = {

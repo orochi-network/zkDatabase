@@ -1,8 +1,8 @@
 import { DatabaseEngine, ModelDbSetting } from '@zkdb/storage';
-import ModelDocumentMetadata from '../../model/database/document-metadata';
-import ModelGroup from '../../model/database/group';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
-import ModelUserGroup from '../../model/database/user-group';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import ModelGroup from '../../model/database/group.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(

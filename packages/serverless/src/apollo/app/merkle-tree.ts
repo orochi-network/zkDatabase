@@ -2,10 +2,10 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
-import resolverWrapper from '../validation';
-import { databaseName, indexNumber, objectId } from './common';
-import { TDatabaseRequest } from './database';
-import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree';
+import resolverWrapper from '../validation.js';
+import { databaseName, indexNumber, objectId } from './common.js';
+import { TDatabaseRequest } from './database.js';
+import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree.js';
 
 export type TMerkleTreeIndexRequest = TDatabaseRequest & {
   index: bigint;

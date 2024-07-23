@@ -8,11 +8,11 @@ import {
   ModelQueueTask,
 } from '@zkdb/storage';
 
-import ModelDocumentMetadata from '../../model/database/document-metadata';
-import ModelDocument from '../../model/abstract/document';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import ModelDocument from '../../model/abstract/document.js';
 
-import { Document } from '../types/document';
-import { buildSchema } from './schema';
+import { Document } from '../types/document.js';
+import { buildSchema } from './schema.js';
 
 // Helper function to set the Merkle tree height
 async function setMerkleTreeHeight(
@@ -67,7 +67,7 @@ export async function proveCreateDocument(
     {
       merkleIndex: BigInt(index),
       hash: hash.toString(),
-      status: "queued",
+      status: 'queued',
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
@@ -128,7 +128,7 @@ export async function proveUpdateDocument(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: hash.toString(),
-      status: "queued",
+      status: 'queued',
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
@@ -182,7 +182,7 @@ export async function proveDeleteDocument(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: Field(0).toString(),
-      status: "queued",
+      status: 'queued',
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,

@@ -1,1 +1,1 @@
-export type TOwnershipGroup = 'User' | 'Group'
+export type TOwnershipGroup = 'User' | 'Group';

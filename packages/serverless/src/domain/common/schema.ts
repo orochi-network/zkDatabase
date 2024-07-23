@@ -17,35 +17,28 @@ import {
   Struct,
 } from 'o1js';
 
-export interface SchemaExtend {
-  serialize(): SchemaEncoded;
-  hash(): Field;
-}
-
-export interface SchemaStaticExtend<A> {
-  deserialize(_doc: SchemaEncoded): InstanceType<SchemaExtendable<A>>;
-  getSchema(): SchemaDefinition;
-}
-
-export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
-  SchemaStaticExtend<A>;
-
 export const ProvableTypeMap = {
-  CircuitString: CircuitString,
-  UInt32: UInt32,
-  UInt64: UInt64,
-  Bool: Bool,
-  Sign: Sign,
-  Character: Character,
-  Int64: Int64,
-  Field: Field,
-  PrivateKey: PrivateKey,
-  PublicKey: PublicKey,
-  Signature: Signature,
-  MerkleMapWitness: MerkleMapWitness,
+  CircuitString,
+  UInt32,
+  UInt64,
+  Bool,
+  Sign,
+  Character,
+  Int64,
+  Field,
+  PrivateKey,
+  PublicKey,
+  Signature,
+  MerkleMapWitness,
 } as const;
 
 export type ProvableTypeString = keyof typeof ProvableTypeMap;
+
+export type SchemaEncoded = {
+  name: string;
+  kind: ProvableTypeString;
+  value: string;
+}[];
 
 export type SchemaFieldDefinition = {
   name: string;
@@ -54,6 +47,19 @@ export type SchemaFieldDefinition = {
 };
 
 export type SchemaDefinition = SchemaFieldDefinition[];
+
+export interface SchemaExtend {
+  serialize(): SchemaEncoded;
+  hash(): Field;
+}
+export interface SchemaStaticExtend<A> {
+  // eslint-disable-next-line no-use-before-define
+  deserialize(_doc: SchemaEncoded): InstanceType<SchemaExtendable<A>>;
+  getSchema(): SchemaDefinition;
+}
+
+export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
+  SchemaStaticExtend<A>;
 
 export type ProvableMapped<T extends SchemaDefinition> = {
   [Property in T[number]['name']]?: (typeof ProvableTypeMap)[ProvableTypeString];
@@ -71,12 +77,6 @@ export function toInnerStructure<T extends SchemaDefinition>(
 }
 
 type Indexes<T> = Array<keyof T>;
-
-export type SchemaEncoded = {
-  name: string,
-  kind: ProvableTypeString,
-  value: string,
-}[];
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
@@ -118,7 +118,7 @@ export class Schema {
             default:
               value = anyThis[name].toString();
           }
-          result.push({name, kind, value});
+          result.push({ name, kind, value });
         }
         return result;
       }
@@ -132,7 +132,7 @@ export class Schema {
         const result: any = {};
 
         for (let i = 0; i < doc.length; i += 1) {
-          const {name, kind, value} = doc[i];
+          const { name, kind, value } = doc[i];
 
           switch (kind) {
             case 'PrivateKey':

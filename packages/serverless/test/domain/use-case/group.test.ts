@@ -1,7 +1,7 @@
 import { DatabaseEngine } from '@zkdb/storage';
 import { PrivateKey, PublicKey } from 'o1js';
 import { createDatabase } from '../../../src/domain/use-case/database';
-import config from '../../../src/helper/config';
+import { config } from '../../../src/helper/config';
 import {
   addUserToGroups,
   checkUserGroupMembership,
@@ -19,7 +19,7 @@ describe('Group Use Cases', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
@@ -81,18 +81,10 @@ describe('Group Use Cases', () => {
     test('user is part of multiple groups', async () => {
       const FIRST_GROUP = 'first group';
       const SECOND_GROUP = 'second group';
-      const ACTOR = "IAM"
+      const ACTOR = 'IAM';
 
-      const isCreated1 = await createGroup(
-        DB_NAME,
-        ACTOR,
-        FIRST_GROUP
-      );
-      const isCreated2 = await createGroup(
-        DB_NAME,
-        ACTOR,
-        SECOND_GROUP
-      );
+      const isCreated1 = await createGroup(DB_NAME, ACTOR, FIRST_GROUP);
+      const isCreated2 = await createGroup(DB_NAME, ACTOR, SECOND_GROUP);
 
       expect(isCreated1).toBeTruthy();
       expect(isCreated2).toBeTruthy();
@@ -116,19 +108,11 @@ describe('Group Use Cases', () => {
 
     test('user belong to one group, but does not belong to another', async () => {
       const SECOND_GROUP = 'second group';
-      const ACTOR = "IAM"
+      const ACTOR = 'IAM';
 
-      const isCreated1 = await createGroup(
-        DB_NAME,
-        ACTOR,
-        TEST_GROUP
-      );
+      const isCreated1 = await createGroup(DB_NAME, ACTOR, TEST_GROUP);
 
-      const isCreated2 = await createGroup(
-        DB_NAME,
-        ACTOR,
-        SECOND_GROUP
-      );
+      const isCreated2 = await createGroup(DB_NAME, ACTOR, SECOND_GROUP);
 
       expect(isCreated1).toBeTruthy();
       expect(isCreated2).toBeTruthy();

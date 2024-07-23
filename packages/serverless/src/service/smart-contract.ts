@@ -11,7 +11,11 @@ export default class SmartContractService {
     Mina.setActiveInstance(network);
   }
 
-  public async getActions(zkAppAddress: string, amount: number = 10): Promise<string[][]> {
+  // eslint-disable-next-line class-methods-use-this
+  public async getActions(
+    zkAppAddress: string,
+    amount: number = 10
+  ): Promise<string[][]> {
     const result = await fetchAccount({
       publicKey: PublicKey.fromBase58(zkAppAddress),
     });

@@ -1,10 +1,10 @@
 import { ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema';
-import { Permissions } from '../types/permission';
-import logger from '../../helper/logger';
-import { createCollectionMetadata } from './collection-metadata';
-import { createGroup } from './group';
+import { DocumentSchema } from '../types/schema.js';
+import { Permissions } from '../types/permission.js';
+import logger from '../../helper/logger.js';
+import { createCollectionMetadata } from './collection-metadata.js';
+import { createGroup } from './group.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollection(

@@ -1,11 +1,13 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "CommonJS",
+    "target": "ESNext",
+    "module": "ESNext",
     "outDir": "./build",
     "rootDir": ".",
+    "baseUrl": "src",
     "moduleResolution": "node",
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,

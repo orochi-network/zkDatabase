@@ -6,15 +6,15 @@ import fileupload from 'express-fileupload';
 import http from 'http';
 import cors from 'cors';
 import { DatabaseEngine } from '@zkdb/storage';
-import logger from './helper/logger';
-import { TypedefsApp, ResolversApp } from './apollo';
-import { APP_CONTEXT_NOBODY, AppContext } from './common/types';
-import { config } from './helper/config';
-import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
+import logger from './helper/logger.js';
+import { TypedefsApp, ResolversApp } from './apollo/index.js';
+import { APP_CONTEXT_NOBODY, AppContext } from './common/types.js';
+import { config } from './helper/config.js';
+import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt.js';
 
 (async () => {
   const app = express();
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }
@@ -38,7 +38,7 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        if (req.headers.authorization && req.headers.authorization !== "") {
+        if (req.headers.authorization && req.headers.authorization !== '') {
           const { sessionId, userName, email } =
             await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
               req.headers.authorization
@@ -55,7 +55,7 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt';
   });
 
   logger.debug('🚀 Server ready at http://localhost:4000/graphql');
-  if (config.nodeEnv !== 'production') {
-    logger.warn('Server environment is:', config.nodeEnv);
+  if (config.NODE_ENV !== 'production') {
+    logger.warn('Server environment is:', config.NODE_ENV);
   }
 })();

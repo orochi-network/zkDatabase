@@ -4,7 +4,7 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import ModelGroup from './group';
+import ModelGroup from './group.js';
 
 export interface DocumentUserGroup extends Document {
   userName: string;
@@ -61,7 +61,11 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     return availableGroups.map((group) => group._id).toArray();
   }
 
-  public async addUserToGroup(userName: string, groupName: string[], options?: BulkWriteOptions) {
+  public async addUserToGroup(
+    userName: string,
+    groupName: string[],
+    options?: BulkWriteOptions
+  ) {
     const groupOfUser = await this.listGroupId(userName);
     const groupIdToAdd = await this.groupNameToGroupId(groupName);
     const newGroupIdToAdd = groupIdToAdd.filter(

@@ -1,8 +1,8 @@
 import { DatabaseEngine } from '@zkdb/storage';
-import config from '../src/helper/config';
+import { config } from '../src/helper/config';
 
 beforeAll(async () => {
-  const dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }

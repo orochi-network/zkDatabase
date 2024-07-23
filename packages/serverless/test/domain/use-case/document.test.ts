@@ -9,12 +9,12 @@ import {
 } from '../../../src/domain/use-case/document';
 import { createCollection } from '../../../src/domain/use-case/collection';
 import { createDatabase } from '../../../src/domain/use-case/database';
-import config from '../../../src/helper/config';
+import { config } from '../../../src/helper/config';
 import { Schema, SchemaEncoded } from '../../../src/domain/common/schema';
 
 const DB_NAME = 'test-db';
 const TEST_COLLECTION = 'users';
-const MERKLE_HEIGHT = 8; 
+const MERKLE_HEIGHT = 8;
 const PUBLIC_KEY = PublicKey.fromPrivateKey(PrivateKey.random()).toBase58();
 
 const dropDatabase = true;
@@ -23,7 +23,7 @@ describe('Document Management Integration Tests', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
