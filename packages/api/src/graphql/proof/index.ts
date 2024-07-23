@@ -1,0 +1,1 @@
+export { getProof } from "./query/get-proof.js"
