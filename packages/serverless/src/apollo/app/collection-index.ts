@@ -3,7 +3,12 @@ import GraphQLJSON from 'graphql-type-json';
 import { ModelCollection } from '@zkdb/storage';
 import { resolverWrapper } from '../validation.js';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
-import { collectionName, databaseName, indexName, indexField } from './common.js';
+import {
+  collectionName,
+  databaseName,
+  indexName,
+  indexField,
+} from './common.js';
 
 // Index request
 export type TIndexNameRequest = {
@@ -35,19 +40,31 @@ export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
 });
 
 export const typeDefsCollectionIndex = `#graphql
-scalar JSON
-type Query
-type Mutation
+  scalar JSON
+  type Query
+  type Mutation
 
-extend type Query {
-  indexList(databaseName: String!, collectionName: String!): [String]!
-  indexExist(databaseName: String!, collectionName: String!, indexName: String!): Boolean
-}
+  extend type Query {
+    indexList(databaseName: String!, collectionName: String!): [String]!
+    indexExist(
+      databaseName: String!
+      collectionName: String!
+      indexName: String!
+    ): Boolean
+  }
 
-extend type Mutation {
-  indexCreate(databaseName: String!, collectionName: String!, indexField: [String]!): Boolean
-  indexDrop(databaseName: String!, collectionName: String!, indexName: String!): Boolean
-}
+  extend type Mutation {
+    indexCreate(
+      databaseName: String!
+      collectionName: String!
+      indexField: [String]!
+    ): Boolean
+    indexDrop(
+      databaseName: String!
+      collectionName: String!
+      indexName: String!
+    ): Boolean
+  }
 `;
 
 // Query

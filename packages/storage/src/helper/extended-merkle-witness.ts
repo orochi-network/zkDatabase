@@ -49,7 +49,7 @@ export default function createExtendedMerkleWitness(height: number): any {
       const otherIndex = Number(other.calculateIndex().toString());
 
       let levelWithDivergance = 0;
-      
+
       let x = 2 ** (this.height() - 1) / 2;
       for (let i = 1; i < this.height(); i += 1) {
         const bothUpperHalf = index > x && otherIndex > x;

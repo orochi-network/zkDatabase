@@ -1,10 +1,10 @@
 import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
 import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
-import logger from '../../helper/logger';
-import createExtendedMerkleWitness from '../../helper/extended-merkle-witness';
-import ModelGeneral from '../base/general';
-import { zkDatabaseConstants } from '../../common/const';
+import logger from '../../helper/logger.js';
+import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
+import ModelGeneral from '../base/general.js';
+import { zkDatabaseConstants } from '../../common/const.js';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {

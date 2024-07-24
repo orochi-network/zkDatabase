@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import logger from '../helper/logger';
+import logger from '../helper/logger.js';
 
 export class DatabaseEngine {
   private static instance: DatabaseEngine | null = null;
@@ -35,7 +35,10 @@ export class DatabaseEngine {
     database: string,
     collection: string
   ): Promise<boolean> {
-    const collections = await this.client.db(database).listCollections().toArray();
+    const collections = await this.client
+      .db(database)
+      .listCollections()
+      .toArray();
     return collections.some((col) => col.name === collection);
   }
 

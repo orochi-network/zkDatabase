@@ -1,6 +1,6 @@
-import { ClientSession } from "mongodb";
-import { DatabaseEngine } from "../database-engine";
-import logger from "../../helper/logger";
+import { ClientSession } from 'mongodb';
+import { DatabaseEngine } from '../database-engine.js';
+import logger from '../../helper/logger.js';
 
 export default async function withTransaction<T>(
   callback: (session: ClientSession) => Promise<T>
@@ -9,13 +9,16 @@ export default async function withTransaction<T>(
   let result: T | null = null;
 
   try {
-    result = await session.withTransaction(async () => {
-      return await callback(session);
-    }, {
-      readPreference: 'primary',
-      readConcern: { level: 'local' },
-      writeConcern: { w: 'majority' }
-    });
+    result = await session.withTransaction(
+      async () => {
+        return await callback(session);
+      },
+      {
+        readPreference: 'primary',
+        readConcern: { level: 'local' },
+        writeConcern: { w: 'majority' },
+      }
+    );
 
     await session.commitTransaction();
   } catch (e) {

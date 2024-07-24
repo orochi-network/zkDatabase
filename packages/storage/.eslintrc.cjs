@@ -10,14 +10,16 @@ module.exports = {
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:o1js/recommended',
+    'plugin:require-extensions/recommended',
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
   },
-  plugins: ['@typescript-eslint', 'o1js'],
+  plugins: ['@typescript-eslint', 'o1js', 'require-extensions'],
   rules: {
     'no-constant-condition': 'off',
     'prefer-const': 'off',
+    '@typescript-eslint/no-explicit-any': 'warn',
   },
 };
