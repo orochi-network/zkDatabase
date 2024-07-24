@@ -13,7 +13,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "noFallthroughCasesInSwitch": true,
-    "useDefineForClassFields": false,
+    "useDefineForClassFields": false
   },
   "include": ["**/*.ts"],
   "exclude": [

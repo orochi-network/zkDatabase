@@ -1,1 +1,1 @@
-export { Action, calculateActionState } from "./action";
+export { Action, calculateActionState } from './action.js';

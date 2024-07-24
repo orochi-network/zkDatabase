@@ -9,8 +9,8 @@ import {
   method,
   state,
 } from 'o1js';
-import { RollUpProgram } from '../proof/proof-program';
-import { Action } from '../archive-node/action';
+import { RollUpProgram } from '../proof/proof-program.js';
+import { Action } from '../archive-node/action.js';
 
 export function getZkDbSmartContract(
   databaseName: string,
@@ -57,5 +57,5 @@ export function getZkDbSmartContract(
     }
   }
 
-  return _
+  return _;
 }
