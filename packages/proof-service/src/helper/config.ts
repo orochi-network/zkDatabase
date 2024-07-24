@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 import { ConfigLoader } from '@orochi-network/framework';
 import Joi from 'joi';
 
@@ -12,11 +13,13 @@ type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 interface TApplicationConfig {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
+  REDIS_URL: string;
   SERVICE_JRPC_HOST: string;
   SERVICE_JRPC_PORT: number;
 }
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (raw: any) => {
     const serviceUrl = new URL(raw.SERVICE_BIND);
     raw.SERVICE_HOST = serviceUrl.hostname;

@@ -1,6 +1,6 @@
-import logger from '../helper/logger';
-import { getNextTaskId } from '../api/get-next-task';
-import { createProof } from '../domain/create-proof';
+import logger from '../helper/logger.js';
+import { getNextTaskId } from '../api/get-next-task.js';
+import { createProof } from '../domain/create-proof.js';
 
 class TaskService {
   private maxRetries: number;
@@ -12,7 +12,7 @@ class TaskService {
   }
 
   private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   public async fetchAndProcessTasks(): Promise<void> {
@@ -27,11 +27,11 @@ class TaskService {
 
         if (id) {
           logger.info('Task received with id:', id);
-          
+
           try {
-            await createProof(id)
-          } catch(error) {
-            logger.error(error)
+            await createProof(id);
+          } catch (error) {
+            logger.error(error);
           }
 
           retries = 0; // Reset retries on success
