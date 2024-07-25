@@ -1,19 +1,10 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import {
-  ClientSession,
-  Filter,
-  ObjectId,
-  Document,
-} from 'mongodb';
-import {
-  ModelBasic,
-  ModelDatabase,
-  ModelCollection,
-} from '@zkdb/storage';
-import logger from '../../helper/logger';
-import {SchemaField } from '../database/collection-metadata';
-import { PermissionBasic } from '../../common/permission';
+import { ClientSession, Filter, ObjectId, Document } from 'mongodb';
+import { ModelBasic, ModelDatabase, ModelCollection } from '@zkdb/storage';
+import logger from '../../helper/logger.js';
+import { SchemaField } from '../database/collection-metadata.js';
+import { PermissionBasic } from '../../common/permission.js';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -34,7 +25,6 @@ export type DocumentRecord = Document & {
  */
 export class ModelDocument extends ModelBasic<DocumentRecord> {
   public static instances = new Map<string, ModelDocument>();
-
 
   get modelDatabase() {
     return ModelDatabase.getInstance(this.databaseName!);

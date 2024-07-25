@@ -1,4 +1,3 @@
-import { Singleton } from '@orochi-network/framework';
 import {
   LoginTicket,
   OAuth2Client,
@@ -6,22 +5,20 @@ import {
 } from 'google-auth-library';
 
 export class GoogleOAuth2 {
-  private googleClient: OAuth2Client;
+  private static _instance: OAuth2Client;
 
-  constructor() {
-    this.googleClient = new OAuth2Client();
+  private static getOAuth2Client(): OAuth2Client {
+    if (!GoogleOAuth2._instance) {
+      GoogleOAuth2._instance = new OAuth2Client();
+    }
+    return GoogleOAuth2._instance;
   }
 
-  public async verifyIdToken(
+  public static async verifyIdToken(
     verifyOptions: VerifyIdTokenOptions
   ): Promise<LoginTicket> {
-    return this.googleClient.verifyIdToken(verifyOptions);
+    return GoogleOAuth2.getOAuth2Client().verifyIdToken(verifyOptions);
   }
 }
 
-const GoogleOAuth2Instance = Singleton<GoogleOAuth2>(
-  'google-oauth2',
-  GoogleOAuth2
-);
-
-export default GoogleOAuth2Instance;
+export default GoogleOAuth2;

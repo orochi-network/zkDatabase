@@ -1,11 +1,11 @@
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema';
-import { Permissions } from '../types/permission';
-import logger from '../../helper/logger';
-import { createCollectionMetadata } from './collection-metadata';
-import { isGroupExist } from './group';
-import { hasCollectionPermission } from './permission';
+import { DocumentSchema } from '../types/schema.js';
+import { Permissions } from '../types/permission.js';
+import logger from '../../helper/logger.js';
+import { createCollectionMetadata } from './collection-metadata.js';
+import { isGroupExist } from './group.js';
+import { hasCollectionPermission } from './permission.js';
 
 async function createCollection(
   databaseName: string,

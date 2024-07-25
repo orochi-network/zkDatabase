@@ -1,7 +1,7 @@
 import Joi from 'joi';
-import { PermissionRecord } from '../../common/permission';
-import { O1JS_VALID_TYPE } from '../../common/const';
-import { TDocumentField } from '../types/document';
+import { PermissionRecord } from '../../common/permission.js';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
+import { TDocumentField } from '../types/document.js';
 
 export const objectId = Joi.string()
   .trim()

@@ -1,10 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2022",
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
     "composite": true,
     "baseUrl": "./src",
     "outDir": "./build/",

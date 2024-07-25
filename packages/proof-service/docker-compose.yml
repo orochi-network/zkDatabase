@@ -6,4 +6,4 @@ services:
       context: ../../
       dockerfile: packages/proof-service/Dockerfile
     ports:
-      - "4000:4000"
+      - '4000:4000'

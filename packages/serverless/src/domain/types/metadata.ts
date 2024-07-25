@@ -1,7 +1,7 @@
-import { Owners } from "./ownership"
-import { FullPermissions } from "./permission"
+import { Owners } from './ownership.js';
+import { FullPermissions } from './permission.js';
 
 export type Metadata = {
-  owners: Owners,
-  permissions: FullPermissions
-}
+  owners: Owners;
+  permissions: FullPermissions;
+};

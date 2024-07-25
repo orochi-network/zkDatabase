@@ -1,7 +1,7 @@
-import { Joi } from '@orochi-network/framework';
+import Joi from 'joi';
 
-import { ZKDATABASE_USER_NOBODY } from './const';
-import { userName } from '../apollo/app/common';
+import { ZKDATABASE_USER_NOBODY } from './const.js';
+import { userName } from '../apollo/app/common.js';
 
 export interface AppContext {
   userName: string;

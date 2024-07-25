@@ -1,5 +1,5 @@
 import GraphQLJSON from 'graphql-type-json';
-import { getNextTaskId } from '../../domain/get-next-task';
+import { getNextTaskId } from '../../domain/get-next-task.js';
 
 export const typeDefsTask = `#graphql
 scalar JSON

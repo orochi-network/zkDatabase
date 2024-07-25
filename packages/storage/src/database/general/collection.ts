@@ -1,8 +1,8 @@
 import { CreateIndexesOptions, IndexSpecification, Document, DropIndexesOptions } from 'mongodb';
-import { isOk } from '../../helper/common';
-import ModelBasic from '../base/basic';
-import ModelDatabase from './database';
-import logger from '../../helper/logger';
+import { isOk } from '../../helper/common.js';
+import ModelBasic from '../base/basic.js';
+import ModelDatabase from './database.js';
+import logger from '../../helper/logger.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -15,10 +15,16 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return ModelDatabase.getInstance(this.databaseName);
   }
 
-  public static getInstance<T extends Document>(databaseName: string, collectionName: string): ModelCollection<T> {
+  public static getInstance<T extends Document>(
+    databaseName: string,
+    collectionName: string
+  ): ModelCollection<T> {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelCollection.instances.has(key)) {
-      ModelCollection.instances.set(key, new ModelCollection<T>(databaseName, collectionName));
+      ModelCollection.instances.set(
+        key,
+        new ModelCollection<T>(databaseName, collectionName)
+      );
     }
     return ModelCollection.instances.get(key) as ModelCollection<T>;
   }
@@ -30,7 +36,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.isCollection(this.databaseName, this.collectionName);
   }
 
-  public async create(indexSpecs: IndexSpecification, indexOptions?: CreateIndexesOptions): Promise<string> {
+  public async create(
+    indexSpecs: IndexSpecification,
+    indexOptions?: CreateIndexesOptions
+  ): Promise<string> {
     if (!this.databaseName || !this.collectionName) {
       throw new Error('Database and collection were not set');
     }
@@ -39,15 +48,20 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
 
   public async drop(): Promise<boolean> {
     if (!this.collectionName) {
-      logger.debug('collectionName is null')
+      logger.debug('collectionName is null');
       return false;
     }
     await this.db.dropCollection(this.collectionName);
     return true;
   }
 
-  public async index(indexSpec: IndexSpecification, indexOptions?: CreateIndexesOptions): Promise<boolean> {
-    return isOk(async () => this.collection.createIndex(indexSpec, indexOptions));
+  public async index(
+    indexSpec: IndexSpecification,
+    indexOptions?: CreateIndexesOptions
+  ): Promise<boolean> {
+    return isOk(async () =>
+      this.collection.createIndex(indexSpec, indexOptions)
+    );
   }
 
   public async isIndexed(indexName: string): Promise<boolean> {
@@ -61,8 +75,8 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
 
   public async listIndexes(): Promise<string[]> {
     const keySet = new Set<string>();
-    (await this.collection.listIndexes().toArray()).forEach(index => {
-        Object.keys(index.key).forEach(key => keySet.add(key));
+    (await this.collection.listIndexes().toArray()).forEach((index) => {
+      Object.keys(index.key).forEach((key) => keySet.add(key));
     });
     return Array.from(keySet);
   }

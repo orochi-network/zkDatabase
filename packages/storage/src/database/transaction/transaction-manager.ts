@@ -1,6 +1,6 @@
 import { ClientSession, MongoError } from 'mongodb';
-import { DatabaseEngine } from '../database-engine';
-import logger from '../../helper/logger';
+import { DatabaseEngine } from '../database-engine.js';
+import logger from '../../helper/logger.js';
 
 export default async function withTransaction<T>(
   callback: (session: ClientSession) => Promise<T>

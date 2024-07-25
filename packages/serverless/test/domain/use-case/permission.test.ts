@@ -1,6 +1,6 @@
 import { DatabaseEngine } from '@zkdb/storage';
 import { PrivateKey, PublicKey } from 'o1js';
-import config from '../../../src/helper/config';
+import { config } from '../../../src/helper/config';
 import { createDatabase } from '../../../src/domain/use-case/database';
 import {
   changePermissions,
@@ -20,7 +20,7 @@ describe('Permission UseCases', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
@@ -297,7 +297,7 @@ describe('Permission UseCases', () => {
           {
             permissionOwner: { read: true },
           }
-        ); 
+        );
 
         await expect(async () =>
           changePermissions(

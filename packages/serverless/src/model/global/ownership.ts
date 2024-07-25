@@ -1,4 +1,8 @@
-import { ModelCollection, ModelGeneral, zkDatabaseConstants } from '@zkdb/storage';
+import {
+  ModelCollection,
+  ModelGeneral,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import { Document } from 'mongodb';
 
 export interface DocumentOwnership extends Document {

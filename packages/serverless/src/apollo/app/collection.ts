@@ -7,13 +7,13 @@ import {
   permissionDetail,
   groupName,
 } from './common';
-import { TDatabaseRequest } from './database';
-import resolverWrapper from '../validation';
-import { PermissionsData } from '../types/permission';
-import { SchemaData } from '../types/schema';
-import { createCollection } from '../../domain/use-case/collection';
-import { O1JS_VALID_TYPE } from '../../common/const';
-import { AppContext } from '../../common/types';
+import { TDatabaseRequest } from './database.js';
+import resolverWrapper from '../validation.js';
+import { PermissionsData } from '../types/permission.js';
+import { SchemaData } from '../types/schema.js';
+import { createCollection } from '../../domain/use-case/collection.js';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
+import { AppContext } from '../../common/types.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()

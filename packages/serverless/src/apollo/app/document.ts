@@ -1,24 +1,24 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import resolverWrapper from '../validation';
-import { TCollectionRequest } from './collection';
-import { DocumentRecord } from '../../model/abstract/document';
+import resolverWrapper from '../validation.js';
+import { TCollectionRequest } from './collection.js';
+import { DocumentRecord } from '../../model/abstract/document.js';
 import {
   collectionName,
   databaseName,
   documentField,
   permissionDetail,
-} from './common';
+} from './common.js';
 import {
   createDocument,
   deleteDocument,
   readDocument,
   updateDocument,
-} from '../../domain/use-case/document';
-import { AppContext } from '../../common/types';
-import { PermissionsData } from '../types/permission';
-import { TDocumentFields } from '../types/document';
+} from '../../domain/use-case/document.js';
+import { AppContext } from '../../common/types.js';
+import { PermissionsData } from '../types/permission.js';
+import { TDocumentFields } from '../types/document.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };

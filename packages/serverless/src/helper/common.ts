@@ -1,4 +1,4 @@
-import logger from './logger';
+import logger from './logger.js';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
   try {

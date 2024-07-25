@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import Client from 'mina-signer';
-import resolverWrapper, { authorizeWrapper } from '../validation';
-import ModelUser from '../../model/global/user';
-import { AppContext } from '../../common/types';
-import ModelSession from '../../model/global/session';
+import resolverWrapper, { authorizeWrapper } from '../validation.js';
+import ModelUser from '../../model/global/user.js';
+import { AppContext } from '../../common/types.js';
+import ModelSession from '../../model/global/session.js';
 
 const timestamp = Joi.number()
   .custom((value, helper) => {

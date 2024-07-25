@@ -1,4 +1,4 @@
-import { resolversTask, typeDefsTask } from "./app/task";
+import { resolversTask, typeDefsTask } from "./app/task.js";
 
 export const TypedefsApp = [
   typeDefsTask,

@@ -1,24 +1,24 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import resolverWrapper from '../validation';
+import resolverWrapper from '../validation.js';
 import {
   databaseName,
   groupDescription,
   groupName,
   groupOptionalDescription,
   userName,
-} from './common';
-import { TDatabaseRequest } from './database';
-import ModelGroup from '../../model/database/group';
-import ModelUserGroup from '../../model/database/user-group';
-import { TCollectionRequest } from './collection';
+} from './common.js';
+import { TDatabaseRequest } from './database.js';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
+import { TCollectionRequest } from './collection.js';
 import {
   addUsersToGroup,
   changeGroupDescription,
   createGroup,
-} from '../../domain/use-case/group';
-import { AppContext } from '../../common/types';
+} from '../../domain/use-case/group.js';
+import { AppContext } from '../../common/types.js';
 
 export type TGroupRequest = TCollectionRequest & {
   groupName: string;

@@ -1,6 +1,6 @@
 import { ClientSession } from 'mongodb';
-import ModelBasic from '../base/basic';
-import { zkDatabaseConstants } from '../../common';
+import ModelBasic from '../base/basic.js';
+import { zkDatabaseConstants } from '../../common/index.js';
 
 export type SequencedItem = {
   _id: string;
@@ -22,7 +22,10 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
     return ModelSequencer.instances.get(key)!;
   }
 
-  async getNextValue(sequenceName: string, session?: ClientSession): Promise<number> {
+  async getNextValue(
+    sequenceName: string,
+    session?: ClientSession
+  ): Promise<number> {
     const updateResult = await this.collection.findOneAndUpdate(
       { _id: sequenceName },
       { $inc: { seq: 1 } },
@@ -30,10 +33,11 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
     );
 
     if (!updateResult) {
-      throw new Error(`Failed to get next value for sequence '${sequenceName}'`);
+      throw new Error(
+        `Failed to get next value for sequence '${sequenceName}'`
+      );
     }
 
     return updateResult.seq;
   }
 }
-

@@ -1,10 +1,10 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
-import resolverWrapper from '../validation';
-import { databaseName, publicKey } from './common';
-import { createDatabase } from '../../domain/use-case/database';
-import { AppContext } from '../../common/types';
+import { DatabaseEngine, ModelDatabase } from '@zkdb/storage';
+import resolverWrapper from '../validation.js';
+import { databaseName, publicKey } from './common.js';
+import { createDatabase } from '../../domain/use-case/database.js';
+import { AppContext } from '../../common/types.js';
 
 export type TDatabaseRequest = {
   databaseName: string;

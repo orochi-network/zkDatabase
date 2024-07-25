@@ -1,15 +1,15 @@
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
-import logger from '../../helper/logger';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import logger from '../../helper/logger.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import {
   ProvableTypeMap,
   ProvableTypeString,
   Schema,
   SchemaEncoded,
-} from '../common/schema';
-import { Document } from '../types/document';
-import { DocumentSchema, DocumentSchemaField } from '../types/schema';
+} from '../common/schema.js';
+import { Document } from '../types/document.js';
+import { DocumentSchema, DocumentSchemaField } from '../types/schema.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 

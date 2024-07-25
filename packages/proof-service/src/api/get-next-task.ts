@@ -1,22 +1,20 @@
-import pkg from '@apollo/client';
-const { gql } = pkg;
-import client from './client.js';
-import logger from '../helper/logger.js';
 import { NetworkResult } from '../utils/network.js';
+import { gql, request } from 'graphql-request';
+import logger from '../helper/logger.js';
+import { config } from '../helper/config.js';
 
 const GET_TASK_ID = gql`
   query GetTaskId {
-    tasks {
-      id
-    }
+    taskId
   }
 `;
 
 export async function getNextTaskId(): Promise<NetworkResult<string | null>> {
   try {
-    const { data } = await client.query({
-      query: GET_TASK_ID,
-    });
+    const data = await request<{ taskId: string }>(
+      config.BROKER_SERVICE,
+      GET_TASK_ID
+    );
 
     return {
       type: 'success',

@@ -1,6 +1,6 @@
 import { ClientSession } from 'mongodb';
-import ModelGroup from '../../model/database/group';
-import ModelUserGroup from '../../model/database/user-group';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 
 async function isGroupExist(
   databaseName: string,

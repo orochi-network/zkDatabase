@@ -3,7 +3,17 @@ services:
   mongo:
     image: mongo:7
     user: root
-    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/etc/mongodb/pki/keyfile"]
+    command:
+      [
+        'mongod',
+        '--replSet',
+        'rs0',
+        '--bind_ip_all',
+        '--port',
+        '27017',
+        '--keyFile',
+        '/etc/mongodb/pki/keyfile',
+      ]
     container_name: mongo
     restart: always
     ports:

@@ -1,10 +1,13 @@
-import RedisInstance, { RedisClient } from './redis';
-import logger from './logger';
+import { RedisClient } from '@orochi-network/framework';
+import logger from './logger.js';
+import { RedisInstance } from './redis.js';
 
-const LOCK_KEY = 'myLockKey';
+const LOCK_KEY = 'my_lock_key';
 const LOCK_EXPIRATION = 300; // in seconds
 
 export default class DistributedLock {
+  private static instance: any;
+
   private redis: RedisClient;
 
   private constructor(redis: RedisClient) {
@@ -12,7 +15,10 @@ export default class DistributedLock {
   }
 
   public static getInstance(): DistributedLock {
-    return new DistributedLock(RedisInstance);
+    if (!DistributedLock.instance) {
+      return new DistributedLock(RedisInstance);
+    }
+    return DistributedLock.instance;
   }
 
   public async acquireLock(): Promise<boolean> {

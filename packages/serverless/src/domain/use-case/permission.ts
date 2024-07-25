@@ -1,16 +1,16 @@
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import {
   PermissionBasic,
   PermissionBinary,
   PermissionRecord,
   PermissionType,
   ZKDATABASE_NO_PERMISSION_RECORD,
-} from '../../common/permission';
-import { checkUserGroupMembership } from './group';
-import { PermissionGroup } from '../types/permission';
-import logger from '../../helper/logger';
+} from '../../common/permission.js';
+import { checkUserGroupMembership } from './group.js';
+import { PermissionGroup } from '../types/permission.js';
+import logger from '../../helper/logger.js';
 
 async function fetchPermissionDetails(
   databaseName: string,

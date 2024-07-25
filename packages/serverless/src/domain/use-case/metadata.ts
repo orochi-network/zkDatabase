@@ -1,12 +1,12 @@
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata';
-import { Metadata } from '../types/metadata';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { Metadata } from '../types/metadata.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
-} from './permission';
-import { PermissionBinary } from '../../common/permission';
+} from './permission.js';
+import { PermissionBinary } from '../../common/permission.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function readMetadata(

@@ -5,13 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.json && cd ./packages/explorer && yarn build"
-  },
-  "resolutions": {
-    "jest": "^28.0.3",
-    "wrap-ansi": "7.0.0",
-    "string-width": "4.1.0",
-    "typescript": "5.4.2"
+    "build": "tsc --build tsconfig.json"
   },
   "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610"
 }
