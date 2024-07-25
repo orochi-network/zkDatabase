@@ -57,8 +57,8 @@ type GroupInfo {
 }
 
 extend type Query {
-  groupListAll(databaseName: String!): [String]
-  groupListByUser(databaseName: String!, userName: String!): [String]
+  groupListAll(databaseName: String!): [String]!
+  groupListByUser(databaseName: String!, userName: String!): [String]!
   groupInfo(databaseName: String!, groupName: String!): GroupInfo!
 }
 
@@ -90,7 +90,8 @@ const groupListAll = resolverWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest) => {
     const modelGroup = new ModelGroup(args.databaseName);
-    return modelGroup.find({});
+    const groups = await modelGroup.find({});
+    return (await groups.toArray()).map((group) => group.groupName);
   }
 );
 
