@@ -7,8 +7,8 @@ import {
   TaskEntity,
 } from '@zkdb/storage';
 import { Field, Poseidon } from 'o1js';
-import { config } from '../../src/helper/config';
-import QueueService from '../../src/queue/queue-service';
+import { config } from '../../src/helper/config.js';
+import QueueService from '../../src/queue/queue-service.js';
 
 const DB_NAME = 'test-db-document';
 const TEST_COLLECTION = 'test-collection';
@@ -18,7 +18,7 @@ describe('QueueService', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }

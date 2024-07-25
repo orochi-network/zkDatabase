@@ -12,9 +12,7 @@ type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 interface TApplicationConfig {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
-  REDIS_URL: string;
-  SERVICE_JRPC_HOST: string;
-  SERVICE_JRPC_PORT: number;
+  PORT: number;
 }
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -30,9 +28,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),
-    SERVICE_BIND: Joi.string()
-      .pattern(/^http(|s):\/\//)
-      .default("http://0.0.0.0:31337"),
+    PORT: Joi.number().integer().min(1).max(65535).required().default(4001),
   }
 );
 
