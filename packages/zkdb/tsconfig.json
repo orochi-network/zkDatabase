@@ -18,6 +18,7 @@
     "allowSyntheticDefaultImports": true,
     "paths": {}
   },
+  "references": [{ "path": "../api" }, { "path": "../smart-contract" }],
   "include": ["./src"],
   "exclude": [
     "./node_modules",
