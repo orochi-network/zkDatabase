@@ -1,7 +1,7 @@
 import { Field, Struct } from "o1js";
 
 export class ProofState extends Struct({
-  actionState: Field,
+  // actionState: Field,
   rootState: Field
 }) {
 }
