@@ -6,14 +6,14 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { ClientSession, WithId, ObjectId } from 'mongodb';
-import { PermissionBinary, partialToPermission } from '../../common/permission';
+import {
+  PermissionBinary,
+  setPartialIntoPermission,
+} from '../../common/permission';
 import ModelDocument, { DocumentRecord } from '../../model/abstract/document';
 import { Document } from '../types/document';
 import { Permissions } from '../types/permission';
-import {
-  hasDocumentPermission,
-  hasCollectionPermission,
-} from './permission';
+import { hasDocumentPermission, hasCollectionPermission } from './permission';
 import {
   proveCreateDocument,
   proveDeleteDocument,
@@ -141,16 +141,6 @@ async function createDocument(
     };
   });
 
-  const documentPermissionOwner = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOwner)
-  );
-  const documentPermissionGroup = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionGroup)
-  );
-  const documentPermissionOther = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOther)
-  );
-
   // 1. Save document
   const insertResult = await modelDocument.insertDocument(
     documentRecord,
@@ -170,7 +160,33 @@ async function createDocument(
     session,
   });
 
-  const { permissionOwner, permissionGroup, permissionOther } = documentSchema;
+  const {
+    permissionOwner: collectionPermissionOwner,
+    permissionGroup: collectionPermissionGroup,
+    permissionOther: collectionPermissionOther,
+  } = documentSchema;
+
+  // TODO: Can we simplify the code by applying binary operations ?
+  const permissionOwner = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOwner),
+      permissions.permissionOwner
+    )
+  );
+
+  const permissionGroup = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionGroup),
+      permissions.permissionGroup
+    )
+  );
+
+  const permissionOther = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOther),
+      permissions.permissionOther
+    )
+  );
 
   await modelDocumentMetadata.insertOne(
     {
@@ -178,9 +194,6 @@ async function createDocument(
       docId: insertResult.insertedId,
       merkleIndex,
       ...{
-        permissionOwner,
-        permissionGroup,
-        permissionOther,
         // I'm set these to system user and group as default
         // In case this permission don't override by the user
         // this will prevent the user from accessing the data
@@ -188,9 +201,9 @@ async function createDocument(
         owner: ZKDATABASE_USER_SYSTEM,
       },
       // Overwrite inherited permission with the new one
-      permissionOwner: documentPermissionOwner,
-      permissionGroup: documentPermissionGroup,
-      permissionOther: documentPermissionOther,
+      permissionOwner,
+      permissionGroup,
+      permissionOther,
       owner: actor,
       group: documentSchema.group,
       createdAt: getCurrentTime(),

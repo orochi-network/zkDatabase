@@ -74,7 +74,7 @@
     "express": "^4.18.2",
     "express-fileupload": "^1.4.0",
     "google-auth-library": "^9.0.0",
-    "graphql": "^16.8.0",
+    "graphql": "^16.9.0",
     "graphql-request": "^6.1.0",
     "graphql-scalars": "^1.22.4",
     "graphql-type-json": "^0.3.2",
