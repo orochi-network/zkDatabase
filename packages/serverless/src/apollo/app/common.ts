@@ -42,6 +42,9 @@ export const groupDescription = Joi.string()
   .trim()
   .min(10)
   .max(256)
+  .required();
+ 
+export const groupOptionalDescription = Joi.string()
   .allow('')
   .optional()
   .description(
