@@ -1,12 +1,12 @@
 import GraphQLJSON from 'graphql-type-json';
-import { getNextTaskId } from '../../domain/get-next-task';
+import { getNextTaskId } from '../../domain/get-next-task.js';
 
 export const typeDefsTask = `#graphql
 scalar JSON
 type Query
 
 extend type Query {
-  taskGet: String!
+  taskId: String!
 }
 `;
 

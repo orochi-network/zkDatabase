@@ -1,37 +1,30 @@
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
-import { ConfigLoader, Singleton, Utilities } from '@orochi-network/framework';
+/* eslint-disable no-param-reassign */
+import { ConfigLoader } from '@orochi-network/framework';
 import Joi from 'joi';
 
-export const nodeEnvValue = ['development', 'production', 'staging'] as const;
+export const NODE_ENV_VALUES = [
+  'development',
+  'production',
+  'staging',
+] as const;
 
-type TNodeEnv = (typeof nodeEnvValue)[number];
+type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 
-interface IAppConfiguration {
-  nodeEnv: TNodeEnv;
-  mongodbUrl: string;
+interface TApplicationConfig {
+  NODE_ENV: TNodeEnv;
+  MONGODB_URL: string;
 }
 
-export const envLocation = `${Utilities.File.getRootFolder(
-  path.dirname(fileURLToPath(pathToFileURL(__filename).toString()))
-)}/.env`;
+const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
+  NODE_ENV: Joi.string()
+    .required()
+    .trim()
+    .valid(...NODE_ENV_VALUES)
+    .default('production'),
+  MONGODB_URL: Joi.string()
+    .trim()
+    .required()
+    .regex(/^mongodb([+a-z]+|):\/\//),
+});
 
-const configLoader = Singleton<ConfigLoader>(
-  'zkdb-aas',
-  ConfigLoader,
-  envLocation,
-  Joi.object<IAppConfiguration>({
-    nodeEnv: Joi.string()
-      .required()
-      .trim()
-      .valid(...nodeEnvValue),
-    mongodbUrl: Joi.string()
-      .trim()
-      .required()
-      .regex(/^mongodb([+a-z]+|):\/\//)
-  })
-);
-
-export const config: IAppConfiguration = configLoader.getConfig();
-
-export default config;
+export const { config } = configLoader;

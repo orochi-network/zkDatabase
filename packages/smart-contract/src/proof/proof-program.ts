@@ -1,6 +1,6 @@
 import { ZkProgram, Field, SelfProof, MerkleWitness } from 'o1js';
-import { ProofState } from './proof-state';
-import { Action, calculateActionState } from '../archive-node/action';
+import { ProofState } from './proof-state.js';
+import { Action, calculateActionState } from '../archive-node/action.js';
 
 export type DatabaseRollUp = ReturnType<typeof RollUpProgram>;
 

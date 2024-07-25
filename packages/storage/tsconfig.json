@@ -2,9 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "target": "es2020",
-    "module": "commonjs",
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "Node",
+    "esModuleInterop": true,
     "outDir": "./build/",
     "rootDir": ".",
     "types": ["node", "jest"]

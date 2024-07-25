@@ -1,11 +1,11 @@
-import { Field, MerkleTree } from "o1js";
-import { DatabaseEngine, ModelMerkleTree } from "../../build/src"
+import { Field, MerkleTree } from 'o1js';
+import { DatabaseEngine, ModelMerkleTree } from '../../build/src';
 import { config } from '../../src/helper/config';
 
 const DB_NAME = 'test-db-document';
 const MERKLE_HEIGHT = 12;
 
-describe("ModelMerkleTree", () => {
+describe('ModelMerkleTree', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
@@ -21,18 +21,22 @@ describe("ModelMerkleTree", () => {
 
   async function dropDatabases() {
     const adminDb = dbEngine.client.db().admin();
-  
+
     // List all databases
     const { databases } = await adminDb.listDatabases();
-  
+
     // Filter out system databases
-    const userDatabases = databases.filter(dbInfo => !['admin', 'local', 'config'].includes(dbInfo.name));
-  
+    const userDatabases = databases.filter(
+      (dbInfo) => !['admin', 'local', 'config'].includes(dbInfo.name)
+    );
+
     // Drop each user database
-    await Promise.all(userDatabases.map(async (dbInfo) => {
-      const db = dbEngine.client.db(dbInfo.name);
-      await db.dropDatabase();
-    }));
+    await Promise.all(
+      userDatabases.map(async (dbInfo) => {
+        const db = dbEngine.client.db(dbInfo.name);
+        await db.dropDatabase();
+      })
+    );
   }
 
   beforeEach(async () => {
@@ -57,9 +61,9 @@ describe("ModelMerkleTree", () => {
 
       const root = await modelMerkleTree.getRoot(new Date());
 
-      expect(root).toEqual(merkleTree.getRoot())
+      expect(root).toEqual(merkleTree.getRoot());
     }
-  })
+  });
 
   test('should correctly retrieve Merkle witnesses for leaf nodes', async () => {
     const modelMerkleTree = ModelMerkleTree.getInstance(DB_NAME);
@@ -75,7 +79,7 @@ describe("ModelMerkleTree", () => {
 
       const witness = await modelMerkleTree.getWitness(index, new Date());
 
-      expect(witness).toEqual(merkleTree.getWitness(index)) 
+      expect(witness).toEqual(merkleTree.getWitness(index));
     }
-  })
-})
+  });
+});

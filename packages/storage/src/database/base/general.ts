@@ -15,8 +15,8 @@ import {
   FindOptions,
   CountDocumentsOptions,
 } from 'mongodb';
-import ModelBasic from './basic';
-import logger from '../../helper/logger';
+import ModelBasic from './basic.js';
+import logger from '../../helper/logger.js';
 
 /**
  * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing

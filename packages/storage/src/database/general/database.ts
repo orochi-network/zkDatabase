@@ -1,9 +1,9 @@
 import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
-import ModelBasic from '../base/basic';
+import ModelBasic from '../base/basic.js';
 import {
   zkDatabaseConstants,
   zkDatabaseMetadataCollections,
-} from '../../common';
+} from '../../common/index.js';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -64,7 +64,6 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     }
     return false;
   }
-  
 
   public async drop(): Promise<boolean> {
     await this.db.dropDatabase();

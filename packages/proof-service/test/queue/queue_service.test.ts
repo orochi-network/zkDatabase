@@ -1,7 +1,14 @@
-import { DatabaseEngine, ModelDbSetting, ModelMerkleTree, ModelProof, ModelQueueTask, TaskEntity } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelDbSetting,
+  ModelMerkleTree,
+  ModelProof,
+  ModelQueueTask,
+  TaskEntity,
+} from '@zkdb/storage';
 import { Field, Poseidon } from 'o1js';
-import { config } from '../../src/helper/config';
-import QueueService from '../../src/queue/queue-service'
+import { config } from '../../src/helper/config.js';
+import QueueService from '../../src/queue/queue-service.js';
 
 const DB_NAME = 'test-db-document';
 const TEST_COLLECTION = 'test-collection';
@@ -11,7 +18,7 @@ describe('QueueService', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
@@ -23,18 +30,22 @@ describe('QueueService', () => {
 
   async function dropDatabases() {
     const adminDb = dbEngine.client.db().admin();
-  
+
     // List all databases
     const { databases } = await adminDb.listDatabases();
-  
+
     // Filter out system databases
-    const userDatabases = databases.filter(dbInfo => !['admin', 'local', 'config'].includes(dbInfo.name));
-  
+    const userDatabases = databases.filter(
+      (dbInfo) => !['admin', 'local', 'config'].includes(dbInfo.name)
+    );
+
     // Drop each user database
-    await Promise.all(userDatabases.map(async (dbInfo) => {
-      const db = dbEngine.client.db(dbInfo.name);
-      await db.dropDatabase();
-    }));
+    await Promise.all(
+      userDatabases.map(async (dbInfo) => {
+        const db = dbEngine.client.db(dbInfo.name);
+        await db.dropDatabase();
+      })
+    );
   }
 
   beforeEach(async () => {
@@ -51,9 +62,9 @@ describe('QueueService', () => {
     const processor = new QueueService(queue);
 
     await ModelDbSetting.getInstance(DB_NAME).updateSetting({
-      merkleHeight: MERKLE_HEIGHT
-    })
-    
+      merkleHeight: MERKLE_HEIGHT,
+    });
+
     const merkleTree = ModelMerkleTree.getInstance(DB_NAME);
 
     merkleTree.setHeight(MERKLE_HEIGHT);
@@ -62,10 +73,10 @@ describe('QueueService', () => {
     const tasks: TaskEntity[] = [];
 
     for (let i = 0; i < 2; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 1000)) 
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       const index = BigInt(i);
-      const hash = Poseidon.hash(Field(100 + i).toFields())
-      
+      const hash = Poseidon.hash(Field(100 + i).toFields());
+
       const currDate = new Date();
 
       await merkleTree.setLeaf(index, hash, currDate);
@@ -74,8 +85,8 @@ describe('QueueService', () => {
         hash: hash.toString(),
         database: DB_NAME,
         collection: TEST_COLLECTION,
-        createdAt: currDate
-      }
+        createdAt: currDate,
+      };
       await queue.createTask(task);
       tasks.push(task);
     }
@@ -84,7 +95,7 @@ describe('QueueService', () => {
     let storedTasks = await queue.collection.find({}).toArray();
     expect(storedTasks.length).toEqual(tasks.length);
 
-    storedTasks.forEach(task => {
+    storedTasks.forEach((task) => {
       expect(task.processed).toBeFalsy();
     });
 
@@ -95,32 +106,32 @@ describe('QueueService', () => {
           hash: tasks[0].hash,
           database: tasks[0].database,
           collection: tasks[0].collection,
-          createdAt: tasks[0].createdAt
+          createdAt: tasks[0].createdAt,
         }),
         expect.objectContaining({
           // merkleIndex: tasks[1].merkleIndex.toString(),
           hash: tasks[1].hash,
           database: tasks[1].database,
           collection: tasks[1].collection,
-          createdAt: tasks[1].createdAt
+          createdAt: tasks[1].createdAt,
         }),
       ])
     );
 
     // Handle tasks
-    processor.start()
+    processor.start();
 
     while (!processor.idle) {
-      await new Promise((resolve) => setTimeout(resolve, 5000)) 
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     await processor.stop();
-    
+
     // Check if task is in the queue and processed is set to TRUE
     storedTasks = await queue.collection.find({}).toArray();
     expect(storedTasks.length).toEqual(tasks.length);
 
-    storedTasks.forEach(task => {
+    storedTasks.forEach((task) => {
       expect(task.processed).toBeTruthy();
     });
 
@@ -132,6 +143,8 @@ describe('QueueService', () => {
     const lastProof = await proofStorage.getProof(DB_NAME, TEST_COLLECTION);
     const merkleRoot = await merkleTree.getRoot(new Date());
 
-    expect(lastProof!.publicOutput[0].toString()).toEqual(merkleRoot.toString());
+    expect(lastProof!.publicOutput[0].toString()).toEqual(
+      merkleRoot.toString()
+    );
   });
 });
