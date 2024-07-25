@@ -21,7 +21,7 @@ export class AuroWallet {
   private constructor() {}
 
   static async signMessage(signContent: string): Promise<SignedData> {
-    this.ensureEnvironment();
+    this.ensureWalletSupport();
 
     const signResult = await (window as any).mina
       .signMessage(signContent)
@@ -37,7 +37,7 @@ export class AuroWallet {
       memo: '',
     }
   ): Promise<string> {
-    this.ensureEnvironment();
+    this.ensureWalletSupport();
 
     const { hash } = await (window as any).mina.sendTransaction({
       transaction: transaction.toJSON(),
@@ -50,7 +50,28 @@ export class AuroWallet {
     return hash;
   }
 
-  private static ensureEnvironment() {
+  static async signTransaction(
+    transaction: Transaction,
+    transactionMetadata: TransactionMetadata = {
+      fee: 0.1,
+      memo: '',
+    }
+  ): Promise<Transaction> {
+    this.ensureWalletSupport();
+
+    const { signedData } = await (window as any).mina.sendTransaction({
+      onlySign: true,
+      transaction: transaction.toJSON(),
+      feePayer: {
+        fee: transactionMetadata.fee,
+        memo: transactionMetadata.memo,
+      },
+    });
+
+    return Mina.Transaction.fromJSON(signedData);
+  }
+
+  private static ensureWalletSupport() {
     if (!isBrowser()) {
       throw Error(
         'Unable to connect to Auro Wallet in a non-browser environment'
