@@ -115,7 +115,7 @@ const collectionExist = resolverWrapper(
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
-    const isCreated = withTransaction((session) =>
+    return withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -126,10 +126,6 @@ const collectionCreate = resolverWrapper(
         session
       )
     );
-
-    return {
-      success: isCreated,
-    };
   }
 );
 
@@ -148,7 +144,7 @@ export const resolversCollection: TCollectionResolvers = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,
-    collectionExist
+    collectionExist,
   },
   Mutation: {
     collectionCreate,

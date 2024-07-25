@@ -4,7 +4,7 @@ import { DocumentSchema } from '../types/schema';
 import { Permissions } from '../types/permission';
 import logger from '../../helper/logger';
 import { createCollectionMetadata } from './collection-metadata';
-import { createGroup, isGroupExist } from './group';
+import { isGroupExist } from './group';
 import { hasCollectionPermission } from './permission';
 
 async function createCollection(
@@ -15,7 +15,7 @@ async function createCollection(
   schema: DocumentSchema,
   permissions: Permissions,
   session?: ClientSession
-): Promise<void> {
+): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelDatabase.isCollectionExist(collectionName)) {
@@ -41,6 +41,7 @@ async function createCollection(
       groupName,
       session
     );
+    return true;
   } catch (error) {
     await modelDatabase.dropCollection(collectionName);
     logger.error(error);

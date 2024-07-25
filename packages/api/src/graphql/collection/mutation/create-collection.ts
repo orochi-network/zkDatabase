@@ -43,7 +43,7 @@ export const createCollection = async (
 
     const response = data?.collectionCreate;
 
-    if (response && response.success) {
+    if (response) {
       return {
         type: "success",
         data: undefined,
