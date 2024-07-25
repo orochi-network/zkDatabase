@@ -79,15 +79,15 @@ scalar JSON
 type Query
 type Mutation
 
-input Signature {
-    field: String
-    scalar: String
+input SignatureInput {
+  field: String
+  scalar: String
 }
 
-input SignatureProof {
-    signature: Signature
-    publicKey: String
-    data: String
+input ProofInput {
+  signature: SignatureInput
+  publicKey: String
+  data: String
 }
 
 input SignUp {
@@ -108,7 +108,7 @@ type SignUpData {
 type SignInResponse {
     success: Boolean
     error: String
-    userName: String
+    userName: String,
     sessionKey: String
     sessionId: String
     userData: JSON
@@ -119,9 +119,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  userSignIn(proof: SignatureProof!): SignInResponse
+  userSignIn(proof: ProofInput!): SignInResponse
   userSignOut: Boolean
-  userSignUp(signUp: SignUp!, proof: SignatureProof!): SignUpData
+  userSignUp(signUp: SignUp!, proof: ProofInput!): SignUpData
 }
 `;
 
