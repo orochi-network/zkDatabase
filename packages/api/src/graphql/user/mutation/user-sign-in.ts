@@ -12,6 +12,7 @@ const SIGN_IN = gql`
       sessionKey
       sessionId
       userData
+      publicKey
     }
   }
 `;
@@ -44,6 +45,7 @@ export const signIn = async (
           user: {
             userName: response.userName,
             email: email,
+            publicKey: response.publicKey
           },
           session: {
             sessionId: response.sessionId,

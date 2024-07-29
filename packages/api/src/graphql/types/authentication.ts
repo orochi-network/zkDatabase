@@ -8,11 +8,6 @@ export type SignInInfo = {
   userData: any;
 }
 
-export type SignUpInfo = {
-  user: User,
-  publicKey: string
-}
-
 export type SignatureProofData = {
   signature: Signature;
   publicKey: string;

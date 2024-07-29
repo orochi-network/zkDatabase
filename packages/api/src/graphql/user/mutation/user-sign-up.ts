@@ -1,11 +1,8 @@
 import { gql } from "@apollo/client";
 import client from "../../client.js";
-import {
-  SignUpData,
-  SignUpInfo,
-  SignatureProofData,
-} from "../../types/authentication.js";
+import { SignUpData, SignatureProofData } from "../../types/authentication.js";
 import { NetworkResult } from "../../../utils/network.js";
+import { User } from "../../types/user.js";
 
 const SIGN_UP = gql`
   mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
@@ -30,7 +27,7 @@ interface UserSignUpResponse {
 export const signUp = async (
   proof: SignatureProofData,
   signUpData: SignUpData
-): Promise<NetworkResult<SignUpInfo>> => {
+): Promise<NetworkResult<User>> => {
   try {
     const { data } = await client.mutate<{ userSignUp: UserSignUpResponse }>({
       mutation: SIGN_UP,
@@ -43,10 +40,8 @@ export const signUp = async (
       return {
         type: "success",
         data: {
-          user: {
-            userName: response.userName,
-            email: response.email,
-          },
+          userName: response.userName,
+          email: response.email,
           publicKey: response.publicKey,
         },
       };

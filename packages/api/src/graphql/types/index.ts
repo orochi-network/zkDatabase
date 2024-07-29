@@ -1,7 +1,6 @@
 export { Signature } from "./signature.js";
 export {
   SignInInfo,
-  SignUpInfo,
   SignatureProofData,
   SignUpData,
 } from "./authentication.js";

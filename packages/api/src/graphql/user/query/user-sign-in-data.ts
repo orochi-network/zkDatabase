@@ -12,6 +12,7 @@ const SIGN_IN_DATA = gql`
       sessionKey
       sessionId
       userData
+      publicKey
     }
   }
 `;
@@ -24,6 +25,7 @@ interface UserSignInResponse {
   sessionKey: string;
   sessionId: string;
   userData: JSON;
+  publicKey: string;
 }
 
 export const getSignInData = async (
@@ -48,6 +50,7 @@ export const getSignInData = async (
           user: {
             userName: response.userName,
             email: response.email,
+            publicKey: response.publicKey
           },
           session: {
             sessionId: response.sessionId,

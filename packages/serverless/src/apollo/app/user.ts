@@ -112,6 +112,7 @@ type SignInResponse {
     sessionKey: String
     sessionId: String
     userData: JSON
+    publicKey: String
 }
 
 extend type Query {
@@ -138,13 +139,17 @@ const userSignInData = async (
     const user = await new ModelUser().findOne({
       userName: session.userName,
     });
-    return {
-      success: true,
-      sessionKey: session.sessionKey,
-      sessionId: session.sessionId,
-      userName: session.userName,
-      userData: user ? user.userData : null,
-    };
+    if (user) {
+      return {
+        success: true,
+        userName: user.userName,
+        sessionKey: session.sessionKey,
+        sessionId: session.sessionId,
+        userData: user.userData,
+        publicKey: user.publicKey,
+      };
+    }
+    throw new Error('User not found');
   }
   return {
     success: false,
@@ -179,6 +184,7 @@ const userSignIn = resolverWrapper(
             sessionKey: session.sessionKey,
             sessionId: session.sessionId,
             userData: user.userData,
+            publicKey: user.publicKey,
           };
         }
         throw new Error('Cannot create session');

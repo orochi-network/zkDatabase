@@ -35,6 +35,7 @@ export abstract class BaseAuthenticator {
       this.getStorage().setUserInfo({
         email: result.data.user.email,
         userName: result.data.user.userName,
+        publicKey: result.data.user.publicKey
       });
     } else {
       throw Error(result.message);
