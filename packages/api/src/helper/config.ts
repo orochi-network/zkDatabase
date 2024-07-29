@@ -1,34 +1,32 @@
-import { fileURLToPath, pathToFileURL } from 'url';
-import path from 'path';
-import { ConfigLoader, Singleton, Utilities } from '@orochi-network/framework';
-import Joi from 'joi';
+import { ConfigLoader } from "@orochi-network/framework";
+import Joi from "joi";
 
-export const nodeEnvValue = ['development', 'production', 'staging'] as const;
+export const NODE_ENV_VALUES = [
+  "development",
+  "production",
+  "staging",
+] as const;
 
-type TNodeEnv = (typeof nodeEnvValue)[number];
+type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 
-interface IAppConfiguration {
-  nodeEnv: TNodeEnv;
-  aasUri: string
+interface TApplicationConfig {
+  NODE_ENV: TNodeEnv;
+  AAS_URI: string;
 }
 
-export const envLocation = `${Utilities.File.getRootFolder(
-  path.dirname(fileURLToPath(pathToFileURL(__filename).toString()))
-)}/packages/api/.env`;
-
-const configLoader = Singleton<ConfigLoader>(
-  'zkdb-api',
-  ConfigLoader,
-  envLocation,
-  Joi.object<IAppConfiguration>({
-    nodeEnv: Joi.string()
+const configLoader = new ConfigLoader<TApplicationConfig>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (raw: any) => raw,
+  {
+    NODE_ENV: Joi.string()
       .required()
       .trim()
-      .valid(...nodeEnvValue),
-    aasUri: Joi.string(),
-  })
+      .valid(...NODE_ENV_VALUES)
+      .default("production"),
+    AAS_URI: Joi.string()
+      .pattern(/^http(|s):\/\//)
+      .default("http://0.0.0.0:31337"),
+  }
 );
 
-export const config: IAppConfiguration = configLoader.getConfig();
-
-export default config;
+export const { config } = configLoader;

@@ -1,10 +1,10 @@
 import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
-import config from '../helper/config.js';
 import { getToken } from '../authentication/jwt-token.js';
+import { config } from '../helper/config.js';
 
 const httpLink = new HttpLink({
-  uri: config.aasUri,
+  uri: config.AAS_URI,
 });
 
 const authLink = setContext(async (_, { headers }) => {
