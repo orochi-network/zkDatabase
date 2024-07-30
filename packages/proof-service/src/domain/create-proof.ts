@@ -1,9 +1,7 @@
 import {
-  fetchAccount,
   Field,
   MerkleWitness,
-  PublicKey,
-  UInt64,
+  Provable,
   ZkProgram,
 } from 'o1js';
 import {
@@ -12,23 +10,25 @@ import {
   ModelProof,
   ModelQueueTask,
 } from '@zkdb/storage';
-import { getZkDbSmartContract, ProofState } from '@zkdb/smart-contract';
+import { ProofState } from '@zkdb/smart-contract';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
 import logger from '../helper/logger.js';
-import assert from 'assert';
-import { isEmptyArray } from '../helper/utils.js';
 
 export async function createProof(taskId: string) {
   const queue = ModelQueueTask.getInstance();
 
-  const task = await queue.getQueuedTask({
-    _id: new ObjectId(taskId),
-  });
+
+  const task = await queue.findOne({_id: new ObjectId(taskId)})
 
   if (!task) {
     logger.error('Task has not been found');
     throw Error('Task has not been found');
+  }
+
+  if (task.status !== 'executing') {
+    logger.error('Task has not been marked as executing');
+    throw Error('Task has not been marked as executing');
   }
 
   try {
@@ -41,16 +41,16 @@ export async function createProof(taskId: string) {
       throw new Error('Setting is wrong, unable to deconstruct settings');
     }
 
-    const publicKey = PublicKey.fromBase58(appPublicKey);
+    // const publicKey = PublicKey.fromBase58(appPublicKey);
 
-    const res = await fetchAccount({ publicKey });
-    const accountExists = res.error == null;
+    // const res = await fetchAccount({ publicKey });
+    // const accountExists = res.error == null;
 
-    if (!accountExists) {
-      throw Error(
-        'Unable to generate proof because the smart contract for the database does not exist'
-      );
-    }
+    // if (!accountExists) {
+    //   throw Error(
+    //     'Unable to generate proof because the smart contract for the database does not exist'
+    //   );
+    // }
 
     if (!merkleHeight) {
       throw new Error('Merkle Tree height is null');
@@ -86,36 +86,38 @@ export async function createProof(taskId: string) {
       new Date(task.createdAt.getTime() - 1)
     );
 
-    class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
-    const zkDbApp = new ZkDbApp(publicKey);
+    Provable.log('merkleRoot', merkleRoot);
+    Provable.log('oldLeaf', oldLeaf);
 
-    const onChainRootState = zkDbApp.state.get();
-    const onChainActionState = zkDbApp.actionState.get();
+    // class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
+    // const zkDbApp = new ZkDbApp(publicKey);
 
-    assert(onChainRootState.equals(merkleRoot));
+    // const onChainRootState = zkDbApp.state.get();
+    // const onChainActionState = zkDbApp.actionState.get();
+
+    // assert(onChainRootState.equals(merkleRoot));
 
     const proofState = new ProofState({
-      actionState: onChainActionState,
-      rootState: onChainRootState,
+      rootState: merkleRoot,
     });
 
-    const allActions = await zkDbApp.reducer.fetchActions({
-      fromActionState: onChainActionState,
-    });
+    // const allActions = await zkDbApp.reducer.fetchActions({
+    //   fromActionState: onChainActionState,
+    // });
 
-    if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
-      throw new Error('Unformatted action data');
-    }
+    // if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
+    //   throw new Error('Unformatted action data');
+    // }
 
-    const [[action]] = allActions;
+    // const [[action]] = allActions;
 
-    assert(Field(task.hash).equals(action.hash));
-    assert(UInt64.from(task.merkleIndex).equals(action.index));
+    // assert(Field(task.hash).equals(action.hash));
+    // assert(UInt64.from(task.merkleIndex).equals(action.index));
 
     // TODO: Should we consider both on-chain action and off-chain leaf. Off-chain leaf = On-chain action
     proof = proof
-      ? await circuit.update(proofState, proof, witness, oldLeaf, action)
-      : await circuit.init(proofState, witness, oldLeaf, action);
+      ? await circuit.update(proofState, proof, witness, oldLeaf, Field(task.hash))
+      : await circuit.init(proofState, witness, oldLeaf, Field(task.hash));
 
     await modelProof.saveProof({
       ...proof.toJSON(),
@@ -126,6 +128,7 @@ export async function createProof(taskId: string) {
 
     logger.debug('Task processed successfully.');
   } catch (error) {
+    await queue.markTaskAsError(task.merkleIndex, error as string);
     logger.error('Error processing task:', error);
   }
 }
