@@ -5,6 +5,7 @@ import logger from '../../helper/logger.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import ModelGeneral from '../base/general.js';
 import { zkDatabaseConstants } from '../../common/const.js';
+import { ModelDbSetting } from './setting.js';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
@@ -41,6 +42,20 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
       );
     }
     return ModelMerkleTree.instances.get(databaseName)!;
+  }
+
+  public static async load(databaseName: string): Promise<ModelMerkleTree> {
+    const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
+    const modelSetting = ModelDbSetting.getInstance(databaseName);
+
+    const setting = await modelSetting.getSetting();
+
+    if (setting) {
+      modelMerkleTree.setHeight(setting.merkleHeight);
+      return modelMerkleTree;
+    }
+
+    throw Error(`${databaseName} setting has not been found.`)
   }
 
   public setHeight(newHeight: number): void {
