@@ -7,7 +7,12 @@ import { ZKProof } from "../../types/proof.js";
 
 const GET_PROOF = gql`
   query GetProof($databaseName: String!) {
-    getProof(databaseName: $databaseName)
+    getProof(databaseName: $databaseName) {
+      publicInput
+      publicOutput
+      maxProofsVerified
+      proof
+    }
   }
 `;
 
