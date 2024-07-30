@@ -10,10 +10,15 @@ import {
   PermissionBinary,
   setPartialIntoPermission,
 } from '../../common/permission.js';
-import ModelDocument, { DocumentRecord } from '../../model/abstract/document.js';
+import ModelDocument, {
+  DocumentRecord,
+} from '../../model/abstract/document.js';
 import { Document } from '../types/document.js';
 import { Permissions } from '../types/permission.js';
-import { hasDocumentPermission, hasCollectionPermission } from './permission.js';
+import {
+  hasDocumentPermission,
+  hasCollectionPermission,
+} from './permission.js';
 import {
   proveCreateDocument,
   proveDeleteDocument,
@@ -131,7 +136,9 @@ async function createDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord: DocumentRecord = {};
+  const documentRecord = {
+    isLatest: true,
+  } as DocumentRecord;
 
   document.forEach((field) => {
     documentRecord[field.name] = {
@@ -248,67 +255,75 @@ async function updateDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord: DocumentRecord = {};
-
-  update.forEach((field) => {
-    documentRecord[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value: field.value,
-    };
-  });
-
-  const oldDocumentRecord = await modelDocument.findOne(
+  const oldDocumentRecord = await modelDocument.find(
     parseQuery(filter),
     session
   );
 
-  const updateResult = await modelDocument.collection.updateMany(
-    parseQuery(filter),
-    {
-      $set: documentRecord,
-    },
-    { session }
-  );
+  if (oldDocumentRecord.length === 1) {
+    if (
+      !(await hasDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
+        oldDocumentRecord[0]._id,
+        'write',
+        session
+      ))
+    ) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
+      );
+    }
 
-  // We need to do this to make sure that only 1 record
-  if (
-    (updateResult.modifiedCount !== 1 && updateResult.matchedCount !== 1) ||
-    !updateResult
-  ) {
-    throw new Error('Invalid update, modified count not equal to 1');
-  }
+    await modelDocument.collection.updateOne(
+      parseQuery(filter),
+      { $set: { isLatest: false } },
+      { session }
+    );
 
-  if (
-    !(await hasDocumentPermission(
+    const documentRecord = {
+      isLatest: true,
+      prevVersion: oldDocumentRecord[0]._id,
+    } as DocumentRecord;
+
+    update.forEach((field) => {
+      documentRecord[field.name] = {
+        name: field.name,
+        kind: field.kind,
+        value: field.value,
+      };
+    });
+
+    const insertResult = await modelDocument.collection.insertOne(
+      documentRecord,
+      { session }
+    );
+
+    const witness = await proveUpdateDocument(
       databaseName,
       collectionName,
-      actor,
-      oldDocumentRecord!._id,
-      'write',
+      oldDocumentRecord[0]!._id,
+      update,
       session
-    ))
-  ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
     );
+
+    const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+    await modelDocumentMetadata.collection.updateMany(
+      { docId: oldDocumentRecord[0]!._id },
+      {
+        $set: { docId: insertResult.insertedId },
+      },
+      { session }
+    );
+
+    return witness;
   }
 
-  await modelDocument.updateDocument(
-    parseQuery(filter),
-    documentRecord,
-    session
+  throw Error(
+    'Invalid query, the amount of documents that satisfy filter must be only one'
   );
-
-  const witness = await proveUpdateDocument(
-    databaseName,
-    collectionName,
-    oldDocumentRecord!._id,
-    update,
-    session
-  );
-
-  return witness;
 }
 
 async function deleteDocument(
@@ -334,10 +349,10 @@ async function deleteDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const document = await modelDocument.findOne(parseQuery(filter), session);
+  const findResult = await modelDocument.find(parseQuery(filter), session);
 
-  if (!document) {
-    throw Error('Document does not exist');
+  if (findResult.length !== 1) {
+    throw Error('Wrong query');
   }
 
   if (
@@ -345,7 +360,7 @@ async function deleteDocument(
       databaseName,
       collectionName,
       actor,
-      document._id,
+      findResult[0]._id,
       'delete',
       session
     ))
@@ -358,15 +373,24 @@ async function deleteDocument(
   const witness = await proveDeleteDocument(
     databaseName,
     collectionName,
-    document._id,
+    findResult[0]._id,
     session
   );
 
-  await modelDocument.drop({ _id: document._id }, session);
+  await modelDocument.insertDocument(
+    {
+      isLatest: true,
+      prevVersion: findResult[0]._id,
+    } as DocumentRecord,
+    session
+  );
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
-  await modelDocumentMetadata.deleteOne({ docId: document._id }, { session });
+  await modelDocumentMetadata.deleteOne(
+    { docId: findResult[0]._id },
+    { session }
+  );
 
   return witness;
 }
