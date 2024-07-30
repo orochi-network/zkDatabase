@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelProof, ModelQueueTask } from '@zkdb/storage';
-import resolverWrapper from '../validation';
-import { collectionName, databaseName, objectId } from './common';
-import { AppContext } from '../../common/types';
-import { TCollectionRequest } from './collection';
+import resolverWrapper from '../validation.js';
+import { collectionName, databaseName, objectId } from './common.js';
+import { AppContext } from '../../common/types.js';
+import { TDatabaseRequest } from './database.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -20,11 +20,11 @@ type Proof {
 
 extend type Query {
   proofStatus(database: String!, collection: String!, docId: String): String!
-  getProof(database: String!): Proof
+  getProof(databaseName: String!): Proof
 }
 `;
 
-export type TProofRequest = TCollectionRequest & {
+export type TProofRequest = TDatabaseRequest & {
   docId: string;
 };
 
@@ -39,8 +39,7 @@ const proofStatus = resolverWrapper(
 
     // TODO: Check permissions
     const proof = await modelProof.findOne({
-      database: args.collectionName,
-      collection: args.collectionName,
+      database: args.databaseName,
       docId: args.docId,
     });
 
@@ -55,12 +54,11 @@ const proofStatus = resolverWrapper(
 const getProof = resolverWrapper(
   Joi.object({
     databaseName,
-    collectionName,
   }),
   async (_root: unknown, args: TProofRequest, ctx: AppContext) => {
     const modelProof = ModelProof.getInstance();
 
-    return modelProof.getProof(args.databaseName, args.collectionName);
+    return modelProof.getProof(args.databaseName);
   }
 );
 

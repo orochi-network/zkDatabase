@@ -6,7 +6,7 @@ import {
   collectionName,
   permissionDetail,
   groupName,
-} from './common';
+} from './common.js';
 import { TDatabaseRequest } from './database.js';
 import resolverWrapper from '../validation.js';
 import { PermissionsData } from '../types/permission.js';

@@ -1,10 +1,10 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import resolverWrapper from '../validation';
-import { collectionName, databaseName } from './common';
-import { readManyDocuments } from '../../domain/use-case/document';
-import { TCollectionRequest } from './collection';
-import { AppContext } from '../../common/types';
+import resolverWrapper from '../validation.js';
+import { collectionName, databaseName } from './common.js';
+import { readManyDocuments } from '../../domain/use-case/document.js';
+import { TCollectionRequest } from './collection.js';
+import { AppContext } from '../../common/types.js';
 
 export const typeDefsAggregation = `#graphql
 scalar JSON
