@@ -25,7 +25,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .default("production"),
     AAS_URI: Joi.string()
       .pattern(/^http(|s):\/\//)
-      .default("http://0.0.0.0:31337"),
+      .default("http://localhost:4000/graphql"),
   }
 );
 
