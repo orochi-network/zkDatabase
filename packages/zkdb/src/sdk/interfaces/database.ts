@@ -26,5 +26,5 @@ export interface ZKDatabase {
   listGroups(): Promise<ZKGroup[]>;
   getRoot(): Promise<Field>;
   getProof(): Promise<JsonProof>;
-  rollUp(senderPrivateKey: PrivateKey): Promise<void>;
+  rollUp(): Promise<void>;
 }

@@ -1,13 +1,11 @@
 import {
-  AccountUpdate,
   Field,
   JsonProof,
-  Mina,
   PrivateKey,
+  Provable,
   PublicKey,
 } from 'o1js';
 import { ZKDatabase } from './interfaces/database.js';
-import { getZkDbSmartContract, RollUpProgram } from '@zkdb/smart-contract';
 import {
   collectionExist,
   createCollection,
@@ -25,115 +23,48 @@ import { ZKCollection } from './interfaces/collection.js';
 import { ZKCollectionImpl } from './collection.js';
 import { DocumentEncoded, SchemaDefinition } from '../core/schema.js';
 import { Permissions } from '../types/permission.js';
-import { AuroWallet } from './wallet/auro-wallet.js';
+import { DatabaseContractWrapper } from './smart-contract/database-contract-wrapper.js';
 
-const transactionFee = 0.1;
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
   private merkleHeight: number;
-  private appPublicKey: string;
+  private appPublicKey: PublicKey;
+  private databaseSmartContract: DatabaseContractWrapper;
 
   constructor(
     databaseName: string,
     merkleHeight: number,
-    appPublicKey: string
+    appPublicKey: PublicKey,
+    databaseSmartContract: DatabaseContractWrapper
   ) {
     this.databaseName = databaseName;
     this.merkleHeight = merkleHeight;
     this.appPublicKey = appPublicKey;
-  }
-
-  static async createWithSignedTx(
-    databaseName: string,
-    merkleHeight: number,
-    transaction: {
-      senderAddress: PublicKey;
-      fee: number;
-      memo: string;
-    },
-    zkAppPrivateKey?: PrivateKey | undefined
-  ): Promise<void> {
-    // TODO: Check if it is browser env
-    // class ZkDatabaseAppClass extends (await getZkDbSmartContract(
-    //   databaseName,
-    //   merkleHeight
-    // )) {}
-    // // TODO: Request compilation cache from service by merkle height
-    // // send compilation callback
-    // await ZkDatabaseAppClass.compile();
-    // const privateKey = zkAppPrivateKey ?? PrivateKey.random();
-    // const publicKey = privateKey.toPublicKey();
-    // const zkDatabaseAppInstance = new ZkDatabaseAppClass(publicKey);
-    // const tx = await Mina.transaction(async () => {
-    //   AccountUpdate.fundNewAccount(transaction.senderAddress);
-    //   await zkDatabaseAppInstance.deploy();
-    // });
-    //  // send compilation prove
-    // await tx.prove();
-    // const txn = tx.sign([privateKey]);
-    //  // send compilation prove
-    // const { hash, signedData } = await (window as any).mina.sendTransaction({
-    //   transaction: txn.toJSON(),
-    //   feePayer: {
-    //     fee: transaction.fee,
-    //     memo: transaction.memo,
-    //   },
-    // });
-    // let pendingTransaction = await txn.send();
-    // if (pendingTransaction.status === 'pending') {
-    //   // Transaction accepted for processing by the Mina daemon
-    //   // eslint-disable-next-line no-useless-catch
-    //   try {
-    //     await pendingTransaction.wait();
-    //     // Transaction successfully included in a block
-    //   } catch (error) {
-    //     // Transaction was rejected or failed to be included in a block
-    //     throw Error(
-    //       'Transaction was rejected or failed to be included in a block: ',
-    //       error as any
-    //     );
-    //   }
-    // } else {
-    //   throw Error(
-    //     'Transaction was not accepted for processing by the Mina daemon'
-    //   );
-    // }
-    // const result = await createDatabase(
-    //   databaseName,
-    //   merkleHeight,
-    //   publicKey.toBase58()
-    // );
-    // if (result.type === 'success') {
-    //   return;
-    // }
-    // throw Error(result.message);
+    this.databaseSmartContract = databaseSmartContract;
   }
 
   static async create(
     databaseName: string,
     merkleHeight: number,
-    senderKey: PrivateKey
+    deployerAddress: PublicKey,
+    appKey: PrivateKey
   ): Promise<void> {
-    // TODO: Check if it is node js env
-    class ZkDatabaseAppClass extends getZkDbSmartContract(
-      databaseName,
-      merkleHeight
-    ) {}
+    // const databaseSmartContract = DatabaseContractWrapper.getInstance(
+    //   databaseName,
+    //   merkleHeight,
+    //   deployerAddress,
+    //   PublicKey.fromPrivateKey(appKey)
+    // );
 
-    await ZkDatabaseAppClass.compileProof();
+    // await databaseSmartContract.compile();
 
-    const zkAppPrivateKey = PrivateKey.random();
+    // await databaseSmartContract.deploy(appKey);
 
-    const zkApp = new ZkDatabaseAppClass(
-      PublicKey.fromPrivateKey(zkAppPrivateKey)
-    );
-
-    await zkApp.createAndProveDeployTransaction(senderKey, zkAppPrivateKey);
-
+    
     const result = await createDatabase(
       databaseName,
       merkleHeight,
-      PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58()
+      'B62qmLTgTZynh12u6r7TrF8h5Gh6KbEyLxUsL6rKM6WqR1ogp3jvmNe'
     );
 
     if (result.type === 'success') {
@@ -241,26 +172,10 @@ export class ZKDatabaseImpl implements ZKDatabase {
     }
   }
 
-  async rollUp(senderPrivateKey: PrivateKey): Promise<void> {
-    class ZkDatabaseAppClass extends getZkDbSmartContract(
-      this.databaseName,
-      this.merkleHeight
-    ) {}
-
-    await ZkDatabaseAppClass.compileProof();
-
+  async rollUp(): Promise<void> {
     const proof = await this.getProof();
-
-    const zkApp = new ZkDatabaseAppClass(
-      PublicKey.fromBase58(this.appPublicKey)
-    );
-
-    const tx = await zkApp.createAndProveRollUpTransaction(
-      proof,
-      PublicKey.fromPrivateKey(senderPrivateKey)
-    );
-
-    await AuroWallet.signAndSendTransaction(tx);
+    Provable.log('proof', proof)
+    await this.databaseSmartContract.rollUp(proof);
   }
 
   async getProof(): Promise<JsonProof> {

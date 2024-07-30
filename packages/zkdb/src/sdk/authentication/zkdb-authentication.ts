@@ -12,7 +12,10 @@ export abstract class BaseAuthenticator {
         return {
           sessionId: session.sessionId,
           sessionKey: session.sessionKey,
-          userInfo,
+          userInfo: {
+            email: userInfo.email,
+            userName: userInfo.userName,
+          },
         };
       }
       return null;
@@ -35,7 +38,7 @@ export abstract class BaseAuthenticator {
       this.getStorage().setUserInfo({
         email: result.data.user.email,
         userName: result.data.user.userName,
-        publicKey: result.data.user.publicKey
+        publicKey: result.data.user.publicKey,
       });
     } else {
       throw Error(result.message);
