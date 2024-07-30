@@ -7,6 +7,7 @@ const SESSION_KEY = 'session_key';
 
 const USER_EMAIL = 'user_email';
 const USER_NAME = 'user_name';
+const USER_ADDRESS= 'user_address';
 
 export class BrowserStorage implements IStorage {
   getSession(): Session | null {
@@ -42,15 +43,23 @@ export class BrowserStorage implements IStorage {
       return null;
     }
 
+    const userAddress = localStorage.getItem(USER_ADDRESS);
+    if (!userAddress || userAddress.length === 0) {
+      return null;
+    }
+
+
     return {
       userName: userName,
       email: userEmail,
+      publicKey: userAddress
     };
   }
 
   setUserInfo(userInfo: UserInfo) {
     localStorage.setItem(USER_EMAIL, userInfo.email);
     localStorage.setItem(USER_NAME, userInfo.userName);
+    localStorage.setItem(USER_NAME, userInfo.publicKey);
   }
 
   clear(): void {
