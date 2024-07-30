@@ -1,4 +1,4 @@
-import { JwtPayload } from "../authentication/types/jwt-payload";
+import { JwtPayload } from "../authentication/types/jwt-payload.js";
 
 let getOutsideJwtPayload: (() => JwtPayload | null) | null = null;
 

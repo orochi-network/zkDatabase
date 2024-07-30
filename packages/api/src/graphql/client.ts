@@ -1,5 +1,6 @@
-import { ApolloClient, InMemoryCache, HttpLink, ApolloLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import pkg from '@apollo/client';
+const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
+import { setContext } from '@apollo/client/link/context/index.js';
 import { getToken } from '../authentication/jwt-token.js';
 import { config } from '../helper/config.js';
 

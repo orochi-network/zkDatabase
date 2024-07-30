@@ -1,6 +1,6 @@
 import * as jose from "jose";
-import { getJwtPayload } from "../bridge/token-data";
-import { JwtPayload } from "./types/jwt-payload";
+import { getJwtPayload } from "../bridge/token-data.js";
+import { JwtPayload } from "./types/jwt-payload.js";
 
 async function generateJwtToken(payload: JwtPayload): Promise<string | null> {
   const decodedSessionKey = jose.base64url.decode(payload.sessionKey);

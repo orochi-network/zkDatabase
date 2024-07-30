@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { handleRequest, NetworkResult } from "../../../utils/network";
-import client from "../../client";
-import { GroupInfo } from "../../types";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { handleRequest, NetworkResult } from "../../../utils/network.js";
+import client from "../../client.js";
+import { GroupInfo } from "../../types/group.js";
 
 const GROUP_DESCRIPTION = gql`
   mutation GroupInfo($databaseName: String!, $groupName: String!) {

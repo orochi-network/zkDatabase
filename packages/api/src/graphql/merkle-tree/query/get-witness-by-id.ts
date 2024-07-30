@@ -1,4 +1,5 @@
-import { gql } from "@apollo/client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
 import { NetworkResult } from "../../../utils/network.js";
 import { MerkleWitness } from "../../types/merkle-tree.js";
 import { handleRequest } from "../../../utils/network.js";

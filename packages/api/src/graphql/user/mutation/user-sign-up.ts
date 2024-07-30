@@ -1,4 +1,5 @@
-import { gql } from "@apollo/client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
 import client from "../../client.js";
 import { SignUpData, SignatureProofData } from "../../types/authentication.js";
 import { NetworkResult } from "../../../utils/network.js";
@@ -29,7 +30,7 @@ export const signUp = async (
   signUpData: SignUpData
 ): Promise<NetworkResult<User>> => {
   try {
-    const { data } = await client.mutate<{ userSignUp: UserSignUpResponse }>({
+    const { data, errors } = await client.mutate({
       mutation: SIGN_UP,
       variables: { signUp: signUpData, proof: proof },
     });
