@@ -4,12 +4,13 @@ import { resolversDocument, typeDefsDocument } from './app/document.js';
 import {
   resolversCollectionIndex,
   typeDefsCollectionIndex,
-} from './app/collection-index';
+} from './app/collection-index.js';
 import { resolversUser, typeDefsUser } from './app/user.js';
 import { resolversGroup, typeDefsGroup } from './app/group.js';
 import { resolversPermission, typeDefsPermission } from './app/metadata.js';
 import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
 import { resolversAggregation, typeDefsAggregation } from './app/aggregation.js';
+import { resolversProof, typeDefsProof } from './app/proof.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -20,7 +21,8 @@ export const TypedefsApp = [
   typeDefsGroup,
   typeDefsPermission,
   typeDefsMerkleTree,
-  typeDefsAggregation
+  typeDefsAggregation,
+  typeDefsProof
 ];
 
 type Resolver =
@@ -33,6 +35,7 @@ type Resolver =
   | typeof resolversPermission
   | typeof resolversMerkleTree
   | typeof resolversAggregation
+  | typeof resolversProof
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -43,5 +46,6 @@ export const ResolversApp: Resolver[] = [
   resolversGroup,
   resolversPermission,
   resolversMerkleTree,
-  resolversAggregation
+  resolversAggregation,
+  resolversProof
 ];

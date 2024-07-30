@@ -215,6 +215,7 @@ const userSignUp = resolverWrapper(
         throw new Error('Email does not match');
       }
       const modelUser = new ModelUser();
+      // TODO: Check user existence by public key
       const result = await modelUser.create(
         args.signUp.userName,
         args.signUp.email,

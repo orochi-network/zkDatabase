@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelCollection, withTransaction } from '@zkdb/storage';
+import { withTransaction } from '@zkdb/storage';
+import { createIndex, doesIndexExist, dropIndex, listIndexes } from '../../domain/use-case/collection.js';
 import { resolverWrapper } from '../validation.js';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
 import {
@@ -9,7 +10,6 @@ import {
   indexName,
   indexField,
 } from './common.js';
-import { createIndex, doesIndexExist, dropIndex, listIndexes } from 'domain/use-case/collection.js';
 import { AppContext } from '../../common/types.js';
 
 // Index request
