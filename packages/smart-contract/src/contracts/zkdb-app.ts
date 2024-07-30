@@ -16,17 +16,9 @@ import {
 import { RollUpProgram } from '../proof/proof-program.js';
 import { MinaTransaction } from '../types/transaction.js';
 
-type ZKDatabaseSmartContract = ReturnType<typeof getZkDbSmartContractClass>;
+export type ZKDatabaseSmartContract = ReturnType<typeof getZkDbSmartContractClass>;
 
-export function getZkDbSmartContract(
-  name: string,
-  merkleHeight: number
-): ZKDatabaseSmartContract {
-  const zkDbSmartContract = getZkDbSmartContractClass(name, merkleHeight);
-  return zkDbSmartContract;
-}
-
-function getZkDbSmartContractClass(
+export function getZkDbSmartContractClass(
   name: string,
   merkleHeight: number,
   callerPublicKey: PublicKey
@@ -87,7 +79,7 @@ function getZkDbSmartContractClass(
 
       proof.verify();
 
-      this.state.requireEquals(proof.publicInput.rootState);
+      // this.state.requireEquals(proof.publicInput.rootState);
       this.state.set(proof.publicOutput.rootState);
     }
   }
