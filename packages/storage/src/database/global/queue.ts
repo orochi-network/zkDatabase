@@ -3,12 +3,13 @@ import {
   Filter,
   FindOptions,
   InsertOneOptions,
+  UpdateOptions,
   WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelGeneral from '../base/general.js';
 
-export type Status = 'queued' | 'executing' | 'success' | 'error';
+export type Status = 'queued' | 'executing' | 'proved' | 'error';
 
 export type TaskEntity = {
   merkleIndex: bigint;
@@ -18,6 +19,7 @@ export type TaskEntity = {
   database: string;
   collection: string;
   docId: string;
+  error?: string;
 };
 
 export class ModelQueueTask extends ModelGeneral<TaskEntity> {
@@ -93,7 +95,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
           {
             $sort: {
               database: 1,
-              createdAt: -1,
+              createdAt: 1,
             },
           },
           {
@@ -160,13 +162,42 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     return task;
   }
 
+  public async markTaskAsExecuting(
+    merkleIndex: bigint,
+    options?: UpdateOptions
+  ): Promise<void> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+    await this.collection.updateOne(
+      { merkleIndex },
+      { $set: { status: 'executing' } },
+      options
+    );
+  }
+
   public async markTaskProcessed(merkleIndex: bigint): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
       { merkleIndex },
-      { $set: { status: 'success' } }
+      { $set: { status: 'proved' } }
+    );
+  }
+
+  public async markTaskAsError(
+    merkleIndex: bigint,
+    errorMessage: string,
+    options?: UpdateOptions
+  ): Promise<void> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+    await this.collection.updateOne(
+      { merkleIndex },
+      { $set: { status: 'error', error: errorMessage } },
+      options
     );
   }
 }
