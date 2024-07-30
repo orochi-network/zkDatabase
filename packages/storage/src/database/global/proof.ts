@@ -52,11 +52,10 @@ export class ModelProof extends ModelBasic<ProofDetails> {
 
   public async getProof(
     database: string,
-    collection: string,
     options?: FindOptions
   ): Promise<ZKProof | null> {
     const proof = await this.collection.findOne(
-      { database, collection },
+      { database },
       { ...options, sort: { createdAt: -1 } }
     );
     return proof as ProofDetails | null;
