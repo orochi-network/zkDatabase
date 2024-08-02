@@ -21,7 +21,7 @@ import { ZKGroup } from './interfaces/group.js';
 import { createGroup } from '@zkdb/api';
 import { ZKCollection } from './interfaces/collection.js';
 import { ZKCollectionImpl } from './collection.js';
-import { DocumentEncoded, SchemaDefinition } from '../core/schema.js';
+import { DocumentEncoded, SchemaDefinition } from './schema.js';
 import { Permissions } from '../types/permission.js';
 import { DatabaseContractWrapper } from './smart-contract/database-contract-wrapper.js';
 

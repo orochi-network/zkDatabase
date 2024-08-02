@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { Field, JsonProof, PrivateKey } from 'o1js';
-import { DocumentEncoded, SchemaDefinition } from '../../core/schema.js';
+import { DocumentEncoded, SchemaDefinition } from '../schema.js';
 import { Permissions } from '../../types/permission.js';
 import { ZKCollection } from './collection.js';
 import { ZKGroup } from './group.js';

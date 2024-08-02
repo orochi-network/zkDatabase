@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { MerkleWitness } from '../../types/merkle-tree.js';
-import { DocumentEncoded } from '../../core/schema.js';
+import { DocumentEncoded } from '../schema.js';
 import { Permissions } from '../../types/permission.js';
 
 export type Filter<T extends new (..._args: any) => any> = Partial<

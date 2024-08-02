@@ -9,7 +9,7 @@ import {
   updateDocument,
 } from '@zkdb/api';
 import { Filter, ZKCollection } from './interfaces/collection.js';
-import { DocumentEncoded } from '../core/schema.js';
+import { DocumentEncoded } from './schema.js';
 import { Field } from 'o1js';
 import { MerkleWitness } from '../types/merkle-tree.js';
 import { Permissions } from '../types/permission.js';
