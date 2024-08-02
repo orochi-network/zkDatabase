@@ -68,7 +68,7 @@ export async function createProof(taskId: string) {
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
-    const zkProof = await modelProof.getProof(task.database, task.collection);
+    const zkProof = await modelProof.getProof(task.database);
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
