@@ -176,13 +176,17 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     );
   }
 
-  public async markTaskProcessed(merkleIndex: bigint): Promise<void> {
+  public async markTaskProcessed(
+    merkleIndex: bigint,
+    options?: UpdateOptions
+  ): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
       { merkleIndex },
-      { $set: { status: 'proved' } }
+      { $set: { status: 'proved' } },
+      options
     );
   }
 

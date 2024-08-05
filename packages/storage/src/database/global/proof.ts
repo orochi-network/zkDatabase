@@ -1,7 +1,7 @@
 import { FindOptions, InsertOneOptions } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
+import ModelGeneral from '../base/general.js';
 
 export type ZKProof = {
   publicInput: string[];
@@ -14,11 +14,12 @@ export type ProofMetadata = {
   createdAt?: Date;
   database: string;
   collection: string;
+  merkleRoot: string;
 };
 
 export type ProofDetails = ZKProof & ProofMetadata;
 
-export class ModelProof extends ModelBasic<ProofDetails> {
+export class ModelProof extends ModelGeneral<ProofDetails> {
   public static instance: ModelProof;
 
   public static getInstance(): ModelProof {
