@@ -1,4 +1,4 @@
-import { DocumentEncoded } from '../../core/schema.js';
+import { DocumentEncoded } from '../../sdk/schema.js';
 import { Permissions } from '../../types/permission.js';
 import { query, mutate } from '../graphql-client.js';
 import { MerkleWitness } from '../types/merkle-tree.js';

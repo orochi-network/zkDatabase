@@ -1,14 +1,12 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import {
-  SignUpData,
-  SignUpInfo,
-  SignatureProofData,
-} from "../../types/authentication";
-import { NetworkResult } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { SignUpData, SignatureProofData } from "../../types/authentication.js";
+import { NetworkResult } from "../../../utils/network.js";
+import { User } from "../../types/user.js";
 
 const SIGN_UP = gql`
-  mutation UserSignUp($signUp: SignUp!, $proof: SignatureProof!) {
+  mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
     userSignUp(signUp: $signUp, proof: $proof) {
       success
       error
@@ -30,9 +28,9 @@ interface UserSignUpResponse {
 export const signUp = async (
   proof: SignatureProofData,
   signUpData: SignUpData
-): Promise<NetworkResult<SignUpInfo>> => {
+): Promise<NetworkResult<User>> => {
   try {
-    const { data } = await client.mutate<{ userSignUp: UserSignUpResponse }>({
+    const { data, errors } = await client.mutate({
       mutation: SIGN_UP,
       variables: { signUp: signUpData, proof: proof },
     });
@@ -43,10 +41,8 @@ export const signUp = async (
       return {
         type: "success",
         data: {
-          user: {
-            userName: response.userName,
-            email: response.email,
-          },
+          userName: response.userName,
+          email: response.email,
           publicKey: response.publicKey,
         },
       };

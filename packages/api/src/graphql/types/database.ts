@@ -3,6 +3,11 @@ export type Database = {
   merkleHeight: number
 }
 
+export type DatabaseSettings = {
+  merkleHeight: number,
+  publicKey: string
+}
+
 export type DatabaseStatus = {
   
 }

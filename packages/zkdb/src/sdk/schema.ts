@@ -4,8 +4,6 @@ import {
   InferProvable,
   CircuitString,
   UInt32,
-  Bool,
-  Field,
   UInt64,
   Character,
   Int64,
@@ -15,15 +13,17 @@ import {
   Signature,
   MerkleMapWitness,
   Struct,
+  Field,
+  Bool
 } from 'o1js';
 
 /**
-  * The Schema defines the structure and behavior of documents in the zkDB system, 
-  * including their serialization, deserialization, and hashing. 
-  * It maps field names to provable types, enabling the creation of documents 
-  * with cryptographic proof capabilities.
-  */
- 
+ * The Schema defines the structure and behavior of documents in the zkDB system,
+ * including their serialization, deserialization, and hashing.
+ * It maps field names to provable types, enabling the creation of documents
+ * with cryptographic proof capabilities.
+ */
+
 export interface SchemaExtend {
   serialize(): DocumentEncoded;
   hash(): Field;
@@ -85,7 +85,10 @@ export type DocumentEncoded = {
   value: string;
 }[];
 
-export type SchemaType<A, T extends InferProvable<A> = InferProvable<A>> = SchemaExtendable<A> & (new (..._args: T[]) => T);
+export type SchemaType<
+  A,
+  T extends InferProvable<A> = InferProvable<A>,
+> = SchemaExtendable<A> & (new (..._args: T[]) => T);
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
@@ -178,7 +181,9 @@ export class Schema {
     return Document as any;
   }
 
-  public static fromRecord(record: string[][]) {
+  public static fromRecord(
+    record: string[][]
+  ): ReturnType<typeof Schema.create> {
     return this.fromSchema(
       record.map(([name, kind, indexed]) => ({
         name,
@@ -188,7 +193,9 @@ export class Schema {
     );
   }
 
-  public static fromSchema(schema: SchemaDefinition) {
+  public static fromSchema(
+    schema: SchemaDefinition
+  ): ReturnType<typeof Schema.create> {
     return Schema.create(toInnerStructure(schema));
   }
 }

@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Permissions } from "../../types/permission";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Permissions } from "../../types/permission.js";
 
 const LIST_PERMISSIONS = gql`
   query PermissionList($databaseName: String!, $collectionName: String!, $docId: String) {
@@ -41,8 +42,7 @@ interface ListPermissionResponse {
 export const listPermissions = async (
   databaseName: string,
   collectionName: string,
-  docId: string | undefined,
-  token: string
+  docId: string | undefined
 ): Promise<NetworkResult<Permissions>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{
@@ -53,12 +53,7 @@ export const listPermissions = async (
         databaseName,
         collectionName,
         docId,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.permissionList;

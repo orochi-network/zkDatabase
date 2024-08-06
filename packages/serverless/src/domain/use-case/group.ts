@@ -58,7 +58,7 @@ async function checkUserGroupMembership(
   return actorGroups.includes(groupName);
 }
 
-export async function addUserToGroups(
+async function addUserToGroups(
   databaseName: string,
   actor: string,
   groups: string[],
@@ -72,4 +72,75 @@ export async function addUserToGroups(
   return result.isOk();
 }
 
-export { isGroupExist, createGroup, checkUserGroupMembership };
+async function changeGroupDescription(
+  databaseName: string,
+  actor: string,
+  groupName: string,
+  newGroupDescription: string,
+  session?: ClientSession
+): Promise<boolean> {
+  // TODO: Check Database Ownership
+  const modelGroup = new ModelGroup(databaseName);
+  const group = await modelGroup.findGroup(groupName, session);
+
+  if (group) {
+    // TODO: We can update without searching for the group first
+    const result = await modelGroup.updateOne(
+      {
+        _id: (group as any)._id,
+      },
+      {
+        $set: { description: newGroupDescription },
+      },
+      { session }
+    );
+
+    return result.modifiedCount === 1;
+  }
+
+  throw Error(`Group ${group} does not exist`);
+}
+
+async function addUsersToGroup(
+  databaseName: string,
+  actor: string,
+  group: string,
+  users: string[],
+  session?: ClientSession
+): Promise<boolean> {
+  // TODO: Check Database Ownership
+  const modelGroup = new ModelGroup(databaseName);
+  const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+
+  if (groupExist) {
+    const modelUserGroup = new ModelUserGroup(databaseName);
+    const result = await modelUserGroup.addUsersToGroup(users, group, {
+      session,
+    });
+
+    return result.isOk();
+  }
+
+  throw Error(`Group ${group} does not exist`);
+}
+
+async function getUsersGroup(
+  databaseName: string,
+  userName: string,
+  session?: ClientSession
+): Promise<string[]> {
+  // TODO: Check Database Ownership
+  return new ModelUserGroup(databaseName).listGroupByUserName(userName, {
+    session,
+  });
+}
+
+export {
+  addUsersToGroup,
+  getUsersGroup,
+  addUserToGroups,
+  isGroupExist,
+  createGroup,
+  checkUserGroupMembership,
+  changeGroupDescription,
+};

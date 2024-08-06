@@ -14,18 +14,6 @@ import ModelDocument from '../../model/abstract/document.js';
 import { Document } from '../types/document.js';
 import { buildSchema } from './schema.js';
 
-// Helper function to set the Merkle tree height
-async function setMerkleTreeHeight(
-  merkleTree: ModelMerkleTree,
-  databaseName: string
-) {
-  const height = await ModelDbSetting.getInstance(databaseName).getHeight();
-  if (!height) {
-    throw new Error('The Merkle tree height is null');
-  }
-  merkleTree.setHeight(height);
-}
-
 // Prove the creation of a document
 export async function proveCreateDocument(
   databaseName: string,
@@ -34,8 +22,7 @@ export async function proveCreateDocument(
   document: Document,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
-  const merkleTree = ModelMerkleTree.getInstance(databaseName);
-  await setMerkleTreeHeight(merkleTree, databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName);
 
   const schema = await buildSchema(
     databaseName,
@@ -71,6 +58,7 @@ export async function proveCreateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );
@@ -93,8 +81,7 @@ export async function proveUpdateDocument(
     throw new Error('Document does not exist');
   }
 
-  const merkleTree = ModelMerkleTree.getInstance(databaseName);
-  await setMerkleTreeHeight(merkleTree, databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName);
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
@@ -132,6 +119,7 @@ export async function proveUpdateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );
@@ -155,8 +143,7 @@ export async function proveDeleteDocument(
     throw new Error('Document does not exist to be proved');
   }
 
-  const merkleTree = ModelMerkleTree.getInstance(databaseName);
-  await setMerkleTreeHeight(merkleTree, databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName);
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
@@ -186,6 +173,7 @@ export async function proveDeleteDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
+      docId: documentId.toString()
     },
     { session }
   );

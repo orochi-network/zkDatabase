@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 const EXIST_INDEX = gql`
   query IndexExist(
@@ -23,18 +24,12 @@ interface ExistIndexResponse {
 export const existIndex = async (
   databaseName: string,
   collectionName: string,
-  indexName: string,
-  token: string
+  indexName: string
 ): Promise<NetworkResult<{ exist: boolean }>> => {
   return handleRequest(async () => {
     const { data } = await client.query<{ indexExist: ExistIndexResponse }>({
       query: EXIST_INDEX,
       variables: { databaseName, collectionName, indexName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.indexExist;

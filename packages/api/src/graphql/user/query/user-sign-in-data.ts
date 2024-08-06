@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import { SignInInfo } from "../../types/authentication";
-import { NetworkResult } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { SignInInfo } from "../../types/authentication.js";
+import { NetworkResult } from "../../../utils/network.js";
 
 const SIGN_IN_DATA = gql`
   query UserSignInData {
@@ -12,6 +13,7 @@ const SIGN_IN_DATA = gql`
       sessionKey
       sessionId
       userData
+      publicKey
     }
   }
 `;
@@ -24,6 +26,7 @@ interface UserSignInResponse {
   sessionKey: string;
   sessionId: string;
   userData: JSON;
+  publicKey: string;
 }
 
 export const getSignInData = async (
@@ -48,6 +51,7 @@ export const getSignInData = async (
           user: {
             userName: response.userName,
             email: response.email,
+            publicKey: response.publicKey
           },
           session: {
             sessionId: response.sessionId,

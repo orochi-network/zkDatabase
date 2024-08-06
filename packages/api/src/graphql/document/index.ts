@@ -1,4 +1,4 @@
-export { createDocument } from "./mutation/create-document";
-export { deleteDocument } from "./mutation/delete-document";
-export { updateDocument } from "./mutation/update-document";
-export { findDocument } from "./query/find-documents";
+export { createDocument } from "./mutation/create-document.js";
+export { deleteDocument } from "./mutation/delete-document.js";
+export { updateDocument } from "./mutation/update-document.js";
+export { findDocument } from "./query/find-documents.js";

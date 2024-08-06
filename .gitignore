@@ -110,3 +110,6 @@ data/
 circuit-cache/
 
 .vscode/
+
+./downloads
+./ftp-root

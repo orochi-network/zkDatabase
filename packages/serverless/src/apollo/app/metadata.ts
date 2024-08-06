@@ -15,7 +15,8 @@ import {
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { TOwnershipGroup } from '../types/ownership.js';
-import { readMetadata } from '../../domain/use-case/metadata.js';
+import { readMetadata } from '../../domain/use-case/metadata.js'
+import { getSchemaDefinition } from '../../domain/use-case/schema.js';
 
 const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
 
@@ -51,6 +52,13 @@ enum OwnershipGroup {
   Group
 }
 
+type SchemaField {
+  order: Int!
+  name: String!
+  kind: String!
+  indexed: Boolean
+}
+
 input PermissionInput {
   read: Boolean
   write: Boolean
@@ -82,6 +90,11 @@ extend type Query {
     collectionName: String!
     docId: String
   ): Permission
+
+  collectionSchema(
+    databaseName: String!
+    collectionName: String!
+  ): [SchemaField!]
 }
 
 extend type Mutation {
@@ -136,6 +149,17 @@ const permissionList = resolverWrapper(
       ...metadata.permissions,
     };
   }
+);
+
+const collectionSchema = resolverWrapper(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root: unknown, args: TCollectionRequest, _: AppContext) =>
+    withTransaction((session) =>
+      getSchemaDefinition(args.databaseName, args.collectionName, session)
+    )
 );
 
 // Mutation
@@ -258,6 +282,7 @@ type TPermissionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     permissionList: typeof permissionList;
+    collectionSchema: typeof collectionSchema;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
@@ -269,9 +294,10 @@ export const resolversPermission: TPermissionResolver = {
   JSON: GraphQLJSON,
   Query: {
     permissionList,
+    collectionSchema
   },
   Mutation: {
     permissionSet,
-    permissionOwn,
+    permissionOwn
   },
 };

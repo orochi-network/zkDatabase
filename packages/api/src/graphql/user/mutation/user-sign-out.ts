@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import { NetworkResult } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { NetworkResult } from "../../../utils/network.js";
 
 export const SIGN_OUT = gql`
   mutation UserSignOut {
@@ -12,17 +13,10 @@ interface UserSignOutResponse {
   success: boolean;
 }
 
-export const signOut = async (
-  token: string
-): Promise<NetworkResult<undefined>> => {
+export const signOut = async (): Promise<NetworkResult<undefined>> => {
   try {
     const { data } = await client.mutate<{ userSignOut: UserSignOutResponse }>({
       mutation: SIGN_OUT,
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.userSignOut;
@@ -30,7 +24,7 @@ export const signOut = async (
     if (response && response.success) {
       return {
         type: "success",
-        data: undefined
+        data: undefined,
       };
     } else {
       return {

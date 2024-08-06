@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import { DatabaseStatus } from "../../types/database";
-import { NetworkResult, handleRequest } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { DatabaseStatus } from "../../types/database.js";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const DATABASE_GET_STATUS_QUERY = gql`
   query GetDbStats($databaseName: String!) {

@@ -42,6 +42,20 @@ export function partialToPermission(
   };
 }
 
+export function setPartialIntoPermission(
+  initialPermission: PermissionRecord,
+  partial: Partial<PermissionRecord> | undefined
+): PermissionRecord {
+  if (!partial) {
+    return initialPermission;
+  }
+
+  return {
+    ...initialPermission,
+    ...partial,
+  };
+}
+
 // All permission fields
 export const ZKDATABASE_ALL_PERMISSION: (keyof PermissionRecord)[] = [
   'system' as keyof PermissionRecord,

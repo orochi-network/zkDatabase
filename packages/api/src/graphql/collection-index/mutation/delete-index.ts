@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 const DELETE_INDEX = gql`
   mutation IndexDrop(
@@ -23,18 +24,12 @@ interface DeleteIndexResponse {
 export const deleteIndex = async (
   databaseName: string,
   collectionName: string,
-  indexName: string,
-  token: string
-): Promise<NetworkResult<undefined>> => {
+  indexName: string
+): Promise<NetworkResult<boolean>> => {
   return handleRequest(async () => {
     const { data } = await client.mutate<{ indexDrop: DeleteIndexResponse }>({
       mutation: DELETE_INDEX,
       variables: { databaseName, collectionName, indexName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.indexDrop;
@@ -42,7 +37,7 @@ export const deleteIndex = async (
     if (response && response.success) {
       return {
         type: "success",
-        data: undefined,
+        data: response.success,
       };
     } else {
       return {

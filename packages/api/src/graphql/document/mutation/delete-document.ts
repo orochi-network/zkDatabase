@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { MerkleWitness } from "../../types/merkle-tree.js";
+import client from "../../client.js";
 
 const DELETE_DOCUMENT = gql`
   mutation DocumentDrop(
@@ -28,8 +29,7 @@ interface DocumentResponse {
 export const deleteDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON,
-  token: string
+  documentQuery: JSON
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -40,12 +40,7 @@ export const deleteDocument = async (
         databaseName,
         collectionName,
         documentQuery,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentDrop;

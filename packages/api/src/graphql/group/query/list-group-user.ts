@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 const LIST_GROUP_BY_USER = gql`
   query GroupListByUser($databaseName: String!, $userName: String!) {

@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 export const LIST_INDEXES = gql`
   query IndexList($databaseName: String!, $collectionName: String!) {
@@ -14,18 +15,12 @@ export interface ListIndexesResponse {
 
 export const listIndexes = async (
   databaseName: string,
-  collectionName: string,
-  token: string
+  collectionName: string
 ): Promise<NetworkResult<string[]>> => {
   return handleRequest(async () => {
     const { data } = await client.query<{ indexList: ListIndexesResponse }>({
       query: LIST_INDEXES,
-      variables: { databaseName, collectionName },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      variables: { databaseName, collectionName }
     });
 
     const response = data?.indexList;

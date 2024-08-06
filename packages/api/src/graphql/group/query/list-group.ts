@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
 
 const LIST_GROUPS = gql`
   query GroupListAll($databaseName: String!) {
@@ -28,7 +29,7 @@ export const listGroups = async (
     if (response) {
       return {
         type: "success",
-        data: response.groups,
+        data: response as any,
       };
     } else {
       return {

@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Owner } from "../../types/ownership";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Owner } from "../../types/ownership.js";
 
 const SET_OWNER = gql`
   mutation PermissionOwn(
@@ -34,8 +35,7 @@ export const setOwner = async (
   collectionName: string,
   docId: string | undefined,
   grouping: string,
-  newOwner: string,
-  token: string
+  newOwner: string
 ): Promise<NetworkResult<Owner>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -48,12 +48,7 @@ export const setOwner = async (
         docId,
         grouping,
         newOwner,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.permissionSet;

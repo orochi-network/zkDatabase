@@ -73,7 +73,7 @@ async function checkPermission(
   return permission[type];
 }
 
-export async function checkDocumentPermission(
+export async function hasDocumentPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -92,7 +92,7 @@ export async function checkDocumentPermission(
   );
 }
 
-export async function checkCollectionPermission(
+export async function hasCollectionPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -120,7 +120,7 @@ export async function changePermissions(
   session?: ClientSession
 ) {
   const hasSystemPermission = docId
-    ? await checkDocumentPermission(
+    ? await hasDocumentPermission(
         databaseName,
         collectionName,
         actor,
@@ -128,7 +128,7 @@ export async function changePermissions(
         'system',
         session
       )
-    : await checkCollectionPermission(
+    : await hasCollectionPermission(
         databaseName,
         collectionName,
         actor,

@@ -57,7 +57,7 @@ extend type Query {
 const getWitness = resolverWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
-    const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
+    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
     return withTransaction((session) =>
       merkleTreeService.getWitness(BigInt(args.index), new Date(), { session })
     );
@@ -80,7 +80,7 @@ const getWitnessByDocument = resolverWrapper(
 const getNode = resolverWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
-    const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
+    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
     return withTransaction((session) =>
       merkleTreeService.getNode(args.level, args.index, new Date(), { session })
     );
@@ -92,7 +92,7 @@ const getRoot = resolverWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest) => {
-    const merkleTreeService = ModelMerkleTree.getInstance(args.databaseName);
+    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
     return merkleTreeService.getRoot(new Date());
   }
 );
