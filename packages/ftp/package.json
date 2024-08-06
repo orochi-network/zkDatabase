@@ -3,13 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsc && node ./build/index.js",
+    "populate": "tsc && node ./build/populate-cache.js"
   },
+  "type": "module",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "o1js": "^1.1.0",
     "ftp-srv": "^4.6.3"
   },
   "devDependencies": {

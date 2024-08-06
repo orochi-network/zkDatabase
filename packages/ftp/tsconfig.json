@@ -8,9 +8,10 @@
     "rootDir": "src",
     "outDir": "build",
     "strict": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "noImplicitAny": false
   },
-  "references": [{ "path": "../storage" }],
+  "references": [{ "path": "../smart-contract" }],
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts"]
 }

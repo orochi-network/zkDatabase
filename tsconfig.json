@@ -24,7 +24,9 @@
     { "path": "./packages/zkdb" },
     { "path": "./packages/serverless" },
     { "path": "./packages/broker-service" },
-    { "path": "./packages/api" }
+    { "path": "./packages/api" },
+    { "path": "./packages/ftp" },
+    { "path": "./examples" }
   ],
   "include": ["./src/"],
   "exclude": [
