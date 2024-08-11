@@ -112,6 +112,7 @@ async function addUsersToGroup(
   const modelGroup = new ModelGroup(databaseName);
   const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
+  // TODO: Check if user exists
   if (groupExist) {
     const modelUserGroup = new ModelUserGroup(databaseName);
     const result = await modelUserGroup.addUsersToGroup(users, group, {
@@ -123,6 +124,32 @@ async function addUsersToGroup(
 
   throw Error(`Group ${group} does not exist`);
 }
+
+async function excludeUsersToGroup(
+  databaseName: string,
+  actor: string,
+  group: string,
+  users: string[],
+  session?: ClientSession
+): Promise<boolean> {
+  // TODO: Check Database Ownership
+  const modelGroup = new ModelGroup(databaseName);
+  const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+
+  // TODO: Check if user exists
+
+  if (groupExist) {
+    const modelUserGroup = new ModelUserGroup(databaseName);
+    const result = await modelUserGroup.removeUsersFromGroup(users, group, {
+      session,
+    });
+
+    return result.isOk();
+  }
+
+  throw Error(`Group ${group} does not exist`);
+}
+
 
 async function getUsersGroup(
   databaseName: string,
@@ -137,6 +164,7 @@ async function getUsersGroup(
 
 export {
   addUsersToGroup,
+  excludeUsersToGroup,
   getUsersGroup,
   addUserToGroups,
   isGroupExist,

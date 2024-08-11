@@ -15,6 +15,7 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { TCollectionRequest } from './collection.js';
 import {
   addUsersToGroup,
+  excludeUsersToGroup,
   changeGroupDescription,
   createGroup,
 } from '../../domain/use-case/group.js';
@@ -70,6 +71,12 @@ extend type Mutation {
   ): Boolean
 
   groupAddUsers(
+    databaseName: String!,
+    groupName: String!,
+    userNames: [String!]!
+  ): Boolean
+
+  groupRemoveUsers(
     databaseName: String!,
     groupName: String!,
     userNames: [String!]!
@@ -161,6 +168,24 @@ const groupAddUsers = resolverWrapper(
     )
 );
 
+const groupRemoveUsers = resolverWrapper(
+  Joi.object({
+    databaseName,
+    groupName,
+    userNames: Joi.array().items(Joi.string().required()).required(),
+  }),
+  async (_root: unknown, args: TGroupAddUsersRequest, ctx: AppContext) =>
+    withTransaction(async (session) =>
+      excludeUsersToGroup(
+        args.databaseName,
+        ctx.userName,
+        args.groupName,
+        args.userNames,
+        session
+      )
+    )
+);
+
 const groupChangeDescription = resolverWrapper(
   GroupDescriptionChangeRequest,
   async (_root: unknown, args: TGroupCreateRequest, ctx: AppContext) =>
@@ -186,6 +211,7 @@ type TGroupResolver = {
     groupCreate: typeof groupCreate;
     groupAddUsers: typeof groupAddUsers;
     groupChangeDescription: typeof groupChangeDescription;
+    groupRemoveUsers: typeof groupRemoveUsers;
   };
 };
 
@@ -200,5 +226,6 @@ export const resolversGroup: TGroupResolver = {
     groupCreate,
     groupAddUsers,
     groupChangeDescription,
+    groupRemoveUsers
   },
 };
