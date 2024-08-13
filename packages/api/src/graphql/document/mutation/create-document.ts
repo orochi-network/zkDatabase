@@ -4,7 +4,7 @@ import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import { MerkleWitness } from "../../types/merkle-tree.js";
 import client from "../../client.js";
 import { DocumentEncoded } from "../../types/document.js";
-import { Permissions } from "../../types/permission.js";
+import { Permissions } from "../../types/ownership.js";
 
 const CREATE_DOCUMENT = gql`
   mutation DocumentCreate(

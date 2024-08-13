@@ -2,7 +2,7 @@ import pkg from '@apollo/client';
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { PermissionSet, Permissions } from "../../types/permission.js";
+import { PermissionSet, Permissions } from "../../types/ownership.js";
 
 const SET_PERMISSION = gql`
   mutation PermissionSet(

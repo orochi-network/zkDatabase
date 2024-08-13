@@ -2,7 +2,7 @@ import pkg from '@apollo/client';
 const { gql } = pkg;
 import { Schema } from "../../types/schema.js";
 import client from "../../client.js";
-import { Permissions } from "../../types/permission.js";
+import { Permissions } from "../../types/ownership.js";
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const CREATE_COLLECTION = gql`
