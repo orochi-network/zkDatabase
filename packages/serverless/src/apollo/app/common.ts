@@ -93,3 +93,8 @@ export const documentField = Joi.object<TDocumentField>({
     .required(),
   value: Joi.string().raw().required(),
 });
+
+export const pagination = Joi.object({
+  offset: Joi.number().integer().min(0).default(0).optional(),
+  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+});

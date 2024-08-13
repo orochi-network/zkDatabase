@@ -1,13 +1,13 @@
 export type Database = {
-  name: string,
-  merkleHeight: number
-}
+  name: string;
+  merkleHeight: number;
+  collections: string[];
+  databaseSize: number;
+};
 
 export type DatabaseSettings = {
-  merkleHeight: number,
-  publicKey: string
-}
+  merkleHeight: number;
+  publicKey: string;
+};
 
-export type DatabaseStatus = {
-  
-}
+export type DatabaseStatus = {};

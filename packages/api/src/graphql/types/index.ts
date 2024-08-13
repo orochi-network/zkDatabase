@@ -14,3 +14,5 @@ export { Session } from "./session.js";
 export { User } from "./user.js";
 export { GroupInfo } from "./group.js";
 export { ZKProof } from "./proof.js";
+export { Pagination } from "./pagination.js";
+export { Search, Condition } from "./search.js";

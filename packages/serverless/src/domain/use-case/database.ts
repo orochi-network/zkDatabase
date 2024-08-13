@@ -1,8 +1,12 @@
-import { DatabaseEngine, ModelDbSetting } from '@zkdb/storage';
+import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
+import { Database } from '../types/database.js';
+import { Pagination } from '../types/pagination.js';
+import { QueryOptions } from '../types/search.js';
+import filterItems from '../query/array-filter.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -23,4 +27,38 @@ export async function createDatabase(
     appPublicKey,
   });
   return true;
+}
+
+export async function getDatabases(
+  query?: QueryOptions<Database>,
+  pagination?: Pagination
+): Promise<Database[]> {
+  const databasesInfo = await DatabaseEngine.getInstance()
+    .client.db()
+    .admin()
+    .listDatabases();
+
+  const offset = pagination?.offset ?? 0;
+  const limit = pagination?.limit ?? databasesInfo.databases.length;
+
+  const databases: Database[] = await Promise.all(
+    databasesInfo.databases
+      .slice(offset, offset + limit)
+      .map(async (database) => {
+        const collections = await ModelDatabase.getInstance(
+          database.name
+        ).listCollections();
+        const settings = await ModelDbSetting.getInstance(
+          database.name
+        ).getSetting();
+        return {
+          name: database.name,
+          merkleHeight: settings!.merkleHeight,
+          databaseSize: database.sizeOnDisk,
+          collections,
+        } as Database;
+      })
+  );
+
+  return filterItems<Database>(databases, query, 10);
 }

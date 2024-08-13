@@ -2,12 +2,23 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import resolverWrapper from '../validation.js';
-import { databaseName, publicKey } from './common.js';
-import { createDatabase } from '../../domain/use-case/database.js';
+import { databaseName, pagination, publicKey } from './common.js';
+import {
+  createDatabase,
+  getDatabases,
+} from '../../domain/use-case/database.js';
 import { AppContext } from '../../common/types.js';
+import mapSearchToQueryOptions from '../mapper/search.js';
+import { Search } from '../types/search.js';
+import { Pagination } from '../types/pagination.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
+};
+
+export type TDatabaseSearchRequest = {
+  search: Search;
+  pagination: Pagination;
 };
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
@@ -35,8 +46,36 @@ type DbSetting {
   publicKey: String!
 }
 
+input ConditionInput {
+  field: String!
+  value: String!
+  operator: String!
+}
+
+input SearchInput {
+  and: [SearchInput]
+  or: [SearchInput]
+  condition: ConditionInput
+}
+
+input PaginationInput {
+  limit: Int,
+  offset: Int
+}
+
+type Collection {
+  name: String!
+}
+
+type DbDescription {
+  databaseName: String!,
+  databaseSize: String!,
+  merkleHeight: Int!,
+  collections: [Collections]!
+}
+
 extend type Query {
-  dbList:JSON
+  dbList(search: SearchInput, pagination: PaginationInput): [DbDescription]!
   dbStats(databaseName: String!): JSON
   dbSetting(databaseName: String!): DbSetting!
   #dbFindIndex(databaseName: String!, index: Int!): JSON
@@ -50,6 +89,11 @@ extend type Mutation {
 
 export const merkleHeight = Joi.number().integer().positive().required();
 
+const databaseSearch = Joi.object({
+  search: Joi.optional(),
+  pagination,
+});
+
 // Query
 const dbStats = resolverWrapper(
   Joi.object({
@@ -59,21 +103,19 @@ const dbStats = resolverWrapper(
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = async () => {
-  const databases = await DatabaseEngine.getInstance()
-    .client.db()
-    .admin()
-    .listDatabases();
-
-  return {
-    databases: databases.databases.map((database) => ({
-      name: database.name,
-      size: database.sizeOnDisk,
-    })),
-    totalSize: databases.totalSize,
-    totalSizeMb: databases.totalSizeMb,
-  };
-};
+const dbList = resolverWrapper(
+  databaseSearch,
+  async (_root: unknown, args: TDatabaseSearchRequest, _ctx: AppContext) =>
+    getDatabases(
+      {
+        where: mapSearchToQueryOptions(args.search),
+      },
+      {
+        limit: args.pagination.limit,
+        offset: args.pagination.offset,
+      }
+    )
+);
 
 const dbSetting = resolverWrapper(
   Joi.object({

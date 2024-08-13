@@ -1,19 +1,25 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import { Database } from "../../types/database.js";
 import client from "../../client.js";
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { Search } from "../../types/search.js";
+import { Pagination } from "../../types/pagination.js";
 
 const LIST_DATABASES = gql`
-query GetDbList {
-  dbList
-}
+  query GetDbList($search: SearchInput, $pagination: PaginationInput) {
+    dbList(search: $search, pagination: $pagination)
+  }
 `;
 
-export const listDatabases = async(): Promise<NetworkResult<Database[]>> => {
+export const listDatabases = async (
+  search?: Search | undefined,
+  pagination?: Pagination | undefined
+): Promise<NetworkResult<Database[]>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{ dbList: any }>({
-      query: LIST_DATABASES
+      query: LIST_DATABASES,
+      variables: [search, pagination],
     });
 
     const response = data?.dbList;
@@ -30,4 +36,4 @@ export const listDatabases = async(): Promise<NetworkResult<Database[]>> => {
       };
     }
   });
-}
+};
