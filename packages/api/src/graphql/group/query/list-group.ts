@@ -2,6 +2,7 @@ import pkg from '@apollo/client';
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
+import { GroupInfo } from '../../types/group.js';
 
 const LIST_GROUPS = gql`
   query GroupListAll($databaseName: String!) {
@@ -9,17 +10,11 @@ const LIST_GROUPS = gql`
   }
 `;
 
-interface GroupResponse {
-  groups: string[];
-}
-
 export const listGroups = async (
   databaseName: string
-): Promise<NetworkResult<string[]>> => {
+): Promise<NetworkResult<GroupInfo[]>> => {
   return handleRequest(async () => {
-    const { data } = await client.query<{
-      groupListAll: GroupResponse;
-    }>({
+    const { data } = await client.query({
       query: LIST_GROUPS,
       variables: { databaseName },
     });
