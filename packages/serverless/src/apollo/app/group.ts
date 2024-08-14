@@ -12,7 +12,6 @@ import {
 import { TDatabaseRequest } from './database.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import { TCollectionRequest } from './collection.js';
 import {
   addUsersToGroup,
   excludeUsersToGroup,
@@ -21,8 +20,12 @@ import {
 } from '../../domain/use-case/group.js';
 import { AppContext } from '../../common/types.js';
 
-export type TGroupRequest = TCollectionRequest & {
+export type TGroupRequest = TDatabaseRequest & {
   groupName: string;
+};
+
+export type TGroupRenameRequest = TGroupRequest & {
+  newGroupName: string;
 };
 
 export type TGroupCreateRequest = TGroupRequest & {
@@ -87,6 +90,12 @@ extend type Mutation {
     groupName: String!,
     groupDescription: String!
   ): Boolean
+
+  groupRename(
+    databaseName: String!,
+    groupName: String!,
+    newGroupName: String!
+  ): Boolean
 }
 `;
 
@@ -131,6 +140,28 @@ const groupInfo = resolverWrapper(
         createdAt: group.createdAt.getSeconds(),
         createdBy: group.createBy,
       };
+    }
+    throw Error(`Group ${args.groupName} does not exist`);
+  }
+);
+
+const groupRename = resolverWrapper(
+  Joi.object({
+    databaseName,
+    groupName,
+    newGroupName: groupName,
+  }),
+  async (_root: unknown, args: TGroupRenameRequest) => {
+    const modelUserGroup = new ModelGroup(args.databaseName);
+    const group = await modelUserGroup.findGroup(args.groupName);
+    if (group) {
+      // TODO: Check database owner
+      await modelUserGroup.collection.updateOne(
+        {
+          groupName: args.groupName,
+        },
+        { $set: { groupName: args.newGroupName } }
+      );
     }
     throw Error(`Group ${args.groupName} does not exist`);
   }
@@ -212,6 +243,7 @@ type TGroupResolver = {
     groupAddUsers: typeof groupAddUsers;
     groupChangeDescription: typeof groupChangeDescription;
     groupRemoveUsers: typeof groupRemoveUsers;
+    groupRename: typeof groupRename;
   };
 };
 
@@ -226,6 +258,7 @@ export const resolversGroup: TGroupResolver = {
     groupCreate,
     groupAddUsers,
     groupChangeDescription,
-    groupRemoveUsers
+    groupRemoveUsers,
+    groupRename
   },
 };
