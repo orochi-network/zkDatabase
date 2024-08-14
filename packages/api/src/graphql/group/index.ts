@@ -5,3 +5,4 @@ export { createGroup } from "./mutation/create-group.js";
 export { addUsersToGroup } from "./mutation/add-users-to-group.js";
 export { removeUsersFromGroup } from "./mutation/remove-users-from-group.js";
 export { changeGroupDescription } from "./mutation/change-group-description.js";
+export { renameGroup } from "./mutation/rename-group.js";
