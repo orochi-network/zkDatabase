@@ -55,13 +55,14 @@ type Query
 type Mutation
 
 type GroupInfo {
+  name: String!,
   description: String!,
   createdAt: Int!,
   createdBy: String!
 }
 
 extend type Query {
-  groupListAll(databaseName: String!): [String]!
+  groupListAll(databaseName: String!): [GroupInfo]!
   groupListByUser(databaseName: String!, userName: String!): [String]!
   groupInfo(databaseName: String!, groupName: String!): GroupInfo!
 }
@@ -106,8 +107,13 @@ const groupListAll = resolverWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest) => {
     const modelGroup = new ModelGroup(args.databaseName);
-    const groups = await modelGroup.find({});
-    return (await groups.toArray()).map((group) => group.groupName);
+    const groups = await (await modelGroup.find({})).toArray();
+    return groups.map((group) => ({
+      name: group.groupName,
+      description: group.description,
+      createdAt: group.createdAt.getSeconds(),
+      createdBy: group.createBy,
+    }));
   }
 );
 
@@ -136,6 +142,7 @@ const groupInfo = resolverWrapper(
     const group = await modelUserGroup.findGroup(args.groupName);
     if (group) {
       return {
+        name: group.groupName,
         description: group.description,
         createdAt: group.createdAt.getSeconds(),
         createdBy: group.createBy,
@@ -259,6 +266,6 @@ export const resolversGroup: TGroupResolver = {
     groupAddUsers,
     groupChangeDescription,
     groupRemoveUsers,
-    groupRename
+    groupRename,
   },
 };
