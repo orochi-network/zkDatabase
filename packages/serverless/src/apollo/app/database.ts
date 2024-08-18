@@ -71,7 +71,7 @@ type DbDescription {
   databaseName: String!,
   databaseSize: String!,
   merkleHeight: Int!,
-  collections: [Collections]!
+  collections: [String]!
 }
 
 extend type Query {
@@ -107,12 +107,14 @@ const dbList = resolverWrapper(
   databaseSearch,
   async (_root: unknown, args: TDatabaseSearchRequest, _ctx: AppContext) =>
     getDatabases(
+      args.search
+        ? {
+            where: mapSearchToQueryOptions(args.search),
+          }
+        : undefined,
       {
-        where: mapSearchToQueryOptions(args.search),
-      },
-      {
-        limit: args.pagination.limit,
-        offset: args.pagination.offset,
+        limit: args.pagination ? args.pagination.limit : 10,
+        offset: args.pagination ? args.pagination.offset : 0,
       }
     )
 );
