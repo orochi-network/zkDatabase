@@ -9,7 +9,10 @@ import {
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission.js';
 import { checkUserGroupMembership } from './group.js';
-import { PermissionGroup } from '../types/permission.js';
+import {
+  FullPermissions,
+  PermissionGroup
+} from '../types/permission.js';
 import logger from '../../helper/logger.js';
 
 async function fetchPermissionDetails(
@@ -180,4 +183,70 @@ export async function changePermissions(
     logger.error('Failed to update permissions:', error);
     throw new Error('Error updating permissions.');
   }
+}
+
+export async function setPermissions(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  docId: ObjectId | null,
+  permissions: FullPermissions,
+  session?: ClientSession
+): Promise<boolean> {
+  const hasSystemPermission = docId
+    ? await hasDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
+        docId!,
+        'system',
+        session
+      )
+    : await hasCollectionPermission(
+        databaseName,
+        collectionName,
+        actor,
+        'system',
+        session
+      );
+
+  if (hasSystemPermission) {
+    const modelPermission = docId
+      ? new ModelDocumentMetadata(databaseName)
+      : ModelCollectionMetadata.getInstance(databaseName);
+
+    const update = {
+      permissionOwner: PermissionBinary.toBinaryPermission({
+        ...permissions.permissionOwner,
+        system: false,
+      }),
+      permissionGroup: PermissionBinary.toBinaryPermission({
+        ...permissions.permissionGroup,
+      }),
+      permissionOther: PermissionBinary.toBinaryPermission({
+        ...permissions.permissionOther,
+        system: false,
+      }),
+    };
+
+    const updateQuery = { collection: collectionName, ...(docId && { docId }) };
+
+    try {
+      const result = await modelPermission.updateMany(
+        updateQuery,
+        { $set: update },
+        { session }
+      );
+
+      return result.matchedCount === 1 && result.modifiedCount === 1;
+    } catch (error) {
+      logger.error('Failed to update permissions:', error);
+      throw new Error('Error updating permissions.');
+    }
+  }
+
+  const targetDescription = docId ? 'document' : 'collection';
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'system' permission for the specified ${targetDescription}.`
+  );
 }
