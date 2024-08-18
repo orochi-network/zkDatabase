@@ -1,10 +1,12 @@
 import {
   AccountUpdate,
+  Bool,
   Field,
   JsonProof,
   MerkleTree,
   Mina,
   PrivateKey,
+  Provable,
   PublicKey,
   Reducer,
   SmartContract,
@@ -13,74 +15,58 @@ import {
   method,
   state,
 } from 'o1js';
-import { RollUpProgram } from '../proof/proof-program.js';
+import { DatabaseRollUp, RollUpProgram } from '../proof/proof-program.js';
 import { MinaTransaction } from '../types/transaction.js';
 
-export type ZKDatabaseSmartContract = ReturnType<typeof getZkDbSmartContractClass>;
+export type ZKDatabaseSmartContractClass = ReturnType<
+  typeof getZkDbSmartContractClass
+>;
 
 export function getZkDbSmartContractClass(
-  name: string,
   merkleHeight: number,
-  callerPublicKey: PublicKey
+  rollUpProgram: DatabaseRollUp
 ) {
   const dummyMerkleTree = new MerkleTree(merkleHeight);
-  const rollUpProgram = RollUpProgram(name, merkleHeight);
 
   class ZkDbProof extends ZkProgram.Proof(rollUpProgram) {}
 
   class ZkDbSmartContract extends SmartContract {
-    @state(Field) state = State<Field>();
+    @state(Field) currentState = State<Field>();
+    @state(Field) prevState = State<Field>();
     @state(Field) actionState = State<Field>();
 
     init() {
       super.init();
-      this.state.set(dummyMerkleTree.getRoot());
-    }
-
-    static async compileProof() {
-      await rollUpProgram.compile();
-      await ZkDbSmartContract.compile();
-    }
-
-    async verify(jsonProof: JsonProof) {
-      const proof = await ZkDbProof.fromJSON(jsonProof);
-      proof.verify();
-    }
-
-    async createAndProveDeployTransaction(): Promise<MinaTransaction> {
-      const tx = await Mina.transaction(
-        {
-          sender: callerPublicKey,
-          fee: 100_000_000,
-        },
-        async () => {
-          AccountUpdate.fundNewAccount(callerPublicKey);
-          await this.deploy();
-        }
-      );
-
-      await tx.prove();
-      return tx;
-    }
-
-    async createAndProveRollUpTransaction(
-      jsonProof: JsonProof
-    ): Promise<MinaTransaction> {
-      const proof = await ZkDbProof.fromJSON(jsonProof);
-      const tx = await Mina.transaction(async () => {
-        await this.rollUp(proof);
-      });
-      await tx.prove();
-      return tx;
+      this.currentState.set(dummyMerkleTree.getRoot());
+      this.prevState.set(Field(0));
     }
 
     @method async rollUp(proof: ZkDbProof) {
-      this.state.getAndRequireEquals();
-
       proof.verify();
 
-      // this.state.requireEquals(proof.publicInput.rootState);
-      this.state.set(proof.publicOutput.rootState);
+      const currentState = this.currentState.getAndRequireEquals();
+      const prevState = this.prevState.getAndRequireEquals();
+
+      Provable.if(
+        proof.publicOutput.isTransition,
+        Bool,
+        proof.publicInput.currentOnChainState
+          .equals(proof.publicOutput.onChainState)
+          .not()
+          .and(proof.publicInput.currentOnChainState.equals(prevState))
+          .and(proof.publicOutput.onChainState.equals(currentState)),
+        proof.publicInput.previousOnChainState
+          .equals(prevState)
+          .and(proof.publicInput.currentOnChainState.equals(currentState))
+          .and(
+            proof.publicInput.currentOnChainState.equals(
+              proof.publicOutput.onChainState
+            )
+          )
+      ).assertTrue();
+
+      this.prevState.set(currentState);
+      this.currentState.set(proof.publicOutput.newOffChainState);
     }
   }
 
