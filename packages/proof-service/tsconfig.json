@@ -9,7 +9,7 @@
     "composite": true,
     "baseUrl": "./src",
     "outDir": "./build/",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
   },
   "include": ["**/*.ts"],
   "references": [{ "path": "../smart-contract" }, { "path": "../storage" }],
