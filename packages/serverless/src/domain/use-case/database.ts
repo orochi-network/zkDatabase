@@ -43,6 +43,9 @@ export async function getDatabases(
 
   const databases: Database[] = await Promise.all(
     databasesInfo.databases
+      .filter(
+        (db) => !['admin', 'local', '_zkdatabase_metadata'].includes(db.name)
+      )
       .slice(offset, offset + limit)
       .map(async (database) => {
         const collections = await ModelDatabase.getInstance(
@@ -52,7 +55,7 @@ export async function getDatabases(
           database.name
         ).getSetting();
         return {
-          name: database.name,
+          databaseName: database.name,
           merkleHeight: settings!.merkleHeight,
           databaseSize: database.sizeOnDisk,
           collections,
