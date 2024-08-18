@@ -8,7 +8,12 @@ import { Pagination } from "../../types/pagination.js";
 
 const LIST_DATABASES = gql`
   query GetDbList($search: SearchInput, $pagination: PaginationInput) {
-    dbList(search: $search, pagination: $pagination)
+    dbList(search: $search, pagination: $pagination) {
+      databaseName
+      databaseSize
+      merkleHeight
+      collections
+    }
   }
 `;
 
@@ -17,7 +22,7 @@ export const listDatabases = async (
   pagination?: Pagination | undefined
 ): Promise<NetworkResult<Database[]>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.query<{ dbList: any }>({
+    const { data, errors } = await client.query({
       query: LIST_DATABASES,
       variables: [search, pagination],
     });

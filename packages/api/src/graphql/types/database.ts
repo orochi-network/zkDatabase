@@ -1,5 +1,5 @@
 export type Database = {
-  name: string;
+  databaseName: string;
   merkleHeight: number;
   collections: string[];
   databaseSize: number;

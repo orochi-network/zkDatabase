@@ -9,19 +9,31 @@ const SET_PERMISSION = gql`
     $databaseName: String!
     $collectionName: String!
     $docId: String
-    $grouping: PermissionGroup!
     $permission: PermissionInput!
   ) {
     permissionSet(
       databaseName: $databaseName
       collectionName: $collectionName
       docId: $docId
-      grouping: $grouping
       permission: $permission
     ) {
       userName
       groupName
       permissionOwner {
+        read
+        write
+        delete
+        create
+        system
+      }
+      permissionGroup {
+        read
+        write
+        delete
+        create
+        system
+      }
+      permissionOther {
         read
         write
         delete
@@ -40,8 +52,7 @@ export const setPermissions = async (
   databaseName: string,
   collectionName: string,
   docId: string | undefined,
-  grouping: string,
-  permission: PermissionSet
+  permission: Permissions
 ): Promise<NetworkResult<Permissions>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -52,7 +63,6 @@ export const setPermissions = async (
         databaseName,
         collectionName,
         docId,
-        grouping,
         permission,
       },
     });
