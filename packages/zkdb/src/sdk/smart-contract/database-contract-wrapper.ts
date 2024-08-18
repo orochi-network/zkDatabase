@@ -1,76 +1,69 @@
+import { ZKDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
 import {
-  ZKDatabaseSmartContract,
-  getZkDbSmartContractClass,
-} from '@zkdb/smart-contract';
-import { JsonProof, PrivateKey, PublicKey } from 'o1js';
+  JsonProof,
+  PendingTransactionPromise,
+  PrivateKey,
+  PublicKey,
+} from 'o1js';
 import { getSigner } from '../signer/signer.js';
+import { ZKDatabaseClient } from '../global/zkdatabase-client.js';
 
 export class DatabaseContractWrapper {
-  private zkDatabaseSmartContact: ZKDatabaseSmartContract;
-  private appAddress: PublicKey;
+  private zkDatabaseSmartContact: ZKDatabaseSmartContractWrapper;
 
-  private isCompiled: boolean;
-
-  private constructor(
-    databaseName: string,
-    merkleHeight: number,
-    publicKey: PublicKey,
-    appPublicKey: PublicKey
-  ) {
-    this.zkDatabaseSmartContact = getZkDbSmartContractClass(
-      databaseName,
+  private constructor(merkleHeight: number, appPublicKey: PublicKey) {
+    this.zkDatabaseSmartContact = new ZKDatabaseSmartContractWrapper(
       merkleHeight,
-      publicKey
+      appPublicKey
     );
-    this.appAddress = appPublicKey;
   }
 
   private static instances: Map<string, DatabaseContractWrapper> = new Map();
 
   static getInstance(
-    databaseName: string,
     merkleHeight: number,
-    deployerAddress: PublicKey,
     appAddress: PublicKey
   ): DatabaseContractWrapper {
-    const key = `${databaseName}_${merkleHeight}`;
+    const key = `${appAddress}_${merkleHeight}`;
     if (!DatabaseContractWrapper.instances.has(key)) {
       DatabaseContractWrapper.instances.set(
         key,
-        new DatabaseContractWrapper(
-          databaseName,
-          merkleHeight,
-          deployerAddress,
-          appAddress
-        )
+        new DatabaseContractWrapper(merkleHeight, appAddress)
       );
     }
     return DatabaseContractWrapper.instances.get(key)!;
   }
 
-  async compile() {
-    if (!this.isCompiled) {
-      await this.zkDatabaseSmartContact.compileProof();
-      this.isCompiled = true;
+  async deploy(appKey: PrivateKey): Promise<PendingTransactionPromise> {
+    await this.zkDatabaseSmartContact.compile();
+
+    const user = ZKDatabaseClient.currentUser;
+
+    if (user) {
+      let tx =
+        await this.zkDatabaseSmartContact.createAndProveDeployTransaction(
+          PublicKey.fromBase58(user.publicKey)
+        );
+
+      tx = await getSigner().signTransaction(tx, [appKey]);
+      const pendingTx = await tx.send();
+      return pendingTx;
     }
+
+    throw Error('User is null');
   }
 
-  async deploy(appKey: PrivateKey) {
-    await this.compile();
+  async rollUp(
+    jsonProof: JsonProof,
+    zkAppPrivateKey: PrivateKey
+  ): Promise<PendingTransactionPromise> {
+    await this.zkDatabaseSmartContact.compile();
 
-    const zkApp = new this.zkDatabaseSmartContact(this.appAddress);
-    let tx = await zkApp.createAndProveDeployTransaction();
-    tx = await getSigner().signTransaction(tx, [appKey]);
-    const pendingTx = await tx.send();
-    await pendingTx.wait();
-  }
-
-  async rollUp(jsonProof: JsonProof) {
-    await this.compile();
-
-    const zkApp = new this.zkDatabaseSmartContact(this.appAddress);
-    let tx = await zkApp.createAndProveRollUpTransaction(jsonProof);
-    tx = await getSigner().signTransaction(tx, []);
-    await tx.send();
+    let tx =
+      await this.zkDatabaseSmartContact.createAndProveRollUpTransaction(
+        jsonProof
+      );
+    tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
+    return await tx.send();
   }
 }

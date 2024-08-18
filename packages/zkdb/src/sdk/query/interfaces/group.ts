@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
-import { GroupDescription } from "../types/group.js";
+import { GroupDescription } from '../../../sdk/types/group.js';
 
-export interface ZKGroup {
+export interface GroupQuery {
   addUsers(userNames: string[]): Promise<boolean>;
   removeUsers(userNames: string[]): Promise<boolean>;
-  getDescription(): Promise<GroupDescription>
+  getDescription(): Promise<GroupDescription>;
   changeDescription(description: string): Promise<boolean>;
 }

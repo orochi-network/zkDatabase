@@ -5,7 +5,7 @@ export type PermissionGroup = 'User' | 'Group' | 'Other';
 export type Permissions = {
   permissionOwner?: Partial<PermissionRecord>;
   permissionGroup?: Partial<PermissionRecord>;
-  permissionOthers?: Partial<PermissionRecord>;
+  permissionOther?: Partial<PermissionRecord>;
 };
 
 export const readOnlyPermissions: PermissionRecord = {
