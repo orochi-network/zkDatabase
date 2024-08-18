@@ -10,7 +10,7 @@ import {
 } from '@zkdb/api';
 import { Field } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
-import { QueryOptions } from '../sdk/query/builder/query-builder.js';
+import { QueryOptions } from '../sdk/query/query-builder.js';
 import mapSearchInputToSearch from './mapper/search.js';
 
 export async function findDocument(

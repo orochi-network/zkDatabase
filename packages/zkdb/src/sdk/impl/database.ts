@@ -1,19 +1,16 @@
 import { PublicKey } from 'o1js';
 import { ZKCollection } from '../interfaces/collection.js';
+import { createGroup, getGroups } from '../../repository/group.js';
+import { DatabaseSettings } from '../../types/database.js';
 import { ZKDatabase } from '../interfaces/database.js';
-import {
-  createDatabase,
-  getDatabaseSettings,
-} from '../../../repository/database.js';
-import { DatabaseSettings } from '../../../types/database.js';
-import { CollectionQueryImpl } from './collection-query.js';
-import { GroupQuery } from '../interfaces/group.js';
-import { GroupQueryImpl } from './group-query.js';
-import { GroupDescription } from '../../../../src/sdk/types/group.js';
-import { createGroup, getGroups } from '../../../repository/group.js';
-import { SchemaDefinition } from '../../../sdk/schema.js';
-import { createCollection } from '../../../repository/collection.js';
-import { Permissions } from '../../../types/permission.js';
+import { SchemaDefinition } from '../schema.js';
+import { CollectionQueryImpl } from './collection.js';
+import { ZKGroupImpl } from './group.js';
+import { createCollection } from '../../repository/collection.js';
+import { createDatabase, getDatabaseSettings } from '../../repository/database.js';
+import { ZKGroup } from '../interfaces/group.js';
+import { Permissions } from '../../types/permission.js';
+import { GroupDescription } from '../../types/group.js';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
@@ -48,8 +45,8 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return new CollectionQueryImpl(this.databaseName, collectionName);
   }
 
-  group(groupName: string): GroupQuery {
-    return new GroupQueryImpl(this.databaseName, groupName);
+  group(groupName: string): ZKGroup {
+    return new ZKGroupImpl(this.databaseName, groupName);
   }
 
   async create(merkleHeight: number, publicKey: PublicKey): Promise<void> {

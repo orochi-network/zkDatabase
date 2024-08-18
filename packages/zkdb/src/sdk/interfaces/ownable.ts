@@ -1,5 +1,5 @@
-import { Ownership } from "../../../types/ownership.js";
-import { Permissions } from "../../../types/permission.js";
+import { Permissions } from "../../types/permission.js";
+import { Ownership } from "../../types/ownership.js";
 
 /* eslint-disable no-unused-vars */
 export interface Ownable {

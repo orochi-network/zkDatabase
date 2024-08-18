@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { GroupDescription } from "../types/group.js";
+import { GroupDescription } from "../../types/group.js";
 
 export interface ZKGroup {
   addUsers(userNames: string[]): Promise<boolean>;

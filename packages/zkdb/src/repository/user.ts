@@ -1,6 +1,6 @@
 import { UserSearch } from "../types/search.js";
 import { searchUsers } from "@zkdb/api"
-import { QueryOptions } from "../sdk/query/builder/query-builder.js";
+import { QueryOptions } from "../sdk/query/query-builder.js";
 import { User } from "../types/user.js";
 import mapSearchInputToSearch from "./mapper/search.js";
 

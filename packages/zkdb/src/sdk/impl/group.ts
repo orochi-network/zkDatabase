@@ -1,13 +1,13 @@
-import { GroupDescription } from 'src/sdk/types/group.js';
-import { GroupQuery } from '../interfaces/group.js';
+import { GroupDescription } from 'src/types/group.js';
+import { ZKGroup } from '../interfaces/group.js';
 import {
   addUsersToGroup,
   changeGroupDescription,
   excludeUsersFromGroup,
   getGroupDescription,
-} from '../../../repository/group.js';
+} from '../../repository/group.js';
 
-export class GroupQueryImpl implements GroupQuery {
+export class ZKGroupImpl implements ZKGroup {
   private databaseName: string;
   private groupName: string;
 

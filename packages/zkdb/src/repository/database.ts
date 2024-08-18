@@ -8,7 +8,7 @@ import {
   DatabaseSettings,
 } from '../types/database.js';
 import { PublicKey } from 'o1js';
-import { QueryOptions } from '../sdk/query/builder/query-builder.js';
+import { QueryOptions } from '../sdk/query/query-builder.js';
 import mapSearchInputToSearch from './mapper/search.js';
 import { DatabaseSearch } from '../types/search.js';
 

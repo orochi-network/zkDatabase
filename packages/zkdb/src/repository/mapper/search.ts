@@ -1,5 +1,5 @@
 import { Condition, Search } from '@zkdb/api';
-import { SearchInput } from '../../sdk/query/builder/query-builder.js';
+import { SearchInput } from '../../sdk/query/query-builder.js';
 
 export default function mapSearchInputToSearch<T>(
   searchInput?: SearchInput<T>

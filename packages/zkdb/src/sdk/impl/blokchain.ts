@@ -5,7 +5,7 @@ import {
   JsonProof,
 } from 'o1js';
 import { MinaBlockchain } from '../interfaces/blockchain.js';
-import { DatabaseContractWrapper } from '../../../sdk/smart-contract/database-contract-wrapper.js';
+import { DatabaseContractWrapper } from '../smart-contract/database-contract-wrapper.js';
 
 export class MinaBlockchainImpl implements MinaBlockchain {
   async deployZKDatabaseSmartContract(

@@ -3,8 +3,8 @@ import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
 import { Signer } from '../signer/interface/signer.js';
 import { getSigner, setSigner } from '../signer/signer.js';
 import { Authenticator } from '../authentication/authentication.js';
-import { ZKDatabaseContext } from '../query/interfaces/context.js';
-import { ZKDatabaseContextImpl } from '../query/impl/context.js';
+import { ZKDatabaseContext } from '../interfaces/context.js';
+import { ZKDatabaseContextImpl } from '../impl/context.js';
 
 export class ZKDatabaseClient {
   static auth(): Authenticator {

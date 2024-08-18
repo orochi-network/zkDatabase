@@ -1,4 +1,6 @@
-export type Group = {
-  groupName: string,
-  groupDescription: string
+export type GroupDescription = {
+  name: string,
+  description: string
+  createdBy: string,
+  createdAt: Date
 }

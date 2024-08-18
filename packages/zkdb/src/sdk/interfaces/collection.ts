@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-vars */
-import { ZKDocument } from '../../../sdk/interfaces/document.js';
-import { QueryOptions } from '../builder/query-builder.js';
+import { MerkleWitness } from '../../types/merkle-tree.js';
+import { ZKDocument } from '../interfaces/document.js';
+import { QueryOptions } from '../query/query-builder.js';
+import { Filter } from '../../types/filter.js';
+import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
-import { Permissions } from '../../..//types/permission.js';
-import { DocumentEncoded } from '../../../sdk/schema.js';
-import { MerkleWitness } from '../../../types/merkle-tree.js';
-import { Filter } from '../../../sdk/types/filter.js';
 
 export interface ZKCollection extends Ownable {
   findOne<

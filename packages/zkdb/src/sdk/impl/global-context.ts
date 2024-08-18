@@ -2,12 +2,12 @@
 /* eslint-disable no-dupe-class-members */
 import { PublicKey } from 'o1js';
 import { GlobalContext } from '../interfaces/global-context.js';
-import { createDatabase, getDatabases } from '../../../repository/database.js';
-import { QueryOptions } from '../builder/query-builder.js';
-import { User } from 'src/types/user.js';
-import { findUsers } from '../../../repository/user.js';
-import { Database } from '../../../types/database.js';
-import { DatabaseSearch, UserSearch } from '../../../types/search.js';
+import { createDatabase, getDatabases } from '../../repository/database.js';
+import { findUsers } from '../../repository/user.js';
+import { DatabaseSearch, UserSearch } from '../../types/search.js';
+import { QueryOptions } from '../query/query-builder.js';
+import { User } from '../../types/user.js';
+import { Database } from '../../types/database.js';
 
 export class GlobalContextImpl implements GlobalContext {
   async databases(): Promise<Database[]>;

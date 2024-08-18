@@ -1,26 +1,27 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
-import {
-  getCollectionOwnership,
-  setCollectionPermissions,
-  updateCollectionGroupOwnership,
-} from '../../../repository/ownership.js';
-import { ZKCollection } from '../interfaces/collection.js';
-import { Permissions } from '../../../types/permission.js';
-import { Ownership } from '../../../types/ownership.js';
-import { ZKDocument } from '../../../sdk/interfaces/document.js';
-import { QueryOptions } from '../builder/query-builder.js';
-import { DocumentEncoded } from '../../../sdk/schema.js';
+
+import { MerkleWitness } from '../../types/merkle-tree.js';
 import {
   createDocument,
   deleteDocument,
   findDocument,
   searchDocument,
   updateDocument,
-} from '../../../repository/document.js';
-import { MerkleWitness } from '../../../types/merkle-tree.js';
-import { ZKDocumentImpl } from '../../../sdk/common/document.js';
-import { Filter } from '../../../sdk/types/filter.js';
+} from '../../repository/document.js';
+import { ZKCollection } from '../interfaces/collection.js';
+import { ZKDocument } from '../interfaces/document.js';
+import { QueryOptions } from '../query/query-builder.js';
+import { Filter } from '../../types/filter.js';
+import { ZKDocumentImpl } from './document.js';
+import { DocumentEncoded } from '../schema.js';
+import {
+  getCollectionOwnership,
+  setCollectionPermissions,
+  updateCollectionGroupOwnership,
+} from '../../repository/ownership.js';
+import { Permissions } from '../../types/permission.js';
+import { Ownership } from '../../types/ownership.js';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;

@@ -1,8 +1,8 @@
 import { PublicKey } from 'o1js';
-import { QueryOptions } from '../builder/query-builder.js';
-import { Database } from '../../../types/database.js';
-import { User } from '../../../types/user.js';
-import { UserSearch, DatabaseSearch } from '../../../types/search.js';
+import { DatabaseSearch, UserSearch } from '../../types/search.js';
+import { QueryOptions } from '../query/query-builder.js';
+import { Database } from '../../types/database.js';
+import { User } from '../../types/user.js';
 
 /* eslint-disable no-unused-vars */
 export interface GlobalContext {

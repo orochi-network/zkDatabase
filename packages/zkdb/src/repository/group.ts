@@ -7,7 +7,7 @@ import {
   listGroups as listGroupsRequest,
   createGroup as createGroupRequest,
 } from '@zkdb/api';
-import { GroupDescription } from '../sdk/types/group.js';
+import { GroupDescription } from '../types/group.js';
 
 export async function addUsersToGroup(
   databaseName: string,

@@ -1,1 +1,0 @@
-export type DatabaseCreationStatus = "compiling" | "proving" | "tr"
