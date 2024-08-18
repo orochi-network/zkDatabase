@@ -32,6 +32,9 @@ import {
 import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { getUsersGroup } from './group.js';
+import { Pagination } from '../types/pagination.js';
+import { SearchInput } from '../types/search.js';
+import buildMongoQuery from '../query/mongodb-filter.js';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -96,6 +99,10 @@ async function readDocument(
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
     );
+  }
+
+  if (!documentRecord.isLatest) {
+    throw Error('You cannot read the history document');
   }
 
   const document: Document = Object.keys(documentRecord)
@@ -487,10 +494,121 @@ async function readManyDocuments(
   );
 }
 
+async function searchDocuments(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  query?: SearchInput<any>,
+  pagination?: Pagination,
+  session?: ClientSession
+): Promise<Array<WithId<Document>>> {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    const { client } = DatabaseEngine.getInstance();
+
+    const database = client.db(databaseName);
+    const documentsCollection = database.collection(collectionName);
+
+    const userGroups = await getUsersGroup(databaseName, actor);
+
+    const matchQuery = buildMongoQuery(query);
+
+    const pipeline = [
+      {
+        $lookup: {
+          from: zkDatabaseConstants.databaseCollections.permission,
+          let: { docId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$docId', '$$docId'] },
+              },
+            },
+            {
+              $project: {
+                permissionOwner: true,
+                permissionGroup: true,
+                permissionOther: true,
+                merkleIndex: true,
+                group: true,
+                owner: true,
+              },
+            },
+          ],
+          as: 'metadata',
+        },
+      },
+      {
+        $unwind: '$metadata',
+      },
+      {
+        $match: matchQuery,
+      },
+      {
+        $skip: pagination ? pagination.offset : 0,
+      },
+      {
+        $limit: pagination ? pagination.limit : 10
+      },
+    ];
+
+    const documentsWithMetadata = await documentsCollection
+      .aggregate(pipeline)
+      .toArray();
+
+    const filteredDocuments = documentsWithMetadata.filter(({ metadata }) => {
+      if (!metadata) {
+        return false;
+      }
+      if (metadata.owner === actor) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+          .read;
+      }
+      if (userGroups.includes(metadata.group)) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+          .read;
+      }
+      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
+        .read;
+    });
+
+    const transformedDocuments = filteredDocuments.map((documentRecord) => {
+      const document: Document = Object.keys(documentRecord)
+        .filter(
+          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
+        )
+        .map((key) => ({
+          name: documentRecord[key].name,
+          kind: documentRecord[key].kind,
+          value: documentRecord[key].value,
+        }));
+
+      return {
+        _id: documentRecord._id,
+        document,
+      };
+    });
+
+    return transformedDocuments as any as WithId<Document>[];
+  }
+
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
+}
+
 export {
   readManyDocuments,
   readDocument,
   createDocument,
   updateDocument,
   deleteDocument,
+  searchDocuments,
 };

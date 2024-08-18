@@ -11,6 +11,7 @@ import { resolversPermission, typeDefsPermission } from './app/metadata.js';
 import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
 import { resolversAggregation, typeDefsAggregation } from './app/aggregation.js';
 import { resolversProof, typeDefsProof } from './app/proof.js';
+import { resolverSearch, typeDefsSearch } from './app/search.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -22,7 +23,8 @@ export const TypedefsApp = [
   typeDefsPermission,
   typeDefsMerkleTree,
   typeDefsAggregation,
-  typeDefsProof
+  typeDefsProof,
+  typeDefsSearch
 ];
 
 type Resolver =
@@ -36,6 +38,7 @@ type Resolver =
   | typeof resolversMerkleTree
   | typeof resolversAggregation
   | typeof resolversProof
+  | typeof resolverSearch
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -47,5 +50,6 @@ export const ResolversApp: Resolver[] = [
   resolversPermission,
   resolversMerkleTree,
   resolversAggregation,
-  resolversProof
+  resolversProof,
+  resolverSearch
 ];

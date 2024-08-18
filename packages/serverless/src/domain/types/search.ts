@@ -1,7 +1,7 @@
 export type Condition<T> = {
   field: keyof T;
   value: any;
-  operator: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte';
+  operator: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'contains';
 };
 
 export type SearchInput<T> = {

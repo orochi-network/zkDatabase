@@ -14,6 +14,12 @@ function applyCondition<T>(item: T, condition: Condition<T>): boolean {
       return item[field] > value;
     case 'lt':
       return item[field] < value;
+    case 'gte':
+      return item[field] >= value;
+    case 'lte':
+      return item[field] <= value;
+    case 'contains':
+      return typeof item[field] === 'string' && item[field].includes(value);
     default:
       throw new Error(`Unknown operator: ${operator}`);
   }
