@@ -72,7 +72,7 @@ input PermissionRecordInput {
 input PermissionDetailInput {
   permissionOwner: PermissionRecordInput
   permissionGroup: PermissionRecordInput
-  permissionOthers: PermissionRecordInput
+  permissionOther: PermissionRecordInput
 }
 
 extend type Query {
