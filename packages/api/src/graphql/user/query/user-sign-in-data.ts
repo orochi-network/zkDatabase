@@ -1,4 +1,4 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
 import { SignInInfo } from "../../types/authentication.js";
@@ -29,17 +29,10 @@ interface UserSignInResponse {
   publicKey: string;
 }
 
-export const getSignInData = async (
-  token: string
-): Promise<NetworkResult<SignInInfo>> => {
+export const getSignInData = async (): Promise<NetworkResult<SignInInfo>> => {
   try {
     const { data } = await client.query<{ userSignIn: UserSignInResponse }>({
       query: SIGN_IN_DATA,
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.userSignIn;
@@ -51,7 +44,7 @@ export const getSignInData = async (
           user: {
             userName: response.userName,
             email: response.email,
-            publicKey: response.publicKey
+            publicKey: response.publicKey,
           },
           session: {
             sessionId: response.sessionId,
