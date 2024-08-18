@@ -1,31 +1,36 @@
-import { DatabaseRollUp, RollUpProgram } from '@zkdb/smart-contract';
-import { CircuitCache } from './cache/circuit-cache.js';
+import {
+  CacheManager,
+  DatabaseRollUp,
+  RollUpProgram,
+} from '@zkdb/smart-contract';
+import { VerificationKey } from 'o1js';
 
-export function getDatabaseRollUpFunction(
-  name: string,
-  merkleHeight: number
-): RollUpProxy {
-  const rollup = RollUpProgram(name, merkleHeight);
-  return new RollUpProxy(rollup);
+export function getDatabaseRollUpFunction(merkleHeight: number): RollUpProxy {
+  const rollup = RollUpProgram(merkleHeight);
+  return new RollUpProxy(rollup, merkleHeight);
 }
 
 export class RollUpProxy {
   private rollUp: DatabaseRollUp;
-  private isCompiled = false;
+  private merkleHeight: number;
+  private verificationKey: VerificationKey | undefined = undefined;
 
-  constructor(rollUp: DatabaseRollUp) {
+  constructor(rollUp: DatabaseRollUp, merkleHeight: number) {
     this.rollUp = rollUp;
+    this.merkleHeight = merkleHeight;
   }
 
   async compile() {
-    if (this.isCompiled) {
-      return;
+    if (!this.verificationKey) {
+      this.verificationKey = (
+        await this.rollUp.compile({
+          cache: await CacheManager.provideCache(
+            'rollup-zkprogram',
+            this.merkleHeight
+          ),
+        })
+      ).verificationKey;
     }
-
-    const circuitCache = new CircuitCache();
-    const cache = circuitCache.getCache(`database-rollup/${this.rollUp.name}`);
-    await this.rollUp.compile({ cache });
-    this.isCompiled = true;
   }
 
   getProgram(): DatabaseRollUp {
