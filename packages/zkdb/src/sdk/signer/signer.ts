@@ -13,7 +13,7 @@ export function setSigner(newSigner: Signer) {
 
 export function getSigner(): Signer {
   if (!signer) {
-    throw Error('Signing method was not set')
+    throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first')
   }
   return signer;
 }
