@@ -19,7 +19,10 @@ function applyCondition<T>(item: T, condition: Condition<T>): boolean {
     case 'lte':
       return item[field] <= value;
     case 'contains':
-      return typeof item[field] === 'string' && item[field].includes(value);
+      return (
+        typeof item[field] === 'string' &&
+        (item[field] as unknown as string).includes(value as string)
+      );
     default:
       throw new Error(`Unknown operator: ${operator}`);
   }

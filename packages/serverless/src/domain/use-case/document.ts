@@ -402,10 +402,12 @@ async function deleteDocument(
   return witness;
 }
 
-async function readManyDocuments(
+async function searchAggregatedDocuments(
   databaseName: string,
   collectionName: string,
   actor: string,
+  query?: SearchInput<any>,
+  pagination?: Pagination,
   session?: ClientSession
 ) {
   if (
@@ -425,6 +427,8 @@ async function readManyDocuments(
     const userGroups = await getUsersGroup(databaseName, actor);
     const tasks =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+
+    const matchQuery = buildMongoQuery(query);
 
     const pipeline = [
       {
@@ -454,39 +458,81 @@ async function readManyDocuments(
       {
         $unwind: '$metadata',
       },
+      {
+        $match: matchQuery,
+      },
+      {
+        $skip: pagination ? pagination.offset : 0,
+      },
+      {
+        $limit: pagination ? pagination.limit : 10,
+      },
     ];
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
       .toArray();
 
-    const result = documentsWithMetadata
-      .filter(({ metadata }) => {
-        if (!metadata) {
-          return false;
-        }
-        if (metadata.owner === actor) {
-          return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
-            .read;
-        }
-        if (userGroups.includes(metadata.group)) {
-          return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-            .read;
-        }
-        return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
+    const filteredDocuments = documentsWithMetadata.filter(({ metadata }) => {
+      if (!metadata) {
+        return false;
+      }
+      if (metadata.owner === actor) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
           .read;
-      })
-      .map((doc) => {
-        const task = tasks?.find(
-          (task: TaskEntity) => task.docId === doc._id.toString()
-        );
-        if (task) {
-          return { ...doc, proofStatus: task?.status };
-        }
-        return { ...doc, proofStatus: undefined };
-      });
+      }
+      if (userGroups.includes(metadata.group)) {
+        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+          .read;
+      }
+      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
+        .read;
+    });
 
-    return result;
+    const transformedDocuments = filteredDocuments.map((documentRecord) => {
+      const document: Document = Object.keys(documentRecord)
+        .filter(
+          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
+        )
+        .map((key) => ({
+          name: documentRecord[key].name,
+          kind: documentRecord[key].kind,
+          value: documentRecord[key].value,
+        }));
+
+      const task = tasks?.find(
+        (task: TaskEntity) =>
+          task.docId === (documentRecord as any)._id.toString()
+      );
+
+      const object = {
+        document: {
+          _id: documentRecord._id,
+          document,
+        },
+
+        
+        metadata: {
+          merkleIndex: documentRecord.metadata.merkleIndex,
+          group: documentRecord.metadata.group,
+          owner: documentRecord.metadata.owner,
+          permissionOwner: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionOwner
+          ),
+          permissionGroup: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionGroup
+          ),
+          permissionOther: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionOther
+          ),
+        },
+        proofStatus: task ? task.status : undefined,
+      };
+
+      return object;
+    });
+
+    return transformedDocuments;
   }
 
   throw new Error(
@@ -555,7 +601,7 @@ async function searchDocuments(
         $skip: pagination ? pagination.offset : 0,
       },
       {
-        $limit: pagination ? pagination.limit : 10
+        $limit: pagination ? pagination.limit : 10,
       },
     ];
 
@@ -605,7 +651,7 @@ async function searchDocuments(
 }
 
 export {
-  readManyDocuments,
+  searchAggregatedDocuments,
   readDocument,
   createDocument,
   updateDocument,

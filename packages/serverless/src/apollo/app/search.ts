@@ -7,7 +7,7 @@ import { Pagination } from '../types/pagination.js';
 import { search } from './common.js';
 import { AppContext } from '../../common/types.js';
 import { searchUsers as searchUserDomain } from '../../domain/use-case/user.js';
-import { searchDocuments as searchDocumentsDomain } from '../../domain/use-case/document.js';
+import { searchDocuments as searchDocumentsDomain, searchAggregatedDocuments } from '../../domain/use-case/document.js';
 import mapSearchToQueryOptions from '../mapper/search.js';
 
 export type TSearchRequest = {
@@ -58,14 +58,37 @@ type DocumentOutput {
   document: [Document!]!
 }
 
+type Metadata {
+  merkleIndex: Int!,
+  owner: String!
+  group: String!
+  permissionOwner: PermissionRecord!
+  permissionGroup: PermissionRecord!
+  permissionOther: PermissionRecord!
+}
+
+type DocumentAggregatedOutput {
+  document: DocumentOutput!
+  metadata: Metadata!,
+  proofStatus: String
+}
+
 extend type Query {
   searchUser(search: SearchInput, pagination: PaginationInput): [User]!
+
   searchDocument(
     databaseName: String!, 
     collectionName: String!, 
     search: SearchInput, 
     pagination: PaginationInput
   ): [DocumentOutput]!
+
+  searchAggregatedDocument(
+    databaseName: String!, 
+    collectionName: String!, 
+    search: SearchInput, 
+    pagination: PaginationInput
+  ): [DocumentAggregatedOutput]!
 }
 `;
 
@@ -100,11 +123,32 @@ const searchDocument = resolverWrapper(
   }
 );
 
+const searchAggregatedDocument = resolverWrapper(
+  Joi.object().optional(),
+  async (_root: unknown, args: TSearchDocumentRequest, _ctx: AppContext) => {
+    return withTransaction(async (session) => {
+      const documents = await searchAggregatedDocuments(
+        args.databaseName,
+        args.collectionName,
+        "oleh-dev",
+        args.search ? mapSearchToQueryOptions(args.search) : undefined,
+        args.pagination ? args.pagination : undefined,
+        session
+      );
+
+      console.log("documents", documents)
+
+      return documents;
+    });
+  }
+);
+
 type TSearchResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     searchUser: typeof searchUser;
     searchDocument: typeof searchDocument;
+    searchAggregatedDocument: typeof searchAggregatedDocument;
   };
 };
 
@@ -113,5 +157,6 @@ export const resolverSearch: TSearchResolver = {
   Query: {
     searchUser,
     searchDocument,
+    searchAggregatedDocument
   },
 };
