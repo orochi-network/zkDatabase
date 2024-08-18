@@ -1,16 +1,8 @@
 import { Mina } from 'o1js';
 import { isBrowser } from '../../utils/environment.js';
+import { SignedData } from '../../types/signing.js';
 
 type Transaction = Awaited<ReturnType<typeof Mina.transaction>>;
-
-export type SignedData = {
-  publicKey: string;
-  data: string;
-  signature: {
-    field: string;
-    scalar: string;
-  };
-};
 
 export type TransactionMetadata = {
   fee: number;

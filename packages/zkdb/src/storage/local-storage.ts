@@ -1,4 +1,4 @@
-import { UserInfo } from '../types/user.js';
+import { User } from '../types/user.js';
 import { Storage, SESSION_KEY, USER_KEY } from './storage.js';
 import { Session } from './types/session.js';
 
@@ -25,11 +25,11 @@ export default class LocalStorage implements Storage {
     this.storage[SESSION_KEY] = session;
   }
 
-  getUserInfo(): UserInfo {
+  getUserInfo(): User {
     return this.storage[USER_KEY];
   }
 
-  setUserInfo(userInfo: UserInfo | undefined): void {
+  setUserInfo(userInfo: User | undefined): void {
     this.storage[USER_KEY] = userInfo;
   }
 }

@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/orochi-network/zkDatabase#readme",
   "type": "module",
-  "types": "./build/src/core/index.d.ts",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
@@ -49,28 +50,6 @@
     "!**/*.test.d.ts",
     "!**/*.test.d.ts.map"
   ],
-  "exports": {
-    ".": {
-      "types": "./build/src/core/index.d.ts",
-      "import": "./build/src/core/index.js"
-    },
-    "./utilities": {
-      "types": "./build/src/utilities/index.d.ts",
-      "import": "./build/src/utilities/index.js"
-    },
-    "./index": {
-      "types": "./build/src/index/index.d.ts",
-      "import": "./build/src/index/index.js"
-    },
-    "./merkle-tree": {
-      "types": "./build/src/merkle-tree/index.d.ts",
-      "import": "./build/src/merkle-tree/index.js"
-    },
-    "./storage-engine": {
-      "types": "./build/src/storage-engine/index.d.ts",
-      "import": "./build/src/storage-engine/index.js"
-    }
-  },
   "lint-staged": {
     "**/*": [
       "eslint src/* --fix",
