@@ -6,7 +6,7 @@ export async function getNextTaskId(): Promise<string | null> {
     const task = await modelQueueTask.getLatestQueuedTaskByDatabase(session);
 
     if (task) {
-      await modelQueueTask.markTaskAsExecuting(task.merkleIndex, { session });
+      await modelQueueTask.markTaskAsExecuting(task._id, { session });
       return task._id.toString();
     }
 

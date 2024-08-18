@@ -3,6 +3,7 @@ import {
   Filter,
   FindOptions,
   InsertOneOptions,
+  ObjectId,
   UpdateOptions,
   WithId,
 } from 'mongodb';
@@ -163,35 +164,35 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   }
 
   public async markTaskAsExecuting(
-    merkleIndex: bigint,
+    taskId: ObjectId,
     options?: UpdateOptions
   ): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { merkleIndex },
+      { _id: taskId  },
       { $set: { status: 'executing' } },
       options
     );
   }
 
   public async markTaskProcessed(
-    merkleIndex: bigint,
+    taskId: ObjectId,
     options?: UpdateOptions
   ): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { merkleIndex },
+      { _id: taskId  },
       { $set: { status: 'proved' } },
       options
     );
   }
 
   public async markTaskAsError(
-    merkleIndex: bigint,
+    taskId: ObjectId,
     errorMessage: string,
     options?: UpdateOptions
   ): Promise<void> {
@@ -199,7 +200,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { merkleIndex },
+      { _id: taskId },
       { $set: { status: 'error', error: errorMessage } },
       options
     );
