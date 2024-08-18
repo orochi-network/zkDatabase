@@ -1,10 +1,12 @@
 import { signIn, signOut, signUp, setJwtPayloadFunction } from '@zkdb/api';
 import storage from '../storage/storage.js';
-import { IStorage } from '../storage/interface/storage.js';
 import { SignedData } from '../../types/signing.js';
+import { Signer } from '../signer/interface/signer.js';
 
-export abstract class BaseAuthenticator {
-  constructor() {
+export class Authenticator {
+  private signer: Signer;
+
+  constructor(signer: Signer) {
     setJwtPayloadFunction(() => {
       const session = storage.getSession();
       const userInfo = storage.getUserInfo();
@@ -20,22 +22,46 @@ export abstract class BaseAuthenticator {
       }
       return null;
     });
+
+    this.signer = signer;
   }
 
   isLoggedIn(): boolean {
     return storage.getSession() !== null;
   }
 
-  protected async sendLoginRequest(email: string, proof: SignedData) {
+  async login(email: string) {
+    const signInProof = await this.getSigner().signMessage(
+      JSON.stringify({
+        email,
+        timestamp: Math.floor(Date.now() / 1000),
+      })
+    );
+
+    await this.sendLoginRequest(email, signInProof);
+  }
+
+  async register(userName: string, email: string) {
+    const signUpProof = await this.getSigner().signMessage(
+      JSON.stringify({
+        userName,
+        email,
+      })
+    );
+
+    await this.sendRegistrationRequest(email, userName, signUpProof)
+  }
+
+  private async sendLoginRequest(email: string, proof: SignedData) {
     const result = await signIn(email, proof);
 
     if (result.type === 'success') {
-      this.getStorage().setSession({
+      storage.setSession({
         sessionId: result.data.session.sessionId,
         sessionKey: result.data.session.sessionKey,
       });
 
-      this.getStorage().setUserInfo({
+      storage.setUserInfo({
         email: result.data.user.email,
         userName: result.data.user.userName,
         publicKey: result.data.user.publicKey,
@@ -45,7 +71,7 @@ export abstract class BaseAuthenticator {
     }
   }
 
-  protected async sendRegistrationRequest(
+  private async sendRegistrationRequest(
     email: string,
     userName: string,
     proof: SignedData
@@ -64,15 +90,19 @@ export abstract class BaseAuthenticator {
     }
   }
 
-  protected getStorage(): IStorage {
-    return storage;
-  }
-
   async logOut(): Promise<void> {
     try {
       await signOut();
     } finally {
       storage.clear();
     }
+  }
+
+  private getSigner(): Signer {
+    if (this.signer === undefined) {
+      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first')
+    }
+
+    return this.signer;
   }
 }
