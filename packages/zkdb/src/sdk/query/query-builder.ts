@@ -1,5 +1,5 @@
-type StringOperator = 'eq' | 'ne' | 'contains';
-type NumberOperator = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte';
+export type StringOperator = 'eq' | 'ne' | 'contains';
+export type NumberOperator = 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte';
 
 export type Condition<T> = {
   field: keyof T;
@@ -19,7 +19,7 @@ export type QueryOptions<T> = {
   offset?: number;
 };
 
-type OperatorFor<T> = T extends string
+export type OperatorFor<T> = T extends string
   ? StringOperator
   : T extends number
     ? NumberOperator
