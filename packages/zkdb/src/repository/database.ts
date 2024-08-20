@@ -2,6 +2,7 @@ import {
   listDatabases,
   getDatabaseSettings as getDatabaseSettingsRequest,
   createDatabase as createDatabaseRequest,
+  changeDatabaseOwner as changeDatabaseOwnerRequest
 } from '@zkdb/api';
 import {
   Database,
@@ -57,3 +58,18 @@ export async function createDatabase(
     throw Error(result.message);
   }
 }
+
+export async function changeDatabaseOwner(
+  databaseName: string,
+  newOwner: string,
+) {
+  const result = await changeDatabaseOwnerRequest(
+    databaseName,
+    newOwner
+  );
+
+  if (result.type === 'error') {
+    throw Error(result.message);
+  }
+}
+

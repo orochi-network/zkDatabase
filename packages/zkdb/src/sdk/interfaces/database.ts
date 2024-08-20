@@ -25,4 +25,6 @@ export interface ZKDatabase {
 
   groups(): Promise<GroupDescription[]>;
   getSettings(): Promise<DatabaseSettings>;
+
+  changeOwner(newOwner: string): Promise<void>
 }

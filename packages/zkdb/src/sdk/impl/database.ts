@@ -7,7 +7,7 @@ import { SchemaDefinition } from '../schema.js';
 import { CollectionQueryImpl } from './collection.js';
 import { ZKGroupImpl } from './group.js';
 import { createCollection } from '../../repository/collection.js';
-import { createDatabase, getDatabaseSettings } from '../../repository/database.js';
+import { changeDatabaseOwner, createDatabase, getDatabaseSettings } from '../../repository/database.js';
 import { ZKGroup } from '../interfaces/group.js';
 import { Permissions } from '../../types/permission.js';
 import { GroupDescription } from '../../types/group.js';
@@ -55,5 +55,9 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
   async getSettings(): Promise<DatabaseSettings> {
     return getDatabaseSettings(this.databaseName);
+  }
+
+  async changeOwner(newOwner: string): Promise<void> {
+    return changeDatabaseOwner(this.databaseName, newOwner)
   }
 }
