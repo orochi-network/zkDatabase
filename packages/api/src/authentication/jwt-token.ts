@@ -11,7 +11,7 @@ async function generateJwtToken(payload: JwtPayload): Promise<string | null> {
   })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("60s")
+    .setExpirationTime("5m")
     .sign(decodedSessionKey);
 }
 

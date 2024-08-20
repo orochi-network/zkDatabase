@@ -1,10 +1,9 @@
-import { assert, CircuitString, Mina, PrivateKey, PublicKey } from 'o1js';
+import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
 import {
   ZKDatabaseClient,
   Signer,
   NodeSigner,
   AuroWalletSigner,
-  Schema,
   QueryBuilder,
   DatabaseSearch,
 } from 'zkdb';
