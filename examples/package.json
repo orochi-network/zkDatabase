@@ -46,6 +46,7 @@
     "typescript": "^5.5.4"
   },
   "peerDependencies": {
-    "o1js": "1.1.*"
+    "o1js": "1.1.*",
+    "zkdb": "^1.0.0"
   }
 }
