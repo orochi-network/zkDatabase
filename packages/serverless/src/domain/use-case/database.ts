@@ -1,4 +1,9 @@
-import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  DbSetting,
+  ModelDatabase,
+  ModelDbSetting,
+} from '@zkdb/storage';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -7,11 +12,13 @@ import { Database } from '../types/database.js';
 import { Pagination } from '../types/pagination.js';
 import { QueryOptions } from '../types/search.js';
 import filterItems from '../query/array-filter.js';
+import { isUserExist } from './user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
+  actor: string,
   appPublicKey: string
 ) {
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
@@ -25,6 +32,7 @@ export async function createDatabase(
   await ModelDbSetting.getInstance(databaseName).updateSetting({
     merkleHeight,
     appPublicKey,
+    databaseOwner: actor,
   });
   return true;
 }
@@ -64,4 +72,52 @@ export async function getDatabases(
   );
 
   return filterItems<Database>(databases, query, 10);
+}
+
+export async function getDatabaseSetting(
+  databaseName: string
+): Promise<DbSetting> {
+  const setting = await ModelDbSetting.getInstance(databaseName).getSetting();
+
+  if (setting) {
+    return setting;
+  }
+
+  throw Error('Setting has not been found');
+}
+
+export async function isDatabaseOwner(
+  databaseName: string,
+  actor: string
+): Promise<boolean> {
+  const setting = await ModelDbSetting.getInstance(databaseName).getSetting();
+
+  if (setting) {
+    return setting.databaseOwner === actor;
+  }
+
+  throw Error('Setting has not been found');
+}
+
+export async function changeDatabaseOwner(
+  databaseName: string,
+  actor: string,
+  newOwner: string
+): Promise<boolean> {
+  const dbSetting = await getDatabaseSetting(databaseName);
+  const dbOwner = dbSetting.databaseOwner;
+
+  if (actor === dbOwner) {
+    if (await isUserExist(newOwner)) {
+      const result = await ModelDbSetting.getInstance(databaseName).updateSetting({
+        databaseOwner: newOwner,
+      });
+
+      return result.acknowledged
+    }
+
+    throw Error(`User ${newOwner} does not exist`);
+  }
+
+  throw Error('You do not have permission to change the db owner');
 }

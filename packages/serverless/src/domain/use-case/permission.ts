@@ -9,11 +9,9 @@ import {
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission.js';
 import { checkUserGroupMembership } from './group.js';
-import {
-  FullPermissions,
-  PermissionGroup
-} from '../types/permission.js';
+import { FullPermissions, PermissionGroup } from '../types/permission.js';
 import logger from '../../helper/logger.js';
+import { isDatabaseOwner } from './database.js';
 
 async function fetchPermissionDetails(
   databaseName: string,
@@ -66,6 +64,10 @@ async function checkPermission(
   isDocument: boolean,
   session?: ClientSession
 ): Promise<boolean> {
+  if (await isDatabaseOwner(databaseName, actor)) {
+    return true;
+  }
+  
   const permission = await readPermission(
     databaseName,
     collectionName,

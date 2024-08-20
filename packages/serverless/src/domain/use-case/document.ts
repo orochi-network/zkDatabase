@@ -35,6 +35,7 @@ import { getUsersGroup } from './group.js';
 import { Pagination } from '../types/pagination.js';
 import { SearchInput } from '../types/search.js';
 import buildMongoQuery from '../query/mongodb-filter.js';
+import { getDatabaseSetting, isDatabaseOwner } from './database.js';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -402,6 +403,66 @@ async function deleteDocument(
   return witness;
 }
 
+function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
+  return [
+    {
+      $lookup: {
+        from: zkDatabaseConstants.databaseCollections.permission,
+        let: { docId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$docId', '$$docId'] },
+            },
+          },
+          {
+            $project: {
+              permissionOwner: true,
+              permissionGroup: true,
+              permissionOther: true,
+              merkleIndex: true,
+              group: true,
+              owner: true,
+            },
+          },
+        ],
+        as: 'metadata',
+      },
+    },
+    {
+      $unwind: '$metadata',
+    },
+    {
+      $match: matchQuery,
+    },
+    {
+      $skip: pagination?.offset || 0,
+    },
+    {
+      $limit: pagination?.limit || 10,
+    },
+  ];
+}
+
+function filterDocumentsByPermissions(
+  documents: Array<any>,
+  actor: string,
+  userGroups: Array<string>
+): Array<any> {
+  return documents.filter(({ metadata }) => {
+    if (!metadata) return false;
+    if (metadata.owner === actor) {
+      return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+        .read;
+    }
+    if (userGroups.includes(metadata.group)) {
+      return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+        .read;
+    }
+    return PermissionBinary.fromBinaryPermission(metadata.permissionOther).read;
+  });
+}
+
 async function searchAggregatedDocuments(
   databaseName: string,
   collectionName: string,
@@ -430,64 +491,23 @@ async function searchAggregatedDocuments(
 
     const matchQuery = buildMongoQuery(query);
 
-    const pipeline = [
-      {
-        $lookup: {
-          from: zkDatabaseConstants.databaseCollections.permission,
-          let: { docId: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ['$docId', '$$docId'] },
-              },
-            },
-            {
-              $project: {
-                permissionOwner: true,
-                permissionGroup: true,
-                permissionOther: true,
-                merkleIndex: true,
-                group: true,
-                owner: true,
-              },
-            },
-          ],
-          as: 'metadata',
-        },
-      },
-      {
-        $unwind: '$metadata',
-      },
-      {
-        $match: matchQuery,
-      },
-      {
-        $skip: pagination ? pagination.offset : 0,
-      },
-      {
-        $limit: pagination ? pagination.limit : 10,
-      },
-    ];
+    const pipeline = buildPipeline(matchQuery, pagination);
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
       .toArray();
 
-    const filteredDocuments = documentsWithMetadata.filter(({ metadata }) => {
-      if (!metadata) {
-        return false;
-      }
-      if (metadata.owner === actor) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
-          .read;
-      }
-      if (userGroups.includes(metadata.group)) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-          .read;
-      }
-      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
-        .read;
-    });
+    let filteredDocuments: any[];
+    
+    if (!(await isDatabaseOwner(databaseName, actor))) {
+      filteredDocuments = filterDocumentsByPermissions(
+        documentsWithMetadata,
+        actor,
+        userGroups
+      );
+    } else {
+      filteredDocuments = documentsWithMetadata;
+    }
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
       const document: Document = Object.keys(documentRecord)
@@ -511,7 +531,6 @@ async function searchAggregatedDocuments(
           document,
         },
 
-        
         metadata: {
           merkleIndex: documentRecord.metadata.merkleIndex,
           group: documentRecord.metadata.group,
@@ -566,64 +585,23 @@ async function searchDocuments(
 
     const matchQuery = buildMongoQuery(query);
 
-    const pipeline = [
-      {
-        $lookup: {
-          from: zkDatabaseConstants.databaseCollections.permission,
-          let: { docId: '$_id' },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $eq: ['$docId', '$$docId'] },
-              },
-            },
-            {
-              $project: {
-                permissionOwner: true,
-                permissionGroup: true,
-                permissionOther: true,
-                merkleIndex: true,
-                group: true,
-                owner: true,
-              },
-            },
-          ],
-          as: 'metadata',
-        },
-      },
-      {
-        $unwind: '$metadata',
-      },
-      {
-        $match: matchQuery,
-      },
-      {
-        $skip: pagination ? pagination.offset : 0,
-      },
-      {
-        $limit: pagination ? pagination.limit : 10,
-      },
-    ];
+    const pipeline = buildPipeline(matchQuery, pagination);
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
       .toArray();
 
-    const filteredDocuments = documentsWithMetadata.filter(({ metadata }) => {
-      if (!metadata) {
-        return false;
-      }
-      if (metadata.owner === actor) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
-          .read;
-      }
-      if (userGroups.includes(metadata.group)) {
-        return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-          .read;
-      }
-      return PermissionBinary.fromBinaryPermission(metadata.permissionOther)
-        .read;
-    });
+    let filteredDocuments: any[];
+
+    if (!(await isDatabaseOwner(databaseName, actor))) {
+      filteredDocuments = filterDocumentsByPermissions(
+        documentsWithMetadata,
+        actor,
+        userGroups
+      );
+    } else {
+      filteredDocuments = documentsWithMetadata;
+    }
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
       const document: Document = Object.keys(documentRecord)

@@ -52,7 +52,7 @@ describe('Document Management Integration Tests', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, "", PUBLIC_KEY);
   });
 
   afterEach(async () => {

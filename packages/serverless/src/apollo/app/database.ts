@@ -2,8 +2,9 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import resolverWrapper from '../validation.js';
-import { databaseName, pagination, publicKey } from './common.js';
+import { databaseName, pagination, publicKey, userName } from './common.js';
 import {
+  changeDatabaseOwner,
   createDatabase,
   getDatabases,
 } from '../../domain/use-case/database.js';
@@ -30,10 +31,19 @@ export type TFindIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
+export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
+  newOwner: string;
+};
+
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
   publicKey,
+});
+
+const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
+  databaseName,
+  newOwner: userName
 });
 
 export const typeDefsDatabase = `#graphql
@@ -83,6 +93,7 @@ extend type Query {
 
 extend type Mutation {
   dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
+  dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
@@ -154,8 +165,23 @@ const dbSetting = resolverWrapper(
 // Mutation
 const dbCreate = resolverWrapper(
   DatabaseCreateRequest,
-  async (_root: unknown, args: TDatabaseCreateRequest) =>
-    createDatabase(args.databaseName, args.merkleHeight, args.publicKey)
+  async (_root: unknown, args: TDatabaseCreateRequest, _ctx: AppContext) =>
+    createDatabase(
+      args.databaseName,
+      args.merkleHeight,
+      _ctx.userName,
+      args.publicKey
+    )
+);
+
+const dbChangeOwner = resolverWrapper(
+  DatabaseChangeOwnerRequest,
+  async (_root: unknown, args: TDatabaseChangeOwnerRequest, _ctx: AppContext) =>
+    changeDatabaseOwner(
+      args.databaseName,
+      _ctx.userName,
+      args.newOwner
+    )
 );
 
 type TDatabaseResolver = {
@@ -167,6 +193,7 @@ type TDatabaseResolver = {
   };
   Mutation: {
     dbCreate: typeof dbCreate;
+    dbChangeOwner: typeof dbChangeOwner;
   };
 };
 
@@ -179,5 +206,6 @@ export const resolversDatabase: TDatabaseResolver = {
   },
   Mutation: {
     dbCreate,
+    dbChangeOwner
   },
 };

@@ -26,3 +26,9 @@ export async function searchUsers(
     })
   ).toArray();
 }
+
+export async function isUserExist(userName: string): Promise<boolean> {
+  const modelUser = new ModelUser();
+
+  return (await modelUser.find({ userName })) !== null;
+}
