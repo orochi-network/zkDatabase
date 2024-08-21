@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import { join } from "path";
 import { buildCircuitCache } from "@zkdb/smart-contract";
+import logger from "./helper/logger";
 
 const ftpRoot = join(process.cwd(), "ftp-root");
 
@@ -11,9 +12,9 @@ const createUserDatabaseCache = async (basePath: string) => {
 const populateFTP = async () => {
   await fs.mkdir(ftpRoot, { recursive: true });
   await createUserDatabaseCache(ftpRoot);
-  console.log("FTP server populated with files and directories.");
+  logger.info("FTP server populated with files and directories.");
 };
 
 populateFTP().catch((err) => {
-  console.error("Error populating FTP server:", err);
+  logger.error("Error populating FTP server:", err);
 });
