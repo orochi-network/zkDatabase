@@ -77,6 +77,14 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     return result.toArray();
   }
 
+  public async areUsersExist(userNames: string[]) {
+    const users = await this.collection.find({
+      userName: { $in: userNames },
+    }).toArray();
+
+    return userNames.length === users.length;
+  }
+
   public async create(
     userName: string,
     email: string,

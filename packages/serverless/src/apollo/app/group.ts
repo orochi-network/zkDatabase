@@ -17,6 +17,7 @@ import {
   excludeUsersToGroup,
   changeGroupDescription,
   createGroup,
+  renameGroup,
 } from '../../domain/use-case/group.js';
 import { AppContext } from '../../common/types.js';
 
@@ -158,20 +159,16 @@ const groupRename = resolverWrapper(
     groupName,
     newGroupName: groupName,
   }),
-  async (_root: unknown, args: TGroupRenameRequest) => {
-    const modelUserGroup = new ModelGroup(args.databaseName);
-    const group = await modelUserGroup.findGroup(args.groupName);
-    if (group) {
-      // TODO: Check database owner
-      await modelUserGroup.collection.updateOne(
-        {
-          groupName: args.groupName,
-        },
-        { $set: { groupName: args.newGroupName } }
-      );
-    }
-    throw Error(`Group ${args.groupName} does not exist`);
-  }
+  async (_root: unknown, args: TGroupRenameRequest, ctx: AppContext) =>
+    withTransaction(async (session) =>
+      renameGroup(
+        args.databaseName,
+        ctx.userName,
+        args.groupName,
+        args.newGroupName,
+        session
+      )
+    )
 );
 
 const groupCreate = resolverWrapper(

@@ -13,6 +13,7 @@ import { Pagination } from '../types/pagination.js';
 import { QueryOptions } from '../types/search.js';
 import filterItems from '../query/array-filter.js';
 import { isUserExist } from './user.js';
+import { ClientSession } from 'mongodb';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -88,9 +89,12 @@ export async function getDatabaseSetting(
 
 export async function isDatabaseOwner(
   databaseName: string,
-  actor: string
+  actor: string,
+  session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDbSetting.getInstance(databaseName).getSetting();
+  const setting = await ModelDbSetting.getInstance(databaseName).getSetting({
+    session,
+  });
 
   if (setting) {
     return setting.databaseOwner === actor;
@@ -109,11 +113,13 @@ export async function changeDatabaseOwner(
 
   if (actor === dbOwner) {
     if (await isUserExist(newOwner)) {
-      const result = await ModelDbSetting.getInstance(databaseName).updateSetting({
+      const result = await ModelDbSetting.getInstance(
+        databaseName
+      ).updateSetting({
         databaseOwner: newOwner,
       });
 
-      return result.acknowledged
+      return result.acknowledged;
     }
 
     throw Error(`User ${newOwner} does not exist`);

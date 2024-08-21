@@ -1,6 +1,8 @@
 import { ClientSession } from 'mongodb';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
+import { isDatabaseOwner } from './database.js';
+import { areUsersExist } from './user.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -21,22 +23,26 @@ async function createGroup(
   groupDescription?: string,
   session?: ClientSession
 ): Promise<boolean> {
-  if (await isGroupExist(databaseName, groupName, session)) {
-    throw Error(
-      `Group ${groupName} is already exist for database ${databaseName}`
+  if (await isDatabaseOwner(databaseName, actor)) {
+    if (await isGroupExist(databaseName, groupName, session)) {
+      throw Error(
+        `Group ${groupName} is already exist for database ${databaseName}`
+      );
+    }
+
+    const modelGroup = new ModelGroup(databaseName);
+
+    const group = await modelGroup.createGroup(
+      groupName,
+      groupDescription,
+      actor,
+      { session }
     );
+
+    return group != null;
   }
 
-  const modelGroup = new ModelGroup(databaseName);
-
-  const group = await modelGroup.createGroup(
-    groupName,
-    groupDescription,
-    actor,
-    { session }
-  );
-
-  return group != null;
+  throw Error('Only database owner allowed to create group')
 }
 
 async function checkUserGroupMembership(
@@ -79,26 +85,29 @@ async function changeGroupDescription(
   newGroupDescription: string,
   session?: ClientSession
 ): Promise<boolean> {
-  // TODO: Check Database Ownership
-  const modelGroup = new ModelGroup(databaseName);
-  const group = await modelGroup.findGroup(groupName, session);
+  if (await isDatabaseOwner(databaseName, actor, session)) {
+    const modelGroup = new ModelGroup(databaseName);
+    const group = await modelGroup.findGroup(groupName, session);
 
-  if (group) {
-    // TODO: We can update without searching for the group first
-    const result = await modelGroup.updateOne(
-      {
-        _id: (group as any)._id,
-      },
-      {
-        $set: { description: newGroupDescription },
-      },
-      { session }
-    );
+    if (group) {
+      // TODO: We can update without searching for the group first
+      const result = await modelGroup.updateOne(
+        {
+          _id: (group as any)._id,
+        },
+        {
+          $set: { description: newGroupDescription },
+        },
+        { session }
+      );
 
-    return result.modifiedCount === 1;
+      return result.modifiedCount === 1;
+    }
+
+    throw Error(`Group ${group} does not exist`);
   }
 
-  throw Error(`Group ${group} does not exist`);
+  throw Error('Only database owner allowed to change description of group');
 }
 
 async function addUsersToGroup(
@@ -108,21 +117,27 @@ async function addUsersToGroup(
   users: string[],
   session?: ClientSession
 ): Promise<boolean> {
-  // TODO: Check Database Ownership
-  const modelGroup = new ModelGroup(databaseName);
-  const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+  if (await isDatabaseOwner(databaseName, actor, session)) {
+    const modelGroup = new ModelGroup(databaseName);
+    const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
-  // TODO: Check if user exists
-  if (groupExist) {
-    const modelUserGroup = new ModelUserGroup(databaseName);
-    const result = await modelUserGroup.addUsersToGroup(users, group, {
-      session,
-    });
+    if (groupExist) {
+      if (await areUsersExist(users)) {
+        const modelUserGroup = new ModelUserGroup(databaseName);
+        const result = await modelUserGroup.addUsersToGroup(users, group, {
+          session,
+        });
 
-    return result.isOk();
+        return result.isOk();
+      }
+
+      throw Error('Some of users do not exist');
+    }
+
+    throw Error(`Group ${group} does not exist`);
   }
 
-  throw Error(`Group ${group} does not exist`);
+  throw Error('Only database owner allowed to add users to group');
 }
 
 async function excludeUsersToGroup(
@@ -132,24 +147,52 @@ async function excludeUsersToGroup(
   users: string[],
   session?: ClientSession
 ): Promise<boolean> {
-  // TODO: Check Database Ownership
-  const modelGroup = new ModelGroup(databaseName);
-  const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+  if (await isDatabaseOwner(databaseName, actor, session)) {
+    const modelGroup = new ModelGroup(databaseName);
+    const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
-  // TODO: Check if user exists
+    if (groupExist) {
+      if (await areUsersExist(users)) {
+        const modelUserGroup = new ModelUserGroup(databaseName);
+        const result = await modelUserGroup.removeUsersFromGroup(users, group, {
+          session,
+        });
 
-  if (groupExist) {
-    const modelUserGroup = new ModelUserGroup(databaseName);
-    const result = await modelUserGroup.removeUsersFromGroup(users, group, {
-      session,
-    });
+        return result.isOk();
+      }
 
-    return result.isOk();
+      throw Error('Some of users do not exist');
+    }
+
+    throw Error(`Group ${group} does not exist`);
   }
 
-  throw Error(`Group ${group} does not exist`);
+  throw Error('Only database owner allowed to exclude users from group');
 }
 
+async function renameGroup(
+  databaseName: string,
+  actor: string,
+  groupName: string,
+  newGroupName: string,
+  session?: ClientSession
+) {
+  if (await isDatabaseOwner(databaseName, actor, session)) {
+    const modelUserGroup = new ModelGroup(databaseName);
+    const group = await modelUserGroup.findGroup(groupName);
+    if (group) {
+      await modelUserGroup.collection.updateOne(
+        {
+          groupName,
+        },
+        { $set: { groupName: newGroupName } }
+      );
+    }
+    throw Error(`Group ${groupName} does not exist`);
+  }
+
+  throw Error('Only database owner allowed to rename group');
+}
 
 async function getUsersGroup(
   databaseName: string,
@@ -171,4 +214,5 @@ export {
   createGroup,
   checkUserGroupMembership,
   changeGroupDescription,
+  renameGroup,
 };

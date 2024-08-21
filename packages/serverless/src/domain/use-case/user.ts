@@ -32,3 +32,9 @@ export async function isUserExist(userName: string): Promise<boolean> {
 
   return (await modelUser.find({ userName })) !== null;
 }
+
+export async function areUsersExist(userNames: string[]) {
+  const modelUser = new ModelUser();
+
+  return modelUser.areUsersExist(userNames);
+}
