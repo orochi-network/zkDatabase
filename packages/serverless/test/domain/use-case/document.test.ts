@@ -6,11 +6,11 @@ import {
   deleteDocument,
   readDocument,
   updateDocument,
-} from '../../../src/domain/use-case/document';
-import { createCollection } from '../../../src/domain/use-case/collection';
-import { createDatabase } from '../../../src/domain/use-case/database';
-import { config } from '../../../src/helper/config';
-import { Schema, SchemaEncoded } from '../../../src/domain/common/schema';
+} from '../../../src/domain/use-case/document.js';
+import { createCollection } from '../../../src/domain/use-case/collection.js';
+import { createDatabase } from '../../../src/domain/use-case/database.js';
+import { config } from '../../../src/helper/config.js';
+import { Schema, SchemaEncoded } from '../../../src/domain/common/schema.js';
 
 const DB_NAME = 'test-db';
 const TEST_COLLECTION = 'users';
@@ -52,7 +52,7 @@ describe('Document Management Integration Tests', () => {
 
   beforeEach(async () => {
     await dropDatabases();
-    await createDatabase(DB_NAME, MERKLE_HEIGHT, PUBLIC_KEY);
+    await createDatabase(DB_NAME, MERKLE_HEIGHT, "", PUBLIC_KEY);
   });
 
   afterEach(async () => {

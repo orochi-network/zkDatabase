@@ -1,8 +1,9 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
-import client from "../../client";
-import { DocumentEncoded } from "../../types/document";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { MerkleWitness } from "../../types/merkle-tree.js";
+import client from "../../client.js";
+import { DocumentEncoded } from "../../types/document.js";
 
 const UPDATE_DOCUMENT = gql`
   mutation DocumentUpdate(
@@ -23,33 +24,21 @@ const UPDATE_DOCUMENT = gql`
   }
 `;
 
-interface DocumentResponse {
-  witness: MerkleWitness;
-}
-
 export const updateDocument = async (
   databaseName: string,
   collectionName: string,
   documentQuery: JSON,
-  documentRecord: DocumentEncoded,
-  token: string
+  documentRecord: DocumentEncoded
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{
-      documentUpdate: DocumentResponse;
-    }>({
+    const { data, errors } = await client.mutate({
       mutation: UPDATE_DOCUMENT,
       variables: {
         databaseName,
         collectionName,
         documentQuery,
         documentRecord,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentUpdate;
@@ -57,7 +46,7 @@ export const updateDocument = async (
     if (response) {
       return {
         type: "success",
-        data: response.witness,
+        data: response as any,
       };
     } else {
       return {

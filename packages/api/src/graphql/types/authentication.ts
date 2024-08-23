@@ -1,16 +1,11 @@
-import { Session } from "./session";
-import { Signature } from "./signature";
-import { User } from "./user";
+import { Session } from "./session.js";
+import { Signature } from "./signature.js";
+import { User } from "./user.js";
 
 export type SignInInfo = {
   user: User,
   session: Session
   userData: any;
-}
-
-export type SignUpInfo = {
-  user: User,
-  publicKey: string
 }
 
 export type SignatureProofData = {

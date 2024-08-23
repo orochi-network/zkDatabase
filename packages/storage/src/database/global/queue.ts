@@ -3,12 +3,14 @@ import {
   Filter,
   FindOptions,
   InsertOneOptions,
+  ObjectId,
+  UpdateOptions,
   WithId,
 } from 'mongodb';
-import ModelBasic from '../base/basic.js';
 import { zkDatabaseConstants } from '../../common/const.js';
+import ModelGeneral from '../base/general.js';
 
-export type Status = 'queued' | 'executing' | 'success' | 'error';
+export type Status = 'queued' | 'executing' | 'proved' | 'error';
 
 export type TaskEntity = {
   merkleIndex: bigint;
@@ -17,9 +19,11 @@ export type TaskEntity = {
   createdAt: Date;
   database: string;
   collection: string;
+  docId: string;
+  error?: string;
 };
 
-export class ModelQueueTask extends ModelBasic<TaskEntity> {
+export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -92,7 +96,7 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
           {
             $sort: {
               database: 1,
-              createdAt: -1,
+              createdAt: 1,
             },
           },
           {
@@ -110,6 +114,24 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
       .toArray();
 
     return latestQueuedTasks[0] as WithId<TaskEntity>;
+  }
+
+  public async getTasksByCollection(
+    collectionName: string
+  ): Promise<TaskEntity[] | null> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+
+    try {
+      const result = await this.collection
+        .find({ collection: collectionName })
+        .toArray();
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch tasks', error);
+      return null;
+    }
   }
 
   public async getNewTask(options?: FindOptions): Promise<TaskEntity | null> {
@@ -141,13 +163,46 @@ export class ModelQueueTask extends ModelBasic<TaskEntity> {
     return task;
   }
 
-  public async markTaskProcessed(merkleIndex: bigint): Promise<void> {
+  public async markTaskAsExecuting(
+    taskId: ObjectId,
+    options?: UpdateOptions
+  ): Promise<void> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { merkleIndex },
-      { $set: { status: 'success' } }
+      { _id: taskId  },
+      { $set: { status: 'executing' } },
+      options
+    );
+  }
+
+  public async markTaskProcessed(
+    taskId: ObjectId,
+    options?: UpdateOptions
+  ): Promise<void> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+    await this.collection.updateOne(
+      { _id: taskId  },
+      { $set: { status: 'proved' } },
+      options
+    );
+  }
+
+  public async markTaskAsError(
+    taskId: ObjectId,
+    errorMessage: string,
+    options?: UpdateOptions
+  ): Promise<void> {
+    if (!this.collection) {
+      throw new Error('TaskQueue is not connected to the database.');
+    }
+    await this.collection.updateOne(
+      { _id: taskId },
+      { $set: { status: 'error', error: errorMessage } },
+      options
     );
   }
 }

@@ -1,23 +1,28 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "target": "es2020",
     "module": "NodeNext",
     "lib": ["dom", "esnext"],
     "outDir": "./build",
-    "rootDir": ".",
+    "rootDir": "src",
     "declarationMap": false,
     "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
     "moduleResolution": "nodenext",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "declaration": false,
+    "declaration": true,
     "sourceMap": true,
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
-    "paths": {}
+    "baseUrl": ".",
+    "paths": {
+      "@o1js/*": ["../../node_modules/o1js/dist/node/lib/provable/*"]
+    }
   },
+  "references": [{ "path": "../api" }, { "path": "../smart-contract" }],
   "include": ["./src"],
   "exclude": [
     "./node_modules",

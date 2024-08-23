@@ -1,7 +1,15 @@
-import { ModelQueueTask } from "@zkdb/storage";
+import { ModelQueueTask, withTransaction } from "@zkdb/storage";
 
-export async function getNextTaskId(): Promise<string | undefined> {
-  const task = await ModelQueueTask.getInstance().getLatestQueuedTaskByDatabase();
+export async function getNextTaskId(): Promise<string | null> {
+  return withTransaction(async (session) => {
+    const modelQueueTask = ModelQueueTask.getInstance();
+    const task = await modelQueueTask.getLatestQueuedTaskByDatabase(session);
 
-  return task?._id?.toString();
+    if (task) {
+      await modelQueueTask.markTaskAsExecuting(task._id, { session });
+      return task._id.toString();
+    }
+
+    return null;
+  });
 }

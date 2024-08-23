@@ -1,6 +1,12 @@
 import {
+  AccountUpdate,
+  Bool,
   Field,
+  JsonProof,
   MerkleTree,
+  Mina,
+  PrivateKey,
+  Provable,
   PublicKey,
   Reducer,
   SmartContract,
@@ -9,53 +15,60 @@ import {
   method,
   state,
 } from 'o1js';
-import { RollUpProgram } from '../proof/proof-program.js';
-import { Action } from '../archive-node/action.js';
+import { DatabaseRollUp, RollUpProgram } from '../proof/proof-program.js';
+import { MinaTransaction } from '../types/transaction.js';
 
-export function getZkDbSmartContract(
-  databaseName: string,
-  merkleHeight: number
+export type ZKDatabaseSmartContractClass = ReturnType<
+  typeof getZkDbSmartContractClass
+>;
+
+export function getZkDbSmartContractClass(
+  merkleHeight: number,
+  rollUpProgram: DatabaseRollUp
 ) {
   const dummyMerkleTree = new MerkleTree(merkleHeight);
 
-  const zkdbProgram = RollUpProgram(databaseName, merkleHeight);
+  class ZkDbProof extends ZkProgram.Proof(rollUpProgram) {}
 
-  class ZkDbProof extends ZkProgram.Proof(zkdbProgram) {}
-
-  class _ extends SmartContract {
-    @state(Field) state = State<Field>();
+  class ZkDbSmartContract extends SmartContract {
+    @state(Field) currentState = State<Field>();
+    @state(Field) prevState = State<Field>();
     @state(Field) actionState = State<Field>();
 
-    reducer = Reducer({ actionType: Action });
-
     init() {
-      this.state.set(dummyMerkleTree.getRoot());
-      this.actionState.set(Reducer.initialActionState);
-    }
-
-    @method async apply(action: Action) {
-      this.reducer.dispatch(action);
+      super.init();
+      this.currentState.set(dummyMerkleTree.getRoot());
+      this.prevState.set(Field(0));
     }
 
     @method async rollUp(proof: ZkDbProof) {
-      this.state.getAndRequireEquals();
-      this.actionState.getAndRequireEquals();
-
       proof.verify();
 
-      this.state.requireEquals(proof.publicInput.rootState);
-      this.actionState.requireEquals(proof.publicInput.actionState);
+      const currentState = this.currentState.getAndRequireEquals();
+      const prevState = this.prevState.getAndRequireEquals();
 
-      // If we have no error we can guarantee that action state is trustworthy
-      this.reducer.getActions({
-        fromActionState: this.actionState.get(),
-        endActionState: proof.publicOutput.actionState,
-      });
+      Provable.if(
+        proof.publicOutput.isTransition,
+        Bool,
+        proof.publicInput.currentOnChainState
+          .equals(proof.publicOutput.onChainState)
+          .not()
+          .and(proof.publicInput.currentOnChainState.equals(prevState))
+          .and(proof.publicOutput.onChainState.equals(currentState)),
+        proof.publicInput.previousOnChainState
+          .equals(prevState)
+          .and(proof.publicInput.currentOnChainState.equals(currentState))
+          .and(
+            proof.publicInput.currentOnChainState.equals(
+              proof.publicOutput.onChainState
+            )
+          )
+      ).assertTrue();
 
-      this.state.set(proof.publicOutput.rootState);
-      this.actionState.set(proof.publicOutput.actionState);
+      this.prevState.set(currentState);
+      this.currentState.set(proof.publicOutput.newOffChainState);
     }
   }
 
-  return _;
+  return ZkDbSmartContract;
 }

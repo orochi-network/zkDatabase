@@ -24,7 +24,7 @@ export default class CircuitFactory {
       return this.instance.get(name)!;
     }
 
-    const newCircuit = getDatabaseRollUpFunction(name, merkleHeight);
+    const newCircuit = getDatabaseRollUpFunction(merkleHeight);
     await newCircuit.compile();
 
     this.instance.set(name, newCircuit);

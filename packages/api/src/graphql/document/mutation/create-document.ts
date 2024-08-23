@@ -1,8 +1,10 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import { MerkleWitness } from "../../types/merkle-tree";
-import client from "../../client";
-import { DocumentEncoded } from "../../types/document";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { MerkleWitness } from "../../types/merkle-tree.js";
+import client from "../../client.js";
+import { DocumentEncoded } from "../../types/document.js";
+import { Permissions } from "../../types/ownership.js";
 
 const CREATE_DOCUMENT = gql`
   mutation DocumentCreate(
@@ -31,8 +33,7 @@ export const createDocument = async (
   databaseName: string,
   collectionName: string,
   documentRecord: DocumentEncoded,
-  documentPermission: Permissions,
-  token: string
+  documentPermission: Permissions
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -45,11 +46,6 @@ export const createDocument = async (
         documentRecord,
         documentPermission,
       },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
     });
 
     const response = data?.documentCreate;
@@ -57,7 +53,7 @@ export const createDocument = async (
     if (response) {
       return {
         type: "success",
-        data: response.witness,
+        data: response as any,
       };
     } else {
       return {

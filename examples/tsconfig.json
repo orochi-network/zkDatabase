@@ -1,17 +1,18 @@
 {
+  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
+    "target": "ESNext",
+    "module": "ESNext",
     "lib": ["dom", "esnext"],
-    "outDir": "./build",
-    "rootDir": ".",
+    "rootDir": "src",
+    "outDir": "build",
     "strict": true,
     "declarationMap": true,
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
-    "moduleResolution": "nodenext",
+    "moduleResolution": "Node",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "allowJs": true,
@@ -22,6 +23,13 @@
     "baseUrl": "./src",
     "paths": {}
   },
-  "include": ["./src"],
-  "exclude": ["node_modules", "build", "examples"]
+  "references": [{ "path": "../packages/zkdb" }],
+  "include": ["./src/"],
+  "exclude": [
+    "**/build",
+    "**/node_modules",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.js"
+  ]
 }

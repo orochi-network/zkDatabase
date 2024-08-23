@@ -79,15 +79,15 @@ scalar JSON
 type Query
 type Mutation
 
-input Signature {
-    field: String
-    scalar: String
+input SignatureInput {
+  field: String
+  scalar: String
 }
 
-input SignatureProof {
-    signature: Signature
-    publicKey: String
-    data: String
+input ProofInput {
+  signature: SignatureInput
+  publicKey: String
+  data: String
 }
 
 input SignUp {
@@ -108,10 +108,11 @@ type SignUpData {
 type SignInResponse {
     success: Boolean
     error: String
-    userName: String
+    userName: String,
     sessionKey: String
     sessionId: String
     userData: JSON
+    publicKey: String
 }
 
 extend type Query {
@@ -119,9 +120,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  userSignIn(proof: SignatureProof!): SignInResponse
+  userSignIn(proof: ProofInput!): SignInResponse
   userSignOut: Boolean
-  userSignUp(signUp: SignUp!, proof: SignatureProof!): SignUpData
+  userSignUp(signUp: SignUp!, proof: ProofInput!): SignUpData
 }
 `;
 
@@ -138,13 +139,17 @@ const userSignInData = async (
     const user = await new ModelUser().findOne({
       userName: session.userName,
     });
-    return {
-      success: true,
-      sessionKey: session.sessionKey,
-      sessionId: session.sessionId,
-      userName: session.userName,
-      userData: user ? user.userData : null,
-    };
+    if (user) {
+      return {
+        success: true,
+        userName: user.userName,
+        sessionKey: session.sessionKey,
+        sessionId: session.sessionId,
+        userData: user.userData,
+        publicKey: user.publicKey,
+      };
+    }
+    throw new Error('User not found');
   }
   return {
     success: false,
@@ -179,6 +184,7 @@ const userSignIn = resolverWrapper(
             sessionKey: session.sessionKey,
             sessionId: session.sessionId,
             userData: user.userData,
+            publicKey: user.publicKey,
           };
         }
         throw new Error('Cannot create session');
@@ -209,6 +215,7 @@ const userSignUp = resolverWrapper(
         throw new Error('Email does not match');
       }
       const modelUser = new ModelUser();
+      // TODO: Check user existence by public key
       const result = await modelUser.create(
         args.signUp.userName,
         args.signUp.email,

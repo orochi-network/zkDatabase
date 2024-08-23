@@ -4,20 +4,19 @@ import { ObjectId } from 'mongodb';
 import { withTransaction } from '@zkdb/storage';
 import { GraphQLError } from 'graphql';
 import resolverWrapper from '../validation.js';
-import { databaseName, userName, collectionName, objectId } from './common.js';
+import { databaseName, userName, collectionName, objectId, permissionDetail } from './common.js';
 import { TCollectionRequest } from './collection.js';
 import { PermissionRecord } from '../../common/permission.js';
 import { AppContext } from '../../common/types.js';
-import { TPermissionGroup } from '../types/permission.js';
-import { changePermissions } from '../../domain/use-case/permission.js';
+import { FullPermissionsData, TPermissionGroup } from '../types/permission.js';
+import { setPermissions } from '../../domain/use-case/permission.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { TOwnershipGroup } from '../types/ownership.js';
-import { readMetadata } from '../../domain/use-case/metadata.js';
-
-const permissionGroup = Joi.string().valid('User', 'Group', 'Other').required();
+import { readMetadata } from '../../domain/use-case/metadata.js'
+import { getSchemaDefinition } from '../../domain/use-case/schema.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -28,6 +27,10 @@ export type TPermissionRequest = TCollectionRequest & {
 export type TPermissionSetRequest = TPermissionRequest & {
   grouping: TPermissionGroup;
   permission: Partial<PermissionRecord>;
+};
+
+export type TPermissionUpdateRequest = TPermissionRequest & {
+  permission: FullPermissionsData;
 };
 
 export type TPermissionOwnRequest = TPermissionRequest & {
@@ -49,6 +52,13 @@ enum PermissionGroup {
 enum OwnershipGroup {
   User
   Group
+}
+
+type SchemaField {
+  order: Int!
+  name: String!
+  kind: String!
+  indexed: Boolean
 }
 
 input PermissionInput {
@@ -75,6 +85,12 @@ type Permission {
   permissionOther: PermissionRecord
 }
 
+input PermissionInput {
+  permissionOwner: PermissionInput
+  permissionGroup: PermissionInput
+  permissionOther: PermissionInput
+}
+
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(
@@ -82,6 +98,11 @@ extend type Query {
     collectionName: String!
     docId: String
   ): Permission
+
+  collectionSchema(
+    databaseName: String!
+    collectionName: String!
+  ): [SchemaField!]
 }
 
 extend type Mutation {
@@ -89,9 +110,8 @@ extend type Mutation {
     databaseName: String!
     collectionName: String!
     docId: String
-    grouping: PermissionGroup!
     permission: PermissionInput!
-  ): Permission
+  ): Permission!
 
   permissionOwn(
     databaseName: String!
@@ -138,32 +158,33 @@ const permissionList = resolverWrapper(
   }
 );
 
-// Mutation
+const collectionSchema = resolverWrapper(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root: unknown, args: TCollectionRequest, _: AppContext) =>
+    withTransaction((session) =>
+      getSchemaDefinition(args.databaseName, args.collectionName, session)
+    )
+);
 
-// Only owner and group member can perform this action
+// Mutation
 const permissionSet = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
-    grouping: permissionGroup,
-    permission: Joi.object({
-      read: Joi.boolean(),
-      write: Joi.boolean(),
-      delete: Joi.boolean(),
-      create: Joi.boolean(),
-      system: Joi.boolean(),
-    }),
+    documentPermission: permissionDetail.required(),
   }),
-  async (_root: unknown, args: TPermissionSetRequest, context: AppContext) => {
+  async (_root: unknown, args: TPermissionUpdateRequest, context: AppContext) => {
     await withTransaction((session) =>
-      changePermissions(
+      setPermissions(
         args.databaseName,
         args.collectionName,
         context.userName,
         args.docId ? new ObjectId(args.docId) : null,
-        args.grouping,
-        args.permission as any,
+        args.permission,
         session
       )
     );
@@ -258,6 +279,7 @@ type TPermissionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     permissionList: typeof permissionList;
+    collectionSchema: typeof collectionSchema;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
@@ -269,9 +291,10 @@ export const resolversPermission: TPermissionResolver = {
   JSON: GraphQLJSON,
   Query: {
     permissionList,
+    collectionSchema,
   },
   Mutation: {
     permissionSet,
-    permissionOwn,
+    permissionOwn
   },
 };

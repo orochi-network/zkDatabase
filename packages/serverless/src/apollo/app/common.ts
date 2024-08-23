@@ -42,6 +42,9 @@ export const groupDescription = Joi.string()
   .trim()
   .min(10)
   .max(256)
+  .required();
+ 
+export const groupOptionalDescription = Joi.string()
   .allow('')
   .optional()
   .description(
@@ -50,9 +53,9 @@ export const groupDescription = Joi.string()
 
 export const publicKey = Joi.string()
   .trim()
-  .length(52)
+  .length(55)
   .required()
-  .pattern(/^[A-HJ-NP-Za-km-z1-9]{52}$/);
+  .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
 
 export const indexName = Joi.string()
   .trim()
@@ -78,7 +81,7 @@ export const permissionRecord = Joi.object<PermissionRecord>({
 export const permissionDetail = Joi.object({
   permissionOwner: permissionRecord,
   permissionGroup: permissionRecord,
-  permissionOthers: permissionRecord,
+  permissionOther: permissionRecord,
 });
 
 export const documentField = Joi.object<TDocumentField>({
@@ -89,4 +92,14 @@ export const documentField = Joi.object<TDocumentField>({
     .valid(...O1JS_VALID_TYPE)
     .required(),
   value: Joi.string().raw().required(),
+});
+
+export const pagination = Joi.object({
+  offset: Joi.number().integer().min(0).default(0).optional(),
+  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+});
+
+export const search = Joi.object({
+  search: Joi.optional(),
+  pagination,
 });

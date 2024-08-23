@@ -1,27 +1,39 @@
-import { Field, MerkleWitness, PublicKey, UInt64, ZkProgram } from 'o1js';
+import {
+  fetchAccount,
+  Field,
+  MerkleWitness,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 import {
   ModelDbSetting,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
+  withTransaction,
 } from '@zkdb/storage';
-import { getZkDbSmartContract, ProofState } from '@zkdb/smart-contract';
+import {
+  getZkDbSmartContractClass,
+  ProofStateInput,
+  ProofStateOutput,
+} from '@zkdb/smart-contract';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
 import logger from '../helper/logger.js';
-import assert from 'assert';
-import { isEmptyArray } from '../helper/utils.js';
 
 export async function createProof(taskId: string) {
   const queue = ModelQueueTask.getInstance();
 
-  const task = await queue.getQueuedTask({
-    _id: new ObjectId(taskId),
-  });
+  const task = await queue.findOne({ _id: new ObjectId(taskId) });
 
   if (!task) {
     logger.error('Task has not been found');
     throw Error('Task has not been found');
+  }
+
+  if (task.status !== 'executing') {
+    logger.error('Task has not been marked as executing');
+    throw Error('Task has not been marked as executing');
   }
 
   try {
@@ -36,6 +48,15 @@ export async function createProof(taskId: string) {
 
     const publicKey = PublicKey.fromBase58(appPublicKey);
 
+    const res = await fetchAccount({ publicKey });
+    const accountExists = res.error == null;
+
+    if (!accountExists) {
+      throw Error(
+        `Unable to generate proof because the smart contract ${appPublicKey} for the database does not exist`
+      );
+    }
+
     if (!merkleHeight) {
       throw new Error('Merkle Tree height is null');
     }
@@ -47,12 +68,12 @@ export async function createProof(taskId: string) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
     }
 
-    const circuit = CircuitFactory.getCircuit(circuitName).getProgram();
-    class RollUpProof extends ZkProgram.Proof(circuit) {}
+    const circuit = await CircuitFactory.getCircuit(circuitName).getProgram();
+    class RollUpProof extends ZkProgram.Proof(circuit as any) {}
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
-    const zkProof = await modelProof.getProof(task.database, task.collection);
+    const zkProof = await modelProof.getProof(task.database);
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
@@ -70,48 +91,94 @@ export async function createProof(taskId: string) {
       new Date(task.createdAt.getTime() - 1)
     );
 
-    class ZkDbApp extends getZkDbSmartContract(task.database, merkleHeight) {}
+    class ZkDbApp extends getZkDbSmartContractClass(merkleHeight, circuit) {}
     const zkDbApp = new ZkDbApp(publicKey);
 
-    // TODO: Check if app exists
+    const onChainRootState = zkDbApp.currentState.get();
+    const prevOnChainRootState = zkDbApp.prevState.get();
 
-    const onChainRootState = zkDbApp.state.get();
-    const onChainActionState = zkDbApp.actionState.get();
+    if (proof) {
+      const prevProofOutput = proof.publicOutput as ProofStateOutput;
 
-    assert(onChainRootState.equals(merkleRoot));
+      const proofState = new ProofStateInput({
+        currentOnChainState: onChainRootState,
+        previousOnChainState: prevOnChainRootState,
+        currentOffChainState: merkleRoot,
+      });
 
-    const proofState = new ProofState({
-      actionState: onChainActionState,
-      rootState: onChainRootState,
-    });
+      if (prevProofOutput.onChainState.equals(onChainRootState)) {
+        // basic
+        proof = await circuit.update(
+          proofState,
+          proof,
+          witness,
+          oldLeaf,
+          Field(task.hash)
+        );
+      } else {
+        const rollupProof = await modelProof.findOne({
+          merkleRoot: onChainRootState.toString(),
+        });
+        if (rollupProof) {
+          proof = await circuit.updateTransition(
+            proofState,
+            await RollUpProof.fromJSON(rollupProof),
+            proof,
+            witness,
+            oldLeaf,
+            Field(task.hash)
+          );
+        }
 
-    const allActions = await zkDbApp.reducer.fetchActions({
-      fromActionState: onChainActionState,
-    });
-
-    if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
-      throw new Error('Unformatted action data');
+        throw Error('RollUp Proof has not been found');
+      }
+    } else {
+      const proofState = new ProofStateInput({
+        previousOnChainState: Field(0),
+        currentOnChainState: onChainRootState,
+        currentOffChainState: merkleRoot,
+      });
+      proof = await circuit.init(
+        proofState,
+        witness,
+        oldLeaf,
+        Field(task.hash)
+      );
     }
 
-    const [[action]] = allActions;
+    // Use proofState here
 
-    assert(Field(task.hash).equals(action.hash));
-    assert(UInt64.from(task.merkleIndex).equals(action.index));
+    // const allActions = await zkDbApp.reducer.fetchActions({
+    //   fromActionState: onChainActionState,
+    // });
+
+    // if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
+    //   throw new Error('Unformatted action data');
+    // }
+
+    // const [[action]] = allActions;
+
+    // assert(Field(task.hash).equals(action.hash));
+    // assert(UInt64.from(task.merkleIndex).equals(action.index));
 
     // TODO: Should we consider both on-chain action and off-chain leaf. Off-chain leaf = On-chain action
-    proof = proof
-      ? await circuit.update(proofState, proof, witness, oldLeaf, action)
-      : await circuit.init(proofState, witness, oldLeaf, action);
 
-    await modelProof.saveProof({
-      ...proof.toJSON(),
-      database: task.database,
-      collection: task.collection,
+    await withTransaction(async (session) => {
+      await modelProof.saveProof(
+        {
+          ...proof.toJSON(),
+          database: task.database,
+          collection: task.collection,
+          merkleRoot: proof.publicOutput.newOffChainState.toString(),
+        },
+        { session }
+      );
+      await queue.markTaskProcessed(task._id, { session });
     });
-    await queue.markTaskProcessed(task.merkleIndex);
 
     logger.debug('Task processed successfully.');
   } catch (error) {
+    await queue.markTaskAsError(task._id, error as string);
     logger.error('Error processing task:', error);
   }
 }

@@ -1,3 +1,3 @@
-import { UserInfo as User } from "../../types/user.js";
+import { User as User } from "../../types/user.js";
 
 export type UserInfo = User

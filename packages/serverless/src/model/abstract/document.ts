@@ -15,6 +15,8 @@ export type DocumentPermission = Pick<
 
 export type DocumentRecord = Document & {
   _id?: ObjectId;
+  prevVersion?: ObjectId;
+  isLatest: boolean;
 } & {
   [key: string]: DocumentField;
 };
@@ -25,6 +27,15 @@ export type DocumentRecord = Document & {
  */
 export class ModelDocument extends ModelBasic<DocumentRecord> {
   public static instances = new Map<string, ModelDocument>();
+
+  private constructor(databaseName: string, collectionName: string) {
+    super(databaseName, collectionName, {
+      timeseries: {
+        timeField: 'timestamp',
+        granularity: 'seconds',
+      },
+    });
+  }
 
   get modelDatabase() {
     return ModelDatabase.getInstance(this.databaseName!);

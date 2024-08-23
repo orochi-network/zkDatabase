@@ -1,11 +1,20 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Permissions } from "../../types/permission";
+import pkg from "@apollo/client";
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Ownership } from "../../types/ownership.js";
 
 const LIST_PERMISSIONS = gql`
-  query PermissionList($databaseName: String!, $collectionName: String!, $docId: String) {
-    permissionList(databaseName: $databaseName, collectionName: $collectionName, docId: $docId) {
+  query PermissionList(
+    $databaseName: String!
+    $collectionName: String!
+    $docId: String
+  ) {
+    permissionList(
+      databaseName: $databaseName
+      collectionName: $collectionName
+      docId: $docId
+    ) {
       userName
       groupName
       permissionOwner {
@@ -33,31 +42,18 @@ const LIST_PERMISSIONS = gql`
   }
 `;
 
-
-interface ListPermissionResponse {
-  permissions: Permissions;
-}
-
 export const listPermissions = async (
   databaseName: string,
   collectionName: string,
-  docId: string | undefined,
-  token: string
-): Promise<NetworkResult<Permissions>> => {
+  docId: string | undefined
+): Promise<NetworkResult<Ownership>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.query<{
-      permissionList: ListPermissionResponse;
-    }>({
+    const { data, errors } = await client.query({
       query: LIST_PERMISSIONS,
       variables: {
         databaseName,
         collectionName,
         docId,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
       },
     });
 
@@ -66,7 +62,21 @@ export const listPermissions = async (
     if (response) {
       return {
         type: "success",
-        data: response.permissions,
+        data: {
+          groupName: response.groupName,
+          userName: response.userName,
+          permissions: {
+            permissionOwner: (({ __typename, ...rest }) => rest)(
+              response.permissionOwner
+            ),
+            permissionGroup: (({ __typename, ...rest }) => rest)(
+              response.permissionGroup
+            ),
+            permissionOther: (({ __typename, ...rest }) => rest)(
+              response.permissionOther
+            ),
+          },
+        },
       };
     } else {
       return {

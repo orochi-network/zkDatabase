@@ -1,18 +1,19 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import { SignInInfo, SignatureProofData } from "../../types/authentication";
-import { NetworkResult } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { SignInInfo, SignatureProofData } from "../../types/authentication.js";
+import { NetworkResult } from "../../../utils/network.js";
 
 const SIGN_IN = gql`
-  mutation UserSignIn($proof: SignatureProof!) {
+  mutation UserSignIn($proof: ProofInput!) {
     userSignIn(proof: $proof) {
       success
       error
       userName
-      email
       sessionKey
       sessionId
       userData
+      publicKey
     }
   }
 `;
@@ -21,17 +22,17 @@ interface UserSignInResponse {
   success: boolean;
   error: string | null;
   userName: string;
-  email: string;
   sessionKey: string;
   sessionId: string;
   userData: JSON;
 }
 
 export const signIn = async (
+  email: string,
   proof: SignatureProofData
 ): Promise<NetworkResult<SignInInfo>> => {
   try {
-    const { data } = await client.mutate<{ userSignIn: UserSignInResponse }>({
+    const { errors, data } = await client.mutate({
       mutation: SIGN_IN,
       variables: { proof },
     });
@@ -44,7 +45,8 @@ export const signIn = async (
         data: {
           user: {
             userName: response.userName,
-            email: response.email,
+            email: email,
+            publicKey: response.publicKey
           },
           session: {
             sessionId: response.sessionId,
@@ -56,7 +58,7 @@ export const signIn = async (
     } else {
       return {
         type: "error",
-        message: response?.error ?? "An unknown error occurred",
+        message: errors?.toString() ?? "An unknown error occurred",
       };
     }
   } catch (error) {

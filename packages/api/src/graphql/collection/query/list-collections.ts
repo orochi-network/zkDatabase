@@ -1,6 +1,7 @@
-import { gql } from "@apollo/client";
-import client from "../../client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import client from "../../client.js";
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
 
 const LIST_COLLECTION = gql`
   query CollectionList($databaseName: String!) {

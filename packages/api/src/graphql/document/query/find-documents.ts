@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { DocumentEncoded } from "../../types/document";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { DocumentEncoded } from "../../types/document.js";
 
 const FIND_DOCUMENT = gql`
   query DocumentFind(
@@ -32,8 +33,7 @@ interface DocumentResponse {
 export const findDocument = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON,
-  token: string
+  documentQuery: JSON
 ): Promise<NetworkResult<{ _id: string; document: DocumentEncoded }>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query<{
@@ -44,12 +44,7 @@ export const findDocument = async (
         databaseName,
         collectionName,
         documentQuery,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.documentFind;

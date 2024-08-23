@@ -3,8 +3,8 @@ import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { Metadata } from '../types/metadata.js';
 import {
-  checkCollectionPermission,
-  checkDocumentPermission,
+  hasCollectionPermission,
+  hasDocumentPermission,
 } from './permission.js';
 import { PermissionBinary } from '../../common/permission.js';
 
@@ -20,7 +20,7 @@ export async function readMetadata(
 ): Promise<Metadata> {
   if (checkPermissions) {
     const hasReadPermission = docId
-      ? await checkDocumentPermission(
+      ? await hasDocumentPermission(
           databaseName,
           collectionName,
           actor,
@@ -28,7 +28,7 @@ export async function readMetadata(
           'read',
           session
         )
-      : await checkCollectionPermission(
+      : await hasCollectionPermission(
           databaseName,
           collectionName,
           actor,

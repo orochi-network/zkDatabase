@@ -1,7 +1,8 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { Owner } from "../../types/ownership";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { Ownership } from "../../types/ownership.js";
 
 const SET_OWNER = gql`
   mutation PermissionOwn(
@@ -24,23 +25,15 @@ const SET_OWNER = gql`
   }
 `;
 
-interface OwnershipResponse {
-  userName: string;
-  groupName: string;
-}
-
 export const setOwner = async (
   databaseName: string,
   collectionName: string,
   docId: string | undefined,
   grouping: string,
-  newOwner: string,
-  token: string
-): Promise<NetworkResult<Owner>> => {
+  newOwner: string
+): Promise<NetworkResult<Ownership>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{
-      permissionSet: OwnershipResponse;
-    }>({
+    const { data, errors } = await client.mutate({
       mutation: SET_OWNER,
       variables: {
         databaseName,
@@ -48,12 +41,7 @@ export const setOwner = async (
         docId,
         grouping,
         newOwner,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
-      },
+      }
     });
 
     const response = data?.permissionSet;
@@ -61,10 +49,7 @@ export const setOwner = async (
     if (response) {
       return {
         type: "success",
-        data: {
-          groupName: response.groupName,
-          userName: response.userName,
-        },
+        data: response.permissionOwn
       };
     } else {
       return {

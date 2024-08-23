@@ -1,0 +1,14 @@
+info:
+  title: 'zkDatabase API Documentation'
+  description: 'This is the documentation for zkDatabase API.'
+  version: '1.0.0'
+
+introspection:
+  url: 'http://localhost:4000/graphql'
+
+output:
+  directory: './docs'
+
+theme:
+  logo:
+    url: 'https://your-company-logo-url.com/logo.png'

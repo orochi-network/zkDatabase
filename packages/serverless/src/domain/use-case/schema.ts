@@ -9,6 +9,7 @@ import {
   SchemaEncoded,
 } from '../common/schema.js';
 import { Document } from '../types/document.js';
+import { DocumentSchema, DocumentSchemaField } from '../types/schema.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -151,4 +152,22 @@ export async function buildSchema(
   const structuredSchema = Schema.create(structType, indexes);
 
   return structuredSchema.deserialize(encodedDocument);
+}
+
+export async function getSchemaDefinition(
+  databaseName: string,
+  collectionName: string,
+  session?: ClientSession
+): Promise<DocumentSchema> {
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const schema = await modelSchema.getMetadata(collectionName, { session });
+
+  return schema.fields.map(
+    (fieldName) =>
+      ({
+        name: schema[fieldName].name,
+        kind: schema[fieldName].king,
+        indexed: schema[fieldName].indexed,
+      }) as DocumentSchemaField
+  );
 }

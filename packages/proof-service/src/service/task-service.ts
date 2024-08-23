@@ -47,7 +47,7 @@ class TaskService {
         await this.delay(delay);
         delay = Math.min(delay * 2, 32000); // Exponential backoff with cap
         delay += Math.floor(Math.random() * 1000); // Add jitter
-        retries++;
+        retries += 1;
       }
     }
 

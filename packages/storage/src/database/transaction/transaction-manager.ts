@@ -1,4 +1,4 @@
-import { ClientSession } from 'mongodb';
+import { ClientSession, MongoError } from 'mongodb';
 import { DatabaseEngine } from '../database-engine.js';
 import logger from '../../helper/logger.js';
 
@@ -20,11 +20,32 @@ export default async function withTransaction<T>(
       }
     );
 
+    // If the transaction has succeeded, commit it
     await session.commitTransaction();
-  } catch (e) {
-    logger.error('DatabaseEngine::withTransaction()', e);
-    await session.abortTransaction();
-    result = null;
+  } catch (error) {
+    // Log the error and handle the transaction abort
+    logger.error('DatabaseEngine::withTransaction()', {
+      message: (error as MongoError).message,
+      code: (error as MongoError).code,
+      stack: (error as Error).stack,
+    });
+
+    // Only attempt to abort if an error occurred and transaction is still active
+    if (session.inTransaction()) {
+      try {
+        await session.abortTransaction();
+      } catch (abortError) {
+        // Log the abort error and rethrow the original error
+        logger.error('DatabaseEngine::withTransaction() - Abort failed', {
+          message: (abortError as MongoError).message,
+          code: (abortError as MongoError).code,
+          stack: (abortError as Error).stack,
+        });
+        throw error;
+      }
+    }
+
+    throw error;
   } finally {
     await session.endSession();
   }

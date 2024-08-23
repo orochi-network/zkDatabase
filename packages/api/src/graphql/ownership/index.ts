@@ -1,1 +1,1 @@
-export { setOwner } from "./mutation/set_ownership";
+export { setOwner } from "./mutation/set_ownership.js";

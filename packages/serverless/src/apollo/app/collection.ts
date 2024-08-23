@@ -6,7 +6,6 @@ import {
   collectionName,
   permissionDetail,
   groupName,
-  groupDescription,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import resolverWrapper from '../validation.js';
@@ -34,7 +33,6 @@ export type TCollectionRequest = TDatabaseRequest & {
 
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
-  groupDescription: string;
   schema: SchemaData;
   permissions: PermissionsData;
 };
@@ -48,7 +46,6 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
-  groupDescription,
   schema: schemaFields,
   permissions: permissionDetail,
 });
@@ -75,11 +72,12 @@ input PermissionRecordInput {
 input PermissionDetailInput {
   permissionOwner: PermissionRecordInput
   permissionGroup: PermissionRecordInput
-  permissionOthers: PermissionRecordInput
+  permissionOther: PermissionRecordInput
 }
 
 extend type Query {
   collectionList(databaseName: String!): JSON
+  collectionExist(databaseName: String!, collectionName: String!): Boolean
 }
 
 extend type Mutation {
@@ -87,7 +85,6 @@ extend type Mutation {
     databaseName: String!, 
     collectionName: String!,
     groupName: String!,
-    groupDescription: String,
     schema: [SchemaFieldInput!]!, 
     permissions: PermissionDetailInput
   ): Boolean
@@ -103,11 +100,22 @@ const collectionList = resolverWrapper(
     ModelDatabase.getInstance(args.databaseName).listCollections()
 );
 
+const collectionExist = resolverWrapper(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root: unknown, args: TCollectionRequest) =>
+    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
+      (collection) => collection === args.collectionName
+    )
+);
+
 // Mutation
 const collectionCreate = resolverWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
-    const isCreated = withTransaction((session) =>
+    return withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -115,14 +123,9 @@ const collectionCreate = resolverWrapper(
         args.groupName,
         args.schema,
         args.permissions,
-        args.groupDescription,
         session
       )
     );
-
-    return {
-      success: isCreated,
-    };
   }
 );
 
@@ -130,6 +133,7 @@ type TCollectionResolvers = {
   JSON: typeof GraphQLJSON;
   Query: {
     collectionList: typeof collectionList;
+    collectionExist: typeof collectionExist;
   };
   Mutation: {
     collectionCreate: typeof collectionCreate;
@@ -140,6 +144,7 @@ export const resolversCollection: TCollectionResolvers = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,
+    collectionExist,
   },
   Mutation: {
     collectionCreate,

@@ -92,7 +92,7 @@ input PermissionRecordInput {
 input PermissionDetailInput {
   permissionOwner: PermissionRecordInput
   permissionGroup: PermissionRecordInput
-  permissionOthers: PermissionRecordInput
+  permissionOther: PermissionRecordInput
 }
 
 input DocumentRecordInput {

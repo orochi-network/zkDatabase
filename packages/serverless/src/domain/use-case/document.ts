@@ -1,12 +1,23 @@
-import { ModelSequencer } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelQueueTask,
+  ModelSequencer,
+  TaskEntity,
+  zkDatabaseConstants,
+} from '@zkdb/storage';
 import { ClientSession, WithId, ObjectId } from 'mongodb';
-import { PermissionBinary, partialToPermission } from '../../common/permission.js';
-import ModelDocument, { DocumentRecord } from '../../model/abstract/document.js';
+import {
+  PermissionBinary,
+  setPartialIntoPermission,
+} from '../../common/permission.js';
+import ModelDocument, {
+  DocumentRecord,
+} from '../../model/abstract/document.js';
 import { Document } from '../types/document.js';
 import { Permissions } from '../types/permission.js';
 import {
-  checkDocumentPermission,
-  checkCollectionPermission,
+  hasDocumentPermission,
+  hasCollectionPermission,
 } from './permission.js';
 import {
   proveCreateDocument,
@@ -20,6 +31,11 @@ import {
 } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { getUsersGroup } from './group.js';
+import { Pagination } from '../types/pagination.js';
+import { SearchInput } from '../types/search.js';
+import buildMongoQuery from '../query/mongodb-filter.js';
+import { getDatabaseSetting, isDatabaseOwner } from './database.js';
 
 export interface FilterCriteria {
   [key: string]: any;
@@ -47,7 +63,7 @@ async function readDocument(
   session?: ClientSession
 ): Promise<WithId<Document> | null> {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -71,7 +87,7 @@ async function readDocument(
     return null;
   }
 
-  const hasReadPermission = await checkDocumentPermission(
+  const hasReadPermission = await hasDocumentPermission(
     databaseName,
     collectionName,
     actor,
@@ -84,6 +100,10 @@ async function readDocument(
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
     );
+  }
+
+  if (!documentRecord.isLatest) {
+    throw Error('You cannot read the history document');
   }
 
   const document: Document = Object.keys(documentRecord)
@@ -109,7 +129,7 @@ async function createDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -124,7 +144,9 @@ async function createDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord: DocumentRecord = {};
+  const documentRecord = {
+    isLatest: true,
+  } as DocumentRecord;
 
   document.forEach((field) => {
     documentRecord[field.name] = {
@@ -133,16 +155,6 @@ async function createDocument(
       value: field.value,
     };
   });
-
-  const documentPermissionOwner = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOwner)
-  );
-  const documentPermissionGroup = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionGroup)
-  );
-  const documentPermissionOther = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOther)
-  );
 
   // 1. Save document
   const insertResult = await modelDocument.insertDocument(
@@ -163,7 +175,33 @@ async function createDocument(
     session,
   });
 
-  const { permissionOwner, permissionGroup, permissionOther } = documentSchema;
+  const {
+    permissionOwner: collectionPermissionOwner,
+    permissionGroup: collectionPermissionGroup,
+    permissionOther: collectionPermissionOther,
+  } = documentSchema;
+
+  // TODO: Can we simplify the code by applying binary operations ?
+  const permissionOwner = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOwner),
+      permissions.permissionOwner
+    )
+  );
+
+  const permissionGroup = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionGroup),
+      permissions.permissionGroup
+    )
+  );
+
+  const permissionOther = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOther),
+      permissions.permissionOther
+    )
+  );
 
   await modelDocumentMetadata.insertOne(
     {
@@ -171,9 +209,6 @@ async function createDocument(
       docId: insertResult.insertedId,
       merkleIndex,
       ...{
-        permissionOwner,
-        permissionGroup,
-        permissionOther,
         // I'm set these to system user and group as default
         // In case this permission don't override by the user
         // this will prevent the user from accessing the data
@@ -181,9 +216,9 @@ async function createDocument(
         owner: ZKDATABASE_USER_SYSTEM,
       },
       // Overwrite inherited permission with the new one
-      permissionOwner: documentPermissionOwner,
-      permissionGroup: documentPermissionGroup,
-      permissionOther: documentPermissionOther,
+      permissionOwner,
+      permissionGroup,
+      permissionOther,
       owner: actor,
       group: documentSchema.group,
       createdAt: getCurrentTime(),
@@ -213,7 +248,7 @@ async function updateDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -228,67 +263,75 @@ async function updateDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord: DocumentRecord = {};
-
-  update.forEach((field) => {
-    documentRecord[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value: field.value,
-    };
-  });
-
-  const oldDocumentRecord = await modelDocument.findOne(
+  const oldDocumentRecord = await modelDocument.find(
     parseQuery(filter),
     session
   );
 
-  const updateResult = await modelDocument.collection.updateMany(
-    parseQuery(filter),
-    {
-      $set: documentRecord,
-    },
-    { session }
-  );
+  if (oldDocumentRecord.length === 1) {
+    if (
+      !(await hasDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
+        oldDocumentRecord[0]._id,
+        'write',
+        session
+      ))
+    ) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
+      );
+    }
 
-  // We need to do this to make sure that only 1 record
-  if (
-    (updateResult.modifiedCount !== 1 && updateResult.matchedCount !== 1) ||
-    !updateResult
-  ) {
-    throw new Error('Invalid update, modified count not equal to 1');
-  }
+    await modelDocument.collection.updateOne(
+      parseQuery(filter),
+      { $set: { isLatest: false } },
+      { session }
+    );
 
-  if (
-    !(await checkDocumentPermission(
+    const documentRecord = {
+      isLatest: true,
+      prevVersion: oldDocumentRecord[0]._id,
+    } as DocumentRecord;
+
+    update.forEach((field) => {
+      documentRecord[field.name] = {
+        name: field.name,
+        kind: field.kind,
+        value: field.value,
+      };
+    });
+
+    const insertResult = await modelDocument.collection.insertOne(
+      documentRecord,
+      { session }
+    );
+
+    const witness = await proveUpdateDocument(
       databaseName,
       collectionName,
-      actor,
-      oldDocumentRecord!._id,
-      'write',
+      oldDocumentRecord[0]!._id,
+      update,
       session
-    ))
-  ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
     );
+
+    const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+    await modelDocumentMetadata.collection.updateMany(
+      { docId: oldDocumentRecord[0]!._id },
+      {
+        $set: { docId: insertResult.insertedId },
+      },
+      { session }
+    );
+
+    return witness;
   }
 
-  await modelDocument.updateDocument(
-    parseQuery(filter),
-    documentRecord,
-    session
+  throw Error(
+    'Invalid query, the amount of documents that satisfy filter must be only one'
   );
-
-  const witness = await proveUpdateDocument(
-    databaseName,
-    collectionName,
-    oldDocumentRecord!._id,
-    update,
-    session
-  );
-
-  return witness;
 }
 
 async function deleteDocument(
@@ -299,7 +342,7 @@ async function deleteDocument(
   session?: ClientSession
 ) {
   if (
-    !(await checkCollectionPermission(
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -314,18 +357,18 @@ async function deleteDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const document = await modelDocument.findOne(parseQuery(filter), session);
+  const findResult = await modelDocument.find(parseQuery(filter), session);
 
-  if (!document) {
-    throw Error('Document does not exist');
+  if (findResult.length !== 1) {
+    throw Error('Wrong query');
   }
 
   if (
-    !(await checkDocumentPermission(
+    !(await hasDocumentPermission(
       databaseName,
       collectionName,
       actor,
-      document._id,
+      findResult[0]._id,
       'delete',
       session
     ))
@@ -338,17 +381,258 @@ async function deleteDocument(
   const witness = await proveDeleteDocument(
     databaseName,
     collectionName,
-    document._id,
+    findResult[0]._id,
     session
   );
 
-  await modelDocument.drop({ _id: document._id }, session);
+  await modelDocument.insertDocument(
+    {
+      isLatest: true,
+      prevVersion: findResult[0]._id,
+    } as DocumentRecord,
+    session
+  );
 
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
-  await modelDocumentMetadata.deleteOne({ docId: document._id }, { session });
+  await modelDocumentMetadata.deleteOne(
+    { docId: findResult[0]._id },
+    { session }
+  );
 
   return witness;
 }
 
-export { readDocument, createDocument, updateDocument, deleteDocument };
+function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
+  return [
+    {
+      $lookup: {
+        from: zkDatabaseConstants.databaseCollections.permission,
+        let: { docId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$docId', '$$docId'] },
+            },
+          },
+          {
+            $project: {
+              permissionOwner: true,
+              permissionGroup: true,
+              permissionOther: true,
+              merkleIndex: true,
+              group: true,
+              owner: true,
+            },
+          },
+        ],
+        as: 'metadata',
+      },
+    },
+    {
+      $unwind: '$metadata',
+    },
+    {
+      $match: matchQuery,
+    },
+    {
+      $skip: pagination?.offset || 0,
+    },
+    {
+      $limit: pagination?.limit || 10,
+    },
+  ];
+}
+
+function filterDocumentsByPermissions(
+  documents: Array<any>,
+  actor: string,
+  userGroups: Array<string>
+): Array<any> {
+  return documents.filter(({ metadata }) => {
+    if (!metadata) return false;
+    if (metadata.owner === actor) {
+      return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
+        .read;
+    }
+    if (userGroups.includes(metadata.group)) {
+      return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
+        .read;
+    }
+    return PermissionBinary.fromBinaryPermission(metadata.permissionOther).read;
+  });
+}
+
+async function searchAggregatedDocuments(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  query?: SearchInput<any>,
+  pagination?: Pagination,
+  session?: ClientSession
+) {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    const { client } = DatabaseEngine.getInstance();
+
+    const database = client.db(databaseName);
+    const documentsCollection = database.collection(collectionName);
+
+    const userGroups = await getUsersGroup(databaseName, actor);
+    const tasks =
+      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+
+    const matchQuery = buildMongoQuery(query);
+
+    const pipeline = buildPipeline(matchQuery, pagination);
+
+    const documentsWithMetadata = await documentsCollection
+      .aggregate(pipeline)
+      .toArray();
+
+    let filteredDocuments: any[];
+    
+    if (!(await isDatabaseOwner(databaseName, actor))) {
+      filteredDocuments = filterDocumentsByPermissions(
+        documentsWithMetadata,
+        actor,
+        userGroups
+      );
+    } else {
+      filteredDocuments = documentsWithMetadata;
+    }
+
+    const transformedDocuments = filteredDocuments.map((documentRecord) => {
+      const document: Document = Object.keys(documentRecord)
+        .filter(
+          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
+        )
+        .map((key) => ({
+          name: documentRecord[key].name,
+          kind: documentRecord[key].kind,
+          value: documentRecord[key].value,
+        }));
+
+      const task = tasks?.find(
+        (task: TaskEntity) =>
+          task.docId === (documentRecord as any)._id.toString()
+      );
+
+      const object = {
+        document: {
+          _id: documentRecord._id,
+          document,
+        },
+
+        metadata: {
+          merkleIndex: documentRecord.metadata.merkleIndex,
+          group: documentRecord.metadata.group,
+          owner: documentRecord.metadata.owner,
+          permissionOwner: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionOwner
+          ),
+          permissionGroup: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionGroup
+          ),
+          permissionOther: PermissionBinary.fromBinaryPermission(
+            documentRecord.metadata.permissionOther
+          ),
+        },
+        proofStatus: task ? task.status : undefined,
+      };
+
+      return object;
+    });
+
+    return transformedDocuments;
+  }
+
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
+}
+
+async function searchDocuments(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  query?: SearchInput<any>,
+  pagination?: Pagination,
+  session?: ClientSession
+): Promise<Array<WithId<Document>>> {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    const { client } = DatabaseEngine.getInstance();
+
+    const database = client.db(databaseName);
+    const documentsCollection = database.collection(collectionName);
+
+    const userGroups = await getUsersGroup(databaseName, actor);
+
+    const matchQuery = buildMongoQuery(query);
+
+    const pipeline = buildPipeline(matchQuery, pagination);
+
+    const documentsWithMetadata = await documentsCollection
+      .aggregate(pipeline)
+      .toArray();
+
+    let filteredDocuments: any[];
+
+    if (!(await isDatabaseOwner(databaseName, actor))) {
+      filteredDocuments = filterDocumentsByPermissions(
+        documentsWithMetadata,
+        actor,
+        userGroups
+      );
+    } else {
+      filteredDocuments = documentsWithMetadata;
+    }
+
+    const transformedDocuments = filteredDocuments.map((documentRecord) => {
+      const document: Document = Object.keys(documentRecord)
+        .filter(
+          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
+        )
+        .map((key) => ({
+          name: documentRecord[key].name,
+          kind: documentRecord[key].kind,
+          value: documentRecord[key].value,
+        }));
+
+      return {
+        _id: documentRecord._id,
+        document,
+      };
+    });
+
+    return transformedDocuments as any as WithId<Document>[];
+  }
+
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
+}
+
+export {
+  searchAggregatedDocuments,
+  readDocument,
+  createDocument,
+  updateDocument,
+  deleteDocument,
+  searchDocuments,
+};

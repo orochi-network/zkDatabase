@@ -30,7 +30,7 @@ export class JWTAuthentication<T extends jose.JWTPayload> {
     return new jose.SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('60s')
+      .setExpirationTime('14d')
       .sign(this.secret);
   }
 

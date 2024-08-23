@@ -1,26 +1,39 @@
-import { gql } from "@apollo/client";
-import { NetworkResult, handleRequest } from "../../../utils/network";
-import client from "../../client";
-import { PermissionSet, Permissions } from "../../types/permission";
+import pkg from '@apollo/client';
+const { gql } = pkg;
+import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import client from "../../client.js";
+import { PermissionSet, Permissions } from "../../types/ownership.js";
 
 const SET_PERMISSION = gql`
   mutation PermissionSet(
     $databaseName: String!
     $collectionName: String!
     $docId: String
-    $grouping: PermissionGroup!
     $permission: PermissionInput!
   ) {
     permissionSet(
       databaseName: $databaseName
       collectionName: $collectionName
       docId: $docId
-      grouping: $grouping
       permission: $permission
     ) {
       userName
       groupName
       permissionOwner {
+        read
+        write
+        delete
+        create
+        system
+      }
+      permissionGroup {
+        read
+        write
+        delete
+        create
+        system
+      }
+      permissionOther {
         read
         write
         delete
@@ -39,9 +52,7 @@ export const setPermissions = async (
   databaseName: string,
   collectionName: string,
   docId: string | undefined,
-  grouping: string,
-  permission: PermissionSet,
-  token: string
+  permission: Permissions
 ): Promise<NetworkResult<Permissions>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.mutate<{
@@ -52,13 +63,7 @@ export const setPermissions = async (
         databaseName,
         collectionName,
         docId,
-        grouping,
         permission,
-      },
-      context: {
-        headers: {
-          authorization: `Bearer ${token}`,
-        },
       },
     });
 
