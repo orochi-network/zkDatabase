@@ -1,6 +1,5 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ObjectId } from 'mongodb';
 import { withTransaction } from '@zkdb/storage';
 import { GraphQLError } from 'graphql';
 import resolverWrapper from '../validation.js';
@@ -136,7 +135,7 @@ const permissionList = resolverWrapper(
       readMetadata(
         args.databaseName,
         args.collectionName,
-        args.docId ? new ObjectId(args.docId) : null,
+        args.docId,
         ctx.userName,
         true,
         session
@@ -183,7 +182,7 @@ const permissionSet = resolverWrapper(
         args.databaseName,
         args.collectionName,
         context.userName,
-        args.docId ? new ObjectId(args.docId) : null,
+        args.docId,
         args.permission,
         session
       )
@@ -193,7 +192,7 @@ const permissionSet = resolverWrapper(
       readMetadata(
         args.databaseName,
         args.collectionName,
-        args.docId ? new ObjectId(args.docId) : null,
+        args.docId,
         context.userName,
         true,
         session
@@ -229,7 +228,7 @@ const permissionOwn = resolverWrapper(
         changeDocumentOwnership(
           args.databaseName,
           args.collectionName,
-          new ObjectId(args.docId),
+          args.docId,
           context.userName,
           args.grouping,
           args.newOwner,
@@ -253,7 +252,7 @@ const permissionOwn = resolverWrapper(
       readMetadata(
         args.databaseName,
         args.collectionName,
-        args.docId ? new ObjectId(args.docId) : null,
+        args.docId,
         context.userName,
         true,
         session

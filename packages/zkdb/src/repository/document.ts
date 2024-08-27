@@ -12,12 +12,13 @@ import { Field } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
 import { QueryOptions } from '../sdk/query/query-builder.js';
 import mapSearchInputToSearch from './mapper/search.js';
+import { Document } from '../types/document.js';
 
 export async function findDocument(
   databaseName: string,
   collectionName: string,
   filter: FilterCriteria
-): Promise<{ id: string; documentEncoded: DocumentEncoded } | null> {
+): Promise<Document | null> {
   const result = await findDocumentRequest(
     databaseName,
     collectionName,
@@ -26,12 +27,13 @@ export async function findDocument(
 
   if (result.type === 'success') {
     return {
-      id: result.data._id,
-      documentEncoded: result.data.document.map((field) => ({
+      id: result.data.docId,
+      documentEncoded: result.data.fields.map((field) => ({
         name: field.name,
         kind: field.kind as ProvableTypeString,
         value: field.value,
       })),
+      createdAt: result.data.createdAt,
     };
   } else {
     return null;
@@ -95,6 +97,8 @@ export async function deleteDocument(
     JSON.parse(JSON.stringify(filter))
   );
 
+  console.log('result', result);
+
   if (result.type === 'success') {
     return result.data.map((node) => ({
       isLeft: node.isLeft,
@@ -109,7 +113,7 @@ export async function searchDocument(
   databaseName: string,
   collectionName: string,
   queryOptions?: QueryOptions<any>
-): Promise<Array<{ id: string; documentEncoded: DocumentEncoded }>> {
+): Promise<Document[]> {
   const result = await searchDocumentRequest(
     databaseName,
     collectionName,
@@ -124,12 +128,13 @@ export async function searchDocument(
 
   if (result.type === 'success') {
     return result.data.map((document) => ({
-      id: document._id,
-      documentEncoded: document.document.map((field) => ({
+      id: document.docId,
+      documentEncoded: document.fields.map((field) => ({
         name: field.name,
         kind: field.kind as ProvableTypeString,
         value: field.value,
       })),
+      createdAt: document.createdAt,
     }));
   } else {
     throw Error(result.message);

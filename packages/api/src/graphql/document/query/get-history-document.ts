@@ -3,59 +3,54 @@ const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
 import { DocumentEncoded, DocumentPayload } from "../../types/document.js";
+import { DocumentHistoryPayload } from '../../types/document-history.js';
 
-const FIND_DOCUMENT = gql`
-  query DocumentFind(
+const GET_DOCUMENT_HISTORY = gql`
+  query HistoryDocumentGet(
     $databaseName: String!
     $collectionName: String!
-    $documentQuery: JSON!
+    $docId: String!
   ) {
-    documentFind(
+    historyDocumentGet(
       databaseName: $databaseName
       collectionName: $collectionName
-      documentQuery: $documentQuery
+      docId: $docId
     ) {
-      docId
-      fields {
-        name
-        kind
-        value
+      docId,
+      documents {
+        docId
+        fields {
+          name
+          kind
+          value
+        }
+        createdAt
       }
-      createdAt
     }
   }
 `;
 
-export const findDocument = async (
+export const getDocumentHistory = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON
-): Promise<NetworkResult<DocumentPayload>> => {
+  docId: string
+): Promise<NetworkResult<DocumentHistoryPayload>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query({
-      query: FIND_DOCUMENT,
+      query: GET_DOCUMENT_HISTORY,
       variables: {
         databaseName,
         collectionName,
-        documentQuery,
+        docId,
       }
     });
 
-    const response = data?.documentFind;
-
-    console.log('response', response)
-
-    const payload: DocumentPayload = {
-      docId: response.docId,
-      fields: response.fields,
-      createdAt: response.fields
-    }
-    console.log('payload', payload);
+    const response = data?.historyDocumentGet;
 
     if (response) {
       return {
         type: "success",
-        data: payload,
+        data: response,
       };
     } else {
       return {

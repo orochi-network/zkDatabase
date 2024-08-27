@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { DocumentEncoded } from "../../types/document.js";
+import { DocumentEncoded, DocumentPayload } from "../../types/document.js";
 import { Search } from "../../types/search.js";
 import { Pagination } from "../../types/pagination.js";
 
@@ -19,8 +19,8 @@ const SEARCH_DOCUMENTS = gql`
       search: $search
       pagination: $pagination
     ) {
-      _id
-      document {
+      docId
+      fields {
         name
         kind
         value
@@ -35,7 +35,7 @@ export const searchDocument = async (
   search?: Search | undefined,
   pagination?: Pagination | undefined
 ): Promise<
-  NetworkResult<Array<{ _id: string; document: DocumentEncoded }>>
+  NetworkResult<Array<DocumentPayload>>
 > => {
   return handleRequest(async () => {
     const { data, errors } = await client.query({

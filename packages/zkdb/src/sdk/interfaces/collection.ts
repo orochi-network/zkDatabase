@@ -48,4 +48,7 @@ export interface ZKCollection extends Ownable {
   >(
     filter: Filter<T>
   ): Promise<MerkleWitness>;
+
+
+  getDocumentHistory(documentId: string): Promise<ZKDocument[]>
 }

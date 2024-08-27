@@ -12,7 +12,7 @@ import { ModelCollectionMetadata } from '../../model/database/collection-metadat
 export async function changeDocumentOwnership(
   databaseName: string,
   collectionName: string,
-  docId: ObjectId,
+  docId: string,
   actor: string,
   group: OwnershipGroup,
   newOwner: string,

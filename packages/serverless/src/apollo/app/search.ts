@@ -9,6 +9,7 @@ import { AppContext } from '../../common/types.js';
 import { searchUsers as searchUserDomain } from '../../domain/use-case/user.js';
 import { searchDocuments as searchDocumentsDomain, searchAggregatedDocuments } from '../../domain/use-case/document.js';
 import mapSearchToQueryOptions from '../mapper/search.js';
+import mapPagination from '../mapper/pagination.js';
 
 export type TSearchRequest = {
   search: Search;
@@ -22,42 +23,15 @@ export type TSearchDocumentRequest = TSearchRequest & {
 
 export const typeDefsSearch = `#graphql
 scalar JSON
+scalar Date
 type Query
-
-input ConditionInput {
-  field: String!
-  value: String!
-  operator: String!
-}
-
-input SearchInput {
-  and: [SearchInput]
-  or: [SearchInput]
-  condition: ConditionInput
-}
-
-input PaginationInput {
-  limit: Int,
-  offset: Int
-}
 
 type User {
   userName: String!,
   email: String!,
   publicKey: String!
 }
-
-type Document {
-  name: String!
-  kind: String!
-  value: String!
-}
-
-type DocumentOutput {
-  _id: String!,
-  document: [Document!]!
-}
-
+ 
 type Metadata {
   merkleIndex: Int!,
   owner: String!
@@ -97,8 +71,8 @@ const searchUser = resolverWrapper(
   async (_root: unknown, args: TSearchRequest, _ctx: AppContext) => {
     return withTransaction(async (session) =>
       searchUserDomain(
-        args.search ? mapSearchToQueryOptions(args.search) : undefined,
-        args.pagination,
+        mapSearchToQueryOptions(args.search),
+        mapPagination(args.pagination),
         session
       )
     );
@@ -114,7 +88,7 @@ const searchDocument = resolverWrapper(
         args.collectionName,
         _ctx.userName,
         mapSearchToQueryOptions(args.search),
-        args.pagination,
+        mapPagination(args.pagination),
         session
       );
 
@@ -131,12 +105,10 @@ const searchAggregatedDocument = resolverWrapper(
         args.databaseName,
         args.collectionName,
         "oleh-dev",
-        args.search ? mapSearchToQueryOptions(args.search) : undefined,
-        args.pagination ? args.pagination : undefined,
+        mapSearchToQueryOptions(args.search),
+        mapPagination(args.pagination),
         session
       );
-
-      console.log("documents", documents)
 
       return documents;
     });

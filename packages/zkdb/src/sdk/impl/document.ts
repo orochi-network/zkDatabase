@@ -10,23 +10,26 @@ import {
   updateDocumentUserOwnership,
   setDocumentPermissions,
 } from '../../repository/ownership.js';
+import { deleteDocument } from '../../repository/document.js';
+import { Document } from 'src/types/document.js';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
   private collectionName: string;
   private _documentEncoded: DocumentEncoded;
   private _id: string;
+  private createdAt: Date;
 
   constructor(
     databaseName: string,
     collectionName: string,
-    documentEncoded: DocumentEncoded,
-    id: string
+    document: Document
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
-    this._documentEncoded = documentEncoded;
-    this._id = id;
+    this._documentEncoded = document.documentEncoded;
+    this._id = document.id;
+    this.createdAt = document.createdAt;
   }
 
   async changeGroup(groupName: string): Promise<void> {
@@ -83,11 +86,21 @@ export class ZKDocumentImpl implements ZKDocument {
     throw Error();
   }
 
-  public get id() {
+  public getId(): string {
     return this._id;
   }
 
-  public get documentEncoded() {
+  public getDocumentEncoded(): DocumentEncoded {
     return this._documentEncoded;
+  }
+
+  async delete(): Promise<MerkleWitness> {
+    return deleteDocument(this.databaseName, this.collectionName, {
+      docId: this._id,
+    });
+  }
+
+  getCreatedAt(): Date {
+    return this.createdAt;
   }
 }

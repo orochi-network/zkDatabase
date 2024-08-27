@@ -4,6 +4,7 @@ import {
   ModelDatabase,
   ModelDbSetting,
 } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -13,7 +14,6 @@ import { Pagination } from '../types/pagination.js';
 import { QueryOptions } from '../types/search.js';
 import filterItems from '../query/array-filter.js';
 import { isUserExist } from './user.js';
-import { ClientSession } from 'mongodb';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(

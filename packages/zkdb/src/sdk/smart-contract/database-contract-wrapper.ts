@@ -39,7 +39,9 @@ export class DatabaseContractWrapper {
 
     const user = ZKDatabaseClient.currentUser;
 
+    console.log('deploy')
     if (user) {
+      console.log('deploy 1')
       let tx =
         await this.zkDatabaseSmartContact.createAndProveDeployTransaction(
           PublicKey.fromBase58(user.publicKey)

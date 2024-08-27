@@ -40,15 +40,15 @@ async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  documentId: ObjectId | null,
+  docId: string | null,
   session?: ClientSession
 ): Promise<PermissionRecord> {
-  const modelMetadata = documentId
+  const modelMetadata = docId
     ? new ModelDocumentMetadata(databaseName)
     : ModelCollectionMetadata.getInstance(databaseName);
 
-  const key = documentId
-    ? { docId: documentId, collection: collectionName }
+  const key = docId
+    ? { docId, collection: collectionName }
     : { collection: collectionName };
   const metadata = await modelMetadata.findOne(key, { session });
 
@@ -59,7 +59,7 @@ async function checkPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  docId: ObjectId | null,
+  docId: string | null,
   type: PermissionType,
   isDocument: boolean,
   session?: ClientSession
@@ -82,7 +82,7 @@ export async function hasDocumentPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  docId: ObjectId,
+  docId: string,
   type: PermissionType,
   session?: ClientSession
 ): Promise<boolean> {
@@ -119,7 +119,7 @@ export async function changePermissions(
   databaseName: string,
   collectionName: string,
   actor: string,
-  docId: ObjectId | null,
+  docId: string | null,
   group: PermissionGroup,
   permissions: PermissionRecord,
   session?: ClientSession
@@ -191,7 +191,7 @@ export async function setPermissions(
   databaseName: string,
   collectionName: string,
   actor: string,
-  docId: ObjectId | null,
+  docId: string | null,
   permissions: FullPermissions,
   session?: ClientSession
 ): Promise<boolean> {

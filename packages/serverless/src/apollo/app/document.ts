@@ -64,23 +64,6 @@ type MerkleWitness {
   sibling: String!
 }
 
-type Document {
-  name: String!
-  kind: String!
-  value: String!
-}
-
-input DocumentInput {
-  name: String!
-  kind: String!
-  value: String!
-}
-
-type DocumentOutput {
-  _id: String!,
-  document: [Document!]!
-}
-
 input PermissionRecordInput {
   system: Boolean
   create: Boolean
@@ -93,12 +76,6 @@ input PermissionDetailInput {
   permissionOwner: PermissionRecordInput
   permissionGroup: PermissionRecordInput
   permissionOther: PermissionRecordInput
-}
-
-input DocumentRecordInput {
-  name: String!
-  kind: String!
-  value: String!
 }
 
 extend type Query {
@@ -146,11 +123,10 @@ const documentFind = resolverWrapper(
       return null;
     }
 
-    const { _id, ...pureDocument } = document;
-
     return {
-      _id,
-      document: Object.values(pureDocument),
+      docId: document.docId,
+      fields: document.fields,
+      createdAt: document.createdAt
     };
   }
 );

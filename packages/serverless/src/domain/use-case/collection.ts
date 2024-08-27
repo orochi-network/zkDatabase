@@ -159,6 +159,15 @@ async function dropIndex(
   );
 }
 
+export async function collectionExist(
+  databaseName: string,
+  collectionName: string
+): Promise<boolean> {
+  return (await ModelDatabase.getInstance(databaseName).listCollections()).some(
+    (collection) => collection === collectionName
+  );
+}
+
 export {
   createCollection,
   createIndex,

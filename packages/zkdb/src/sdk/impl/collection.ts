@@ -22,6 +22,7 @@ import {
 } from '../../repository/ownership.js';
 import { Permissions } from '../../types/permission.js';
 import { Ownership } from '../../types/ownership.js';
+import { getDocumentHistory as getDocumentHistoryRequest } from '../../repository/document-history.js';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;
@@ -41,8 +42,7 @@ export class CollectionQueryImpl implements ZKCollection {
       return new ZKDocumentImpl(
         this.databaseName,
         this.collectionName,
-        document.documentEncoded,
-        document.id
+        document
       );
     });
   }
@@ -59,8 +59,7 @@ export class CollectionQueryImpl implements ZKCollection {
       return new ZKDocumentImpl(
         this.databaseName,
         this.collectionName,
-        document.documentEncoded,
-        document.id
+        document
       );
     }
     return null;
@@ -148,5 +147,18 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async getOwnership(): Promise<Ownership> {
     return getCollectionOwnership(this.databaseName, this.collectionName);
+  }
+
+  async getDocumentHistory(documentId: string): Promise<ZKDocument[]> {
+    return (
+      await getDocumentHistoryRequest(
+        this.databaseName,
+        this.collectionName,
+        documentId
+      )
+    ).documents.map(
+      (document) =>
+        new ZKDocumentImpl(this.databaseName, this.collectionName, document)
+    );
   }
 }
