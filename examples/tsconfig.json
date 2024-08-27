@@ -4,7 +4,7 @@
     "target": "ESNext",
     "module": "ESNext",
     "lib": ["dom", "esnext"],
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "build",
     "strict": true,
     "declarationMap": true,
