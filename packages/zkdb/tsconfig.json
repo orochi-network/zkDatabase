@@ -6,7 +6,7 @@
     "module": "NodeNext",
     "lib": ["dom", "esnext"],
     "outDir": "./build",
-    "rootDir": "src",
+    "rootDir": ".",
     "declarationMap": false,
     "strictPropertyInitialization": false,
     "forceConsistentCasingInFileNames": true,
