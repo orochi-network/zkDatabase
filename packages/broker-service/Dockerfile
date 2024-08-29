@@ -8,8 +8,8 @@ RUN yarn install --frozen-lockfile
 
 RUN yarn workspace @zkdb/storage build
 
-RUN yarn workspace @zkdb/proof-service build
+RUN yarn workspace @zkdb/broker-service build
 
-WORKDIR /usr/src/app/packages/proof-service
+WORKDIR /usr/src/app/packages/broker-service
 
 CMD ["node", "build/src/index.js"]

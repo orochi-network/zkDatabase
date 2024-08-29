@@ -1,0 +1,51 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:7
+    user: root
+    command:
+      [
+        'mongod',
+        '--replSet',
+        'rs0',
+        '--bind_ip_all',
+        '--port',
+        '27017',
+        '--keyFile',
+        '/etc/mongodb/pki/keyfile',
+      ]
+    container_name: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    healthcheck:
+      test: >
+        bash -c 'mongo --quiet --eval "
+          var status = rs.status();
+          if (status.code == 94) {
+            rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]});
+          } else if (status.ok != 1) {
+            throw new Error(status.errmsg);
+          }
+        "' --port 27017
+      interval: 10s
+      timeout: 30s
+      start_period: 10s
+      retries: 5
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ${PWD}/mongo-keyfile/rs_keyfile:/etc/mongodb/pki/keyfile
+    entrypoint:
+      - bash
+      - -c
+      - |
+        /bin/chmod 400 /etc/mongodb/pki/keyfile
+        /bin/chown 999:999 /etc/mongodb/pki/keyfile
+        exec docker-entrypoint.sh "$@"
+    networks:
+      - zk
+networks:
+  zk:
+    external: true
