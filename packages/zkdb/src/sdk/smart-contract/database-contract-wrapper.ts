@@ -39,9 +39,7 @@ export class DatabaseContractWrapper {
 
     const user = ZKDatabaseClient.currentUser;
 
-    console.log('deploy')
     if (user) {
-      console.log('deploy 1')
       let tx =
         await this.zkDatabaseSmartContact.createAndProveDeployTransaction(
           PublicKey.fromBase58(user.publicKey)
@@ -61,11 +59,18 @@ export class DatabaseContractWrapper {
   ): Promise<PendingTransactionPromise> {
     await this.zkDatabaseSmartContact.compile();
 
-    let tx =
-      await this.zkDatabaseSmartContact.createAndProveRollUpTransaction(
-        jsonProof
-      );
-    tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
-    return await tx.send();
+    const user = ZKDatabaseClient.currentUser;
+
+    if (user) {
+      let tx =
+        await this.zkDatabaseSmartContact.createAndProveRollUpTransaction(
+          PublicKey.fromBase58(user.publicKey),
+          jsonProof
+        );
+      tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
+      return await tx.send();
+    }
+
+    throw Error('User is null');
   }
 }

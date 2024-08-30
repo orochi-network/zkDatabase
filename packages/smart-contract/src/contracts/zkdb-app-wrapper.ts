@@ -74,15 +74,22 @@ export class ZKDatabaseSmartContractWrapper {
   }
 
   async createAndProveRollUpTransaction(
+    callerPublicKey: PublicKey,
     jsonProof: JsonProof
   ): Promise<MinaTransaction> {
     const zkApp = new this._smartContract(this.publicKey);
     class ZkDbProof extends ZkProgram.Proof(this.rollUpProgram) {}
 
     const proof = await ZkDbProof.fromJSON(jsonProof);
-    const tx = await Mina.transaction(async () => {
-      await zkApp.rollUp(proof);
-    });
+    const tx = await Mina.transaction(
+      {
+        sender: callerPublicKey,
+        fee: 100_000_000,
+      },
+      async () => {
+        await zkApp.rollUp(proof);
+      }
+    );
     await tx.prove();
     return tx;
   }
