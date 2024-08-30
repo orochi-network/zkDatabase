@@ -1,5 +1,5 @@
 # Use the official Node.js 20 slim image as a base
-FROM node:iron-slim
+FROM orochinetwork/node:20-iron
 
 # Create a non-root user and group early in the Dockerfile
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser

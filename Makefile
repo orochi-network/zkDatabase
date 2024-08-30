@@ -3,7 +3,7 @@ BROKER_SERVICE_TAG = broker-service
 PROOF_SERVICE_TAG = proof-service
 FTP_SERVICE_TAG = ftp-service
 SERVERLESS_TAG = serverless
-PLATFORM_TAG = linux/amd64
+PLATFORM_TAG = linux/amd64 # You can choose between linux/amd64 for x86_64 and linux/arm64 for arm64
 
 BROKER_SERVICE_DOCKERFILE = packages/broker-service/Dockerfile
 PROOF_SERVICE_DOCKERFILE = packages/proof-service/Dockerfile
@@ -51,18 +51,28 @@ up-serverless:
 up-mongo:
 	docker compose -f $(MONGO_COMPOSE) up -d 
 
-# Combined build and up commands
-.PHONY: all
-all: build up
+# Stop specific services with Docker Compose
+.PHONY: stop
+stop: stop-broker stop-proof stop-ftp stop-serverless stop-mongo
 
-# Stop and remove containers, networks, images, and volumes
-.PHONY: down
-down:
+stop-broker:
 	docker compose -f $(BROKER_SERVICE_COMPOSE) down
+
+stop-proof:
 	docker compose -f $(PROOF_SERVICE_COMPOSE) down
+
+stop-ftp:
 	docker compose -f $(FTP_COMPOSE) down
+
+stop-serverless:
 	docker compose -f $(SERVERLESS_COMPOSE) down
+
+stop-mongo:
 	docker compose -f $(MONGO_COMPOSE) down
+
+# Stop and remove containers, networks, images, and volumes for all services
+.PHONY: down
+down: stop-broker stop-proof stop-ftp stop-serverless stop-mongo
 
 # Clean up Docker images
 .PHONY: clean

@@ -1,4 +1,4 @@
-FROM node:iron-slim
+FROM orochinetwork/node:20-iron
 
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
 
