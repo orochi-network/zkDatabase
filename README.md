@@ -138,6 +138,9 @@ _The graphical user interface provided by zkDatabase offers an intuitive and use
 
 The specification of zkDatabase was moved [here](https://docs.orochi.network/zkdatabase/chapter.html).
 
+## Installation
+Refer to the [installation guide](Installation.md) for detailed instructions on setting up zkDatabase.
+
 ## Contribute
 
 This section will be updated soon but all contributions are welcomed, feeling free to create a [pull request](https://github.com/orochi-network/zkDatabase/pulls).

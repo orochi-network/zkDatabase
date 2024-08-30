@@ -1,8 +1,10 @@
 services:
   app:
-    image: proof-service
+    image: ftp-service
     env_file:
       - .env
+    ports:
+      - "2121:2121"
     networks:
       - zk
 networks:

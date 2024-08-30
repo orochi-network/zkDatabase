@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "tsc && node ./build/index.js",
-    "populate": "tsc && node ./build/populate-cache.js"
+    "build": "tsc",
+    "start": "tsc && node ./build/src/index.js",
+    "populate": "tsc && node ./build/src/populate-cache.js"
   },
   "type": "module",
   "keywords": [],

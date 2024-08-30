@@ -13,19 +13,17 @@ RUN chown -R appuser:appuser /usr/src/app
 # Switch to the non-root user
 USER appuser
 
-# Copy the application code as the non-root user
+# Copy the application code
 COPY --chown=appuser:appuser . .
 
 # Install dependencies with a frozen lockfile
 RUN yarn install --frozen-lockfile
 
 # Build the necessary workspace
-RUN yarn workspace @zkdb/storage build
+RUN yarn workspace @zkdb/serverless build
 
-RUN yarn workspace @zkdb/proof-service build
-
-# Set the working directory for the FTP package
-WORKDIR /usr/src/app/packages/proof-service
+# Set the working directory for the serverless package
+WORKDIR /usr/src/app/packages/serverless
 
 # Set the entrypoint to the application
 ENTRYPOINT ["node", "build/src/index.js"]

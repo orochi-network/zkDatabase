@@ -20,12 +20,10 @@ COPY --chown=appuser:appuser . .
 RUN yarn install --frozen-lockfile
 
 # Build the necessary workspace
-RUN yarn workspace @zkdb/storage build
-
-RUN yarn workspace @zkdb/proof-service build
+RUN yarn workspace ftp build
 
 # Set the working directory for the FTP package
-WORKDIR /usr/src/app/packages/proof-service
+WORKDIR /usr/src/app/packages/ftp
 
 # Set the entrypoint to the application
 ENTRYPOINT ["node", "build/src/index.js"]
