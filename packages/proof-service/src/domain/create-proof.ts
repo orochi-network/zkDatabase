@@ -31,7 +31,7 @@ export async function createProof(taskId: string) {
     throw Error('Task has not been found');
   }
 
-  if (task.status !== 'executing') {
+  if (task.status !== 'proving') {
     logger.error('Task has not been marked as executing');
     throw Error('Task has not been marked as executing');
   }

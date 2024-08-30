@@ -1,10 +1,11 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelProof, ModelQueueTask } from '@zkdb/storage';
+import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
 import resolverWrapper from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
 import { AppContext } from '../../common/types.js';
-import { TDatabaseRequest } from './database.js';
+import { hasDocumentPermission } from '../../domain/use-case/permission.js';
+import { TCollectionRequest } from './collection.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -18,36 +19,69 @@ type Proof {
   proof: String!
 }
 
+enum ProofStatus {
+  QUEUED
+  PROVING
+  PROVED
+  FAILED
+}
+
 extend type Query {
-  proofStatus(database: String!, collection: String!, docId: String): String!
+  getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
   getProof(databaseName: String!): Proof
 }
 `;
 
-export type TProofRequest = TDatabaseRequest & {
+export type TProofRequest = TCollectionRequest & {
   docId: string;
 };
 
-const proofStatus = resolverWrapper(
+const getProofStatus = resolverWrapper(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TProofRequest, ctx: AppContext) => {
-    const modelProof = ModelQueueTask.getInstance();
+    return withTransaction(async (session) => {
+      const modelProof = ModelQueueTask.getInstance();
 
-    // TODO: Check permissions
-    const proof = await modelProof.findOne({
-      database: args.databaseName,
-      docId: args.docId,
+      if (
+        await hasDocumentPermission(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.docId,
+          'read',
+          session
+        )
+      ) {
+        const proof = await modelProof.findOne({
+          database: args.databaseName,
+          docId: args.docId,
+        });
+
+        if (proof) {
+          switch (proof.status) {
+            case 'queued':
+              return 'QUEUED';
+            case 'proving':
+              return 'PROVING';
+            case 'proved':
+              return 'PROVED';
+            case 'failed':
+              return 'FAILED';
+            default:
+              throw new Error(`Unknown proof status: ${proof.status}`);
+          }
+        }
+        throw Error('Proof has not been found');
+      }
+
+      throw new Error(
+        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
+      );
     });
-
-    if (proof) {
-      return proof.status;
-    }
-
-    throw Error('Proof has not been found');
   }
 );
 
@@ -55,7 +89,7 @@ const getProof = resolverWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TProofRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TProofRequest) => {
     const modelProof = ModelProof.getInstance();
 
     return modelProof.getProof(args.databaseName);
@@ -65,7 +99,7 @@ const getProof = resolverWrapper(
 type TProofResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
-    proofStatus: typeof proofStatus;
+    getProofStatus: typeof getProofStatus;
     getProof: typeof getProof;
   };
 };
@@ -73,7 +107,7 @@ type TProofResolver = {
 export const resolversProof: TProofResolver = {
   JSON: GraphQLJSON,
   Query: {
-    proofStatus,
+    getProofStatus,
     getProof,
   },
 };
