@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: proof-service-image
+    image: proof-service
     env_file:
       - .env
     networks:

@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   app:
-    image: broker-service
+    image: ftp-service
     env_file:
       - .env
     ports:
-      - "4001:4001"
+      - "2121:2121"
     networks:
       - zk
 networks:
