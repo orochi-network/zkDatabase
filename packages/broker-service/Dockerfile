@@ -1,4 +1,4 @@
-# Use the official Node.js 20 slim image as a base
+# Use our customized image based on Node.js 20 slim image as a base
 FROM orochinetwork/node:20-iron
 
 # Create a non-root user and group early in the Dockerfile
