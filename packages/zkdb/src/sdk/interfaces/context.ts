@@ -5,7 +5,7 @@ import { ZKDatabase } from "./database.js";
 import { GlobalContext } from "./global-context.js";
 
 export interface ZKDatabaseContext {
-  database(name: string): ZKDatabase;
+  useDatabase(name: string): ZKDatabase;
   minaBlockchain(): MinaBlockchain;
   global(): GlobalContext
 }

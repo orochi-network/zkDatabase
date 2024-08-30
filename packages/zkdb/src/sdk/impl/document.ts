@@ -11,7 +11,9 @@ import {
   setDocumentPermissions,
 } from '../../repository/ownership.js';
 import { deleteDocument } from '../../repository/document.js';
-import { Document } from 'src/types/document.js';
+import { Document } from '../../types/document.js';
+import { ProofStatus } from '../../types/proof.js';
+import { getProofStatus } from '../../repository/proof.js';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
@@ -30,6 +32,10 @@ export class ZKDocumentImpl implements ZKDocument {
     this._documentEncoded = document.documentEncoded;
     this._id = document.id;
     this.createdAt = document.createdAt;
+  }
+
+  async getProofStatus(): Promise<ProofStatus> {
+    return getProofStatus(this.databaseName, this.collectionName, this._id);
   }
 
   async changeGroup(groupName: string): Promise<void> {

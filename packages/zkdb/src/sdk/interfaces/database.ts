@@ -5,6 +5,7 @@ import { GroupDescription } from '../../types/group.js';
 import { SchemaDefinition } from '../schema.js';
 import { Permissions } from '../../types/permission.js';
 import { ZKGroup } from './group.js';
+import { JsonProof } from 'o1js';
 
 export interface ZKDatabase {
   useCollection(name: string): ZKCollection;
@@ -28,4 +29,6 @@ export interface ZKDatabase {
   getSettings(): Promise<DatabaseSettings>;
   
   changeOwner(newOwner: string): Promise<void>
+
+  getProof(): Promise<JsonProof>
 }

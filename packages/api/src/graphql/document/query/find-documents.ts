@@ -10,13 +10,13 @@ const SEARCH_DOCUMENTS = gql`
   query DocumentsFind(
     $databaseName: String!
     $collectionName: String!
-    $search: SearchInput
+    $documentQuery: JSON!
     $pagination: PaginationInput
   ) {
     documentsFind(
       databaseName: $databaseName
       collectionName: $collectionName
-      search: $search
+      documentQuery: $documentQuery
       pagination: $pagination
     ) {
       docId
@@ -25,6 +25,7 @@ const SEARCH_DOCUMENTS = gql`
         kind
         value
       }
+      createdAt
     }
   }
 `;

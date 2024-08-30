@@ -17,7 +17,7 @@ import {
   readDocument,
   searchDocuments,
   updateDocument,
-  findDocumentsWithMetadata
+  findDocumentsWithMetadata,
 } from '../../domain/use-case/document.js';
 import { AppContext } from '../../common/types.js';
 import { PermissionsData } from '../types/permission.js';
@@ -31,7 +31,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
 
 export type TDocumentsFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
-  pagination: Pagination
+  pagination: Pagination;
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
@@ -54,9 +54,8 @@ export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
-  pagination
+  pagination,
 });
-
 
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
@@ -104,7 +103,7 @@ type DocumentsWithMetadataOutput {
 
 extend type Query {
   documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): DocumentOutput
-  documentsFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): [DocumentOutput]!
+  documentsFind(databaseName: String!, collectionName: String!, documentQuery: JSON!, pagination: PaginationInput): [DocumentOutput]!
   documentsWithMetadataFind(
     databaseName: String!, 
     collectionName: String!, 
@@ -273,7 +272,7 @@ export const resolversDocument: TDocumentResolver = {
   Query: {
     documentFind,
     documentsFind,
-    documentsWithMetadataFind
+    documentsWithMetadataFind,
   },
   Mutation: {
     documentCreate,

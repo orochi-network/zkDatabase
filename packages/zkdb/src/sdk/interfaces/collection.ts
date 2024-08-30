@@ -5,6 +5,7 @@ import { QueryOptions } from '../query/query-builder.js';
 import { Filter } from '../../types/filter.js';
 import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
+import { Pagination } from '../../types/pagination.js';
 
 export interface ZKCollection extends Ownable {
   getDocument<
@@ -20,7 +21,8 @@ export interface ZKCollection extends Ownable {
       new (..._args: any): InstanceType<T>;
     },
   >(
-    filter: Filter<T>
+    filter?: Filter<T>,
+    pagination?: Pagination
   ): Promise<ZKDocument[]>;
 
   saveDocument<

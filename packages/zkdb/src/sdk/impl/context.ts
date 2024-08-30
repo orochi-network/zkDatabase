@@ -7,7 +7,7 @@ import { GlobalContextImpl } from './global-context.js';
 import { GlobalContext } from '../interfaces/global-context.js';
 
 export class ZKDatabaseContextImpl implements ZKDatabaseContext {
-  database(name: string): ZKDatabase {
+  useDatabase(name: string): ZKDatabase {
     return new ZKDatabaseImpl(name);
   }
 

@@ -3,17 +3,22 @@ import { DocumentEncoded, ProvableTypeString } from '../sdk/schema.js';
 import { MerkleWitness } from '../types/merkle-tree.js';
 import { Field } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
-import { QueryOptions } from '../sdk/query/query-builder.js';
-import mapSearchInputToSearch from './mapper/search.js';
 import { Document } from '../types/document.js';
-import { findDocument } from '@zkdb/api';
+import {
+  findDocument as findDocumentRequest,
+  createDocument as createDocumentRequest,
+  updateDocument as updateDocumentRequest,
+  deleteDocument as deleteDocumentRequest,
+  findDocuments as findDocumentsRequest,
+} from '@zkdb/api';
+import { Pagination } from '../types/pagination.js';
 
 export async function findDocument(
   databaseName: string,
   collectionName: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  const result = await findDocuments(
+  const result = await findDocumentRequest(
     databaseName,
     collectionName,
     JSON.parse(JSON.stringify(filter))
@@ -103,21 +108,17 @@ export async function deleteDocument(
   }
 }
 
-export async function searchDocument(
+export async function findDocuments(
   databaseName: string,
   collectionName: string,
-  queryOptions?: QueryOptions<any>
+  filter: FilterCriteria,
+  pagination?: Pagination
 ): Promise<Document[]> {
-  const result = await searchDocumentRequest(
+  const result = await findDocumentsRequest(
     databaseName,
     collectionName,
-    queryOptions ? mapSearchInputToSearch(queryOptions.where) : undefined,
-    queryOptions?.limit
-      ? {
-          limit: queryOptions.limit,
-          offset: queryOptions.offset ?? 0,
-        }
-      : undefined
+    JSON.parse(JSON.stringify(filter)),
+    pagination
   );
 
   if (result.type === 'success') {

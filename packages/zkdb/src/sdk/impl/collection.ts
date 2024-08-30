@@ -5,7 +5,7 @@ import {
   createDocument,
   deleteDocument,
   findDocument,
-  searchDocument,
+  findDocuments,
   updateDocument,
 } from '../../repository/document.js';
 import { ZKCollection } from '../interfaces/collection.js';
@@ -22,6 +22,7 @@ import {
 import { Permissions } from '../../types/permission.js';
 import { Ownership } from '../../types/ownership.js';
 import { getDocumentHistory as getDocumentHistoryRequest } from '../../repository/document-history.js';
+import { Pagination } from '../../types/pagination.js';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;
@@ -32,11 +33,16 @@ export class CollectionQueryImpl implements ZKCollection {
     this.collectionName = collectionName;
   }
 
-  async getAvailableDocuments<T>(
-    queryOptions: QueryOptions<T>
-  ): Promise<ZKDocument[]> {
+  async getAvailableDocuments<
+    T extends { new (..._args: any): InstanceType<T> },
+  >(filter?: Filter<T>, pagination?: Pagination): Promise<ZKDocument[]> {
     return (
-      await searchDocument(this.databaseName, this.collectionName, queryOptions)
+      await findDocuments(
+        this.databaseName,
+        this.collectionName,
+        filter ?? {},
+        pagination
+      )
     ).map((document) => {
       return new ZKDocumentImpl(
         this.databaseName,
