@@ -1,13 +1,21 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# This GitHub Action will loop through all sub-repos:
+# If a package is in the publish list and its package.json version is higher than the NPM registry version, it will be published.
+# Others will also be checked for linting and tested (if applicable).
+# For now: The publish list is:
+# @zkdb/kubo
+# @zkdb/api
+# @zkdb/smart-contract
 
-name: Node.js CI
+name: Publish packages in zkDatabase Repository
 
 on:
   push:
     branches: ['main']
   pull_request:
     branches: ['main']
+
+env:
+  NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
 jobs:
   build:
@@ -17,8 +25,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [20.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,13 +33,53 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      #- name: Test & Build explorer
-      #  run: cd ./packages/explorer && npm i && npm run build
-      - name: Test & Build kubo
-        run: cd ./packages/kubo && npm i && npm run build && npm run test
-      #- name: Test & Build portal
-      #  run: cd ./packages/portal && npm i && npm run lint && npm run build
-      #- name: Test & Build serverless
-      #  run: cd ./packages/serverless && npm i && npm run lint && npm run build
-      - name: Test & Build zkdb
-        run: cd ./packages/zkdb && npm i && npm run lint && npm run build && npm run test
+      - name: Install dependencies
+        run: yarn install
+      - name: Build all packages
+        run: yarn build
+      - name: Install compare-versions package
+        run: yarn add -W -D compare-versions@6.1.0
+      - name: Loop through all packages and publish them if necessary
+        env:
+          NPM_TOKEN: ${{ env.NPM_TOKEN }}
+        run: |
+          # Define packages need to publish
+          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract")
+          # Prepare npm token environment
+          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true \n @orochi-network:registry=https://registry.npmjs.org" > ~/.npmrc
+          packages_dir="packages"
+
+          # Loop through all packages
+          for package_dir in $(find "$packages_dir" -mindepth 1 -maxdepth 1 -type d); do
+            echo "Processing: $package_dir"
+            cd $package_dir
+            PACKAGE_NAME=$(node -p "require('./package.json').name")
+            if [[ " ${PUBLISH_LIST[@]} " =~ " ${PACKAGE_NAME} " ]]; then
+              echo "$PACKAGE_NAME is in the publish list"
+              NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
+              PACKAGE_VERSION=$(node -p "require('./package.json').version")
+              echo "NPM_VERSION = " $NPM_VERSION
+              echo "PACKAGE_VERSION = " $PACKAGE_VERSION
+
+              # Doing version comparison
+              VERSION_COMPARE=$(node -e "
+                const compareVersions = require('compare-versions');
+                const npmVersion = '$NPM_VERSION';
+                const packageVersion = '$PACKAGE_VERSION';
+                if (compareVersions.compare(packageVersion, npmVersion, '>')) {
+                  console.log('true');
+                } else {
+                  console.log('false');
+                }
+              ")
+              if [ "$VERSION_COMPARE" = "false" ]; then
+                echo "Ignore ${PACKAGE_NAME} since no changes"
+              else
+                echo "Detected: New version of ${PACKAGE_NAME}"
+              fi
+            else
+              echo "$PACKAGE_NAME is not in the publish list"
+              yarn run lint
+            fi
+            cd -
+          done
