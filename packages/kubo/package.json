@@ -8,7 +8,7 @@
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "repository": {
     "type": "git",
