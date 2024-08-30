@@ -7,15 +7,23 @@ import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
 
 export interface ZKCollection extends Ownable {
-  findOne<
+  getDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
   >(
     filter: Filter<T>
   ): Promise<ZKDocument | null>;
-  queryDocuments<T>(queryOptions: QueryOptions<T>): Promise<ZKDocument[]>;
-  insertOne<
+
+  getAvailableDocuments<
+    T extends {
+      new (..._args: any): InstanceType<T>;
+    },
+  >(
+    filter: Filter<T>
+  ): Promise<ZKDocument[]>;
+
+  saveDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -24,7 +32,8 @@ export interface ZKCollection extends Ownable {
     model: InstanceType<T>,
     permissions: Permissions
   ): Promise<MerkleWitness>;
-  insertOne<
+
+  saveDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -32,7 +41,8 @@ export interface ZKCollection extends Ownable {
   >(
     model: InstanceType<T>
   ): Promise<MerkleWitness>;
-  updateOne<
+
+  updateDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -41,7 +51,8 @@ export interface ZKCollection extends Ownable {
     filter: Filter<T>,
     model: InstanceType<T>
   ): Promise<MerkleWitness>;
-  deleteOne<
+
+  deleteDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
@@ -49,6 +60,5 @@ export interface ZKCollection extends Ownable {
     filter: Filter<T>
   ): Promise<MerkleWitness>;
 
-
-  getDocumentHistory(documentId: string): Promise<ZKDocument[]>
+  getDocumentHistory(documentId: string): Promise<ZKDocument[]>;
 }

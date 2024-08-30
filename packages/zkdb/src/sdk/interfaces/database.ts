@@ -7,9 +7,9 @@ import { Permissions } from '../../types/permission.js';
 import { ZKGroup } from './group.js';
 
 export interface ZKDatabase {
-  collection(name: string): ZKCollection;
+  useCollection(name: string): ZKCollection;
 
-  newCollection<
+  createCollection<
     T extends {
       getSchema: () => SchemaDefinition;
     },
@@ -19,12 +19,13 @@ export interface ZKDatabase {
     type: T,
     permissions: Permissions
   ): Promise<void>;
-  newGroup(groupName: string, description: string): Promise<void>;
+  
+  createGroup(groupName: string, description: string): Promise<void>;
 
-  group(groupName: string): ZKGroup;
+  useGroup(groupName: string): ZKGroup;
 
-  groups(): Promise<GroupDescription[]>;
+  getGroups(): Promise<GroupDescription[]>;
   getSettings(): Promise<DatabaseSettings>;
-
+  
   changeOwner(newOwner: string): Promise<void>
 }

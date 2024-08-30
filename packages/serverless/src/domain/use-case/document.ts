@@ -34,8 +34,6 @@ import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { getUsersGroup } from './group.js';
 import { Pagination } from '../types/pagination.js';
-import { SearchInput } from '../types/search.js';
-import buildMongoQuery from '../query/mongodb-filter.js';
 import { isDatabaseOwner } from './database.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
@@ -49,7 +47,8 @@ function buildDocumentFields(
         key !== '_id' &&
         key !== 'docId' &&
         key !== 'deleted' &&
-        key !== 'timestamp'
+        key !== 'timestamp' &&
+        key !== 'metadata'
     )
     .map((key) => ({
       name: documentRecord[key].name,
@@ -345,8 +344,7 @@ async function deleteDocument(
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
   const findResult = await modelDocument.findOne(parseQuery(filter), session);
-
-  console.log('findResult', findResult);
+  
   if (findResult) {
     if (
       !(await hasDocumentPermission(
@@ -415,7 +413,7 @@ function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
       $unwind: '$metadata',
     },
     {
-      $match: matchQuery,
+      $match: matchQuery
     },
     {
       $skip: pagination?.offset || 0,
@@ -445,11 +443,11 @@ function filterDocumentsByPermissions(
   });
 }
 
-async function searchAggregatedDocuments(
+async function findDocumentsWithMetadata(
   databaseName: string,
   collectionName: string,
   actor: string,
-  query?: SearchInput<any>,
+  query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
 ): Promise<WithProofStatus<WithMetadata<Document>>[]> {
@@ -471,9 +469,7 @@ async function searchAggregatedDocuments(
     const tasks =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
-    const matchQuery = buildMongoQuery(query);
-
-    const pipeline = buildPipeline(matchQuery, pagination);
+    const pipeline = buildPipeline(query ? parseQuery(query) : null, pagination);
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
@@ -545,7 +541,7 @@ async function searchDocuments(
   databaseName: string,
   collectionName: string,
   actor: string,
-  query?: SearchInput<any>,
+  query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
 ): Promise<Array<Document>> {
@@ -565,9 +561,9 @@ async function searchDocuments(
 
     const userGroups = await getUsersGroup(databaseName, actor);
 
-    const matchQuery = buildMongoQuery(query);
+    // const matchQuery = buildMongoQuery(query);
 
-    const pipeline = buildPipeline(matchQuery, pagination);
+    const pipeline = buildPipeline(query ? parseQuery(query) : null, pagination);
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
@@ -606,7 +602,7 @@ async function searchDocuments(
 }
 
 export {
-  searchAggregatedDocuments,
+  findDocumentsWithMetadata,
   readDocument,
   createDocument,
   updateDocument,

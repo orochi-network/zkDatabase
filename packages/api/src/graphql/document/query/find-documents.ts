@@ -1,19 +1,23 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
 import { DocumentEncoded, DocumentPayload } from "../../types/document.js";
+import { Search } from "../../types/search.js";
+import { Pagination } from "../../types/pagination.js";
 
-const FIND_DOCUMENT = gql`
-  query DocumentFind(
+const SEARCH_DOCUMENTS = gql`
+  query DocumentsFind(
     $databaseName: String!
     $collectionName: String!
-    $documentQuery: JSON!
+    $search: SearchInput
+    $pagination: PaginationInput
   ) {
-    documentFind(
+    documentsFind(
       databaseName: $databaseName
       collectionName: $collectionName
-      documentQuery: $documentQuery
+      search: $search
+      pagination: $pagination
     ) {
       docId
       fields {
@@ -21,41 +25,35 @@ const FIND_DOCUMENT = gql`
         kind
         value
       }
-      createdAt
     }
   }
 `;
 
-export const findDocument = async (
+export const findDocuments = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON
-): Promise<NetworkResult<DocumentPayload>> => {
+  documentQuery: JSON,
+  pagination?: Pagination
+): Promise<
+  NetworkResult<Array<DocumentPayload>>
+> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query({
-      query: FIND_DOCUMENT,
+      query: SEARCH_DOCUMENTS,
       variables: {
         databaseName,
         collectionName,
         documentQuery,
-      }
+        pagination,
+      },
     });
 
-    const response = data?.documentFind;
-
-    console.log('response', response)
-
-    const payload: DocumentPayload = {
-      docId: response.docId,
-      fields: response.fields,
-      createdAt: response.fields
-    }
-    console.log('payload', payload);
-
+    const response = data?.documentsFind;
+    
     if (response) {
       return {
         type: "success",
-        data: payload,
+        data: response,
       };
     } else {
       return {

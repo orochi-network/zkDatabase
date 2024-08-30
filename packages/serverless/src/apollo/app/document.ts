@@ -8,20 +8,30 @@ import {
   collectionName,
   databaseName,
   documentField,
+  pagination,
   permissionDetail,
 } from './common.js';
 import {
   createDocument,
   deleteDocument,
   readDocument,
+  searchDocuments,
   updateDocument,
+  findDocumentsWithMetadata
 } from '../../domain/use-case/document.js';
 import { AppContext } from '../../common/types.js';
 import { PermissionsData } from '../types/permission.js';
 import { TDocumentFields } from '../types/document.js';
+import { Pagination } from '../types/pagination.js';
+import mapPagination from '../mapper/pagination.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
+};
+
+export type TDocumentsFindRequest = TCollectionRequest & {
+  documentQuery: { [key: string]: string };
+  pagination: Pagination
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
@@ -39,6 +49,14 @@ export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   collectionName,
   documentQuery: Joi.object(),
 });
+
+export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
+  databaseName,
+  collectionName,
+  documentQuery: Joi.object(),
+  pagination
+});
+
 
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
@@ -77,9 +95,22 @@ input PermissionDetailInput {
   permissionGroup: PermissionRecordInput
   permissionOther: PermissionRecordInput
 }
+  
+type DocumentsWithMetadataOutput {
+  document: DocumentOutput!
+  metadata: Metadata!,
+  proofStatus: String
+}
 
 extend type Query {
   documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): DocumentOutput
+  documentsFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): [DocumentOutput]!
+  documentsWithMetadataFind(
+    databaseName: String!, 
+    collectionName: String!, 
+    query: JSON!, 
+    pagination: PaginationInput
+  ): [DocumentsWithMetadataOutput]!
 }
 
 extend type Mutation {
@@ -126,8 +157,44 @@ const documentFind = resolverWrapper(
     return {
       docId: document.docId,
       fields: document.fields,
-      createdAt: document.createdAt
+      createdAt: document.createdAt,
     };
+  }
+);
+
+const documentsFind = resolverWrapper(
+  DOCUMENTS_FIND_REQUEST,
+  async (_root: unknown, args: TDocumentsFindRequest, _ctx: AppContext) => {
+    return withTransaction(async (session) => {
+      const documents = await searchDocuments(
+        args.databaseName,
+        args.collectionName,
+        _ctx.userName,
+        args.documentQuery,
+        mapPagination(args.pagination),
+        session
+      );
+
+      return documents;
+    });
+  }
+);
+
+const documentsWithMetadataFind = resolverWrapper(
+  Joi.object().optional(),
+  async (_root: unknown, args: TDocumentsFindRequest, _ctx: AppContext) => {
+    return withTransaction(async (session) => {
+      const documents = await findDocumentsWithMetadata(
+        args.databaseName,
+        args.collectionName,
+        _ctx.userName,
+        args.documentQuery,
+        mapPagination(args.pagination),
+        session
+      );
+
+      return documents;
+    });
   }
 );
 
@@ -191,6 +258,8 @@ type TDocumentResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     documentFind: typeof documentFind;
+    documentsFind: typeof documentsFind;
+    documentsWithMetadataFind: typeof documentsWithMetadataFind;
   };
   Mutation: {
     documentCreate: typeof documentCreate;
@@ -203,6 +272,8 @@ export const resolversDocument: TDocumentResolver = {
   JSON: GraphQLJSON,
   Query: {
     documentFind,
+    documentsFind,
+    documentsWithMetadataFind
   },
   Mutation: {
     documentCreate,

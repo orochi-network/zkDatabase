@@ -90,6 +90,15 @@ input PermissionInput {
   permissionOther: PermissionInput
 }
 
+type Metadata {
+  merkleIndex: Int!,
+  owner: String!
+  group: String!
+  permissionOwner: PermissionRecord!
+  permissionGroup: PermissionRecord!
+  permissionOther: PermissionRecord!
+}
+
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(

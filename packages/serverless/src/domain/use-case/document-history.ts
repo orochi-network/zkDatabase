@@ -14,7 +14,6 @@ import ModelDocument, {
   DocumentRecord,
 } from '../../model/abstract/document.js';
 import { HistoryDocument } from '../types/document-history.js';
-import { parseQuery, FilterCriteria } from '../utils/document.js';
 
 function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
@@ -157,6 +156,7 @@ async function listHistoryDocuments(
         docId: historyDocument._id,
         documents,
         metadata: historyDocument.metadata,
+        deleted: historyDocument.deleted
       };
     });
 
@@ -191,7 +191,7 @@ async function readHistoryDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const latestDocument = await modelDocument.findOne({ docId }, session);
+  const latestDocument = await modelDocument.findHistoryOne(docId, session);
 
   if (!latestDocument) {
     return null;
@@ -201,7 +201,7 @@ async function readHistoryDocument(
     databaseName,
     collectionName,
     actor,
-    latestDocument.docId,
+    docId,
     'read',
     session
   );
@@ -213,7 +213,7 @@ async function readHistoryDocument(
   }
 
   const documentHistoryRecords = await modelDocument.findHistoryOne(
-    latestDocument.docId,
+    docId,
     session
   );
 
@@ -228,8 +228,9 @@ async function readHistoryDocument(
   });
 
   return {
-    docId: latestDocument.docId,
+    docId,
     documents,
+    deleted: documentHistoryRecords[0].deleted
   };
 }
 

@@ -52,7 +52,7 @@ export async function changeDocumentOwnership(
         docId,
       },
       {
-        owner: newOwner,
+        $set: { owner: newOwner },
       },
       { session }
     );
@@ -66,7 +66,7 @@ export async function changeDocumentOwnership(
         docId,
       },
       {
-        group: newOwner,
+        $set: { group: newOwner },
       },
       { session }
     );
@@ -113,7 +113,7 @@ export async function changeCollectionOwnership(
         collection: collectionName,
       },
       {
-        owner: newOwner,
+        $set: { owner: newOwner },
       },
       { session }
     );
@@ -126,7 +126,7 @@ export async function changeCollectionOwnership(
         collection: collectionName,
       },
       {
-        group: newOwner,
+        $set: { group: newOwner },
       },
       { session }
     );

@@ -1,25 +1,19 @@
 import { Permissions } from '../types/permission.js';
 import { DocumentEncoded, ProvableTypeString } from '../sdk/schema.js';
 import { MerkleWitness } from '../types/merkle-tree.js';
-import {
-  createDocument as createDocumentRequest,
-  updateDocument as updateDocumentRequest,
-  deleteDocument as deleteDocumentRequest,
-  findDocument as findDocumentRequest,
-  searchDocument as searchDocumentRequest,
-} from '@zkdb/api';
 import { Field } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
 import { QueryOptions } from '../sdk/query/query-builder.js';
 import mapSearchInputToSearch from './mapper/search.js';
 import { Document } from '../types/document.js';
+import { findDocument } from '@zkdb/api';
 
 export async function findDocument(
   databaseName: string,
   collectionName: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  const result = await findDocumentRequest(
+  const result = await findDocuments(
     databaseName,
     collectionName,
     JSON.parse(JSON.stringify(filter))

@@ -20,5 +20,7 @@ export default {
   modulePathIgnorePatterns: ['<rootDir>/build/'],
   moduleNameMapper: {
     '^(\\.{1,2}/.+)\\.js$': '$1',
+    '^@orochi-network/framework$': '<rootDir>/../../node_modules/@orochi-network/framework',
+    '^@orochi-network/utilities$': '<rootDir>/../../node_modules/@orochi-network/utilities',
   },
 };

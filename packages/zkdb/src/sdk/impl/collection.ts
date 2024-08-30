@@ -1,6 +1,5 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
-
 import { MerkleWitness } from '../../types/merkle-tree.js';
 import {
   createDocument,
@@ -33,7 +32,7 @@ export class CollectionQueryImpl implements ZKCollection {
     this.collectionName = collectionName;
   }
 
-  async queryDocuments<T>(
+  async getAvailableDocuments<T>(
     queryOptions: QueryOptions<T>
   ): Promise<ZKDocument[]> {
     return (
@@ -47,7 +46,7 @@ export class CollectionQueryImpl implements ZKCollection {
     });
   }
 
-  async findOne<T extends { new (..._args: any): InstanceType<T> }>(
+  async getDocument<T extends { new (..._args: any): InstanceType<T> }>(
     filter: Filter<T>
   ): Promise<ZKDocument | null> {
     const document = await findDocument(
@@ -65,7 +64,7 @@ export class CollectionQueryImpl implements ZKCollection {
     return null;
   }
 
-  async updateOne<T extends { new (..._args: any): InstanceType<T> }>(
+  async updateDocument<T extends { new (..._args: any): InstanceType<T> }>(
     filter: Filter<T>,
     model: InstanceType<T>
   ): Promise<MerkleWitness> {
@@ -77,27 +76,27 @@ export class CollectionQueryImpl implements ZKCollection {
     );
   }
 
-  async deleteOne<T extends { new (..._args: any): InstanceType<T> }>(
+  async deleteDocument<T extends { new (..._args: any): InstanceType<T> }>(
     filter: Filter<T>
   ): Promise<MerkleWitness> {
     return deleteDocument(this.databaseName, this.collectionName, filter);
   }
 
-  insertOne<
+  saveDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
     },
   >(model: InstanceType<T>, permissions: Permissions): Promise<MerkleWitness>;
 
-  insertOne<
+  saveDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
     },
   >(model: InstanceType<T>): Promise<MerkleWitness>;
 
-  async insertOne<
+  async saveDocument<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
