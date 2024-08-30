@@ -44,7 +44,7 @@ const DB_NAME = 'shop';
 
   await ZKDatabaseClient.context
     .global()
-    .newDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
   const databases = await ZKDatabaseClient.context
     .global()
