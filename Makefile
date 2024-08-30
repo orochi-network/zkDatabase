@@ -3,6 +3,7 @@ BROKER_SERVICE_TAG = broker-service
 PROOF_SERVICE_TAG = proof-service
 FTP_SERVICE_TAG = ftp-service
 SERVERLESS_TAG = serverless
+PLATFORM_TAG = linux/amd64
 
 BROKER_SERVICE_DOCKERFILE = packages/broker-service/Dockerfile
 PROOF_SERVICE_DOCKERFILE = packages/proof-service/Dockerfile
@@ -20,16 +21,16 @@ MONGO_COMPOSE = general/database/docker-compose.yml
 build: build-broker build-proof build-ftp build-serverless
 
 build-broker:
-	docker build --no-cache -t $(BROKER_SERVICE_TAG) -f $(BROKER_SERVICE_DOCKERFILE) --platform=linux/amd64 .
+	docker build --no-cache -t $(BROKER_SERVICE_TAG) -f $(BROKER_SERVICE_DOCKERFILE) --platform=${PLATFORM_TAG} .
 
 build-proof:
-	docker build --no-cache -t $(PROOF_SERVICE_TAG) -f $(PROOF_SERVICE_DOCKERFILE) --platform=linux/amd64 .
+	docker build --no-cache -t $(PROOF_SERVICE_TAG) -f $(PROOF_SERVICE_DOCKERFILE) --platform=${PLATFORM_TAG} .
 
 build-ftp:
-	docker build --no-cache -t $(FTP_SERVICE_TAG) -f $(FTP_SERVICE_DOCKERFILE) --platform=linux/amd64 .
+	docker build --no-cache -t $(FTP_SERVICE_TAG) -f $(FTP_SERVICE_DOCKERFILE) --platform=${PLATFORM_TAG} .
 
 build-serverless:
-	docker build --no-cache -t $(SERVERLESS_TAG) -f $(SERVERLESS_DOCKERFILE) --platform=linux/amd64 .
+	docker build --no-cache -t $(SERVERLESS_TAG) -f $(SERVERLESS_DOCKERFILE) --platform=${PLATFORM_TAG} .
 
 # Start services with Docker Compose
 .PHONY: up
@@ -67,3 +68,8 @@ down:
 .PHONY: clean
 clean:
 	docker rmi -f $(BROKER_SERVICE_TAG) $(PROOF_SERVICE_TAG) $(FTP_SERVICE_TAG) $(SERVERLESS_TAG)
+
+# Create zk network
+.PHONY: network
+create-network:
+	docker network create zk

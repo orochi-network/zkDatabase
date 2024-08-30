@@ -1,8 +1,14 @@
-FROM node:22-slim
+FROM node:iron-slim
+
+RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
 
 WORKDIR /usr/src/app
 
-COPY . .
+RUN chown -R appuser:appuser /usr/src/app
+
+USER appuser
+
+COPY --chown=appuser:appuser . .
 
 RUN yarn install --frozen-lockfile
 
@@ -12,4 +18,4 @@ RUN yarn workspace @zkdb/proof-service build
 
 WORKDIR /usr/src/app/packages/proof-service
 
-CMD ["node", "build/src/index.js"]
+ENTRYPOINT ["node", "build/src/index.js"]

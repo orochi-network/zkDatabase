@@ -1,9 +1,7 @@
-version: '3.8'
 services:
   mongo:
     image: mongo:7
     container_name: mongo
-    user: root
     command:
       [
         '--replSet',
