@@ -6,6 +6,7 @@ import { v4 } from 'uuid';
 import logger from '../../helper/logger.js';
 import { SchemaField } from '../database/collection-metadata.js';
 import { PermissionBasic } from '../../common/permission.js';
+
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
 export type DocumentPermission = Pick<
@@ -75,7 +76,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
       return documentRecord;
     }
 
-    throw Error('Error occured when inserting document');
+    throw Error('Error occurred when inserting document');
   }
 
   public async updateOne(

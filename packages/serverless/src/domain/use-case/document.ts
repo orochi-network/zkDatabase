@@ -57,6 +57,39 @@ function buildDocumentFields(
     }));
 }
 
+function documentFieldsToDocumentRecord(document: DocumentFields): DocumentRecord {
+  return document.reduce((acc, field) => {
+    let value: any = field.value as any;
+
+    switch (field.kind) {
+      case 'CircuitString':
+        value = value.toString();
+        break;
+      case 'UInt32':
+        value = parseInt(field.value, 10);
+        break;
+      case 'UInt64':
+        value = parseInt(field.value, 10);
+        break;
+      case 'Bool':
+        value = field.value.toLowerCase() === 'true';
+        break;
+      case 'Int64':
+        value = parseInt(field.value, 10);
+        break;
+      default:
+        break;
+    }
+
+    acc[field.name] = {
+      name: field.name,
+      kind: field.kind,
+      value,
+    };
+    return acc;
+  }, {} as DocumentRecord);
+}
+
 async function readDocument(
   databaseName: string,
   collectionName: string,
@@ -139,14 +172,7 @@ async function createDocument(
     throw new Error('Document array is empty. At least one field is required.');
   }
 
-  const documentRecord: DocumentRecord = document.reduce((acc, field) => {
-    acc[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value: field.value,
-    };
-    return acc;
-  }, {} as DocumentRecord);
+  const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(document);
 
   // Save the document to the database
   const insertResult = await modelDocument.insertOne(documentRecord, session);
@@ -279,14 +305,7 @@ async function updateDocument(
       );
     }
 
-    const documentRecord: DocumentRecord = update.reduce((acc, field) => {
-      acc[field.name] = {
-        name: field.name,
-        kind: field.kind,
-        value: field.value,
-      };
-      return acc;
-    }, {} as DocumentRecord);
+    const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(update);
 
     await modelDocument.updateOne(
       oldDocumentRecord.docId,
@@ -344,7 +363,7 @@ async function deleteDocument(
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
   const findResult = await modelDocument.findOne(parseQuery(filter), session);
-  
+
   if (findResult) {
     if (
       !(await hasDocumentPermission(
@@ -413,7 +432,7 @@ function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
       $unwind: '$metadata',
     },
     {
-      $match: matchQuery
+      $match: matchQuery,
     },
     {
       $skip: pagination?.offset || 0,
@@ -469,7 +488,10 @@ async function findDocumentsWithMetadata(
     const tasks =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
-    const pipeline = buildPipeline(query ? parseQuery(query) : null, pagination);
+    const pipeline = buildPipeline(
+      query ? parseQuery(query) : null,
+      pagination
+    );
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
@@ -563,7 +585,10 @@ async function searchDocuments(
 
     // const matchQuery = buildMongoQuery(query);
 
-    const pipeline = buildPipeline(query ? parseQuery(query) : null, pagination);
+    const pipeline = buildPipeline(
+      query ? parseQuery(query) : null,
+      pagination
+    );
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
