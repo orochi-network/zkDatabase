@@ -6,8 +6,13 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "release": "rm -rf ./build && npm run build && npm publish --access public"
   },
+  "files": [
+    "build/",
+    "!**/*.tsbuildinfo"
+  ],
   "keywords": [],
   "author": "",
   "license": "Apache-2.0",
