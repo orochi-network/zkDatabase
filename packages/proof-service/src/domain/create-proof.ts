@@ -106,7 +106,7 @@ export async function createProof(taskId: string) {
         currentOffChainState: merkleRoot,
       });
 
-      if (prevProofOutput.onChainState.equals(onChainRootState)) {
+      if (prevProofOutput.onChainState.equals(onChainRootState).toBoolean()) {
         // basic
         proof = await circuit.update(
           proofState,
@@ -128,9 +128,9 @@ export async function createProof(taskId: string) {
             oldLeaf,
             Field(task.hash)
           );
+        } else {
+          throw Error('RollUp Proof has not been found');
         }
-
-        throw Error('RollUp Proof has not been found');
       }
     } else {
       const proofState = new ProofStateInput({
