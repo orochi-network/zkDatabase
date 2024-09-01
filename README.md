@@ -73,7 +73,7 @@ zkDatabase addresses these limitations by offloading some of the proving respons
 ### Enhancing Usability and Toolkits for zkApp Development with zkDatabase
 
 zkDatabase aims to improve usability by providing comprehensive toolkits, documentation, and support to streamline the development process and make it more accessible to newcomers.
- 
+
 ### Public Key Authentication for Enhanced Security
 
 zkDatabase employs Public Key Authentication to securely authenticate user sessions, ensuring only authorized access. It also uses session keys to efficiently verify asymmetric signatures, enhancing security without sacrificing performance.
@@ -89,18 +89,22 @@ _The graphical user interface provided by zkDatabase offers an intuitive and use
 **The zkDBaaS architecture consists of the following key components:**
 
 - zkApp:
+
   - Client-side application that interacts with zkDBaaS.
   - Includes a user interface (zkApp UI) and an application-specific smart contract (App Smart Contract) for managing application-level logic.
 
 - zkDatabase Smart Contract:
+
   - Manages data commitment and proof generation on the Mina blockchain.
   - Interacts with zkDatabase Client for data updates and queries.
 
 - zkDatabase Client:
+
   - Provides an interface for applications to interact with zkDBaaS.
   - Handles data updates and queries, interacting with the zkDatabase Smart Contract and zkDatabaser aaS.
 
 - zkDatabaser aaS:
+
   - Core service layer responsible for:
     - Data commitment to the Mina blockchain
     - Proof accumulation and verification
@@ -111,35 +115,43 @@ _The graphical user interface provided by zkDatabase offers an intuitive and use
 - MongoDB Replica Set:
   - Underlying database for storing committed data.
   - Provides high availability and scalability.
- 
+
 **Component Interactions:**
 
-  - Data Updates:
-    - zkApp initiates a data update request through the zkDatabase Client.
-    - zkDatabase Client forwards the request to zkDatabaser aaS.
+- Data Updates:
 
-  - zkDatabaser aaS:
-    - Verifies authorization using public key authentication.
-    - Persists data to MongoDB.
-    - Generates a zero-knowledge proof of the update.
-    - Commits the proof to the Mina blockchain through the zkDatabase Smart Contract.
+  - zkApp initiates a data update request through the zkDatabase Client.
+  - zkDatabase Client forwards the request to zkDatabaser aaS.
 
-  - Data Queries:
-    - zkApp initiates a data query request through the zkDatabase Client.
-    - zkDatabase Client forwards the request to zkDatabaser aaS.
+- zkDatabaser aaS:
 
-  - zkDatabaser aaS:
-    - Retrieves data from MongoDB.
-    - Generates a zero-knowledge proof of the query result (Lookup Prover).
-    - Returns the proof to the zkDatabase Client.
-    - zkDatabase Client verifies the proof and returns the verified data to zkApp.
+  - Verifies authorization using public key authentication.
+  - Persists data to MongoDB.
+  - Generates a zero-knowledge proof of the update.
+  - Commits the proof to the Mina blockchain through the zkDatabase Smart Contract.
+
+- Data Queries:
+
+  - zkApp initiates a data query request through the zkDatabase Client.
+  - zkDatabase Client forwards the request to zkDatabaser aaS.
+
+- zkDatabaser aaS:
+  - Retrieves data from MongoDB.
+  - Generates a zero-knowledge proof of the query result (Lookup Prover).
+  - Returns the proof to the zkDatabase Client.
+  - zkDatabase Client verifies the proof and returns the verified data to zkApp.
 
 ## Specification
 
 The specification of zkDatabase was moved [here](https://docs.orochi.network/zkdatabase/chapter.html).
 
 ## Installation
+
 Refer to the [installation guide](Installation.md) for detailed instructions on setting up zkDatabase.
+
+## Publish package
+
+Increase the package version in the packages folder, then make a pull request to the `main` branch. If the PR is merged, it will be published to the NPM Registry automatically. For now, this action applies to `@zkdb/smart-contract`, `@zkdb/api` and `@zkdb/kubo`.
 
 ## Contribute
 
