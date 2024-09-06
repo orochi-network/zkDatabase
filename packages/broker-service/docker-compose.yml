@@ -1,8 +1,10 @@
 services:
   app:
-    image: proof-service
+    image: broker-service
     env_file:
       - .env
+    ports:
+      - "4001:4001"
     networks:
       - zk
 networks:

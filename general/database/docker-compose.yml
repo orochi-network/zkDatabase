@@ -1,0 +1,29 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: mongo
+    command:
+      [
+        '--replSet',
+        'rs0',
+        '--bind_ip_all',
+        '--port',
+        '27017',
+        '--keyFile',
+        '/etc/mongodb/pki/keyfile',
+      ]
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./data/mongo-keyfile/rs_keyfile:/etc/mongodb/pki/keyfile
+      - ./data/mongo-data:/data/db
+      - ./data/mongo-config:/data/configdb
+    networks:
+      - zk
+networks:
+  zk:
+    external: true

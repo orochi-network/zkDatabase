@@ -19,13 +19,12 @@ COPY --chown=appuser:appuser . .
 # Install dependencies with a frozen lockfile
 RUN yarn install --frozen-lockfile
 
-# Build the necessary workspace
-RUN yarn workspace @zkdb/storage build
+# Build the necessary workspaces
+RUN yarn workspace @zkdb/storage build && \
+    yarn workspace @zkdb/broker-service build
 
-RUN yarn workspace @zkdb/proof-service build
-
-# Set the working directory for the FTP package
-WORKDIR /usr/src/app/packages/proof-service
+# Set the working directory for the broker service
+WORKDIR /usr/src/app/packages/broker-service
 
 # Set the entrypoint to the application
 ENTRYPOINT ["node", "build/src/index.js"]
