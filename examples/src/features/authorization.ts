@@ -1,5 +1,5 @@
 import { PrivateKey } from 'o1js';
-import { ZKDatabaseClient, Signer, NodeSigner, AuroWalletSigner } from 'zkdb';
+import { zkdb, Signer, NodeSigner, AuroWalletSigner } from 'zkdb';
 
 const isBrowser = false;
 
@@ -14,11 +14,13 @@ const isBrowser = false;
     signer = new NodeSigner(privateKey);
   }
 
-  ZKDatabaseClient.setSigner(signer);
+  zkdb.setSigner(signer);
 
-  await ZKDatabaseClient.auth().register('test-name', 'robot@gmail.com');
+  await zkdb.auth.signUp('test-name', 'robot@gmail.com');
 
-  await ZKDatabaseClient.auth().login('robot@gmail.com');
+  await zkdb.auth.signIn('robot@gmail.com');
 
-  await ZKDatabaseClient.auth().logOut();
+  zkdb.auth.getUser()
+
+  await zkdb.auth.signOut();
 })();

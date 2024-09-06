@@ -8,7 +8,6 @@ import {
   UInt64,
 } from 'o1js';
 import {
-  ZKDatabaseClient,
   Signer,
   NodeSigner,
   AuroWalletSigner,
@@ -16,12 +15,15 @@ import {
   DatabaseSearch,
   Schema,
   AccessPermissions,
+  zkdb,
 } from 'zkdb';
 
 const isBrowser = false;
 
-const MY_PRIVATE_KEY = PrivateKey.fromBase58('EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3')
-const ZKDB_PRIVATE_KEY = 'EKF6kkkpjruMD9G1jhZLhQE2o57H22iY5qAtvsAQTV2qfXSv6mrk'
+const MY_PRIVATE_KEY = PrivateKey.fromBase58(
+  'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
+);
+const ZKDB_PRIVATE_KEY = 'EKF62NTG7antqq6wDxFKt17q3EthV7AUmFmYL9rLLf72TtQx82jg';
 
 const DB_NAME = 'shop';
 const COLLECTION_NAME = 'clothes';
@@ -48,68 +50,84 @@ class TShirt extends Schema.create({
     signer = new NodeSigner(MY_PRIVATE_KEY);
   }
 
-  ZKDatabaseClient.setSigner(signer);
+  zkdb.setSigner(signer);
 
-  await ZKDatabaseClient.auth().register('user-name', 'robot@gmail.com');
+  await zkdb.auth.signUp('user-name', 'robot@gmail.com');
 
-  await ZKDatabaseClient.auth().login('robot@gmail.com');
+  await zkdb.auth.signIn('robot@gmail.com');
 
-  const zkDbPrivateKey = PrivateKey.random();
+  const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
 
-  console.log('zkDbPrivateKey', zkDbPrivateKey.toBase58())
-
-  const tx = await ZKDatabaseClient.context
-    .minaBlockchain()
+  const tx = await zkdb
+    .fromBlockchain()
     .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
   console.log('deployment hash', tx.hash);
   await tx.wait();
 
-  await ZKDatabaseClient.context
-    .global()
+  await zkdb
+    .fromGlobal()
     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
-  await ZKDatabaseClient.context
-    .useDatabase(DB_NAME)
-    .createGroup(GROUP_NAME, 'default description');
+  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 
-  await ZKDatabaseClient.context
-    .useDatabase(DB_NAME)
+  await zkdb
+    .database(DB_NAME)
     .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, {
       permissionOwner: AccessPermissions.fullAdminPermissions,
       permissionGroup: AccessPermissions.fullAccessPermissions,
       permissionOther: AccessPermissions.noPermissions,
     });
 
-  const database = ZKDatabaseClient.context.useDatabase(DB_NAME);
+  const shirt = new TShirt({
+    name: CircuitString.fromString('Guchi'),
+    price: UInt64.from(12),
+  });
 
-  const collection = database.useCollection(COLLECTION_NAME);
+  await zkdb.database('my-db').from('my-collection').insert(shirt);
 
-  const witness1 = await collection.saveDocument(
+  await zkdb.database('my-db').fromGroup('group-name');
+  await zkdb
+    .database('my-db')
+    .from('my-collection')
+    .insert(shirt, {
+      permissionOwner: {
+        read: true,
+        write: true,
+        delete: true,
+        create: true,
+        system: true,
+      },
+      permissionGroup: {
+        read: true,
+        write: true,
+        delete: true,
+        create: true,
+        system: true,
+      },
+      permissionOther: {
+        read: true,
+        write: true,
+        delete: true,
+        create: true,
+        system: true,
+      },
+    });
+
+  const database = zkdb.database(DB_NAME);
+
+  const collection = database.from(COLLECTION_NAME);
+
+  const witness1 = await collection.insert(
     new TShirt({
       name: CircuitString.fromString('Guchi'),
       price: UInt64.from(12),
     })
   );
 
-  // const witness2 = await collection.saveDocument(
-  //   new TShirt({
-  //     name: CircuitString.fromString('Guchi'),
-  //     price: UInt64.from(13),
-  //   })
-  // );
-
-  const document = await collection.getDocument({ name: 'Guchi' });
+  const document = await collection.fetchOne({ name: 'Guchi' });
 
   console.log(await document?.getProofStatus());
-  // if (document) {
-  //   const guchi = await document.toSchema(TShirt);
-  //   Provable.log(guchi);
-  // }
 
-  // const documents = await collection.getAvailableDocuments();
-
-  // await database.getProof();
-
-  await ZKDatabaseClient.auth().logOut();
+  await zkdb.auth.signOut();
 })();

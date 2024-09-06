@@ -1,10 +1,7 @@
 import {
-  assert,
   CircuitString,
   Mina,
   PrivateKey,
-  Provable,
-  PublicKey,
   UInt64,
 } from 'o1js';
 import {
@@ -12,10 +9,7 @@ import {
   Signer,
   NodeSigner,
   AuroWalletSigner,
-  QueryBuilder,
-  DatabaseSearch,
   Schema,
-  AccessPermissions,
 } from 'zkdb';
 
 const isBrowser = false;
@@ -56,14 +50,20 @@ class TShirt extends Schema.create({
 
   await zkdb.auth.signIn('robot@gmail.com');
 
-  const proof = await zkdb.database(DB_NAME).getProof();
+  await zkdb.database('my-db').createGroup('group-name', 'group description');
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .rollUpZKDatabaseSmartContract(18, ZKDB_PRIVATE_KEY, proof);
+  const collection = await zkdb
+    .database(DB_NAME)
+    .from(COLLECTION_NAME);
 
-  console.log('deployment hash', tx.hash);
-  await tx.wait();
+  for (let i = 0; i < 10; i++) {
+    await collection.insert(
+      new TShirt({
+        name: CircuitString.fromString(`Guchi ${i}`),
+        price: UInt64.from(i),
+      })
+    );
+  }
 
   await zkdb.auth.signOut();
 })();
