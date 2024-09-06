@@ -20,4 +20,5 @@ export interface ZKDocument extends Ownable {
     type: T
   ): InstanceType<T>;
   getProofStatus(): Promise<ProofStatus>
+  getDocumentHistory(): Promise<ZKDocument[]>;
 }

@@ -14,6 +14,7 @@ import { deleteDocument } from '../../repository/document.js';
 import { Document } from '../../types/document.js';
 import { ProofStatus } from '../../types/proof.js';
 import { getProofStatus } from '../../repository/proof.js';
+import { getDocumentHistory as getDocumentHistoryRequest } from '../../repository/document-history.js';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
@@ -104,6 +105,19 @@ export class ZKDocumentImpl implements ZKDocument {
     return deleteDocument(this.databaseName, this.collectionName, {
       docId: this._id,
     });
+  }
+
+  async getDocumentHistory(): Promise<ZKDocument[]> {
+    return (
+      await getDocumentHistoryRequest(
+        this.databaseName,
+        this.collectionName,
+        this._id
+      )
+    ).documents.map(
+      (document) =>
+        new ZKDocumentImpl(this.databaseName, this.collectionName, document)
+    );
   }
 
   getCreatedAt(): Date {

@@ -28,7 +28,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return getProof(this.databaseName);
   }
 
-  useCollection(collectionName: string): ZKCollection {
+  from(collectionName: string): ZKCollection {
     return new CollectionQueryImpl(this.databaseName, collectionName);
   }
 
@@ -51,7 +51,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return createGroup(this.databaseName, groupName, description);
   }
 
-  useGroup(groupName: string): ZKGroup {
+  fromGroup(groupName: string): ZKGroup {
     return new ZKGroupImpl(this.databaseName, groupName);
   }
 

@@ -8,7 +8,7 @@ import { ZKGroup } from './group.js';
 import { JsonProof } from 'o1js';
 
 export interface ZKDatabase {
-  useCollection(name: string): ZKCollection;
+  from(name: string): ZKCollection;
 
   createCollection<
     T extends {
@@ -23,7 +23,7 @@ export interface ZKDatabase {
   
   createGroup(groupName: string, description: string): Promise<void>;
 
-  useGroup(groupName: string): ZKGroup;
+  fromGroup(groupName: string): ZKGroup;
 
   getGroups(): Promise<GroupDescription[]>;
   getSettings(): Promise<DatabaseSettings>;
