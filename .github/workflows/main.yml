@@ -35,4 +35,4 @@ jobs:
       #- name: Test & Build serverless
       #  run: cd ./packages/serverless && npm i && npm run lint && npm run build
       - name: Test & Build zkdb
-        run: npm run build && cd ./packages/zkdb && npm i && npm run lint && npm run build && npm run test
+        run: yarn run build && cd ./packages/zkdb && yarn install && npm run lint && yarn run build && yarn run test
