@@ -28,11 +28,13 @@ jobs:
           node-version: ${{ matrix.node-version }}
       #- name: Test & Build explorer
       #  run: cd ./packages/explorer && npm i && npm run build
+      - name: Build root
+        run: yarn install && yarn run build
       - name: Test & Build kubo
-        run: cd ./packages/kubo && npm i && npm run build && npm run test
+        run: cd ./packages/kubo && npm i && yarn run build && yarn run test
       #- name: Test & Build portal
       #  run: cd ./packages/portal && npm i && npm run lint && npm run build
       #- name: Test & Build serverless
       #  run: cd ./packages/serverless && npm i && npm run lint && npm run build
       - name: Test & Build zkdb
-        run: yarn run build && cd ./packages/zkdb && yarn install && npm run lint && yarn run build && yarn run test
+        run: cd ./packages/zkdb && yarn run lint && yarn run build && yarn run test
