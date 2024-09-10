@@ -20,7 +20,8 @@ COPY --chown=appuser:appuser . .
 RUN yarn install --frozen-lockfile
 
 # Build the necessary workspace
-RUN yarn workspace @zkdb/serverless build
+RUN yarn workspace @zkdb/smart-contract build && \
+    yarn workspace @zkdb/serverless build
 
 # Set the working directory for the serverless package
 WORKDIR /usr/src/app/packages/serverless

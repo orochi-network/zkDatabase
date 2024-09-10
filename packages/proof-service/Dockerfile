@@ -20,9 +20,9 @@ COPY --chown=appuser:appuser . .
 RUN yarn install --frozen-lockfile
 
 # Build the necessary workspace
-RUN yarn workspace @zkdb/storage build
-
-RUN yarn workspace @zkdb/proof-service build
+RUN yarn workspace @zkdb/smart-contract build && \
+    yarn workspace @zkdb/storage build && \
+    yarn workspace @zkdb/proof-service build
 
 # Set the working directory for the FTP package
 WORKDIR /usr/src/app/packages/proof-service

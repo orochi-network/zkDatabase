@@ -20,8 +20,10 @@ COPY --chown=appuser:appuser . .
 RUN yarn install --frozen-lockfile
 
 # Build the necessary workspaces
-RUN yarn workspace @zkdb/storage build && \
-    yarn workspace @zkdb/broker-service build
+
+RUN yarn workspace @zkdb/smart-contract build && \
+    yarn workspace @zkdb/storage build && \
+    yarn workspace @zkdb/broker-service build && \
 
 # Set the working directory for the broker service
 WORKDIR /usr/src/app/packages/broker-service
