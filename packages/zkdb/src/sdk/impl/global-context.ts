@@ -23,7 +23,7 @@ export class GlobalContextImpl implements GlobalContext {
     return findUsers(queryOptions)
   }
   
-  async newDatabase(
+  async createDatabase(
     databaseName: string,
     merkleHeight: number,
     publicKey: PublicKey

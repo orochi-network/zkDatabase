@@ -5,17 +5,28 @@ import { QueryOptions } from '../query/query-builder.js';
 import { Filter } from '../../types/filter.js';
 import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
+import { Pagination } from '../../types/pagination.js';
+import { Permissions } from '../../types/permission.js';
 
 export interface ZKCollection extends Ownable {
-  findOne<
+  fetchOne<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
   >(
     filter: Filter<T>
   ): Promise<ZKDocument | null>;
-  queryDocuments<T>(queryOptions: QueryOptions<T>): Promise<ZKDocument[]>;
-  insertOne<
+
+  fetchMany<
+    T extends {
+      new (..._args: any): InstanceType<T>;
+    },
+  >(
+    filter?: Filter<T>,
+    pagination?: Pagination
+  ): Promise<ZKDocument[]>;
+
+  insert<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -24,7 +35,8 @@ export interface ZKCollection extends Ownable {
     model: InstanceType<T>,
     permissions: Permissions
   ): Promise<MerkleWitness>;
-  insertOne<
+
+  insert<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -32,7 +44,8 @@ export interface ZKCollection extends Ownable {
   >(
     model: InstanceType<T>
   ): Promise<MerkleWitness>;
-  updateOne<
+
+  update<
     T extends {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
@@ -41,7 +54,8 @@ export interface ZKCollection extends Ownable {
     filter: Filter<T>,
     model: InstanceType<T>
   ): Promise<MerkleWitness>;
-  deleteOne<
+
+  delete<
     T extends {
       new (..._args: any): InstanceType<T>;
     },

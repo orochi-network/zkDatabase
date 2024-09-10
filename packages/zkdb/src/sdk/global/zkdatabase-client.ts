@@ -1,32 +1,34 @@
-import storage from '../storage/storage.js';
-import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
 import { Signer } from '../signer/interface/signer.js';
 import { getSigner, setSigner } from '../signer/signer.js';
 import { Authenticator } from '../authentication/authentication.js';
-import { ZKDatabaseContext } from '../interfaces/context.js';
-import { ZKDatabaseContextImpl } from '../impl/context.js';
+import { ZKDatabase } from '../interfaces/database.js';
+import { MinaBlockchain } from '../interfaces/blockchain.js';
+import { GlobalContext } from '../interfaces/global-context.js';
+import { ZKDatabaseImpl } from '../impl/database.js';
+import { MinaBlockchainImpl } from '../impl/blokchain.js';
+import { GlobalContextImpl } from '../impl/global-context.js';
+class ZKDatabaseClient {
 
-export class ZKDatabaseClient {
-  static auth(): Authenticator {
+  public get auth(): Authenticator {
     return new Authenticator(getSigner());
   }
 
-  static setSigner(signer: Signer) {
+  public setSigner(signer: Signer) {
     setSigner(signer);
   }
 
-  static get currentUser(): ZKDatabaseUser | null {
-    const userInfo = storage.getUserInfo();
-
-    if (userInfo) {
-      const { userName: name, email, publicKey } = userInfo;
-      return { name, email, publicKey };
-    }
-
-    return null;
+  database(name: string): ZKDatabase {
+    return new ZKDatabaseImpl(name);
   }
 
-  static get context(): ZKDatabaseContext {
-    return new ZKDatabaseContextImpl();
+  fromBlockchain(): MinaBlockchain {
+    return new MinaBlockchainImpl();
+  }
+
+  fromGlobal(): GlobalContext {
+    return new GlobalContextImpl();
   }
 }
+
+const zkdb = new ZKDatabaseClient();
+export { zkdb };

@@ -1,10 +1,18 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import Client from 'mina-signer';
+import { withTransaction } from '@zkdb/storage';
 import resolverWrapper, { authorizeWrapper } from '../validation.js';
 import ModelUser from '../../model/global/user.js';
 import { AppContext } from '../../common/types.js';
 import ModelSession from '../../model/global/session.js';
+import {
+  signUpUser,
+  findUser as findUserDomain,
+} from '../../domain/use-case/user.js';
+import { Pagination } from '../types/pagination.js';
+import mapPagination from '../mapper/pagination.js';
+import { pagination } from './common.js';
 
 const timestamp = Joi.number()
   .custom((value, helper) => {
@@ -57,6 +65,11 @@ export type TSignUpRequest = {
   timestamp: number;
 };
 
+export type TUserFindRequest = {
+  query: { [key: string]: string };
+  pagination: Pagination;
+};
+
 export const SignUpRequest = Joi.object<TSignUpRequest>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
@@ -72,6 +85,11 @@ export type TSignUpWrapper = {
 export const SignUpWrapper = Joi.object<TSignUpWrapper>({
   signUp: SignUpRequest.required(),
   proof: SignatureProof.required(),
+});
+
+export const USER_FIND_REQUEST = Joi.object<TUserFindRequest>({
+  query: Joi.object(),
+  pagination
 });
 
 export const typeDefsUser = `#graphql
@@ -115,8 +133,15 @@ type SignInResponse {
     publicKey: String
 }
 
+type User {
+  userName: String!,
+  email: String!,
+  publicKey: String!
+}
+
 extend type Query {
   userSignInData: SignInResponse
+  findUser(query: JSON!, pagination: PaginationInput): [User]!
 }
 
 extend type Mutation {
@@ -156,6 +181,16 @@ const userSignInData = async (
     error: 'Session not found',
   };
 };
+
+const findUser = resolverWrapper(
+  USER_FIND_REQUEST,
+  async (_root: unknown, args: TUserFindRequest, _ctx: AppContext) => {
+    return withTransaction(async (session) =>
+      findUserDomain(args.query, mapPagination(args.pagination), session)
+    );
+  }
+);
+
 
 // Mutation
 const userSignIn = resolverWrapper(
@@ -205,41 +240,15 @@ const userSignOut = authorizeWrapper(
 const userSignUp = resolverWrapper(
   SignUpWrapper,
   async (_root: unknown, args: TSignUpWrapper) => {
-    const client = new Client({ network: 'testnet' });
-    if (client.verifyMessage(args.proof)) {
-      const jsonData = JSON.parse(args.proof.data);
-      if (jsonData.userName !== args.signUp.userName) {
-        throw new Error('Username does not match');
-      }
-      if (jsonData.email !== args.signUp.email) {
-        throw new Error('Email does not match');
-      }
-      const modelUser = new ModelUser();
-      // TODO: Check user existence by public key
-      const result = await modelUser.create(
-        args.signUp.userName,
-        args.signUp.email,
-        args.proof.publicKey,
-        args.signUp.userData
-      );
-      if (result && result.acknowledged) {
-        return {
-          success: true,
-          error: null,
-          userName: args.signUp.userName,
-          email: args.signUp.email,
-          publicKey: args.proof.publicKey,
-        };
-      }
-      return {
-        success: false,
-        error: 'Cannot create user',
+    return signUpUser(
+      {
         userName: args.signUp.userName,
         email: args.signUp.email,
         publicKey: args.proof.publicKey,
-      };
-    }
-    throw new Error('Signature is not valid');
+      },
+      args.signUp.userData,
+      args.proof
+    );
   }
 );
 
@@ -247,6 +256,7 @@ type TUserResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     userSignInData: typeof userSignInData;
+    findUser: typeof findUser;
   };
   Mutation: {
     userSignIn: typeof userSignIn;
@@ -259,6 +269,7 @@ export const resolversUser: TUserResolver = {
   JSON: GraphQLJSON,
   Query: {
     userSignInData,
+    findUser
   },
   Mutation: {
     userSignIn,

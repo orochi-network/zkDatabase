@@ -1,61 +1,60 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { DocumentEncoded } from "../../types/document.js";
+import { DocumentEncoded, DocumentPayload } from "../../types/document.js";
+import { Search } from "../../types/search.js";
+import { Pagination } from "../../types/pagination.js";
 
-const FIND_DOCUMENT = gql`
-  query DocumentFind(
+const SEARCH_DOCUMENTS = gql`
+  query DocumentsFind(
     $databaseName: String!
     $collectionName: String!
     $documentQuery: JSON!
+    $pagination: PaginationInput
   ) {
-    documentFind(
+    documentsFind(
       databaseName: $databaseName
       collectionName: $collectionName
       documentQuery: $documentQuery
+      pagination: $pagination
     ) {
-      _id
-      document {
+      docId
+      fields {
         name
         kind
         value
       }
+      createdAt
     }
   }
 `;
 
-interface DocumentResponse {
-  _id: string;
-  document: DocumentEncoded;
-}
-
-export const findDocument = async (
+export const findDocuments = async (
   databaseName: string,
   collectionName: string,
-  documentQuery: JSON
-): Promise<NetworkResult<{ _id: string; document: DocumentEncoded }>> => {
+  documentQuery: JSON,
+  pagination?: Pagination
+): Promise<
+  NetworkResult<Array<DocumentPayload>>
+> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.query<{
-      documentFind: DocumentResponse;
-    }>({
-      query: FIND_DOCUMENT,
+    const { data, errors } = await client.query({
+      query: SEARCH_DOCUMENTS,
       variables: {
         databaseName,
         collectionName,
         documentQuery,
-      }
+        pagination,
+      },
     });
 
-    const response = data?.documentFind;
-
+    const response = data?.documentsFind;
+    
     if (response) {
       return {
         type: "success",
-        data: {
-          _id: response._id,
-          document: response.document,
-        },
+        data: response,
       };
     } else {
       return {

@@ -31,7 +31,7 @@ export async function createProof(taskId: string) {
     throw Error('Task has not been found');
   }
 
-  if (task.status !== 'executing') {
+  if (task.status !== 'proving') {
     logger.error('Task has not been marked as executing');
     throw Error('Task has not been marked as executing');
   }
@@ -106,7 +106,7 @@ export async function createProof(taskId: string) {
         currentOffChainState: merkleRoot,
       });
 
-      if (prevProofOutput.onChainState.equals(onChainRootState)) {
+      if (prevProofOutput.onChainState.equals(onChainRootState).toBoolean()) {
         // basic
         proof = await circuit.update(
           proofState,
@@ -128,9 +128,9 @@ export async function createProof(taskId: string) {
             oldLeaf,
             Field(task.hash)
           );
+        } else {
+          throw Error('RollUp Proof has not been found');
         }
-
-        throw Error('RollUp Proof has not been found');
       }
     } else {
       const proofState = new ProofStateInput({

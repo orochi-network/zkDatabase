@@ -10,7 +10,7 @@ import {
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelGeneral from '../base/general.js';
 
-export type Status = 'queued' | 'executing' | 'proved' | 'error';
+export type Status = 'queued' | 'proving' | 'proved' | 'failed';
 
 export type TaskEntity = {
   merkleIndex: bigint;
@@ -69,7 +69,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
         [
           {
             $match: {
-              status: 'executing',
+              status: 'proving',
             },
           },
           {
@@ -172,7 +172,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
     await this.collection.updateOne(
       { _id: taskId  },
-      { $set: { status: 'executing' } },
+      { $set: { status: 'proving' } },
       options
     );
   }
@@ -201,7 +201,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
     await this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'error', error: errorMessage } },
+      { $set: { status: 'failed', error: errorMessage } },
       options
     );
   }

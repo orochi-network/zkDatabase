@@ -1,11 +1,11 @@
-import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
+import { assert, Mina, PrivateKey, PublicKey, UInt32 } from 'o1js';
 import {
-  ZKDatabaseClient,
   Signer,
   NodeSigner,
   AuroWalletSigner,
   QueryBuilder,
   DatabaseSearch,
+  zkdb,
 } from 'zkdb';
 
 const isBrowser = false;
@@ -28,31 +28,26 @@ const DB_NAME = 'shop';
 
   const zkDbPrivateKey = PrivateKey.random();
 
-  ZKDatabaseClient.setSigner(signer);
+  zkdb.setSigner(signer);
 
-  await ZKDatabaseClient.auth().register('user-name', 'robot@gmail.com');
+  await zkdb.auth.signUp('user-name', 'robot@gmail.com');
 
-  await ZKDatabaseClient.auth().login('robot@gmail.com');
+  await zkdb.auth.signIn('robot@gmail.com');
 
-  const tx = await ZKDatabaseClient.context
-    .minaBlockchain()
+  const tx = await zkdb.fromBlockchain()
     .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
- 
-  console.log('deployment hash', tx.hash);
   await tx.wait();
 
-  await ZKDatabaseClient.context
-    .global()
-    .newDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+  await zkdb.fromGlobal()
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey))
 
-  const databases = await ZKDatabaseClient.context
-    .global()
+  const databases = await zkdb.fromGlobal()
     .databases(
       new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
     );
 
   assert(databases[0].databaseName === DB_NAME);
 
-  await ZKDatabaseClient.auth().logOut();
+  await zkdb.auth.signOut();
 })();

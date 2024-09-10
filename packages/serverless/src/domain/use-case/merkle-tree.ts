@@ -1,17 +1,17 @@
 import { ModelMerkleTree, TMerkleProof } from '@zkdb/storage';
-import { ClientSession, ObjectId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function getWitnessByDocumentId(
   databaseName: string,
-  documentId: ObjectId,
+  docId: string,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
   const docMetadata = await modelDocumentMetadata.findOne({
-    docId: documentId,
+    docId,
   });
 
   if (!docMetadata) {

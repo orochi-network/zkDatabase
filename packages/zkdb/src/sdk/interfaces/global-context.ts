@@ -6,7 +6,7 @@ import { User } from '../../types/user.js';
 
 /* eslint-disable no-unused-vars */
 export interface GlobalContext {
-  newDatabase(
+  createDatabase(
     databaseName: string,
     merkleHeight: number,
     publicKey: PublicKey

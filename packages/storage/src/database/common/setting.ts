@@ -41,9 +41,4 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     const setting = await this.collection.findOne({}, options);
     return setting;
   }
-
-  public async getHeight(): Promise<number | null> {
-    const setting = await this.getSetting();
-    return setting ? setting.merkleHeight : null;
-  }
 }

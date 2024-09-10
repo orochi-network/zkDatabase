@@ -20,8 +20,8 @@
   },
   "homepage": "https://github.com/orochi-network/zkDatabase#readme",
   "type": "module",
-  "main": "./build/index.js",
-  "types": "./build/index.d.ts",
+  "main": "./build/src/index.js",
+  "types": "./build/src/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc -p tsconfig.json",
@@ -29,7 +29,7 @@
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
-    "test": "node ../../node_modules/jest/bin/jest.js",
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
     "testw": "node ../../node_modules/jest/bin/jest.js --watch",
     "lint": "npx eslint ./src/**/*.ts --fix",
     "lint-check": "npx eslint ./src/**/*.ts --debug"

@@ -1,13 +1,13 @@
 import { DatabaseEngine } from '@zkdb/storage';
 import { PrivateKey, PublicKey } from 'o1js';
-import { createDatabase } from '../../../src/domain/use-case/database';
-import { config } from '../../../src/helper/config';
+import { createDatabase } from '../../../src/domain/use-case/database.js';
+import { config } from '../../../src/helper/config.js';
 import {
   addUserToGroups,
   checkUserGroupMembership,
   createGroup,
   isGroupExist,
-} from '../../../src/domain/use-case/group';
+} from '../../../src/domain/use-case/group.js';
 
 const DB_NAME = 'test-db-schema';
 const TEST_COLLECTION = 'users';

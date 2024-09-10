@@ -1,4 +1,4 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import { Schema } from "../../types/schema.js";
 import client from "../../client.js";
@@ -31,28 +31,43 @@ export const createCollection = async (
   permissions: Permissions
 ): Promise<NetworkResult<undefined>> => {
   return handleRequest(async () => {
-    const { data } = await client.mutate({
-      mutation: CREATE_COLLECTION,
-      variables: {
-        databaseName,
-        collectionName,
-        groupName,
-        schema,
-        permissions,
-      },
-    });
+    try {
+      const {
+        data: { collectionCreate },
+        errors,
+      } = await client.mutate({
+        mutation: CREATE_COLLECTION,
+        variables: {
+          databaseName,
+          collectionName,
+          groupName,
+          schema,
+          permissions,
+        },
+      });
 
-    const response = data?.collectionCreate;
+      if (errors) {
+        return {
+          type: "error",
+          message: errors.map((error: any) => error.message).join(", "),
+        };
+      }
 
-    if (response) {
-      return {
-        type: "success",
-        data: undefined,
-      };
-    } else {
+      if (collectionCreate) {
+        return {
+          type: "success",
+          data: undefined,
+        };
+      } else {
+        return {
+          type: "error",
+          message: "Failed to create collection. No data returned.",
+        };
+      }
+    } catch (error) {
       return {
         type: "error",
-        message: "An unknown error occurred",
+        message: `An error occurred: ${(error as Error).message}`,
       };
     }
   });

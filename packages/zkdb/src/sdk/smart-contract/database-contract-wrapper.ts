@@ -6,7 +6,7 @@ import {
   PublicKey,
 } from 'o1js';
 import { getSigner } from '../signer/signer.js';
-import { ZKDatabaseClient } from '../global/zkdatabase-client.js';
+import { zkdb } from '../global/zkdatabase-client.js';
 
 export class DatabaseContractWrapper {
   private zkDatabaseSmartContact: ZKDatabaseSmartContractWrapper;
@@ -37,7 +37,7 @@ export class DatabaseContractWrapper {
   async deploy(appKey: PrivateKey): Promise<PendingTransactionPromise> {
     await this.zkDatabaseSmartContact.compile();
 
-    const user = ZKDatabaseClient.currentUser;
+    const user = zkdb.auth.getUser();
 
     if (user) {
       let tx =
@@ -59,11 +59,18 @@ export class DatabaseContractWrapper {
   ): Promise<PendingTransactionPromise> {
     await this.zkDatabaseSmartContact.compile();
 
-    let tx =
-      await this.zkDatabaseSmartContact.createAndProveRollUpTransaction(
-        jsonProof
-      );
-    tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
-    return await tx.send();
+    const user = zkdb.auth.getUser();
+
+    if (user) {
+      let tx =
+        await this.zkDatabaseSmartContact.createAndProveRollUpTransaction(
+          PublicKey.fromBase58(user.publicKey),
+          jsonProof
+        );
+      tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
+      return await tx.send();
+    }
+
+    throw Error('User is null');
   }
 }

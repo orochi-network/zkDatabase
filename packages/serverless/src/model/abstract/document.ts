@@ -2,6 +2,7 @@
 // eslint-disable-next-line max-classes-per-file
 import { ClientSession, Filter, ObjectId, Document } from 'mongodb';
 import { ModelBasic, ModelDatabase, ModelCollection } from '@zkdb/storage';
+import { v4 } from 'uuid';
 import logger from '../../helper/logger.js';
 import { SchemaField } from '../database/collection-metadata.js';
 import { PermissionBasic } from '../../common/permission.js';
@@ -15,8 +16,9 @@ export type DocumentPermission = Pick<
 
 export type DocumentRecord = Document & {
   _id?: ObjectId;
-  prevVersion?: ObjectId;
-  isLatest: boolean;
+  docId: string;
+  deleted: boolean;
+  timestamp?: Date;
 } & {
   [key: string]: DocumentField;
 };
@@ -59,36 +61,94 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     return ModelDocument.instances.get(key)!;
   }
 
-  public async insertDocument(
-    document: DocumentRecord,
-    session?: ClientSession
-  ) {
+  public async insertOne(document: DocumentRecord, session?: ClientSession) {
     logger.debug(`ModelDocument::updateDocument()`);
-    return this.collection.insertOne(document, { session });
+    const documentRecord: DocumentRecord = {
+      timestamp: new Date(),
+      ...document,
+      docId: v4(),
+      deleted: false,
+    } as any;
+
+    const result = await this.collection.insertOne(documentRecord, { session });
+
+    if (result.acknowledged) {
+      return documentRecord;
+    }
+
+    throw Error('Error occurred when inserting document');
   }
 
-  public async updateDocument(
-    filter: Filter<any>,
+  public async updateOne(
+    docId: string,
     document: DocumentRecord,
     session?: ClientSession
   ) {
-    logger.debug(`ModelDocument::updateDocument()`, { filter });
-    return this.collection.updateMany(filter, { $set: document }, { session });
+    logger.debug(`ModelDocument::updateDocument()`, { docId });
+    const findDocument = await this.find({ docId });
+
+    if (findDocument.length > 0) {
+      const documentRecord: DocumentRecord = {
+        timestamp: new Date(),
+        ...document,
+        docId: findDocument[0].docId,
+        deleted: false,
+      } as any;
+
+      return this.collection.insertOne(documentRecord, { session });
+    }
+
+    throw new Error('No documents found to update');
+  }
+
+  public async dropOne(docId: string, session?: ClientSession) {
+    logger.debug(`ModelDocument::drop()`, { docId });
+    const findDocument = await this.find({ docId });
+
+    const docIds = findDocument.map((doc) => doc.docId);
+
+    // eslint-disable-next-line @typescript-eslint/no-shadow
+    const bulkOps = docIds.map((docId) => ({
+      updateMany: {
+        filter: { docId },
+        update: {
+          $set: {
+            deleted: true,
+          },
+        },
+      },
+    }));
+
+    // Execute the bulk update
+    const result = await this.collection.bulkWrite(bulkOps, { session });
+
+    logger.debug(
+      `ModelDocument::drop() - All versions of documents soft deleted`,
+      { result }
+    );
+
+    return result;
   }
 
   public async findOne(filter: Filter<any>, session?: ClientSession) {
     logger.debug(`ModelDocument::findOne()`, { filter });
-    return this.collection.findOne(filter, { session });
+    return this.collection.findOne(
+      { ...filter, deleted: false },
+      {
+        sort: { timestamp: -1 },
+        session,
+      }
+    );
+  }
+
+  public async findHistoryOne(docId: string, session?: ClientSession) {
+    const documents = this.find({ docId }, session);
+    return documents;
   }
 
   public async find(filter?: Filter<any>, session?: ClientSession) {
     logger.debug(`ModelDocument::find()`, { filter });
     return this.collection.find(filter || {}, { session }).toArray();
-  }
-
-  public async drop(filter: Filter<any>, session?: ClientSession) {
-    logger.debug(`ModelDocument::drop()`, { filter });
-    return this.collection.deleteMany(filter || {}, { session });
   }
 }
 

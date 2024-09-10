@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { UserInfo } from "./types/user.js";
 import { Session } from "./types/session.js";
 

@@ -3,3 +3,9 @@ export type DocumentEncoded = {
   kind: string;
   value: string;
 }[];
+
+export type DocumentPayload = {
+  docId: string,
+  fields: DocumentEncoded,
+  createdAt: Date
+}

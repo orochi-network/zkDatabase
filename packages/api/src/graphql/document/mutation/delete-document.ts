@@ -32,9 +32,7 @@ export const deleteDocument = async (
   documentQuery: JSON
 ): Promise<NetworkResult<MerkleWitness>> => {
   return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{
-      documentDrop: DocumentResponse;
-    }>({
+    const { data, errors } = await client.mutate({
       mutation: DELETE_DOCUMENT,
       variables: {
         databaseName,
@@ -48,7 +46,7 @@ export const deleteDocument = async (
     if (response) {
       return {
         type: "success",
-        data: response.witness,
+        data: response,
       };
     } else {
       return {
