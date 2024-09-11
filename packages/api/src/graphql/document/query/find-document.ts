@@ -1,59 +1,58 @@
-import pkg from "@apollo/client";
+import pkg from '@apollo/client';
 const { gql } = pkg;
 import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { DocumentEncoded } from "../../types/document.js";
-import { Search } from "../../types/search.js";
-import { Pagination } from "../../types/pagination.js";
+import { DocumentEncoded, DocumentPayload } from "../../types/document.js";
 
-const SEARCH_DOCUMENTS = gql`
-  query SearchDocument(
+const FIND_DOCUMENT = gql`
+  query DocumentFind(
     $databaseName: String!
     $collectionName: String!
-    $search: SearchInput
-    $pagination: PaginationInput
+    $documentQuery: JSON!
   ) {
-    searchDocument(
+    documentFind(
       databaseName: $databaseName
       collectionName: $collectionName
-      search: $search
-      pagination: $pagination
+      documentQuery: $documentQuery
     ) {
-      _id
-      document {
+      docId
+      fields {
         name
         kind
         value
       }
+      createdAt
     }
   }
 `;
 
-export const searchDocument = async (
+export const findDocument = async (
   databaseName: string,
   collectionName: string,
-  search?: Search | undefined,
-  pagination?: Pagination | undefined
-): Promise<
-  NetworkResult<Array<{ _id: string; document: DocumentEncoded }>>
-> => {
+  documentQuery: JSON
+): Promise<NetworkResult<DocumentPayload>> => {
   return handleRequest(async () => {
     const { data, errors } = await client.query({
-      query: SEARCH_DOCUMENTS,
+      query: FIND_DOCUMENT,
       variables: {
         databaseName,
         collectionName,
-        search,
-        pagination,
-      },
+        documentQuery,
+      }
     });
 
-    const response = data?.searchDocument;
-    
+    const response = data?.documentFind;
+
+    const payload: DocumentPayload = {
+      docId: response.docId,
+      fields: response.fields,
+      createdAt: response.fields
+    }
+
     if (response) {
       return {
         type: "success",
-        data: response,
+        data: payload,
       };
     } else {
       return {

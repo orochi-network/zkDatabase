@@ -1,4 +1,4 @@
-import { ClientSession, ObjectId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { Metadata } from '../types/metadata.js';
@@ -12,7 +12,7 @@ import { PermissionBinary } from '../../common/permission.js';
 export async function readMetadata(
   databaseName: string,
   collectionName: string,
-  docId: ObjectId | null,
+  docId: string | null,
   actor: string,
   // eslint-disable-next-line default-param-last
   checkPermissions: boolean = false,

@@ -38,7 +38,7 @@ export type SchemaField = {
   order: number;
   name: string;
   kind: ProvableTypeString;
-  value: string;
+  value: any;
   indexed: boolean;
 };
 

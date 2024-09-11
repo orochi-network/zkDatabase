@@ -19,9 +19,7 @@ interface TApplicationConfig {
 
 const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
   NODE_ENV: Joi.string()
-    .required()
-    .trim()
-    .valid(...NODE_ENV_VALUES)
+    .optional()
     .default('production'),
   MONGODB_URL: Joi.string()
     .trim()

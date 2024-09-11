@@ -63,6 +63,7 @@ export type SchemaFieldDefinition = {
 export type SchemaDefinition = SchemaFieldDefinition[];
 
 export type ProvableMapped<T extends SchemaDefinition> = {
+  // eslint-disable-next-line no-unused-vars
   [Property in T[number]['name']]?: (typeof ProvableTypeMap)[ProvableTypeString];
 };
 

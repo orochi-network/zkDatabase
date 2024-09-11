@@ -12,7 +12,7 @@ import { ModelCollectionMetadata } from '../../model/database/collection-metadat
 export async function changeDocumentOwnership(
   databaseName: string,
   collectionName: string,
-  docId: ObjectId,
+  docId: string,
   actor: string,
   group: OwnershipGroup,
   newOwner: string,
@@ -52,7 +52,7 @@ export async function changeDocumentOwnership(
         docId,
       },
       {
-        owner: newOwner,
+        $set: { owner: newOwner },
       },
       { session }
     );
@@ -66,7 +66,7 @@ export async function changeDocumentOwnership(
         docId,
       },
       {
-        group: newOwner,
+        $set: { group: newOwner },
       },
       { session }
     );
@@ -113,7 +113,7 @@ export async function changeCollectionOwnership(
         collection: collectionName,
       },
       {
-        owner: newOwner,
+        $set: { owner: newOwner },
       },
       { session }
     );
@@ -126,7 +126,7 @@ export async function changeCollectionOwnership(
         collection: collectionName,
       },
       {
-        group: newOwner,
+        $set: { group: newOwner },
       },
       { session }
     );

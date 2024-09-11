@@ -8,7 +8,7 @@ import {
   Schema,
   SchemaEncoded,
 } from '../common/schema.js';
-import { Document } from '../types/document.js';
+import { DocumentFields } from '../types/document.js';
 import { DocumentSchema, DocumentSchemaField } from '../types/schema.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
@@ -39,7 +39,7 @@ if (schemaVerification.size === 0) {
 export async function validateDocumentSchema(
   databaseName: string,
   collectionName: string,
-  document: Document,
+  document: DocumentFields,
   session?: ClientSession
 ): Promise<boolean> {
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
@@ -119,7 +119,7 @@ export async function validateDocumentSchema(
 export async function buildSchema(
   databaseName: string,
   collectionName: string,
-  document: Document,
+  document: DocumentFields,
   session?: ClientSession
 ) {
   if (!(await validateDocumentSchema(databaseName, collectionName, document))) {

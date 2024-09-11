@@ -70,7 +70,7 @@ const getWitnessByDocument = resolverWrapper(
     return withTransaction((session) =>
       getWitnessByDocumentId(
         args.databaseName,
-        new ObjectId(args.docId),
+        args.docId,
         session
       )
     );

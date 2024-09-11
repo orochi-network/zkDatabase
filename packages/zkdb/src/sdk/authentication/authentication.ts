@@ -2,6 +2,7 @@ import { signIn, signOut, signUp, setJwtPayloadFunction } from '@zkdb/api';
 import storage from '../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';
+import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
 
 export class Authenticator {
   private signer: Signer;
@@ -30,7 +31,7 @@ export class Authenticator {
     return storage.getSession() !== null;
   }
 
-  async login(email: string) {
+  async signIn(email: string) {
     const signInProof = await this.getSigner().signMessage(
       JSON.stringify({
         email,
@@ -41,7 +42,7 @@ export class Authenticator {
     await this.sendLoginRequest(email, signInProof);
   }
 
-  async register(userName: string, email: string) {
+  async signUp(userName: string, email: string) {
     const signUpProof = await this.getSigner().signMessage(
       JSON.stringify({
         userName,
@@ -90,12 +91,23 @@ export class Authenticator {
     }
   }
 
-  async logOut(): Promise<void> {
+  async signOut(): Promise<void> {
     try {
       await signOut();
     } finally {
       storage.clear();
     }
+  }
+
+  public getUser(): ZKDatabaseUser | null {
+    const userInfo = storage.getUserInfo();
+
+    if (userInfo) {
+      const { userName: name, email, publicKey } = userInfo;
+      return { name, email, publicKey };
+    }
+
+    return null;
   }
 
   private getSigner(): Signer {

@@ -5,8 +5,8 @@ import { TDocumentField } from '../types/document.js';
 
 export const objectId = Joi.string()
   .trim()
-  .min(24)
-  .max(24)
+  .min(36)
+  .max(36)
   .required()
   .pattern(/^[a-f0-9]+/i);
 

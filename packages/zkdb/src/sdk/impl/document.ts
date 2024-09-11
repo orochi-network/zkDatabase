@@ -10,23 +10,33 @@ import {
   updateDocumentUserOwnership,
   setDocumentPermissions,
 } from '../../repository/ownership.js';
+import { deleteDocument } from '../../repository/document.js';
+import { Document } from '../../types/document.js';
+import { ProofStatus } from '../../types/proof.js';
+import { getProofStatus } from '../../repository/proof.js';
+import { getDocumentHistory as getDocumentHistoryRequest } from '../../repository/document-history.js';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
   private collectionName: string;
   private _documentEncoded: DocumentEncoded;
   private _id: string;
+  private createdAt: Date;
 
   constructor(
     databaseName: string,
     collectionName: string,
-    documentEncoded: DocumentEncoded,
-    id: string
+    document: Document
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
-    this._documentEncoded = documentEncoded;
-    this._id = id;
+    this._documentEncoded = document.documentEncoded;
+    this._id = document.id;
+    this.createdAt = document.createdAt;
+  }
+
+  async getProofStatus(): Promise<ProofStatus> {
+    return getProofStatus(this.databaseName, this.collectionName, this._id);
   }
 
   async changeGroup(groupName: string): Promise<void> {
@@ -83,11 +93,34 @@ export class ZKDocumentImpl implements ZKDocument {
     throw Error();
   }
 
-  public get id() {
+  public getId(): string {
     return this._id;
   }
 
-  public get documentEncoded() {
+  public getDocumentEncoded(): DocumentEncoded {
     return this._documentEncoded;
+  }
+
+  async delete(): Promise<MerkleWitness> {
+    return deleteDocument(this.databaseName, this.collectionName, {
+      docId: this._id,
+    });
+  }
+
+  async getDocumentHistory(): Promise<ZKDocument[]> {
+    return (
+      await getDocumentHistoryRequest(
+        this.databaseName,
+        this.collectionName,
+        this._id
+      )
+    ).documents.map(
+      (document) =>
+        new ZKDocumentImpl(this.databaseName, this.collectionName, document)
+    );
+  }
+
+  getCreatedAt(): Date {
+    return this.createdAt;
   }
 }

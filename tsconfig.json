@@ -21,10 +21,10 @@
     { "path": "./packages/storage" },
     { "path": "./packages/kubo" },
     { "path": "./packages/proof-service" },
+    { "path": "./packages/api" },
     { "path": "./packages/zkdb" },
     { "path": "./packages/serverless" },
     { "path": "./packages/broker-service" },
-    { "path": "./packages/api" },
     { "path": "./packages/ftp" },
     { "path": "./examples" }
   ],

@@ -1,4 +1,4 @@
-import { ObjectId, Document } from 'mongodb';
+import { Document } from 'mongodb';
 import {
   ModelCollection,
   ModelGeneral,
@@ -8,7 +8,7 @@ import { PermissionBasic } from '../../common/permission.js';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
-  docId: ObjectId;
+  docId: string;
   merkleIndex: number;
   createdAt: Date;
   updatedAt: Date;

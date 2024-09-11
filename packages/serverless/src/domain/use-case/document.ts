@@ -5,7 +5,8 @@ import {
   TaskEntity,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ClientSession, WithId, ObjectId } from 'mongodb';
+import { ClientSession, WithId } from 'mongodb';
+import { WithProofStatus } from '../types/proof.js';
 import {
   PermissionBinary,
   setPartialIntoPermission,
@@ -13,7 +14,7 @@ import {
 import ModelDocument, {
   DocumentRecord,
 } from '../../model/abstract/document.js';
-import { Document } from '../types/document.js';
+import { Document, DocumentFields } from '../types/document.js';
 import { Permissions } from '../types/permission.js';
 import {
   hasDocumentPermission,
@@ -33,26 +34,60 @@ import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { getUsersGroup } from './group.js';
 import { Pagination } from '../types/pagination.js';
-import { SearchInput } from '../types/search.js';
-import buildMongoQuery from '../query/mongodb-filter.js';
-import { getDatabaseSetting, isDatabaseOwner } from './database.js';
+import { isDatabaseOwner } from './database.js';
+import { FilterCriteria, parseQuery } from '../utils/document.js';
+import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
 
-export interface FilterCriteria {
-  [key: string]: any;
+function buildDocumentFields(
+  documentRecord: WithId<DocumentRecord>
+): DocumentFields {
+  return Object.keys(documentRecord)
+    .filter(
+      (key) =>
+        key !== '_id' &&
+        key !== 'docId' &&
+        key !== 'deleted' &&
+        key !== 'timestamp' &&
+        key !== 'metadata'
+    )
+    .map((key) => ({
+      name: documentRecord[key].name,
+      kind: documentRecord[key].kind,
+      value: documentRecord[key].value,
+    }));
 }
 
-function parseQuery(input: FilterCriteria): FilterCriteria {
-  const query: FilterCriteria = {};
+function documentFieldsToDocumentRecord(document: DocumentFields): DocumentRecord {
+  return document.reduce((acc, field) => {
+    let value: any = field.value as any;
 
-  Object.keys(input).forEach((key) => {
-    if (key === '_id') {
-      query[key] = new ObjectId(String(input[key]));
-    } else {
-      query[`${key}.value`] = `${input[key]}`;
+    switch (field.kind) {
+      case 'CircuitString':
+        value = value.toString();
+        break;
+      case 'UInt32':
+        value = parseInt(field.value, 10);
+        break;
+      case 'UInt64':
+        value = parseInt(field.value, 10);
+        break;
+      case 'Bool':
+        value = field.value.toLowerCase() === 'true';
+        break;
+      case 'Int64':
+        value = parseInt(field.value, 10);
+        break;
+      default:
+        break;
     }
-  });
 
-  return query;
+    acc[field.name] = {
+      name: field.name,
+      kind: field.kind,
+      value,
+    };
+    return acc;
+  }, {} as DocumentRecord);
 }
 
 async function readDocument(
@@ -61,7 +96,7 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<WithId<Document> | null> {
+): Promise<Document | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -91,7 +126,7 @@ async function readDocument(
     databaseName,
     collectionName,
     actor,
-    documentRecord._id,
+    documentRecord.docId,
     'read',
     session
   );
@@ -102,21 +137,10 @@ async function readDocument(
     );
   }
 
-  if (!documentRecord.isLatest) {
-    throw Error('You cannot read the history document');
-  }
-
-  const document: Document = Object.keys(documentRecord)
-    .filter((key) => key !== '_id') // Exclude '_id'
-    .map((key) => ({
-      name: documentRecord[key].name,
-      kind: documentRecord[key].kind,
-      value: documentRecord[key].value,
-    }));
-
   return {
-    _id: documentRecord._id,
-    ...document,
+    docId: documentRecord.docId,
+    fields: buildDocumentFields(documentRecord),
+    createdAt: documentRecord.timestamp!,
   };
 }
 
@@ -124,7 +148,7 @@ async function createDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  document: Document,
+  document: DocumentFields,
   permissions: Permissions,
   session?: ClientSession
 ) {
@@ -144,23 +168,14 @@ async function createDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord = {
-    isLatest: true,
-  } as DocumentRecord;
+  if (document.length === 0) {
+    throw new Error('Document array is empty. At least one field is required.');
+  }
 
-  document.forEach((field) => {
-    documentRecord[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value: field.value,
-    };
-  });
+  const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(document);
 
-  // 1. Save document
-  const insertResult = await modelDocument.insertDocument(
-    documentRecord,
-    session
-  );
+  // Save the document to the database
+  const insertResult = await modelDocument.insertOne(documentRecord, session);
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
@@ -206,7 +221,7 @@ async function createDocument(
   await modelDocumentMetadata.insertOne(
     {
       collection: collectionName,
-      docId: insertResult.insertedId,
+      docId: insertResult.docId!,
       merkleIndex,
       ...{
         // I'm set these to system user and group as default
@@ -231,7 +246,7 @@ async function createDocument(
   const witness = await proveCreateDocument(
     databaseName,
     collectionName,
-    insertResult.insertedId,
+    insertResult.docId!,
     document,
     session
   );
@@ -244,7 +259,7 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  update: Document,
+  update: DocumentFields,
   session?: ClientSession
 ) {
   if (
@@ -263,18 +278,18 @@ async function updateDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const oldDocumentRecord = await modelDocument.find(
+  const oldDocumentRecord = await modelDocument.findOne(
     parseQuery(filter),
     session
   );
 
-  if (oldDocumentRecord.length === 1) {
+  if (oldDocumentRecord) {
     if (
       !(await hasDocumentPermission(
         databaseName,
         collectionName,
         actor,
-        oldDocumentRecord[0]._id,
+        oldDocumentRecord.docId,
         'write',
         session
       ))
@@ -284,47 +299,37 @@ async function updateDocument(
       );
     }
 
-    await modelDocument.collection.updateOne(
-      parseQuery(filter),
-      { $set: { isLatest: false } },
-      { session }
-    );
+    if (update.length === 0) {
+      throw new Error(
+        'Document array is empty. At least one field is required.'
+      );
+    }
 
-    const documentRecord = {
-      isLatest: true,
-      prevVersion: oldDocumentRecord[0]._id,
-    } as DocumentRecord;
+    const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(update);
 
-    update.forEach((field) => {
-      documentRecord[field.name] = {
-        name: field.name,
-        kind: field.kind,
-        value: field.value,
-      };
-    });
-
-    const insertResult = await modelDocument.collection.insertOne(
-      documentRecord,
-      { session }
+    await modelDocument.updateOne(
+      oldDocumentRecord.docId,
+      documentRecord!,
+      session
     );
 
     const witness = await proveUpdateDocument(
       databaseName,
       collectionName,
-      oldDocumentRecord[0]!._id,
+      oldDocumentRecord.docId!,
       update,
       session
     );
 
-    const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+    // const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
-    await modelDocumentMetadata.collection.updateMany(
-      { docId: oldDocumentRecord[0]!._id },
-      {
-        $set: { docId: insertResult.insertedId },
-      },
-      { session }
-    );
+    // await modelDocumentMetadata.collection.updateMany(
+    //   { docId: oldDocumentRecord[0]!.docId},
+    //   {
+    //     $set: { docId: insertResult.insertedId },
+    //   },
+    //   { session }
+    // );
 
     return witness;
   }
@@ -357,50 +362,44 @@ async function deleteDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const findResult = await modelDocument.find(parseQuery(filter), session);
+  const findResult = await modelDocument.findOne(parseQuery(filter), session);
 
-  if (findResult.length !== 1) {
-    throw Error('Wrong query');
-  }
+  if (findResult) {
+    if (
+      !(await hasDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
+        findResult.docId,
+        'delete',
+        session
+      ))
+    ) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
+      );
+    }
 
-  if (
-    !(await hasDocumentPermission(
+    const witness = await proveDeleteDocument(
       databaseName,
       collectionName,
-      actor,
-      findResult[0]._id,
-      'delete',
+      findResult.docId,
       session
-    ))
-  ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
     );
+
+    await modelDocument.dropOne(findResult.docId);
+
+    // TODO: Should we remove document metadata ???????
+    // const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+    // await modelDocumentMetadata.deleteOne(
+    //   { docId: findResult[0].docId },
+    //   { session }
+    // );
+
+    return witness;
   }
 
-  const witness = await proveDeleteDocument(
-    databaseName,
-    collectionName,
-    findResult[0]._id,
-    session
-  );
-
-  await modelDocument.insertDocument(
-    {
-      isLatest: true,
-      prevVersion: findResult[0]._id,
-    } as DocumentRecord,
-    session
-  );
-
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-
-  await modelDocumentMetadata.deleteOne(
-    { docId: findResult[0]._id },
-    { session }
-  );
-
-  return witness;
+  throw Error('Document not found');
 }
 
 function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
@@ -408,7 +407,7 @@ function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
     {
       $lookup: {
         from: zkDatabaseConstants.databaseCollections.permission,
-        let: { docId: '$_id' },
+        let: { docId: '$docId' },
         pipeline: [
           {
             $match: {
@@ -463,14 +462,14 @@ function filterDocumentsByPermissions(
   });
 }
 
-async function searchAggregatedDocuments(
+async function findDocumentsWithMetadata(
   databaseName: string,
   collectionName: string,
   actor: string,
-  query?: SearchInput<any>,
+  query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
-) {
+): Promise<WithProofStatus<WithMetadata<Document>>[]> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -489,16 +488,17 @@ async function searchAggregatedDocuments(
     const tasks =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
-    const matchQuery = buildMongoQuery(query);
-
-    const pipeline = buildPipeline(matchQuery, pagination);
+    const pipeline = buildPipeline(
+      query ? parseQuery(query) : null,
+      pagination
+    );
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
       .toArray();
 
     let filteredDocuments: any[];
-    
+
     if (!(await isDatabaseOwner(databaseName, actor))) {
       filteredDocuments = filterDocumentsByPermissions(
         documentsWithMetadata,
@@ -510,31 +510,26 @@ async function searchAggregatedDocuments(
     }
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      const document: Document = Object.keys(documentRecord)
-        .filter(
-          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
-        )
-        .map((key) => ({
-          name: documentRecord[key].name,
-          kind: documentRecord[key].kind,
-          value: documentRecord[key].value,
-        }));
+      const fields: DocumentFields = buildDocumentFields(documentRecord);
 
       const task = tasks?.find(
-        (task: TaskEntity) =>
-          task.docId === (documentRecord as any)._id.toString()
+        (taskEntity: TaskEntity) =>
+          taskEntity.docId === (documentRecord as any)._id.toString()
       );
 
-      const object = {
-        document: {
-          _id: documentRecord._id,
-          document,
-        },
+      const document: Document = {
+        docId: documentRecord._id,
+        fields,
+        createdAt: documentRecord.timestamp,
+      };
 
-        metadata: {
-          merkleIndex: documentRecord.metadata.merkleIndex,
+      const metadata: DocumentMetadata = {
+        merkleIndex: documentRecord.metadata.merkleIndex,
+        owners: {
           group: documentRecord.metadata.group,
           owner: documentRecord.metadata.owner,
+        },
+        permissions: {
           permissionOwner: PermissionBinary.fromBinaryPermission(
             documentRecord.metadata.permissionOwner
           ),
@@ -545,7 +540,12 @@ async function searchAggregatedDocuments(
             documentRecord.metadata.permissionOther
           ),
         },
-        proofStatus: task ? task.status : undefined,
+      };
+
+      const object = {
+        ...document,
+        metadata,
+        proofStatus: task ? task.status.toString() : '',
       };
 
       return object;
@@ -563,10 +563,10 @@ async function searchDocuments(
   databaseName: string,
   collectionName: string,
   actor: string,
-  query?: SearchInput<any>,
+  query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
-): Promise<Array<WithId<Document>>> {
+): Promise<Array<Document>> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -583,9 +583,12 @@ async function searchDocuments(
 
     const userGroups = await getUsersGroup(databaseName, actor);
 
-    const matchQuery = buildMongoQuery(query);
+    // const matchQuery = buildMongoQuery(query);
 
-    const pipeline = buildPipeline(matchQuery, pagination);
+    const pipeline = buildPipeline(
+      query ? parseQuery(query) : null,
+      pagination
+    );
 
     const documentsWithMetadata = await documentsCollection
       .aggregate(pipeline)
@@ -603,24 +606,19 @@ async function searchDocuments(
       filteredDocuments = documentsWithMetadata;
     }
 
-    const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      const document: Document = Object.keys(documentRecord)
-        .filter(
-          (key) => key !== '_id' && key !== 'metadata' && key !== 'isLatest'
-        )
-        .map((key) => ({
-          name: documentRecord[key].name,
-          kind: documentRecord[key].kind,
-          value: documentRecord[key].value,
-        }));
+    const transformedDocuments: Document[] = filteredDocuments.map(
+      (documentRecord) => {
+        const fields: DocumentFields = buildDocumentFields(documentRecord);
 
-      return {
-        _id: documentRecord._id,
-        document,
-      };
-    });
+        return {
+          docId: documentRecord.docId,
+          fields,
+          createdAt: documentRecord.timestamp,
+        };
+      }
+    );
 
-    return transformedDocuments as any as WithId<Document>[];
+    return transformedDocuments;
   }
 
   throw new Error(
@@ -629,7 +627,7 @@ async function searchDocuments(
 }
 
 export {
-  searchAggregatedDocuments,
+  findDocumentsWithMetadata,
   readDocument,
   createDocument,
   updateDocument,

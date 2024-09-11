@@ -1,1 +1,1 @@
-export { ZKDatabaseClient } from './zkdatabase-client.js'
+export { zkdb } from './zkdatabase-client.js'

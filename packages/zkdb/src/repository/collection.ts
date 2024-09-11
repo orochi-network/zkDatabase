@@ -4,7 +4,7 @@ import {
   listIndexes,
   createCollection as createCollectionRequest,
 } from '@zkdb/api';
-import { DocumentEncoded, SchemaDefinition } from '../sdk/schema.js';
+import { SchemaDefinition } from '../sdk/schema.js';
 import { Permissions } from '../types/permission.js';
 
 export async function listCollectionIndexes(

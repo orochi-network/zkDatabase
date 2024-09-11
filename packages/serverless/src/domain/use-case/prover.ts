@@ -1,9 +1,8 @@
-import { ClientSession, ObjectId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
 import {
   TMerkleProof,
-  ModelDbSetting,
   ModelMerkleTree,
   ModelQueueTask,
 } from '@zkdb/storage';
@@ -11,15 +10,15 @@ import {
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';
 
-import { Document } from '../types/document.js';
+import { DocumentFields } from '../types/document.js';
 import { buildSchema } from './schema.js';
 
 // Prove the creation of a document
 export async function proveCreateDocument(
   databaseName: string,
   collectionName: string,
-  documentId: ObjectId,
-  document: Document,
+  docId: string,
+  document: DocumentFields,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
   const merkleTree = await ModelMerkleTree.load(databaseName);
@@ -34,7 +33,7 @@ export async function proveCreateDocument(
 
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
-      docId: documentId,
+      docId,
     },
     { session }
   );
@@ -58,7 +57,7 @@ export async function proveCreateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
-      docId: documentId.toString()
+      docId,
     },
     { session }
   );
@@ -70,12 +69,12 @@ export async function proveCreateDocument(
 export async function proveUpdateDocument(
   databaseName: string,
   collectionName: string,
-  documentId: ObjectId,
-  newDocument: Document,
+  docId: string,
+  newDocument: DocumentFields,
   session?: ClientSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const oldDocument = await modelDocument.findOne({ _id: documentId }, session);
+  const oldDocument = await modelDocument.findOne({ docId }, session);
 
   if (!oldDocument) {
     throw new Error('Document does not exist');
@@ -86,7 +85,7 @@ export async function proveUpdateDocument(
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
-      docId: oldDocument._id,
+      docId,
     },
     { session }
   );
@@ -119,7 +118,7 @@ export async function proveUpdateDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
-      docId: documentId.toString()
+      docId,
     },
     { session }
   );
@@ -133,11 +132,11 @@ export async function proveUpdateDocument(
 export async function proveDeleteDocument(
   databaseName: string,
   collectionName: string,
-  documentId: ObjectId,
+  docId: string,
   session?: ClientSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const document = await modelDocument.findOne({ _id: documentId }, session);
+  const document = await modelDocument.findOne({ docId }, session);
 
   if (!document) {
     throw new Error('Document does not exist to be proved');
@@ -148,7 +147,7 @@ export async function proveDeleteDocument(
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
-      docId: documentId,
+      docId,
     },
     { session }
   );
@@ -173,7 +172,7 @@ export async function proveDeleteDocument(
       createdAt: currDate,
       database: databaseName,
       collection: collectionName,
-      docId: documentId.toString()
+      docId,
     },
     { session }
   );
