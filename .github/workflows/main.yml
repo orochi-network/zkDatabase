@@ -1,26 +1,16 @@
 # This GitHub Action will loop through all sub-repos:
 # If a package is in the publish list and its package.json version is higher than the NPM registry version, it will be published.
-# Others will also be checked for linting (if applicable).
 # For now: The publish list is:
 # @zkdb/kubo
 # @zkdb/api
 # @zkdb/smart-contract
-# Packages are checked in order:
-# smart-contract
-# storage
-# kubo
-# proof-service
-# zkdb
-# serverless
-# broker-service
-# api
-# ftp
-# Because they depend on others.
 
 name: Publish packages in zkDatabase Repository
 
 on:
   push:
+    branches: ['main']
+  pull_request:
     branches: ['main']
 
 env:
@@ -29,6 +19,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      working-directory: ./packges/zkdb
+
     strategy:
       matrix:
         node-version: [20.x]
@@ -39,8 +32,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
-        run: yarn install
+      - name: Install dependencies & build root
+        run: yarn install && yarn build
+      - name: Test kubo
+        run: cd ./packages/kubo && yarn run test
+      - name: Test zkdb
+        run: cd ./packages/zkdb && yarn run test
       - name: Install compare-versions package
         run: yarn add -W -D compare-versions@6.1.0
       - name: Loop through all packages and publish them if necessary
@@ -49,24 +46,21 @@ jobs:
         run: |
           PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract")
 
-          PACKAGE_ORDER=("smart-contract" "storage" "kubo" "proof-service" "zkdb" "serverless" "broker-service" "api" "ftp")
-
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true \n @orochi-network:registry=https://registry.npmjs.org" > ~/.npmrc
           packages_dir="packages"
 
           # Loop through all packages
-          for ((i = 0; i < ${#PACKAGE_ORDER[@]}; i++));
+          for package_dir in $(find "$packages_dir" -mindepth 1 -maxdepth 1 -type d);
           do
-            PACKAGE=${PACKAGE_ORDER[$i]}
-            echo "Processing: ${PACKAGE}"
-            cd "./${packages_dir}/${PACKAGE_ORDER[$i]}"
-
+            echo "Processing: $package_dir"
+            cd $package_dir
+            
+            PACKAGE_NAME=$(node -p "require('./package.json').name")
             if jq -e '.scripts.lint' package.json > /dev/null; then
                 echo "Running lint script for $PACKAGE_NAME"
                 yarn run lint
             fi
             yarn build
-            PACKAGE_NAME=$(node -p "require('./package.json').name")
 
             if [[ " ${PUBLISH_LIST[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"
