@@ -6,7 +6,7 @@
   "dependencies": {
     "@zkdb/storage": "^1.0.0",
     "apollo-server": "^3.13.0",
-    "express": "^4.19.2",
+    "express": "^4.20.0",
     "graphql": "^16.9.0",
     "graphql-type-json": "^0.3.2"
   },

@@ -73,7 +73,7 @@
     "@zkdb/storage": "^1.0.0",
     "axios": "^1.5.0",
     "cors": "^2.8.5",
-    "express": "^4.18.2",
+    "express": "^4.20.0",
     "express-fileupload": "^1.4.0",
     "google-auth-library": "^9.0.0",
     "graphql": "^16.9.0",
