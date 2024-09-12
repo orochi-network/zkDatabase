@@ -1,9 +1,8 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult } from "../../../utils/network.js";
-import { handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
 import { ZKProof } from "../../types/proof.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const GET_PROOF = gql`
   query GetProof($databaseName: String!) {
@@ -17,28 +16,31 @@ const GET_PROOF = gql`
 `;
 
 export const getProof = async (
-  databaseName: string,
-): Promise<NetworkResult<ZKProof>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.query({
+  databaseName: string
+): Promise<GraphQLResult<ZKProof>> => {
+  try {
+    const {
+      data: { getProof },
+      errors,
+    } = await client.query({
       query: GET_PROOF,
       variables: {
-        databaseName
-      }
+        databaseName,
+      },
     });
 
-    const response = data?.getProof;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<ZKProof>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    return GraphQLResult.wrap<ZKProof>(getProof);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<ZKProof>(error);
+    } else {
+      return GraphQLResult.wrap<ZKProof>(Error("Unknown Error"));
+    }
+  }
 };

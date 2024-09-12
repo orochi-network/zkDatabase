@@ -1,7 +1,7 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { GraphQLResult } from "utils/result.js";
 
 const COLLECTION_EXIST = gql`
   query CollectionExist($databaseName: String!, $collectionName: String!) {
@@ -15,25 +15,31 @@ const COLLECTION_EXIST = gql`
 export const collectionExist = async (
   databaseName: string,
   collectionName: string
-): Promise<NetworkResult<boolean>> => {
-  return handleRequest(async () => {
-    const { data } = await client.query({
+): Promise<GraphQLResult<boolean>> => {
+  try {
+    const {
+      data: { collectionExist },
+      error,
+    } = await client.query({
       query: COLLECTION_EXIST,
       variables: { databaseName, collectionName },
     });
 
-    const response = data?.collectionExist;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response as any,
-      };
-    } else {
-      return {
-        type: "error",
-        message: "An unknown error occurred",
-      };
+    if (error) {
+      return GraphQLResult.wrap<boolean>(error);
     }
-  });
+    
+    if (typeof collectionExist === 'boolean') {
+      return GraphQLResult.wrap(collectionExist as boolean);
+    }
+
+    return GraphQLResult.wrap<boolean>(new Error('Unexpected response format or type'));
+    
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<boolean>(error);
+    } else {
+      return GraphQLResult.wrap<boolean>(Error('Unknown Error'))
+    }
+  }
 };

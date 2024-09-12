@@ -2,9 +2,9 @@ import pkg from "@apollo/client";
 const { gql } = pkg;
 import { Database } from "../../types/database.js";
 import client from "../../client.js";
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import { Search } from "../../types/search.js";
 import { Pagination } from "../../types/pagination.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const LIST_DATABASES = gql`
   query GetDbList($search: SearchInput, $pagination: PaginationInput) {
@@ -20,25 +20,26 @@ const LIST_DATABASES = gql`
 export const listDatabases = async (
   search?: Search | undefined,
   pagination?: Pagination | undefined
-): Promise<NetworkResult<Database[]>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.query({
+): Promise<GraphQLResult<Database>> => {
+  try {
+    const {
+      data: { dbList },
+      error,
+    } = await client.query({
       query: LIST_DATABASES,
       variables: [search, pagination],
     });
 
-    const response = data?.dbList;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (error) {
+      return GraphQLResult.wrap<Database>(error);
     }
-  });
+
+    return GraphQLResult.wrap(dbList);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<Database>(error);
+    } else {
+      return GraphQLResult.wrap<Database>(Error("Unknown Error"));
+    }
+  }
 };

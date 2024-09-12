@@ -1,9 +1,7 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult } from "../../../utils/network.js";
-import { handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-
+import { GraphQLResult } from "../../../utils/result.js";
 const GET_ROOT = gql`
   query GetRoot($databaseName: String!) {
     getRoot(databaseName: $databaseName)
@@ -11,28 +9,31 @@ const GET_ROOT = gql`
 `;
 
 export const getMerkleRoot = async (
-  databaseName: string,
-): Promise<NetworkResult<string>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.query({
+  databaseName: string
+): Promise<GraphQLResult<string>> => {
+  try {
+    const {
+      data: { getRoot },
+      errors,
+    } = await client.query({
       query: GET_ROOT,
       variables: {
-        databaseName
-      }
+        databaseName,
+      },
     });
 
-    const response = data?.getRoot;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<string>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    return GraphQLResult.wrap<string>(getRoot);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<string>(error);
+    } else {
+      return GraphQLResult.wrap<string>(Error("Unknown Error"));
+    }
+  }
 };

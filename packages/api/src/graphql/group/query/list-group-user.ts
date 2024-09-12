@@ -1,7 +1,7 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const LIST_GROUP_BY_USER = gql`
   query GroupListByUser($databaseName: String!, $userName: String!) {
@@ -9,34 +9,29 @@ const LIST_GROUP_BY_USER = gql`
   }
 `;
 
-interface GroupResponse {
-  groups: string[];
-}
-
 export const listGroupsByUser = async (
   databaseName: string,
   userName: string
-): Promise<NetworkResult<string[]>> => {
-  return handleRequest(async () => {
-    const { data } = await client.query<{
-      groupListByUser: GroupResponse;
-    }>({
+): Promise<GraphQLResult<string>> => {
+  try {
+    const {
+      data: { groupListByUser },
+      error,
+    } = await client.query({
       query: LIST_GROUP_BY_USER,
       variables: { databaseName, userName },
     });
 
-    const response = data?.groupListByUser;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response.groups,
-      };
-    } else {
-      return {
-        type: "error",
-        message: "An unknown error occurred",
-      };
+    if (error) {
+      return GraphQLResult.wrap<string>(error);
     }
-  });
+
+    return GraphQLResult.wrap(groupListByUser);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<string>(error);
+    } else {
+      return GraphQLResult.wrap<string>(Error("Unknown Error"));
+    }
+  }
 };

@@ -1,8 +1,8 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
 import { DatabaseStatus } from "../../types/database.js";
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const DATABASE_GET_STATUS_QUERY = gql`
   query GetDbStats($databaseName: String!) {
@@ -12,25 +12,26 @@ const DATABASE_GET_STATUS_QUERY = gql`
 
 export const getDatabaseStatus = async (
   databaseName: string
-): Promise<NetworkResult<DatabaseStatus>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.query<{ dbStats: any }>({
+): Promise<GraphQLResult<DatabaseStatus>> => {
+  try {
+    const {
+      data: { dbStats },
+      error,
+    } = await client.query({
       query: DATABASE_GET_STATUS_QUERY,
-      variables: { databaseName }
+      variables: { databaseName },
     });
 
-    const response = data?.dbStats;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (error) {
+      return GraphQLResult.wrap<DatabaseStatus>(error);
     }
-  });
+
+    return GraphQLResult.wrap(dbStats);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<DatabaseStatus>(error);
+    } else {
+      return GraphQLResult.wrap<DatabaseStatus>(Error("Unknown Error"));
+    }
+  }
 };

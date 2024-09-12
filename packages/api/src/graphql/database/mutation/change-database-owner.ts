@@ -1,7 +1,7 @@
 import pkg from '@apollo/client';
 const { gql } = pkg;
 import client from "../../client.js";
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const DATABASE_CHANGE_OWNER_MUTATION = gql`
   mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
@@ -12,25 +12,31 @@ const DATABASE_CHANGE_OWNER_MUTATION = gql`
 export const changeDatabaseOwner = async (
   databaseName: string,
   newOwner: string,
-): Promise<NetworkResult<undefined>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{ dbChangeOwner: boolean }>({
+): Promise<GraphQLResult<boolean>> => {
+  try {
+    const { data : {dbChangeOwner}, errors } = await client.mutate({
       mutation: DATABASE_CHANGE_OWNER_MUTATION,
       variables: { databaseName, newOwner },
     });
 
-    const response = data?.dbChangeOwner;
-
-    if (response) {
-      return {
-        type: "success",
-        data: undefined,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<boolean>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    if (typeof dbChangeOwner === "boolean") {
+      return GraphQLResult.wrap(dbChangeOwner as boolean);
+    }
+
+    return GraphQLResult.wrap<boolean>(
+      new Error("Unexpected response format or type")
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<boolean>(error);
+    } else {
+      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
+    }
+  }
 };

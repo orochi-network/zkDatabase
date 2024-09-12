@@ -1,8 +1,8 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
 import { Ownership } from "../../types/ownership.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SET_OWNER = gql`
   mutation PermissionOwn(
@@ -31,9 +31,12 @@ export const setOwner = async (
   docId: string | undefined,
   grouping: string,
   newOwner: string
-): Promise<NetworkResult<Ownership>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.mutate({
+): Promise<GraphQLResult<Ownership>> => {
+  try {
+    const {
+      data: { permissionOwn },
+      errors,
+    } = await client.mutate({
       mutation: SET_OWNER,
       variables: {
         databaseName,
@@ -41,21 +44,20 @@ export const setOwner = async (
         docId,
         grouping,
         newOwner,
-      }
+      },
     });
-
-    const response = data?.permissionSet;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response.permissionOwn
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<Ownership>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    return GraphQLResult.wrap<Ownership>(permissionOwn);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<Ownership>(error);
+    } else {
+      return GraphQLResult.wrap<Ownership>(Error("Unknown Error"));
+    }
+  }
 };

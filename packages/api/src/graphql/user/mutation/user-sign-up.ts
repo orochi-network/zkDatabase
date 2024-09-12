@@ -1,9 +1,9 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
 import { SignUpData, SignatureProofData } from "../../types/authentication.js";
-import { NetworkResult } from "../../../utils/network.js";
 import { User } from "../../types/user.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SIGN_UP = gql`
   mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
@@ -28,34 +28,34 @@ interface UserSignUpResponse {
 export const signUp = async (
   proof: SignatureProofData,
   signUpData: SignUpData
-): Promise<NetworkResult<User>> => {
+): Promise<GraphQLResult<User>> => {
   try {
-    const { data, errors } = await client.mutate({
+    const {
+      data: { userSignUp },
+      errors,
+    } = await client.mutate({
       mutation: SIGN_UP,
       variables: { signUp: signUpData, proof: proof },
     });
 
-    const response = data?.userSignUp;
-
-    if (response && response.success) {
-      return {
-        type: "success",
-        data: {
-          userName: response.userName,
-          email: response.email,
-          publicKey: response.publicKey,
-        },
-      };
-    } else {
-      return {
-        type: "error",
-        message: response?.error ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<User>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  } catch (error) {
-    return {
-      type: "error",
-      message: `${(error as any).message}` ?? "An unknown error occurred",
+
+    const user: User = {
+      userName: userSignUp.userName,
+      email: userSignUp.email,
+      publicKey: userSignUp.publicKey,
     };
+
+    return GraphQLResult.wrap<User>(user);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<User>(error);
+    } else {
+      return GraphQLResult.wrap<User>(Error("Unknown Error"));
+    }
   }
 };
