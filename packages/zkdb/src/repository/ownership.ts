@@ -15,8 +15,8 @@ export async function updateCollectionGroupOwnership(
     groupName
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
 
@@ -33,8 +33,8 @@ export async function updateCollectionUserOwnership(
     userName
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
 
@@ -52,8 +52,8 @@ export async function updateDocumentGroupOwnership(
     groupName
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
 
@@ -71,8 +71,8 @@ export async function updateDocumentUserOwnership(
     userName
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
 
@@ -82,10 +82,14 @@ export async function getCollectionOwnership(
 ): Promise<Ownership> {
   const result = await listPermissions(databaseName, collectionName, undefined);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -96,10 +100,14 @@ export async function getDocumentOwnership(
 ): Promise<Ownership> {
   const result = await listPermissions(databaseName, collectionName, docId);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -109,33 +117,35 @@ export async function setDocumentPermissions(
   docId: string,
   permissions: Permissions
 ) {
-  const remotePermissions = await getDocumentOwnership(databaseName, collectionName, docId);
-
-  const setPermissionsResult = await setPermissions(
+  const remotePermissions = await getDocumentOwnership(
     databaseName,
     collectionName,
-    docId,
-    {
-      permissionOwner: {
-        ...remotePermissions.permissions.permissionOwner,
-        ...permissions.permissionOwner,
-      },
-      permissionGroup: {
-        ...remotePermissions.permissions.permissionGroup,
-        ...permissions.permissionGroup,
-      },
-      permissionOther: {
-        ...remotePermissions.permissions.permissionOther,
-        ...permissions.permissionOther,
-      },
-    }
+    docId
   );
 
+  const result = await setPermissions(databaseName, collectionName, docId, {
+    permissionOwner: {
+      ...remotePermissions.permissions.permissionOwner,
+      ...permissions.permissionOwner,
+    },
+    permissionGroup: {
+      ...remotePermissions.permissions.permissionGroup,
+      ...permissions.permissionGroup,
+    },
+    permissionOther: {
+      ...remotePermissions.permissions.permissionOther,
+      ...permissions.permissionOther,
+    },
+  });
 
-  if (setPermissionsResult.type === 'success') {
-    return setPermissionsResult.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(setPermissionsResult.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -144,31 +154,33 @@ export async function setCollectionPermissions(
   collectionName: string,
   permissions: Permissions
 ) {
-  const remotePermissions = await getCollectionOwnership(databaseName, collectionName);
-
-  const setPermissionsResult = await setPermissions(
+  const remotePermissions = await getCollectionOwnership(
     databaseName,
-    collectionName,
-    undefined,
-    {
-      permissionOwner: {
-        ...remotePermissions.permissions.permissionOwner,
-        ...permissions.permissionOwner,
-      },
-      permissionGroup: {
-        ...remotePermissions.permissions.permissionGroup,
-        ...permissions.permissionGroup,
-      },
-      permissionOther: {
-        ...remotePermissions.permissions.permissionOther,
-        ...permissions.permissionOther,
-      },
-    }
+    collectionName
   );
 
-  if (setPermissionsResult.type === 'success') {
-    return setPermissionsResult.data;
+  const result = await setPermissions(databaseName, collectionName, undefined, {
+    permissionOwner: {
+      ...remotePermissions.permissions.permissionOwner,
+      ...permissions.permissionOwner,
+    },
+    permissionGroup: {
+      ...remotePermissions.permissions.permissionGroup,
+      ...permissions.permissionGroup,
+    },
+    permissionOther: {
+      ...remotePermissions.permissions.permissionOther,
+      ...permissions.permissionOther,
+    },
+  });
+
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(setPermissionsResult.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }

@@ -2,12 +2,9 @@ import {
   listDatabases,
   getDatabaseSettings as getDatabaseSettingsRequest,
   createDatabase as createDatabaseRequest,
-  changeDatabaseOwner as changeDatabaseOwnerRequest
+  changeDatabaseOwner as changeDatabaseOwnerRequest,
 } from '@zkdb/api';
-import {
-  Database,
-  DatabaseSettings,
-} from '../types/database.js';
+import { Database, DatabaseSettings } from '../types/database.js';
 import { PublicKey } from 'o1js';
 import { QueryOptions } from '../sdk/query/query-builder.js';
 import mapSearchInputToSearch from './mapper/search.js';
@@ -25,10 +22,15 @@ export async function getDatabases(
         }
       : undefined
   );
-  if (result.type === 'success') {
-    return result.data;
+
+  if (result.isArray()) {
+    return result.unwrapArray();
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -36,10 +38,14 @@ export async function getDatabaseSettings(
   databaseName: string
 ): Promise<DatabaseSettings> {
   const result = await getDatabaseSettingsRequest(databaseName);
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -54,22 +60,18 @@ export async function createDatabase(
     publicKey.toBase58()
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
 
 export async function changeDatabaseOwner(
   databaseName: string,
-  newOwner: string,
+  newOwner: string
 ) {
-  const result = await changeDatabaseOwnerRequest(
-    databaseName,
-    newOwner
-  );
+  const result = await changeDatabaseOwnerRequest(databaseName, newOwner);
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
   }
 }
-

@@ -24,15 +24,16 @@ export async function findDocument(
     JSON.parse(JSON.stringify(filter))
   );
 
-  if (result.type === 'success') {
+  if (result.isOne()) {
+    const document = result.unwrapObject();
     return {
-      id: result.data.docId,
-      documentEncoded: result.data.fields.map((field) => ({
+      id: document.docId,
+      documentEncoded: document.fields.map((field) => ({
         name: field.name,
         kind: field.kind as ProvableTypeString,
         value: field.value,
       })),
-      createdAt: result.data.createdAt,
+      createdAt: document.createdAt,
     };
   } else {
     return null;
@@ -52,13 +53,19 @@ export async function createDocument(
     permissions
   );
 
-  if (result.type === 'success') {
-    return result.data.map((node) => ({
+  if (result.isOne()) {
+    const merkleWitness = result.unwrapObject();
+
+    return merkleWitness.map((node) => ({
       isLeft: node.isLeft,
       sibling: Field(node.sibling),
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -75,13 +82,19 @@ export async function updateDocument(
     documentEncoded
   );
 
-  if (result.type === 'success') {
-    return result.data.map((node) => ({
+  if (result.isOne()) {
+    const merkleWitness = result.unwrapObject();
+
+    return merkleWitness.map((node) => ({
       isLeft: node.isLeft,
       sibling: Field(node.sibling),
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -98,13 +111,19 @@ export async function deleteDocument(
 
   console.log('result', result);
 
-  if (result.type === 'success') {
-    return result.data.map((node) => ({
+  if (result.isOne()) {
+    const merkleWitness = result.unwrapObject();
+
+    return merkleWitness.map((node) => ({
       isLeft: node.isLeft,
       sibling: Field(node.sibling),
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -121,8 +140,10 @@ export async function findDocuments(
     pagination
   );
 
-  if (result.type === 'success') {
-    return result.data.map((document) => ({
+  if (result.isSome()) {
+    const documents = result.unwrapArray();
+
+    return documents.map((document) => ({
       id: document.docId,
       documentEncoded: document.fields.map((field) => ({
         name: field.name,
@@ -132,6 +153,10 @@ export async function findDocuments(
       createdAt: document.createdAt,
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }

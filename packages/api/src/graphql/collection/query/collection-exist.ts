@@ -1,7 +1,7 @@
 import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
-import { GraphQLResult } from "utils/result.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const COLLECTION_EXIST = gql`
   query CollectionExist($databaseName: String!, $collectionName: String!) {

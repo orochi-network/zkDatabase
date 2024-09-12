@@ -8,10 +8,14 @@ import { MerkleWitness } from '../types/merkle-tree.js';
 export async function getRoot(databaseName: string): Promise<Field> {
   const result = await getMerkleRoot(databaseName);
 
-  if (result.type === 'success') {
-    return Field(result.data);
+  if (result.isOne()) {
+    return Field(result.unwrapObject());
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -20,12 +24,16 @@ export async function getWitnessByDocumentId(
   documentId: string
 ): Promise<MerkleWitness> {
   const result = await getWitnessByDocumentIdRequest(databaseName, documentId);
-  if (result.type === 'success') {
-    return result.data.map((node) => ({
+  if (result.isOne()) {
+    return result.unwrapObject().map((node) => ({
       isLeft: node.isLeft,
       sibling: Field(node.sibling),
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }

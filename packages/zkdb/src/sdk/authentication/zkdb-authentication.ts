@@ -29,19 +29,24 @@ export abstract class BaseAuthenticator {
   protected async sendLoginRequest(email: string, proof: SignedData) {
     const result = await signIn(email, proof);
 
-    if (result.type === 'success') {
+    if (result.isObject()) {
+      const userData = result.unwrapObject();
       this.getStorage().setSession({
-        sessionId: result.data.session.sessionId,
-        sessionKey: result.data.session.sessionKey,
+        sessionId: userData.session.sessionId,
+        sessionKey: userData.session.sessionKey,
       });
 
       this.getStorage().setUserInfo({
-        email: result.data.user.email,
-        userName: result.data.user.userName,
-        publicKey: result.data.user.publicKey,
+        email: userData.user.email,
+        userName: userData.user.userName,
+        publicKey: userData.user.publicKey,
       });
     } else {
-      throw Error(result.message);
+      if (result.isError()) {
+        throw result.unwrapError();
+      } else {
+        throw Error('Unknown error');
+      }
     }
   }
 
@@ -59,8 +64,10 @@ export abstract class BaseAuthenticator {
       userData: {},
     });
 
-    if (result.type === 'error') {
-      throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
     }
   }
 
