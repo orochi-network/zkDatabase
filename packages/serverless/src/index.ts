@@ -13,7 +13,11 @@ import http from 'http';
 import { ResolversApp, TypedefsApp } from './apollo/index.js';
 import { nobodyContext, TApplicationContext } from './common/types.js';
 import { config } from './helper/config.js';
-import { headerToAccessToken, JwtAuthorization } from './helper/jwt.js';
+import {
+  calculateAccessTokenDigest,
+  headerToAccessToken,
+  JwtAuthorization,
+} from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
 
@@ -96,13 +100,25 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
           typeof req.headers.authorization === 'string' &&
           req.headers.authorization.startsWith('Bearer ')
         ) {
+          const accessToken = headerToAccessToken(req.headers.authorization);
+          const accessTokenDigest = calculateAccessTokenDigest(accessToken);
           const {
             payload: { userName, email },
-          } = await JwtAuthorization.verify(
-            // Remove "Bearer "
-            headerToAccessToken(req.headers.authorization)
-          );
-          return { sessionId: req.sessionID, userName, email };
+          } = await JwtAuthorization.verify(accessToken);
+          const serverRawSideAcessToken =
+            await RedisInstance.accessTokenDigest(accessTokenDigest).get();
+          const serverSideAcessToken =
+            typeof serverRawSideAcessToken === 'string'
+              ? JSON.parse(serverRawSideAcessToken)
+              : serverRawSideAcessToken;
+          if (serverSideAcessToken) {
+            if (
+              userName === serverSideAcessToken.userName &&
+              serverSideAcessToken.email === email
+            ) {
+              return { sessionId: req.sessionID, userName, email };
+            }
+          }
         }
 
         return nobodyContext(req);
