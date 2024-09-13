@@ -1,11 +1,10 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
-import { ObjectId } from 'mongodb';
-import resolverWrapper from '../validation.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree.js';
+import publicWrapper from '../validation.js';
 import { databaseName, indexNumber, objectId } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree.js';
 
 export type TMerkleTreeIndexRequest = TDatabaseRequest & {
   index: bigint;
@@ -54,7 +53,7 @@ extend type Query {
 }
 `;
 
-const getWitness = resolverWrapper(
+const getWitness = publicWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
     const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
@@ -64,20 +63,16 @@ const getWitness = resolverWrapper(
   }
 );
 
-const getWitnessByDocument = resolverWrapper(
+const getWitnessByDocument = publicWrapper(
   MerkleTreeWitnessByDocumentRequest,
   async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) => {
     return withTransaction((session) =>
-      getWitnessByDocumentId(
-        args.databaseName,
-        args.docId,
-        session
-      )
+      getWitnessByDocumentId(args.databaseName, args.docId, session)
     );
   }
 );
 
-const getNode = resolverWrapper(
+const getNode = publicWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
     const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
@@ -87,7 +82,7 @@ const getNode = resolverWrapper(
   }
 );
 
-const getRoot = resolverWrapper(
+const getRoot = publicWrapper(
   Joi.object({
     databaseName,
   }),

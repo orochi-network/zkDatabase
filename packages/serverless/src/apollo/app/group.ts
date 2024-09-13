@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import resolverWrapper from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   databaseName,
   groupDescription,
@@ -19,7 +19,6 @@ import {
   createGroup,
   renameGroup,
 } from '../../domain/use-case/group.js';
-import { AppContext } from '../../common/types.js';
 
 export type TGroupRequest = TDatabaseRequest & {
   groupName: string;
@@ -102,7 +101,7 @@ extend type Mutation {
 `;
 
 // Query
-const groupListAll = resolverWrapper(
+const groupListAll = publicWrapper(
   Joi.object({
     databaseName,
   }),
@@ -122,7 +121,7 @@ export type TGroupListByUserRequest = TDatabaseRequest & {
   userName: string;
 };
 
-const groupListByUser = resolverWrapper(
+const groupListByUser = publicWrapper(
   Joi.object({
     databaseName,
     userName,
@@ -133,7 +132,7 @@ const groupListByUser = resolverWrapper(
   }
 );
 
-const groupInfo = resolverWrapper(
+const groupInfo = publicWrapper(
   Joi.object({
     databaseName,
     groupName,
@@ -153,13 +152,13 @@ const groupInfo = resolverWrapper(
   }
 );
 
-const groupRename = resolverWrapper(
+const groupRename = authorizeWrapper(
   Joi.object({
     databaseName,
     groupName,
     newGroupName: groupName,
   }),
-  async (_root: unknown, args: TGroupRenameRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TGroupRenameRequest, ctx) =>
     withTransaction(async (session) =>
       renameGroup(
         args.databaseName,
@@ -171,9 +170,9 @@ const groupRename = resolverWrapper(
     )
 );
 
-const groupCreate = resolverWrapper(
+const groupCreate = authorizeWrapper(
   GroupCreateRequest,
-  async (_root: unknown, args: TGroupCreateRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TGroupCreateRequest, ctx) =>
     withTransaction(async (session) =>
       createGroup(
         args.databaseName,
@@ -185,13 +184,13 @@ const groupCreate = resolverWrapper(
     )
 );
 
-const groupAddUsers = resolverWrapper(
+const groupAddUsers = authorizeWrapper(
   Joi.object({
     databaseName,
     groupName,
     userNames: Joi.array().items(Joi.string().required()).required(),
   }),
-  async (_root: unknown, args: TGroupAddUsersRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
     withTransaction(async (session) =>
       addUsersToGroup(
         args.databaseName,
@@ -203,13 +202,13 @@ const groupAddUsers = resolverWrapper(
     )
 );
 
-const groupRemoveUsers = resolverWrapper(
+const groupRemoveUsers = authorizeWrapper(
   Joi.object({
     databaseName,
     groupName,
     userNames: Joi.array().items(Joi.string().required()).required(),
   }),
-  async (_root: unknown, args: TGroupAddUsersRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
     withTransaction(async (session) =>
       excludeUsersToGroup(
         args.databaseName,
@@ -221,9 +220,9 @@ const groupRemoveUsers = resolverWrapper(
     )
 );
 
-const groupChangeDescription = resolverWrapper(
+const groupChangeDescription = authorizeWrapper(
   GroupDescriptionChangeRequest,
-  async (_root: unknown, args: TGroupCreateRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TGroupCreateRequest, ctx) =>
     withTransaction(async (session) =>
       changeGroupDescription(
         args.databaseName,

@@ -5,7 +5,7 @@ import { config } from '../helper/config.js';
 import ModelUser from '../model/global/user.js';
 import logger from '../helper/logger.js';
 import ModelSession from '../model/global/session.js';
-import { IJWTAuthenticationPayload, JWTAuthentication } from '../helper/jwt.js';
+import { JwtAuthorization } from '../helper/jwt.js';
 
 const mutationSignUp = gql`
   mutation UserSignUp($proof: SignatureProof!, $signUp: SignUp!) {
@@ -98,11 +98,10 @@ const before = async () => {
   logger.debug(result);
 
   const {
-    userSignIn: { sessionKey, sessionId },
+    userSignIn: { sessionId },
   } = <any>result;
 
-  const jwt = new JWTAuthentication<IJWTAuthenticationPayload>(sessionKey);
-  const accessToken = await jwt.sign({
+  const accessToken = await JwtAuthorization.sign({
     sessionId,
     userName: userInfo.userName,
     email: userInfo.email,
