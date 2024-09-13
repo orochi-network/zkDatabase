@@ -1,19 +1,19 @@
 import Joi from 'joi';
 import { GraphQLError, GraphQLResolveInfo } from 'graphql';
 import { ZKDATABASE_USER_NOBODY } from '../common/const.js';
-import { AppContext } from '../common/types.js';
+import { TAuthorizedContext, TPublicContext } from '../common/types.js';
 
-export type THandler<T = any> = (
-  _root: any,
+export type THandler<R, T, C> = (
+  _root: R,
   _args: T,
-  _context: any,
+  _context: C,
   _info: GraphQLResolveInfo
 ) => Promise<any>;
 
-export type TWrapperHandler<T = any> = (
+export type TWrapperHandler<R, T, C> = (
   schema: Joi.ObjectSchema<T>,
-  resolver: THandler<T>
-) => THandler<T>;
+  resolver: THandler<R, T, C>
+) => THandler<R, T, C>;
 
 export type TResolver<T> = {
   [key: string]: any;
@@ -27,15 +27,15 @@ export type TResolver<T> = {
   };
 };
 
-export type TOriginResolver<T = any> = TResolver<THandler<T>>;
+export type TOriginResolver<R, T, C> = TResolver<THandler<R, T, C>>;
 
-export type TWrapperMap<T = any> = TResolver<Joi.ObjectSchema<T>>;
+export type TWrapperMap<T> = TResolver<Joi.ObjectSchema<T>>;
 
-export const resolverWrapper = <T>(
+export const publicWrapper = <T, R = any, C = TPublicContext>(
   schema: Joi.ObjectSchema<T>,
-  resolver: THandler<T>
-): THandler<T> => {
-  return async (root: any, args: T, context: any, info: GraphQLResolveInfo) => {
+  resolver: THandler<R, T, C>
+): THandler<R, T, C> => {
+  return async (root: R, args: T, context: C, info: GraphQLResolveInfo) => {
     const { error } = schema.validate(args);
     if (error) {
       throw error;
@@ -44,14 +44,12 @@ export const resolverWrapper = <T>(
   };
 };
 
-export const authorizeWrapper = <T>(resolver: THandler<T>): THandler<T> => {
-  return async (
-    root: any,
-    args: T,
-    context: AppContext,
-    info: GraphQLResolveInfo
-  ) => {
-    if (context.userName === ZKDATABASE_USER_NOBODY) {
+export const authorizeWrapper = <T, R = any, C = TAuthorizedContext>(
+  schema: Joi.ObjectSchema<T>,
+  resolver: THandler<R, T, C>
+): THandler<R, T, C> => {
+  return async (root: R, args: T, context: C, info: GraphQLResolveInfo) => {
+    if ((context as TAuthorizedContext).userName === ZKDATABASE_USER_NOBODY) {
       throw new GraphQLError('This method required authorized user', {
         extensions: {
           code: 'UNAUTHENTICATED',
@@ -59,31 +57,10 @@ export const authorizeWrapper = <T>(resolver: THandler<T>): THandler<T> => {
         },
       });
     }
-    return resolver(root, args, context, info);
-  };
-};
-
-export const resolverAuth = (
-  schema: Joi.ObjectSchema,
-  resolver: (
-    _root: any,
-    _args: any,
-    context: AppContext,
-    _info: GraphQLResolveInfo
-  ) => Promise<any>
-) => {
-  return async (
-    root: any,
-    args: any,
-    context: AppContext,
-    info: GraphQLResolveInfo
-  ) => {
     const { error } = schema.validate(args);
     if (error) {
-      throw new Error(error.message);
+      throw error;
     }
-    // const { token } = context;
-
     return resolver(root, args, context, info);
   };
 };
@@ -100,4 +77,4 @@ export const validateCollection = Joi.string()
   .pattern(/^[a-z][0-9,a-z]{3,64}$/)
   .message('Invalid collection name');
 
-export default resolverWrapper;
+export default publicWrapper;

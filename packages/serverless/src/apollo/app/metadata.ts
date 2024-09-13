@@ -2,11 +2,16 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
 import { GraphQLError } from 'graphql';
-import resolverWrapper from '../validation.js';
-import { databaseName, userName, collectionName, objectId, permissionDetail } from './common.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import {
+  databaseName,
+  userName,
+  collectionName,
+  objectId,
+  permissionDetail,
+} from './common.js';
 import { TCollectionRequest } from './collection.js';
 import { PermissionRecord } from '../../common/permission.js';
-import { AppContext } from '../../common/types.js';
 import { FullPermissionsData, TPermissionGroup } from '../types/permission.js';
 import { setPermissions } from '../../domain/use-case/permission.js';
 import {
@@ -14,7 +19,7 @@ import {
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { TOwnershipGroup } from '../types/ownership.js';
-import { readMetadata } from '../../domain/use-case/metadata.js'
+import { readMetadata } from '../../domain/use-case/metadata.js';
 import { getSchemaDefinition } from '../../domain/use-case/schema.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
@@ -133,13 +138,13 @@ extend type Mutation {
 `;
 
 // Query
-const permissionList = resolverWrapper(
+const permissionList = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TPermissionRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TPermissionRequest, ctx) => {
     const metadata = await withTransaction((session) =>
       readMetadata(
         args.databaseName,
@@ -166,26 +171,26 @@ const permissionList = resolverWrapper(
   }
 );
 
-const collectionSchema = resolverWrapper(
+const collectionSchema = publicWrapper(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest, _: AppContext) =>
+  async (_root: unknown, args: TCollectionRequest, _) =>
     withTransaction((session) =>
       getSchemaDefinition(args.databaseName, args.collectionName, session)
     )
 );
 
 // Mutation
-const permissionSet = resolverWrapper(
+const permissionSet = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
     documentPermission: permissionDetail.required(),
   }),
-  async (_root: unknown, args: TPermissionUpdateRequest, context: AppContext) => {
+  async (_root: unknown, args: TPermissionUpdateRequest, context) => {
     await withTransaction((session) =>
       setPermissions(
         args.databaseName,
@@ -223,7 +228,7 @@ const permissionSet = resolverWrapper(
   }
 );
 
-const permissionOwn = resolverWrapper(
+const permissionOwn = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
@@ -231,7 +236,7 @@ const permissionOwn = resolverWrapper(
     grouping: ownershipGroup,
     newOwner: userName,
   }),
-  async (_root: unknown, args: TPermissionOwnRequest, context: AppContext) => {
+  async (_root: unknown, args: TPermissionOwnRequest, context) => {
     if (args.docId) {
       await withTransaction((session) =>
         changeDocumentOwnership(
@@ -303,6 +308,6 @@ export const resolversPermission: TPermissionResolver = {
   },
   Mutation: {
     permissionSet,
-    permissionOwn
+    permissionOwn,
   },
 };

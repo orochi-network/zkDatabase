@@ -1,14 +1,13 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
-import resolverWrapper from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, pagination, publicKey, userName } from './common.js';
 import {
   changeDatabaseOwner,
   createDatabase,
   getDatabases,
 } from '../../domain/use-case/database.js';
-import { AppContext } from '../../common/types.js';
 import mapSearchToQueryOptions from '../mapper/search.js';
 import { Search } from '../types/search.js';
 import { Pagination } from '../types/pagination.js';
@@ -43,7 +42,7 @@ const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
 
 const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
   databaseName,
-  newOwner: userName
+  newOwner: userName,
 });
 
 export const typeDefsDatabase = `#graphql
@@ -106,17 +105,17 @@ const databaseSearch = Joi.object({
 });
 
 // Query
-const dbStats = resolverWrapper(
+const dbStats = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx: AppContext) =>
+  async (_root: unknown, args: TDatabaseRequest, _ctx) =>
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = resolverWrapper(
+const dbList = publicWrapper(
   databaseSearch,
-  async (_root: unknown, args: TDatabaseSearchRequest, _ctx: AppContext) =>
+  async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
     getDatabases(
       args.search
         ? {
@@ -130,11 +129,11 @@ const dbList = resolverWrapper(
     )
 );
 
-const dbSetting = resolverWrapper(
+const dbSetting = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx: AppContext) => {
+  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
     const databases = await DatabaseEngine.getInstance()
       .client.db()
       .admin()
@@ -148,9 +147,9 @@ const dbSetting = resolverWrapper(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const dbSetting = ModelDbSetting.getInstance(args.databaseName);
-
-    const setting = await dbSetting.getSetting();
+    const setting = await ModelDbSetting.getInstance(
+      args.databaseName
+    ).getSetting();
 
     if (setting) {
       return {
@@ -163,25 +162,21 @@ const dbSetting = resolverWrapper(
   }
 );
 // Mutation
-const dbCreate = resolverWrapper(
+const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
-  async (_root: unknown, args: TDatabaseCreateRequest, _ctx: AppContext) =>
+  async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
     createDatabase(
       args.databaseName,
       args.merkleHeight,
-      _ctx.userName,
+      ctx.userName,
       args.publicKey
     )
 );
 
-const dbChangeOwner = resolverWrapper(
+const dbChangeOwner = authorizeWrapper(
   DatabaseChangeOwnerRequest,
-  async (_root: unknown, args: TDatabaseChangeOwnerRequest, _ctx: AppContext) =>
-    changeDatabaseOwner(
-      args.databaseName,
-      _ctx.userName,
-      args.newOwner
-    )
+  async (_root: unknown, args: TDatabaseChangeOwnerRequest, ctx) =>
+    changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
 );
 
 type TDatabaseResolver = {
@@ -206,6 +201,6 @@ export const resolversDatabase: TDatabaseResolver = {
   },
   Mutation: {
     dbCreate,
-    dbChangeOwner
+    dbChangeOwner,
   },
 };

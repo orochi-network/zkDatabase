@@ -1,89 +1,28 @@
-import { GraphQLError } from 'graphql';
+import { JWTAuthentication } from '@orochi-network/framework';
+import { createHash } from 'crypto';
 import * as jose from 'jose';
-import logger from './logger.js';
 import { config } from './config.js';
-import ModelSession from '../model/global/session.js';
-import { APP_JWT_VALIDATION } from '../common/types.js';
 
-export interface IJWTAuthenticationPayload extends jose.JWTPayload {
+export const ACESS_TOKEN_EXPIRE_DAY =
+  config.NODE_ENV === 'development' ? 30 : 14;
+
+export const ACESS_TOKEN_EXPIRE_TIME = ACESS_TOKEN_EXPIRE_DAY * 24 * 60 * 60;
+
+export type TJWTAuthenticationPayload = jose.JWTPayload & {
   userName: string;
   email: string;
-  sessionId: string;
-}
+  sessionId?: string;
+};
 
-export class JWTAuthentication<T extends jose.JWTPayload> {
-  private secret: Uint8Array;
+export const JwtAuthorization =
+  JWTAuthentication.getInstance<TJWTAuthenticationPayload>(
+    config.JWT_SECRET,
+    'HS256',
+    `${ACESS_TOKEN_EXPIRE_DAY}d`
+  );
 
-  constructor(secret: string) {
-    this.secret = jose.base64url.decode(secret);
-  }
+export const calculateAccessTokenDigest = (accessToken: string) =>
+  createHash('sha256').update(accessToken).digest('hex');
 
-  public async sign(payload: T): Promise<string> {
-    if (config.NODE_ENV === 'development') {
-      // Development token won't be expired
-      return new jose.SignJWT(payload)
-        .setProtectedHeader({ alg: 'HS256' })
-        .setIssuedAt()
-        .setExpirationTime('30d')
-        .sign(this.secret);
-    }
-    return new jose.SignJWT(payload)
-      .setProtectedHeader({ alg: 'HS256' })
-      .setIssuedAt()
-      .setExpirationTime('14d')
-      .sign(this.secret);
-  }
-
-  public static async verify<T extends jose.JWTPayload>(
-    token: string
-  ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, 'protectedHeader'>> {
-    const decodedPayload = jose.decodeJwt(token) as IJWTAuthenticationPayload;
-    const { error } = APP_JWT_VALIDATION.validate(decodedPayload);
-    if (error) {
-      logger.error(error);
-      throw new GraphQLError('Token is invalid', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-    const session = await ModelSession.getInstance().findOne({
-      sessionId: decodedPayload.sessionId,
-    });
-    // Check if session is valid
-    if (!session || (session && session.userName !== decodedPayload.userName)) {
-      throw new GraphQLError('Username mismatch', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-    // Recover the session key and verify the token
-    const { payload, protectedHeader } = await jose.jwtVerify(
-      token,
-      jose.base64url.decode(session.sessionKey)
-    );
-    return { payload: payload as T, protectedHeader };
-  }
-
-  public static async verifyHeader<T extends jose.JWTPayload>(
-    header: string
-  ): Promise<T> {
-    // Skip for development
-    try {
-      // 7 is length of `Bearer + space`
-      const { payload } = await JWTAuthentication.verify(header.substring(7));
-      return (payload as T) || undefined;
-    } catch (e) {
-      logger.error(e);
-      throw new GraphQLError('User is not authenticated', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-  }
-}
+export const headerToAccessToken = (authorizationHeader: string) =>
+  authorizationHeader.substring(7);

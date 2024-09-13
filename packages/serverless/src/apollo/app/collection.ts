@@ -8,12 +8,11 @@ import {
   groupName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import resolverWrapper from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { PermissionsData } from '../types/permission.js';
 import { SchemaData } from '../types/schema.js';
 import { createCollection } from '../../domain/use-case/collection.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
-import { AppContext } from '../../common/types.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -92,7 +91,7 @@ extend type Mutation {
 `;
 
 // Query
-const collectionList = resolverWrapper(
+const collectionList = publicWrapper(
   Joi.object({
     databaseName,
   }),
@@ -100,7 +99,7 @@ const collectionList = resolverWrapper(
     ModelDatabase.getInstance(args.databaseName).listCollections()
 );
 
-const collectionExist = resolverWrapper(
+const collectionExist = publicWrapper(
   Joi.object({
     databaseName,
     collectionName,
@@ -112,9 +111,9 @@ const collectionExist = resolverWrapper(
 );
 
 // Mutation
-const collectionCreate = resolverWrapper(
+const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
-  async (_root: unknown, args: TCollectionCreateRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
     return withTransaction((session) =>
       createCollection(
         args.databaseName,

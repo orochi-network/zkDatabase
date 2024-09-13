@@ -1,9 +1,8 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
-import resolverWrapper from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
-import { AppContext } from '../../common/types.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import { TCollectionRequest } from './collection.js';
 
@@ -36,13 +35,13 @@ export type TProofRequest = TCollectionRequest & {
   docId: string;
 };
 
-const getProofStatus = resolverWrapper(
+const getProofStatus = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TProofRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TProofRequest, ctx) => {
     return withTransaction(async (session) => {
       const modelProof = ModelQueueTask.getInstance();
 
@@ -85,7 +84,7 @@ const getProofStatus = resolverWrapper(
   }
 );
 
-const getProof = resolverWrapper(
+const getProof = publicWrapper(
   Joi.object({
     databaseName,
   }),

@@ -1,10 +1,9 @@
-import { ClientSession } from 'mongodb';
 import Client from 'mina-signer';
+import { ClientSession } from 'mongodb';
 import ModelUser from '../../model/global/user.js';
-import buildMongoQuery from '../query/mongodb-filter.js';
 import { Pagination } from '../types/pagination.js';
-import { User } from '../types/user.js';
 import { Signature } from '../types/proof.js';
+import { User } from '../types/user.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -46,7 +45,8 @@ export async function signUpUser(
   userData: any,
   signature: Signature
 ) {
-  const client = new Client({ network: 'testnet' });
+  // @todo: We should move network config to ENV
+  const client = new Client({ network: 'mainnet' });
   if (client.verifyMessage(signature)) {
     const jsonData = JSON.parse(signature.data);
     if (jsonData.userName !== user.userName) {

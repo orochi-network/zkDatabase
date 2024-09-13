@@ -1,33 +1,37 @@
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { AppContext } from '../../common/types.js';
-import resolverWrapper from '../validation.js';
-import { listHistoryDocuments, readHistoryDocument } from '../../domain/use-case/document-history.js';
+import { authorizeWrapper } from '../validation.js';
+import {
+  listHistoryDocuments,
+  readHistoryDocument,
+} from '../../domain/use-case/document-history.js';
 import { collectionName, databaseName, pagination } from './common.js';
 import mapPagination from '../mapper/pagination.js';
 import { TCollectionRequest } from './collection.js';
 import { Pagination } from '../types/pagination.js';
 
 export type TDocumentHistoryGetRequest = TCollectionRequest & {
-  docId: string
-}
+  docId: string;
+};
 
 export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: Pagination;
 };
 
-export const DOCUMENT_HISTORY_GET_REQUEST = Joi.object<TDocumentHistoryGetRequest>({
-  databaseName,
-  collectionName,
-  docId: Joi.string(),
-});
+export const DOCUMENT_HISTORY_GET_REQUEST =
+  Joi.object<TDocumentHistoryGetRequest>({
+    databaseName,
+    collectionName,
+    docId: Joi.string(),
+  });
 
-export const DOCUMENT_HISTORY_LIST_REQUEST = Joi.object<TDocumentHistoryListRequest>({
-  databaseName,
-  collectionName,
-  pagination,
-});
+export const DOCUMENT_HISTORY_LIST_REQUEST =
+  Joi.object<TDocumentHistoryListRequest>({
+    databaseName,
+    collectionName,
+    pagination,
+  });
 
 export const typeDefsDocumentHistory = `#graphql
 scalar JSON
@@ -43,9 +47,9 @@ extend type Query {
 }
 `;
 
-const historyDocumentGet = resolverWrapper(
+const historyDocumentGet = authorizeWrapper(
   DOCUMENT_HISTORY_GET_REQUEST,
-  async (_root: unknown, args: TDocumentHistoryGetRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentHistoryGetRequest, ctx) => {
     const document = await withTransaction((session) =>
       readHistoryDocument(
         args.databaseName,
@@ -69,9 +73,9 @@ const historyDocumentGet = resolverWrapper(
   }
 );
 
-const documentsHistoryList = resolverWrapper(
+const documentsHistoryList = authorizeWrapper(
   Joi.object().optional(),
-  async (_root: unknown, args: TDocumentHistoryListRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentHistoryListRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await listHistoryDocuments(
         args.databaseName,
@@ -98,6 +102,6 @@ export const resolversDocumentHistory: TDocumentHistoryResolver = {
   JSON: GraphQLJSON,
   Query: {
     historyDocumentGet,
-    documentsHistoryList
+    documentsHistoryList,
   },
 };

@@ -4,8 +4,7 @@ import { gql, request } from 'graphql-request';
 import { config } from '../helper/config.js';
 import ModelUser from '../model/global/user.js';
 import logger from '../helper/logger.js';
-import ModelSession from '../model/global/session.js';
-import { IJWTAuthenticationPayload, JWTAuthentication } from '../helper/jwt.js';
+import { JwtAuthorization } from '../helper/jwt.js';
 
 const mutationSignUp = gql`
   mutation UserSignUp($proof: SignatureProof!, $signUp: SignUp!) {
@@ -52,15 +51,12 @@ const before = async () => {
 
 (async () => {
   await before();
-  const client = new Client({ network: 'testnet' });
+  const client = new Client({ network: 'mainnet' });
   const modelUser = new ModelUser();
 
   // Clean up before test
   const userInfo = { email: 'user@example.com', userName: 'user' };
   await modelUser.deleteOne({ email: userInfo.email });
-  await new ModelSession().collection.deleteMany({
-    userName: userInfo.userName,
-  });
 
   // Generate keys
   // client.genKeys();
@@ -98,11 +94,10 @@ const before = async () => {
   logger.debug(result);
 
   const {
-    userSignIn: { sessionKey, sessionId },
+    userSignIn: { sessionId },
   } = <any>result;
 
-  const jwt = new JWTAuthentication<IJWTAuthenticationPayload>(sessionKey);
-  const accessToken = await jwt.sign({
+  const accessToken = await JwtAuthorization.sign({
     sessionId,
     userName: userInfo.userName,
     email: userInfo.email,

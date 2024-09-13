@@ -1,16 +1,27 @@
-import express from 'express';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import fileupload from 'express-fileupload';
-import http from 'http';
-import cors from 'cors';
 import { DatabaseEngine } from '@zkdb/storage';
-import logger from './helper/logger.js';
-import { TypedefsApp, ResolversApp } from './apollo/index.js';
-import { APP_CONTEXT_NOBODY, AppContext } from './common/types.js';
+import RedisStore from 'connect-redis';
+import cors from 'cors';
+import { randomUUID } from 'crypto';
+import express from 'express';
+import fileupload from 'express-fileupload';
+import session from 'express-session';
+import helmet from 'helmet';
+import http from 'http';
+import { ResolversApp, TypedefsApp } from './apollo/index.js';
+import { nobodyContext, TApplicationContext } from './common/types.js';
 import { config } from './helper/config.js';
-import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt.js';
+import {
+  calculateAccessTokenDigest,
+  headerToAccessToken,
+  JwtAuthorization,
+} from './helper/jwt.js';
+import logger from './helper/logger.js';
+import RedisInstance from './helper/redis.js';
+
+const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
 (async () => {
   const app = express();
@@ -19,10 +30,14 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt.js';
     await dbEngine.connect();
   }
 
+  RedisInstance.event.on('error', logger.error);
+
+  await RedisInstance.connect();
+
   app.use(express.json()).use(fileupload());
 
   const httpServer = http.createServer(app);
-  const server = new ApolloServer<Partial<AppContext>>({
+  const server = new ApolloServer<Partial<TApplicationContext>>({
     typeDefs: TypedefsApp,
     resolvers: ResolversApp,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
@@ -30,7 +45,50 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt.js';
     logger,
   });
 
+  app.use(
+    helmet({
+      // enable playground apollo when environment is local
+      contentSecurityPolicy: config.NODE_ENV !== 'local',
+      // set the “X-Frame-Options” header to prevent clickjacking attacks
+      frameguard: { action: 'deny' },
+      // set the “X-XSS-Protection” header to prevent cross-site scripting (XSS) attacks
+      xXssProtection: true,
+      hsts: {
+        // 30 days
+        maxAge: 2592000,
+        // removing the "includeSubDomains" option
+        includeSubDomains: false,
+      },
+      // not loading the noSniff() middleware
+      noSniff: false,
+    })
+  );
+
   await server.start();
+
+  const redisStore = new RedisStore({
+    client: RedisInstance.redis,
+    prefix: 'zkdb-express-session-',
+    // Sync expiration time in redis-store equal to the `expires` time in express-session cookie object
+    ttl: EXPRESS_SESSION_EXPIRE_TIME,
+  });
+
+  app.use(
+    session({
+      genid: () => randomUUID(),
+      store: redisStore,
+      rolling: false, // force session not to reset expire time base on last call
+      resave: false, // required: force lightweight session keep alive (touch)
+      saveUninitialized: false, // recommended: only save session when data exists
+      secret: config.EXPRESS_SESSION_SECRET,
+      cookie: {
+        httpOnly: true,
+        path: '/',
+        sameSite: 'strict',
+        maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
+      },
+    })
+  );
 
   app.use(
     '/graphql',
@@ -38,14 +96,32 @@ import { IJWTAuthenticationPayload, JWTAuthentication } from './helper/jwt.js';
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        if (req.headers.authorization && req.headers.authorization !== '') {
-          const { sessionId, userName, email } =
-            await JWTAuthentication.verifyHeader<IJWTAuthenticationPayload>(
-              req.headers.authorization
-            );
-          return { sessionId, userName, email };
+        if (
+          typeof req.headers.authorization === 'string' &&
+          req.headers.authorization.startsWith('Bearer ')
+        ) {
+          const accessToken = headerToAccessToken(req.headers.authorization);
+          const accessTokenDigest = calculateAccessTokenDigest(accessToken);
+          const {
+            payload: { userName, email },
+          } = await JwtAuthorization.verify(accessToken);
+          const serverRawSideAcessToken =
+            await RedisInstance.accessTokenDigest(accessTokenDigest).get();
+          const serverSideAcessToken =
+            typeof serverRawSideAcessToken === 'string'
+              ? JSON.parse(serverRawSideAcessToken)
+              : serverRawSideAcessToken;
+          if (serverSideAcessToken) {
+            if (
+              userName === serverSideAcessToken.userName &&
+              serverSideAcessToken.email === email
+            ) {
+              return { sessionId: req.sessionID, userName, email };
+            }
+          }
         }
-        return APP_CONTEXT_NOBODY;
+
+        return nobodyContext(req);
       },
     })
   );

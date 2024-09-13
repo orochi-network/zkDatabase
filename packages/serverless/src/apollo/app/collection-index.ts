@@ -1,8 +1,13 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import { createIndex, doesIndexExist, dropIndex, listIndexes } from '../../domain/use-case/collection.js';
-import { resolverWrapper } from '../validation.js';
+import {
+  createIndex,
+  doesIndexExist,
+  dropIndex,
+  listIndexes,
+} from '../../domain/use-case/collection.js';
+import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
 import {
   collectionName,
@@ -10,7 +15,6 @@ import {
   indexName,
   indexField,
 } from './common.js';
-import { AppContext } from '../../common/types.js';
 
 // Index request
 export type TIndexNameRequest = {
@@ -70,17 +74,17 @@ export const typeDefsCollectionIndex = `#graphql
 `;
 
 // Query
-const indexList = resolverWrapper(
+const indexList = authorizeWrapper(
   IndexListRequest,
-  async (_root: unknown, args: TIndexListRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TIndexListRequest, ctx) =>
     withTransaction((session) =>
       listIndexes(args.databaseName, ctx.userName, args.collectionName, session)
     )
 );
 
-const indexExist = resolverWrapper(
+const indexExist = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
     withTransaction((session) =>
       doesIndexExist(
         args.databaseName,
@@ -93,9 +97,9 @@ const indexExist = resolverWrapper(
 );
 
 // Mutation
-const indexCreate = resolverWrapper(
+const indexCreate = authorizeWrapper(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TIndexCreateRequest, ctx) =>
     withTransaction((session) =>
       createIndex(
         args.databaseName,
@@ -107,9 +111,9 @@ const indexCreate = resolverWrapper(
     )
 );
 
-const indexDrop = resolverWrapper(
+const indexDrop = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx: AppContext) =>
+  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
     withTransaction((session) =>
       dropIndex(
         args.databaseName,

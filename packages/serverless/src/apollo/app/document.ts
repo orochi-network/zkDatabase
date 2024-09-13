@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import resolverWrapper from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import { DocumentRecord } from '../../model/abstract/document.js';
 import {
@@ -19,11 +19,11 @@ import {
   updateDocument,
   findDocumentsWithMetadata,
 } from '../../domain/use-case/document.js';
-import { AppContext } from '../../common/types.js';
 import { PermissionsData } from '../types/permission.js';
 import { TDocumentFields } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
 import mapPagination from '../mapper/pagination.js';
+import { gql } from '../../helper/common.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
@@ -71,74 +71,84 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   documentRecord: Joi.required(),
 });
 
-export const typeDefsDocument = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsDocument = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-type MerkleWitness {
-  isLeft: Boolean!
-  sibling: String!
-}
+  type MerkleWitness {
+    isLeft: Boolean!
+    sibling: String!
+  }
 
-input PermissionRecordInput {
-  system: Boolean
-  create: Boolean
-  read: Boolean
-  write: Boolean
-  delete: Boolean
-}
+  input PermissionRecordInput {
+    system: Boolean
+    create: Boolean
+    read: Boolean
+    write: Boolean
+    delete: Boolean
+  }
 
-input PermissionDetailInput {
-  permissionOwner: PermissionRecordInput
-  permissionGroup: PermissionRecordInput
-  permissionOther: PermissionRecordInput
-}
-  
-type DocumentsWithMetadataOutput {
-  document: DocumentOutput!
-  metadata: Metadata!,
-  proofStatus: String
-}
+  input PermissionDetailInput {
+    permissionOwner: PermissionRecordInput
+    permissionGroup: PermissionRecordInput
+    permissionOther: PermissionRecordInput
+  }
 
-extend type Query {
-  documentFind(databaseName: String!, collectionName: String!, documentQuery: JSON!): DocumentOutput
-  documentsFind(databaseName: String!, collectionName: String!, documentQuery: JSON!, pagination: PaginationInput): [DocumentOutput]!
-  documentsWithMetadataFind(
-    databaseName: String!, 
-    collectionName: String!, 
-    query: JSON!, 
-    pagination: PaginationInput
-  ): [DocumentsWithMetadataOutput]!
-}
+  type DocumentsWithMetadataOutput {
+    document: DocumentOutput!
+    metadata: Metadata!
+    proofStatus: String
+  }
 
-extend type Mutation {
-  documentCreate(
-    databaseName: String!, 
-    collectionName: String!, 
-    documentRecord: [DocumentRecordInput!]!, 
-    documentPermission: PermissionDetailInput
-  ): [MerkleWitness!]!
+  extend type Query {
+    documentFind(
+      databaseName: String!
+      collectionName: String!
+      documentQuery: JSON!
+    ): DocumentOutput
+    documentsFind(
+      databaseName: String!
+      collectionName: String!
+      documentQuery: JSON!
+      pagination: PaginationInput
+    ): [DocumentOutput]!
+    documentsWithMetadataFind(
+      databaseName: String!
+      collectionName: String!
+      query: JSON!
+      pagination: PaginationInput
+    ): [DocumentsWithMetadataOutput]!
+  }
 
-  documentUpdate(
-    databaseName: String!, 
-    collectionName: String!, 
-    documentQuery: JSON!,
-    documentRecord: [DocumentRecordInput!]!
-  ): [MerkleWitness!]!
+  extend type Mutation {
+    documentCreate(
+      databaseName: String!
+      collectionName: String!
+      documentRecord: [DocumentRecordInput!]!
+      documentPermission: PermissionDetailInput
+    ): [MerkleWitness!]!
 
-  documentDrop(
-    databaseName: String!, 
-    collectionName: String!, 
-    documentQuery: JSON!
-  ): [MerkleWitness!]!
-}
+    documentUpdate(
+      databaseName: String!
+      collectionName: String!
+      documentQuery: JSON!
+      documentRecord: [DocumentRecordInput!]!
+    ): [MerkleWitness!]!
+
+    documentDrop(
+      databaseName: String!
+      collectionName: String!
+      documentQuery: JSON!
+    ): [MerkleWitness!]!
+  }
 `;
 
 // Query
-const documentFind = resolverWrapper(
+const documentFind = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     const document = await withTransaction((session) =>
       readDocument(
         args.databaseName,
@@ -161,14 +171,14 @@ const documentFind = resolverWrapper(
   }
 );
 
-const documentsFind = resolverWrapper(
+const documentsFind = authorizeWrapper(
   DOCUMENTS_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentsFindRequest, _ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await searchDocuments(
         args.databaseName,
         args.collectionName,
-        _ctx.userName,
+        ctx.userName,
         args.documentQuery,
         mapPagination(args.pagination),
         session
@@ -179,14 +189,14 @@ const documentsFind = resolverWrapper(
   }
 );
 
-const documentsWithMetadataFind = resolverWrapper(
+const documentsWithMetadataFind = authorizeWrapper(
   Joi.object().optional(),
-  async (_root: unknown, args: TDocumentsFindRequest, _ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await findDocumentsWithMetadata(
         args.databaseName,
         args.collectionName,
-        _ctx.userName,
+        ctx.userName,
         args.documentQuery,
         mapPagination(args.pagination),
         session
@@ -198,9 +208,9 @@ const documentsWithMetadataFind = resolverWrapper(
 );
 
 // Mutation
-const documentCreate = resolverWrapper(
+const documentCreate = authorizeWrapper(
   DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentCreateRequest, ctx) => {
     return withTransaction((session) =>
       createDocument(
         args.databaseName,
@@ -214,9 +224,9 @@ const documentCreate = resolverWrapper(
   }
 );
 
-const documentUpdate = resolverWrapper(
+const documentUpdate = authorizeWrapper(
   DOCUMENT_UPDATE_REQUEST,
-  async (_root: unknown, args: TDocumentUpdateRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentUpdateRequest, ctx) => {
     for (let i = 0; i < args.documentRecord.length; i += 1) {
       const { error } = documentField.validate(args.documentRecord[i]);
       if (error)
@@ -238,9 +248,9 @@ const documentUpdate = resolverWrapper(
   }
 );
 
-const documentDrop = resolverWrapper(
+const documentDrop = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest, ctx: AppContext) => {
+  async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     return withTransaction((session) =>
       deleteDocument(
         args.databaseName,

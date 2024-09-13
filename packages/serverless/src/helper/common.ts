@@ -36,3 +36,5 @@ export function objectToLookupPattern(obj: {
   }
   return result;
 }
+
+export const gql = (...args: any[]): string => args.join('\n');

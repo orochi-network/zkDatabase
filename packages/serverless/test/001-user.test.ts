@@ -1,5 +1,5 @@
 import { DatabaseEngine } from '@zkdb/storage';
-import { config } from '../src/helper/config';
+import { config } from '../src/helper/config.js';
 
 beforeAll(async () => {
   const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
@@ -8,7 +8,7 @@ beforeAll(async () => {
   }
 });
 
-test('test', async () => {
+test('User sign in', async () => {
   expect(1).toBe(1);
 });
 

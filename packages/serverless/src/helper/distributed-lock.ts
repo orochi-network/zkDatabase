@@ -1,16 +1,16 @@
-import { RedisClient } from '@orochi-network/framework';
+import { RedisClient, TRedisCache } from '@orochi-network/framework';
 import logger from './logger.js';
 import { RedisInstance } from './redis.js';
 
-const LOCK_KEY = 'my_lock_key';
+export const LOCK_KEY = 'my-lock-key';
 const LOCK_EXPIRATION = 300; // in seconds
 
 export default class DistributedLock {
   private static instance: any;
 
-  private redis: RedisClient;
+  private redis: RedisClient & TRedisCache<'dbLockKey'>;
 
-  private constructor(redis: RedisClient) {
+  private constructor(redis: RedisClient & TRedisCache<'dbLockKey'>) {
     this.redis = redis;
   }
 
@@ -23,7 +23,7 @@ export default class DistributedLock {
 
   public async acquireLock(): Promise<boolean> {
     try {
-      const result = await this.redis.set(LOCK_KEY, 'locked', {
+      const result = await this.redis.dbLockKey().set('locked', {
         EX: LOCK_EXPIRATION,
         NX: true,
       });
@@ -36,7 +36,7 @@ export default class DistributedLock {
 
   public async releaseLock(): Promise<void> {
     try {
-      await this.redis.delete(LOCK_KEY);
+      await this.redis.dbLockKey().delete();
     } catch (error) {
       logger.error('Error releasing lock:', error);
     }
