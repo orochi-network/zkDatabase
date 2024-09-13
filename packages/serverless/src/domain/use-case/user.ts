@@ -46,7 +46,7 @@ export async function signUpUser(
   signature: Signature
 ) {
   // @todo: We should move network config to ENV
-  const client = new Client({ network: 'testnet' });
+  const client = new Client({ network: 'mainnet' });
   if (client.verifyMessage(signature)) {
     const jsonData = JSON.parse(signature.data);
     if (jsonData.userName !== user.userName) {

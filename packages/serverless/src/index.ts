@@ -13,23 +13,11 @@ import http from 'http';
 import { ResolversApp, TypedefsApp } from './apollo/index.js';
 import { nobodyContext, TApplicationContext } from './common/types.js';
 import { config } from './helper/config.js';
-import { JwtAuthorization } from './helper/jwt.js';
+import { headerToAccessToken, JwtAuthorization } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
-
-const generateSession = (req: express.Request) => {
-  return new Promise((resolve, reject) => {
-    req.session.regenerate((err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(err);
-      }
-    });
-  });
-};
 
 (async () => {
   const app = express();
@@ -93,7 +81,7 @@ const generateSession = (req: express.Request) => {
         httpOnly: true,
         path: '/',
         sameSite: 'strict',
-        maxAge: Date.now() + EXPRESS_SESSION_EXPIRE_TIME * 1000,
+        maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
       },
     })
   );
@@ -104,11 +92,6 @@ const generateSession = (req: express.Request) => {
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
-        logger.info(req.sessionID);
-        if ((await RedisInstance.expressSession(req.sessionID).get()) == null) {
-          await generateSession(req);
-        }
-
         if (
           typeof req.headers.authorization === 'string' &&
           req.headers.authorization.startsWith('Bearer ')
@@ -117,7 +100,7 @@ const generateSession = (req: express.Request) => {
             payload: { userName, email },
           } = await JwtAuthorization.verify(
             // Remove "Bearer "
-            req.headers.authorization.substring(7)
+            headerToAccessToken(req.headers.authorization)
           );
           return { sessionId: req.sessionID, userName, email };
         }

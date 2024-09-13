@@ -27,7 +27,7 @@
     "build": "tsc -p tsconfig.json",
     "buildw": "tsc -p tsconfig.json --watch",
     "format": "prettier --write --ignore-unknown **/*",
-    "dev": "npx nodemon -e ts -w ./src -x \"npx ts-node ./src/index.ts\"",
+    "dev": "tsx --watch ./src/index.ts",
     "test": "node ../../node_modules/jest/bin/jest.js --runInBand",
     "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "lint": "eslint ./src/**/*.ts --fix && prettier . --write",
@@ -65,6 +65,7 @@
     "jest": "29.7.0",
     "prettier": "3.3.3",
     "ts-jest": "^29.1.2",
+    "tsx": "^4.19.1",
     "typedoc": "^0.25.7",
     "typescript": "^5.3.3"
   },

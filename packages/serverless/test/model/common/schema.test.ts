@@ -11,7 +11,7 @@ import {
   Field,
   state,
 } from 'o1js';
-import { Schema } from '../../../src/domain/common/schema';
+import { Schema } from '../../../src/domain/common/schema.js';
 
 class User extends Schema.create({
   name: Field,

@@ -8,7 +8,7 @@ beforeAll(async () => {
   }
 });
 
-test('testdsa', async () => {
+test('User sign in', async () => {
   expect(1).toBe(1);
 });
 

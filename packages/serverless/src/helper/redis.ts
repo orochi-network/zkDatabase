@@ -2,7 +2,7 @@ import { RedisClient } from '@orochi-network/framework';
 import { config } from './config.js';
 
 export const RedisInstance = RedisClient.getInstance<
-  'dbLockKey' | 'ecdsaChallenge' | 'expressSession'
+  'dbLockKey' | 'expressSession' | 'accessTokenDigest'
 >('zkdb-', {
   url: config.REDIS_URL,
 });

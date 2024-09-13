@@ -1,4 +1,5 @@
 import { withTransaction } from '@zkdb/storage';
+import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
@@ -8,12 +9,26 @@ import {
   signUpUser,
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
-import ModelSession from '../../model/global/session.js';
+import {
+  ACESS_TOKEN_EXPIRE_TIME,
+  calculateAccessTokenDigest,
+  headerToAccessToken,
+  JwtAuthorization,
+} from '../../helper/jwt.js';
+import RedisInstance from '../../helper/redis.js';
+import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
 import mapPagination from '../mapper/pagination.js';
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { pagination } from './common.js';
+
+// We extend express session to define session expiration time
+declare module 'express-session' {
+  interface SessionData {
+    ecdsaChallenge?: string;
+  }
+}
 
 const timestamp = Joi.number()
   .custom((value, helper) => {
@@ -129,8 +144,7 @@ export const typeDefsUser = gql`
     success: Boolean
     error: String
     userName: String
-    sessionKey: String
-    sessionId: String
+    accessToken: String
     userData: JSON
     publicKey: String
   }
@@ -148,41 +162,30 @@ export const typeDefsUser = gql`
 
   extend type Mutation {
     userSignIn(proof: ProofInput!): SignInResponse
+    userGetEcdsaChallenge: String!
     userSignOut: Boolean
     userSignUp(signUp: SignUp!, proof: ProofInput!): SignUpData
   }
 `;
 
 // Query
-const userSignInData = async (
-  _root: unknown,
-  _args: any,
-  context: TPublicContext
-) => {
-  const session = await ModelSession.getInstance().findOne({
-    sessionId: context.sessionId,
-  });
-  if (session) {
+const userSignInData = authorizeWrapper(
+  Joi.object().unknown(),
+  async (_root: unknown, _args: any, context) => {
     const user = await new ModelUser().findOne({
-      userName: session.userName,
+      userName: context.userName,
     });
     if (user) {
       return {
         success: true,
         userName: user.userName,
-        sessionKey: session.sessionKey,
-        sessionId: session.sessionId,
         userData: user.userData,
         publicKey: user.publicKey,
       };
     }
     throw new Error('User not found');
   }
-  return {
-    success: false,
-    error: 'Session not found',
-  };
-};
+);
 
 const findUser = publicWrapper(
   USER_FIND_REQUEST,
@@ -194,36 +197,50 @@ const findUser = publicWrapper(
 );
 
 // Mutation
+const userGetEcdsaChallenge = async (
+  _root: unknown,
+  _args: any,
+  context: TPublicContext
+) => {
+  const { req } = context;
+  // Save the request
+
+  req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
+  req.session.save();
+  return req.session.ecdsaChallenge;
+};
+
 const userSignIn = publicWrapper(
   SignInRequest,
-  async (_root: unknown, args: TSignInRequest) => {
-    // We only support testnet for now to prevent the signature from being used on mainnet
-    const client = new Client({ network: 'testnet' });
+  async (_root: unknown, args: TSignInRequest, context) => {
+    if (typeof context.req.session.ecdsaChallenge !== 'string') {
+      throw new Error('Invalid ECDSA challenge');
+    }
+    const client = new Client({ network: 'mainnet' });
+    if (args.proof.data !== context.req.session.ecdsaChallenge) {
+      throw new Error('Invalid challenge message');
+    }
     if (client.verifyMessage(args.proof)) {
       const modelUser = new ModelUser();
       const user = await modelUser.findOne({
         publicKey: args.proof.publicKey,
       });
-      const jsonData = JSON.parse(args.proof.data);
+
       if (user) {
-        if (jsonData.email !== user.email) {
-          throw new Error('Email does not match');
-        }
-        if (timestamp.validate(jsonData.timestamp).error) {
-          throw new Error('Timestamp is invalid');
-        }
-        const session = await ModelSession.getInstance().create(user.userName);
-        if (session && session.userName === user.userName) {
-          return {
-            success: true,
-            userName: user.userName,
-            sessionKey: session.sessionKey,
-            sessionId: session.sessionId,
-            userData: user.userData,
-            publicKey: user.publicKey,
-          };
-        }
-        throw new Error('Cannot create session');
+        const { userName, email } = user;
+        const accessToken = await JwtAuthorization.sign({ userName, email });
+        const accessTokenDigest = calculateAccessTokenDigest(accessToken);
+        await RedisInstance.accessTokenDigest(accessTokenDigest).set(
+          JSON.stringify({ userName, email }),
+          { EX: ACESS_TOKEN_EXPIRE_TIME }
+        );
+        return {
+          success: true,
+          userName: user.userName,
+          accessToken,
+          userData: user.userData,
+          publicKey: user.publicKey,
+        };
       }
       throw new Error('User not found');
     }
@@ -235,8 +252,15 @@ const userSignIn = publicWrapper(
 const userSignOut = authorizeWrapper(
   Joi.object().unknown(),
   async (_root: unknown, _args: any, context) => {
-    return (await ModelSession.getInstance().delete(context.sessionId))
-      .acknowledged;
+    const { req } = context;
+    if (req.headers.authorization) {
+      const accessTokenDigest = calculateAccessTokenDigest(
+        headerToAccessToken(req.headers.authorization)
+      );
+      await RedisInstance.accessTokenDigest(accessTokenDigest).delete();
+    }
+    await sessionDestroy(req);
+    return true;
   }
 );
 
@@ -262,6 +286,7 @@ type TUserResolver = {
     findUser: typeof findUser;
   };
   Mutation: {
+    userGetEcdsaChallenge: any;
     userSignIn: typeof userSignIn;
     userSignOut: typeof userSignOut;
     userSignUp: typeof userSignOut;
@@ -275,6 +300,7 @@ export const resolversUser: TUserResolver = {
     findUser,
   },
   Mutation: {
+    userGetEcdsaChallenge,
     userSignIn,
     userSignOut,
     userSignUp,
