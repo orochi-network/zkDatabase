@@ -31,7 +31,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install dependencies & build root
-        run: yarn install && yarn build
+        run: |
+          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
+          yarn install
+          yarn build
       - name: Test kubo
         run: cd ./packages/kubo && yarn run test
       - name: Test zkdb
@@ -43,8 +46,6 @@ jobs:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
         run: |
           PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract")
-
-          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true \n @orochi-network:registry=https://registry.npmjs.org" > ~/.npmrc
           packages_dir="packages"
 
           # Loop through all packages
