@@ -2,3 +2,5 @@
 .git
 .github
 .env
+.npmrc
+npm-token
