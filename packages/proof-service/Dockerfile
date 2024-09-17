@@ -1,5 +1,4 @@
-# Stage 1: Builder
-FROM orochinetwork/node:20-iron AS builder
+# Use our customized image based on Node.js 20 slim image as a baseFROM orochinetwork/node:20-iron AS builder
 
 # Create a non-root user and group early in the Dockerfile
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
@@ -28,7 +27,7 @@ RUN yarn workspace @zkdb/smart-contract build && \
     yarn workspace @zkdb/storage build && \
     yarn workspace @zkdb/proof-service build
 
-# Stage 2: Runner
+# Use our customized image based on Node.js 20 slim image as a runner
 FROM orochinetwork/node:20-alpine AS runner
 
 # Create a non-root user and group in the runner stage
