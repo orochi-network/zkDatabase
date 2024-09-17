@@ -113,3 +113,6 @@ circuit-cache/
 
 ./downloads
 ./ftp-root
+
+#private
+npm-token
