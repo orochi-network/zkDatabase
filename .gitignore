@@ -116,3 +116,4 @@ circuit-cache/
 
 #private
 npm-token
+.npmrc
