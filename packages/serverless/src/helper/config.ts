@@ -11,7 +11,7 @@ export type TApplicationConfig = {
   JWT_SECRET: string;
   SERVICE_HOST: string;
   SERVICE_PORT: number;
-  SERVICE_ORIGIN: string[];
+  SERVICE_ORIGIN: Map<string, boolean>;
   OROCHI_LOG: TLogLevel;
 };
 
@@ -30,8 +30,8 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     result.SERVICE_HOST = hostname;
     result.SERVICE_PORT = parseInt(port, 10);
     if (typeof raw.SERVICE_ALLOW_ORIGIN === 'string') {
-      result.SERVICE_ORIGIN = raw.SERVICE_ALLOW_ORIGIN.split(';').map((e) =>
-        e.trim()
+      result.SERVICE_ORIGIN = new Map(
+        raw.SERVICE_ALLOW_ORIGIN.split(';').map((e) => [e.trim(), true])
       );
     }
     return result;

@@ -23,19 +23,6 @@ import RedisInstance from './helper/redis.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
-const corsOptionsDelegate = (req: cors.CorsRequest, callback: Function) => {
-  let corsOptions;
-  if (
-    req.headers.origin &&
-    config.SERVICE_ORIGIN.indexOf(req.headers.origin) !== -1
-  ) {
-    corsOptions = { origin: true };
-  } else {
-    corsOptions = { origin: false };
-  }
-  callback(null, corsOptions);
-};
-
 (async () => {
   const app = express();
   const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
@@ -106,7 +93,14 @@ const corsOptionsDelegate = (req: cors.CorsRequest, callback: Function) => {
 
   app.use(
     '/graphql',
-    cors<cors.CorsRequest>(corsOptionsDelegate),
+    cors<cors.CorsRequest>({
+      origin: (reqOrigin, callback) => {
+        if (reqOrigin && config.SERVICE_ORIGIN.get(reqOrigin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not whitelisted origin'));
+      },
+    }),
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
