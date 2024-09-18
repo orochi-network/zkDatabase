@@ -11,7 +11,6 @@ env:
   DOCKER_REPO_SERVERLESS: orochinetwork/zkdb-serverless
   NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
-
 jobs:
   detect-changes:
     name: Detect Changes
@@ -22,31 +21,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Fetch enough commit history
 
       - name: Detect changed packages
         id: changed
         run: |
           # Detect all changed packages
-          CHANGED_PACKAGES=$(git diff --name-only HEAD~5 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
+          CHANGED_PACKAGES=$(git diff --name-only HEAD~1 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
           echo "Detected changes: $CHANGED_PACKAGES"
           
-          # Remove any carriage returns or special characters and split on new lines
+          # Clean up carriage returns or special characters and split on new lines
           CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
           echo "Cleaned packages: $CLEANED_PACKAGES"
 
-          # Split package names and store them
-          echo "::set-output name=changed_packages::$CLEANED_PACKAGES"
+          # Save cleaned package names to environment
+          echo "changed_packages=$CLEANED_PACKAGES" >> $GITHUB_ENV
 
       - name: Filter packages using case statement and map to numbers
         id: filter
         run: |
-          CHANGED_PACKAGES="${{ steps.changed.outputs.changed_packages }}"
+          CHANGED_PACKAGES="${{ env.changed_packages }}"
           FILTERED_PACKAGES=""
 
           # Debugging - print out each package to see what's being processed
           echo "Changed packages: $CHANGED_PACKAGES"
 
-          # Split the CHANGED_PACKAGES string into an array using spaces as delimiters
+          # Split the CHANGED_PACKAGES string into an array
           IFS=' ' read -r -a PACKAGE_ARRAY <<< "$CHANGED_PACKAGES"
 
           # Declare an associative array to map package names to numbers
@@ -79,13 +80,12 @@ jobs:
           # Trim any leading/trailing spaces in FILTERED_PACKAGES
           FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
 
-          # Output the mapped numbers or exit if none of the required packages changed
+          # Output the mapped numbers using Environment Files and set job output
           if [ -z "$FILTERED_PACKAGES" ]; then
             echo "No required packages changed."
             exit 0
           else
-            echo "Filtered packages (numbers): $FILTERED_PACKAGES"
-            echo "::set-output name=filtered_packages::$FILTERED_PACKAGES"
+            echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
           fi
 
   build:
@@ -104,12 +104,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      # Debug stage before each build
-      - name: Debug Broker Service Env Vars
-        run: |
-          echo "Filtered Packages from detect-changes: ${{ needs.detect-changes.outputs.filtered_packages }}"
 
-      # Build and Push Broker Service (mapped to 2)
       - name: Build & Push Broker Service Image
         run: |
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
@@ -127,7 +122,6 @@ jobs:
             echo "Broker Service not in changed packages."
           fi
 
-      # Build and Push Proof Service (mapped to 3)
       - name: Build & Push Proof Service Image
         run: |
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
@@ -145,7 +139,6 @@ jobs:
             echo "Proof Service not in changed packages."
           fi
 
-      # Build and Push Serverless Service (mapped to 1)
       - name: Build & Push Serverless Service Image
         run: |
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
