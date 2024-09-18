@@ -28,7 +28,7 @@ jobs:
         id: changed
         run: |
           # Detect all changed packages
-          CHANGED_PACKAGES=$(git diff --name-only HEAD~5 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
+          CHANGED_PACKAGES=$(git diff --name-only HEAD~7 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
           echo "Detected changes: $CHANGED_PACKAGES"
           
           # Clean up carriage returns or special characters and split on new lines
