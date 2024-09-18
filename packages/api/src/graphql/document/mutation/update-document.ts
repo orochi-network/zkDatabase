@@ -1,9 +1,9 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import { MerkleWitness } from "../../types/merkle-tree.js";
 import client from "../../client.js";
 import { DocumentEncoded } from "../../types/document.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const UPDATE_DOCUMENT = gql`
   mutation DocumentUpdate(
@@ -29,30 +29,33 @@ export const updateDocument = async (
   collectionName: string,
   documentQuery: JSON,
   documentRecord: DocumentEncoded
-): Promise<NetworkResult<MerkleWitness>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.mutate({
+): Promise<GraphQLResult<MerkleWitness>> => {
+  try {
+    const {
+      data: { documentUpdate },
+      errors,
+    } = await client.mutate({
       mutation: UPDATE_DOCUMENT,
       variables: {
         databaseName,
         collectionName,
         documentQuery,
         documentRecord,
-      }
+      },
     });
 
-    const response = data?.documentUpdate;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response as any,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<MerkleWitness>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    return GraphQLResult.wrap<MerkleWitness>(documentUpdate);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<MerkleWitness>(error);
+    } else {
+      return GraphQLResult.wrap<MerkleWitness>(Error("Unknown Error"));
+    }
+  }
 };

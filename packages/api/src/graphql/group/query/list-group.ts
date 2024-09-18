@@ -1,8 +1,8 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { GroupInfo } from '../../types/group.js';
+import { GroupInfo } from "../../types/group.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const LIST_GROUPS = gql`
   query GroupListAll($databaseName: String!) {
@@ -12,25 +12,25 @@ const LIST_GROUPS = gql`
 
 export const listGroups = async (
   databaseName: string
-): Promise<NetworkResult<GroupInfo[]>> => {
-  return handleRequest(async () => {
-    const { data } = await client.query({
+): Promise<GraphQLResult<GroupInfo>> => {
+  try {
+    const {
+      data: { groupListAll },
+      error,
+    } = await client.query({
       query: LIST_GROUPS,
       variables: { databaseName },
     });
-
-    const response = data?.groupListAll;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response as any,
-      };
-    } else {
-      return {
-        type: "error",
-        message: "An unknown error occurred",
-      };
+    if (error) {
+      return GraphQLResult.wrap<GroupInfo>(error);
     }
-  });
+
+    return GraphQLResult.wrap(groupListAll);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<GroupInfo>(error);
+    } else {
+      return GraphQLResult.wrap<GroupInfo>(Error("Unknown Error"));
+    }
+  }
 };

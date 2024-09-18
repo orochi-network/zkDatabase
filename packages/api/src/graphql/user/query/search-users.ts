@@ -2,9 +2,9 @@ import pkg from "@apollo/client";
 const { gql } = pkg;
 import { Search } from "../../types/search.js";
 import client from "../../client.js";
-import { NetworkResult } from "../../../utils/network.js";
 import { Pagination } from "../../types/pagination.js";
 import { User } from "../../types/user.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SEARCH_USERS = gql`
   query SearchUser($search: SearchInput, $pagination: PaginationInput) {
@@ -19,31 +19,28 @@ const SEARCH_USERS = gql`
 export async function searchUsers(
   search?: Search | undefined,
   pagination?: Pagination | undefined
-): Promise<NetworkResult<User[]>> {
+): Promise<GraphQLResult<User>> {
   try {
-    const { data } = await client.query({
+    const {
+      data: { searchUser },
+      errors,
+    } = await client.query({
       query: SEARCH_USERS,
       variables: [search, pagination],
     });
 
-    const response = data?.searchUser;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response,
-      };
-    } else {
-      return {
-        type: "error",
-        message: response?.error ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<User>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
+
+    return GraphQLResult.wrap<User>(searchUser);
   } catch (error) {
-    console.log('error', error)
-    return {
-      type: "error",
-      message: `${(error as any).message}` ?? "An unknown error occurred",
-    };
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<User>(error);
+    } else {
+      return GraphQLResult.wrap<User>(Error("Unknown Error"));
+    }
   }
 }

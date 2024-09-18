@@ -1,8 +1,8 @@
 import pkg from '@apollo/client';
 const { gql } = pkg;
-import { NetworkResult, handleRequest } from "../../../utils/network.js";
 import client from "../../client.js";
-import { PermissionSet, Permissions } from "../../types/ownership.js";
+import { Permissions } from "../../types/ownership.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SET_PERMISSION = gql`
   mutation PermissionSet(
@@ -44,20 +44,14 @@ const SET_PERMISSION = gql`
   }
 `;
 
-interface ListPermissionResponse {
-  permissions: Permissions;
-}
-
 export const setPermissions = async (
   databaseName: string,
   collectionName: string,
   docId: string | undefined,
   permission: Permissions
-): Promise<NetworkResult<Permissions>> => {
-  return handleRequest(async () => {
-    const { data, errors } = await client.mutate<{
-      permissionSet: ListPermissionResponse;
-    }>({
+): Promise<GraphQLResult<Permissions>> => {
+  try {
+    const { data: {permissionSet}, errors } = await client.mutate({
       mutation: SET_PERMISSION,
       variables: {
         databaseName,
@@ -67,18 +61,18 @@ export const setPermissions = async (
       },
     });
 
-    const response = data?.permissionSet;
-
-    if (response) {
-      return {
-        type: "success",
-        data: response.permissions,
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<Permissions>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  });
+
+    return GraphQLResult.wrap<Permissions>(permissionSet);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<Permissions>(error);
+    } else {
+      return GraphQLResult.wrap<Permissions>(Error("Unknown Error"));
+    }
+  }
 };

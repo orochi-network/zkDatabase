@@ -9,10 +9,14 @@ import { ProofStatus as ProofStatusPayload } from '@zkdb/api';
 export async function getProof(databaseName: string): Promise<JsonProof> {
   const result = await getProofRequest(databaseName);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -27,8 +31,8 @@ export async function getProofStatus(
     documentId
   );
 
-  if (result.type === 'success') {
-    switch (result.data) {
+  if (result.isObject()) {
+    switch (result.unwrapObject()) {
       case ProofStatusPayload.QUEUED:
         return 'queue';
       case ProofStatusPayload.PROVING:
@@ -39,6 +43,10 @@ export async function getProofStatus(
         return 'failed';
     }
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }

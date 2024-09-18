@@ -13,10 +13,10 @@ export async function listCollectionIndexes(
 ): Promise<string[]> {
   const result = await listIndexes(databaseName, collectionName);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapArray();
   } else {
-    throw Error(result.message);
+    throw result.unwrapError();
   }
 }
 
@@ -27,10 +27,10 @@ export async function dropCollectionIndex(
 ): Promise<boolean> {
   const result = await deleteIndex(databaseName, collectionName, indexName);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapOne();
   } else {
-    throw Error(result.message);
+    throw result.unwrapError();
   }
 }
 
@@ -41,10 +41,10 @@ export async function createCollectionIndexes(
 ): Promise<boolean> {
   const result = await createIndexes(databaseName, collectionName, indexNames);
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapOne();
   } else {
-    throw Error(result.message);
+    throw result.unwrapError();
   }
 }
 
@@ -55,7 +55,7 @@ export async function createCollection(
   documentEncoded: SchemaDefinition,
   permissions: Permissions
 ) {
-  const result =  await createCollectionRequest(
+  const result = await createCollectionRequest(
     databaseName,
     collectionName,
     groupName,
@@ -63,7 +63,7 @@ export async function createCollection(
     permissions
   );
 
-  if (result.type === 'error') {
-    throw Error(result.message)
-  } 
+  if (result.isError()) {
+    throw result.unwrapError();
+  }
 }

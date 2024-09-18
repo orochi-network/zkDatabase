@@ -20,10 +20,10 @@ export async function addUsersToGroup(
     userNames
   );
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    throw result.unwrapError();
   }
 }
 
@@ -38,10 +38,10 @@ export async function excludeUsersFromGroup(
     userNames
   );
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    throw Error(result.message);
+    throw result.unwrapError();
   }
 }
 
@@ -56,10 +56,10 @@ export async function changeGroupDescription(
     description
   );
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isOne()) {
+    return result.unwrapObject();
   } else {
-    return false;
+    throw result.unwrapError();
   }
 }
 
@@ -69,15 +69,20 @@ export async function getGroupDescription(
 ): Promise<GroupDescription> {
   const result = await getGroupDescriptionRequest(databaseName, groupName);
 
-  if (result.type === 'success') {
+  if (result.isOne()) {
+    const groupDescription = result.unwrapObject();
     return {
-      name: result.data.name,
-      description: result.data.description,
-      createdAt: new Date(result.data.createdAt),
-      createdBy: result.data.createdBy,
+      name: groupDescription.name,
+      description: groupDescription.description,
+      createdAt: new Date(groupDescription.createdAt),
+      createdBy: groupDescription.createdBy,
     };
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -92,10 +97,10 @@ export async function renameGroup(
     newGroupName
   );
 
-  if (result.type === 'success') {
-    return result.data;
+  if (result.isError()) {
+    throw result.unwrapError();
   } else {
-    throw Error(result.message);
+    throw Error('Unknown error');
   }
 }
 
@@ -104,15 +109,21 @@ export async function getGroups(
 ): Promise<GroupDescription[]> {
   const result = await listGroupsRequest(databaseName);
 
-  if (result.type === 'success') {
-    return result.data.map((group) => ({
+  if (result.isSome()) {
+    const groups = result.unwrapArray();
+
+    return groups.map((group) => ({
       name: group.name,
       description: group.description,
       createdAt: new Date(group.createdAt),
       createdBy: group.createdBy,
     }));
   } else {
-    throw Error(result.message);
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }
 
@@ -123,7 +134,9 @@ export async function createGroup(
 ) {
   const result = await createGroupRequest(databaseName, groupName, description);
 
-  if (result.type === 'error') {
-    throw Error(result.message);
+  if (result.isError()) {
+    throw result.unwrapError();
+  } else {
+    throw Error('Unknown error');
   }
 }

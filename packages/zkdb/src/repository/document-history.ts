@@ -13,19 +13,25 @@ export async function getDocumentHistory(
     id
   );
 
-  if (result.type === 'success') {
-    return ({
-      documents: result.data.documents.map((document) => ({
+  if (result.isOne()) {
+    const documents = result.unwrapObject().documents;
+
+    return {
+      documents: documents.map((document) => ({
         id: document.docId,
         documentEncoded: document.fields.map((field) => ({
           name: field.name,
           kind: field.kind as ProvableTypeString,
           value: field.value,
         })),
-        createdAt: document.createdAt
+        createdAt: document.createdAt,
       })),
-    });
+    };
   } else {
-    throw Error(result.message)
+    if (result.isError()) {
+      throw result.unwrapError();
+    } else {
+      throw Error('Unknown error');
+    }
   }
 }

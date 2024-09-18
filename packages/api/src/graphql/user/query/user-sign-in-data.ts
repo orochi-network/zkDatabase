@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
 import { SignInInfo } from "../../types/authentication.js";
-import { NetworkResult } from "../../../utils/network.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SIGN_IN_DATA = gql`
   query UserSignInData {
@@ -18,51 +18,40 @@ const SIGN_IN_DATA = gql`
   }
 `;
 
-interface UserSignInResponse {
-  success: boolean;
-  error: string | null;
-  userName: string;
-  email: string;
-  sessionKey: string;
-  sessionId: string;
-  userData: JSON;
-  publicKey: string;
-}
-
-export const getSignInData = async (): Promise<NetworkResult<SignInInfo>> => {
+export const getSignInData = async (): Promise<GraphQLResult<SignInInfo>> => {
   try {
-    const { data } = await client.query<{ userSignIn: UserSignInResponse }>({
+    const {
+      data: { userSignIn },
+      errors,
+    } = await client.query({
       query: SIGN_IN_DATA,
     });
 
-    const response = data?.userSignIn;
-
-    if (response && response.success) {
-      return {
-        type: "success",
-        data: {
-          user: {
-            userName: response.userName,
-            email: response.email,
-            publicKey: response.publicKey,
-          },
-          session: {
-            sessionId: response.sessionId,
-            sessionKey: response.sessionKey,
-          },
-          userData: response.userData,
-        },
-      };
-    } else {
-      return {
-        type: "error",
-        message: response?.error ?? "An unknown error occurred",
-      };
-    }
-  } catch (error) {
-    return {
-      type: "error",
-      message: `${(error as any).message}` ?? "An unknown error occurred",
+    const info: SignInInfo = {
+      user: {
+        userName: userSignIn.userName,
+        email: userSignIn.email,
+        publicKey: userSignIn.publicKey,
+      },
+      session: {
+        sessionId: userSignIn.sessionId,
+        sessionKey: userSignIn.sessionKey,
+      },
+      userData: userSignIn.userData,
     };
+
+    if (errors) {
+      return GraphQLResult.wrap<SignInInfo>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
+    }
+
+    return GraphQLResult.wrap<SignInInfo>(info);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<SignInInfo>(error);
+    } else {
+      return GraphQLResult.wrap<SignInInfo>(Error("Unknown Error"));
+    }
   }
 };

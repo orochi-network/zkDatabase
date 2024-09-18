@@ -1,8 +1,8 @@
-import pkg from '@apollo/client';
+import pkg from "@apollo/client";
 const { gql } = pkg;
 import client from "../../client.js";
 import { SignInInfo, SignatureProofData } from "../../types/authentication.js";
-import { NetworkResult } from "../../../utils/network.js";
+import { GraphQLResult } from "../../../utils/result.js";
 
 const SIGN_IN = gql`
   mutation UserSignIn($proof: ProofInput!) {
@@ -18,53 +18,44 @@ const SIGN_IN = gql`
   }
 `;
 
-interface UserSignInResponse {
-  success: boolean;
-  error: string | null;
-  userName: string;
-  sessionKey: string;
-  sessionId: string;
-  userData: JSON;
-}
-
 export const signIn = async (
   email: string,
   proof: SignatureProofData
-): Promise<NetworkResult<SignInInfo>> => {
+): Promise<GraphQLResult<SignInInfo>> => {
   try {
-    const { errors, data } = await client.mutate({
+    const {
+      errors,
+      data: { userSignIn },
+    } = await client.mutate({
       mutation: SIGN_IN,
       variables: { proof },
     });
 
-    const response = data?.userSignIn;
-
-    if (response && response.success) {
-      return {
-        type: "success",
-        data: {
-          user: {
-            userName: response.userName,
-            email: email,
-            publicKey: response.publicKey
-          },
-          session: {
-            sessionId: response.sessionId,
-            sessionKey: response.sessionKey,
-          },
-          userData: response.userData,
-        },
-      };
-    } else {
-      return {
-        type: "error",
-        message: errors?.toString() ?? "An unknown error occurred",
-      };
+    if (errors) {
+      return GraphQLResult.wrap<SignInInfo>(
+        Error(errors.map((error: any) => error.message).join(", "))
+      );
     }
-  } catch (error) {
-    return {
-      type: "error",
-      message: `${(error as any).message}` ?? "An unknown error occurred",
+
+    const info: SignInInfo = {
+      user: {
+        userName: userSignIn.userName,
+        email: email,
+        publicKey: userSignIn.publicKey,
+      },
+      session: {
+        sessionId: userSignIn.sessionId,
+        sessionKey: userSignIn.sessionKey,
+      },
+      userData: userSignIn.userData,
     };
+
+    return GraphQLResult.wrap<SignInInfo>(info);
+  } catch (error) {
+    if (error instanceof Error) {
+      return GraphQLResult.wrap<SignInInfo>(error);
+    } else {
+      return GraphQLResult.wrap<SignInInfo>(Error("Unknown Error"));
+    }
   }
 };

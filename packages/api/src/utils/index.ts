@@ -1,1 +1,1 @@
-export { NetworkResult, Success, Error } from "./network.js";
+export { GraphQLResult, TResultType  } from "./result.js";
