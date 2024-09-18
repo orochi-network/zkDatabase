@@ -13,14 +13,13 @@ RUN chown -R appuser:appuser /usr/src/app
 # Switch to the non-root user
 USER appuser
 
-# Copy the application code
+# Copy the application code as the non-root user, including .env.example
 COPY --chown=appuser:appuser . .
 
-# Install dependencies with a frozen lockfile
-RUN yarn install --frozen-lockfile
+USER root
 
-# Build the necessary workspace
-RUN yarn workspace @zkdb/serverless build
+# Install dependencies with the exported environment variables
+RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfile
 
 USER appuser
 

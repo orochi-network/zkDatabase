@@ -15,6 +15,11 @@ USER appuser
 
 # Copy the application code as the non-root user
 COPY --chown=appuser:appuser . .
+USER root
+
+RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfile
+
+USER appuser
 
 USER root
 
@@ -48,6 +53,7 @@ RUN chown -R appuser:appuser /usr/src/app
 
 # Switch to the non-root user
 USER appuser
+
 
 # Set the working directory for the FTP package
 WORKDIR /usr/src/app/packages/ftp

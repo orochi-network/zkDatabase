@@ -30,7 +30,7 @@ docker-compose up -d
 
 This will start a MongoDB instance with the replica set named rs0 and enable keyfile-based authorization.
 
-3. Copy the `.env.example` file to a new file named `.env`. And edit the `.env` file and replace the placeholder values with your actual environment-specific values.
+3. Copy the `.env.example` file to a new file named `.env`. And edit the `.env` file and replace the placeholder values with your actual environment-specific values
 
 Url: `mongodb://admin:password@127.0.0.1:27017/?directConnection=true`
 

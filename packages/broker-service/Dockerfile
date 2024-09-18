@@ -15,6 +15,11 @@ USER appuser
 
 # Copy the application code as the non-root user
 COPY --chown=appuser:appuser . .
+USER root
+
+RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfile
+
+USER appuser
 
 USER root
 
@@ -22,6 +27,7 @@ USER root
 RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfile
 
 USER appuser
+
 
 # Build the necessary workspaces
 RUN yarn workspace @zkdb/storage build && \
