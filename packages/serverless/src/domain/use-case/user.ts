@@ -64,21 +64,9 @@ export async function signUpUser(
       userData.userData
     );
     if (result && result.acknowledged) {
-      return {
-        success: true,
-        error: null,
-        userName: user.userName,
-        email: user.email,
-        publicKey: user.publicKey,
-      };
+      return user;
     }
-    return {
-      success: false,
-      error: 'Cannot create user',
-      userName: user.userName,
-      email: user.email,
-      publicKey: user.publicKey,
-    };
+    throw new Error('Unable to create new user');
   }
   throw new Error('Signature is not valid');
 }

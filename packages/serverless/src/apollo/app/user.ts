@@ -133,16 +133,12 @@ export const typeDefsUser = gql`
   }
 
   type SignUpData {
-    success: Boolean
-    error: String
     userName: String
     email: String
     publicKey: String
   }
 
   type SignInResponse {
-    success: Boolean
-    error: String
     userName: String
     accessToken: String
     userData: JSON
@@ -176,12 +172,7 @@ const userSignInData = authorizeWrapper(
       userName: context.userName,
     });
     if (user) {
-      return {
-        success: true,
-        userName: user.userName,
-        userData: user.userData,
-        publicKey: user.publicKey,
-      };
+      return user;
     }
     throw new Error('User not found');
   }
@@ -203,8 +194,7 @@ const userGetEcdsaChallenge = async (
   context: TPublicContext
 ) => {
   const { req } = context;
-  // Save the request
-
+  // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
   req.session.save();
   return req.session.ecdsaChallenge;
@@ -235,11 +225,8 @@ const userSignIn = publicWrapper(
           { EX: ACESS_TOKEN_EXPIRE_TIME }
         );
         return {
-          success: true,
-          userName: user.userName,
+          ...user,
           accessToken,
-          userData: user.userData,
-          publicKey: user.publicKey,
         };
       }
       throw new Error('User not found');
@@ -267,14 +254,18 @@ const userSignOut = authorizeWrapper(
 const userSignUp = publicWrapper(
   SignUpWrapper,
   async (_root: unknown, args: TSignUpWrapper) => {
+    const {
+      signUp: { userData, userName, email },
+      proof,
+    } = args;
     return signUpUser(
       {
-        userName: args.signUp.userName,
-        email: args.signUp.email,
-        publicKey: args.proof.publicKey,
+        userName,
+        email,
+        publicKey: proof.publicKey,
       },
-      args.signUp.userData,
-      args.proof
+      userData,
+      proof
     );
   }
 );

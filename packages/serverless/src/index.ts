@@ -47,8 +47,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   app.use(
     helmet({
+      crossOriginOpenerPolicy: false,
       // enable playground apollo when environment is local
-      contentSecurityPolicy: config.NODE_ENV !== 'local',
+      contentSecurityPolicy: false,
       // set the “X-Frame-Options” header to prevent clickjacking attacks
       frameguard: { action: 'deny' },
       // set the “X-XSS-Protection” header to prevent cross-site scripting (XSS) attacks
@@ -92,7 +93,14 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   app.use(
     '/graphql',
-    cors<cors.CorsRequest>(),
+    cors<cors.CorsRequest>({
+      origin: (reqOrigin, callback) => {
+        if (reqOrigin && config.SERVICE_ORIGIN.get(reqOrigin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Not whitelisted origin'));
+      },
+    }),
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
@@ -130,7 +138,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     httpServer.listen({ port: 4000 }, resolve);
   });
 
-  logger.debug('🚀 Server ready at http://localhost:4000/graphql');
+  logger.debug(
+    `🚀 Server ready at http://${config.SERVICE_HOST}:${config.SERVICE_PORT}/graphql`
+  );
   if (config.NODE_ENV !== 'production') {
     logger.warn('Server environment is:', config.NODE_ENV);
   }
