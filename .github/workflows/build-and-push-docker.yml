@@ -6,9 +6,9 @@ on:
       - main
 
 env:
-  DOCKER_REPO_BROKER_SERVICE: orochinetwork/zkdb-broker-service
-  DOCKER_REPO_PROOF_SERVICE: orochinetwork/zkdb-proof-service
-  DOCKER_REPO_SERVERLESS: orochinetwork/zkdb-serverless
+  DOCKER_REPO_BROKER_SERVICE: harris1111/zkdb-broker-service
+  DOCKER_REPO_PROOF_SERVICE: harris1111/zkdb-proof-service
+  DOCKER_REPO_SERVERLESS: harris1111/zkdb-serverless
   NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
 
 jobs:
