@@ -15,12 +15,18 @@ USER appuser
 
 # Copy the application code as the non-root user
 COPY --chown=appuser:appuser . .
+USER root
+
+RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfile
+
+USER appuser
 
 # Install dependencies with a frozen lockfile
-RUN yarn install --frozen-lockfile
+# RUN yarn install --frozen-lockfile
 
-# Build the necessary workspace
-RUN yarn workspace ftp build
+# Build the necessary workspaces
+RUN yarn workspace @zkdb/smart-contract build && \
+    yarn workspace ftp build
 
 # Set the working directory for the FTP package
 WORKDIR /usr/src/app/packages/ftp

@@ -1,0 +1,157 @@
+name: 'Build & Push Selected Docker Images to Docker Hub'
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  DOCKER_REPO_BROKER_SERVICE: orochinetwork/zkdb-broker-service
+  DOCKER_REPO_PROOF_SERVICE: orochinetwork/zkdb-proof-service
+  DOCKER_REPO_SERVERLESS: orochinetwork/zkdb-serverless
+  NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+
+jobs:
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Fetch enough commit history
+
+      - name: Detect changed packages
+        id: changed
+        run: |
+          # Detect all changed packages
+          CHANGED_PACKAGES=$(git diff --name-only HEAD~1 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
+          echo "Detected changes: $CHANGED_PACKAGES"
+          
+          # Clean up carriage returns or special characters and split on new lines
+          CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
+          echo "Cleaned packages: $CLEANED_PACKAGES"
+
+          # Save cleaned package names to environment
+          echo "changed_packages=$CLEANED_PACKAGES" >> $GITHUB_ENV
+
+      - name: Filter packages using case statement and map to numbers
+        id: filter
+        run: |
+          CHANGED_PACKAGES="${{ env.changed_packages }}"
+          FILTERED_PACKAGES=""
+
+          # Debugging - print out each package to see what's being processed
+          echo "Changed packages: $CHANGED_PACKAGES"
+
+          # Split the CHANGED_PACKAGES string into an array
+          IFS=' ' read -r -a PACKAGE_ARRAY <<< "$CHANGED_PACKAGES"
+
+          # Declare an associative array to map package names to numbers
+          declare -A PACKAGE_MAP
+          PACKAGE_MAP["packages/serverless"]=1
+          PACKAGE_MAP["packages/broker-service"]=2
+          PACKAGE_MAP["packages/proof-service"]=3
+
+          # Loop through the detected changes and map the packages to numbers
+          for PACKAGE in "${PACKAGE_ARRAY[@]}"; do
+            case $PACKAGE in
+              "packages/serverless")
+                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/serverless"]}"
+                echo "serverless changed (mapped to 1)"
+                ;;
+              "packages/broker-service")
+                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/broker-service"]}"
+                echo "broker-service changed (mapped to 2)"
+                ;;
+              "packages/proof-service")
+                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/proof-service"]}"
+                echo "proof-service changed (mapped to 3)"
+                ;;
+              *)
+                echo "No match for package: $PACKAGE"
+                ;;
+            esac
+          done
+
+          # Trim any leading/trailing spaces in FILTERED_PACKAGES
+          FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
+
+          # Output the mapped numbers using Environment Files and set job output
+          if [ -z "$FILTERED_PACKAGES" ]; then
+            echo "No required packages changed."
+            exit 0
+          else
+            echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    name: Build & Push Docker Images
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USER }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build & Push Broker Service Image
+        run: |
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"2"* ]]; then
+            echo "Building and pushing Broker Service..."
+            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            docker build -t ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest \
+              -f packages/broker-service/Dockerfile \
+              --platform=linux/amd64 \
+              --secret id=npm,src=npm-token .
+            docker tag ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest ${{ env.DOCKER_REPO_BROKER_SERVICE }}:${{ github.sha }}
+            docker push ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest
+            docker push ${{ env.DOCKER_REPO_BROKER_SERVICE }}:${{ github.sha }}
+          else
+            echo "Broker Service not in changed packages."
+          fi
+
+      - name: Build & Push Proof Service Image
+        run: |
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"3"* ]]; then
+            echo "Building and pushing Proof Service..."
+            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            docker build -t ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest \
+              -f packages/proof-service/Dockerfile \
+              --platform=linux/amd64 \
+              --secret id=npm,src=npm-token .
+            docker tag ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
+            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest
+            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
+          else
+            echo "Proof Service not in changed packages."
+          fi
+
+      - name: Build & Push Serverless Service Image
+        run: |
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"1"* ]]; then
+            echo "Building and pushing Serverless Service..."
+            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            docker build -t ${{ env.DOCKER_REPO_SERVERLESS }}:latest \
+              -f packages/serverless/Dockerfile \
+              --platform=linux/amd64 \
+              --secret id=npm,src=npm-token .
+            docker tag ${{ env.DOCKER_REPO_SERVERLESS }}:latest ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
+            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:latest
+            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
+          else
+            echo "Serverless Service not in changed packages."
+          fi
