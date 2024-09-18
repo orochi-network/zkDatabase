@@ -1,14 +1,7 @@
 /* eslint-disable no-param-reassign */
-import {
-  ConfigLoader,
-  TNodeEnv,
-  LoggerSet,
-  LoggerLoader,
-} from '@orochi-network/framework';
+import { ConfigLoader, TNodeEnv } from '@orochi-network/framework';
 import { createHash } from 'crypto';
 import Joi from 'joi';
-
-LoggerSet(new LoggerLoader('framework', 'debug', 'json'));
 
 interface TApplicationConfig {
   NODE_ENV: TNodeEnv;
@@ -16,7 +9,9 @@ interface TApplicationConfig {
   REDIS_URL: string;
   EXPRESS_SESSION_SECRET: string;
   JWT_SECRET: string;
-  PORT: number;
+  SERVICE_HOST: string;
+  SERVICE_PORT: number;
+  SERVICE_ORIGIN: string[];
 }
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -30,6 +25,14 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .update('jwt')
       .update(raw.SERVICE_SECRET)
       .digest('base64');
+    const { hostname, port } = new URL(raw.SERVICE_BIND);
+    result.SERVICE_HOST = hostname;
+    result.SERVICE_PORT = parseInt(port, 10);
+    if (typeof raw.SERVICE_ALLOW_ORIGIN === 'string') {
+      result.SERVICE_ORIGIN = raw.SERVICE_ALLOW_ORIGIN.split(';').map((e) =>
+        e.trim()
+      );
+    }
     return result;
   },
   {
@@ -42,8 +45,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .trim()
       .required()
       .regex(/^redis([+a-z]+|):\/\//),
-    PORT: Joi.number().integer().min(1).max(65535).optional().default(4000),
     SERVICE_SECRET: Joi.string().base64().trim().required(),
+    SERVICE_BIND: Joi.string().trim().default('http://0.0.0.0:4000'),
+    // URL separated by ;
+    SERVICE_ALLOW_ORIGIN: Joi.string().trim().default('http://localhost:4000/'),
   }
 );
 

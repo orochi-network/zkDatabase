@@ -23,6 +23,19 @@ import RedisInstance from './helper/redis.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
+const corsOptionsDelegate = (req: cors.CorsRequest, callback: Function) => {
+  let corsOptions;
+  if (
+    req.headers.origin &&
+    config.SERVICE_ORIGIN.indexOf(req.headers.origin) !== -1
+  ) {
+    corsOptions = { origin: true };
+  } else {
+    corsOptions = { origin: false };
+  }
+  callback(null, corsOptions);
+};
+
 (async () => {
   const app = express();
   const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
@@ -47,8 +60,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   app.use(
     helmet({
+      crossOriginOpenerPolicy: false,
       // enable playground apollo when environment is local
-      contentSecurityPolicy: config.NODE_ENV !== 'local',
+      contentSecurityPolicy: false,
       // set the “X-Frame-Options” header to prevent clickjacking attacks
       frameguard: { action: 'deny' },
       // set the “X-XSS-Protection” header to prevent cross-site scripting (XSS) attacks
@@ -92,7 +106,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   app.use(
     '/graphql',
-    cors<cors.CorsRequest>(),
+    cors<cors.CorsRequest>(corsOptionsDelegate),
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
@@ -130,7 +144,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     httpServer.listen({ port: 4000 }, resolve);
   });
 
-  logger.debug('🚀 Server ready at http://localhost:4000/graphql');
+  logger.debug(
+    `🚀 Server ready at http://${config.SERVICE_HOST}:${config.SERVICE_PORT}/graphql`
+  );
   if (config.NODE_ENV !== 'production') {
     logger.warn('Server environment is:', config.NODE_ENV);
   }
