@@ -1,9 +1,9 @@
 /* eslint-disable no-param-reassign */
-import { ConfigLoader, TNodeEnv } from '@orochi-network/framework';
+import { ConfigLoader, TLogLevel, TNodeEnv } from '@orochi-network/framework';
 import { createHash } from 'crypto';
 import Joi from 'joi';
 
-interface TApplicationConfig {
+export type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
   REDIS_URL: string;
@@ -12,7 +12,8 @@ interface TApplicationConfig {
   SERVICE_HOST: string;
   SERVICE_PORT: number;
   SERVICE_ORIGIN: string[];
-}
+  OROCHI_LOG: TLogLevel;
+};
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
@@ -49,6 +50,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     SERVICE_BIND: Joi.string().trim().default('http://0.0.0.0:4000'),
     // URL separated by ;
     SERVICE_ALLOW_ORIGIN: Joi.string().trim().default('http://localhost:4000/'),
+    OROCHI_LOG: Joi.string().trim().default('debug'),
   }
 );
 
