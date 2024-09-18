@@ -100,6 +100,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
         }
         return callback(new Error('Not whitelisted origin'));
       },
+      credentials: true,
     }),
     express.json(),
     expressMiddleware(server, {
