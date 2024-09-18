@@ -80,12 +80,12 @@ jobs:
           # Trim any leading/trailing spaces in FILTERED_PACKAGES
           FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
 
-          # Output the mapped numbers using Environment Files
+          # Output the mapped numbers using Environment Files and set job output
           if [ -z "$FILTERED_PACKAGES" ]; then
             echo "No required packages changed."
             exit 0
           else
-            echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_ENV
+            echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
           fi
 
   build:
@@ -107,8 +107,8 @@ jobs:
 
       - name: Build & Push Broker Service Image
         run: |
-          echo "Filtered Packages: ${{ env.filtered_packages }}"
-          if [[ "${{ env.filtered_packages }}" == *"2"* ]]; then
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"2"* ]]; then
             echo "Building and pushing Broker Service..."
             echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest \
@@ -124,8 +124,8 @@ jobs:
 
       - name: Build & Push Proof Service Image
         run: |
-          echo "Filtered Packages: ${{ env.filtered_packages }}"
-          if [[ "${{ env.filtered_packages }}" == *"3"* ]]; then
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"3"* ]]; then
             echo "Building and pushing Proof Service..."
             echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest \
@@ -141,8 +141,8 @@ jobs:
 
       - name: Build & Push Serverless Service Image
         run: |
-          echo "Filtered Packages: ${{ env.filtered_packages }}"
-          if [[ "${{ env.filtered_packages }}" == *"1"* ]]; then
+          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
+          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"1"* ]]; then
             echo "Building and pushing Serverless Service..."
             echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_SERVERLESS }}:latest \
