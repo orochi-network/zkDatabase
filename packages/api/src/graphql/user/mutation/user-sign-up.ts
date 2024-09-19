@@ -1,5 +1,4 @@
-import pkg from "@apollo/client";
-const { gql } = pkg;
+import { gql } from "@apollo/client";
 import client from "../../client.js";
 import { SignUpData, SignatureProofData } from "../../types/authentication.js";
 import { User } from "../../types/user.js";
@@ -16,14 +15,6 @@ const SIGN_UP = gql`
     }
   }
 `;
-
-interface UserSignUpResponse {
-  success: boolean;
-  error: string;
-  userName: string;
-  email: string;
-  publicKey: string;
-}
 
 export const signUp = async (
   proof: SignatureProofData,
