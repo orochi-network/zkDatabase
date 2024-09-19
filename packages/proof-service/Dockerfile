@@ -1,4 +1,5 @@
-# Use our customized image based on Node.js 20 slim image as a baseFROM orochinetwork/node:20-iron AS builder
+# Use our customized image based on Node.js 20 slim image as a base
+FROM orochinetwork/node:20-iron AS builder
 
 # Create a non-root user and group early in the Dockerfile
 RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
