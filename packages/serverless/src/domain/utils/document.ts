@@ -19,4 +19,3 @@ export function parseQuery(input: FilterCriteria): FilterCriteria {
 
   return query;
 }
-

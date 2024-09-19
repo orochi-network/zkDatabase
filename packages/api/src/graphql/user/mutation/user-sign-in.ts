@@ -1,61 +1,40 @@
 import pkg from "@apollo/client";
+import {
+  TSignInInfo,
+  TSignatureProofData,
+} from "../../types/authentication.js";
+import { createMutateFunction } from "../common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { SignInInfo, SignatureProofData } from "../../types/authentication.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const SIGN_IN = gql`
-  mutation UserSignIn($proof: ProofInput!) {
-    userSignIn(proof: $proof) {
-      success
-      error
-      userName
-      sessionKey
-      sessionId
-      userData
-      publicKey
+/**
+ * Signs in a user using the provided signature proof data.
+ *
+ * @function
+ * @template TSignInInfo - The type of the sign-in information.
+ * @param {TSignatureProofData} proof - The proof data required for user sign-in.
+ * @returns {TAsyncGraphQLResult<TSignInInfo>} The sign-in information of the user.
+ *
+ * @example
+ * ```typescript
+ * const signInInfo = await signIn({ proof: proofData });
+ * console.log(signInInfo.userName);
+ * ```
+ */
+export const signIn = createMutateFunction<
+  TSignInInfo,
+  { proof: TSignatureProofData },
+  { userSignIn: TSignInInfo }
+>(
+  gql`
+    mutation UserSignIn($proof: ProofInput!) {
+      userSignIn(proof: $proof) {
+        userName
+        sessionKey
+        sessionId
+        userData
+        publicKey
+      }
     }
-  }
-`;
-
-export const signIn = async (
-  email: string,
-  proof: SignatureProofData
-): Promise<GraphQLResult<SignInInfo>> => {
-  try {
-    const {
-      errors,
-      data: { userSignIn },
-    } = await client.mutate({
-      mutation: SIGN_IN,
-      variables: { proof },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<SignInInfo>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    const info: SignInInfo = {
-      user: {
-        userName: userSignIn.userName,
-        email: email,
-        publicKey: userSignIn.publicKey,
-      },
-      session: {
-        sessionId: userSignIn.sessionId,
-        sessionKey: userSignIn.sessionKey,
-      },
-      userData: userSignIn.userData,
-    };
-
-    return GraphQLResult.wrap<SignInInfo>(info);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<SignInInfo>(error);
-    } else {
-      return GraphQLResult.wrap<SignInInfo>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.userSignIn
+);

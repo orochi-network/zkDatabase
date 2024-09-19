@@ -7,7 +7,7 @@ export type Metadata = {
 };
 
 export type DocumentMetadata = Metadata & {
-  merkleIndex: string
-}
+  merkleIndex: string;
+};
 
 export type WithMetadata<T> = T & { metadata: DocumentMetadata };

@@ -1,35 +1,23 @@
 import pkg from "@apollo/client";
+import { createMutateFunction } from "../common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-export const SIGN_OUT = gql`
-  mutation UserSignOut {
-    userSignOut
-  }
-`;
-
-export const signOut = async (): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { userSignOut },
-      errors,
-    } = await client.mutate({
-      mutation: SIGN_OUT,
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<boolean>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Signs out the current user.
+ *
+ * This function sends a GraphQL mutation to sign out the user and returns a boolean indicating the success of the operation.
+ *
+ * @returns {TAsyncGraphQLResult<boolean>} A promise that resolves to a boolean indicating whether the sign-out was successful.
+ */
+export const signOut = createMutateFunction<
+  boolean,
+  undefined,
+  { userSignOut: boolean }
+>(
+  gql`
+    mutation UserSignOut {
+      userSignOut
     }
-
-    return GraphQLResult.wrap<boolean>(userSignOut);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.userSignOut
+);

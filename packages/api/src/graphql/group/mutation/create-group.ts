@@ -1,52 +1,51 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const CREATE_GROUP = gql`
-  mutation GroupCreate(
-    $databaseName: String!
-    $groupName: String!
-    $groupDescription: String
-  ) {
-    groupCreate(
-      databaseName: $databaseName
-      groupName: $groupName
-      groupDescription: $groupDescription
-    )
-  }
-`;
-
-export const createGroup = async (
-  databaseName: string,
-  groupName: string,
-  groupDescription: string
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { groupCreate },
-      errors,
-    } = await client.mutate({
-      mutation: CREATE_GROUP,
-      variables: {
-        databaseName,
-        groupName,
-        groupDescription,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<boolean>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Creates a new group in the specified database.
+ *
+ * @function
+ * @template T - The return type of the mutation function.
+ * @template V - The variables required for the mutation.
+ * @template R - The response type of the mutation.
+ *
+ * @param {string} databaseName - The name of the database where the group will be created.
+ * @param {string} groupName - The name of the group to be created.
+ * @param {string} groupDescription - A description of the group to be created.
+ *
+ * @returns {TAsyncGraphQLResult<boolean>} - Returns true if the group was successfully created.
+ *
+ * @example
+ * ```typescript
+ * const result = await createGroup({
+ *   databaseName: 'exampleDB',
+ *   groupName: 'exampleGroup',
+ *   groupDescription: 'example'
+ * });
+ * console.log(result); // true if the group was created successfully
+ * ```
+ */
+export const createGroup = createMutateFunction<
+  boolean,
+  { databaseName: string; groupName: string; groupDescription: string },
+  { groupCreate: boolean }
+>(
+  gql`
+    mutation GroupCreate(
+      $databaseName: String!
+      $groupName: String!
+      $groupDescription: String
+    ) {
+      groupCreate(
+        databaseName: $databaseName
+        groupName: $groupName
+        groupDescription: $groupDescription
+      )
     }
-
-    return GraphQLResult.wrap<boolean>(groupCreate);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.groupCreate
+);

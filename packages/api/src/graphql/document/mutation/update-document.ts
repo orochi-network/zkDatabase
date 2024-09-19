@@ -1,61 +1,51 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TDocumentEncoded } from "../../types/document.js";
+import { TMerkleWitness } from "../../types/merkle-tree.js";
 const { gql } = pkg;
-import { MerkleWitness } from "../../types/merkle-tree.js";
-import client from "../../client.js";
-import { DocumentEncoded } from "../../types/document.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const UPDATE_DOCUMENT = gql`
-  mutation DocumentUpdate(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $documentRecord: [DocumentRecordInput!]!
-  ) {
-    documentUpdate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      documentRecord: $documentRecord
+/**
+ * Updates a document in the specified database and collection.
+ *
+ * @function
+ * @template TMerkleWitness - The type representing the Merkle witness.
+ * @param {Object} params - The parameters for the mutation.
+ * @param {string} params.databaseName - The name of the database.
+ * @param {string} params.collectionName - The name of the collection.
+ * @param {any} params.documentQuery - The query to find the document to update.
+ * @param {TDocumentEncoded} params.documentRecord - The new document record to update.
+ * @returns {TAsyncGraphQLResult<TMerkleWitness>} - The result of the document update mutation.
+ */
+export const updateDocument = createMutateFunction<
+  TMerkleWitness,
+  {
+    databaseName: string;
+    collectionName: string;
+    documentQuery: any;
+    documentRecord: TDocumentEncoded;
+  },
+  { documentUpdate: TMerkleWitness }
+>(
+  gql`
+    mutation DocumentUpdate(
+      $databaseName: String!
+      $collectionName: String!
+      $documentQuery: JSON!
+      $documentRecord: [DocumentRecordInput!]!
     ) {
-      isLeft
-      sibling
+      documentUpdate(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        documentQuery: $documentQuery
+        documentRecord: $documentRecord
+      ) {
+        isLeft
+        sibling
+      }
     }
-  }
-`;
-
-export const updateDocument = async (
-  databaseName: string,
-  collectionName: string,
-  documentQuery: JSON,
-  documentRecord: DocumentEncoded
-): Promise<GraphQLResult<MerkleWitness>> => {
-  try {
-    const {
-      data: { documentUpdate },
-      errors,
-    } = await client.mutate({
-      mutation: UPDATE_DOCUMENT,
-      variables: {
-        databaseName,
-        collectionName,
-        documentQuery,
-        documentRecord,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<MerkleWitness>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    return GraphQLResult.wrap<MerkleWitness>(documentUpdate);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<MerkleWitness>(error);
-    } else {
-      return GraphQLResult.wrap<MerkleWitness>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.documentUpdate
+);

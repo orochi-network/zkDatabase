@@ -1,7 +1,7 @@
-import { Document } from "./document.js"
+import { Document } from './document.js';
 
 export type HistoryDocument = {
-  docId: string,
-  documents: Document[],
-  deleted: boolean
-}
+  docId: string;
+  documents: Document[];
+  deleted: boolean;
+};

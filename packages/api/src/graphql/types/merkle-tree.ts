@@ -1,4 +1,4 @@
-export type MerkleWitness = {
-  isLeft: boolean,
-  sibling: string
-}[]
+export type TMerkleWitness = {
+  isLeft: boolean;
+  sibling: string;
+}[];

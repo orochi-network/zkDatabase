@@ -1,54 +1,35 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const DELETE_INDEX = gql`
-  mutation IndexDrop(
-    $databaseName: String!
-    $collectionName: String!
-    $indexName: String!
-  ) {
-    indexDrop(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      indexName: $indexName
-    )
-  }
-`;
-
-export const deleteIndex = async (
-  databaseName: string,
-  collectionName: string,
-  indexName: string
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { indexDrop },
-      errors,
-    } = await client.mutate({
-      mutation: DELETE_INDEX,
-      variables: { databaseName, collectionName, indexName },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<boolean>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Deletes an index from a specified collection in a database.
+ *
+ * @param databaseName - The name of the database containing the collection.
+ * @param collectionName - The name of the collection containing the index.
+ * @param indexName - The name of the index to be deleted.
+ * @returns {TAsyncGraphQLResult<boolean>} - A boolean indicating whether the index was successfully deleted.
+ */
+export const deleteIndex = createMutateFunction<
+  boolean,
+  { databaseName: string; collectionName: string; indexName: string },
+  { indexDrop: boolean }
+>(
+  gql`
+    mutation IndexDrop(
+      $databaseName: String!
+      $collectionName: String!
+      $indexName: String!
+    ) {
+      indexDrop(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        indexName: $indexName
+      )
     }
-
-    if (typeof indexDrop === "boolean") {
-      return GraphQLResult.wrap(indexDrop as boolean);
-    }
-
-    return GraphQLResult.wrap<boolean>(
-      new Error("Unexpected response format or type")
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.indexDrop
+);

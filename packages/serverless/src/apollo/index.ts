@@ -11,7 +11,10 @@ import { resolversPermission, typeDefsPermission } from './app/metadata.js';
 import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
 import { resolversProof, typeDefsProof } from './app/proof.js';
 import { typeCommonDefsDocument } from './app/types/document.js';
-import { resolversDocumentHistory, typeDefsDocumentHistory } from './app/document-history.js';
+import {
+  resolversDocumentHistory,
+  typeDefsDocumentHistory,
+} from './app/document-history.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -24,7 +27,7 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
   typeDefsProof,
   typeDefsDocumentHistory,
-  typeCommonDefsDocument
+  typeCommonDefsDocument,
 ];
 
 type Resolver =
@@ -37,7 +40,7 @@ type Resolver =
   | typeof resolversPermission
   | typeof resolversMerkleTree
   | typeof resolversProof
-  | typeof resolversDocumentHistory
+  | typeof resolversDocumentHistory;
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -49,5 +52,5 @@ export const ResolversApp: Resolver[] = [
   resolversPermission,
   resolversMerkleTree,
   resolversProof,
-  resolversDocumentHistory
+  resolversDocumentHistory,
 ];

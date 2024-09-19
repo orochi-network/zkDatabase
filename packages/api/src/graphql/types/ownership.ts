@@ -1,10 +1,10 @@
-export type Ownership = {
-  userName: string,
-  groupName: string
-  permissions: Permissions
-}
+export type TOwnership = {
+  userName: string;
+  groupName: string;
+  permissions: TPermissions;
+};
 
-export type PermissionSet = {
+export type TPermissionSet = {
   system?: boolean;
   create?: boolean;
   read?: boolean;
@@ -12,8 +12,14 @@ export type PermissionSet = {
   delete?: boolean;
 };
 
-export type Permissions = {
-  permissionOwner?: PermissionSet;
-  permissionGroup?: PermissionSet;
-  permissionOther?: PermissionSet;
+export type TPermissions = {
+  permissionOwner?: TPermissionSet;
+  permissionGroup?: TPermissionSet;
+  permissionOther?: TPermissionSet;
+};
+
+export type TOwnershipRequest = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
 };

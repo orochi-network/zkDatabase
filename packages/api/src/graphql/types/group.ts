@@ -1,5 +1,5 @@
-export type GroupInfo = {
-  name: string,
+export type TGroupInfo = {
+  name: string;
   description: string;
   createdAt: number;
   createdBy: string;

@@ -1,52 +1,37 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const EXIST_INDEX = gql`
-  query IndexExist(
-    $databaseName: String!
-    $collectionName: String!
-    $indexName: String!
-  ) {
-    indexExist(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      indexName: $indexName
-    )
-  }
-`;
-
-export const existIndex = async (
-  databaseName: string,
-  collectionName: string,
-  indexName: string
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { indexExist },
-      error,
-    } = await client.query({
-      query: EXIST_INDEX,
-      variables: { databaseName, collectionName, indexName },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<boolean>(error);
+/**
+ * Executes a GraphQL query to check if an index exists in a specified collection within a database.
+ *
+ * @function
+ * @param {Object} variables - The variables for the GraphQL query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.collectionName - The name of the collection.
+ * @param {string} variables.indexName - The name of the index.
+ * @returns {TAsyncGraphQLResult<boolean>} A promise that resolves to a boolean indicating whether the index exists.
+ */
+export const existIndex = createQueryFunction<
+  boolean,
+  { databaseName: string; collectionName: string; indexName: string },
+  { indexExist: boolean }
+>(
+  gql`
+    query IndexExist(
+      $databaseName: String!
+      $collectionName: String!
+      $indexName: String!
+    ) {
+      indexExist(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        indexName: $indexName
+      )
     }
-
-    if (typeof indexExist === "boolean") {
-      return GraphQLResult.wrap(indexExist as boolean);
-    }
-
-    return GraphQLResult.wrap<boolean>(
-      new Error("Unexpected response format or type")
-    );
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.indexExist
+);

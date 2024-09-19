@@ -57,7 +57,9 @@ function buildDocumentFields(
     }));
 }
 
-function documentFieldsToDocumentRecord(document: DocumentFields): DocumentRecord {
+function documentFieldsToDocumentRecord(
+  document: DocumentFields
+): DocumentRecord {
   return document.reduce((acc, field) => {
     let value: any = field.value as any;
 
@@ -172,7 +174,8 @@ async function createDocument(
     throw new Error('Document array is empty. At least one field is required.');
   }
 
-  const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(document);
+  const documentRecord: DocumentRecord =
+    documentFieldsToDocumentRecord(document);
 
   // Save the document to the database
   const insertResult = await modelDocument.insertOne(documentRecord, session);
@@ -305,7 +308,8 @@ async function updateDocument(
       );
     }
 
-    const documentRecord: DocumentRecord = documentFieldsToDocumentRecord(update);
+    const documentRecord: DocumentRecord =
+      documentFieldsToDocumentRecord(update);
 
     await modelDocument.updateOne(
       oldDocumentRecord.docId,

@@ -1,4 +1,4 @@
-export type Signature = {
+export type TSignature = {
   scalar: string;
   field: string;
 };

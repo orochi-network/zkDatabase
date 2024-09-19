@@ -1,59 +1,67 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TPermissions } from "../../types/ownership.js";
+import { TSchema } from "../../types/schema.js";
 const { gql } = pkg;
-import { Schema } from "../../types/schema.js";
-import client from "../../client.js";
-import { Permissions } from "../../types/ownership.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const CREATE_COLLECTION = gql`
-  mutation CollectionCreate(
-    $databaseName: String!
-    $collectionName: String!
-    $groupName: String!
-    $schema: [SchemaFieldInput!]!
-    $permissions: PermissionDetailInput
-  ) {
-    collectionCreate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      groupName: $groupName
-      schema: $schema
-      permissions: $permissions
-    )
-  }
-`;
-
-export const createCollection = async (
-  databaseName: string,
-  collectionName: string,
-  groupName: string,
-  schema: Schema,
-  permissions: Permissions
-): Promise<GraphQLResult<undefined>> => {
-  try {
-    const { errors } = await client.mutate({
-      mutation: CREATE_COLLECTION,
-      variables: {
-        databaseName,
-        collectionName,
-        groupName,
-        schema,
-        permissions,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<undefined>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Creates a new collection in the specified database.
+ *
+ * @function
+ * @template TReturn - The return type of the mutation function.
+ * @template TVariables - The variables required for the mutation.
+ * @template TData - The data returned by the mutation.
+ *
+ * @param {string} databaseName - The name of the database where the collection will be created.
+ * @param {string} collectionName - The name of the new collection.
+ * @param {string} groupName - The name of the group associated with the collection.
+ * @param {TSchema} schema - The schema definition for the collection.
+ * @param {TPermissions} permissions - The permissions associated with the collection.
+ *
+ * @returns {TAsyncGraphQLResult<boolean>} - Returns true if the collection was successfully created, otherwise false.
+ *
+ * @example
+ * ```typescript
+ * const result = await createCollection({
+ *   databaseName: 'myDatabase',
+ *   collectionName: 'myCollection',
+ *   groupName: 'myGroup',
+ *   schema: [...],
+ *   permissions: {...}
+ * });
+ * console.log(result); // true if successful
+ * ```
+ */
+export const createCollection = createMutateFunction<
+  boolean,
+  {
+    databaseName: string;
+    collectionName: string;
+    groupName: string;
+    schema: TSchema;
+    permissions: TPermissions;
+  },
+  { collectionCreate: boolean }
+>(
+  gql`
+    mutation CollectionCreate(
+      $databaseName: String!
+      $collectionName: String!
+      $groupName: String!
+      $schema: [SchemaFieldInput!]!
+      $permissions: PermissionDetailInput
+    ) {
+      collectionCreate(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        groupName: $groupName
+        schema: $schema
+        permissions: $permissions
+      )
     }
-
-    return GraphQLResult.wrap(undefined);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<undefined>(error);
-    } else {
-      return GraphQLResult.wrap<undefined>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.collectionCreate
+);

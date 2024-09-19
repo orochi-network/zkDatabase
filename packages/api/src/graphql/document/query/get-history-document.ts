@@ -1,62 +1,58 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TDocumentHistoryPayload } from "../../types/document-history.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { DocumentHistoryPayload } from "../../types/document-history.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const GET_DOCUMENT_HISTORY = gql`
-  query HistoryDocumentGet(
-    $databaseName: String!
-    $collectionName: String!
-    $docId: String!
-  ) {
-    historyDocumentGet(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      docId: $docId
+/**
+ * Retrieves the history of a specific document from a specified database and collection.
+ *
+ * @function
+ * @template TDocumentHistoryPayload - The payload type for the document history.
+ * @param {Object} variables - The variables required for the query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.collectionName - The name of the collection.
+ * @param {string} variables.docId - The ID of the document.
+ * @returns {TAsyncGraphQLResult<TDocumentHistoryPayload>} The document history payload.
+ *
+ * @example
+ * const history = await getDocumentHistory({
+ *   databaseName: 'myDatabase',
+ *   collectionName: 'myCollection',
+ *   docId: '12345'
+ * });
+ * console.log(history);
+ */
+export const getDocumentHistory = createQueryFunction<
+  TDocumentHistoryPayload,
+  { databaseName: string; collectionName: string; docId: string },
+  { historyDocumentGet: TDocumentHistoryPayload }
+>(
+  gql`
+    query HistoryDocumentGet(
+      $databaseName: String!
+      $collectionName: String!
+      $docId: String!
     ) {
-      docId
-      documents {
+      historyDocumentGet(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        docId: $docId
+      ) {
         docId
-        fields {
-          name
-          kind
-          value
+        documents {
+          docId
+          fields {
+            name
+            kind
+            value
+          }
+          createdAt
         }
-        createdAt
       }
     }
-  }
-`;
-
-export const getDocumentHistory = async (
-  databaseName: string,
-  collectionName: string,
-  docId: string
-): Promise<GraphQLResult<DocumentHistoryPayload>> => {
-  try {
-    const {
-      data: { historyDocumentGet },
-      error,
-    } = await client.query({
-      query: GET_DOCUMENT_HISTORY,
-      variables: {
-        databaseName,
-        collectionName,
-        docId,
-      },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<DocumentHistoryPayload>(error);
-    }
-
-    return GraphQLResult.wrap(historyDocumentGet);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<DocumentHistoryPayload>(error);
-    } else {
-      return GraphQLResult.wrap<DocumentHistoryPayload>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.historyDocumentGet
+);

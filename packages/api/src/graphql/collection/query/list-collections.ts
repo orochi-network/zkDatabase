@@ -1,47 +1,37 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const LIST_COLLECTION = gql`
-  query CollectionList($databaseName: String!) {
-    collectionList(databaseName: $databaseName)
+/**
+ * Retrieves a list of collections from a specified database.
+ *
+ * @function
+ * @template T - The type of the collections array.
+ * @template V - The type of the variables object.
+ * @template R - The type of the response object.
+ *
+ * @param {string[]} T - The array of collection names.
+ * @param {{ databaseName: string }} V - The variables object containing the database name.
+ * @param {{ collections: string[] }} R - The response object containing the collections array.
+ *
+ * @param {string} databaseName - The name of the database to retrieve collections from.
+ *
+ * @returns {TAsyncGraphQLResult<string[]>} A promise that resolves to an array of collection names.
+ */
+export const listCollections = createQueryFunction<
+  string[],
+  { databaseName: string },
+  {
+    collections: string[];
   }
-`;
-
-interface ListCollectionResponse {
-  collections: string[];
-}
-
-export const listCollections = async (
-  databaseName: string
-): Promise<GraphQLResult<string>> => {
-  try {
-    const {
-      data: { collectionList },
-      error
-    } = await client.query<{
-      collectionList: ListCollectionResponse;
-    }>({
-      query: LIST_COLLECTION,
-      variables: { databaseName },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<string>(error);
+>(
+  gql`
+    query CollectionList($databaseName: String!) {
+      collectionList(databaseName: $databaseName)
     }
-    
-    if (Array.isArray(collectionList)) {
-      return GraphQLResult.wrap(collectionList as string[]);
-    }
-
-    return GraphQLResult.wrap<string>(new Error('Unexpected response format or type'));
-     
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<string>(error);
-    } else {
-      return GraphQLResult.wrap<string>(Error('Unknown Error'))
-    }
-  }
-};
+  `,
+  (data) => data.collections
+);

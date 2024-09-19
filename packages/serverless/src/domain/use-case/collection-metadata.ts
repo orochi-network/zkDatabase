@@ -3,7 +3,10 @@ import { ClientSession } from 'mongodb';
 import { DocumentSchema } from '../types/schema.js';
 import { getCurrentTime } from '../../helper/common.js';
 import { Permissions } from '../types/permission.js';
-import { PermissionBinary, partialToPermission } from '../../common/permission.js';
+import {
+  PermissionBinary,
+  partialToPermission,
+} from '../../common/permission.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 
 // eslint-disable-next-line import/prefer-default-export

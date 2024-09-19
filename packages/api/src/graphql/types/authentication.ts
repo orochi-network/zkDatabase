@@ -1,20 +1,20 @@
-import { Session } from "./session.js";
-import { Signature } from "./signature.js";
-import { User } from "./user.js";
+import { TSession } from "./session.js";
+import { TSignature } from "./signature.js";
+import { TUser } from "./user.js";
 
-export type SignInInfo = {
-  user: User,
-  session: Session
+export type TSignInInfo = {
+  user: TUser;
+  session: TSession;
   userData: any;
-}
+};
 
-export type SignatureProofData = {
-  signature: Signature;
+export type TSignatureProofData = {
+  signature: TSignature;
   publicKey: string;
   data: string;
 };
 
-export type SignUpData = {
+export type TSignUpData = {
   userName: string;
   email: string;
   timestamp: number;

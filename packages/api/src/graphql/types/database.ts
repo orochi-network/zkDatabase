@@ -1,13 +1,13 @@
-export type Database = {
+export type TDatabase = {
   databaseName: string;
   merkleHeight: number;
   collections: string[];
   databaseSize: number;
 };
 
-export type DatabaseSettings = {
+export type TDatabaseSettings = {
   merkleHeight: number;
   publicKey: string;
 };
 
-export type DatabaseStatus = {};
+export type TDatabaseStatus = {};

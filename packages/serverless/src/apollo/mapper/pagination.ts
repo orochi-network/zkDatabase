@@ -10,12 +10,12 @@ export default function mapPagination(
   if (!pagination) {
     return {
       limit: DEFAULT_LIMIT,
-      offset: DEFAULT_OFFSET
+      offset: DEFAULT_OFFSET,
     };
   }
 
   return {
     limit: pagination.limit,
-    offset: pagination.offset
-  }
+    offset: pagination.offset,
+  };
 }

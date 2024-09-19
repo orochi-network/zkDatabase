@@ -113,16 +113,15 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     options?: BulkWriteOptions
   ) {
     const groupId = (await this.groupNameToGroupId([groupName]))[0];
-  
+
     const operations = userNames.map((userName) => ({
       deleteOne: {
         filter: { userName, groupId },
       },
     }));
-  
+
     return this.collection.bulkWrite(operations, options);
   }
-  
 
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(

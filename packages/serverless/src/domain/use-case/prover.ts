@@ -1,11 +1,7 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
-import {
-  TMerkleProof,
-  ModelMerkleTree,
-  ModelQueueTask,
-} from '@zkdb/storage';
+import { TMerkleProof, ModelMerkleTree, ModelQueueTask } from '@zkdb/storage';
 
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';

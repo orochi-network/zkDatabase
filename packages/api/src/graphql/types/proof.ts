@@ -1,13 +1,19 @@
-export type ZKProof = {
+export type TZKProof = {
   publicInput: string[];
   publicOutput: string[];
   maxProofsVerified: 0 | 1 | 2;
   proof: string;
 };
 
-export enum ProofStatus {
+export enum TProofStatus {
   QUEUED = "QUEUED",
   PROVING = "PROVING",
   PROVED = "PROVED",
-  FAILED = "FAILED"
+  FAILED = "FAILED",
 }
+
+export type TProofStatusRequest = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+};
