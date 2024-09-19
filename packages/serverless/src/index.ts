@@ -94,12 +94,8 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   app.use(
     '/graphql',
     cors<cors.CorsRequest>({
-      origin: (reqOrigin, callback) => {
-        if (reqOrigin && config.SERVICE_ORIGIN.get(reqOrigin)) {
-          return callback(null, true);
-        }
-        return callback(new Error('Not whitelisted origin'));
-      },
+      origin: '*', // @todo: temporary allow for now
+      credentials: true,
     }),
     express.json(),
     expressMiddleware(server, {

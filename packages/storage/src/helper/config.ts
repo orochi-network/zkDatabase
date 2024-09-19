@@ -10,10 +10,10 @@ export const NODE_ENV_VALUES = [
 
 type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 
-interface TApplicationConfig {
+type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
-}
+};
 
 const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
   NODE_ENV: Joi.string()

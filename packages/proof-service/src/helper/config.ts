@@ -31,7 +31,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .regex(/^mongodb([+a-z]+|):\/\//),
     BROKER_SERVICE: Joi.string()
       .pattern(/^http(|s):\/\//)
-      .default('http://0.0.0.0:31337')
+      .default('http://0.0.0.0:31337'),
   }
 );
 
