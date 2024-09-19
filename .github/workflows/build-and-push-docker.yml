@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-
+      
 env:
   DOCKER_REPO_BROKER_SERVICE: orochinetwork/zkdb-broker-service
   DOCKER_REPO_PROOF_SERVICE: orochinetwork/zkdb-proof-service
@@ -110,7 +110,7 @@ jobs:
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
           if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"2"* ]]; then
             echo "Building and pushing Broker Service..."
-            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest \
               -f packages/broker-service/Dockerfile \
               --platform=linux/amd64 \
@@ -127,7 +127,7 @@ jobs:
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
           if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"3"* ]]; then
             echo "Building and pushing Proof Service..."
-            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest \
               -f packages/proof-service/Dockerfile \
               --platform=linux/amd64 \
@@ -144,7 +144,7 @@ jobs:
           echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
           if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"1"* ]]; then
             echo "Building and pushing Serverless Service..."
-            echo "${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
             docker build -t ${{ env.DOCKER_REPO_SERVERLESS }}:latest \
               -f packages/serverless/Dockerfile \
               --platform=linux/amd64 \
