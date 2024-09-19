@@ -49,5 +49,8 @@ RUN chown -R appuser:appuser /usr/src/app
 # Switch to the non-root user
 USER appuser
 
+# Set the working directory for the serverless service
+WORKDIR /usr/src/app/packages/serverless
+
 # Set the entrypoint to the application
-ENTRYPOINT ["node", "packages/serverless/build/src/index.js"]
+ENTRYPOINT ["node", "build/src/index.js"]
