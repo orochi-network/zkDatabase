@@ -277,7 +277,7 @@ type TUserResolver = {
     findUser: typeof findUser;
   };
   Mutation: {
-    userGetEcdsaChallenge: any;
+    userGetEcdsaChallenge: typeof userGetEcdsaChallenge;
     userSignIn: typeof userSignIn;
     userSignOut: typeof userSignOut;
     userSignUp: typeof userSignOut;
