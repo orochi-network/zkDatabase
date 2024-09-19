@@ -1,5 +1,4 @@
-import pkg from "@apollo/client";
-const { gql } = pkg;
+import { gql } from "@apollo/client";
 import client from "../../client.js";
 import { SignInInfo } from "../../types/authentication.js";
 import { GraphQLResult } from "../../../utils/result.js";
