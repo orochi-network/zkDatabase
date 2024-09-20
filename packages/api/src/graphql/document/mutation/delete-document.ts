@@ -1,56 +1,41 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TMerkleWitness } from "../../types/merkle-tree.js";
 const { gql } = pkg;
-import { MerkleWitness } from "../../types/merkle-tree.js";
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const DELETE_DOCUMENT = gql`
-  mutation DocumentDrop(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentDrop(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
+/**
+ * Deletes a document from a specified collection in a database.
+ *
+ * @function
+ * @template TMerkleWitness - The type representing the Merkle witness.
+ * @param {string} databaseName - The name of the database.
+ * @param {string} collectionName - The name of the collection.
+ * @param {JSON} documentQuery - The query to identify the document to be deleted.
+ * @returns {TAsyncGraphQLResult<TMerkleWitness>} - A promise that resolves to the result of the document deletion, containing the Merkle witness.
+ */
+export const deleteDocument = createMutateFunction<
+  TMerkleWitness,
+  { databaseName: string; collectionName: string; documentQuery: JSON },
+  { documentDrop: TMerkleWitness }
+>(
+  gql`
+    mutation DocumentDrop(
+      $databaseName: String!
+      $collectionName: String!
+      $documentQuery: JSON!
     ) {
-      isLeft
-      sibling
+      documentDrop(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        documentQuery: $documentQuery
+      ) {
+        isLeft
+        sibling
+      }
     }
-  }
-`;
-
-export const deleteDocument = async (
-  databaseName: string,
-  collectionName: string,
-  documentQuery: JSON
-): Promise<GraphQLResult<MerkleWitness>> => {
-  try {
-    const {
-      data: { documentDrop },
-      errors,
-    } = await client.mutate({
-      mutation: DELETE_DOCUMENT,
-      variables: {
-        databaseName,
-        collectionName,
-        documentQuery,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<MerkleWitness>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    return GraphQLResult.wrap<MerkleWitness>(documentDrop);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<MerkleWitness>(error);
-    } else {
-      return GraphQLResult.wrap<MerkleWitness>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.documentDrop
+);

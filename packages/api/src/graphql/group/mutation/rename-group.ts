@@ -1,52 +1,32 @@
 import pkg from "@apollo/client";
+import { createMutateFunction } from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const RENAME_GROUP = gql`
-  mutation GroupRename(
-    $databaseName: String!
-    $groupName: String!
-    $newGroupName: String!
-  ) {
-    groupRename(
-      databaseName: $databaseName
-      groupName: $groupName
-      newGroupName: $newGroupName
-    )
-  }
-`;
-
-export const renameGroup = async (
-  databaseName: string,
-  groupName: string,
-  newGroupName: string
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { groupRename },
-      errors,
-    } = await client.mutate({
-      mutation: RENAME_GROUP,
-      variables: {
-        databaseName,
-        groupName,
-        newGroupName,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<boolean>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Renames a group within a specified database.
+ *
+ * @param databaseName - The name of the database containing the group to be renamed.
+ * @param groupName - The current name of the group to be renamed.
+ * @param newGroupName - The new name for the group.
+ * @returns A boolean indicating whether the group was successfully renamed.
+ */
+export const renameGroup = createMutateFunction<
+  boolean,
+  { databaseName: string; groupName: string; newGroupName: string },
+  { groupRename: boolean }
+>(
+  gql`
+    mutation GroupRename(
+      $databaseName: String!
+      $groupName: String!
+      $newGroupName: String!
+    ) {
+      groupRename(
+        databaseName: $databaseName
+        groupName: $groupName
+        newGroupName: $newGroupName
+      )
     }
-
-    return GraphQLResult.wrap<boolean>(groupRename);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.groupRename
+);

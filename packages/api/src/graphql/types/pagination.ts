@@ -1,4 +1,4 @@
-export type Pagination = {
+export type TPagination = {
   limit: number;
   offset: number;
 };

@@ -1,64 +1,55 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TDocumentPayload } from "../../types/document.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { DocumentPayload } from "../../types/document.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const FIND_DOCUMENT = gql`
-  query DocumentFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
+/**
+ * Executes a GraphQL query to find a document in a specified database and collection.
+ *
+ * @function
+ * @template TDocumentPayload - The type of the document payload.
+ * @param {Object} variables - The variables for the GraphQL query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.collectionName - The name of the collection.
+ * @param {any} variables.documentQuery - The query to find the document.
+ * @returns {TAsyncGraphQLResult<TDocumentPayload>} The found document payload.
+ *
+ * @example
+ * const result = await findDocument({
+ *   databaseName: 'myDatabase',
+ *   collectionName: 'myCollection',
+ *   documentQuery: { _id: '12345' }
+ * });
+ * console.log(result.documentFind);
+ */
+export const findDocument = createQueryFunction<
+  TDocumentPayload,
+  { databaseName: string; collectionName: string; documentQuery: any },
+  { documentFind: TDocumentPayload }
+>(
+  gql`
+    query DocumentFind(
+      $databaseName: String!
+      $collectionName: String!
+      $documentQuery: JSON!
     ) {
-      docId
-      fields {
-        name
-        kind
-        value
+      documentFind(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        documentQuery: $documentQuery
+      ) {
+        docId
+        fields {
+          name
+          kind
+          value
+        }
+        createdAt
       }
-      createdAt
     }
-  }
-`;
-
-export const findDocument = async (
-  databaseName: string,
-  collectionName: string,
-  documentQuery: JSON
-): Promise<GraphQLResult<DocumentPayload>> => {
-  try {
-    const {
-      data: { documentFind },
-      error,
-    } = await client.query({
-      query: FIND_DOCUMENT,
-      variables: {
-        databaseName,
-        collectionName,
-        documentQuery,
-      },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<DocumentPayload>(error);
-    }
-    const payload: DocumentPayload = {
-      docId: documentFind.docId,
-      fields: documentFind.fields,
-      createdAt: documentFind.fields,
-    };
-
-    return GraphQLResult.wrap(payload);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<DocumentPayload>(error);
-    } else {
-      return GraphQLResult.wrap<DocumentPayload>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.documentFind
+);

@@ -1,46 +1,34 @@
 import pkg from "@apollo/client";
+import { TPagination } from "../../types/pagination.js";
+import { TSearch } from "../../types/search.js";
+import { TUser } from "../../types/user.js";
+import { createQueryFunction } from "../common.js";
 const { gql } = pkg;
-import { Search } from "../../types/search.js";
-import client from "../../client.js";
-import { Pagination } from "../../types/pagination.js";
-import { User } from "../../types/user.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const SEARCH_USERS = gql`
-  query SearchUser($search: SearchInput, $pagination: PaginationInput) {
-    searchUser(search: $search, pagination: $pagination) {
-      email
-      publicKey
-      userName
+/**
+ * Executes a GraphQL query to search for users based on the provided search criteria and pagination options.
+ *
+ * @function
+ * @template TUser - The type representing a user.
+ * @template TSearch - The type representing the search criteria.
+ * @template TPagination - The type representing the pagination options.
+ * @param {Search} search - The search criteria input.
+ * @param {Pagination} pagination - The pagination options input.
+ * @returns {TAsyncGraphQLResult<TUser>} - A promise that resolves to an object containing the search results.
+ */
+export const searchUsers = createQueryFunction<
+  TUser,
+  { search: TSearch; pagination: TPagination },
+  { searchUser: TUser }
+>(
+  gql`
+    query SearchUser($search: SearchInput, $pagination: PaginationInput) {
+      searchUser(search: $search, pagination: $pagination) {
+        email
+        publicKey
+        userName
+      }
     }
-  }
-`;
-
-export async function searchUsers(
-  search?: Search | undefined,
-  pagination?: Pagination | undefined
-): Promise<GraphQLResult<User>> {
-  try {
-    const {
-      data: { searchUser },
-      errors,
-    } = await client.query({
-      query: SEARCH_USERS,
-      variables: [search, pagination],
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<User>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    return GraphQLResult.wrap<User>(searchUser);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<User>(error);
-    } else {
-      return GraphQLResult.wrap<User>(Error("Unknown Error"));
-    }
-  }
-}
+  `,
+  (data) => data.searchUser
+);

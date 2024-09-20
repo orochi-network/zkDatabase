@@ -1,39 +1,30 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
-const GET_ROOT = gql`
-  query GetRoot($databaseName: String!) {
-    getRoot(databaseName: $databaseName)
-  }
-`;
 
-export const getMerkleRoot = async (
-  databaseName: string
-): Promise<GraphQLResult<string>> => {
-  try {
-    const {
-      data: { getRoot },
-      errors,
-    } = await client.query({
-      query: GET_ROOT,
-      variables: {
-        databaseName,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<string>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Retrieves the Merkle root for a specified database.
+ *
+ * @function getMerkleRoot
+ * @template T - The type of the result.
+ * @template Variables - The type of the variables for the query.
+ * @template Data - The type of the data returned by the query.
+ *
+ * @param {string} databaseName - The name of the database for which to retrieve the Merkle root.
+ * @returns {TAsyncGraphQLResult<string>} The Merkle root of the specified database.
+ */
+export const getMerkleRoot = createQueryFunction<
+  string,
+  { databaseName: string },
+  { getRoot: string }
+>(
+  gql`
+    query GetRoot($databaseName: String!) {
+      getRoot(databaseName: $databaseName)
     }
-
-    return GraphQLResult.wrap<string>(getRoot);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<string>(error);
-    } else {
-      return GraphQLResult.wrap<string>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.getRoot
+);

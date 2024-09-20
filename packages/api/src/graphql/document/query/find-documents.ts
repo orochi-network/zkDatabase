@@ -1,64 +1,56 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TDocumentPayload } from "../../types/document.js";
+import { TPagination } from "../../types/pagination.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { DocumentPayload } from "../../types/document.js";
-import { Pagination } from "../../types/pagination.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const SEARCH_DOCUMENTS = gql`
-  query DocumentsFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $pagination: PaginationInput
-  ) {
-    documentsFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      pagination: $pagination
+/**
+ * Executes a GraphQL query to find documents in a specified database and collection.
+ *
+ * @function
+ * @template TDocumentPayload - The type of the document payload.
+ * @param {Object} variables - The variables for the query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.collectionName - The name of the collection.
+ * @param {any} variables.documentQuery - The query to filter documents.
+ * @param {TPagination} [variables.pagination] - Optional pagination parameters.
+ * @returns {TAsyncGraphQLResult<TDocumentPayload>} The result of the query containing the found documents.
+ */
+export const findDocuments = createQueryFunction<
+  TDocumentPayload,
+  {
+    databaseName: string;
+    collectionName: string;
+    documentQuery: any;
+    pagination?: TPagination;
+  },
+  { documentsFind: TDocumentPayload }
+>(
+  gql`
+    query DocumentsFind(
+      $databaseName: String!
+      $collectionName: String!
+      $documentQuery: JSON!
+      $pagination: PaginationInput
     ) {
-      docId
-      fields {
-        name
-        kind
-        value
+      documentsFind(
+        databaseName: $databaseName
+        collectionName: $collectionName
+        documentQuery: $documentQuery
+        pagination: $pagination
+      ) {
+        docId
+        fields {
+          name
+          kind
+          value
+        }
+        createdAt
       }
-      createdAt
     }
-  }
-`;
-
-export const findDocuments = async (
-  databaseName: string,
-  collectionName: string,
-  documentQuery: JSON,
-  pagination?: Pagination
-): Promise<GraphQLResult<DocumentPayload>> => {
-  try {
-    const {
-      data: { documentsFind },
-      error,
-    } = await client.query({
-      query: SEARCH_DOCUMENTS,
-      variables: {
-        databaseName,
-        collectionName,
-        documentQuery,
-        pagination,
-      },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<DocumentPayload>(error);
-    }
-
-    return GraphQLResult.wrap(documentsFind);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<DocumentPayload>(error);
-    } else {
-      return GraphQLResult.wrap<DocumentPayload>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.documentsFind
+);

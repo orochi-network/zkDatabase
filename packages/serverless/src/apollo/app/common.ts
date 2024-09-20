@@ -38,12 +38,8 @@ export const groupName = Joi.string()
   .required()
   .pattern(/^[a-z]+[_a-z0-9]+/i);
 
-export const groupDescription = Joi.string()
-  .trim()
-  .min(10)
-  .max(256)
-  .required();
- 
+export const groupDescription = Joi.string().trim().min(10).max(256).required();
+
 export const groupOptionalDescription = Joi.string()
   .allow('')
   .optional()

@@ -1,11 +1,11 @@
-export type Condition = {
+export type TCondition = {
   field: string;
   value: string;
   operator: string;
 };
 
-export type Search = {
-  and?: [Search];
-  or?: [Search];
-  condition?: Condition;
+export type TSearch = {
+  and?: [TSearch];
+  or?: [TSearch];
+  condition?: TCondition;
 };

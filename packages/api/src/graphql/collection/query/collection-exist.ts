@@ -1,45 +1,35 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const COLLECTION_EXIST = gql`
-  query CollectionExist($databaseName: String!, $collectionName: String!) {
-    collectionExist(
-      databaseName: $databaseName
-      collectionName: $collectionName
-    )
-  }
-`;
-
-export const collectionExist = async (
-  databaseName: string,
-  collectionName: string
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { collectionExist },
-      error,
-    } = await client.query({
-      query: COLLECTION_EXIST,
-      variables: { databaseName, collectionName },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<boolean>(error);
+/**
+ * Checks if a collection exists within a specified database.
+ *
+ * @function
+ * @param {Object} variables - The variables required for the query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.collectionName - The name of the collection.
+ * @returns {TAsyncGraphQLResult<boolean>} - A promise that resolves to a boolean indicating whether the collection exists.
+ *
+ * @example
+ * const exists = await collectionExist({ databaseName: 'myDatabase', collectionName: 'myCollection' });
+ * console.log(exists); // true or false
+ */
+export const collectionExist = createQueryFunction<
+  boolean,
+  { databaseName: string; collectionName: string },
+  { collectionExist: boolean }
+>(
+  gql`
+    query CollectionExist($databaseName: String!, $collectionName: String!) {
+      collectionExist(
+        databaseName: $databaseName
+        collectionName: $collectionName
+      )
     }
-    
-    if (typeof collectionExist === 'boolean') {
-      return GraphQLResult.wrap(collectionExist as boolean);
-    }
-
-    return GraphQLResult.wrap<boolean>(new Error('Unexpected response format or type'));
-    
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error('Unknown Error'))
-    }
-  }
-};
+  `,
+  (data) => data.collectionExist
+);

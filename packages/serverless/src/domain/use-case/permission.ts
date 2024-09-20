@@ -67,7 +67,7 @@ async function checkPermission(
   if (await isDatabaseOwner(databaseName, actor)) {
     return true;
   }
-  
+
   const permission = await readPermission(
     databaseName,
     collectionName,

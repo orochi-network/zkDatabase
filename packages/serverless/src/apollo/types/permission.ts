@@ -1,4 +1,8 @@
-import { PermissionSet, Permissions, FullPermissions } from '../../domain/types/permission.js';
+import {
+  PermissionSet,
+  Permissions,
+  FullPermissions,
+} from '../../domain/types/permission.js';
 
 export type TPermissionSet = PermissionSet;
 

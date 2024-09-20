@@ -1,41 +1,30 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TGroupInfo } from "../../types/group.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GroupInfo } from "../../types/group.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const GROUP_DESCRIPTION = gql`
-  mutation GroupInfo($databaseName: String!, $groupName: String!) {
-    groupInfo(databaseName: $databaseName, groupName: $groupName)
-  }
-`;
-
-export const getGroupDescription = async (
-  databaseName: string,
-  groupName: string
-): Promise<GraphQLResult<GroupInfo>> => {
-  try {
-    const {
-      data: { groupInfo },
-      error,
-    } = await client.query({
-      query: GROUP_DESCRIPTION,
-      variables: {
-        databaseName,
-        groupName,
-      },
-    });
-
-    if (error) {
-      return GraphQLResult.wrap<GroupInfo>(error);
+/**
+ * Retrieves the description of a group from the database.
+ *
+ * @function
+ * @template TGroupInfo - The type of the group information.
+ * @param {Object} variables - The variables required for the query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.groupName - The name of the group.
+ * @returns {TAsyncGraphQLResult<TGroupInfo>} The group information.
+ */
+export const getGroupDescription = createQueryFunction<
+  TGroupInfo,
+  { databaseName: string; groupName: string },
+  { groupInfo: TGroupInfo }
+>(
+  gql`
+    mutation GroupInfo($databaseName: String!, $groupName: String!) {
+      groupInfo(databaseName: $databaseName, groupName: $groupName)
     }
-
-    return GraphQLResult.wrap(groupInfo);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<GroupInfo>(error);
-    } else {
-      return GraphQLResult.wrap<GroupInfo>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.groupInfo
+);

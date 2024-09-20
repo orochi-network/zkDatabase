@@ -1,52 +1,42 @@
-import { gql } from "@apollo/client";
-import client from "../../client.js";
-import { SignUpData, SignatureProofData } from "../../types/authentication.js";
-import { User } from "../../types/user.js";
-import { GraphQLResult } from "../../../utils/result.js";
+import pkg from "@apollo/client";
+import {
+  TSignUpData,
+  TSignatureProofData,
+} from "../../types/authentication.js";
+import { TUser } from "../../types/user.js";
+import { createMutateFunction } from "../common.js";
+const { gql } = pkg;
 
-const SIGN_UP = gql`
-  mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
-    userSignUp(signUp: $signUp, proof: $proof) {
-      success
-      error
-      userName
-      email
-      publicKey
+export type TUserSignUpRecord = TUser;
+
+/**
+ * Mutation function to sign up a new user.
+ *
+ * @function
+ * @template TUser - The user type.
+ * @template TSignatureProofData - The signature proof data type.
+ * @template TSignUpData - The sign-up data type.
+ * @template TUserSignUpRecord - The user sign-up record type.
+ *
+ * @param {TUser} TUser - The user type.
+ * @param {Object} variables - The variables for the mutation.
+ * @param {TSignatureProofData} variables.proof - The proof data for the sign-up.
+ * @param {TSignUpData} variables.signUp - The sign-up data.
+ * @returns {TAsyncGraphQLResult<TUserSignUpRecord>} - The user sign-up record.
+ */
+export const signUp = createMutateFunction<
+  TUser,
+  { proof: TSignatureProofData; signUp: TSignUpData },
+  { userSignUp: TUserSignUpRecord }
+>(
+  gql`
+    mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
+      userSignUp(signUp: $signUp, proof: $proof) {
+        userName
+        email
+        publicKey
+      }
     }
-  }
-`;
-
-export const signUp = async (
-  proof: SignatureProofData,
-  signUpData: SignUpData
-): Promise<GraphQLResult<User>> => {
-  try {
-    const {
-      data: { userSignUp },
-      errors,
-    } = await client.mutate({
-      mutation: SIGN_UP,
-      variables: { signUp: signUpData, proof: proof },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<User>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    const user: User = {
-      userName: userSignUp.userName,
-      email: userSignUp.email,
-      publicKey: userSignUp.publicKey,
-    };
-
-    return GraphQLResult.wrap<User>(user);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<User>(error);
-    } else {
-      return GraphQLResult.wrap<User>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.userSignUp
+);

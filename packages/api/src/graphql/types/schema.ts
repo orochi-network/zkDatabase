@@ -1,7 +1,7 @@
-export type SchemaField = {
+export type TSchemaField = {
   name: string;
   kind: string;
   indexed?: boolean;
 };
 
-export type Schema = SchemaField[]
+export type TSchema = TSchemaField[];

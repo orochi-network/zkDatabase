@@ -1,4 +1,4 @@
-import { SearchInput } from "../types/search.js";
+import { SearchInput } from '../types/search.js';
 
 export default function buildMongoQuery<T>(searchInput?: SearchInput<T>): any {
   if (!searchInput) {

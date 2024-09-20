@@ -1,4 +1,4 @@
-export type Session = {
+export type TSession = {
   sessionKey: string;
   sessionId: string;
 };

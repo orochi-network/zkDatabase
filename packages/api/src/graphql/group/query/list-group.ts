@@ -1,36 +1,29 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TGroupInfo } from "../../types/group.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GroupInfo } from "../../types/group.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const LIST_GROUPS = gql`
-  query GroupListAll($databaseName: String!) {
-    groupListAll(databaseName: $databaseName)
-  }
-`;
-
-export const listGroups = async (
-  databaseName: string
-): Promise<GraphQLResult<GroupInfo>> => {
-  try {
-    const {
-      data: { groupListAll },
-      error,
-    } = await client.query({
-      query: LIST_GROUPS,
-      variables: { databaseName },
-    });
-    if (error) {
-      return GraphQLResult.wrap<GroupInfo>(error);
+/**
+ * Fetches a list of all groups from the specified database.
+ *
+ * @function
+ * @template TGroupInfo - The type representing the group information.
+ * @param {Object} variables - The variables required for the query.
+ * @param {string} variables.databaseName - The name of the database from which to fetch the groups.
+ * @returns {TAsyncGraphQLResult<TGroupInfo>} A promise that resolves to the list of group information.
+ */
+export const listGroups = createQueryFunction<
+  TGroupInfo,
+  { databaseName: string },
+  { groupListAll: TGroupInfo }
+>(
+  gql`
+    query GroupListAll($databaseName: String!) {
+      groupListAll(databaseName: $databaseName)
     }
-
-    return GraphQLResult.wrap(groupListAll);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<GroupInfo>(error);
-    } else {
-      return GraphQLResult.wrap<GroupInfo>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.groupListAll
+);

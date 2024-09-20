@@ -42,7 +42,7 @@ async function createGroup(
     return group != null;
   }
 
-  throw Error('Only database owner allowed to create group')
+  throw Error('Only database owner allowed to create group');
 }
 
 async function checkUserGroupMembership(

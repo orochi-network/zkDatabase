@@ -1,46 +1,33 @@
 import pkg from "@apollo/client";
+import {
+  createQueryFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
+import { TMerkleWitness } from "../../types/merkle-tree.js";
 const { gql } = pkg;
-import { MerkleWitness } from "../../types/merkle-tree.js";
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const GET_WITNESS_BY_DOCUMENT_QUERY = gql`
-  query GetWitness($databaseName: String!, $docId: String!) {
-    getWitnessByDocument(databaseName: $databaseName, docId: $docId) {
-      isLeft
-      sibling
+/**
+ * Executes a GraphQL query to retrieve a Merkle witness by document ID.
+ *
+ * @function
+ * @template TMerkleWitness - The type representing the Merkle witness.
+ * @param {Object} variables - The variables for the GraphQL query.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.docId - The ID of the document.
+ * @returns {TAsyncGraphQLResult<TMerkleWitness>} The Merkle witness associated with the specified document ID.
+ */
+export const getWitnessByDocumentId = createQueryFunction<
+  TMerkleWitness,
+  { databaseName: string; docId: string },
+  { getWitnessByDocument: TMerkleWitness }
+>(
+  gql`
+    query GetWitness($databaseName: String!, $docId: String!) {
+      getWitnessByDocument(databaseName: $databaseName, docId: $docId) {
+        isLeft
+        sibling
+      }
     }
-  }
-`;
-
-export const getWitnessByDocumentId = async (
-  databaseName: string,
-  docId: string
-): Promise<GraphQLResult<MerkleWitness>> => {
-  try {
-    const {
-      data: { getWitnessByDocument },
-      errors,
-    } = await client.query({
-      query: GET_WITNESS_BY_DOCUMENT_QUERY,
-      variables: {
-        databaseName,
-        docId,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<MerkleWitness>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
-    }
-
-    return GraphQLResult.wrap<MerkleWitness>(getWitnessByDocument);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<MerkleWitness>(error);
-    } else {
-      return GraphQLResult.wrap<MerkleWitness>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.getWitnessByDocument
+);

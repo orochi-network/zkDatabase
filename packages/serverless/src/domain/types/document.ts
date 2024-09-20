@@ -7,7 +7,7 @@ export type DocumentFields = Array<{
 }>;
 
 export type Document = {
-  docId: string,
-  fields: DocumentFields,
-  createdAt: Date
-}
+  docId: string;
+  fields: DocumentFields;
+  createdAt: Date;
+};

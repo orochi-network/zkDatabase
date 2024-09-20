@@ -1,52 +1,37 @@
 import pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  TAsyncGraphQLResult,
+} from "graphql/user/common.js";
 const { gql } = pkg;
-import client from "../../client.js";
-import { GraphQLResult } from "../../../utils/result.js";
 
-const ADD_USERS_GROUP = gql`
-  mutation GroupAddUsers(
-    $databaseName: String!
-    $groupName: String!
-    $userNames: [String!]!
-  ) {
-    groupAddUsers(
-      databaseName: $databaseName
-      groupName: $groupName
-      userNames: $userNames
-    )
-  }
-`;
-
-export const addUsersToGroup = async (
-  databaseName: string,
-  groupName: string,
-  userNames: string[]
-): Promise<GraphQLResult<boolean>> => {
-  try {
-    const {
-      data: { groupAddUsers },
-      errors,
-    } = await client.mutate({
-      mutation: ADD_USERS_GROUP,
-      variables: {
-        databaseName,
-        groupName,
-        userNames,
-      },
-    });
-
-    if (errors) {
-      return GraphQLResult.wrap<boolean>(
-        Error(errors.map((error: any) => error.message).join(", "))
-      );
+/**
+ * Adds users to a specified group in the database.
+ *
+ * @function
+ * @param {Object} variables - The input variables for the mutation.
+ * @param {string} variables.databaseName - The name of the database.
+ * @param {string} variables.groupName - The name of the group.
+ * @param {string[]} variables.userNames - An array of usernames to be added to the group.
+ * @returns {TAsyncGraphQLResult<boolean>} - A promise that resolves to a boolean indicating the success of the operation.
+ */
+export const addUsersToGroup = createMutateFunction<
+  boolean,
+  { databaseName: string; groupName: string; userNames: string[] },
+  { groupAddUsers: boolean }
+>(
+  gql`
+    mutation GroupAddUsers(
+      $databaseName: String!
+      $groupName: String!
+      $userNames: [String!]!
+    ) {
+      groupAddUsers(
+        databaseName: $databaseName
+        groupName: $groupName
+        userNames: $userNames
+      )
     }
-
-    return GraphQLResult.wrap<boolean>(groupAddUsers);
-  } catch (error) {
-    if (error instanceof Error) {
-      return GraphQLResult.wrap<boolean>(error);
-    } else {
-      return GraphQLResult.wrap<boolean>(Error("Unknown Error"));
-    }
-  }
-};
+  `,
+  (data) => data.groupAddUsers
+);

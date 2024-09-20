@@ -1,28 +1,34 @@
-export type TResultType = "error" | "object" | "array" | "undefined";
+export type TResultType = "error" | "undefined" | "data";
+
+export type TResult<T> = T | any | undefined | null;
 
 export class GraphQLResult<T> {
   private type: TResultType;
-  private result: T | T[] | Error | undefined | null;
 
-  private constructor(result: T | T[] | Error | undefined | null) {
+  private result: TResult<T>;
+
+  private constructor(result: TResult<T>) {
     if (result instanceof Error) {
       this.type = "error";
       this.result = result;
     } else if (result === null || typeof result === "undefined") {
       this.type = "undefined";
       this.result = undefined;
-    } else if (Array.isArray(result)) {
-      this.type = "array";
-      this.result = result;
     } else {
-      this.type = "object";
+      this.type = "data";
+      this.result = result;
+    }
+    // Handle ApolloError
+    if (
+      typeof result === "object" &&
+      (this.result as Error[]).every((e) => e instanceof Error)
+    ) {
+      this.type = "error";
       this.result = result;
     }
   }
 
-  public static wrap<T>(
-    result: T | T[] | Error |  undefined | null
-  ): GraphQLResult<T> {
+  public static wrap<T>(result: TResult<T>): GraphQLResult<T> {
     return new GraphQLResult(result);
   }
 
@@ -30,7 +36,7 @@ export class GraphQLResult<T> {
     if (this.isArray()) {
       return (this.result as T[]).length;
     }
-    return this.isObject() ? 1 : 0;
+    return this.isValid() ? 1 : 0;
   }
 
   public isError(): boolean {
@@ -42,15 +48,15 @@ export class GraphQLResult<T> {
   }
 
   public isValid(): boolean {
-    return this.type === "object" || this.type === "array";
+    return this.type === "data";
   }
 
   public isArray(): boolean {
-    return this.type === "array";
+    return typeof this.result === "object" && Array.isArray(this.result);
   }
 
   public isObject(): boolean {
-    return this.type === "object";
+    return typeof this.result === "object" && !Array.isArray(this.result);
   }
 
   /**
@@ -67,32 +73,19 @@ export class GraphQLResult<T> {
     return this.isValid() && this.length > 0;
   }
 
-  public unwrapObject(): T {
-    if (this.isObject()) {
+  /**
+   * Checks if the result contains more than one item.
+   */
+  public isMany(): boolean {
+    return this.isArray() && this.length > 1;
+  }
+
+  public unwrap(): T {
+    if (this.isValid()) {
       return this.result as T;
     }
-    throw new Error("Expected an object but found none");
-  }
-
-  public unwrapArray(): T[] {
-    if (this.isArray()) {
-      return this.result as T[];
-    }
-    throw new Error("Expected an array but found none");
-  }
-
-  public unwrapOne(): T {
-    if (this.isObject()) {
-      return this.unwrapObject();
-    } else if (this.isArray() && this.length > 0) {
-      return this.unwrapArray()[0];
-    }
-    throw new Error("Expected at least one item, but found none");
-  }
-
-  public unwrapError(): Error {
     if (this.isError()) {
-      return this.result as Error;
+      throw this.result as Error;
     }
     throw new Error("Expected an error but found none");
   }

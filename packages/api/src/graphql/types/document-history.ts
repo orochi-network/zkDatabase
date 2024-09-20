@@ -1,6 +1,6 @@
-import { DocumentPayload } from "./document"
+import { TDocumentPayload } from "./document";
 
-export type DocumentHistoryPayload = {
-  docId: string,
-  documents: DocumentPayload[]
-}
+export type TDocumentHistoryPayload = {
+  docId: string;
+  documents: TDocumentPayload[];
+};
