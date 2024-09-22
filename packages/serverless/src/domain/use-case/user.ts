@@ -66,6 +66,9 @@ export async function signUpUser(
     if (result && result.acknowledged) {
       return user;
     }
+
+
+    // TODO: Return more meaningful error
     throw new Error('Unable to create new user');
   }
   throw new Error('Signature is not valid');

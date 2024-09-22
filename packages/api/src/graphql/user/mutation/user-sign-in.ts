@@ -32,6 +32,7 @@ export const signIn = createMutateFunction<
         accessToken
         userData
         publicKey
+        email
       }
     }
   `,
