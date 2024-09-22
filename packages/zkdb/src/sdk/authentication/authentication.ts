@@ -1,4 +1,4 @@
-import { signIn, signOut, signUp, setJwtPayloadFunction } from '@zkdb/api';
+import { signIn, signOut, signUp, setJwtTokenFunction, getEcdsa } from '@zkdb/api';
 import storage from '../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';
@@ -8,13 +8,12 @@ export class Authenticator {
   private signer: Signer;
 
   constructor(signer: Signer) {
-    setJwtPayloadFunction(() => {
-      const session = storage.getSession();
+    setJwtTokenFunction(() => {
+      const accessToken = storage.getAccessToken();
       const userInfo = storage.getUserInfo();
-      if (session && userInfo) {
+      if (accessToken && userInfo) {
         return {
-          sessionId: session.sessionId,
-          sessionKey: session.sessionKey,
+          accessToken,
           userInfo: {
             email: userInfo.email,
             userName: userInfo.userName,
@@ -28,18 +27,21 @@ export class Authenticator {
   }
 
   isLoggedIn(): boolean {
-    return storage.getSession() !== null;
+    return storage.getAccessToken() !== null;
   }
 
-  async signIn(email: string) {
+  async signIn() {
+    const ecdsaResult = await getEcdsa(undefined);
+    const ecdsaMessage = ecdsaResult.unwrap();
+
     const signInProof = await this.getSigner().signMessage(
       JSON.stringify({
-        email,
+        ecdsaMessage,
         timestamp: Math.floor(Date.now() / 1000),
       })
     );
 
-    await this.sendLoginRequest(email, signInProof);
+    await this.sendLoginRequest(signInProof);
   }
 
   async signUp(userName: string, email: string) {
@@ -50,32 +52,20 @@ export class Authenticator {
       })
     );
 
-    await this.sendRegistrationRequest(email, userName, signUpProof)
+    await this.sendRegistrationRequest(email, userName, signUpProof);
   }
 
-  private async sendLoginRequest(email: string, proof: SignedData) {
-    const result = await signIn(email, proof);
+  private async sendLoginRequest(proof: SignedData) {
+    const result = await signIn({ proof });
 
-    if (result.isOne()) {
-      const userData = result.unwrapObject();
+    const userData = result.unwrap();
+    storage.setAccessToken(userData.accessToken);
 
-      storage.setSession({
-        sessionId: userData.session.sessionId,
-        sessionKey: userData.session.sessionKey,
-      });
-
-      storage.setUserInfo({
-        email: userData.user.email,
-        userName: userData.user.userName,
-        publicKey: userData.user.publicKey,
-      });
-    } else {
-      if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-    }
+    storage.setUserInfo({
+      email: userData.user.email,
+      userName: userData.user.userName,
+      publicKey: userData.user.publicKey,
+    });
   }
 
   private async sendRegistrationRequest(
@@ -83,23 +73,21 @@ export class Authenticator {
     userName: string,
     proof: SignedData
   ) {
-    const result = await signUp(proof, {
+    const result = await signUp({proof, signUp: {
       ...{
         userName,
         email,
       },
       timestamp: Math.floor(Date.now() / 1000),
       userData: {},
-    });
+    }});
 
-    if (result.isError()) {
-      throw result.unwrapError()
-    }
+    return result.unwrap();
   }
 
   async signOut(): Promise<void> {
     try {
-      await signOut();
+      await signOut(undefined);
     } finally {
       storage.clear();
     }
@@ -118,7 +106,7 @@ export class Authenticator {
 
   private getSigner(): Signer {
     if (this.signer === undefined) {
-      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first')
+      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first');
     }
 
     return this.signer;

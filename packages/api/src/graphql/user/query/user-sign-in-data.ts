@@ -1,5 +1,5 @@
 import pkg from "@apollo/client";
-import { createQueryFunction } from "../common.js";
+import { createQueryFunction } from "../../common.js";
 const { gql } = pkg;
 
 /**

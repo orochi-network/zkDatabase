@@ -18,26 +18,22 @@ export async function findDocument(
   collectionName: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  const result = await findDocumentRequest(
+  const result = await findDocumentRequest({
     databaseName,
     collectionName,
-    JSON.parse(JSON.stringify(filter))
-  );
+    documentQuery: JSON.parse(JSON.stringify(filter)),
+  });
 
-  if (result.isOne()) {
-    const document = result.unwrapObject();
-    return {
-      id: document.docId,
-      documentEncoded: document.fields.map((field) => ({
-        name: field.name,
-        kind: field.kind as ProvableTypeString,
-        value: field.value,
-      })),
-      createdAt: document.createdAt,
-    };
-  } else {
-    return null;
-  }
+  const document = result.unwrap();
+  return {
+    id: document.docId,
+    documentEncoded: document.fields.map((field) => ({
+      name: field.name,
+      kind: field.kind as ProvableTypeString,
+      value: field.value,
+    })),
+    createdAt: document.createdAt,
+  };
 }
 
 export async function createDocument(
@@ -46,27 +42,19 @@ export async function createDocument(
   documentEncoded: DocumentEncoded,
   permissions: Permissions
 ): Promise<MerkleWitness> {
-  const result = await createDocumentRequest(
+  const result = await createDocumentRequest({
     databaseName,
     collectionName,
-    documentEncoded,
-    permissions
-  );
+    documentRecord: documentEncoded,
+    documentPermission: permissions,
+  });
 
-  if (result.isOne()) {
-    const merkleWitness = result.unwrapObject();
+  const merkleWitness = result.unwrap();
 
-    return merkleWitness.map((node) => ({
-      isLeft: node.isLeft,
-      sibling: Field(node.sibling),
-    }));
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return merkleWitness.map((node) => ({
+    isLeft: node.isLeft,
+    sibling: Field(node.sibling),
+  }));
 }
 
 export async function updateDocument(
@@ -75,27 +63,19 @@ export async function updateDocument(
   documentEncoded: DocumentEncoded,
   filter: FilterCriteria
 ): Promise<MerkleWitness> {
-  const result = await updateDocumentRequest(
+  const result = await updateDocumentRequest({
     databaseName,
     collectionName,
-    JSON.parse(JSON.stringify(filter)),
-    documentEncoded
-  );
+    documentQuery: JSON.parse(JSON.stringify(filter)),
+    documentRecord: documentEncoded,
+  });
 
-  if (result.isOne()) {
-    const merkleWitness = result.unwrapObject();
+  const merkleWitness = result.unwrap();
 
-    return merkleWitness.map((node) => ({
-      isLeft: node.isLeft,
-      sibling: Field(node.sibling),
-    }));
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return merkleWitness.map((node) => ({
+    isLeft: node.isLeft,
+    sibling: Field(node.sibling),
+  }));
 }
 
 export async function deleteDocument(
@@ -103,28 +83,18 @@ export async function deleteDocument(
   collectionName: string,
   filter: FilterCriteria
 ): Promise<MerkleWitness> {
-  const result = await deleteDocumentRequest(
+  const result = await deleteDocumentRequest({
     databaseName,
     collectionName,
-    JSON.parse(JSON.stringify(filter))
-  );
+    documentQuery: JSON.parse(JSON.stringify(filter)),
+  });
 
-  console.log('result', result);
+  const merkleWitness = result.unwrap();
 
-  if (result.isOne()) {
-    const merkleWitness = result.unwrapObject();
-
-    return merkleWitness.map((node) => ({
-      isLeft: node.isLeft,
-      sibling: Field(node.sibling),
-    }));
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return merkleWitness.map((node) => ({
+    isLeft: node.isLeft,
+    sibling: Field(node.sibling),
+  }));
 }
 
 export async function findDocuments(
@@ -133,30 +103,22 @@ export async function findDocuments(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<Document[]> {
-  const result = await findDocumentsRequest(
+  const result = await findDocumentsRequest({
     databaseName,
     collectionName,
-    JSON.parse(JSON.stringify(filter)),
-    pagination
-  );
+    documentQuery: JSON.parse(JSON.stringify(filter)),
+    pagination,
+  });
 
-  if (result.isSome()) {
-    const documents = result.unwrapArray();
+  const documents = result.unwrap();
 
-    return documents.map((document) => ({
-      id: document.docId,
-      documentEncoded: document.fields.map((field) => ({
-        name: field.name,
-        kind: field.kind as ProvableTypeString,
-        value: field.value,
-      })),
-      createdAt: document.createdAt,
-    }));
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return documents.map((document) => ({
+    id: document.docId,
+    documentEncoded: document.fields.map((field) => ({
+      name: field.name,
+      kind: field.kind as ProvableTypeString,
+      value: field.value,
+    })),
+    createdAt: document.createdAt,
+  }));
 }

@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 import {
   createMutateFunction,
   TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TPermissions } from "../../types/ownership.js";
 import { TSchema } from "../../types/schema.js";
 const { gql } = pkg;

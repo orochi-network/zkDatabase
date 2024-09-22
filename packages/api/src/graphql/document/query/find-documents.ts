@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 import {
   createQueryFunction,
   TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TDocumentPayload } from "../../types/document.js";
 import { TPagination } from "../../types/pagination.js";
 const { gql } = pkg;
@@ -20,14 +20,14 @@ const { gql } = pkg;
  * @returns {TAsyncGraphQLResult<TDocumentPayload>} The result of the query containing the found documents.
  */
 export const findDocuments = createQueryFunction<
-  TDocumentPayload,
+  TDocumentPayload[],
   {
     databaseName: string;
     collectionName: string;
     documentQuery: any;
     pagination?: TPagination;
   },
-  { documentsFind: TDocumentPayload }
+  { documentsFind: Array<TDocumentPayload> }
 >(
   gql`
     query DocumentsFind(

@@ -4,7 +4,7 @@ import {
   TSignatureProofData,
 } from "../../types/authentication.js";
 import { TUser } from "../../types/user.js";
-import { createMutateFunction } from "../common.js";
+import { createMutateFunction } from "../../common.js";
 const { gql } = pkg;
 
 export type TUserSignUpRecord = TUser;

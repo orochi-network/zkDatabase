@@ -37,7 +37,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     groupName: string,
     type: T,
     permissions: Permissions
-  ): Promise<void> {
+  ): Promise<boolean> {
     return createCollection(
       this.databaseName,
       collectionName,
@@ -47,7 +47,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     );
   }
 
-  async createGroup(groupName: string, description: string): Promise<void> {
+  async createGroup(groupName: string, description: string): Promise<boolean> {
     return createGroup(this.databaseName, groupName, description);
   }
 
@@ -59,7 +59,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return getGroups(this.databaseName);
   }
 
-  async create(merkleHeight: number, publicKey: PublicKey): Promise<void> {
+  async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
     return createDatabase(this.databaseName, merkleHeight, publicKey);
   }
 
@@ -67,7 +67,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return getDatabaseSettings(this.databaseName);
   }
 
-  async changeOwner(newOwner: string): Promise<void> {
+  async changeOwner(newOwner: string): Promise<boolean> {
     return changeDatabaseOwner(this.databaseName, newOwner);
   }
 }

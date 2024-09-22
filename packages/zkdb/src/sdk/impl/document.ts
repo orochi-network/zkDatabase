@@ -40,7 +40,7 @@ export class ZKDocumentImpl implements ZKDocument {
   }
 
   async changeGroup(groupName: string): Promise<void> {
-    return updateDocumentGroupOwnership(
+    await updateDocumentGroupOwnership(
       this.databaseName,
       this.collectionName,
       this._id,
@@ -49,7 +49,7 @@ export class ZKDocumentImpl implements ZKDocument {
   }
 
   async changeOwner(userName: string): Promise<void> {
-    return updateDocumentUserOwnership(
+    await updateDocumentUserOwnership(
       this.databaseName,
       this.collectionName,
       this._id,
@@ -57,7 +57,7 @@ export class ZKDocumentImpl implements ZKDocument {
     );
   }
 
-  async setPermissions(permissions: Permissions): Promise<Permissions> {
+  async setPermissions(permissions: Permissions): Promise<Ownership> {
     return setDocumentPermissions(
       this.databaseName,
       this.collectionName,

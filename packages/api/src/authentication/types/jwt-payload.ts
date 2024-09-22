@@ -1,5 +1,4 @@
 export type JwtPayload = {
-  sessionId: string,
-  sessionKey: string,
+  accessToken: string
   userInfo: any
 }

@@ -14,17 +14,13 @@ export async function addUsersToGroup(
   groupName: string,
   userNames: string[]
 ) {
-  const result = await addUsersToGroupRequest(
+  const result = await addUsersToGroupRequest({
     databaseName,
     groupName,
-    userNames
-  );
+    userNames,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapObject();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function excludeUsersFromGroup(
@@ -32,17 +28,13 @@ export async function excludeUsersFromGroup(
   groupName: string,
   userNames: string[]
 ) {
-  const result = await removeUsersToGroupRequest(
+  const result = await removeUsersToGroupRequest({
     databaseName,
     groupName,
-    userNames
-  );
+    userNames,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapObject();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function changeGroupDescription(
@@ -50,81 +42,57 @@ export async function changeGroupDescription(
   groupName: string,
   description: string
 ) {
-  const result = await changeGroupDescriptionRequest(
+  const result = await changeGroupDescriptionRequest({
     databaseName,
     groupName,
-    description
-  );
+    groupDescription: description,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapObject();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap()
 }
 
 export async function getGroupDescription(
   databaseName: string,
   groupName: string
 ): Promise<GroupDescription> {
-  const result = await getGroupDescriptionRequest(databaseName, groupName);
+  const result = await getGroupDescriptionRequest({ databaseName, groupName });
 
-  if (result.isOne()) {
-    const groupDescription = result.unwrapObject();
-    return {
-      name: groupDescription.name,
-      description: groupDescription.description,
-      createdAt: new Date(groupDescription.createdAt),
-      createdBy: groupDescription.createdBy,
-    };
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  const groupDescription = result.unwrap();
+  return {
+    name: groupDescription.name,
+    description: groupDescription.description,
+    createdAt: new Date(groupDescription.createdAt),
+    createdBy: groupDescription.createdBy,
+  };
 }
 
 export async function renameGroup(
   databaseName: string,
   groupName: string,
   newGroupName: string
-): Promise<void> {
-  const result = await renameGroupRequest(
+): Promise<boolean> {
+  const result = await renameGroupRequest({
     databaseName,
     groupName,
-    newGroupName
-  );
+    newGroupName,
+  });
 
-  if (result.isError()) {
-    throw result.unwrapError();
-  } else {
-    throw Error('Unknown error');
-  }
+  return result.unwrap();
 }
 
 export async function getGroups(
   databaseName: string
 ): Promise<GroupDescription[]> {
-  const result = await listGroupsRequest(databaseName);
+  const result = await listGroupsRequest({ databaseName });
 
-  if (result.isSome()) {
-    const groups = result.unwrapArray();
+  const groups = result.unwrap();
 
-    return groups.map((group) => ({
-      name: group.name,
-      description: group.description,
-      createdAt: new Date(group.createdAt),
-      createdBy: group.createdBy,
-    }));
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return groups.map((group) => ({
+    name: group.name,
+    description: group.description,
+    createdAt: new Date(group.createdAt),
+    createdBy: group.createdBy,
+  }));
 }
 
 export async function createGroup(
@@ -132,11 +100,11 @@ export async function createGroup(
   groupName: string,
   description: string
 ) {
-  const result = await createGroupRequest(databaseName, groupName, description);
+  const result = await createGroupRequest({
+    databaseName,
+    groupName,
+    groupDescription: description,
+  });
 
-  if (result.isError()) {
-    throw result.unwrapError();
-  } else {
-    throw Error('Unknown error');
-  }
+  return result.unwrap();
 }

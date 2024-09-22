@@ -4,7 +4,7 @@ import { TUser } from "./user.js";
 
 export type TSignInInfo = {
   user: TUser;
-  session: TSession;
+  accessToken: string;
   userData: any;
 };
 

@@ -1,8 +1,7 @@
 import pkg from "@apollo/client";
 import {
   createQueryFunction,
-  TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TGroupInfo } from "../../types/group.js";
 const { gql } = pkg;
 
@@ -13,12 +12,12 @@ const { gql } = pkg;
  * @template TGroupInfo - The type representing the group information.
  * @param {Object} variables - The variables required for the query.
  * @param {string} variables.databaseName - The name of the database from which to fetch the groups.
- * @returns {TAsyncGraphQLResult<TGroupInfo>} A promise that resolves to the list of group information.
+ * @returns {TAsyncGraphQLResult<TGroupInfo[]>} A promise that resolves to the list of group information.
  */
 export const listGroups = createQueryFunction<
-  TGroupInfo,
+  TGroupInfo[],
   { databaseName: string },
-  { groupListAll: TGroupInfo }
+  { groupListAll: TGroupInfo[] }
 >(
   gql`
     query GroupListAll($databaseName: String!) {

@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 import {
   createQueryFunction,
   TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TDatabase } from "../../types/database.js";
 import { TPagination } from "../../types/pagination.js";
 import { TSearch } from "../../types/search.js";
@@ -28,13 +28,13 @@ const { gql } = pkg;
  * ```
  */
 export const listDatabases = createQueryFunction<
-  TDatabase,
-  { search: TSearch; pagination: TPagination },
-  { dbList: TDatabase }
+  TDatabase[],
+  { query: any; pagination: TPagination },
+  { dbList: TDatabase[] }
 >(
   gql`
-    query GetDbList($search: SearchInput, $pagination: PaginationInput) {
-      dbList(search: $search, pagination: $pagination) {
+    query GetDbList($query: JSON, $pagination: PaginationInput) {
+      dbList(query: $query, pagination: $pagination) {
         databaseName
         databaseSize
         merkleHeight

@@ -197,12 +197,16 @@ const userGetEcdsaChallenge = async (
   // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
   req.session.save();
+  console.log('userGetEcdsaChallenge - Session ID:', req.session.id);
+  console.log('userGetEcdsaChallenge - Session Data:', req.session);
   return req.session.ecdsaChallenge;
 };
 
 const userSignIn = publicWrapper(
   SignInRequest,
   async (_root: unknown, args: TSignInRequest, context) => {
+    console.log('userSignIn - Session ID:', context.req.session.id);
+    console.log('userSignIn - Session Data:', context.req.session);
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
     }

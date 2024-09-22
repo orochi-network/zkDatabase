@@ -1,8 +1,7 @@
 import pkg from "@apollo/client";
 import {
   createMutateFunction,
-  TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TDocumentEncoded } from "../../types/document.js";
 import { TMerkleWitness } from "../../types/merkle-tree.js";
 const { gql } = pkg;

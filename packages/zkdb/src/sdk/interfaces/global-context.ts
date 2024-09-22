@@ -10,7 +10,7 @@ export interface GlobalContext {
     databaseName: string,
     merkleHeight: number,
     publicKey: PublicKey
-  ): Promise<void>;
+  ): Promise<boolean>;
   databases(queryOptions: QueryOptions<DatabaseSearch>): Promise<Database[]>;
   databases(): Promise<Database[]>;
   users(queryOptions?: QueryOptions<UserSearch>): Promise<User[]>

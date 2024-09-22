@@ -3,7 +3,7 @@ import {
   TSignInInfo,
   TSignatureProofData,
 } from "../../types/authentication.js";
-import { createMutateFunction } from "../common.js";
+import { createMutateFunction } from "../../common.js";
 const { gql } = pkg;
 
 /**
@@ -29,8 +29,7 @@ export const signIn = createMutateFunction<
     mutation UserSignIn($proof: ProofInput!) {
       userSignIn(proof: $proof) {
         userName
-        sessionKey
-        sessionId
+        accessToken
         userData
         publicKey
       }

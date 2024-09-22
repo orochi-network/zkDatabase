@@ -1,8 +1,7 @@
 import pkg from "@apollo/client";
 import {
   createQueryFunction,
-  TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 const { gql } = pkg;
 
 /**

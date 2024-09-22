@@ -20,8 +20,8 @@ export class GraphQLResult<T> {
     }
     // Handle ApolloError
     if (
-      typeof result === "object" &&
-      (this.result as Error[]).every((e) => e instanceof Error)
+      Array.isArray(this.result) &&
+      this.result.every((e) => e instanceof Error)
     ) {
       this.type = "error";
       this.result = result;

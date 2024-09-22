@@ -19,16 +19,16 @@ export interface ZKDatabase {
     groupName: string,
     type: T,
     permissions: Permissions
-  ): Promise<void>;
+  ): Promise<boolean>;
   
-  createGroup(groupName: string, description: string): Promise<void>;
+  createGroup(groupName: string, description: string): Promise<boolean>;
 
   fromGroup(groupName: string): ZKGroup;
 
   getGroups(): Promise<GroupDescription[]>;
   getSettings(): Promise<DatabaseSettings>;
   
-  changeOwner(newOwner: string): Promise<void>
+  changeOwner(newOwner: string): Promise<boolean>
 
   getProof(): Promise<JsonProof>
 }

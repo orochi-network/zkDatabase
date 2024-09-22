@@ -1,8 +1,7 @@
 import pkg from "@apollo/client";
 import {
   createMutateFunction,
-  TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TOwnership, TOwnershipRequest } from "../../types/ownership.js";
 const { gql } = pkg;
 
@@ -24,7 +23,7 @@ const { gql } = pkg;
  */
 export const setOwner = createMutateFunction<
   Pick<TOwnership, "userName" | "groupName">,
-  TOwnershipRequest & { permissionOwn: TOwnership },
+  TOwnershipRequest & { grouping: string; newOwner: string },
   { permissionOwn: Pick<TOwnership, "userName" | "groupName"> }
 >(
   gql`

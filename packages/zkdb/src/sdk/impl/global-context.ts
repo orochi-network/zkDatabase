@@ -27,7 +27,7 @@ export class GlobalContextImpl implements GlobalContext {
     databaseName: string,
     merkleHeight: number,
     publicKey: PublicKey
-  ): Promise<void> {
+  ): Promise<boolean> {
     return createDatabase(databaseName, merkleHeight, publicKey);
   }
 }

@@ -1,6 +1,6 @@
 import { OperationVariables } from "@apollo/client";
-import { GraphQLResult } from "../../utils/result.js";
-import client from "../client.js";
+import { GraphQLResult } from "../utils/result.js";
+import client from "./client.js";
 
 export type TAsyncGraphQLResult<T> = Promise<GraphQLResult<T>>;
 
@@ -51,7 +51,7 @@ export const createQueryFunction = <T, Req = any, Res = any>(
         Req extends OperationVariables ? any : any
       >({
         query,
-        variables: variables as any,
+        variables: variables as any
       });
       if (!errors && data) {
         return GraphQLResult.wrap(postProcess(data));

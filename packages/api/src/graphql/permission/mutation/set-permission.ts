@@ -1,8 +1,7 @@
 import pkg from "@apollo/client";
 import {
   createMutateFunction,
-  TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import {
   TOwnership,
   TOwnershipRequest,

@@ -1,1 +1,1 @@
-export { setJwtPayloadFunction } from "./token-data.js";
+export { setJwtTokenFunction } from "./token-data.js";

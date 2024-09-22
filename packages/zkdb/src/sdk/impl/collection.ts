@@ -126,7 +126,7 @@ export class CollectionQueryImpl implements ZKCollection {
   }
 
   async changeGroup(groupName: string): Promise<void> {
-    return updateCollectionGroupOwnership(
+    await updateCollectionGroupOwnership(
       this.databaseName,
       this.collectionName,
       groupName
@@ -134,14 +134,14 @@ export class CollectionQueryImpl implements ZKCollection {
   }
 
   async changeOwner(userName: string): Promise<void> {
-    return updateCollectionGroupOwnership(
+    await updateCollectionGroupOwnership(
       this.databaseName,
       this.collectionName,
       userName
     );
   }
 
-  async setPermissions(permissions: Permissions): Promise<Permissions> {
+  async setPermissions(permissions: Permissions): Promise<Ownership> {
     return setCollectionPermissions(
       this.databaseName,
       this.collectionName,

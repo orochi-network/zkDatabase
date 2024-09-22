@@ -1,14 +1,14 @@
 import { JwtPayload } from "../authentication/types/jwt-payload.js";
 
-let getOutsideJwtPayload: (() => JwtPayload | null) | null = null;
+let getOutsideJwtToken: (() => JwtPayload | null) | null = null;
 
-export function setJwtPayloadFunction(fn: () => JwtPayload | null): void {
-  getOutsideJwtPayload = fn;
+export function setJwtTokenFunction(fn: () => JwtPayload | null): void {
+  getOutsideJwtToken = fn;
 }
 
-export function getJwtPayload(): JwtPayload | null {
-  if (getOutsideJwtPayload) {
-    const data = getOutsideJwtPayload();
+export function getJwtToken(): JwtPayload | null {
+  if (getOutsideJwtToken) {
+    const data = getOutsideJwtToken();
     return data;
   } else {
     return null;

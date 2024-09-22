@@ -2,7 +2,7 @@ import pkg from "@apollo/client";
 import {
   createMutateFunction,
   TAsyncGraphQLResult,
-} from "graphql/user/common.js";
+} from "../../common.js";
 import { TDocumentEncoded } from "../../types/document.js";
 import { TMerkleWitness } from "../../types/merkle-tree.js";
 import { TPermissions } from "../../types/ownership.js";
@@ -21,7 +21,7 @@ const { gql } = pkg;
  * @returns {TAsyncGraphQLResult<TMerkleWitness>} The result of the document creation mutation.
  */
 export const createDocument = createMutateFunction<
-  TDocumentEncoded,
+  TMerkleWitness,
   {
     databaseName: string;
     collectionName: string;

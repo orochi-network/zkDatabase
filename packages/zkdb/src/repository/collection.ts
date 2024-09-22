@@ -11,13 +11,9 @@ export async function listCollectionIndexes(
   databaseName: string,
   collectionName: string
 ): Promise<string[]> {
-  const result = await listIndexes(databaseName, collectionName);
+  const result = await listIndexes({databaseName, collectionName});
 
-  if (result.isOne()) {
-    return result.unwrapArray();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap()
 }
 
 export async function dropCollectionIndex(
@@ -25,27 +21,19 @@ export async function dropCollectionIndex(
   collectionName: string,
   indexName: string
 ): Promise<boolean> {
-  const result = await deleteIndex(databaseName, collectionName, indexName);
+  const result = await deleteIndex({databaseName, collectionName, indexName});
 
-  if (result.isOne()) {
-    return result.unwrapOne();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function createCollectionIndexes(
   databaseName: string,
   collectionName: string,
-  indexNames: string[]
+  indexes: string[]
 ): Promise<boolean> {
-  const result = await createIndexes(databaseName, collectionName, indexNames);
+  const result = await createIndexes({databaseName, collectionName, indexes});
 
-  if (result.isOne()) {
-    return result.unwrapOne();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function createCollection(
@@ -56,14 +44,12 @@ export async function createCollection(
   permissions: Permissions
 ) {
   const result = await createCollectionRequest(
-    databaseName,
+    {databaseName,
     collectionName,
     groupName,
-    documentEncoded,
-    permissions
+    schema: documentEncoded,
+    permissions}
   );
 
-  if (result.isError()) {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }

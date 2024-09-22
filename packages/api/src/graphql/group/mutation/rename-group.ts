@@ -1,5 +1,5 @@
 import pkg from "@apollo/client";
-import { createMutateFunction } from "graphql/user/common.js";
+import { createMutateFunction } from "../../common.js";
 const { gql } = pkg;
 
 /**

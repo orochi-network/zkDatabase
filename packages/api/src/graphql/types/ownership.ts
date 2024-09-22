@@ -21,5 +21,5 @@ export type TPermissions = {
 export type TOwnershipRequest = {
   databaseName: string;
   collectionName: string;
-  docId: string;
+  docId?: string;
 };
