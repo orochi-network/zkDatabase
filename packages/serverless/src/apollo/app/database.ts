@@ -8,8 +8,6 @@ import {
   createDatabase,
   getDatabases,
 } from '../../domain/use-case/database.js';
-import mapSearchToQueryOptions from '../mapper/search.js';
-import { Search } from '../types/search.js';
 import { Pagination } from '../types/pagination.js';
 
 export type TDatabaseRequest = {
@@ -17,7 +15,7 @@ export type TDatabaseRequest = {
 };
 
 export type TDatabaseSearchRequest = {
-  search: Search;
+  query: { [key: string]: string };
   pagination: Pagination;
 };
 
@@ -55,18 +53,6 @@ type DbSetting {
   publicKey: String!
 }
 
-input ConditionInput {
-  field: String!
-  value: String!
-  operator: String!
-}
-
-input SearchInput {
-  and: [SearchInput]
-  or: [SearchInput]
-  condition: ConditionInput
-}
-
 input PaginationInput {
   limit: Int,
   offset: Int
@@ -84,7 +70,7 @@ type DbDescription {
 }
 
 extend type Query {
-  dbList(search: SearchInput, pagination: PaginationInput): [DbDescription]!
+  dbList(query: JSON, pagination: PaginationInput): [DbDescription]!
   dbStats(databaseName: String!): JSON
   dbSetting(databaseName: String!): DbSetting!
   #dbFindIndex(databaseName: String!, index: Int!): JSON
@@ -100,7 +86,7 @@ extend type Mutation {
 export const merkleHeight = Joi.number().integer().positive().required();
 
 const databaseSearch = Joi.object({
-  search: Joi.optional(),
+  query: Joi.object().optional(),
   pagination,
 });
 
@@ -116,17 +102,7 @@ const dbStats = publicWrapper(
 const dbList = publicWrapper(
   databaseSearch,
   async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
-    getDatabases(
-      args.search
-        ? {
-            where: mapSearchToQueryOptions(args.search),
-          }
-        : undefined,
-      {
-        limit: args.pagination ? args.pagination.limit : 10,
-        offset: args.pagination ? args.pagination.offset : 0,
-      }
-    )
+    getDatabases(args.query, args.pagination)
 );
 
 const dbSetting = publicWrapper(
@@ -147,9 +123,7 @@ const dbSetting = publicWrapper(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const setting = await ModelDbSetting.getInstance(
-      args.databaseName
-    ).getSetting();
+    const setting = await ModelDbSetting.getInstance().getSetting(args.databaseName);
 
     if (setting) {
       return {

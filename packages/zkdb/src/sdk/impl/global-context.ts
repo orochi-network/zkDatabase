@@ -8,6 +8,7 @@ import { DatabaseSearch, UserSearch } from '../../types/search.js';
 import { QueryOptions } from '../query/query-builder.js';
 import { User } from '../../types/user.js';
 import { Database } from '../../types/database.js';
+import { FilterCriteria } from 'src/types/common.js';
 
 export class GlobalContextImpl implements GlobalContext {
   async databases(): Promise<Database[]>;
@@ -15,12 +16,12 @@ export class GlobalContextImpl implements GlobalContext {
     queryOptions: QueryOptions<DatabaseSearch>
   ): Promise<Database[]>;
 
-  async databases(queryOptions?: QueryOptions<DatabaseSearch>): Promise<Database[]> {
-    return getDatabases(queryOptions);
+  async databases(filter?: FilterCriteria): Promise<Database[]> {
+    return getDatabases(filter);
   }
 
-  async users(queryOptions?: QueryOptions<UserSearch>): Promise<User[]> {
-    return findUsers(queryOptions)
+  async users(filter?: FilterCriteria): Promise<User[]> {
+    return findUsers(filter)
   }
   
   async createDatabase(

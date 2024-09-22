@@ -58,9 +58,8 @@ export class Authenticator {
   private async sendLoginRequest(proof: SignedData) {
     const result = await signIn({ proof });
 
-    console.log('result', result)
     const userData = result.unwrap();
-    console.log('userData', userData)
+
     storage.setAccessToken(userData.accessToken);
 
     storage.setUserInfo({

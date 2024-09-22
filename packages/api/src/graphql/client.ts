@@ -12,7 +12,8 @@ const httpLink = new HttpLink({
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = getJwtToken();
+  const token = getJwtToken()?.accessToken;
+  
   return {
     headers: {
       ...headers,

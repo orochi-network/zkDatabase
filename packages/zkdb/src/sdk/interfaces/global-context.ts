@@ -1,8 +1,7 @@
 import { PublicKey } from 'o1js';
-import { DatabaseSearch, UserSearch } from '../../types/search.js';
-import { QueryOptions } from '../query/query-builder.js';
 import { Database } from '../../types/database.js';
 import { User } from '../../types/user.js';
+import { FilterCriteria } from '../../types/common.js';
 
 /* eslint-disable no-unused-vars */
 export interface GlobalContext {
@@ -11,7 +10,7 @@ export interface GlobalContext {
     merkleHeight: number,
     publicKey: PublicKey
   ): Promise<boolean>;
-  databases(queryOptions: QueryOptions<DatabaseSearch>): Promise<Database[]>;
+  databases(filter?: FilterCriteria): Promise<Database[]>;
   databases(): Promise<Database[]>;
-  users(queryOptions?: QueryOptions<UserSearch>): Promise<User[]>
+  users(filter?: FilterCriteria): Promise<User[]>;
 }

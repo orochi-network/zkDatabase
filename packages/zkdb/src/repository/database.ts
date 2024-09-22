@@ -6,8 +6,6 @@ import {
 } from '@zkdb/api';
 import { Database, DatabaseSettings } from '../types/database.js';
 import { PublicKey } from 'o1js';
-import { QueryOptions } from '../sdk/query/query-builder.js';
-import { DatabaseSearch } from '../types/search.js';
 import { FilterCriteria } from '../types/common.js';
 import { Pagination } from '../types/pagination.js';
 
