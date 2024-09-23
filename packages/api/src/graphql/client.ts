@@ -1,31 +1,64 @@
 import pkg from "@apollo/client";
-const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
-import { setContext } from "@apollo/client/link/context/index.js";
+import * as jose from "jose";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
-import { getToken } from "../authentication/jwt-token.js";
-import { config } from "../helper/config.js";
+import { setContext } from "@apollo/client/link/context/index.js";
+import { Context } from "../authentication/context.js";
+import { collection } from "./collection.js";
+import { database } from "./database.js";
+import { document } from "./document.js";
+import { collectionIndex } from "./collection-index.js";
+import { user } from "./user.js";
+import { group } from "./group.js";
+import { merkle } from "./merkle.js";
+import { ownership } from "./ownership.js";
+import { permission } from "./permission.js";
 
-const httpLink = new HttpLink({
-  uri: config.AAS_URI,
-});
+const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
 
-const authLink = setContext(async (_, { headers }) => {
-  const token = await getToken();
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : "",
-    },
-  };
-});
+export class ApiClient<T extends jose.JWTPayload> {
+  #client: InstanceType<typeof ApolloClient<any>>;
 
-const removeTypenameLink = removeTypenameFromVariables();
+  context: Context<T> = new Context<T>();
 
-const link = ApolloLink.from([removeTypenameLink, authLink, httpLink]);
+  public get client() {
+    return this.#client;
+  }
 
-const client = new ApolloClient({
-  link: link,
-  cache: new InMemoryCache({ addTypename: false }),
-});
+  constructor(uri: string) {
+    const context = new Context<T>();
+    const removeTypenameLink = removeTypenameFromVariables();
+    this.context = context;
+    const httpLink = new HttpLink({ uri });
+    const authLink = setContext(async (_, { headers }) => {
+      const token = this.context.getContext();
+      return token
+        ? {
+            headers: {
+              ...headers,
+              authorization: `Bearer ${token}`,
+            },
+          }
+        : { headers };
+    });
+    this.#client = new ApolloClient({
+      link: ApolloLink.from([removeTypenameLink, authLink, httpLink]),
+      cache: new InMemoryCache({ addTypename: false }),
+    });
+  }
 
-export default client;
+  public static newInstance<T extends jose.JWTPayload>(url: string) {
+    const api = new ApiClient<T>(url);
+    return {
+      api,
+      db: database(api.client),
+      collection: collection(api.client),
+      index: collectionIndex(api.client),
+      doc: document(api.client),
+      user: user(api.client),
+      group: group(api.client),
+      ownership: ownership(api.client),
+      permission: permission(api.client),
+      merkle: merkle(api.client),
+    };
+  }
+}

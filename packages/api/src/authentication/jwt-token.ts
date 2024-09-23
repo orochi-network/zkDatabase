@@ -1,26 +1,75 @@
 import * as jose from "jose";
-import { getJwtPayload } from "../bridge/token-data.js";
-import { JwtPayload } from "./types/jwt-payload.js";
+import { Context } from "./context.js";
 
-async function generateJwtToken(payload: JwtPayload): Promise<string | null> {
-  const decodedSessionKey = jose.base64url.decode(payload.sessionKey);
+export class JWTAuthentication<T extends jose.JWTPayload> {
+  private static instances: Map<string, JWTAuthentication<jose.JWTPayload>> =
+    new Map();
 
-  return new jose.SignJWT({
-    ...payload.userInfo,
-    sessionId: payload.sessionId,
-  })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("5m")
-    .sign(decodedSessionKey);
-}
+  public readonly expiredTime: number | string;
 
-export async function getToken(): Promise<string | null> {
-  const jwtPayload = getJwtPayload();
+  private secret: Uint8Array;
 
-  if (jwtPayload) {
-    return generateJwtToken(jwtPayload);
-  } else {
-    return null;
+  private algorithm: string;
+
+  #context = new Context<T>();
+
+  private constructor(
+    secret: string,
+    algorithm: string = "HS256",
+    expiredTime: number | string = "30 days"
+  ) {
+    this.secret = jose.base64url.decode(secret);
+    this.algorithm = algorithm;
+    this.expiredTime = expiredTime;
+  }
+
+  public setContextCallback(fn: () => T | null): void {
+    this.#context.setContextCallback(fn);
+  }
+
+  public getToken() {
+    return this.#context.getContext();
+  }
+
+  public static getInstance<T extends jose.JWTPayload>(
+    secret: string,
+    algorithm: string = "HS256",
+    expiredTime: number | string = "30 days"
+  ): JWTAuthentication<T> {
+    const key = `${algorithm}-${secret}`;
+    if (!JWTAuthentication.instances.has(key)) {
+      JWTAuthentication.instances.set(
+        key,
+        new JWTAuthentication(secret, algorithm, expiredTime)
+      );
+    }
+    return JWTAuthentication.instances.get(key) as JWTAuthentication<T>;
+  }
+
+  public async sign(payload: T): Promise<string> {
+    return new jose.SignJWT(payload)
+      .setProtectedHeader({ alg: this.algorithm })
+      .setIssuedAt()
+      .setExpirationTime(this.expiredTime)
+      .sign(this.secret);
+  }
+
+  public async verify(
+    token: string
+  ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, "protectedHeader">> {
+    const { payload, protectedHeader } = await jose.jwtVerify(
+      token,
+      this.secret
+    );
+    return { payload: payload as T, protectedHeader };
+  }
+
+  public async verifyHeader(
+    header: string
+  ): Promise<{ payload: T } & Pick<jose.JWTVerifyResult, "protectedHeader">> {
+    // 7 is length of `Bearer + space`
+    return this.verify(header.substring(7));
   }
 }
+
+export default JWTAuthentication;
