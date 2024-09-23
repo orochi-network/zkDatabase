@@ -1,5 +1,4 @@
 import pkg from "@apollo/client";
-import * as jose from "jose";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { Context } from "../authentication/context.js";
@@ -14,6 +13,19 @@ import { ownership } from "./ownership.js";
 import { permission } from "./permission.js";
 
 const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
+
+export interface IApiClient<T = any> {
+  api: ApiClient<T>;
+  db: ReturnType<typeof database>;
+  collection: ReturnType<typeof collection>;
+  index: ReturnType<typeof collectionIndex>;
+  doc: ReturnType<typeof document>;
+  user: ReturnType<typeof user>;
+  group: ReturnType<typeof group>;
+  ownership: ReturnType<typeof ownership>;
+  permission: ReturnType<typeof permission>;
+  merkle: ReturnType<typeof merkle>;
+}
 
 export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
@@ -54,7 +66,7 @@ export class ApiClient<T = any> {
     return this.context.getContext();
   }
 
-  public static newInstance<T = any>(url: string) {
+  public static newInstance<T = any>(url: string): IApiClient<T> {
     const api = new ApiClient<T>(url);
     return {
       api,
