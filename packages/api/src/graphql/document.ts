@@ -140,7 +140,7 @@ export const document = <T>(client: ApolloClient<T>) => ({
     { documentDrop: TMerkleWitness }
   >(client, DOCUMENT_DELETE, (data) => data.documentDrop),
   create: createMutateFunction<
-    TDocumentEncoded,
+    TMerkleWitness,
     {
       databaseName: string;
       collectionName: string;
@@ -165,14 +165,14 @@ export const document = <T>(client: ApolloClient<T>) => ({
     { documentFind: TDocumentPayload }
   >(client, DOCUMENT_FIND_ONE, (data) => data.documentFind),
   findMany: createQueryFunction<
-    TDocumentPayload,
+    TDocumentPayload[],
     {
       databaseName: string;
       collectionName: string;
       documentQuery: any;
       pagination?: TPagination;
     },
-    { documentsFind: TDocumentPayload }
+    { documentsFind: TDocumentPayload[] }
   >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind),
   history: createQueryFunction<
     TDocumentHistoryPayload,

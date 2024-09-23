@@ -124,9 +124,9 @@ export const group = <T>(client: ApolloClient<T>) => ({
     (data) => data.groupInfo
   ),
   list: createQueryFunction<
-    TGroupInfo,
+    TGroupInfo[],
     { databaseName: string },
-    { groupListAll: TGroupInfo }
+    { groupListAll: TGroupInfo[] }
   >(
     client,
     gql`

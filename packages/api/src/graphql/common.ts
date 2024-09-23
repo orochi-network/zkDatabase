@@ -1,6 +1,5 @@
-import { OperationVariables } from "@apollo/client";
+import { ApolloClient, OperationVariables } from "@apollo/client";
 import { GraphQLResult } from "../utils/result.js";
-import client from "./client.js";
 
 export type TAsyncGraphQLResult<T> = Promise<GraphQLResult<T>>;
 
@@ -41,6 +40,7 @@ export type TAsyncGraphQLResult<T> = Promise<GraphQLResult<T>>;
  * ```
  */
 export const createQueryFunction = <T, Req = any, Res = any>(
+  client: ApolloClient<any>,
   query: any,
   postProcess: (data: Res) => T | any
 ) => {
@@ -51,7 +51,7 @@ export const createQueryFunction = <T, Req = any, Res = any>(
         Req extends OperationVariables ? any : any
       >({
         query,
-        variables: variables as any
+        variables: variables as any,
       });
       if (!errors && data) {
         return GraphQLResult.wrap(postProcess(data));
@@ -79,6 +79,7 @@ export const createQueryFunction = <T, Req = any, Res = any>(
  * @returns {TAsyncGraphQLResult<T>} - A promise that resolves to a wrapped GraphQL result.
  */
 export const createMutateFunction = <T, Req = any, Res = any>(
+  client: ApolloClient<any>,
   mutation: any,
   postProcess: (data: Res) => T | any
 ) => {
