@@ -15,12 +15,12 @@ import { permission } from "./permission.js";
 
 const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
 
-export class ApiClient<T extends jose.JWTPayload> {
+export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   context: Context<T> = new Context<T>();
 
-  public get client() {
+  public get apollo() {
     return this.#client;
   }
 
@@ -46,19 +46,27 @@ export class ApiClient<T extends jose.JWTPayload> {
     });
   }
 
-  public static newInstance<T extends jose.JWTPayload>(url: string) {
+  public setContextContext(fn: () => T | null) {
+    this.context.setContextCallback(fn);
+  }
+
+  public getContext() {
+    return this.context.getContext();
+  }
+
+  public static newInstance<T = any>(url: string) {
     const api = new ApiClient<T>(url);
     return {
       api,
-      db: database(api.client),
-      collection: collection(api.client),
-      index: collectionIndex(api.client),
-      doc: document(api.client),
-      user: user(api.client),
-      group: group(api.client),
-      ownership: ownership(api.client),
-      permission: permission(api.client),
-      merkle: merkle(api.client),
+      db: database(api.apollo),
+      collection: collection(api.apollo),
+      index: collectionIndex(api.apollo),
+      doc: document(api.apollo),
+      user: user(api.apollo),
+      group: group(api.apollo),
+      ownership: ownership(api.apollo),
+      permission: permission(api.apollo),
+      merkle: merkle(api.apollo),
     };
   }
 }
