@@ -14,16 +14,17 @@ export class GraphQLResult<T> {
     } else if (result === null || typeof result === "undefined") {
       this.type = "undefined";
       this.result = undefined;
-    } else {
+    } else if (Array.isArray(result) && result.length === 0) {
       this.type = "data";
       this.result = result;
-    }
-    // Handle ApolloError
-    if (
-      Array.isArray(this.result) &&
-      this.result.every((e) => e instanceof Error)
+    } else if (
+      Array.isArray(result) &&
+      result.every((e) => e instanceof Error)
     ) {
       this.type = "error";
+      this.result = result;
+    } else {
+      this.type = "data";
       this.result = result;
     }
   }
