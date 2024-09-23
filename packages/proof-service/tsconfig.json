@@ -2,14 +2,14 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "composite": true,
     "baseUrl": "./src",
     "outDir": "./build/",
-    "types": ["node", "jest"],
+    "types": ["node", "jest"]
   },
   "include": ["**/*.ts"],
   "references": [{ "path": "../smart-contract" }, { "path": "../storage" }],
