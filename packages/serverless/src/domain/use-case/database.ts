@@ -100,7 +100,6 @@ export async function getDatabases(
       (db): db is Database => db !== null
     );
 
-    console.log('validDatabases', validDatabases)
     return validDatabases;
   } catch (error) {
     logger.error('An error occurred in getDatabases:', error);
