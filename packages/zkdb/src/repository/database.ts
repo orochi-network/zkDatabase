@@ -1,19 +1,14 @@
-import {
-  listDatabases,
-  getDatabaseSettings as getDatabaseSettingsRequest,
-  createDatabase as createDatabaseRequest,
-  changeDatabaseOwner as changeDatabaseOwnerRequest,
-} from '@zkdb/api';
 import { Database, DatabaseSettings } from '../types/database.js';
 import { PublicKey } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
 import { Pagination } from '../types/pagination.js';
+import { AppContainer } from '../container.js';
 
 export async function getDatabases(
   filter?: FilterCriteria,
   pagination?: Pagination
 ): Promise<Database[]> {
-  const result = await listDatabases({
+  const result = await AppContainer.getInstance().getApiClient().db.list({
     query: filter ?? {},
     pagination: pagination ?? {
       offset: 0,
@@ -27,7 +22,7 @@ export async function getDatabases(
 export async function getDatabaseSettings(
   databaseName: string
 ): Promise<DatabaseSettings> {
-  const result = await getDatabaseSettingsRequest({ databaseName });
+  const result = await AppContainer.getInstance().getApiClient().db.setting({ databaseName });
   return result.unwrap();
 }
 
@@ -36,7 +31,7 @@ export async function createDatabase(
   merkleHeight: number,
   publicKey: PublicKey
 ) {
-  const result = await createDatabaseRequest({
+  const result = await AppContainer.getInstance().getApiClient().db.create({
     databaseName,
     merkleHeight,
     publicKey: publicKey.toBase58(),
@@ -49,7 +44,10 @@ export async function changeDatabaseOwner(
   databaseName: string,
   newOwner: string
 ): Promise<boolean> {
-  const result = await changeDatabaseOwnerRequest({ databaseName, newOwner });
+  const result = await AppContainer.getInstance().getApiClient().db.transferOwnership({
+    databaseName,
+    newOwner,
+  });
 
   return result.unwrap();
 }

@@ -1,20 +1,12 @@
-import {
-  changeGroupDescription as changeGroupDescriptionRequest,
-  addUsersToGroup as addUsersToGroupRequest,
-  getGroupDescription as getGroupDescriptionRequest,
-  removeUsersFromGroup as removeUsersToGroupRequest,
-  renameGroup as renameGroupRequest,
-  listGroups as listGroupsRequest,
-  createGroup as createGroupRequest,
-} from '@zkdb/api';
 import { GroupDescription } from '../types/group.js';
+import { AppContainer } from '../container.js';
 
 export async function addUsersToGroup(
   databaseName: string,
   groupName: string,
   userNames: string[]
 ) {
-  const result = await addUsersToGroupRequest({
+  const result = await AppContainer.getInstance().getApiClient().group.addUser({
     databaseName,
     groupName,
     userNames,
@@ -28,7 +20,7 @@ export async function excludeUsersFromGroup(
   groupName: string,
   userNames: string[]
 ) {
-  const result = await removeUsersToGroupRequest({
+  const result = await AppContainer.getInstance().getApiClient().group.removeUser({
     databaseName,
     groupName,
     userNames,
@@ -42,7 +34,7 @@ export async function changeGroupDescription(
   groupName: string,
   description: string
 ) {
-  const result = await changeGroupDescriptionRequest({
+  const result =await AppContainer.getInstance().getApiClient().group.updateDescription({
     databaseName,
     groupName,
     groupDescription: description,
@@ -55,7 +47,7 @@ export async function getGroupDescription(
   databaseName: string,
   groupName: string
 ): Promise<GroupDescription> {
-  const result = await getGroupDescriptionRequest({ databaseName, groupName });
+  const result = await AppContainer.getInstance().getApiClient().group.info({ databaseName, groupName });
 
   const groupDescription = result.unwrap();
   return {
@@ -71,7 +63,7 @@ export async function renameGroup(
   groupName: string,
   newGroupName: string
 ): Promise<boolean> {
-  const result = await renameGroupRequest({
+  const result = await AppContainer.getInstance().getApiClient().group.rename({
     databaseName,
     groupName,
     newGroupName,
@@ -83,7 +75,7 @@ export async function renameGroup(
 export async function getGroups(
   databaseName: string
 ): Promise<GroupDescription[]> {
-  const result = await listGroupsRequest({ databaseName });
+  const result = await AppContainer.getInstance().getApiClient().group.list({ databaseName });
 
   const groups = result.unwrap();
 
@@ -100,7 +92,7 @@ export async function createGroup(
   groupName: string,
   description: string
 ) {
-  const result = await createGroupRequest({
+  const result = await AppContainer.getInstance().getApiClient().group.create({
     databaseName,
     groupName,
     groupDescription: description,

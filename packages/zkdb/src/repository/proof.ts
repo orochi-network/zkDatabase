@@ -1,13 +1,10 @@
-import {
-  getProof as getProofRequest,
-  getProofStatus as getProofStatusRequest,
-} from '@zkdb/api';
 import { JsonProof } from 'o1js';
 import { ProofStatus } from '../types/proof.js';
 import { TProofStatus } from '@zkdb/api';
+import { AppContainer } from '../container.js';
 
 export async function getProof(databaseName: string): Promise<JsonProof> {
-  const result = await getProofRequest({ databaseName });
+  const result = await AppContainer.getInstance().getApiClient().proof.get({ databaseName });
 
   return result.unwrap();
 }
@@ -17,7 +14,7 @@ export async function getProofStatus(
   collectionName: string,
   documentId: string
 ): Promise<ProofStatus> {
-  const result = await getProofStatusRequest({
+  const result = await AppContainer.getInstance().getApiClient().proof.status({
     databaseName,
     collectionName,
     docId: documentId,

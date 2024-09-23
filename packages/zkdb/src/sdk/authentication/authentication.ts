@@ -1,5 +1,5 @@
-import { signIn, signOut, signUp, setJwtTokenFunction, getEcdsa } from '@zkdb/api';
-import storage from '../storage/storage.js';
+import { AppContainer } from 'src/container.js';
+import storage from '../../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';
 import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
@@ -8,21 +8,6 @@ export class Authenticator {
   private signer: Signer;
 
   constructor(signer: Signer) {
-    setJwtTokenFunction(() => {
-      const accessToken = storage.getAccessToken();
-      const userInfo = storage.getUserInfo();
-      if (accessToken && userInfo) {
-        return {
-          accessToken,
-          userInfo: {
-            email: userInfo.email,
-            userName: userInfo.userName,
-          },
-        };
-      }
-      return null;
-    });
-
     this.signer = signer;
   }
 
@@ -31,7 +16,10 @@ export class Authenticator {
   }
 
   async signIn() {
-    const ecdsaResult = await getEcdsa(undefined);
+    const ecdsaResult = await AppContainer.getInstance()
+      .getApiClient()
+      .user.ecdsa(undefined);
+
     const ecdsaMessage = ecdsaResult.unwrap();
 
     const signInProof = await this.getSigner().signMessage(
@@ -56,7 +44,9 @@ export class Authenticator {
   }
 
   private async sendLoginRequest(proof: SignedData) {
-    const result = await signIn({ proof });
+    const result = await AppContainer.getInstance()
+      .getApiClient()
+      .user.signIn({ proof });
 
     const userData = result.unwrap();
 
@@ -74,21 +64,26 @@ export class Authenticator {
     userName: string,
     proof: SignedData
   ) {
-    const result = await signUp({proof, signUp: {
-      ...{
-        userName,
-        email,
-      },
-      timestamp: Math.floor(Date.now() / 1000),
-      userData: {},
-    }});
+    const result = await AppContainer.getInstance()
+      .getApiClient()
+      .user.signUp({
+        proof,
+        signUp: {
+          ...{
+            userName,
+            email,
+          },
+          timestamp: Math.floor(Date.now() / 1000),
+          userData: {},
+        },
+      });
 
     return result.unwrap();
   }
 
   async signOut(): Promise<void> {
     try {
-      await signOut(undefined);
+      await AppContainer.getInstance().getApiClient().user.signOut(undefined);
     } finally {
       storage.clear();
     }

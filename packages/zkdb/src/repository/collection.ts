@@ -1,19 +1,17 @@
-import {
-  createIndexes,
-  deleteIndex,
-  listIndexes,
-  createCollection as createCollectionRequest,
-} from '@zkdb/api';
 import { SchemaDefinition } from '../sdk/schema.js';
 import { Permissions } from '../types/permission.js';
+import { AppContainer } from '../container.js';
 
 export async function listCollectionIndexes(
   databaseName: string,
   collectionName: string
 ): Promise<string[]> {
-  const result = await listIndexes({databaseName, collectionName});
+  const result = await AppContainer.getInstance().getApiClient().index.list({
+    databaseName,
+    collectionName,
+  });
 
-  return result.unwrap()
+  return result.unwrap();
 }
 
 export async function dropCollectionIndex(
@@ -21,7 +19,11 @@ export async function dropCollectionIndex(
   collectionName: string,
   indexName: string
 ): Promise<boolean> {
-  const result = await deleteIndex({databaseName, collectionName, indexName});
+  const result = await AppContainer.getInstance().getApiClient().index.delete({
+    databaseName,
+    collectionName,
+    indexName,
+  });
 
   return result.unwrap();
 }
@@ -31,7 +33,11 @@ export async function createCollectionIndexes(
   collectionName: string,
   indexes: string[]
 ): Promise<boolean> {
-  const result = await createIndexes({databaseName, collectionName, indexes});
+  const result = await AppContainer.getInstance().getApiClient().index.create({
+    databaseName,
+    collectionName,
+    indexes,
+  });
 
   return result.unwrap();
 }
@@ -43,13 +49,13 @@ export async function createCollection(
   documentEncoded: SchemaDefinition,
   permissions: Permissions
 ) {
-  const result = await createCollectionRequest(
-    {databaseName,
+  const result = await AppContainer.getInstance().getApiClient().collection.create({
+    databaseName,
     collectionName,
     groupName,
     schema: documentEncoded,
-    permissions}
-  );
+    permissions,
+  });
 
   return result.unwrap();
 }

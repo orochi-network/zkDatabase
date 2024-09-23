@@ -4,27 +4,22 @@ import { MerkleWitness } from '../types/merkle-tree.js';
 import { Field } from 'o1js';
 import { FilterCriteria } from '../types/common.js';
 import { Document } from '../types/document.js';
-import {
-  findDocument as findDocumentRequest,
-  createDocument as createDocumentRequest,
-  updateDocument as updateDocumentRequest,
-  deleteDocument as deleteDocumentRequest,
-  findDocuments as findDocumentsRequest,
-} from '@zkdb/api';
 import { Pagination } from '../types/pagination.js';
+import { AppContainer } from '../container.js';
 
 export async function findDocument(
   databaseName: string,
   collectionName: string,
   filter: FilterCriteria
 ): Promise<Document | null> {
-  const result = await findDocumentRequest({
+  const documentResult = await AppContainer.getInstance().getApiClient().doc.findOne({
     databaseName,
     collectionName,
     documentQuery: JSON.parse(JSON.stringify(filter)),
   });
 
-  const document = result.unwrap();
+  const document = documentResult.unwrap();
+
   return {
     id: document.docId,
     documentEncoded: document.fields.map((field) => ({
@@ -42,7 +37,7 @@ export async function createDocument(
   documentEncoded: DocumentEncoded,
   permissions: Permissions
 ): Promise<MerkleWitness> {
-  const result = await createDocumentRequest({
+  const result = await AppContainer.getInstance().getApiClient().doc.create({
     databaseName,
     collectionName,
     documentRecord: documentEncoded,
@@ -63,7 +58,7 @@ export async function updateDocument(
   documentEncoded: DocumentEncoded,
   filter: FilterCriteria
 ): Promise<MerkleWitness> {
-  const result = await updateDocumentRequest({
+  const result = await AppContainer.getInstance().getApiClient().doc.update({
     databaseName,
     collectionName,
     documentQuery: JSON.parse(JSON.stringify(filter)),
@@ -83,7 +78,7 @@ export async function deleteDocument(
   collectionName: string,
   filter: FilterCriteria
 ): Promise<MerkleWitness> {
-  const result = await deleteDocumentRequest({
+  const result = await AppContainer.getInstance().getApiClient().doc.delete({
     databaseName,
     collectionName,
     documentQuery: JSON.parse(JSON.stringify(filter)),
@@ -103,7 +98,7 @@ export async function findDocuments(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<Document[]> {
-  const result = await findDocumentsRequest({
+  const result = await AppContainer.getInstance().getApiClient().doc.findMany({
     databaseName,
     collectionName,
     documentQuery: JSON.parse(JSON.stringify(filter)),

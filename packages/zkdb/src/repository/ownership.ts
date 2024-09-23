@@ -1,13 +1,13 @@
-import { listPermissions, setOwner, setPermissions } from '@zkdb/api';
 import { Ownership } from '../types/ownership.js';
 import { Permissions } from '../types/permission.js';
+import { AppContainer } from '../container.js';
 
 export async function updateCollectionGroupOwnership(
   databaseName: string,
   collectionName: string,
   groupName: string
 ) {
-  const result = await setOwner({
+  const result = await AppContainer.getInstance().getApiClient().ownership.setOwnership({
     databaseName,
     collectionName,
     docId: undefined,
@@ -23,7 +23,7 @@ export async function updateCollectionUserOwnership(
   collectionName: string,
   userName: string
 ) {
-  const result = await setOwner({
+  const result = await AppContainer.getInstance().getApiClient().ownership.setOwnership({
     databaseName,
     collectionName,
     docId: undefined,
@@ -40,7 +40,7 @@ export async function updateDocumentGroupOwnership(
   docId: string,
   groupName: string
 ) {
-  const result = await setOwner({
+  const result = await AppContainer.getInstance().getApiClient().ownership.setOwnership({
     databaseName,
     collectionName,
     docId,
@@ -57,7 +57,7 @@ export async function updateDocumentUserOwnership(
   docId: string,
   userName: string
 ) {
-  const result = await setOwner({
+  const result = await AppContainer.getInstance().getApiClient().ownership.setOwnership({
     databaseName,
     collectionName,
     docId,
@@ -72,7 +72,7 @@ export async function getCollectionOwnership(
   databaseName: string,
   collectionName: string
 ): Promise<Ownership> {
-  const result = await listPermissions({
+  const result = await AppContainer.getInstance().getApiClient().permission.get({
     databaseName,
     collectionName,
     docId: undefined,
@@ -86,7 +86,7 @@ export async function getDocumentOwnership(
   collectionName: string,
   docId: string
 ): Promise<Ownership> {
-  const result = await listPermissions({ databaseName, collectionName, docId });
+  const result = await AppContainer.getInstance().getApiClient().permission.get({ databaseName, collectionName, docId });
 
   return result.unwrap();
 }
@@ -103,7 +103,7 @@ export async function setDocumentPermissions(
     docId
   );
 
-  const result = await setPermissions({
+  const result = await AppContainer.getInstance().getApiClient().permission.set({
     databaseName,
     collectionName,
     docId,
@@ -136,7 +136,7 @@ export async function setCollectionPermissions(
     collectionName
   );
 
-  const result = await setPermissions({
+  const result = await AppContainer.getInstance().getApiClient().permission.set({
     databaseName,
     collectionName,
     docId: undefined,

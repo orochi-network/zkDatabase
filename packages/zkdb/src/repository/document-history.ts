@@ -1,13 +1,13 @@
-import { getDocumentHistory as getDocumentHistoryRequest } from '@zkdb/api';
 import { DocumentHistory } from '../types/document-history.js';
 import { ProvableTypeString } from '../sdk/schema.js';
+import { AppContainer } from '../container.js';
 
 export async function getDocumentHistory(
   databaseName: string,
   collectionName: string,
   id: string
 ): Promise<DocumentHistory> {
-  const result = await getDocumentHistoryRequest({
+  const result = await AppContainer.getInstance().getApiClient().doc.history({
     databaseName,
     collectionName,
     docId: id,
