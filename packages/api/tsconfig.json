@@ -13,5 +13,5 @@
     "declaration": true
   },
   "include": ["**/*.ts"],
-  "exclude": ["build", "node_modules", "typechain/**/*.ts"]
+  "exclude": ["build", "node_modules"]
 }
