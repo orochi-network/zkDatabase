@@ -23,3 +23,12 @@ export type TOwnershipRequest = {
   collectionName: string;
   docId?: string;
 };
+
+export type TOwnershipResponse = {
+  userName: string;
+  userGroup: string;
+  permissionOwner?: TPermissionSet;
+  permissionGroup?: TPermissionSet;
+  permissionOther?: TPermissionSet;
+};
+

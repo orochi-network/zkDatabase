@@ -1,6 +1,10 @@
 import pkg from "@apollo/client";
 import { createMutateFunction } from "../../common.js";
-import { TOwnership, TOwnershipRequest } from "../../types/ownership.js";
+import {
+  TOwnership,
+  TOwnershipRequest,
+  TOwnershipResponse,
+} from "../../types/ownership.js";
 const { gql } = pkg;
 
 /**
@@ -29,7 +33,7 @@ const { gql } = pkg;
 export const listPermissions = createMutateFunction<
   TOwnership,
   TOwnershipRequest,
-  { permissionList: TOwnership }
+  { permissionList: TOwnershipResponse }
 >(
   gql`
     query PermissionList(
@@ -68,5 +72,13 @@ export const listPermissions = createMutateFunction<
       }
     }
   `,
-  (data) => data.permissionList
+  (data) => ({
+    userName: data.permissionList.userName,
+    userGroup: data.permissionList.userGroup,
+    permissions: {
+      permissionOwner: data.permissionList.permissionOwner,
+      permissionGroup: data.permissionList.permissionGroup,
+      permissionOther: data.permissionList.permissionOther,
+    },
+  })
 );
