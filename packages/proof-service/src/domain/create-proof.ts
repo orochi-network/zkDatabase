@@ -1,10 +1,8 @@
 import {
-  fetchAccount,
-  Field,
-  MerkleWitness,
-  PublicKey,
-  ZkProgram,
-} from 'o1js';
+  getZkDbSmartContractClass,
+  ProofStateInput,
+  ProofStateOutput,
+} from '@zkdb/smart-contract';
 import {
   ModelDbSetting,
   ModelMerkleTree,
@@ -12,13 +10,9 @@ import {
   ModelQueueTask,
   withTransaction,
 } from '@zkdb/storage';
-import {
-  getZkDbSmartContractClass,
-  ProofStateInput,
-  ProofStateOutput,
-} from '@zkdb/smart-contract';
-import CircuitFactory from '../circuit/circuit-factory.js';
 import { ObjectId } from 'mongodb';
+import { fetchAccount, Field, MerkleWitness, PublicKey, ZkProgram } from 'o1js';
+import CircuitFactory from '../circuit/circuit-factory.js';
 import logger from '../helper/logger.js';
 
 export async function createProof(taskId: string) {
@@ -38,9 +32,9 @@ export async function createProof(taskId: string) {
 
   try {
     const circuitName = `${task.database}.${task.collection}`;
-    const modelDbSetting = ModelDbSetting.getInstance(task.database);
+    const modelDbSetting = ModelDbSetting.getInstance();
     const { merkleHeight, appPublicKey } =
-      (await modelDbSetting.getSetting()) || {};
+      (await modelDbSetting.getSetting(task.database)) || {};
 
     if (!merkleHeight || !appPublicKey) {
       throw new Error('Setting is wrong, unable to deconstruct settings');
@@ -69,7 +63,7 @@ export async function createProof(taskId: string) {
     }
 
     const circuit = await CircuitFactory.getCircuit(circuitName).getProgram();
-    class RollUpProof extends ZkProgram.Proof(circuit as any) {}
+    class RollUpProof extends ZkProgram.Proof(circuit) {}
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
