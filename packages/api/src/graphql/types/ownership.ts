@@ -21,5 +21,14 @@ export type TPermissions = {
 export type TOwnershipRequest = {
   databaseName: string;
   collectionName: string;
-  docId: string;
+  docId?: string;
 };
+
+export type TOwnershipResponse = {
+  userName: string;
+  userGroup: string;
+  permissionOwner?: TPermissionSet;
+  permissionGroup?: TPermissionSet;
+  permissionOther?: TPermissionSet;
+};
+

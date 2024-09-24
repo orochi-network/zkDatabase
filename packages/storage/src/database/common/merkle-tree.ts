@@ -46,9 +46,9 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
 
   public static async load(databaseName: string): Promise<ModelMerkleTree> {
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
-    const modelSetting = ModelDbSetting.getInstance(databaseName);
+    const modelSetting = ModelDbSetting.getInstance();
 
-    const setting = await modelSetting.getSetting();
+    const setting = await modelSetting.getSetting(databaseName);
 
     if (setting) {
       modelMerkleTree.setHeight(setting.merkleHeight);

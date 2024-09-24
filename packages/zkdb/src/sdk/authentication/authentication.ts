@@ -1,5 +1,5 @@
-import { signIn, signOut, signUp, setJwtPayloadFunction } from '@zkdb/api';
-import storage from '../storage/storage.js';
+import { AppContainer } from 'src/container.js';
+import storage from '../../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';
 import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
@@ -8,38 +8,28 @@ export class Authenticator {
   private signer: Signer;
 
   constructor(signer: Signer) {
-    setJwtPayloadFunction(() => {
-      const session = storage.getSession();
-      const userInfo = storage.getUserInfo();
-      if (session && userInfo) {
-        return {
-          sessionId: session.sessionId,
-          sessionKey: session.sessionKey,
-          userInfo: {
-            email: userInfo.email,
-            userName: userInfo.userName,
-          },
-        };
-      }
-      return null;
-    });
-
     this.signer = signer;
   }
 
   isLoggedIn(): boolean {
-    return storage.getSession() !== null;
+    return storage.getAccessToken() !== null;
   }
 
-  async signIn(email: string) {
+  async signIn() {
+    const ecdsaResult = await AppContainer.getInstance()
+      .getApiClient()
+      .user.ecdsa(undefined);
+
+    const ecdsaMessage = ecdsaResult.unwrap();
+
     const signInProof = await this.getSigner().signMessage(
       JSON.stringify({
-        email,
+        ecdsaMessage,
         timestamp: Math.floor(Date.now() / 1000),
       })
     );
 
-    await this.sendLoginRequest(email, signInProof);
+    await this.sendLoginRequest(signInProof);
   }
 
   async signUp(userName: string, email: string) {
@@ -50,32 +40,23 @@ export class Authenticator {
       })
     );
 
-    await this.sendRegistrationRequest(email, userName, signUpProof)
+    await this.sendRegistrationRequest(email, userName, signUpProof);
   }
 
-  private async sendLoginRequest(email: string, proof: SignedData) {
-    const result = await signIn(email, proof);
+  private async sendLoginRequest(proof: SignedData) {
+    const result = await AppContainer.getInstance()
+      .getApiClient()
+      .user.signIn({ proof });
 
-    if (result.isOne()) {
-      const userData = result.unwrapObject();
+    const userData = result.unwrap();
 
-      storage.setSession({
-        sessionId: userData.session.sessionId,
-        sessionKey: userData.session.sessionKey,
-      });
+    storage.setAccessToken(userData.accessToken);
 
-      storage.setUserInfo({
-        email: userData.user.email,
-        userName: userData.user.userName,
-        publicKey: userData.user.publicKey,
-      });
-    } else {
-      if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-    }
+    storage.setUserInfo({
+      email: userData.email,
+      userName: userData.userName,
+      publicKey: userData.publicKey,
+    });
   }
 
   private async sendRegistrationRequest(
@@ -83,23 +64,26 @@ export class Authenticator {
     userName: string,
     proof: SignedData
   ) {
-    const result = await signUp(proof, {
-      ...{
-        userName,
-        email,
-      },
-      timestamp: Math.floor(Date.now() / 1000),
-      userData: {},
-    });
+    const result = await AppContainer.getInstance()
+      .getApiClient()
+      .user.signUp({
+        proof,
+        signUp: {
+          ...{
+            userName,
+            email,
+          },
+          timestamp: Math.floor(Date.now() / 1000),
+          userData: {},
+        },
+      });
 
-    if (result.isError()) {
-      throw result.unwrapError()
-    }
+    return result.unwrap();
   }
 
   async signOut(): Promise<void> {
     try {
-      await signOut();
+      await AppContainer.getInstance().getApiClient().user.signOut(undefined);
     } finally {
       storage.clear();
     }
@@ -118,7 +102,7 @@ export class Authenticator {
 
   private getSigner(): Signer {
     if (this.signer === undefined) {
-      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first')
+      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first');
     }
 
     return this.signer;

@@ -18,7 +18,7 @@ const isBrowser = false;
 
   await zkdb.auth.signUp('test-name', 'robot@gmail.com');
 
-  await zkdb.auth.signIn('robot@gmail.com');
+  await zkdb.auth.signIn();
 
   zkdb.auth.getUser()
 

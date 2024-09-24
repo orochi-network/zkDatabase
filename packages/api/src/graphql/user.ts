@@ -1,5 +1,4 @@
 import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
 import {
   TSignatureProofData,
   TSignInInfo,
@@ -8,6 +7,7 @@ import {
 import { TPagination } from "./types/pagination.js";
 import { TSearch } from "./types/search.js";
 import { TUser } from "./types/user.js";
+import { createMutateFunction, createQueryFunction } from "./common.js";
 
 const { gql } = pkg;
 
@@ -90,6 +90,12 @@ const USER_INFO = gql`
   }
 `;
 
+const ECDSA = gql`
+  mutation UserGetEcdsaChallenge {
+    userGetEcdsaChallenge
+  }
+`;
+
 export const user = <T>(client: ApolloClient<T>) => ({
   signIn: createMutateFunction<
     TSignInInfo,
@@ -106,10 +112,15 @@ export const user = <T>(client: ApolloClient<T>) => ({
     { proof: TSignatureProofData; signUp: TSignUpData },
     { userSignUp: TUserSignUpRecord }
   >(client, USER_SIGN_UP, (data) => data.userSignUp),
-  findOne: createQueryFunction<
-    TUser,
-    { search: TSearch; pagination: TPagination },
-    { searchUser: TUser }
+  ecdsa: createMutateFunction<
+    string,
+    undefined,
+    { userGetEcdsaChallenge: string }
+  >(client, ECDSA, (data) => data.userGetEcdsaChallenge),
+  findMany: createQueryFunction<
+    TUser[],
+    { query: any; pagination: TPagination },
+    { searchUser: TUser[] }
   >(client, USER_FIND_ONE, (data) => data.searchUser),
   userInfo: createQueryFunction<
     TUserSignInRecord,

@@ -77,8 +77,8 @@ export const database = <T>(client: ApolloClient<T>) => ({
     { dbStats: TDatabaseStatus }
   >(client, DATABASE_STATUS, (data) => data.dbStats),
   list: createQueryFunction<
-    TDatabase,
-    { search: TSearch; pagination: TPagination },
-    { dbList: TDatabase }
+    TDatabase[],
+    { query: any; pagination: TPagination },
+    { dbList: TDatabase[] }
   >(client, DATABASE_LIST, (data) => data.dbList),
 });

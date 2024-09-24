@@ -1,12 +1,15 @@
-/* eslint-disable no-unused-vars */
-import { UserInfo } from "./types/user.js";
-import { Session } from "./types/session.js";
+import { BrowserStorage } from "./browser.js";
+import { IStorage } from "./interface/storage.js";
+import { NodeStorage } from "./node.js";
 
-export const SESSION_KEY = "session_data";
-export const USER_KEY = "user_data"
-export interface Storage {
-  getSession(): Session
-  setSession(session: Session): void
-  getUserInfo(): UserInfo
-  setUserInfo(userInfo: UserInfo): void
+let storage: IStorage;
+
+if (typeof window !== 'undefined' && typeof window.localStorage !== 'undefined') {
+  storage = new BrowserStorage();
+} else if (typeof process !== 'undefined' && process.versions != null && process.versions.node != null) {
+  storage = new NodeStorage();
+} else {
+  throw new Error('Unsupported environment');
 }
+
+export default storage;

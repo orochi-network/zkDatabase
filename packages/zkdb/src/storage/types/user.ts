@@ -1,3 +1,5 @@
-import { User as User } from "../../types/user.js";
-
-export type UserInfo = User
+export type UserInfo = {
+  email: string,
+  userName: string,
+  publicKey: string
+}

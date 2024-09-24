@@ -1,17 +1,16 @@
 import { IStorage } from './interface/storage.js';
-import { Session } from './types/session.js';
 import { UserInfo } from './types/user.js';
 
 export class NodeStorage implements IStorage {
-  private session: Session | null;
+  private accessToken: string | null;
   private userInfo: UserInfo | null;
 
-  getSession(): Session | null {
-    return this.session;
+  getAccessToken(): string | null {
+    return this.accessToken;
   }
 
-  setSession(session: Session) {
-    this.session = session;
+  setAccessToken(accessToken: string) {
+    this.accessToken = accessToken;
   }
 
   getUserInfo(): UserInfo | null {
@@ -23,7 +22,7 @@ export class NodeStorage implements IStorage {
   }
 
   clear(): void {
-    this.session = null;
+    this.accessToken = null;
     this.userInfo = null;
   }
 }

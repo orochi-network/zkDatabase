@@ -7,7 +7,7 @@ const { gql } = pkg;
 
 export type TUserSignUpRecord = TUser;
 
-export const ownership = <T>(client: ApolloClient<T>) => ({
+export const proof = <T>(client: ApolloClient<T>) => ({
   status: createQueryFunction<
     TProofStatus,
     TProofStatusRequest,
@@ -29,7 +29,7 @@ export const ownership = <T>(client: ApolloClient<T>) => ({
     `,
     (data) => data.getProofStatus
   ),
-  proof: createQueryFunction<
+  get: createQueryFunction<
     TZKProof,
     { databaseName: string },
     { getProof: TZKProof }

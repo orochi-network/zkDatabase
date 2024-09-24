@@ -3,8 +3,10 @@ import { TSignature } from "./signature.js";
 import { TUser } from "./user.js";
 
 export type TSignInInfo = {
-  user: TUser;
-  session: TSession;
+  userName: string;
+  email: string;
+  publicKey: string;
+  accessToken: string;
   userData: any;
 };
 

@@ -1,23 +1,17 @@
-import {
-  createIndexes,
-  deleteIndex,
-  listIndexes,
-  createCollection as createCollectionRequest,
-} from '@zkdb/api';
 import { SchemaDefinition } from '../sdk/schema.js';
 import { Permissions } from '../types/permission.js';
+import { AppContainer } from '../container.js';
 
 export async function listCollectionIndexes(
   databaseName: string,
   collectionName: string
 ): Promise<string[]> {
-  const result = await listIndexes(databaseName, collectionName);
+  const result = await AppContainer.getInstance().getApiClient().index.list({
+    databaseName,
+    collectionName,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapArray();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function dropCollectionIndex(
@@ -25,27 +19,27 @@ export async function dropCollectionIndex(
   collectionName: string,
   indexName: string
 ): Promise<boolean> {
-  const result = await deleteIndex(databaseName, collectionName, indexName);
+  const result = await AppContainer.getInstance().getApiClient().index.delete({
+    databaseName,
+    collectionName,
+    indexName,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapOne();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function createCollectionIndexes(
   databaseName: string,
   collectionName: string,
-  indexNames: string[]
+  indexes: string[]
 ): Promise<boolean> {
-  const result = await createIndexes(databaseName, collectionName, indexNames);
+  const result = await AppContainer.getInstance().getApiClient().index.create({
+    databaseName,
+    collectionName,
+    indexes,
+  });
 
-  if (result.isOne()) {
-    return result.unwrapOne();
-  } else {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }
 
 export async function createCollection(
@@ -55,15 +49,13 @@ export async function createCollection(
   documentEncoded: SchemaDefinition,
   permissions: Permissions
 ) {
-  const result = await createCollectionRequest(
+  const result = await AppContainer.getInstance().getApiClient().collection.create({
     databaseName,
     collectionName,
     groupName,
-    documentEncoded,
-    permissions
-  );
+    schema: documentEncoded,
+    permissions,
+  });
 
-  if (result.isError()) {
-    throw result.unwrapError();
-  }
+  return result.unwrap();
 }

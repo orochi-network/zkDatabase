@@ -5,6 +5,6 @@ import { Ownership } from "../../types/ownership.js";
 export interface Ownable {
   changeGroup(groupName: string): Promise<void>;
   changeOwner(userName: string): Promise<void>;
-  setPermissions(permissions: Permissions): Promise<Permissions>;
+  setPermissions(permissions: Permissions): Promise<Ownership>;
   getOwnership(): Promise<Ownership>
 }

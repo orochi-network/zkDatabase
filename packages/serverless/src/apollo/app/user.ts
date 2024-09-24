@@ -143,6 +143,7 @@ export const typeDefsUser = gql`
     accessToken: String
     userData: JSON
     publicKey: String
+    email: String
   }
 
   type User {
@@ -197,6 +198,7 @@ const userGetEcdsaChallenge = async (
   // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
   req.session.save();
+
   return req.session.ecdsaChallenge;
 };
 
@@ -207,7 +209,8 @@ const userSignIn = publicWrapper(
       throw new Error('Invalid ECDSA challenge');
     }
     const client = new Client({ network: 'mainnet' });
-    if (args.proof.data !== context.req.session.ecdsaChallenge) {
+
+    if (JSON.parse(args.proof.data).ecdsaMessage !== context.req.session.ecdsaChallenge) {
       throw new Error('Invalid challenge message');
     }
     if (client.verifyMessage(args.proof)) {

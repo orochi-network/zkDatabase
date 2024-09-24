@@ -1,37 +1,29 @@
-import { getDocumentHistory as getDocumentHistoryRequest } from '@zkdb/api';
 import { DocumentHistory } from '../types/document-history.js';
 import { ProvableTypeString } from '../sdk/schema.js';
+import { AppContainer } from '../container.js';
 
 export async function getDocumentHistory(
   databaseName: string,
   collectionName: string,
   id: string
 ): Promise<DocumentHistory> {
-  const result = await getDocumentHistoryRequest(
+  const result = await AppContainer.getInstance().getApiClient().doc.history({
     databaseName,
     collectionName,
-    id
-  );
+    docId: id,
+  });
 
-  if (result.isOne()) {
-    const documents = result.unwrapObject().documents;
+  const documents = result.unwrap().documents;
 
-    return {
-      documents: documents.map((document) => ({
-        id: document.docId,
-        documentEncoded: document.fields.map((field) => ({
-          name: field.name,
-          kind: field.kind as ProvableTypeString,
-          value: field.value,
-        })),
-        createdAt: document.createdAt,
+  return {
+    documents: documents.map((document) => ({
+      id: document.docId,
+      documentEncoded: document.fields.map((field) => ({
+        name: field.name,
+        kind: field.kind as ProvableTypeString,
+        value: field.value,
       })),
-    };
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+      createdAt: document.createdAt,
+    })),
+  };
 }

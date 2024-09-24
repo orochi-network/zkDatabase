@@ -1,23 +1,12 @@
-import {
-  getProof as getProofRequest,
-  getProofStatus as getProofStatusRequest,
-} from '@zkdb/api';
 import { JsonProof } from 'o1js';
 import { ProofStatus } from '../types/proof.js';
-import { ProofStatus as ProofStatusPayload } from '@zkdb/api';
+import { TProofStatus } from '@zkdb/api';
+import { AppContainer } from '../container.js';
 
 export async function getProof(databaseName: string): Promise<JsonProof> {
-  const result = await getProofRequest(databaseName);
+  const result = await AppContainer.getInstance().getApiClient().proof.get({ databaseName });
 
-  if (result.isOne()) {
-    return result.unwrapObject();
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
-  }
+  return result.unwrap();
 }
 
 export async function getProofStatus(
@@ -25,28 +14,22 @@ export async function getProofStatus(
   collectionName: string,
   documentId: string
 ): Promise<ProofStatus> {
-  const result = await getProofStatusRequest(
+  const result = await AppContainer.getInstance().getApiClient().proof.status({
     databaseName,
     collectionName,
-    documentId
-  );
+    docId: documentId,
+  });
 
-  if (result.isObject()) {
-    switch (result.unwrapObject()) {
-      case ProofStatusPayload.QUEUED:
-        return 'queue';
-      case ProofStatusPayload.PROVING:
-        return 'proving';
-      case ProofStatusPayload.PROVED:
-        return 'proved';
-      case ProofStatusPayload.FAILED:
-        return 'failed';
-    }
-  } else {
-    if (result.isError()) {
-      throw result.unwrapError();
-    } else {
-      throw Error('Unknown error');
-    }
+  switch (result.unwrap()) {
+    case TProofStatus.QUEUED:
+      return 'queue';
+    case TProofStatus.PROVING:
+      return 'proving';
+    case TProofStatus.PROVED:
+      return 'proved';
+    case TProofStatus.FAILED:
+      return 'failed';
   }
+  
+  throw Error('Failed to retrieve proof status')
 }

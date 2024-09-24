@@ -1,35 +1,21 @@
 import { IStorage } from './interface/storage.js';
-import { Session } from './types/session.js';
 import { UserInfo } from './types/user.js';
 
-const SESSION_ID_KEY = 'session_id';
-const SESSION_KEY = 'session_key';
+const ACCESS_TOKEN_KEY = 'access_token';
 
 const USER_EMAIL = 'user_email';
 const USER_NAME = 'user_name';
-const USER_ADDRESS= 'user_address';
+const USER_ADDRESS = 'user_address';
 
 export class BrowserStorage implements IStorage {
-  getSession(): Session | null {
-    const sessionId = localStorage.getItem(SESSION_ID_KEY);
-    if (!sessionId || sessionId.length === 0) {
-      return null;
-    }
-
-    const sessionKey = localStorage.getItem(SESSION_KEY);
-    if (!sessionKey || sessionKey.length === 0) {
-      return null;
-    }
-
-    return {
-      sessionId,
-      sessionKey,
-    };
+  
+  getAccessToken(): string | null {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    return accessToken;
   }
 
-  setSession(session: Session) {
-    localStorage.setItem(SESSION_KEY, session.sessionKey);
-    localStorage.setItem(SESSION_ID_KEY, session.sessionId);
+  setAccessToken(accessToken: string) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   }
 
   getUserInfo(): UserInfo | null {
@@ -48,11 +34,10 @@ export class BrowserStorage implements IStorage {
       return null;
     }
 
-
     return {
       userName: userName,
       email: userEmail,
-      publicKey: userAddress
+      publicKey: userAddress,
     };
   }
 

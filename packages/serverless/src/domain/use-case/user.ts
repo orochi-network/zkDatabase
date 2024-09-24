@@ -5,6 +5,7 @@ import { Pagination } from '../types/pagination.js';
 import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
+import logger from '../../helper/logger.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function findUser(
@@ -56,6 +57,32 @@ export async function signUpUser(
       throw new Error('Email does not match');
     }
     const modelUser = new ModelUser();
+
+    try {
+      const existingUser = await modelUser.collection.findOne({
+        $or: [
+          { email: user.email },
+          { userName: user.userName },
+          { publicKey: user.publicKey },
+        ],
+      });
+  
+      if (existingUser) {
+        if (existingUser.email === user.email) {
+          throw new Error('A user with this email already exists');
+        }
+        if (existingUser.userName === user.userName) {
+          throw new Error('A user with this username already exists');
+        }
+        if (existingUser.publicKey === user.publicKey) {
+          throw new Error('A user with this public key already exists');
+        }
+      }
+    } catch (error) {
+      logger.error('Error checking existing user:', error);
+      throw error; // Re-throw the error after logging
+    }
+
     // TODO: Check user existence by public key
     const result = await modelUser.create(
       user.userName,
@@ -66,6 +93,9 @@ export async function signUpUser(
     if (result && result.acknowledged) {
       return user;
     }
+
+
+    // TODO: Return more meaningful error
     throw new Error('Unable to create new user');
   }
   throw new Error('Signature is not valid');

@@ -3,6 +3,7 @@ import { createMutateFunction, createQueryFunction } from "./common.js";
 import {
   TOwnership,
   TOwnershipRequest,
+  TOwnershipResponse,
   TPermissions,
 } from "./types/ownership.js";
 import { TUser } from "./types/user.js";
@@ -17,7 +18,7 @@ export const permission = <T>(client: ApolloClient<T>) => ({
     TOwnershipRequest & {
       permission: TPermissions;
     },
-    { permissionSet: TOwnership }
+    { permissionSet: TOwnershipResponse }
   >(
     client,
     gql`
@@ -59,12 +60,20 @@ export const permission = <T>(client: ApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.permissionSet
+    (data) => ({
+      userName: data.permissionSet.userName,
+      userGroup: data.permissionSet.userGroup,
+      permissions: {
+        permissionOwner: data.permissionSet.permissionOwner,
+        permissionGroup: data.permissionSet.permissionGroup,
+        permissionOther: data.permissionSet.permissionOther,
+      },
+    })
   ),
   get: createQueryFunction<
     TOwnership,
     TOwnershipRequest,
-    { permissionList: TOwnership }
+    { permissionList: TOwnershipResponse }
   >(
     client,
     gql`
@@ -104,6 +113,14 @@ export const permission = <T>(client: ApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.permissionList
+    (data) => ({
+      userName: data.permissionList.userName,
+      userGroup: data.permissionList.userGroup,
+      permissions: {
+        permissionOwner: data.permissionList.permissionOwner,
+        permissionGroup: data.permissionList.permissionGroup,
+        permissionOther: data.permissionList.permissionOther,
+      },
+    })
   ),
 });

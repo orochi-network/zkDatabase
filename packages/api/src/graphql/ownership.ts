@@ -10,7 +10,7 @@ export type TUserSignUpRecord = TUser;
 export const ownership = <T>(client: ApolloClient<T>) => ({
   setOwnership: createMutateFunction<
     Pick<TOwnership, "userName" | "groupName">,
-    TOwnershipRequest & { permissionOwn: TOwnership },
+    TOwnershipRequest & { grouping: string; newOwner: string },
     { permissionOwn: Pick<TOwnership, "userName" | "groupName"> }
   >(
     client,

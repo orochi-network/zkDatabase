@@ -11,9 +11,9 @@ import { ModelCollectionMetadata } from '../../model/database/collection-metadat
 import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination } from '../types/pagination.js';
-import { QueryOptions } from '../types/search.js';
-import filterItems from '../query/array-filter.js';
 import { isUserExist } from './user.js';
+import logger from '../../helper/logger.js';
+import { FilterCriteria } from '../utils/document.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -30,7 +30,8 @@ export async function createDatabase(
   await ModelCollectionMetadata.init(databaseName);
   await ModelGroup.init(databaseName);
   await ModelUserGroup.init(databaseName);
-  await ModelDbSetting.getInstance(databaseName).updateSetting({
+  await ModelDbSetting.getInstance().createSetting({
+    databaseName,
     merkleHeight,
     appPublicKey,
     databaseOwner: actor,
@@ -39,46 +40,77 @@ export async function createDatabase(
 }
 
 export async function getDatabases(
-  query?: QueryOptions<Database>,
+  filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<Database[]> {
-  const databasesInfo = await DatabaseEngine.getInstance()
-    .client.db()
-    .admin()
-    .listDatabases();
+  try {
+    const databasesInfo = await DatabaseEngine.getInstance()
+      .client.db()
+      .admin()
+      .listDatabases();
 
-  const offset = pagination?.offset ?? 0;
-  const limit = pagination?.limit ?? databasesInfo.databases.length;
+    const databaseInfoMap: { [name: string]: { sizeOnDisk: number } } = {};
 
-  const databases: Database[] = await Promise.all(
-    databasesInfo.databases
-      .filter(
-        (db) => !['admin', 'local', '_zkdatabase_metadata'].includes(db.name)
-      )
-      .slice(offset, offset + limit)
-      .map(async (database) => {
-        const collections = await ModelDatabase.getInstance(
-          database.name
-        ).listCollections();
-        const settings = await ModelDbSetting.getInstance(
-          database.name
-        ).getSetting();
-        return {
-          databaseName: database.name,
-          merkleHeight: settings!.merkleHeight,
-          databaseSize: database.sizeOnDisk,
-          collections,
-        } as Database;
+    databasesInfo.databases.forEach((dbInfo) => {
+      databaseInfoMap[dbInfo.name] = { sizeOnDisk: dbInfo.sizeOnDisk || 0 };
+    });
+
+    const settings = await ModelDbSetting.getInstance().findSettingsByFields(
+      filter,
+      {
+        skip: pagination?.offset,
+        limit: pagination?.limit,
+      }
+    );
+
+    const collectionsCache: { [databaseName: string]: string[] } = {};
+
+    const databases: (Database | null)[] = await Promise.all(
+      settings.map(async (setting: DbSetting) => {
+        try {
+          const { databaseName, merkleHeight } = setting;
+
+          const dbInfo = databaseInfoMap[databaseName];
+          const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
+
+          let collections = collectionsCache[databaseName];
+          if (!collections) {
+            collections =
+              await ModelDatabase.getInstance(databaseName).listCollections();
+            collectionsCache[databaseName] = collections;
+          }
+
+          return {
+            databaseName,
+            merkleHeight,
+            databaseSize,
+            collections,
+          } as Database;
+        } catch (error) {
+          logger.error(
+            `Error processing database ${setting.databaseName}:`,
+            error
+          );
+          return null;
+        }
       })
-  );
+    );
 
-  return filterItems<Database>(databases, query, 10);
+    const validDatabases = databases.filter(
+      (db): db is Database => db !== null
+    );
+
+    return validDatabases;
+  } catch (error) {
+    logger.error('An error occurred in getDatabases:', error);
+    throw error;
+  }
 }
 
 export async function getDatabaseSetting(
   databaseName: string
 ): Promise<DbSetting> {
-  const setting = await ModelDbSetting.getInstance(databaseName).getSetting();
+  const setting = await ModelDbSetting.getInstance().getSetting(databaseName);
 
   if (setting) {
     return setting;
@@ -92,7 +124,7 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDbSetting.getInstance(databaseName).getSetting({
+  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });
 
@@ -113,11 +145,10 @@ export async function changeDatabaseOwner(
 
   if (actor === dbOwner) {
     if (await isUserExist(newOwner)) {
-      const result = await ModelDbSetting.getInstance(
-        databaseName
-      ).updateSetting({
-        databaseOwner: newOwner,
-      });
+      const result = await ModelDbSetting.getInstance().changeDatabaseOwner(
+        databaseName,
+        newOwner
+      );
 
       return result.acknowledged;
     }
