@@ -1,10 +1,4 @@
-import {
-  ConfigLoader,
-  LoggerLoader,
-  LoggerSet,
-  Joi,
-} from "@orochi-network/framework";
-
+import { ConfigLoader, LoggerSet, Joi } from "@orochi-network/framework";
 export const NODE_ENV_VALUES = [
   "development",
   "production",
@@ -19,8 +13,6 @@ type TApplicationConfig = {
   SERVICE_HOST: string;
   SERVICE_PORT: number;
 };
-
-LoggerSet(new LoggerLoader("framework", "debug", "json"));
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
