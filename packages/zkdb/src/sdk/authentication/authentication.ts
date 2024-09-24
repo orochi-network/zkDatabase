@@ -1,4 +1,4 @@
-import { AppContainer } from 'src/container.js';
+import { IApiClient } from '@zkdb/api';
 import storage from '../../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';
@@ -6,9 +6,11 @@ import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
 
 export class Authenticator {
   private signer: Signer;
+  private apiClient: IApiClient;
 
-  constructor(signer: Signer) {
+  constructor(signer: Signer, apiClient: IApiClient) {
     this.signer = signer;
+    this.apiClient = apiClient;
   }
 
   isLoggedIn(): boolean {
@@ -16,9 +18,7 @@ export class Authenticator {
   }
 
   async signIn() {
-    const ecdsaResult = await AppContainer.getInstance()
-      .getApiClient()
-      .user.ecdsa(undefined);
+    const ecdsaResult = await this.apiClient.user.ecdsa(undefined);
 
     const ecdsaMessage = ecdsaResult.unwrap();
 
@@ -44,9 +44,7 @@ export class Authenticator {
   }
 
   private async sendLoginRequest(proof: SignedData) {
-    const result = await AppContainer.getInstance()
-      .getApiClient()
-      .user.signIn({ proof });
+    const result = await this.apiClient.user.signIn({ proof });
 
     const userData = result.unwrap();
 
@@ -64,26 +62,24 @@ export class Authenticator {
     userName: string,
     proof: SignedData
   ) {
-    const result = await AppContainer.getInstance()
-      .getApiClient()
-      .user.signUp({
-        proof,
-        signUp: {
-          ...{
-            userName,
-            email,
-          },
-          timestamp: Math.floor(Date.now() / 1000),
-          userData: {},
+    const result = await this.apiClient.user.signUp({
+      proof,
+      signUp: {
+        ...{
+          userName,
+          email,
         },
-      });
+        timestamp: Math.floor(Date.now() / 1000),
+        userData: {},
+      },
+    });
 
     return result.unwrap();
   }
 
   async signOut(): Promise<void> {
     try {
-      await AppContainer.getInstance().getApiClient().user.signOut(undefined);
+      await this.apiClient.user.signOut(undefined);
     } finally {
       storage.clear();
     }
