@@ -9,7 +9,6 @@
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "tsc",
     "test": "echo 'hello world'"
-    // "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "repository": {
     "type": "git",
