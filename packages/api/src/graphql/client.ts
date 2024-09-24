@@ -1,5 +1,4 @@
 import * as pkg from "@apollo/client";
-import * as jose from "jose";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { Context } from "../authentication/context.js";
@@ -16,7 +15,21 @@ import { proof } from "./proof.js";
 
 const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
 
-export class ApiClient<T extends jose.JWTPayload> {
+export interface IApiClient<T = any> {
+  api: ApiClient<T>;
+  db: ReturnType<typeof database>;
+  collection: ReturnType<typeof collection>;
+  index: ReturnType<typeof collectionIndex>;
+  doc: ReturnType<typeof document>;
+  user: ReturnType<typeof user>;
+  group: ReturnType<typeof group>;
+  ownership: ReturnType<typeof ownership>;
+  permission: ReturnType<typeof permission>;
+  merkle: ReturnType<typeof merkle>;
+  proof: ReturnType<typeof proof>;
+}
+
+export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   context: Context<T> = new Context<T>();
@@ -56,7 +69,7 @@ export class ApiClient<T extends jose.JWTPayload> {
     });
   }
 
-  public static newInstance<T extends jose.JWTPayload>(url: string) {
+  public static newInstance<T = any>(url: string) {
     const api = new ApiClient<T>(url);
     return {
       api,
