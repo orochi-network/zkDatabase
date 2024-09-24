@@ -12,6 +12,7 @@ import { group } from "./group.js";
 import { merkle } from "./merkle.js";
 import { ownership } from "./ownership.js";
 import { permission } from "./permission.js";
+import { proof } from "./proof.js";
 
 const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
 
@@ -20,7 +21,15 @@ export class ApiClient<T extends jose.JWTPayload> {
 
   context: Context<T> = new Context<T>();
 
-  public get client() {
+  public setContext(fn: () => T | null) {
+    this.context.setContextCallback(fn);
+  }
+
+  public getContext() {
+    return this.context.getContext();
+  }
+
+  public get apollo() {
     return this.#client;
   }
 
@@ -51,15 +60,16 @@ export class ApiClient<T extends jose.JWTPayload> {
     const api = new ApiClient<T>(url);
     return {
       api,
-      db: database(api.client),
-      collection: collection(api.client),
-      index: collectionIndex(api.client),
-      doc: document(api.client),
-      user: user(api.client),
-      group: group(api.client),
-      ownership: ownership(api.client),
-      permission: permission(api.client),
-      merkle: merkle(api.client),
+      db: database(api.apollo),
+      collection: collection(api.apollo),
+      index: collectionIndex(api.apollo),
+      doc: document(api.apollo),
+      user: user(api.apollo),
+      group: group(api.apollo),
+      ownership: ownership(api.apollo),
+      permission: permission(api.apollo),
+      merkle: merkle(api.apollo),
+      proof: proof(api.apollo),
     };
   }
 }
