@@ -4,6 +4,7 @@
 # @zkdb/kubo
 # @zkdb/api
 # @zkdb/smart-contract
+# zkdb
 
 name: Publish packages in zkDatabase Repository
 
@@ -45,7 +46,9 @@ jobs:
         env:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
         run: |
-          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract")
+          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true" > ~/.npmrc
+
+          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb")
           packages_dir="packages"
 
           # Loop through all packages
@@ -83,7 +86,7 @@ jobs:
                 echo "Ignore ${PACKAGE_NAME} since no changes"
               else
                 echo "Detected: New version of ${PACKAGE_NAME}"
-                yarn run release
+                npm run release
               fi
             else
               echo "$PACKAGE_NAME is not in the publish list"
