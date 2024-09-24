@@ -5,7 +5,6 @@ const isBrowser = false;
 
 (async () => {
   let signer: Signer;
-
   if (isBrowser) {
     signer = new AuroWalletSigner();
   } else {
@@ -14,7 +13,7 @@ const isBrowser = false;
     signer = new NodeSigner(privateKey);
   }
 
-  zkdb.setSigner(signer);
+  zkdb.connect("http://0.0.0.0:4000/graphql", signer);
 
   await zkdb.auth.signUp('test-name', 'robot@gmail.com');
 
