@@ -57,7 +57,7 @@
     "o1js": "1.1.*"
   },
   "dependencies": {
-    "@orochi-network/framework": "^2.2.21",
+    "@orochi-network/framework": "^2.3.19",
     "mongodb": "^6.3.0"
   }
 }

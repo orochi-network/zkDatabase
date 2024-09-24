@@ -50,7 +50,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@orochi-network/framework": "^2.2.21",
+    "@orochi-network/framework": "^2.3.19",
     "@zkdb/smart-contract": "^1.0.0",
     "@zkdb/storage": "^1.0.0",
     "graphql": "^16.9.0",

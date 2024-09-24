@@ -13,8 +13,10 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "o1js": "^1.1.0",
-    "ftp-srv": "^4.6.3"
+    "@orochi-network/framework": "^2.3.19",
+    "ftp-srv": "^4.6.3",
+    "joi": "^17.13.3",
+    "o1js": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.1.0",
