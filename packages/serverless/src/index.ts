@@ -85,7 +85,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
       cookie: {
         httpOnly: true,
         path: '/',
-        sameSite: 'strict',
+        secure: 'auto',
         maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
       },
     })
