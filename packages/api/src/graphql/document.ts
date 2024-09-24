@@ -1,5 +1,9 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 import { TDocumentHistoryPayload } from "./types/document-history.js";
 import { TDocumentEncoded, TDocumentPayload } from "./types/document.js";
 import { TMerkleWitness } from "./types/merkle-tree.js";
@@ -133,7 +137,7 @@ const DOCUMENT_HISTORY = gql`
   }
 `;
 
-export const document = <T>(client: ApolloClient<T>) => ({
+export const document = <T>(client: TApolloClient<T>) => ({
   delete: createMutateFunction<
     TMerkleWitness,
     { databaseName: string; collectionName: string; documentQuery: JSON },

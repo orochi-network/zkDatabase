@@ -1,5 +1,10 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
+
 const { gql } = pkg;
 
 const COLLECTION_INDEX_CREATE = gql`
@@ -50,7 +55,7 @@ const COLLECTION_INDEX_LIST = gql`
   }
 `;
 
-export const collectionIndex = <T>(client: ApolloClient<T>) => ({
+export const collectionIndex = <T>(client: TApolloClient<T>) => ({
   create: createMutateFunction<
     boolean,
     { databaseName: string; collectionName: string; indexes: string[] },

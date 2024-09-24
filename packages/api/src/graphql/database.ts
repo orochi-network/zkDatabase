@@ -1,12 +1,16 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 import {
   TDatabase,
   TDatabaseSettings,
   TDatabaseStatus,
 } from "./types/database.js";
 import { TPagination } from "./types/pagination.js";
-import { TSearch } from "./types/search.js";
+
 const { gql } = pkg;
 
 const DATABASE_CHANGE_OWNER = gql`
@@ -55,7 +59,7 @@ const DATABASE_LIST = gql`
   }
 `;
 
-export const database = <T>(client: ApolloClient<T>) => ({
+export const database = <T>(client: TApolloClient<T>) => ({
   transferOwnership: createMutateFunction<
     boolean,
     { databaseName: string; newOwner: string },

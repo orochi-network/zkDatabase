@@ -1,5 +1,5 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import { createMutateFunction, TApolloClient } from "./common.js";
 import { TOwnership, TOwnershipRequest } from "./types/ownership.js";
 import { TUser } from "./types/user.js";
 
@@ -7,7 +7,7 @@ const { gql } = pkg;
 
 export type TUserSignUpRecord = TUser;
 
-export const ownership = <T>(client: ApolloClient<T>) => ({
+export const ownership = <T>(client: TApolloClient<T>) => ({
   setOwnership: createMutateFunction<
     Pick<TOwnership, "userName" | "groupName">,
     TOwnershipRequest & { grouping: string; newOwner: string },

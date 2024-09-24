@@ -1,5 +1,9 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 import {
   TOwnership,
   TOwnershipRequest,
@@ -12,7 +16,7 @@ const { gql } = pkg;
 
 export type TUserSignUpRecord = TUser;
 
-export const permission = <T>(client: ApolloClient<T>) => ({
+export const permission = <T>(client: TApolloClient<T>) => ({
   set: createMutateFunction<
     TOwnership,
     TOwnershipRequest & {

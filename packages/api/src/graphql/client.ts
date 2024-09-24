@@ -1,4 +1,4 @@
-import pkg from "@apollo/client";
+import * as pkg from "@apollo/client";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { Context } from "../authentication/context.js";
@@ -205,8 +205,10 @@ class NodeJsApiClient<T = any> extends BaseApiClient<T> {
 
 export class ApiClient {
   public static newInstance<T = any>(url: string): IApiClient<T> {
-    const api: BaseApiClient<T> = isNode ? new NodeJsApiClient(url) : new BrowserApiClient(url);
-    
+    const api: BaseApiClient<T> = isNode
+      ? new NodeJsApiClient(url)
+      : new BrowserApiClient(url);
+
     if (api.apollo) {
       return {
         api,
@@ -223,6 +225,6 @@ export class ApiClient {
       };
     }
 
-    throw Error('Apollo Client is not initialized')
+    throw Error("Apollo Client is not initialized");
   }
 }

@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { ClientSession, Filter, ObjectId, Document } from 'mongodb';
-import { ModelBasic, ModelDatabase, ModelCollection } from '@zkdb/storage';
-import { v4 } from 'uuid';
+import { ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { randomUUID } from 'crypto';
+import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
+import { PermissionBasic } from '../../common/permission.js';
 import logger from '../../helper/logger.js';
 import { SchemaField } from '../database/collection-metadata.js';
-import { PermissionBasic } from '../../common/permission.js';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
@@ -66,7 +66,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     const documentRecord: DocumentRecord = {
       timestamp: new Date(),
       ...document,
-      docId: v4(),
+      docId: randomUUID(),
       deleted: false,
     } as any;
 
