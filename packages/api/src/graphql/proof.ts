@@ -1,4 +1,4 @@
-import * as pkg from "@apollo/client";
+import pkg from '@apollo/client';
 import { createQueryFunction, TApolloClient } from "./common.js";
 import { TProofStatus, TProofStatusRequest, TZKProof } from "./types/proof.js";
 import { TUser } from "./types/user.js";

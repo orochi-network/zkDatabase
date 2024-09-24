@@ -1,4 +1,4 @@
-import * as pkg from "@apollo/client";
+import pkg from '@apollo/client';
 import { GraphQLResult } from "../utils/result.js";
 
 export type TAsyncGraphQLResult<T> = Promise<GraphQLResult<T>>;

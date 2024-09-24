@@ -1,4 +1,4 @@
-import * as pkg from "@apollo/client";
+import pkg from '@apollo/client';
 import {
   createMutateFunction,
   createQueryFunction,

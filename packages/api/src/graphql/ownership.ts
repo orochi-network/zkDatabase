@@ -1,4 +1,4 @@
-import * as pkg from "@apollo/client";
+import pkg from '@apollo/client';
 import { createMutateFunction, TApolloClient } from "./common.js";
 import { TOwnership, TOwnershipRequest } from "./types/ownership.js";
 import { TUser } from "./types/user.js";
