@@ -1,4 +1,4 @@
-import pkg, { ApolloClient } from "@apollo/client";
+import * as pkg from "@apollo/client";
 import {
   TSignatureProofData,
   TSignInInfo,
@@ -7,7 +7,11 @@ import {
 import { TPagination } from "./types/pagination.js";
 import { TSearch } from "./types/search.js";
 import { TUser } from "./types/user.js";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 
 const { gql } = pkg;
 
@@ -96,7 +100,7 @@ const ECDSA = gql`
   }
 `;
 
-export const user = <T>(client: ApolloClient<T>) => ({
+export const user = <T>(client: TApolloClient<T>) => ({
   signIn: createMutateFunction<
     TSignInInfo,
     { proof: TSignatureProofData },

@@ -1,10 +1,14 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 import { TGroupInfo } from "./types/group.js";
 
 const { gql } = pkg;
 
-export const group = <T>(client: ApolloClient<T>) => ({
+export const group = <T>(client: TApolloClient<T>) => ({
   addUser: createMutateFunction<
     boolean,
     { databaseName: string; groupName: string; userNames: string[] },

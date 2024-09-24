@@ -1,7 +1,12 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createMutateFunction, createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
 import { TPermissions } from "./types/ownership.js";
 import { TSchema } from "./types/schema.js";
+
 const { gql } = pkg;
 
 const COLLECTION_CREATE = gql`
@@ -59,7 +64,7 @@ export type TCollectionCreateRequest = TCollectionExistRequest & {
 
 export type TCollectionCreateResponse = { collectionCreate: boolean };
 
-export const collection = <T>(client: ApolloClient<T>) => ({
+export const collection = <T>(client: TApolloClient<T>) => ({
   create: createMutateFunction<
     boolean,
     TCollectionCreateRequest,

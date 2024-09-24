@@ -1,5 +1,5 @@
-import pkg, { ApolloClient } from "@apollo/client";
-import { createQueryFunction } from "./common.js";
+import * as pkg from "@apollo/client";
+import { createQueryFunction, TApolloClient } from "./common.js";
 import { TProofStatus, TProofStatusRequest, TZKProof } from "./types/proof.js";
 import { TUser } from "./types/user.js";
 
@@ -7,7 +7,7 @@ const { gql } = pkg;
 
 export type TUserSignUpRecord = TUser;
 
-export const proof = <T>(client: ApolloClient<T>) => ({
+export const proof = <T>(client: TApolloClient<T>) => ({
   status: createQueryFunction<
     TProofStatus,
     TProofStatusRequest,
