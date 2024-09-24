@@ -28,7 +28,7 @@ export class ApiClient<T extends jose.JWTPayload> {
     const context = new Context<T>();
     const removeTypenameLink = removeTypenameFromVariables();
     this.context = context;
-    const httpLink = new HttpLink({ uri });
+    const httpLink = new HttpLink({ uri, credentials: "include" });
     const authLink = setContext(async (_, { headers }) => {
       const token = this.context.getContext();
       return token
