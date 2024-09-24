@@ -1,14 +1,9 @@
-/* eslint-disable no-param-reassign */
-import { ConfigLoader } from "@orochi-network/framework";
+import {
+  ConfigLoader,
+  NODE_ENV_VALUE,
+  TNodeEnv,
+} from "@orochi-network/framework";
 import Joi from "joi";
-
-export const NODE_ENV_VALUES = [
-  "development",
-  "production",
-  "staging",
-] as const;
-
-type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 
 interface TApplicationConfig {
   NODE_ENV: TNodeEnv;
@@ -18,20 +13,30 @@ interface TApplicationConfig {
   PASV_MAX: number;
 }
 
-const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
-  NODE_ENV: Joi.string()
-    .required()
-    .trim()
-    .valid(...NODE_ENV_VALUES)
-    .default("production"),
-  HOST_NAME: Joi.string().required().trim().hostname(),
-  PORT: Joi.number().integer().min(1).max(65535).required().default(2121),
-  PASV_MIN: Joi.number().integer().min(1).max(65535).required(),
-  PASV_MAX: Joi.number()
-    .integer()
-    .min(1)
-    .max(65535)
-    .required(),
-});
+const configLoader = new ConfigLoader<TApplicationConfig>(
+  (raw) => {
+    const result = { ...raw };
+    const serviceBindUrl = new URL(result.SERVICE_BIND);
+    result.HOST_NAME = serviceBindUrl.hostname;
+    result.PORT = parseInt(serviceBindUrl.port || "2121", 10);
+    result.PASV_MIN = parseInt(
+      serviceBindUrl.searchParams.get("pasvMin") || "1024",
+      10
+    );
+    result.PASV_MIN = parseInt(
+      serviceBindUrl.searchParams.get("pasvMax") || "2048",
+      10
+    );
+    return result;
+  },
+  {
+    NODE_ENV: Joi.string()
+      .required()
+      .trim()
+      .valid(...NODE_ENV_VALUE)
+      .default("production"),
+    SERVICE_BIND: Joi.string().required().trim().uri(),
+  }
+);
 
 export const { config } = configLoader;

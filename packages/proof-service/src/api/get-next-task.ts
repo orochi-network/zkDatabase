@@ -1,7 +1,7 @@
-import { NetworkResult } from '../utils/network.js';
 import { gql, request } from 'graphql-request';
-import logger from '../helper/logger.js';
 import { config } from '../helper/config.js';
+import logger from '../helper/logger.js';
+import { NetworkResult } from '../utils/network.js';
 
 const GET_TASK_ID = gql`
   query GetTaskId {
