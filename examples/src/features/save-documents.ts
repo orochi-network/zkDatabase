@@ -1,10 +1,4 @@
-import {
-  CircuitString,
-  Mina,
-  PrivateKey,
-  PublicKey,
-  UInt64,
-} from 'o1js';
+import { CircuitString, Mina, PrivateKey, PublicKey, UInt64 } from 'o1js';
 import {
   NodeSigner,
   AuroWalletSigner,
@@ -29,7 +23,7 @@ class TShirt extends Schema.create({
   price: UInt64,
 }) {}
 
-(async () => {
+async function run() {
   const Network = Mina.Network({
     mina: 'https://api.minascan.io/node/devnet/v1/graphql',
     archive: 'https://api.minascan.io/archive/devnet/v1/graphql',
@@ -37,9 +31,11 @@ class TShirt extends Schema.create({
 
   Mina.setActiveInstance(Network);
 
-  const signer = isBrowser ? new AuroWalletSigner() : new NodeSigner(MY_PRIVATE_KEY)
+  const signer = isBrowser
+    ? new AuroWalletSigner()
+    : new NodeSigner(MY_PRIVATE_KEY);
 
-  zkdb.connect("http://0.0.0.0:4000/graphql", signer);
+  zkdb.connect('http://0.0.0.0:4000/graphql', signer);
 
   await zkdb.auth.signUp('user-name', 'robot@gmail.com');
 
@@ -117,4 +113,6 @@ class TShirt extends Schema.create({
   console.log(await document?.getProofStatus());
 
   await zkdb.auth.signOut();
-})();
+}
+
+await run();

@@ -1,16 +1,5 @@
-import {
-  CircuitString,
-  Mina,
-  PrivateKey,
-  UInt64,
-} from 'o1js';
-import {
-  zkdb,
-  Signer,
-  NodeSigner,
-  AuroWalletSigner,
-  Schema,
-} from 'zkdb';
+import { CircuitString, Mina, PrivateKey, UInt64 } from 'o1js';
+import { zkdb, NodeSigner, AuroWalletSigner, Schema } from 'zkdb';
 
 const isBrowser = false;
 
@@ -23,14 +12,13 @@ const ZKDB_PRIVATE_KEY = PrivateKey.fromBase58(
 
 const DB_NAME = 'shop';
 const COLLECTION_NAME = 'clothes';
-const GROUP_NAME = 'buyers';
 
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
-(async () => {
+async function run() {
   const Network = Mina.Network({
     mina: 'https://api.minascan.io/node/devnet/v1/graphql',
     archive: 'https://api.minascan.io/archive/devnet/v1/graphql',
@@ -38,7 +26,9 @@ class TShirt extends Schema.create({
 
   Mina.setActiveInstance(Network);
 
-  const signer = isBrowser ? new AuroWalletSigner() : new NodeSigner(MY_PRIVATE_KEY)
+  const signer = isBrowser
+    ? new AuroWalletSigner()
+    : new NodeSigner(MY_PRIVATE_KEY);
 
   zkdb.setSigner(signer);
 
@@ -46,9 +36,7 @@ class TShirt extends Schema.create({
 
   await zkdb.database('my-db').createGroup('group-name', 'group description');
 
-  const collection = await zkdb
-    .database(DB_NAME)
-    .from(COLLECTION_NAME);
+  const collection = await zkdb.database(DB_NAME).from(COLLECTION_NAME);
 
   for (let i = 0; i < 10; i++) {
     await collection.insert(
@@ -60,4 +48,6 @@ class TShirt extends Schema.create({
   }
 
   await zkdb.auth.signOut();
-})();
+}
+
+await run();
