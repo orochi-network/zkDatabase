@@ -46,8 +46,7 @@ const USER_SIGN_IN = gql`
   mutation UserSignIn($proof: ProofInput!) {
     userSignIn(proof: $proof) {
       userName
-      sessionKey
-      sessionId
+      accessToken
       userData
       publicKey
     }
