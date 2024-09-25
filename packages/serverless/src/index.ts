@@ -83,9 +83,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
       saveUninitialized: false, // recommended: only save session when data exists
       secret: config.EXPRESS_SESSION_SECRET,
       cookie: {
-        httpOnly: true,
         path: '/',
-        sameSite: 'strict',
         maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
       },
     })
@@ -94,7 +92,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   app.use(
     '/graphql',
     cors<cors.CorsRequest>({
-      origin: '*', // @todo: temporary allow for now
+      origin: (_, callback) => {
+        callback(null, true);
+      },
       credentials: true,
     }),
     express.json(),

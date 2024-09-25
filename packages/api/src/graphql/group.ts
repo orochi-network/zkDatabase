@@ -1,12 +1,10 @@
-import pkg from '@apollo/client';
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
-import { TGroupInfo } from "./types/group.js";
-
-const { gql } = pkg;
+} from "./common";
+import { TGroupInfo } from "./types";
 
 export const group = <T>(client: TApolloClient<T>) => ({
   addUser: createMutateFunction<

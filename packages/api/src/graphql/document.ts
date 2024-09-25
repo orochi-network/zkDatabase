@@ -1,15 +1,17 @@
-import pkg from '@apollo/client';
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
-import { TDocumentHistoryPayload } from "./types/document-history.js";
-import { TDocumentEncoded, TDocumentPayload } from "./types/document.js";
-import { TMerkleWitness } from "./types/merkle-tree.js";
-import { TPermissions } from "./types/ownership.js";
-import { TPagination } from "./types/pagination.js";
-const { gql } = pkg;
+} from "./common";
+import {
+  TDocumentHistoryPayload,
+  TDocumentEncoded,
+  TDocumentPayload,
+  TMerkleWitness,
+  TPermissions,
+  TPagination,
+} from "./types";
 
 const DOCUMENT_DELETE = gql`
   mutation DocumentDrop(

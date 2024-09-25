@@ -1,6 +1,6 @@
 {
   "name": "zkdb",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -91,7 +91,7 @@
     "o1js": "^1.1.0"
   },
   "dependencies": {
-    "@zkdb/api": "^1.1.1",
+    "@zkdb/api": "^1.1.2",
     "@zkdb/smart-contract": "^1.1.0",
     "detect-node": "^2.1.0",
     "graphql": "^16.9.0",

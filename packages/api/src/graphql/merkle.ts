@@ -1,8 +1,6 @@
-import pkg from '@apollo/client';
-import { createQueryFunction, TApolloClient } from "./common.js";
-import { TMerkleWitness } from "./types/merkle-tree.js";
-
-const { gql } = pkg;
+import { gql } from "@apollo/client";
+import { createQueryFunction, TApolloClient } from "./common";
+import { TMerkleWitness } from "./types";
 
 export const merkle = <T>(client: TApolloClient<T>) => ({
   root: createQueryFunction<

@@ -1,6 +1,4 @@
-import { TSession } from "./session.js";
-import { TSignature } from "./signature.js";
-import { TUser } from "./user.js";
+import { TSignature } from "./signature";
 
 export type TSignInInfo = {
   userName: string;
