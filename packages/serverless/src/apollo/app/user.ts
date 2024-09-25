@@ -210,9 +210,10 @@ const userSignIn = publicWrapper(
     }
     const client = new Client({ network: 'mainnet' });
 
-    if (JSON.parse(args.proof.data).ecdsaMessage !== context.req.session.ecdsaChallenge) {
+    if (args.proof.data !== context.req.session.ecdsaChallenge) {
       throw new Error('Invalid challenge message');
     }
+
     if (client.verifyMessage(args.proof)) {
       const modelUser = new ModelUser();
       const user = await modelUser.findOne({

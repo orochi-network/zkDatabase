@@ -93,7 +93,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     '/graphql',
     cors<cors.CorsRequest>({
       origin: (_, callback) => {
-        return callback(null, true);
+        callback(null, true);
       },
       credentials: true,
     }),
