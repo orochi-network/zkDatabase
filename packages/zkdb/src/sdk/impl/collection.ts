@@ -63,7 +63,7 @@ export class CollectionQueryImpl implements ZKCollection {
     const result = await this.apiClient.doc.findMany({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      documentQuery: JSON.parse(JSON.stringify(filter)),
+      documentQuery: filter,
       pagination,
     });
 
@@ -93,7 +93,7 @@ export class CollectionQueryImpl implements ZKCollection {
     const result = await this.apiClient.doc.findOne({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      documentQuery: JSON.parse(JSON.stringify(filter)),
+      documentQuery: filter,
     });
 
     const document = result.unwrap();
@@ -121,7 +121,7 @@ export class CollectionQueryImpl implements ZKCollection {
     const result = await this.apiClient.doc.update({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      documentQuery: JSON.parse(JSON.stringify(filter)),
+      documentQuery: filter,
       documentRecord: (model as any).serialize(),
     });
 
@@ -139,7 +139,7 @@ export class CollectionQueryImpl implements ZKCollection {
     const result = await this.apiClient.doc.delete({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      documentQuery: JSON.parse(JSON.stringify(filter)),
+      documentQuery: filter,
     });
 
     const merkleWitness = result.unwrap();
