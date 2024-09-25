@@ -1,4 +1,4 @@
-import { assert, Mina, PrivateKey, PublicKey, UInt32 } from 'o1js';
+import { assert, Mina, PrivateKey, PublicKey, Sign, UInt32 } from 'o1js';
 import {
   NodeSigner,
   AuroWalletSigner,
@@ -11,6 +11,8 @@ const isBrowser = false;
 
 const DB_NAME = 'shop';
 
+const SERVER_URL = 'http://0.0.0.0:4000/graphql';
+
 async function run() {
   const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
   Mina.setActiveInstance(Local);
@@ -21,9 +23,9 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(deployerPrivate);
 
+  zkdb.connect(SERVER_URL, signer);
+  
   const zkDbPrivateKey = PrivateKey.random();
-
-  zkdb.setSigner(signer);
 
   await zkdb.auth.signUp('user-name', 'robot@gmail.com');
 

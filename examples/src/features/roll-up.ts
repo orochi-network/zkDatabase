@@ -20,6 +20,8 @@ const ZKDB_PRIVATE_KEY = PrivateKey.fromBase58(
 
 const DB_NAME = 'my-collection';
 
+const SERVER_URL = 'http://0.0.0.0:4000/graphql';
+
 async function run() {
   const Network = Mina.Network({
     mina: 'https://api.minascan.io/node/devnet/v1/graphql',
@@ -32,7 +34,7 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-  zkdb.setSigner(signer);
+    zkdb.connect(SERVER_URL, signer);
 
   await zkdb.auth.signIn();
 
