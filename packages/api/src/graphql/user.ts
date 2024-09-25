@@ -1,19 +1,16 @@
-import * as pkg from "@apollo/client";
-import {
-  TSignatureProofData,
-  TSignInInfo,
-  TSignUpData,
-} from "./types/authentication.js";
-import { TPagination } from "./types/pagination.js";
-import { TSearch } from "./types/search.js";
-import { TUser } from "./types/user.js";
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
-
-const { gql } = pkg;
+} from "./common";
+import {
+  TSignatureProofData,
+  TSignInInfo,
+  TSignUpData,
+  TUser,
+  TPagination,
+} from "./types";
 
 export type TUserSignUpRecord = TUser;
 

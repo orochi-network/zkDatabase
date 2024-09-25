@@ -1,1 +1,1 @@
-export { GraphQLResult, TResultType  } from "./result.js";
+export * from "./result";

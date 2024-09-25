@@ -1,3 +1,3 @@
-export * from "./graphql/index.js";
-export * from "./utils/index.js";
-export * from "./authentication/index.js";
+export * from "./graphql";
+export * from "./utils";
+export * from "./authentication";

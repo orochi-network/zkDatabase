@@ -1,4 +1,4 @@
-import * as pkg from "@apollo/client";
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
@@ -8,10 +8,8 @@ import {
   TDatabase,
   TDatabaseSettings,
   TDatabaseStatus,
-} from "./types/database.js";
-import { TPagination } from "./types/pagination.js";
-
-const { gql } = pkg;
+  TPagination,
+} from "./types";
 
 const DATABASE_CHANGE_OWNER = gql`
   mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {

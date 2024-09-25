@@ -1,19 +1,22 @@
-import * as pkg from "@apollo/client";
-import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
+import {
+  ApolloClient,
+  InMemoryCache,
+  HttpLink,
+  ApolloLink,
+} from "@apollo/client";
 import { setContext } from "@apollo/client/link/context/index.js";
-import { Context } from "../authentication/context.js";
-import { collection } from "./collection.js";
-import { database } from "./database.js";
-import { document } from "./document.js";
-import { collectionIndex } from "./collection-index.js";
-import { user } from "./user.js";
-import { group } from "./group.js";
-import { merkle } from "./merkle.js";
-import { ownership } from "./ownership.js";
-import { permission } from "./permission.js";
-import { proof } from "./proof.js";
-
-const { ApolloClient, InMemoryCache, HttpLink, ApolloLink } = pkg;
+import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
+import { Context } from "@authentication";
+import { database } from "./database";
+import { collection } from "./collection";
+import { collectionIndex } from "./collection-index";
+import { document } from "./document";
+import { user } from "./user";
+import { group } from "./group";
+import { ownership } from "./ownership";
+import { permission } from "./permission";
+import { merkle } from "./merkle";
+import { proof } from "./proof";
 
 export interface IApiClient<T = any> {
   api: ApiClient<T>;

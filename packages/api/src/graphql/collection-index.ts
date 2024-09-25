@@ -1,11 +1,9 @@
-import * as pkg from "@apollo/client";
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
-
-const { gql } = pkg;
+} from "./common";
 
 const COLLECTION_INDEX_CREATE = gql`
   mutation IndexCreate(
