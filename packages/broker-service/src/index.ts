@@ -32,10 +32,12 @@ import { TypedefsApp, ResolversApp } from "./apollo/index.js";
   server.applyMiddleware({ app, path: "/graphql", cors: true });
 
   await new Promise<void>((resolve) => {
-    httpServer.listen({ port: config.PORT }, resolve);
+    httpServer.listen({ port: config.SERVICE_PORT }, resolve);
   });
 
-  logger.debug(`🚀 Server ready at http://localhost:${config.PORT}/graphql`);
+  logger.debug(
+    `🚀 Server ready at http://localhost:${config.SERVICE_PORT}/graphql`
+  );
   if (config.NODE_ENV !== "production") {
     logger.warn("Server environment is:", config.NODE_ENV);
   }

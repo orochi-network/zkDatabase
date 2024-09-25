@@ -1,9 +1,6 @@
-import * as pkg from "@apollo/client";
-import { createMutateFunction, TApolloClient } from "./common.js";
-import { TOwnership, TOwnershipRequest } from "./types/ownership.js";
-import { TUser } from "./types/user.js";
-
-const { gql } = pkg;
+import { gql } from "@apollo/client";
+import { createMutateFunction, TApolloClient } from "./common";
+import { TOwnership, TOwnershipRequest, TUser } from "./types";
 
 export type TUserSignUpRecord = TUser;
 

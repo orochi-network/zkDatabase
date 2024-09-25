@@ -1,13 +1,10 @@
-import * as pkg from "@apollo/client";
+import { gql } from "@apollo/client";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
-import { TPermissions } from "./types/ownership.js";
-import { TSchema } from "./types/schema.js";
-
-const { gql } = pkg;
+} from "./common";
+import { TPermissions, TSchema } from "./types";
 
 const COLLECTION_CREATE = gql`
   mutation CollectionCreate(

@@ -1,17 +1,14 @@
-export { TSignature } from "./signature.js";
-export {
-  TSignInInfo,
-  TSignatureProofData,
-  TSignUpData,
-} from "./authentication.js";
-export { TDatabase, TDatabaseStatus } from "./database.js";
-export { TDocumentEncoded } from "./document.js";
-export { TMerkleWitness } from "./merkle-tree.js";
-export { TPermissionSet, TPermissions, TOwnership } from "./ownership.js";
-export { TSchemaField, TSchema } from "./schema.js";
-export { TSession } from "./session.js";
-export { TUser } from "./user.js";
-export { TGroupInfo } from "./group.js";
-export { TZKProof, TProofStatus } from "./proof.js";
-export { TPagination } from "./pagination.js";
-export { TSearch, TCondition } from "./search.js";
+export * from "./authentication";
+export * from "./database";
+export * from "./document";
+export * from "./document-history";
+export * from "./group";
+export * from "./merkle-tree";
+export * from "./ownership";
+export * from "./pagination";
+export * from "./proof";
+export * from "./schema";
+export * from "./search";
+export * from "./session";
+export * from "./signature";
+export * from "./user";

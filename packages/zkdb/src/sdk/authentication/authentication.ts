@@ -1,4 +1,4 @@
-import { AppContainer } from 'src/container.js';
+import { AppContainer } from '../../container.js';
 import storage from '../../storage/storage.js';
 import { SignedData } from '../../types/signing.js';
 import { Signer } from '../signer/interface/signer.js';

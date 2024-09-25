@@ -1,11 +1,8 @@
-import * as pkg from "@apollo/client";
-import { createQueryFunction, TApolloClient } from "./common.js";
-import { TProofStatus, TProofStatusRequest, TZKProof } from "./types/proof.js";
-import { TUser } from "./types/user.js";
-
-const { gql } = pkg;
-
+import { gql } from "@apollo/client";
+import { createQueryFunction, TApolloClient } from "./common";
+import { TProofStatus, TProofStatusRequest, TZKProof, TUser } from "./types";
 export type TUserSignUpRecord = TUser;
+console.log("🚀 ~ gql:", gql);
 
 export const proof = <T>(client: TApolloClient<T>) => ({
   status: createQueryFunction<
