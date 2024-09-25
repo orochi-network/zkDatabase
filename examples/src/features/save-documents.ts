@@ -4,7 +4,7 @@ import {
   AuroWalletSigner,
   Schema,
   AccessPermissions,
-  zkdb,
+  ZKDatabaseClient,
 } from 'zkdb';
 
 const isBrowser = false;
@@ -37,11 +37,11 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-    zkdb.connect(SERVER_URL, signer);
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
-  await zkdb.auth.signUp('user-name', 'robot@gmail.com');
+  await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
-  await zkdb.auth.signIn();
+  await zkdb.authenticator.signIn();
 
   const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
 
@@ -114,7 +114,7 @@ async function run() {
 
   console.log(await document?.getProofStatus());
 
-  await zkdb.auth.signOut();
+  await zkdb.authenticator.signOut();
 }
 
 await run();

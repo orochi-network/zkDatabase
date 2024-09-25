@@ -1,5 +1,5 @@
 import { CircuitString, Mina, PrivateKey, UInt64 } from 'o1js';
-import { zkdb, NodeSigner, AuroWalletSigner, Schema } from 'zkdb';
+import { AuroWalletSigner, NodeSigner, Schema, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
 
@@ -32,9 +32,9 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-    zkdb.connect(SERVER_URL, signer);
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
-  await zkdb.auth.signIn();
+  await zkdb.authenticator.signIn();
 
   await zkdb.database('my-db').createGroup('group-name', 'group description');
 
@@ -49,7 +49,7 @@ async function run() {
     );
   }
 
-  await zkdb.auth.signOut();
+  await zkdb.authenticator.signOut();
 }
 
 await run();

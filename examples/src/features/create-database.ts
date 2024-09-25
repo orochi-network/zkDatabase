@@ -1,10 +1,10 @@
-import { assert, Mina, PrivateKey, PublicKey, Sign, UInt32 } from 'o1js';
+import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
 import {
-  NodeSigner,
   AuroWalletSigner,
-  QueryBuilder,
   DatabaseSearch,
-  zkdb,
+  NodeSigner,
+  QueryBuilder,
+  ZKDatabaseClient,
 } from 'zkdb';
 
 const isBrowser = false;
@@ -23,13 +23,13 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(deployerPrivate);
 
-  zkdb.connect(SERVER_URL, signer);
-  
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+
   const zkDbPrivateKey = PrivateKey.random();
 
-  await zkdb.auth.signUp('user-name', 'robot@gmail.com');
+  await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
-  await zkdb.auth.signIn();
+  await zkdb.authenticator.signIn();
 
   const tx = await zkdb
     .fromBlockchain()
@@ -49,7 +49,7 @@ async function run() {
 
   assert(databases[0].databaseName === DB_NAME);
 
-  await zkdb.auth.signOut();
+  await zkdb.authenticator.signOut();
 }
 
 await run();
