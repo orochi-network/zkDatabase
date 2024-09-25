@@ -71,14 +71,14 @@ export class ZKDatabaseImpl implements ZKDatabase {
       databaseName: this.databaseName,
     });
 
-    const groups = result.unwrap();
-
-    return groups.map((group) => ({
-      name: group.name,
-      description: group.description,
-      createdAt: new Date(group.createdAt),
-      createdBy: group.createdBy,
-    }));
+    return result
+      .unwrap()
+      .map(({ name, description, createdAt, createdBy }) => ({
+        name,
+        description,
+        createdAt: new Date(createdAt),
+        createdBy: createdBy,
+      }));
   }
 
   async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
