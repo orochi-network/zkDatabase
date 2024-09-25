@@ -47,12 +47,15 @@ const DATABASE_STATUS = gql`
 `;
 
 const DATABASE_LIST = gql`
-  query GetDbList($search: SearchInput, $pagination: PaginationInput) {
-    dbList(search: $search, pagination: $pagination) {
+  query GetDbList($query: JSON, $pagination: PaginationInput) {
+    dbList(query: $query, pagination: $pagination) {
       databaseName
       databaseSize
       merkleHeight
-      collections
+      collections {
+        name
+        indexes
+      }
     }
   }
 `;

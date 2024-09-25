@@ -1,6 +1,7 @@
 import {
   DatabaseEngine,
   DbSetting,
+  ModelCollection,
   ModelDatabase,
   ModelDbSetting,
 } from '@zkdb/storage';
@@ -14,6 +15,7 @@ import { Pagination } from '../types/pagination.js';
 import { isUserExist } from './user.js';
 import logger from '../../helper/logger.js';
 import { FilterCriteria } from '../utils/document.js';
+import { Collection } from '../types/collection.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -44,16 +46,21 @@ export async function getDatabases(
   pagination?: Pagination
 ): Promise<Database[]> {
   try {
-    const databasesInfo = await DatabaseEngine.getInstance()
-      .client.db()
-      .admin()
-      .listDatabases();
+    const dbEngine = DatabaseEngine.getInstance();
+    const databasesInfo = await dbEngine.client.db().admin().listDatabases();
 
-    const databaseInfoMap: { [name: string]: { sizeOnDisk: number } } = {};
+    if (!databasesInfo?.databases?.length) {
+      return [];
+    }
 
-    databasesInfo.databases.forEach((dbInfo) => {
-      databaseInfoMap[dbInfo.name] = { sizeOnDisk: dbInfo.sizeOnDisk || 0 };
-    });
+    const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
+      databasesInfo.databases.reduce(
+        (acc, dbInfo) => {
+          acc[dbInfo.name] = { sizeOnDisk: dbInfo.sizeOnDisk || 0 };
+          return acc;
+        },
+        {} as Record<string, { sizeOnDisk: number }>
+      );
 
     const settings = await ModelDbSetting.getInstance().findSettingsByFields(
       filter,
@@ -63,44 +70,46 @@ export async function getDatabases(
       }
     );
 
-    const collectionsCache: { [databaseName: string]: string[] } = {};
+    if (!settings?.length) {
+      return [];
+    }
 
-    const databases: (Database | null)[] = await Promise.all(
+    const collectionsCache: Record<string, string[]> = {};
+
+    const databases: Database[] = await Promise.all(
       settings.map(async (setting: DbSetting) => {
-        try {
-          const { databaseName, merkleHeight } = setting;
+        const { databaseName, merkleHeight } = setting;
+        const dbInfo = databaseInfoMap[databaseName];
+        const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-          const dbInfo = databaseInfoMap[databaseName];
-          const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
+        const collectionNames =
+          collectionsCache[databaseName] ||
+          (collectionsCache[databaseName] =
+            await ModelDatabase.getInstance(databaseName).listCollections());
 
-          let collections = collectionsCache[databaseName];
-          if (!collections) {
-            collections =
-              await ModelDatabase.getInstance(databaseName).listCollections();
-            collectionsCache[databaseName] = collections;
-          }
+        const collections: Collection[] = await Promise.all(
+          collectionNames.map(async (collectionName) => {
+            const indexes = await ModelCollection.getInstance(
+              databaseName,
+              collectionName
+            ).listIndexes();
+            return { name: collectionName, indexes };
+          })
+        );
 
-          return {
-            databaseName,
-            merkleHeight,
-            databaseSize,
-            collections,
-          } as Database;
-        } catch (error) {
-          logger.error(
-            `Error processing database ${setting.databaseName}:`,
-            error
-          );
-          return null;
-        }
+        return {
+          databaseName,
+          merkleHeight,
+          databaseSize,
+          collections,
+        } as Database;
       })
-    );
+    ).catch((error) => {
+      logger.error(`Error processing databases:`, error);
+      throw error;
+    });
 
-    const validDatabases = databases.filter(
-      (db): db is Database => db !== null
-    );
-
-    return validDatabases;
+    return databases.filter(Boolean); // Filter out any `null` results
   } catch (error) {
     logger.error('An error occurred in getDatabases:', error);
     throw error;

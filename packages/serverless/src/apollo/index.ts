@@ -15,6 +15,7 @@ import {
   resolversDocumentHistory,
   typeDefsDocumentHistory,
 } from './app/document-history.js';
+import { typeCommonDefsCollection } from './app/types/collection.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -28,6 +29,7 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsDocumentHistory,
   typeCommonDefsDocument,
+  typeCommonDefsCollection
 ];
 
 type Resolver =

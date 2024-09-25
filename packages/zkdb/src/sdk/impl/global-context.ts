@@ -16,18 +16,22 @@ export class GlobalContextImpl implements GlobalContext {
   }
 
   async databases(
-    filter?: FilterCriteria,
-    pagination?: Pagination
+    filter: FilterCriteria = {},
+    pagination: Pagination = { offset: 0, limit: 10 }
   ): Promise<Database[]> {
-    const result = await this.apiClient.db.list({
-      query: filter ?? {},
-      pagination: pagination ?? {
-        offset: 0,
-        limit: 10,
-      },
+    const { unwrap } = await this.apiClient.db.list({
+      query: filter,
+      pagination,
     });
 
-    return result.unwrap();
+    return unwrap().map(
+      ({ databaseName, merkleHeight, collections, databaseSize }) => ({
+        databaseName,
+        merkleHeight,
+        collections: collections.map(({ name }) => name),
+        databaseSize,
+      })
+    );
   }
 
   async users(
