@@ -1,6 +1,4 @@
-import { ConfigLoader } from "@orochi-network/framework";
-import Joi from "joi";
-
+import { ConfigLoader, Joi } from "@orochi-network/framework";
 export const NODE_ENV_VALUES = [
   "development",
   "production",
@@ -9,15 +7,22 @@ export const NODE_ENV_VALUES = [
 
 type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 
-interface TApplicationConfig {
+type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
-  PORT: number;
-}
+  SERVICE_HOST: string;
+  SERVICE_PORT: number;
+};
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (raw: any) => raw,
+  (raw) => {
+    const serviceUrl = new URL(raw.SERVICE_BIND);
+    raw.SERVICE_HOST = serviceUrl.hostname;
+    raw.SERVICE_PORT = parseInt(serviceUrl.port, 10);
+
+    delete raw.SERVICE_BIND;
+    return raw;
+  },
   {
     NODE_ENV: Joi.string()
       .required()
@@ -28,7 +33,9 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),
-    PORT: Joi.number().integer().min(1).max(65535).required().default(4001),
+    SERVICE_BIND: Joi.string()
+      .pattern(/^http(|s):\/\//)
+      .default("http://0.0.0.0:3000"),
   }
 );
 
