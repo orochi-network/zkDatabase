@@ -1,10 +1,10 @@
-// import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
+// import { assert, Mina, PrivateKey, PublicKey, UInt32 } from 'o1js';
 // import {
-//   AuroWalletSigner,
-//   DatabaseSearch,
-//   NodeSigner,
-//   QueryBuilder,
 //   Signer,
+//   NodeSigner,
+//   AuroWalletSigner,
+//   QueryBuilder,
+//   DatabaseSearch,
 //   zkdb,
 // } from 'zkdb';
 
@@ -34,18 +34,15 @@
 
 //   await zkdb.auth.signIn('robot@gmail.com');
 
-//   const tx = await zkdb
-//     .fromBlockchain()
+//   const tx = await zkdb.fromBlockchain()
 //     .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
 //   await tx.wait();
 
-//   await zkdb
-//     .fromGlobal()
-//     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+//   await zkdb.fromGlobal()
+//     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey))
 
-//   const databases = await zkdb
-//     .fromGlobal()
+//   const databases = await zkdb.fromGlobal()
 //     .databases(
 //       new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
 //     );
