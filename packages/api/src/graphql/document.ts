@@ -140,7 +140,7 @@ const DOCUMENT_HISTORY = gql`
 export const document = <T>(client: TApolloClient<T>) => ({
   delete: createMutateFunction<
     TMerkleWitness,
-    { databaseName: string; collectionName: string; documentQuery: JSON },
+    { databaseName: string; collectionName: string; documentQuery: any },
     { documentDrop: TMerkleWitness }
   >(client, DOCUMENT_DELETE, (data) => data.documentDrop),
   create: createMutateFunction<
