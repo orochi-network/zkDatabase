@@ -1,56 +1,56 @@
-import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
-import {
-  AuroWalletSigner,
-  DatabaseSearch,
-  NodeSigner,
-  QueryBuilder,
-  Signer,
-  zkdb,
-} from 'zkdb';
+// import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
+// import {
+//   AuroWalletSigner,
+//   DatabaseSearch,
+//   NodeSigner,
+//   QueryBuilder,
+//   Signer,
+//   zkdb,
+// } from 'zkdb';
 
-const isBrowser = false;
+// const isBrowser = false;
 
-const DB_NAME = 'shop';
+// const DB_NAME = 'shop';
 
-(async () => {
-  const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
-  Mina.setActiveInstance(Local);
+// (async () => {
+//   const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
+//   Mina.setActiveInstance(Local);
 
-  let signer: Signer;
+//   let signer: Signer;
 
-  const { key: deployerPrivate } = Local.testAccounts[0];
+//   const { key: deployerPrivate } = Local.testAccounts[0];
 
-  if (isBrowser) {
-    signer = new AuroWalletSigner();
-  } else {
-    signer = new NodeSigner(deployerPrivate);
-  }
+//   if (isBrowser) {
+//     signer = new AuroWalletSigner();
+//   } else {
+//     signer = new NodeSigner(deployerPrivate);
+//   }
 
-  const zkDbPrivateKey = PrivateKey.random();
+//   const zkDbPrivateKey = PrivateKey.random();
 
-  zkdb.setSigner(signer);
+//   zkdb.setSigner(signer);
 
-  await zkdb.auth.signUp('user-name', 'robot@gmail.com');
+//   await zkdb.auth.signUp('user-name', 'robot@gmail.com');
 
-  await zkdb.auth.signIn();
+//   await zkdb.auth.signIn('robot@gmail.com');
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
+//   const tx = await zkdb
+//     .fromBlockchain()
+//     .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
-  await tx.wait();
+//   await tx.wait();
 
-  await zkdb
-    .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+//   await zkdb
+//     .fromGlobal()
+//     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
-  const databases = await zkdb
-    .fromGlobal()
-    .databases(
-      new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
-    );
+//   const databases = await zkdb
+//     .fromGlobal()
+//     .databases(
+//       new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
+//     );
 
-  assert(databases[0].databaseName === DB_NAME);
+//   assert(databases[0].databaseName === DB_NAME);
 
-  await zkdb.auth.signOut();
-})();
+//   await zkdb.auth.signOut();
+// })();
