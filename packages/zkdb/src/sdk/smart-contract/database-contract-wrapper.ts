@@ -5,11 +5,11 @@ import {
   PrivateKey,
   PublicKey,
 } from 'o1js';
-import { getSigner } from '../signer/signer.js';
 import ZKDatabaseClient from '../global/zkdatabase-client.js';
 
 export class DatabaseContractWrapper {
   private zkDatabaseClient: ZKDatabaseClient;
+
   private zkDatabaseSmartContact: ZKDatabaseSmartContractWrapper;
 
   private constructor(
@@ -52,7 +52,9 @@ export class DatabaseContractWrapper {
           PublicKey.fromBase58(user.publicKey)
         );
 
-      tx = await getSigner().signTransaction(tx, [appKey]);
+      tx = await this.zkDatabaseClient
+        .getSigner()
+        .signTransaction(tx, [appKey]);
       const pendingTx = await tx.send();
       return pendingTx;
     }
@@ -74,7 +76,9 @@ export class DatabaseContractWrapper {
           PublicKey.fromBase58(user.publicKey),
           jsonProof
         );
-      tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
+      tx = await this.zkDatabaseClient
+        .getSigner()
+        .signTransaction(tx, [zkAppPrivateKey]);
       return await tx.send();
     }
 

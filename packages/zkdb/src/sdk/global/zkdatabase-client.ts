@@ -32,6 +32,10 @@ export class ZKDatabaseClient {
     return new ZKDatabaseClient(ApiClient.newInstance(url), authenticator);
   }
 
+  public getSigner(): Signer {
+    return this.authenticator.signer;
+  }
+
   public setSigner(signer: Signer) {
     this.authenticator.connect(signer);
   }
