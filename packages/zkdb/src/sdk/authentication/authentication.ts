@@ -22,12 +22,7 @@ export class Authenticator {
 
     const ecdsaMessage = ecdsaResult.unwrap();
 
-    const signInProof = await this.getSigner().signMessage(
-      JSON.stringify({
-        ecdsaMessage,
-        timestamp: Math.floor(Date.now() / 1000),
-      })
-    );
+    const signInProof = await this.getSigner().signMessage(ecdsaMessage);
 
     await this.sendLoginRequest(signInProof);
   }
