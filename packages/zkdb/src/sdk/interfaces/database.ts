@@ -9,7 +9,14 @@ import { JsonProof } from 'o1js';
 
 export interface ZKDatabase {
   from(name: string): ZKCollection;
-
+  // Group
+  createGroup(groupName: string, description: string): Promise<boolean>;
+  fromGroup(groupName: string): ZKGroup;
+  getGroups(): Promise<GroupDescription[]>;
+  // Settings
+  getSettings(): Promise<DatabaseSettings>;
+  // Collection
+  getCollections(): Promise<string[]>;
   createCollection<
     T extends {
       getSchema: () => SchemaDefinition;
@@ -20,15 +27,8 @@ export interface ZKDatabase {
     type: T,
     permissions: Permissions
   ): Promise<boolean>;
-  
-  createGroup(groupName: string, description: string): Promise<boolean>;
-
-  fromGroup(groupName: string): ZKGroup;
-
-  getGroups(): Promise<GroupDescription[]>;
-  getSettings(): Promise<DatabaseSettings>;
-  
-  changeOwner(newOwner: string): Promise<boolean>
-
-  getProof(): Promise<JsonProof>
+  // Ownership
+  changeOwner(newOwner: string): Promise<boolean>;
+  // Proof
+  getProof(): Promise<JsonProof>;
 }

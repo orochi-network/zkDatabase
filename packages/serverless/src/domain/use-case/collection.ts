@@ -6,6 +6,7 @@ import logger from '../../helper/logger.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isGroupExist } from './group.js';
 import { hasCollectionPermission } from './permission.js';
+import { Collection } from '../types/collection.js';
 
 async function createCollection(
   databaseName: string,
@@ -47,6 +48,23 @@ async function createCollection(
     logger.error(error);
     throw error;
   }
+}
+
+async function listCollections(databaseName: string): Promise<Collection[]> {
+  const collectionNames =
+    await ModelDatabase.getInstance(databaseName).listCollections();
+
+  const collections: Collection[] = await Promise.all(
+    collectionNames.map(async (collectionName) => {
+      const indexes = await ModelCollection.getInstance(
+        databaseName,
+        collectionName
+      ).listIndexes();
+      return { name: collectionName, indexes };
+    })
+  );
+
+  return collections;
 }
 
 async function listIndexes(
@@ -174,4 +192,5 @@ export {
   dropIndex,
   listIndexes,
   doesIndexExist,
+  listCollections,
 };
