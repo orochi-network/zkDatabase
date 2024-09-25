@@ -5,11 +5,11 @@ import { Signer } from '../signer/interface/signer.js';
 import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
 
 export class Authenticator {
-  private signer: Signer;
+  #signer: Signer;
   private apiClient: IApiClient;
 
   constructor(signer: Signer, apiClient: IApiClient) {
-    this.signer = signer;
+    this.#signer = signer;
     this.apiClient = apiClient;
   }
 
@@ -22,13 +22,13 @@ export class Authenticator {
 
     const ecdsaMessage = ecdsaResult.unwrap();
 
-    const signInProof = await this.getSigner().signMessage(ecdsaMessage);
+    const signInProof = await this.signer.signMessage(ecdsaMessage);
 
     await this.sendLoginRequest(signInProof);
   }
 
   async signUp(userName: string, email: string) {
-    const signUpProof = await this.getSigner().signMessage(
+    const signUpProof = await this.signer.signMessage(
       JSON.stringify({
         userName,
         email,
@@ -91,11 +91,7 @@ export class Authenticator {
     return null;
   }
 
-  private getSigner(): Signer {
-    if (this.signer === undefined) {
-      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first');
-    }
-
-    return this.signer;
+  private get signer() {
+    return this.#signer;
   }
 }
