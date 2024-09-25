@@ -6,7 +6,6 @@ import {
   UInt64,
 } from 'o1js';
 import {
-  Signer,
   NodeSigner,
   AuroWalletSigner,
   Schema,
@@ -38,13 +37,7 @@ class TShirt extends Schema.create({
 
   Mina.setActiveInstance(Network);
 
-  let signer: Signer;
-
-  if (isBrowser) {
-    signer = new AuroWalletSigner();
-  } else {
-    signer = new NodeSigner(MY_PRIVATE_KEY);
-  }
+  const signer = isBrowser ? new AuroWalletSigner() : new NodeSigner(MY_PRIVATE_KEY)
 
   zkdb.connect("http://0.0.0.0:4000/graphql", signer);
 
@@ -54,12 +47,12 @@ class TShirt extends Schema.create({
 
   const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
 
-  // const tx = await zkdb
-  //   .fromBlockchain()
-  //   .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
+  const tx = await zkdb
+    .fromBlockchain()
+    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
-  // console.log('deployment hash', tx.hash);
-  // await tx.wait();
+  console.log('deployment hash', tx.hash);
+  await tx.wait();
 
   await zkdb
     .fromGlobal()
@@ -79,8 +72,6 @@ class TShirt extends Schema.create({
     name: CircuitString.fromString('Guchi'),
     price: UInt64.from(12),
   });
-
-  await zkdb.database('my-db').from('my-collection').insert(shirt);
 
   await zkdb.database('my-db').fromGroup('group-name');
   await zkdb
