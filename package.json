@@ -5,7 +5,7 @@
     "packages/*"
   ],
   "scripts": {
-		"clean": "find $(pwd) -name 'node_modules' -type d -exec rm -rf {} \\; || true && find $(pwd) -name 'build' -type d -exec rm -rf {} \\; || true",
+    "clean": "find $(pwd) -name 'node_modules' -type d -exec rm -rf {} \\; || true && find $(pwd) -name 'build' -type d -exec rm -rf {} \\; || true",
     "build": "tsc --build tsconfig.json",
     "clean-build": "yarn clean && yarn && yarn build",
     "generate-docs": "spectaql spectaql-config.yml"
