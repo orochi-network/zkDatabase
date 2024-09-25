@@ -18,7 +18,7 @@ export class Authenticator {
   }
 
   async signIn() {
-    const ecdsaResult = await this.apiClient.user.ecdsa(undefined);
+    const ecdsaResult = await this.user.ecdsa(undefined);
 
     const ecdsaMessage = ecdsaResult.unwrap();
 
@@ -39,7 +39,7 @@ export class Authenticator {
   }
 
   private async sendLoginRequest(proof: SignedData) {
-    const result = await this.apiClient.user.signIn({ proof });
+    const result = await this.user.signIn({ proof });
 
     const userData = result.unwrap();
 
@@ -57,13 +57,11 @@ export class Authenticator {
     userName: string,
     proof: SignedData
   ) {
-    const result = await this.apiClient.user.signUp({
+    const result = await this.user.signUp({
       proof,
       signUp: {
-        ...{
-          userName,
-          email,
-        },
+        userName,
+        email,
         timestamp: Math.floor(Date.now() / 1000),
         userData: {},
       },
@@ -74,7 +72,7 @@ export class Authenticator {
 
   async signOut(): Promise<void> {
     try {
-      await this.apiClient.user.signOut(undefined);
+      await this.user.signOut(undefined);
     } finally {
       storage.clear();
     }
@@ -93,5 +91,9 @@ export class Authenticator {
 
   private get signer() {
     return this.#signer;
+  }
+
+  private get user() {
+    return this.apiClient.user;
   }
 }
