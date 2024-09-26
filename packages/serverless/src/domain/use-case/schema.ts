@@ -162,12 +162,5 @@ export async function getSchemaDefinition(
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
-  return schema.fields.map(
-    (fieldName) =>
-      ({
-        name: schema[fieldName].name,
-        kind: schema[fieldName].kind,
-        indexed: schema[fieldName].indexed,
-      }) as DocumentSchemaField
-  );
+  return schema.fields.map((f) => schema[f]);
 }
