@@ -1,12 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { MerkleWitness } from '../../types/merkle-tree.js';
-import { ZKDocument } from '../interfaces/document.js';
-import { QueryOptions } from '../query/query-builder.js';
-import { Filter } from '../../types/filter.js';
+import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
+import { ZKDocument } from '../interfaces';
 import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
-import { Pagination } from '../../types/pagination.js';
-import { Permissions } from '../../types/permission.js';
 
 export interface ZKCollection extends Ownable {
   fetchOne<
@@ -64,6 +60,6 @@ export interface ZKCollection extends Ownable {
   ): Promise<MerkleWitness>;
 
   listIndexes(): Promise<string[]>;
-  createIndexes(indexes: string[]): Promise<boolean>
-  dropIndex(indexName: string): Promise<boolean>
+  createIndexes(indexes: string[]): Promise<boolean>;
+  dropIndex(indexName: string): Promise<boolean>;
 }

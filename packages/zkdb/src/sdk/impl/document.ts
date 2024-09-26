@@ -1,12 +1,14 @@
-import { DocumentEncoded, ProvableTypeString } from '../schema.js';
-import { MerkleWitness } from '../../types/merkle-tree.js';
-import { ZKDocument } from '../interfaces/document.js';
-import { Ownership } from '../../types/ownership.js';
-import { Permissions } from '../../types/permission.js';
-import { Document } from '../../types/document.js';
-import { ProofStatus } from '../../types/proof.js';
 import { IApiClient, TProofStatus } from '@zkdb/api';
 import { Field } from 'o1js';
+import { DocumentEncoded, ProvableTypeString } from '../schema';
+import {
+  MerkleWitness,
+  Ownership,
+  Permissions,
+  Document,
+  ProofStatus,
+} from '../../types';
+import { ZKDocument } from '../interfaces';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
@@ -162,13 +164,13 @@ export class ZKDocumentImpl implements ZKDocument {
       collectionName: this.collectionName,
       docId: this._id,
     });
-  
+
     return result.unwrap().documents.map(
       (document) =>
         new ZKDocumentImpl(
           this.databaseName,
           this.collectionName,
-          ({
+          {
             id: document.docId,
             documentEncoded: document.fields.map((field) => ({
               name: field.name,
@@ -176,7 +178,7 @@ export class ZKDocumentImpl implements ZKDocument {
               value: field.value,
             })),
             createdAt: document.createdAt,
-          }),
+          },
           this.apiClient
         )
     );

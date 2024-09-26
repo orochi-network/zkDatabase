@@ -2,7 +2,6 @@ import { gql } from "@apollo/client";
 import { createQueryFunction, TApolloClient } from "./common";
 import { TProofStatus, TProofStatusRequest, TZKProof, TUser } from "./types";
 export type TUserSignUpRecord = TUser;
-console.log("🚀 ~ gql:", gql);
 
 export const proof = <T>(client: TApolloClient<T>) => ({
   status: createQueryFunction<

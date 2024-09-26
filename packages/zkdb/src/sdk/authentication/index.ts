@@ -1,1 +1,1 @@
-export { Authenticator } from './authentication.js';
+export * from './authentication';

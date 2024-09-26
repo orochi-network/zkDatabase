@@ -1,12 +1,9 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
 import { PublicKey } from 'o1js';
-import { GlobalContext } from '../interfaces/global-context.js';
-import { User } from '../../types/user.js';
-import { Database } from '../../types/database.js';
-import { FilterCriteria } from '../../types/common.js';
 import { IApiClient } from '@zkdb/api';
-import { Pagination } from '../../types/pagination.js';
+import { GlobalContext } from '../interfaces';
+import { User, Database, FilterCriteria, Pagination } from '../../types';
 
 export class GlobalContextImpl implements GlobalContext {
   private apiClient: IApiClient;

@@ -1,8 +1,5 @@
 import { PublicKey } from 'o1js';
-import { Database } from '../../types/database.js';
-import { User } from '../../types/user.js';
-import { FilterCriteria } from '../../types/common.js';
-import { Pagination } from '../../types/pagination.js';
+import { Database, User, FilterCriteria, Pagination } from '../../types';
 
 /* eslint-disable no-unused-vars */
 export interface GlobalContext {

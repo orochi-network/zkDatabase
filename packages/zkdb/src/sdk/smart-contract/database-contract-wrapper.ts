@@ -5,13 +5,19 @@ import {
   PrivateKey,
   PublicKey,
 } from 'o1js';
-import { getSigner } from '../signer/signer.js';
-import { zkdb } from '../global/zkdatabase-client.js';
+import { ZKDatabaseClient } from '../global';
 
 export class DatabaseContractWrapper {
+  private zkDatabaseClient: ZKDatabaseClient;
+
   private zkDatabaseSmartContact: ZKDatabaseSmartContractWrapper;
 
-  private constructor(merkleHeight: number, appPublicKey: PublicKey) {
+  private constructor(
+    zkDatabaseClient: ZKDatabaseClient,
+    merkleHeight: number,
+    appPublicKey: PublicKey
+  ) {
+    this.zkDatabaseClient = zkDatabaseClient;
     this.zkDatabaseSmartContact = new ZKDatabaseSmartContractWrapper(
       merkleHeight,
       appPublicKey
@@ -21,6 +27,7 @@ export class DatabaseContractWrapper {
   private static instances: Map<string, DatabaseContractWrapper> = new Map();
 
   static getInstance(
+    zkDatabaseClient: ZKDatabaseClient,
     merkleHeight: number,
     appAddress: PublicKey
   ): DatabaseContractWrapper {
@@ -28,7 +35,7 @@ export class DatabaseContractWrapper {
     if (!DatabaseContractWrapper.instances.has(key)) {
       DatabaseContractWrapper.instances.set(
         key,
-        new DatabaseContractWrapper(merkleHeight, appAddress)
+        new DatabaseContractWrapper(zkDatabaseClient, merkleHeight, appAddress)
       );
     }
     return DatabaseContractWrapper.instances.get(key)!;
@@ -37,7 +44,7 @@ export class DatabaseContractWrapper {
   async deploy(appKey: PrivateKey): Promise<PendingTransactionPromise> {
     await this.zkDatabaseSmartContact.compile();
 
-    const user = zkdb.auth.getUser();
+    const user = this.zkDatabaseClient.authenticator.getUser();
 
     if (user) {
       let tx =
@@ -45,7 +52,9 @@ export class DatabaseContractWrapper {
           PublicKey.fromBase58(user.publicKey)
         );
 
-      tx = await getSigner().signTransaction(tx, [appKey]);
+      tx = await this.zkDatabaseClient
+        .getSigner()
+        .signTransaction(tx, [appKey]);
       const pendingTx = await tx.send();
       return pendingTx;
     }
@@ -59,7 +68,7 @@ export class DatabaseContractWrapper {
   ): Promise<PendingTransactionPromise> {
     await this.zkDatabaseSmartContact.compile();
 
-    const user = zkdb.auth.getUser();
+    const user = this.zkDatabaseClient.authenticator.getUser();
 
     if (user) {
       let tx =
@@ -67,7 +76,9 @@ export class DatabaseContractWrapper {
           PublicKey.fromBase58(user.publicKey),
           jsonProof
         );
-      tx = await getSigner().signTransaction(tx, [zkAppPrivateKey]);
+      tx = await this.zkDatabaseClient
+        .getSigner()
+        .signTransaction(tx, [zkAppPrivateKey]);
       return await tx.send();
     }
 
