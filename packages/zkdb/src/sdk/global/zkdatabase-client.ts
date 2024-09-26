@@ -1,6 +1,8 @@
 import { Signer } from '../signer/interface/signer.js';
-import { getSigner, setSigner } from '../signer/signer.js';
-import { Authenticator } from '../authentication/authentication.js';
+import {
+  Authenticator,
+  ISecureStorage,
+} from '../authentication/authentication.js';
 import { ZKDatabase } from '../interfaces/database.js';
 import { MinaBlockchain } from '../interfaces/blockchain.js';
 import { GlobalContext } from '../interfaces/global-context.js';
@@ -8,34 +10,34 @@ import { ZKDatabaseImpl } from '../impl/database.js';
 import { MinaBlockchainImpl } from '../impl/blokchain.js';
 import { GlobalContextImpl } from '../impl/global-context.js';
 import { ApiClient, IApiClient } from '@zkdb/api';
-import storage from '../../storage/storage.js';
 
-class ZKDatabaseClient {
-  private apiClient: IApiClient<any>;
+export class ZKDatabaseClient {
+  public apiClient: IApiClient;
 
-  public connect(url: string, signer: Signer) {
-    this.initializeApiClient(url);
-    this.setSigner(signer);
+  public authenticator: Authenticator;
+
+  private constructor(apiClient: IApiClient, authenticator: Authenticator) {
+    this.apiClient = apiClient;
+    this.authenticator = authenticator;
   }
 
-  private initializeApiClient(url: string) {
-    this.apiClient = ApiClient.newInstance(url);
-    this.apiClient.api.setContext(() => {
-      return storage.getAccessToken();
-    });
+  public static newInstance(
+    url: string,
+    signer: Signer,
+    storage: ISecureStorage
+  ) {
+    const apiClient = ApiClient.newInstance(url);
+    const authenticator = new Authenticator(signer, apiClient, storage);
+    apiClient.api.setContext(() => authenticator.getAccessToken());
+    return new ZKDatabaseClient(ApiClient.newInstance(url), authenticator);
   }
 
-  public get auth(): Authenticator {
-    if (this.apiClient) {
-      return new Authenticator(getSigner(), this.apiClient);
-    }
-    throw new Error(
-      'Authentication failed: Server URL is not set. Please call connect() first.'
-    );
+  public getSigner(): Signer {
+    return this.authenticator.signer;
   }
 
   public setSigner(signer: Signer) {
-    setSigner(signer);
+    this.authenticator.connect(signer);
   }
 
   database(name: string): ZKDatabase {
@@ -48,7 +50,7 @@ class ZKDatabaseClient {
   }
 
   fromBlockchain(): MinaBlockchain {
-    return new MinaBlockchainImpl();
+    return new MinaBlockchainImpl(this);
   }
 
   fromGlobal(): GlobalContext {
@@ -62,6 +64,4 @@ class ZKDatabaseClient {
   }
 }
 
-const zkdb = new ZKDatabaseClient();
-
-export { zkdb };
+export default ZKDatabaseClient;

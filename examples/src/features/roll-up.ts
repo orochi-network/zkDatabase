@@ -1,13 +1,5 @@
-import {
-  Mina,
-  PrivateKey,
-} from 'o1js';
-import {
-  zkdb,
-  Signer,
-  NodeSigner,
-  AuroWalletSigner,
-} from 'zkdb';
+import { Mina, PrivateKey } from 'o1js';
+import { Signer, NodeSigner, AuroWalletSigner, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
 
@@ -34,9 +26,9 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-    zkdb.connect(SERVER_URL, signer);
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
-  await zkdb.auth.signIn();
+  await zkdb.authenticator.signIn();
 
   const proof = await zkdb.database(DB_NAME).getProof();
 
@@ -47,7 +39,7 @@ async function run() {
   console.log('deployment hash', tx.hash);
   await tx.wait();
 
-  await zkdb.auth.signOut();
+  await zkdb.authenticator.signOut();
 }
 
 await run();
