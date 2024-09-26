@@ -1,8 +1,8 @@
 import { PrivateKey } from 'o1js';
-import { Signer } from './interface/signer.js';
-import { MinaTransaction } from '../types/o1js.js';
-import { SignedData } from 'src/types/signing.js';
 import Client from 'mina-signer';
+import { SignedData } from '@types';
+import { MinaTransaction } from '../types/o1js';
+import { Signer } from './interface/signer';
 
 export class NodeSigner implements Signer {
   private privateKey: PrivateKey;

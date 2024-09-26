@@ -1,6 +1,6 @@
 import { Mina } from 'o1js';
-import { isBrowser } from '../../utils/environment.js';
-import { SignedData } from '../../types/signing.js';
+import { SignedData } from '../../types';
+import { isBrowser } from '@utils';
 
 type Transaction = Awaited<ReturnType<typeof Mina.transaction>>;
 

@@ -4,9 +4,9 @@ import {
   PublicKey,
   JsonProof,
 } from 'o1js';
-import { MinaBlockchain } from '../interfaces/blockchain.js';
-import { DatabaseContractWrapper } from '../smart-contract/database-contract-wrapper.js';
-import ZKDatabaseClient from '../global/zkdatabase-client.js';
+import { MinaBlockchain } from '../interfaces';
+import { DatabaseContractWrapper } from '../smart-contract';
+import ZKDatabaseClient from '../global/zkdatabase-client';
 
 export class MinaBlockchainImpl implements MinaBlockchain {
   #zkDatabaseClient: ZKDatabaseClient;

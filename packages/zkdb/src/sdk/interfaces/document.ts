@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 
-import { ProofStatus } from '../../types/proof.js';
-import { MerkleWitness } from '../../types/merkle-tree.js';
+import { ProofStatus, MerkleWitness } from '../../types';
 import { DocumentEncoded } from '../schema.js';
 import { Ownable } from './ownable.js';
 
@@ -19,6 +18,6 @@ export interface ZKDocument extends Ownable {
   >(
     type: T
   ): InstanceType<T>;
-  getProofStatus(): Promise<ProofStatus>
+  getProofStatus(): Promise<ProofStatus>;
   getDocumentHistory(): Promise<ZKDocument[]>;
 }

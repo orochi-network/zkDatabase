@@ -72,7 +72,7 @@ export class ApiClient<T = any> {
     });
   }
 
-  public static newInstance<T = any>(url: string) {
+  public static newInstance<T = any>(url: string): IApiClient<T> {
     const api = new ApiClient<T>(url);
     return {
       api,

@@ -1,5 +1,5 @@
-import { Ownership } from "./ownership.js";
+import { Ownership } from './ownership';
 
 export type Metadata = Ownership & {
-  merkleIndex: number
-}
+  merkleIndex: number;
+};

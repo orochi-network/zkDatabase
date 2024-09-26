@@ -1,5 +1,5 @@
-export { Schema } from './schema.js';
-export * from './global/index.js';
-export * from './signer/index.js';
-export * from './interfaces/index.js';
-export * from './query/index.js';
+export * from './schema';
+export * from './global';
+export * from './signer';
+export * from './interfaces';
+export * from './query';

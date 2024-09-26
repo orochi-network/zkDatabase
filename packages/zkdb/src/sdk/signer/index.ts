@@ -1,3 +1,3 @@
-export { AuroWalletSigner } from './browser-signer.js';
-export { NodeSigner } from './nodejs-signer.js';
-export { Signer } from './interface/signer.js';
+export * from './browser-signer';
+export * from './nodejs-signer';
+export * from './interface/signer';

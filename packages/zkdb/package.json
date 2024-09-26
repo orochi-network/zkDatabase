@@ -24,7 +24,7 @@
   "types": "./build/src/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
-    "build": "tsc -p tsconfig.json",
+    "build": "rm -rf ./build && rollup -c",
     "buildw": "tsc -p tsconfig.json --watch",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
@@ -62,6 +62,9 @@
     "@babel/preset-env": "^7.25.4",
     "@babel/preset-typescript": "^7.23.3",
     "@jest/globals": "^29.7.0",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.3.0",
+    "@rollup/plugin-typescript": "^12.1.0",
     "@shelf/jest-mongodb": "^4.2.0",
     "@types/jest": "^29.5.12",
     "@types/mock-fs": "^4.13.3",
@@ -82,6 +85,7 @@
     "lint-staged": "^15.2.10",
     "mock-fs": "^5.2.0",
     "prettier": "^3.0.3",
+    "rollup": "^4.22.4",
     "ts-jest": "^29.1.2",
     "typedoc": "^0.26.7",
     "typescript": "^5.6.2"
@@ -90,7 +94,7 @@
     "o1js": "^1.1.0"
   },
   "dependencies": {
-    "@zkdb/api": "^1.1.2",
+    "@zkdb/api": "^1.1.3",
     "@zkdb/smart-contract": "^1.1.0",
     "graphql": "^16.9.0",
     "graphql-request": "^7.1.0",

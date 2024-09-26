@@ -1,8 +1,8 @@
-import { Document } from "./document.js"
-import { Metadata } from "./metadata.js"
+import { Document } from './document';
+import { Metadata } from './metadata';
 
 export type DocumentHistory = {
-  documents: Document[]
-}
+  documents: Document[];
+};
 
-export type DocumentHistoryWithMetadata = DocumentHistory & Metadata
+export type DocumentHistoryWithMetadata = DocumentHistory & Metadata;

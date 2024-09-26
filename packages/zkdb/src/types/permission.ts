@@ -1,4 +1,4 @@
-import { PermissionRecord } from '../common/permission.js';
+import { PermissionRecord } from '../common/permission';
 
 export type PermissionGroup = 'User' | 'Group' | 'Other';
 

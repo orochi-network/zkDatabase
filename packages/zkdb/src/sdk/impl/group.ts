@@ -1,6 +1,6 @@
-import { GroupDescription } from '../../types/group.js';
-import { ZKGroup } from '../interfaces/group.js';
 import { IApiClient } from '@zkdb/api';
+import { GroupDescription } from '../../types';
+import { ZKGroup } from '../interfaces';
 
 export class ZKGroupImpl implements ZKGroup {
   private databaseName: string;
@@ -19,7 +19,7 @@ export class ZKGroupImpl implements ZKGroup {
       groupName: this.groupName,
       userNames,
     });
-  
+
     return result.unwrap();
   }
 
