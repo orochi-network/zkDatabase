@@ -1,35 +1,38 @@
 import { JsonProof, PublicKey } from 'o1js';
 import { ZKCollection } from '../interfaces/collection.js';
-import { createGroup, getGroups } from '../../repository/group.js';
 import { DatabaseSettings } from '../../types/database.js';
 import { ZKDatabase } from '../interfaces/database.js';
 import { SchemaDefinition } from '../schema.js';
 import { CollectionQueryImpl } from './collection.js';
 import { ZKGroupImpl } from './group.js';
-import { createCollection } from '../../repository/collection.js';
-import {
-  changeDatabaseOwner,
-  createDatabase,
-  getDatabaseSettings,
-} from '../../repository/database.js';
 import { ZKGroup } from '../interfaces/group.js';
 import { Permissions } from '../../types/permission.js';
 import { GroupDescription } from '../../types/group.js';
-import { getProof } from '../../repository/proof.js';
+import { IApiClient } from '@zkdb/api';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
+  private apiClient: IApiClient;
 
-  constructor(databaseName: string) {
+  constructor(databaseName: string, apiClient: IApiClient) {
     this.databaseName = databaseName;
+    this.apiClient = apiClient;
   }
 
   async getProof(): Promise<JsonProof> {
-    return getProof(this.databaseName);
+    const result = await this.apiClient.proof.get({
+      databaseName: this.databaseName,
+    });
+
+    return result.unwrap();
   }
 
   from(collectionName: string): ZKCollection {
-    return new CollectionQueryImpl(this.databaseName, collectionName);
+    return new CollectionQueryImpl(
+      this.databaseName,
+      collectionName,
+      this.apiClient
+    );
   }
 
   async createCollection<T extends { getSchema: () => SchemaDefinition }>(
@@ -38,36 +41,69 @@ export class ZKDatabaseImpl implements ZKDatabase {
     type: T,
     permissions: Permissions
   ): Promise<boolean> {
-    return createCollection(
-      this.databaseName,
-      collectionName,
+    const result = await this.apiClient.collection.create({
+      databaseName: this.databaseName,
+      collectionName: collectionName,
       groupName,
-      type.getSchema(),
-      permissions
-    );
+      schema: type.getSchema(),
+      permissions,
+    });
+
+    return result.unwrap();
   }
 
   async createGroup(groupName: string, description: string): Promise<boolean> {
-    return createGroup(this.databaseName, groupName, description);
+    const result = await this.apiClient.group.create({
+      databaseName: this.databaseName,
+      groupName,
+      groupDescription: description,
+    });
+
+    return result.unwrap();
   }
 
   fromGroup(groupName: string): ZKGroup {
-    return new ZKGroupImpl(this.databaseName, groupName);
+    return new ZKGroupImpl(this.databaseName, groupName, this.apiClient);
   }
 
-  getGroups(): Promise<GroupDescription[]> {
-    return getGroups(this.databaseName);
+  async getGroups(): Promise<GroupDescription[]> {
+    const result = await this.apiClient.group.list({
+      databaseName: this.databaseName,
+    });
+
+    return result
+      .unwrap()
+      .map(({ name, description, createdAt, createdBy }) => ({
+        name,
+        description,
+        createdAt: new Date(createdAt),
+        createdBy: createdBy,
+      }));
   }
 
   async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
-    return createDatabase(this.databaseName, merkleHeight, publicKey);
+    const result = await this.apiClient.db.create({
+      databaseName: this.databaseName,
+      merkleHeight,
+      publicKey: publicKey.toBase58(),
+    });
+
+    return result.unwrap();
   }
 
   async getSettings(): Promise<DatabaseSettings> {
-    return getDatabaseSettings(this.databaseName);
+    const result = await this.apiClient.db.setting({
+      databaseName: this.databaseName,
+    });
+    return result.unwrap();
   }
 
   async changeOwner(newOwner: string): Promise<boolean> {
-    return changeDatabaseOwner(this.databaseName, newOwner);
+    const result = await this.apiClient.db.transferOwnership({
+      databaseName: this.databaseName,
+      newOwner,
+    });
+
+    return result.unwrap();
   }
 }

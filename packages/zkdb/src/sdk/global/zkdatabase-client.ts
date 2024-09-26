@@ -1,34 +1,67 @@
 import { Signer } from '../signer/interface/signer.js';
-import { getSigner, setSigner } from '../signer/signer.js';
-import { Authenticator } from '../authentication/authentication.js';
+import {
+  Authenticator,
+  ISecureStorage,
+} from '../authentication/authentication.js';
 import { ZKDatabase } from '../interfaces/database.js';
 import { MinaBlockchain } from '../interfaces/blockchain.js';
 import { GlobalContext } from '../interfaces/global-context.js';
 import { ZKDatabaseImpl } from '../impl/database.js';
 import { MinaBlockchainImpl } from '../impl/blokchain.js';
 import { GlobalContextImpl } from '../impl/global-context.js';
-class ZKDatabaseClient {
+import { ApiClient, IApiClient } from '@zkdb/api';
 
-  public get auth(): Authenticator {
-    return new Authenticator(getSigner());
+export class ZKDatabaseClient {
+  public apiClient: IApiClient;
+
+  public authenticator: Authenticator;
+
+  private constructor(apiClient: IApiClient, authenticator: Authenticator) {
+    this.apiClient = apiClient;
+    this.authenticator = authenticator;
+  }
+
+  public static newInstance(
+    url: string,
+    signer: Signer,
+    storage: ISecureStorage
+  ) {
+    const apiClient = ApiClient.newInstance(url);
+    const authenticator = new Authenticator(signer, apiClient, storage);
+    apiClient.api.setContext(() => authenticator.getAccessToken());
+    return new ZKDatabaseClient(ApiClient.newInstance(url), authenticator);
+  }
+
+  public getSigner(): Signer {
+    return this.authenticator.signer;
   }
 
   public setSigner(signer: Signer) {
-    setSigner(signer);
+    this.authenticator.connect(signer);
   }
 
   database(name: string): ZKDatabase {
-    return new ZKDatabaseImpl(name);
+    if (this.apiClient) {
+      return new ZKDatabaseImpl(name, this.apiClient);
+    }
+    throw new Error(
+      'Database access failed: Server URL is not set. Please call connect() first.'
+    );
   }
 
   fromBlockchain(): MinaBlockchain {
-    return new MinaBlockchainImpl();
+    return new MinaBlockchainImpl(this);
   }
 
   fromGlobal(): GlobalContext {
-    return new GlobalContextImpl();
+    if (this.apiClient) {
+      return new GlobalContextImpl(this.apiClient);
+    }
+
+    throw new Error(
+      'Global access failed: Server URL is not set. Please call connect() first.'
+    );
   }
 }
 
-const zkdb = new ZKDatabaseClient();
-export { zkdb };
+export default ZKDatabaseClient;

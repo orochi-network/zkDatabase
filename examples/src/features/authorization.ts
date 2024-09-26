@@ -1,26 +1,24 @@
 import { PrivateKey } from 'o1js';
-import { zkdb, Signer, NodeSigner, AuroWalletSigner } from 'zkdb';
+import { NodeSigner, AuroWalletSigner, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
 
-(async () => {
-  let signer: Signer;
+const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
-  if (isBrowser) {
-    signer = new AuroWalletSigner();
-  } else {
-    const privateKey = PrivateKey.random();
-    console.log(privateKey.toBase58()); 
-    signer = new NodeSigner(privateKey);
-  }
+async function run() {
+  const signer = isBrowser
+    ? new AuroWalletSigner()
+    : new NodeSigner(PrivateKey.random());
 
-  zkdb.setSigner(signer);
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
-  await zkdb.auth.signUp('test-name', 'robot@gmail.com');
+  await zkdb.authenticator.signUp('test-name1234', 'robot1234@gmail.com');
 
-  await zkdb.auth.signIn();
+  await zkdb.authenticator.signIn();
 
-  zkdb.auth.getUser()
+  zkdb.authenticator.getUser();
 
-  await zkdb.auth.signOut();
-})();
+  await zkdb.authenticator.signOut();
+}
+
+await run();

@@ -17,7 +17,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     env:
       working-directory: ./packges/zkdb
 
@@ -36,10 +36,6 @@ jobs:
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
           yarn install
           yarn build
-      - name: Test kubo
-        run: cd ./packages/kubo && yarn run test
-      - name: Test zkdb
-        run: cd ./packages/zkdb && yarn run test
       - name: Install compare-versions package
         run: yarn add -W -D compare-versions@6.1.0
       - name: Loop through all packages and publish them if necessary

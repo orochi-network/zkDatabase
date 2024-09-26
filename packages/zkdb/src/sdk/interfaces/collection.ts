@@ -62,4 +62,8 @@ export interface ZKCollection extends Ownable {
   >(
     filter: Filter<T>
   ): Promise<MerkleWitness>;
+
+  listIndexes(): Promise<string[]>;
+  createIndexes(indexes: string[]): Promise<boolean>
+  dropIndex(indexName: string): Promise<boolean>
 }

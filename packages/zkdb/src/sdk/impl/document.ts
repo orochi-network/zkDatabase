@@ -1,20 +1,12 @@
-import { DocumentEncoded } from '../schema.js';
+import { DocumentEncoded, ProvableTypeString } from '../schema.js';
 import { MerkleWitness } from '../../types/merkle-tree.js';
-import { getWitnessByDocumentId } from '../../repository/merkle-tree.js';
 import { ZKDocument } from '../interfaces/document.js';
 import { Ownership } from '../../types/ownership.js';
 import { Permissions } from '../../types/permission.js';
-import {
-  getDocumentOwnership,
-  updateDocumentGroupOwnership,
-  updateDocumentUserOwnership,
-  setDocumentPermissions,
-} from '../../repository/ownership.js';
-import { deleteDocument } from '../../repository/document.js';
 import { Document } from '../../types/document.js';
 import { ProofStatus } from '../../types/proof.js';
-import { getProofStatus } from '../../repository/proof.js';
-import { getDocumentHistory as getDocumentHistoryRequest } from '../../repository/document-history.js';
+import { IApiClient, TProofStatus } from '@zkdb/api';
+import { Field } from 'o1js';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
@@ -22,63 +14,111 @@ export class ZKDocumentImpl implements ZKDocument {
   private _documentEncoded: DocumentEncoded;
   private _id: string;
   private createdAt: Date;
+  private apiClient: IApiClient;
 
   constructor(
     databaseName: string,
     collectionName: string,
-    document: Document
+    document: Document,
+    apiClient: IApiClient
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
     this._documentEncoded = document.documentEncoded;
     this._id = document.id;
     this.createdAt = document.createdAt;
+    this.apiClient = apiClient;
   }
 
   async getProofStatus(): Promise<ProofStatus> {
-    return getProofStatus(this.databaseName, this.collectionName, this._id);
+    const result = await this.apiClient.proof.status({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+    });
+
+    switch (result.unwrap()) {
+      case TProofStatus.QUEUED:
+        return 'queue';
+      case TProofStatus.PROVING:
+        return 'proving';
+      case TProofStatus.PROVED:
+        return 'proved';
+      case TProofStatus.FAILED:
+        return 'failed';
+    }
   }
 
   async changeGroup(groupName: string): Promise<void> {
-    await updateDocumentGroupOwnership(
-      this.databaseName,
-      this.collectionName,
-      this._id,
-      groupName
-    );
+    const result = await this.apiClient.ownership.setOwnership({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+      grouping: 'Group',
+      newOwner: groupName,
+    });
+
+    result.unwrap();
   }
 
   async changeOwner(userName: string): Promise<void> {
-    await updateDocumentUserOwnership(
-      this.databaseName,
-      this.collectionName,
-      this._id,
-      userName
-    );
+    const result = await this.apiClient.ownership.setOwnership({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+      grouping: 'User',
+      newOwner: userName,
+    });
+
+    result.unwrap();
   }
 
   async setPermissions(permissions: Permissions): Promise<Ownership> {
-    return setDocumentPermissions(
-      this.databaseName,
-      this.collectionName,
-      this._id,
-      permissions
-    );
+    const remotePermissions = await this.getOwnership();
+
+    const result = await this.apiClient.permission.set({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+      permission: {
+        permissionOwner: {
+          ...remotePermissions.permissions.permissionOwner,
+          ...permissions.permissionOwner,
+        },
+        permissionGroup: {
+          ...remotePermissions.permissions.permissionGroup,
+          ...permissions.permissionGroup,
+        },
+        permissionOther: {
+          ...remotePermissions.permissions.permissionOther,
+          ...permissions.permissionOther,
+        },
+      },
+    });
+
+    return result.unwrap();
   }
 
   async getOwnership(): Promise<Ownership> {
-    return getDocumentOwnership(
-      this.databaseName,
-      this.collectionName,
-      this._id
-    );
+    const result = await this.apiClient.permission.get({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+    });
+
+    return result.unwrap();
   }
 
   async getWitness(): Promise<MerkleWitness> {
-    if (this._id) {
-      return getWitnessByDocumentId(this.databaseName, this._id);
-    }
-    throw Error();
+    const result = await this.apiClient.merkle.witness({
+      databaseName: this.databaseName,
+      docId: this._id,
+    });
+
+    return result.unwrap().map((node) => ({
+      isLeft: node.isLeft,
+      sibling: Field(node.sibling),
+    }));
   }
 
   toSchema<
@@ -102,21 +142,43 @@ export class ZKDocumentImpl implements ZKDocument {
   }
 
   async delete(): Promise<MerkleWitness> {
-    return deleteDocument(this.databaseName, this.collectionName, {
-      docId: this._id,
+    const result = await this.apiClient.doc.delete({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      documentQuery: JSON.parse(JSON.stringify({ docId: this._id })),
     });
+
+    const merkleWitness = result.unwrap();
+
+    return merkleWitness.map((node) => ({
+      isLeft: node.isLeft,
+      sibling: Field(node.sibling),
+    }));
   }
 
   async getDocumentHistory(): Promise<ZKDocument[]> {
-    return (
-      await getDocumentHistoryRequest(
-        this.databaseName,
-        this.collectionName,
-        this._id
-      )
-    ).documents.map(
+    const result = await this.apiClient.doc.history({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+    });
+  
+    return result.unwrap().documents.map(
       (document) =>
-        new ZKDocumentImpl(this.databaseName, this.collectionName, document)
+        new ZKDocumentImpl(
+          this.databaseName,
+          this.collectionName,
+          ({
+            id: document.docId,
+            documentEncoded: document.fields.map((field) => ({
+              name: field.name,
+              kind: field.kind as ProvableTypeString,
+              value: field.value,
+            })),
+            createdAt: document.createdAt,
+          }),
+          this.apiClient
+        )
     );
   }
 

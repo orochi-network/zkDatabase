@@ -1,110 +1,111 @@
-import { AppContainer } from '../../container.js';
-import storage from '../../storage/storage.js';
-import { SignedData } from '../../types/signing.js';
+import { IApiClient, TSignInInfo } from '@zkdb/api';
 import { Signer } from '../signer/interface/signer.js';
-import { ZKDatabaseUser } from '../types/zkdatabase-user.js';
+
+export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
+
+export const ZKDB_KEY_USER_INFO = 'userInfo';
+
+export interface ISecureStorage {
+  set(key: string, value: string): void;
+  get(key: string): string | undefined;
+  delete(key: string): void;
+  clear(): void;
+  has(key: string): boolean;
+}
 
 export class Authenticator {
-  private signer: Signer;
+  #signer: Signer | undefined;
 
-  constructor(signer: Signer) {
-    this.signer = signer;
+  #storage: ISecureStorage;
+
+  private apiClient: IApiClient;
+
+  constructor(
+    signer: Signer,
+    apiClient: IApiClient,
+    storage: ISecureStorage = new Map<string, string>()
+  ) {
+    this.#signer = signer;
+    this.apiClient = apiClient;
+    this.#storage = storage;
+  }
+
+  private get user() {
+    return this.apiClient.user;
+  }
+
+  private timestamp() {
+    return Math.floor(Date.now() / 1000);
+  }
+
+  public get signer(): Signer {
+    if (this.#signer) {
+      return this.#signer;
+    }
+    throw new Error('Signer is not initialized');
+  }
+
+  public connect(signer: Signer) {
+    this.#signer = signer;
   }
 
   isLoggedIn(): boolean {
-    return storage.getAccessToken() !== null;
+    return typeof this.#storage.get(ZKDB_KEY_ACCESS_TOKEN) === 'string';
   }
 
-  async signIn() {
-    const ecdsaResult = await AppContainer.getInstance()
-      .getApiClient()
-      .user.ecdsa(undefined);
+  public async signIn() {
+    const proof = await this.signer.signMessage(
+      (await this.user.ecdsa(undefined)).unwrap()
+    );
 
-    const ecdsaMessage = ecdsaResult.unwrap();
+    const userData = (await this.user.signIn({ proof })).unwrap();
 
-    const signInProof = await this.getSigner().signMessage(
+    this.#storage.set(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
+
+    this.#storage.set(
+      ZKDB_KEY_USER_INFO,
       JSON.stringify({
-        ecdsaMessage,
-        timestamp: Math.floor(Date.now() / 1000),
+        userName: userData.userName,
+        email: userData.email,
+        publicKey: userData.publicKey,
       })
     );
 
-    await this.sendLoginRequest(signInProof);
+    return userData;
   }
 
-  async signUp(userName: string, email: string) {
-    const signUpProof = await this.getSigner().signMessage(
+  public async signUp(userName: string, email: string) {
+    const proof = await this.signer.signMessage(
       JSON.stringify({
         userName,
         email,
       })
     );
 
-    await this.sendRegistrationRequest(email, userName, signUpProof);
-  }
-
-  private async sendLoginRequest(proof: SignedData) {
-    const result = await AppContainer.getInstance()
-      .getApiClient()
-      .user.signIn({ proof });
-
-    const userData = result.unwrap();
-
-    storage.setAccessToken(userData.accessToken);
-
-    storage.setUserInfo({
-      email: userData.email,
-      userName: userData.userName,
-      publicKey: userData.publicKey,
-    });
-  }
-
-  private async sendRegistrationRequest(
-    email: string,
-    userName: string,
-    proof: SignedData
-  ) {
-    const result = await AppContainer.getInstance()
-      .getApiClient()
-      .user.signUp({
+    return (
+      await this.user.signUp({
         proof,
         signUp: {
-          ...{
-            userName,
-            email,
-          },
-          timestamp: Math.floor(Date.now() / 1000),
+          userName,
+          email,
+          timestamp: this.timestamp(),
           userData: {},
         },
-      });
-
-    return result.unwrap();
+      })
+    ).unwrap();
   }
 
-  async signOut(): Promise<void> {
-    try {
-      await AppContainer.getInstance().getApiClient().user.signOut(undefined);
-    } finally {
-      storage.clear();
+  public async signOut(): Promise<void> {
+    if ((await this.user.signOut(undefined)).unwrap()) {
+      this.#storage.clear();
     }
   }
 
-  public getUser(): ZKDatabaseUser | null {
-    const userInfo = storage.getUserInfo();
-
-    if (userInfo) {
-      const { userName: name, email, publicKey } = userInfo;
-      return { name, email, publicKey };
-    }
-
-    return null;
+  public getUser(): Omit<TSignInInfo, 'userData' | 'accessToken'> | undefined {
+    return JSON.parse(this.#storage.get(ZKDB_KEY_USER_INFO) || 'undefined');
   }
 
-  private getSigner(): Signer {
-    if (this.signer === undefined) {
-      throw Error('Signer was not set. Call ZKDatabaseClient.setSigner first');
-    }
-
-    return this.signer;
+  public getAccessToken(): string | undefined {
+    return this.#storage.get(ZKDB_KEY_ACCESS_TOKEN);
   }
 }
