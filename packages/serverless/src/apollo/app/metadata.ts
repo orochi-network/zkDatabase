@@ -188,7 +188,7 @@ const permissionSet = authorizeWrapper(
     databaseName,
     collectionName,
     docId: objectId.optional(),
-    documentPermission: permissionDetail.required(),
+    permission: permissionDetail.required(),
   }),
   async (_root: unknown, args: TPermissionUpdateRequest, context) => {
     await withTransaction((session) =>

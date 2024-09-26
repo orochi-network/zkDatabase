@@ -195,6 +195,7 @@ export async function setPermissions(
   permissions: FullPermissions,
   session?: ClientSession
 ): Promise<boolean> {
+  console.log('🚀 ~ permissions:', permissions);
   const hasSystemPermission = docId
     ? await hasDocumentPermission(
         databaseName,
