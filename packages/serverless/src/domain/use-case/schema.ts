@@ -9,7 +9,7 @@ import {
   SchemaEncoded,
 } from '../common/schema.js';
 import { DocumentFields } from '../types/document.js';
-import { DocumentSchema, DocumentSchemaField } from '../types/schema.js';
+import { DocumentSchema } from '../types/schema.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
