@@ -1,14 +1,10 @@
 import { JsonProof, PublicKey } from 'o1js';
-import { ZKCollection } from '../interfaces/collection.js';
-import { DatabaseSettings } from '../../types/database.js';
-import { ZKDatabase } from '../interfaces/database.js';
-import { SchemaDefinition } from '../schema.js';
-import { CollectionQueryImpl } from './collection.js';
-import { ZKGroupImpl } from './group.js';
-import { ZKGroup } from '../interfaces/group.js';
-import { Permissions } from '../../types/permission.js';
-import { GroupDescription } from '../../types/group.js';
 import { IApiClient } from '@zkdb/api';
+import { ZKCollection, ZKDatabase, ZKGroup } from '../interfaces';
+import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
+import { SchemaDefinition } from '../schema';
+import { CollectionQueryImpl } from './collection';
+import { ZKGroupImpl } from './group';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;

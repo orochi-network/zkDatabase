@@ -1,7 +1,7 @@
-import { Permissions } from "./permission.js"
+import { Permissions } from './permission';
 
 export type Ownership = {
-  userName: string,
-  groupName: string,
-  permissions: Permissions
-}
+  userName: string;
+  groupName: string;
+  permissions: Permissions;
+};

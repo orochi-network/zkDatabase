@@ -244,16 +244,15 @@ const userSignIn = publicWrapper(
 const userSignOut = authorizeWrapper(
   Joi.object().unknown(),
   async (_root: unknown, _args: any, context) => {
-    console.log('🚀 ~ context:', context);
     const { req } = context;
 
-    // if (req.headers.authorization) {
-    //   const accessTokenDigest = calculateAccessTokenDigest(
-    //     headerToAccessToken(req.headers.authorization)
-    //   );
-    //   await RedisInstance.accessTokenDigest(accessTokenDigest).delete();
-    // }
-    // await sessionDestroy(req);
+    if (req.headers.authorization) {
+      const accessTokenDigest = calculateAccessTokenDigest(
+        headerToAccessToken(req.headers.authorization)
+      );
+      await RedisInstance.accessTokenDigest(accessTokenDigest).delete();
+    }
+    await sessionDestroy(req);
     return true;
   }
 );

@@ -1,15 +1,9 @@
-import { Signer } from '../signer/interface/signer.js';
-import {
-  Authenticator,
-  ISecureStorage,
-} from '../authentication/authentication.js';
-import { ZKDatabase } from '../interfaces/database.js';
-import { MinaBlockchain } from '../interfaces/blockchain.js';
-import { GlobalContext } from '../interfaces/global-context.js';
-import { ZKDatabaseImpl } from '../impl/database.js';
-import { MinaBlockchainImpl } from '../impl/blokchain.js';
-import { GlobalContextImpl } from '../impl/global-context.js';
 import { ApiClient, IApiClient } from '@zkdb/api';
+import { Authenticator, ISecureStorage } from '../authentication';
+import { ZKDatabase, MinaBlockchain, GlobalContext } from '../interfaces';
+import { ZKDatabaseImpl, MinaBlockchainImpl, GlobalContextImpl } from '../impl';
+
+import { Signer } from '../signer';
 
 export class ZKDatabaseClient {
   public apiClient: IApiClient;

@@ -5,7 +5,7 @@ import {
   PrivateKey,
   PublicKey,
 } from 'o1js';
-import ZKDatabaseClient from '../global/zkdatabase-client.js';
+import { ZKDatabaseClient } from '../global';
 
 export class DatabaseContractWrapper {
   private zkDatabaseClient: ZKDatabaseClient;

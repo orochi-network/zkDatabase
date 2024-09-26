@@ -1,16 +1,17 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
-import { MerkleWitness } from '../../types/merkle-tree.js';
-import { ZKCollection } from '../interfaces/collection.js';
-import { ZKDocument } from '../interfaces/document.js';
-import { Filter } from '../../types/filter.js';
-import { ZKDocumentImpl } from './document.js';
-import { DocumentEncoded, ProvableTypeString } from '../schema.js';
-import { Permissions } from '../../types/permission.js';
-import { Ownership } from '../../types/ownership.js';
-import { Pagination } from '../../types/pagination.js';
 import { IApiClient } from '@zkdb/api';
 import { Field } from 'o1js';
+import {
+  MerkleWitness,
+  Filter,
+  Permissions,
+  Ownership,
+  Pagination,
+} from '../../types';
+import { ZKDocumentImpl } from './document';
+import { DocumentEncoded, ProvableTypeString } from '../schema';
+import { ZKCollection, ZKDocument } from '../interfaces';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;

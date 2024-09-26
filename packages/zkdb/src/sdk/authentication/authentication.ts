@@ -1,5 +1,6 @@
+/* eslint-disable no-unused-vars */
 import { IApiClient, TSignInInfo } from '@zkdb/api';
-import { Signer } from '../signer/interface/signer.js';
+import { Signer } from '../signer';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 

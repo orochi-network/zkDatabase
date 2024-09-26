@@ -1,8 +1,6 @@
 import typescript from '@rollup/plugin-typescript';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
-import nodeResolve from '@rollup/plugin-node-resolve';
-
 export default {
   input: 'src/index.ts',
   output: {
@@ -15,12 +13,13 @@ export default {
     alias({
       entries: [
         { find: '@', replacement: 'src' },
-        { find: '@authentication', replacement: 'src/authentication' },
-        { find: '@graphql', replacement: 'src/graphql' },
+        { find: '@common', replacement: 'src/common' },
+        { find: '@sdk', replacement: 'src/sdk' },
         { find: '@utils', replacement: 'src/utils' },
+        { find: '@types', replacement: 'src/types' },
+        { find: '@tests', replacement: 'src/tests' },
       ],
     }),
-    nodeResolve(),
     commonjs(),
     typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
   ],
