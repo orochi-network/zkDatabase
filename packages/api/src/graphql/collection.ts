@@ -4,7 +4,7 @@ import {
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TPermissions, TSchema } from "./types";
+import { TPermissions, TPermissionSet, TSchema } from "./types";
 import { Collection } from "./types/collection";
 
 const COLLECTION_CREATE = gql`
@@ -39,6 +39,36 @@ const COLLECTION_LIST = gql`
     collectionList(databaseName: $databaseName) {
       name
       indexes
+      schema {
+        name
+        kind
+        indexed
+      }
+      metadata {
+        userName
+        groupName
+        permissionOwner {
+          read
+          write
+          delete
+          create
+          system
+        }
+        permissionGroup {
+          read
+          write
+          delete
+          create
+          system
+        }
+        permissionOther {
+          read
+          write
+          delete
+          create
+          system
+        }
+      }
     }
   }
 `;

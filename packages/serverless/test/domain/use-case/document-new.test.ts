@@ -437,7 +437,7 @@ describe('Document Management Integration Tests', () => {
         ANOTHER_OWNER
       );
 
-      expect(metadata.owners.owner).toEqual(ANOTHER_OWNER);
+      expect(metadata.userName).toEqual(ANOTHER_OWNER);
 
       await expect(async () => {
         return readDocument(DB_NAME, TEST_COLLECTION, COLLECTION_OWNER, {

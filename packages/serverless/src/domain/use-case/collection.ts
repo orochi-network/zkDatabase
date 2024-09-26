@@ -7,6 +7,9 @@ import { createCollectionMetadata } from './collection-metadata.js';
 import { isGroupExist } from './group.js';
 import { hasCollectionPermission } from './permission.js';
 import { Collection } from '../types/collection.js';
+import { getSchemaDefinition } from './schema.js';
+import { readMetadata } from './metadata.js';
+import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
 
 async function createCollection(
   databaseName: string,
@@ -50,20 +53,37 @@ async function createCollection(
   }
 }
 
+async function readCollectionInfo(
+  databaseName: string,
+  collectionName: string
+): Promise<Collection> {
+  const indexes = await ModelCollection.getInstance(
+    databaseName,
+    collectionName
+  ).listIndexes();
+  const schema = await getSchemaDefinition(databaseName, collectionName);
+  const metadata = await readMetadata(
+    databaseName,
+    collectionName,
+    null,
+    ZKDATABASE_USER_NOBODY
+  );
+  const info = { name: collectionName, indexes, schema, metadata };
+
+  console.log('info', info)
+  console.log('metadata', metadata)
+  return info
+}
+
 async function listCollections(databaseName: string): Promise<Collection[]> {
   const collectionNames =
     await ModelDatabase.getInstance(databaseName).listCollections();
 
   const collections: Collection[] = await Promise.all(
-    collectionNames.map(async (collectionName) => {
-      const indexes = await ModelCollection.getInstance(
-        databaseName,
-        collectionName
-      ).listIndexes();
-      return { name: collectionName, indexes };
-    })
+    collectionNames.map(async (collectionName) =>
+      readCollectionInfo(databaseName, collectionName)
+    )
   );
-
   return collections;
 }
 
@@ -193,4 +213,5 @@ export {
   listIndexes,
   doesIndexExist,
   listCollections,
+  readCollectionInfo,
 };

@@ -1,7 +1,7 @@
 import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { Metadata } from '../types/metadata.js';
+import { CollectionMetadata } from '../types/metadata.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
@@ -17,7 +17,7 @@ export async function readMetadata(
   // eslint-disable-next-line default-param-last
   checkPermissions: boolean = false,
   session?: ClientSession
-): Promise<Metadata> {
+): Promise<CollectionMetadata> {
   if (checkPermissions) {
     const hasReadPermission = docId
       ? await hasDocumentPermission(
@@ -58,20 +58,16 @@ export async function readMetadata(
   }
 
   return {
-    owners: {
-      owner: metadata.owner,
-      group: metadata.group,
-    },
-    permissions: {
-      permissionOwner: PermissionBinary.fromBinaryPermission(
-        metadata.permissionOwner
-      ),
-      permissionGroup: PermissionBinary.fromBinaryPermission(
-        metadata.permissionGroup
-      ),
-      permissionOther: PermissionBinary.fromBinaryPermission(
-        metadata.permissionOther
-      ),
-    },
+    userName: metadata.owner,
+    groupName: metadata.group,
+    permissionOwner: PermissionBinary.fromBinaryPermission(
+      metadata.permissionOwner
+    ),
+    permissionGroup: PermissionBinary.fromBinaryPermission(
+      metadata.permissionGroup
+    ),
+    permissionOther: PermissionBinary.fromBinaryPermission(
+      metadata.permissionOther
+    ),
   };
 }

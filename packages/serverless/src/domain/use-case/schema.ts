@@ -166,7 +166,7 @@ export async function getSchemaDefinition(
     (fieldName) =>
       ({
         name: schema[fieldName].name,
-        kind: schema[fieldName].king,
+        kind: schema[fieldName].kind,
         indexed: schema[fieldName].indexed,
       }) as DocumentSchemaField
   );

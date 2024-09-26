@@ -82,15 +82,15 @@ export class ZKDocumentImpl implements ZKDocument {
       docId: this._id,
       permission: {
         permissionOwner: {
-          ...remotePermissions.permissions.permissionOwner,
+          ...remotePermissions.permissionOwner,
           ...permissions.permissionOwner,
         },
         permissionGroup: {
-          ...remotePermissions.permissions.permissionGroup,
+          ...remotePermissions.permissionGroup,
           ...permissions.permissionGroup,
         },
         permissionOther: {
-          ...remotePermissions.permissions.permissionOther,
+          ...remotePermissions.permissionOther,
           ...permissions.permissionOther,
         },
       },

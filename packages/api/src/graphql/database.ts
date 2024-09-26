@@ -55,6 +55,36 @@ const DATABASE_LIST = gql`
       collections {
         name
         indexes
+        schema {
+          name
+          kind
+          indexed
+        }
+        metadata {
+          userName
+          groupName
+          permissionOwner {
+            read
+            write
+            delete
+            create
+            system
+          }
+          permissionGroup {
+            read
+            write
+            delete
+            create
+            system
+          }
+          permissionOther {
+            read
+            write
+            delete
+            create
+            system
+          }
+        }
       }
     }
   }

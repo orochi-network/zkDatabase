@@ -1,7 +1,6 @@
 import {
   DatabaseEngine,
   DbSetting,
-  ModelCollection,
   ModelDatabase,
   ModelDbSetting,
 } from '@zkdb/storage';
@@ -16,6 +15,7 @@ import { isUserExist } from './user.js';
 import logger from '../../helper/logger.js';
 import { FilterCriteria } from '../utils/document.js';
 import { Collection } from '../types/collection.js';
+import { readCollectionInfo } from './collection.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -88,13 +88,9 @@ export async function getDatabases(
             await ModelDatabase.getInstance(databaseName).listCollections());
 
         const collections: Collection[] = await Promise.all(
-          collectionNames.map(async (collectionName) => {
-            const indexes = await ModelCollection.getInstance(
-              databaseName,
-              collectionName
-            ).listIndexes();
-            return { name: collectionName, indexes };
-          })
+          collectionNames.map(async (collectionName) =>
+            readCollectionInfo(databaseName, collectionName)
+          )
         );
 
         return {

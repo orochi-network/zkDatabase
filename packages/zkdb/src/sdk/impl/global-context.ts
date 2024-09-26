@@ -19,12 +19,12 @@ export class GlobalContextImpl implements GlobalContext {
     filter: FilterCriteria = {},
     pagination: Pagination = { offset: 0, limit: 10 }
   ): Promise<Database[]> {
-    const { unwrap } = await this.apiClient.db.list({
+    const result = await this.apiClient.db.list({
       query: filter,
       pagination,
     });
-
-    return unwrap().map(
+    
+    return result.unwrap().map(
       ({ databaseName, merkleHeight, collections, databaseSize }) => ({
         databaseName,
         merkleHeight,

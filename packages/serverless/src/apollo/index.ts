@@ -16,6 +16,7 @@ import {
   typeDefsDocumentHistory,
 } from './app/document-history.js';
 import { typeCommonDefsCollection } from './app/types/collection.js';
+import { typeCommonDefsMetadata } from './app/types/metadata.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -29,7 +30,8 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsDocumentHistory,
   typeCommonDefsDocument,
-  typeCommonDefsCollection
+  typeCommonDefsCollection,
+  typeCommonDefsMetadata
 ];
 
 type Resolver =

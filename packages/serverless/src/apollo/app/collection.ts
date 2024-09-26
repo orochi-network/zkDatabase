@@ -57,26 +57,6 @@ scalar JSON
 type Query
 type Mutation
 
-input SchemaFieldInput {
-  name: String!
-  kind: String!
-  indexed: Boolean
-}
-
-input PermissionRecordInput {
-  system: Boolean
-  create: Boolean
-  read: Boolean
-  write: Boolean
-  delete: Boolean
-}
-
-input PermissionDetailInput {
-  permissionOwner: PermissionRecordInput
-  permissionGroup: PermissionRecordInput
-  permissionOther: PermissionRecordInput
-}
-
 extend type Query {
   collectionList(databaseName: String!): [CollectionDescriptionOutput]!
   collectionExist(databaseName: String!, collectionName: String!): Boolean

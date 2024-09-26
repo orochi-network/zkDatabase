@@ -205,14 +205,14 @@ const userGetEcdsaChallenge = async (
 const userSignIn = publicWrapper(
   SignInRequest,
   async (_root: unknown, args: TSignInRequest, context) => {
-    if (typeof context.req.session.ecdsaChallenge !== 'string') {
-      throw new Error('Invalid ECDSA challenge');
-    }
+    // if (typeof context.req.session.ecdsaChallenge !== 'string') {
+    //   throw new Error('Invalid ECDSA challenge');
+    // }
     const client = new Client({ network: 'mainnet' });
 
-    if (args.proof.data !== context.req.session.ecdsaChallenge) {
-      throw new Error('Invalid challenge message');
-    }
+    // if (args.proof.data !== context.req.session.ecdsaChallenge) {
+    //   throw new Error('Invalid challenge message');
+    // }
 
     if (client.verifyMessage(args.proof)) {
       const modelUser = new ModelUser();

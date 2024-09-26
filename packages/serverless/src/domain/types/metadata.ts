@@ -1,12 +1,14 @@
-import { Owners } from './ownership.js';
-import { FullPermissions } from './permission.js';
+import { PermissionSet } from './permission.js';
 
-export type Metadata = {
-  owners: Owners;
-  permissions: FullPermissions;
+export type CollectionMetadata = {
+  userName: string;
+  groupName: string;
+  permissionOwner: PermissionSet;
+  permissionGroup: PermissionSet;
+  permissionOther: PermissionSet;
 };
 
-export type DocumentMetadata = Metadata & {
+export type DocumentMetadata = CollectionMetadata & {
   merkleIndex: string;
 };
 
