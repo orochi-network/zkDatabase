@@ -208,6 +208,7 @@ const userSignIn = publicWrapper(
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
     }
+
     const client = new Client({ network: 'mainnet' });
 
     if (args.proof.data !== context.req.session.ecdsaChallenge) {
@@ -243,14 +244,16 @@ const userSignIn = publicWrapper(
 const userSignOut = authorizeWrapper(
   Joi.object().unknown(),
   async (_root: unknown, _args: any, context) => {
+    console.log('🚀 ~ context:', context);
     const { req } = context;
-    if (req.headers.authorization) {
-      const accessTokenDigest = calculateAccessTokenDigest(
-        headerToAccessToken(req.headers.authorization)
-      );
-      await RedisInstance.accessTokenDigest(accessTokenDigest).delete();
-    }
-    await sessionDestroy(req);
+
+    // if (req.headers.authorization) {
+    //   const accessTokenDigest = calculateAccessTokenDigest(
+    //     headerToAccessToken(req.headers.authorization)
+    //   );
+    //   await RedisInstance.accessTokenDigest(accessTokenDigest).delete();
+    // }
+    // await sessionDestroy(req);
     return true;
   }
 );
