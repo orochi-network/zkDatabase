@@ -171,12 +171,11 @@ export class CollectionQueryImpl implements ZKCollection {
       serialize: () => DocumentEncoded;
     },
   >(model: InstanceType<T>, permissions?: Permissions): Promise<MerkleWitness> {
-    const isPermissionNotPassed =
-      !permissions || Object.keys(permissions).length === 0;
-
-    const documentPermission = isPermissionNotPassed
-      ? await this.getOwnership()
-      : permissions;
+    const isPermissionPassed =
+      permissions && Object.keys(permissions).length > 0;
+    const documentPermission = isPermissionPassed
+      ? permissions
+      : await this.getOwnership();
 
     const result = await this.apiClient.doc.create({
       databaseName: this.databaseName,
