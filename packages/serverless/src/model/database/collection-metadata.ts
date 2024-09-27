@@ -99,13 +99,13 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   public async getMetadata(
     collectionName: string,
     options?: FindOptions
-  ): Promise<SchemaDefinition> {
+  ): Promise<SchemaDefinition | null> {
     return this.findOne(
       {
         collection: collectionName,
       },
       options
-    ) as any;
+    );
   }
 
   public static async init(databaseName: string) {

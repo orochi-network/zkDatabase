@@ -193,6 +193,10 @@ async function createDocument(
     session,
   });
 
+  if (documentSchema === null) {
+    throw new Error('Schema not found');
+  }
+
   const {
     permissionOwner: collectionPermissionOwner,
     permissionGroup: collectionPermissionGroup,
