@@ -50,6 +50,7 @@ const DATABASE_LIST = gql`
   query GetDbList($query: JSON, $pagination: PaginationInput) {
     dbList(query: $query, pagination: $pagination) {
       databaseName
+      databaseOwner
       databaseSize
       merkleHeight
       collections {

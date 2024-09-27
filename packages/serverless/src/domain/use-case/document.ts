@@ -193,8 +193,8 @@ async function createDocument(
     session,
   });
 
-  if (documentSchema === null) {
-    throw new Error('Schema not found');
+  if (!documentSchema) {
+    throw new Error('Cannot get documentSchema');
   }
 
   const {
@@ -317,14 +317,14 @@ async function updateDocument(
 
     await modelDocument.updateOne(
       oldDocumentRecord.docId,
-      documentRecord!,
+      documentRecord,
       session
     );
 
     const witness = await proveUpdateDocument(
       databaseName,
       collectionName,
-      oldDocumentRecord.docId!,
+      oldDocumentRecord.docId,
       update,
       session
     );

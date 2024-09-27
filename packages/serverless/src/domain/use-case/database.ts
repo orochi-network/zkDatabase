@@ -77,7 +77,7 @@ export async function getDatabases(
   const databases: Database[] = (
     await Fill(
       settings.map((setting: DbSetting) => async () => {
-        const { databaseName, merkleHeight } = setting;
+        const { databaseName, merkleHeight, databaseOwner } = setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
@@ -95,6 +95,7 @@ export async function getDatabases(
 
         return {
           databaseName,
+          databaseOwner,
           merkleHeight,
           databaseSize,
           collections,
