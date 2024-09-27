@@ -5,6 +5,7 @@ import {
   ModelDbSetting,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { Fill } from '@orochi-network/queue';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -12,9 +13,7 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination } from '../types/pagination.js';
 import { isUserExist } from './user.js';
-import logger from '../../helper/logger.js';
 import { FilterCriteria } from '../utils/document.js';
-import { Collection } from '../types/collection.js';
 import { readCollectionInfo } from './collection.js';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -45,39 +44,39 @@ export async function getDatabases(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<Database[]> {
-  try {
-    const dbEngine = DatabaseEngine.getInstance();
-    const databasesInfo = await dbEngine.client.db().admin().listDatabases();
+  const dbEngine = DatabaseEngine.getInstance();
+  const databasesInfo = await dbEngine.client.db().admin().listDatabases();
 
-    if (!databasesInfo?.databases?.length) {
-      return [];
-    }
+  if (!databasesInfo?.databases?.length) {
+    return [];
+  }
 
-    const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
-      databasesInfo.databases.reduce<Record<string, { sizeOnDisk: number }>>(
-        (acc, dbInfo) => ({
-          ...acc,
-          [dbInfo.name]: { sizeOnDisk: dbInfo.sizeOnDisk || 0 },
-        }),
-        {}
-      );
-
-    const settings = await ModelDbSetting.getInstance().findSettingsByFields(
-      filter,
-      {
-        skip: pagination?.offset,
-        limit: pagination?.limit,
-      }
+  const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
+    databasesInfo.databases.reduce<Record<string, { sizeOnDisk: number }>>(
+      (acc, dbInfo) => ({
+        ...acc,
+        [dbInfo.name]: { sizeOnDisk: dbInfo.sizeOnDisk || 0 },
+      }),
+      {}
     );
 
-    if (!settings?.length) {
-      return [];
+  const settings = await ModelDbSetting.getInstance().findSettingsByFields(
+    filter,
+    {
+      skip: pagination?.offset,
+      limit: pagination?.limit,
     }
+  );
 
-    const collectionsCache: Record<string, string[]> = {};
+  if (!settings?.length) {
+    return [];
+  }
 
-    const databases: Database[] = await Promise.all(
-      settings.map(async (setting: DbSetting) => {
+  const collectionsCache: Record<string, string[]> = {};
+
+  const databases: Database[] = (
+    await Fill(
+      settings.map((setting: DbSetting) => async () => {
         const { databaseName, merkleHeight } = setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
@@ -87,10 +86,13 @@ export async function getDatabases(
           (collectionsCache[databaseName] =
             await ModelDatabase.getInstance(databaseName).listCollections());
 
-        const collections: Collection[] = await Promise.all(
-          collectionNames.map(async (collectionName) =>
+        const promises = collectionNames.map(
+          (collectionName) => async () =>
             readCollectionInfo(databaseName, collectionName)
-          )
+        );
+
+        const collections = (await Fill(promises)).map(
+          (result) => result.result
         );
 
         return {
@@ -100,13 +102,10 @@ export async function getDatabases(
           collections,
         } as Database;
       })
-    );
+    )
+  ).map((result) => result.result);
 
-    return databases.filter(Boolean);
-  } catch (error) {
-    logger.error('An error occurred in getDatabases:', error);
-    throw error;
-  }
+  return databases.filter(Boolean);
 }
 
 export async function getDatabaseSetting(

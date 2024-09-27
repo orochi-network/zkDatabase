@@ -1,4 +1,5 @@
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { Fill } from '@orochi-network/queue';
 import { ClientSession } from 'mongodb';
 import { DocumentSchemaInput } from '../types/schema.js';
 import { Permissions } from '../types/permission.js';
@@ -76,12 +77,14 @@ async function listCollections(databaseName: string): Promise<Collection[]> {
   const collectionNames =
     await ModelDatabase.getInstance(databaseName).listCollections();
 
-  const collections: Collection[] = await Promise.all(
-    collectionNames.map((collectionName) =>
-      readCollectionInfo(databaseName, collectionName)
+  return (
+    await Fill(
+      collectionNames.map(
+        (collectionName) => async () =>
+          readCollectionInfo(databaseName, collectionName)
+      )
     )
-  );
-  return collections;
+  ).map((result) => result.result);
 }
 
 async function listIndexes(
