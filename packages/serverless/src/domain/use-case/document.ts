@@ -193,6 +193,10 @@ async function createDocument(
     session,
   });
 
+  if (!documentSchema) {
+    throw new Error('Cannot get documentSchema');
+  }
+
   const {
     permissionOwner: collectionPermissionOwner,
     permissionGroup: collectionPermissionGroup,

@@ -133,6 +133,10 @@ export async function buildSchema(
   const structType: { [key: string]: any } = {};
   const indexes: string[] = [];
 
+  if (!schema) {
+    throw new Error('Error schema does not found');
+  }
+
   schema.fields.forEach((fieldName) => {
     const documentField = document.find((f) => f.name === fieldName);
 
@@ -159,8 +163,12 @@ export async function getSchemaDefinition(
   collectionName: string,
   session?: ClientSession
 ): Promise<DocumentSchema> {
+  console.log('🚀 ~ collectionName:', collectionName);
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
   const schema = await modelSchema.getMetadata(collectionName, { session });
-
-  return schema.fields.map((f) => schema[f]);
+  console.log('🚀 ~ schema:', schema);
+  if (!schema) {
+    throw new Error('Error schema does not found');
+  }
+  return schema.fields?.map((f) => schema[f]);
 }
