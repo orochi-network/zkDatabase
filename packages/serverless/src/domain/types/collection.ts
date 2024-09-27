@@ -5,5 +5,5 @@ export type Collection = {
   name: string,
   indexes: string[],
   schema: DocumentSchema,
-  metadata: CollectionMetadata
+  ownership: CollectionMetadata
 }

@@ -1,6 +1,6 @@
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema.js';
+import { DocumentSchemaInput } from '../types/schema.js';
 import { Permissions } from '../types/permission.js';
 import logger from '../../helper/logger.js';
 import { createCollectionMetadata } from './collection-metadata.js';
@@ -16,7 +16,7 @@ async function createCollection(
   collectionName: string,
   actor: string,
   groupName: string,
-  schema: DocumentSchema,
+  schema: DocumentSchemaInput,
   permissions: Permissions,
   session?: ClientSession
 ): Promise<boolean> {
@@ -62,14 +62,14 @@ async function readCollectionInfo(
     collectionName
   ).listIndexes();
   const schema = await getSchemaDefinition(databaseName, collectionName);
-  const metadata = await readMetadata(
+  const ownership = await readMetadata(
     databaseName,
     collectionName,
     null,
     ZKDATABASE_USER_NOBODY
   );
 
-  return { name: collectionName, indexes, schema, metadata };
+  return { name: collectionName, indexes, schema, ownership };
 }
 
 async function listCollections(databaseName: string): Promise<Collection[]> {

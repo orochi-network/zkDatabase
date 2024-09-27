@@ -10,6 +10,7 @@ input SchemaFieldInput {
 }
 
 type SchemaFieldOutput {
+  order: Int!,
   name: String!
   kind: String!
   indexed: Boolean
@@ -19,6 +20,6 @@ type CollectionDescriptionOutput {
   name: String!
   indexes: [String]!,
   schema: [SchemaFieldOutput!]!,
-  metadata : CollectionMetadataOutput!
+  ownership : CollectionMetadataOutput!
 }
 `;

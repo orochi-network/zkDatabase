@@ -56,11 +56,12 @@ const DATABASE_LIST = gql`
         name
         indexes
         schema {
+          order
           name
           kind
           indexed
         }
-        metadata {
+        ownership {
           userName
           groupName
           permissionOwner {

@@ -5,5 +5,5 @@ export type Collection = {
   name: string,
   indexes: string[],
   schema: TSchema,
-  metadata: TOwnership
+  ownership: TOwnership
 }
