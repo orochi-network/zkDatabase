@@ -171,8 +171,12 @@ export class CollectionQueryImpl implements ZKCollection {
       serialize: () => DocumentEncoded;
     },
   >(model: InstanceType<T>, permissions?: Permissions): Promise<MerkleWitness> {
-    const documentPermission =
-      permissions ?? (await this.getOwnership());
+    const isPermissionNotPassed =
+      !permissions || Object.keys(permissions).length === 0;
+
+    const documentPermission = isPermissionNotPassed
+      ? await this.getOwnership()
+      : permissions;
 
     const result = await this.apiClient.doc.create({
       databaseName: this.databaseName,
@@ -181,7 +185,7 @@ export class CollectionQueryImpl implements ZKCollection {
       documentPermission: {
         permissionOwner: documentPermission.permissionOwner,
         permissionOther: documentPermission.permissionOther,
-        permissionGroup: documentPermission.permissionGroup
+        permissionGroup: documentPermission.permissionGroup,
       },
     });
 
@@ -240,7 +244,7 @@ export class CollectionQueryImpl implements ZKCollection {
       },
     });
 
-    return result.unwrap()
+    return result.unwrap();
   }
 
   async getOwnership(): Promise<Ownership> {
