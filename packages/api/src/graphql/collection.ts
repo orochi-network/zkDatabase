@@ -4,7 +4,8 @@ import {
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TPermissions, TSchema } from "./types";
+import { TPermissions, TPermissionSet, TSchema } from "./types";
+import { Collection } from "./types/collection";
 
 const COLLECTION_CREATE = gql`
   mutation CollectionCreate(
@@ -35,7 +36,41 @@ const COLLECTION_EXIST = gql`
 
 const COLLECTION_LIST = gql`
   query CollectionList($databaseName: String!) {
-    collectionList(databaseName: $databaseName)
+    collectionList(databaseName: $databaseName) {
+      name
+      indexes
+      schema {
+        order
+        name
+        kind
+        indexed
+      }
+      ownership {
+        userName
+        groupName
+        permissionOwner {
+          read
+          write
+          delete
+          create
+          system
+        }
+        permissionGroup {
+          read
+          write
+          delete
+          create
+          system
+        }
+        permissionOther {
+          read
+          write
+          delete
+          create
+          system
+        }
+      }
+    }
   }
 `;
 
@@ -43,9 +78,7 @@ export type TCollectionListRequest = {
   databaseName: string;
 };
 
-export type TCollectionListResponse = {
-  collections: string[];
-};
+export type TCollectionListResponse = { collectionList: Collection[] };
 
 export type TCollectionExistRequest = TCollectionListRequest & {
   collectionName: string;
@@ -73,8 +106,8 @@ export const collection = <T>(client: TApolloClient<T>) => ({
     TCollectionExistResponse
   >(client, COLLECTION_EXIST, (data) => data.collectionExist),
   list: createQueryFunction<
-    string[],
+    Collection[],
     TCollectionListRequest,
     TCollectionListResponse
-  >(client, COLLECTION_LIST, (data) => data.collections),
+  >(client, COLLECTION_LIST, (data) => data.collectionList),
 });

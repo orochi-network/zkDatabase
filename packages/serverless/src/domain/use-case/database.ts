@@ -5,6 +5,7 @@ import {
   ModelDbSetting,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { Fill } from '@orochi-network/queue';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -12,8 +13,8 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination } from '../types/pagination.js';
 import { isUserExist } from './user.js';
-import logger from '../../helper/logger.js';
 import { FilterCriteria } from '../utils/document.js';
+import { readCollectionInfo } from './collection.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -43,68 +44,66 @@ export async function getDatabases(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<Database[]> {
-  try {
-    const databasesInfo = await DatabaseEngine.getInstance()
-      .client.db()
-      .admin()
-      .listDatabases();
+  const dbEngine = DatabaseEngine.getInstance();
+  const databasesInfo = await dbEngine.client.db().admin().listDatabases();
 
-    const databaseInfoMap: { [name: string]: { sizeOnDisk: number } } = {};
-
-    databasesInfo.databases.forEach((dbInfo) => {
-      databaseInfoMap[dbInfo.name] = { sizeOnDisk: dbInfo.sizeOnDisk || 0 };
-    });
-
-    const settings = await ModelDbSetting.getInstance().findSettingsByFields(
-      filter,
-      {
-        skip: pagination?.offset,
-        limit: pagination?.limit,
-      }
-    );
-
-    const collectionsCache: { [databaseName: string]: string[] } = {};
-
-    const databases: (Database | null)[] = await Promise.all(
-      settings.map(async (setting: DbSetting) => {
-        try {
-          const { databaseName, merkleHeight } = setting;
-
-          const dbInfo = databaseInfoMap[databaseName];
-          const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
-
-          let collections = collectionsCache[databaseName];
-          if (!collections) {
-            collections =
-              await ModelDatabase.getInstance(databaseName).listCollections();
-            collectionsCache[databaseName] = collections;
-          }
-
-          return {
-            databaseName,
-            merkleHeight,
-            databaseSize,
-            collections,
-          } as Database;
-        } catch (error) {
-          logger.error(
-            `Error processing database ${setting.databaseName}:`,
-            error
-          );
-          return null;
-        }
-      })
-    );
-
-    const validDatabases = databases.filter(
-      (db): db is Database => db !== null
-    );
-
-    return validDatabases;
-  } catch (error) {
-    logger.error('An error occurred in getDatabases:', error);
-    throw error;
+  if (!databasesInfo?.databases?.length) {
+    return [];
   }
+
+  const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
+    databasesInfo.databases.reduce<Record<string, { sizeOnDisk: number }>>(
+      (acc, dbInfo) => ({
+        ...acc,
+        [dbInfo.name]: { sizeOnDisk: dbInfo.sizeOnDisk || 0 },
+      }),
+      {}
+    );
+
+  const settings = await ModelDbSetting.getInstance().findSettingsByFields(
+    filter,
+    {
+      skip: pagination?.offset,
+      limit: pagination?.limit,
+    }
+  );
+
+  if (!settings?.length) {
+    return [];
+  }
+
+  const collectionsCache: Record<string, string[]> = {};
+
+  const databases: Database[] = (
+    await Fill(
+      settings.map((setting: DbSetting) => async () => {
+        const { databaseName, merkleHeight } = setting;
+        const dbInfo = databaseInfoMap[databaseName];
+        const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
+
+        const collectionNames =
+          collectionsCache[databaseName] ||
+          (collectionsCache[databaseName] =
+            await ModelDatabase.getInstance(databaseName).listCollections());
+
+        const promises = collectionNames.map(
+          (collectionName) => async () =>
+            readCollectionInfo(databaseName, collectionName)
+        );
+
+        const collections = (await Fill(promises)).map(({ result }) => result);
+
+        return {
+          databaseName,
+          merkleHeight,
+          databaseSize,
+          collections,
+        } as Database;
+      })
+    )
+  ).map(({ result }) => result);
+
+  return databases.filter(Boolean);
 }
 
 export async function getDatabaseSetting(

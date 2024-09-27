@@ -66,7 +66,7 @@ type DbDescription {
   databaseName: String!,
   databaseSize: String!,
   merkleHeight: Int!,
-  collections: [String]!
+  collections: [CollectionDescriptionOutput]!
 }
 
 extend type Query {

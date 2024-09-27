@@ -23,7 +23,7 @@ export class ZKDatabaseClient {
     const apiClient = ApiClient.newInstance(url);
     const authenticator = new Authenticator(signer, apiClient, storage);
     apiClient.api.setContext(() => authenticator.getAccessToken());
-    return new ZKDatabaseClient(ApiClient.newInstance(url), authenticator);
+    return new ZKDatabaseClient(apiClient, authenticator);
   }
 
   public getSigner(): Signer {

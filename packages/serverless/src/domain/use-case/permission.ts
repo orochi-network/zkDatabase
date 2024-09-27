@@ -1,4 +1,4 @@
-import { ClientSession, ObjectId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import {
@@ -36,7 +36,7 @@ async function fetchPermissionDetails(
   return PermissionBinary.fromBinary(metadata.permissionOther);
 }
 
-async function readPermission(
+export async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,

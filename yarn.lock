@@ -2797,7 +2797,7 @@
     winston "3.14.2"
     winston-transport "4.7.1"
 
-"@orochi-network/queue@^0.1.9":
+"@orochi-network/queue@^0.1.11", "@orochi-network/queue@^0.1.9":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@orochi-network/queue/-/queue-0.1.11.tgz#c749704587a7a49e4808009def83058c9d871f0c"
   integrity sha512-oey8T41oEfA3FvpHXpc5RrSro318ysPRAKHcWjd89TbCjjVlAPs/GjK9gy71ImeRaAL6FUCu+Bk/OxldMxJfAQ==

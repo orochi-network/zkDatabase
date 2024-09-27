@@ -11,7 +11,10 @@ import { TDatabaseRequest } from './database.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { PermissionsData } from '../types/permission.js';
 import { SchemaData } from '../types/schema.js';
-import { createCollection } from '../../domain/use-case/collection.js';
+import {
+  createCollection,
+  listCollections,
+} from '../../domain/use-case/collection.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 
 export const schemaField = Joi.object({
@@ -54,28 +57,8 @@ scalar JSON
 type Query
 type Mutation
 
-input SchemaFieldInput {
-  name: String!
-  kind: String!
-  indexed: Boolean
-}
-
-input PermissionRecordInput {
-  system: Boolean
-  create: Boolean
-  read: Boolean
-  write: Boolean
-  delete: Boolean
-}
-
-input PermissionDetailInput {
-  permissionOwner: PermissionRecordInput
-  permissionGroup: PermissionRecordInput
-  permissionOther: PermissionRecordInput
-}
-
 extend type Query {
-  collectionList(databaseName: String!): JSON
+  collectionList(databaseName: String!): [CollectionDescriptionOutput]!
   collectionExist(databaseName: String!, collectionName: String!): Boolean
 }
 
@@ -96,7 +79,7 @@ const collectionList = publicWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest) =>
-    ModelDatabase.getInstance(args.databaseName).listCollections()
+    listCollections(args.databaseName)
 );
 
 const collectionExist = publicWrapper(

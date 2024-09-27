@@ -1,7 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
-import { GraphQLError } from 'graphql';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   databaseName,
@@ -65,52 +64,13 @@ type SchemaField {
   indexed: Boolean
 }
 
-input PermissionInput {
-  read: Boolean
-  write: Boolean
-  delete: Boolean
-  create: Boolean
-  system: Boolean
-}
-
-type PermissionRecord {
-  read: Boolean
-  write: Boolean
-  delete: Boolean
-  create: Boolean
-  system: Boolean
-}
-
-type Permission {
-  userName: String
-  groupName: String
-  permissionOwner: PermissionRecord
-  permissionGroup: PermissionRecord
-  permissionOther: PermissionRecord
-}
-
-input PermissionInput {
-  permissionOwner: PermissionInput
-  permissionGroup: PermissionInput
-  permissionOther: PermissionInput
-}
-
-type Metadata {
-  merkleIndex: Int!,
-  owner: String!
-  group: String!
-  permissionOwner: PermissionRecord!
-  permissionGroup: PermissionRecord!
-  permissionOther: PermissionRecord!
-}
-
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(
     databaseName: String!
     collectionName: String!
     docId: String
-  ): Permission
+  ): CollectionMetadataOutput
 
   collectionSchema(
     databaseName: String!
@@ -123,8 +83,8 @@ extend type Mutation {
     databaseName: String!
     collectionName: String!
     docId: String
-    permission: PermissionInput!
-  ): Permission!
+    permission: PermissionDetailInput!
+  ): CollectionMetadataOutput!
 
   permissionOwn(
     databaseName: String!
@@ -132,7 +92,7 @@ extend type Mutation {
     docId: String
     grouping: OwnershipGroup!
     newOwner: String!
-  ): Permission
+  ): CollectionMetadataOutput
 }
 
 `;
@@ -145,7 +105,7 @@ const permissionList = authorizeWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionRequest, ctx) => {
-    const metadata = await withTransaction((session) =>
+    return withTransaction((session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -155,19 +115,6 @@ const permissionList = authorizeWrapper(
         session
       )
     );
-
-    if (!metadata) {
-      const message = args.docId
-        ? `document with id ${args.docId}`
-        : `collection ${args.collectionName}`;
-      throw new GraphQLError(`Metadata for ${message} has not been found`);
-    }
-
-    return {
-      userName: metadata.owners.owner,
-      groupName: metadata.owners.group,
-      ...metadata.permissions,
-    };
   }
 );
 
@@ -202,7 +149,7 @@ const permissionSet = authorizeWrapper(
       )
     );
 
-    const metadata = await withTransaction((session) =>
+    return withTransaction((session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -212,19 +159,6 @@ const permissionSet = authorizeWrapper(
         session
       )
     );
-
-    if (!metadata) {
-      const message = args.docId
-        ? `document with id ${args.docId}`
-        : `collection ${args.collectionName}`;
-      throw new GraphQLError(`Metadata for ${message} has not been found`);
-    }
-
-    return {
-      userName: metadata.owners.owner,
-      groupName: metadata.owners.group,
-      ...metadata.permissions,
-    };
   }
 );
 
@@ -262,7 +196,7 @@ const permissionOwn = authorizeWrapper(
       );
     }
 
-    const metadata = await withTransaction((session) =>
+    return withTransaction((session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -272,19 +206,6 @@ const permissionOwn = authorizeWrapper(
         session
       )
     );
-
-    if (!metadata) {
-      const message = args.docId
-        ? `document with id ${args.docId}`
-        : `collection ${args.collectionName}`;
-      throw new GraphQLError(`Metadata for ${message} has not been found`);
-    }
-
-    return {
-      userName: metadata.owners.owner,
-      groupName: metadata.owners.group,
-      ...metadata.permissions,
-    };
   }
 );
 

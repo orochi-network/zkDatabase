@@ -1,7 +1,9 @@
 export type TOwnership = {
   userName: string;
   groupName: string;
-  permissions: TPermissions;
+  permissionOwner?: TPermissionSet;
+  permissionGroup?: TPermissionSet;
+  permissionOther?: TPermissionSet;
 };
 
 export type TPermissionSet = {
