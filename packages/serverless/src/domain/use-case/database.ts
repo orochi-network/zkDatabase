@@ -54,12 +54,12 @@ export async function getDatabases(
     }
 
     const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
-      databasesInfo.databases.reduce(
-        (acc, dbInfo) => {
-          acc[dbInfo.name] = { sizeOnDisk: dbInfo.sizeOnDisk || 0 };
-          return acc;
-        },
-        {} as Record<string, { sizeOnDisk: number }>
+      databasesInfo.databases.reduce<Record<string, { sizeOnDisk: number }>>(
+        (acc, dbInfo) => ({
+          ...acc,
+          [dbInfo.name]: { sizeOnDisk: dbInfo.sizeOnDisk || 0 },
+        }),
+        {}
       );
 
     const settings = await ModelDbSetting.getInstance().findSettingsByFields(
@@ -100,12 +100,9 @@ export async function getDatabases(
           collections,
         } as Database;
       })
-    ).catch((error) => {
-      logger.error(`Error processing databases:`, error);
-      throw error;
-    });
+    );
 
-    return databases.filter(Boolean); // Filter out any `null` results
+    return databases.filter(Boolean);
   } catch (error) {
     logger.error('An error occurred in getDatabases:', error);
     throw error;

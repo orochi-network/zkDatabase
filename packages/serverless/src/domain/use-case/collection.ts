@@ -68,11 +68,8 @@ async function readCollectionInfo(
     null,
     ZKDATABASE_USER_NOBODY
   );
-  const info = { name: collectionName, indexes, schema, metadata };
 
-  console.log('info', info)
-  console.log('metadata', metadata)
-  return info
+  return { name: collectionName, indexes, schema, metadata };
 }
 
 async function listCollections(databaseName: string): Promise<Collection[]> {
@@ -80,7 +77,7 @@ async function listCollections(databaseName: string): Promise<Collection[]> {
     await ModelDatabase.getInstance(databaseName).listCollections();
 
   const collections: Collection[] = await Promise.all(
-    collectionNames.map(async (collectionName) =>
+    collectionNames.map((collectionName) =>
       readCollectionInfo(databaseName, collectionName)
     )
   );
