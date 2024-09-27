@@ -84,7 +84,7 @@ async function listCollections(databaseName: string): Promise<Collection[]> {
           readCollectionInfo(databaseName, collectionName)
       )
     )
-  ).map((result) => result.result);
+  ).map(({ result }) => result);
 }
 
 async function listIndexes(
