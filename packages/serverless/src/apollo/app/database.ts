@@ -65,6 +65,7 @@ type Collection {
 type DbDescription {
   databaseName: String!,
   databaseSize: String!,
+  databaseOwner: String!,
   merkleHeight: Int!,
   collections: [CollectionDescriptionOutput]!
 }
@@ -123,7 +124,9 @@ const dbSetting = publicWrapper(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const setting = await ModelDbSetting.getInstance().getSetting(args.databaseName);
+    const setting = await ModelDbSetting.getInstance().getSetting(
+      args.databaseName
+    );
 
     if (setting) {
       return {
