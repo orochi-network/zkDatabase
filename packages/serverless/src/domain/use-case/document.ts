@@ -313,14 +313,14 @@ async function updateDocument(
 
     await modelDocument.updateOne(
       oldDocumentRecord.docId,
-      documentRecord!,
+      documentRecord,
       session
     );
 
     const witness = await proveUpdateDocument(
       databaseName,
       collectionName,
-      oldDocumentRecord.docId!,
+      oldDocumentRecord.docId,
       update,
       session
     );
