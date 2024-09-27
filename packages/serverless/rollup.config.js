@@ -7,7 +7,7 @@ export default {
   output: {
     entryFileNames: 'src/index.js',
     dir: 'build',
-    preserveModules: false, // If will build to a single index.js file if it 'false'
+    preserveModules: false, // Bundle into a single index.js if set to `false`
     sourcemap: true,
   },
   plugins: [
