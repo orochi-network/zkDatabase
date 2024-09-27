@@ -36,7 +36,7 @@ async function fetchPermissionDetails(
   return PermissionBinary.fromBinary(metadata.permissionOther);
 }
 
-async function readPermission(
+export async function readPermission(
   databaseName: string,
   collectionName: string,
   actor: string,

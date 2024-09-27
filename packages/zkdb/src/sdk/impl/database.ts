@@ -77,6 +77,14 @@ export class ZKDatabaseImpl implements ZKDatabase {
       }));
   }
 
+  async getCollections(): Promise<string[]> {
+    const result = await this.apiClient.collection.list({
+      databaseName: this.databaseName,
+    });
+
+    return result.unwrap().map((collection) => collection.name);
+  }
+
   async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
     const result = await this.apiClient.db.create({
       databaseName: this.databaseName,

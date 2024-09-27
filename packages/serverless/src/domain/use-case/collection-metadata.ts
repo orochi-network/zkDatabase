@@ -1,6 +1,6 @@
 import { ModelCollection } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema.js';
+import { DocumentSchemaInput } from '../types/schema.js';
 import { getCurrentTime } from '../../helper/common.js';
 import { Permissions } from '../types/permission.js';
 import {
@@ -13,7 +13,7 @@ import { ModelCollectionMetadata } from '../../model/database/collection-metadat
 export async function createCollectionMetadata(
   databaseName: string,
   collectionName: string,
-  schema: DocumentSchema,
+  schema: DocumentSchemaInput,
   permissions: Permissions,
   owner: string,
   group: string,

@@ -1,6 +1,6 @@
 export type OwnershipGroup = 'User' | 'Group';
 
 export type Owners = {
-  owner: string;
-  group: string;
+  userName: string;
+  groupName: string;
 };

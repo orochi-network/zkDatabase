@@ -98,7 +98,7 @@ export const typeDefsDocument = gql`
 
   type DocumentsWithMetadataOutput {
     document: DocumentOutput!
-    metadata: Metadata!
+    metadata: DocumentMetadataOutput!
     proofStatus: String
   }
 

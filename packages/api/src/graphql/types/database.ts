@@ -1,7 +1,9 @@
+import { Collection } from "./collection";
+
 export type TDatabase = {
   databaseName: string;
   merkleHeight: number;
-  collections: string[];
+  collections: Collection[];
   databaseSize: number;
 };
 

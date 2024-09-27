@@ -1,18 +1,23 @@
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { Fill } from '@orochi-network/queue';
 import { ClientSession } from 'mongodb';
-import { DocumentSchema } from '../types/schema.js';
+import { DocumentSchemaInput } from '../types/schema.js';
 import { Permissions } from '../types/permission.js';
 import logger from '../../helper/logger.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isGroupExist } from './group.js';
 import { hasCollectionPermission } from './permission.js';
+import { Collection } from '../types/collection.js';
+import { getSchemaDefinition } from './schema.js';
+import { readMetadata } from './metadata.js';
+import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
 
 async function createCollection(
   databaseName: string,
   collectionName: string,
   actor: string,
   groupName: string,
-  schema: DocumentSchema,
+  schema: DocumentSchemaInput,
   permissions: Permissions,
   session?: ClientSession
 ): Promise<boolean> {
@@ -47,6 +52,39 @@ async function createCollection(
     logger.error(error);
     throw error;
   }
+}
+
+async function readCollectionInfo(
+  databaseName: string,
+  collectionName: string
+): Promise<Collection> {
+  const indexes = await ModelCollection.getInstance(
+    databaseName,
+    collectionName
+  ).listIndexes();
+  const schema = await getSchemaDefinition(databaseName, collectionName);
+  const ownership = await readMetadata(
+    databaseName,
+    collectionName,
+    null,
+    ZKDATABASE_USER_NOBODY
+  );
+
+  return { name: collectionName, indexes, schema, ownership };
+}
+
+async function listCollections(databaseName: string): Promise<Collection[]> {
+  const collectionNames =
+    await ModelDatabase.getInstance(databaseName).listCollections();
+
+  return (
+    await Fill(
+      collectionNames.map(
+        (collectionName) => async () =>
+          readCollectionInfo(databaseName, collectionName)
+      )
+    )
+  ).map(({ result }) => result);
 }
 
 async function listIndexes(
@@ -174,4 +212,6 @@ export {
   dropIndex,
   listIndexes,
   doesIndexExist,
+  listCollections,
+  readCollectionInfo,
 };

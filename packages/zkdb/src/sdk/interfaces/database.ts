@@ -7,7 +7,14 @@ import { ZKGroup } from './group';
 
 export interface ZKDatabase {
   from(name: string): ZKCollection;
-
+  // Group
+  createGroup(groupName: string, description: string): Promise<boolean>;
+  fromGroup(groupName: string): ZKGroup;
+  getGroups(): Promise<GroupDescription[]>;
+  // Settings
+  getSettings(): Promise<DatabaseSettings>;
+  // Collection
+  getCollections(): Promise<string[]>;
   createCollection<
     T extends {
       getSchema: () => SchemaDefinition;
@@ -18,15 +25,8 @@ export interface ZKDatabase {
     type: T,
     permissions: Permissions
   ): Promise<boolean>;
-
-  createGroup(groupName: string, description: string): Promise<boolean>;
-
-  fromGroup(groupName: string): ZKGroup;
-
-  getGroups(): Promise<GroupDescription[]>;
-  getSettings(): Promise<DatabaseSettings>;
-
+  // Ownership
   changeOwner(newOwner: string): Promise<boolean>;
-
+  // Proof
   getProof(): Promise<JsonProof>;
 }
