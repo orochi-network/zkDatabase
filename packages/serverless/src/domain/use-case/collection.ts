@@ -145,22 +145,14 @@ async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  indexNames: string[],
-  session?: ClientSession
+  indexNames: string[]
 ): Promise<boolean> {
   if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'system',
-      session
-    )
+    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
     // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(databaseName, collectionName).index(
-      indexNames || [],
-      { session }
+      indexNames || []
     );
   }
 
@@ -173,22 +165,22 @@ async function dropIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  indexName: string,
-  session?: ClientSession
+  indexName: string
 ): Promise<boolean> {
   if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'system',
-      session
-    )
+    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
-    // TODO: Should we check if index fields exist for a collection
-    return ModelCollection.getInstance(databaseName, collectionName).dropIndex(
-      indexName,
-      { session }
+    const index = `${indexName}_1`
+    if (await doesIndexExist(databaseName, actor, collectionName, index)) {
+      // TODO: Should we check if index fields exist for a collection
+      return ModelCollection.getInstance(
+        databaseName,
+        collectionName
+      ).dropIndex(index);
+    }
+
+    throw Error(
+      `Index '${indexName}' does not exist on ${databaseName}/${collectionName}`
     );
   }
 

@@ -9,12 +9,7 @@ import {
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
-import {
-  collectionName,
-  databaseName,
-  indexName,
-  indexField,
-} from './common.js';
+import { collectionName, databaseName, indexName, indexes } from './common.js';
 
 // Index request
 export type TIndexNameRequest = {
@@ -28,7 +23,7 @@ export const IndexListRequest = CollectionRequest;
 export type TIndexRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  indexField: string[];
+  indexes: string[];
 };
 
 export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
@@ -42,7 +37,7 @@ export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
 export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   collectionName,
   databaseName,
-  indexField,
+  indexes,
 });
 
 export const typeDefsCollectionIndex = `#graphql
@@ -63,7 +58,7 @@ export const typeDefsCollectionIndex = `#graphql
     indexCreate(
       databaseName: String!
       collectionName: String!
-      indexField: [String]!
+      indexes: [String]!
     ): Boolean
     indexDrop(
       databaseName: String!
@@ -100,28 +95,22 @@ const indexExist = authorizeWrapper(
 const indexCreate = authorizeWrapper(
   IndexCreateRequest,
   async (_root: unknown, args: TIndexCreateRequest, ctx) =>
-    withTransaction((session) =>
-      createIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.indexField,
-        session
-      )
+    createIndex(
+      args.databaseName,
+      ctx.userName,
+      args.collectionName,
+      args.indexes
     )
 );
 
 const indexDrop = authorizeWrapper(
   IndexDetailRequest,
   async (_root: unknown, args: TIndexDetailRequest, ctx) =>
-    withTransaction((session) =>
-      dropIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.indexName,
-        session
-      )
+    dropIndex(
+      args.databaseName,
+      ctx.userName,
+      args.collectionName,
+      args.indexName
     )
 );
 

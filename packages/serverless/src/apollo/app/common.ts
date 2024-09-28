@@ -64,7 +64,7 @@ export const indexNumber = Joi.string()
   .regex(/^[0-9]+$/)
   .required();
 
-export const indexField = Joi.array().items(Joi.string().required());
+export const indexes = Joi.array().items(Joi.string().required());
 
 export const permissionRecord = Joi.object<PermissionRecord>({
   system: Joi.boolean(),
