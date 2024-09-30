@@ -120,7 +120,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
               userName === serverSideAcessToken.userName &&
               serverSideAcessToken.email === email
             ) {
-              return { sessionId: req.sessionID, userName, email };
+              return { sessionId: req.sessionID, userName, email, req };
             }
           }
         }

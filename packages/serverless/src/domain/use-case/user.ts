@@ -20,7 +20,7 @@ export async function findUser(
   }
 
   return (
-    await modelUser.find(query ? parseQuery(query) : {}, {
+    await modelUser.find(query || {}, {
       session,
       ...options,
     })

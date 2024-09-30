@@ -1,4 +1,4 @@
-/* eslint-disable no-bitwise */
+ 
 export type PermissionRecord = {
   // Permission to change permission and ownership
   system: boolean;

@@ -70,6 +70,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     const result = await this.collection.find({
       $or: objectToLookupPattern(searchingInfo),
     });
+    console.log('🚀 ~ ModelUser ~ result:', result);
 
     return result.toArray();
   }

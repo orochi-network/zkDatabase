@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+ 
 import { ConfigLoader, TLogLevel, TNodeEnv } from '@orochi-network/framework';
 import { createHash } from 'crypto';
 import Joi from 'joi';
