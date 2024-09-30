@@ -17,7 +17,8 @@ export type DocumentPermission = Pick<
 export type DocumentRecord = Document & {
   _id?: ObjectId;
   docId: string;
-  deleted: boolean;
+  active: boolean;
+  nextId?: ObjectId;
   timestamp?: Date;
 } & {
   [key: string]: DocumentField;
@@ -67,7 +68,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
       timestamp: new Date(),
       ...document,
       docId: randomUUID(),
-      deleted: false,
+      active: true,
     } as any;
 
     const result = await this.collection.insertOne(documentRecord, { session });
@@ -85,17 +86,25 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     session?: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
-    const findDocument = await this.find({ docId });
+    const findDocument = await this.findOne({ docId });
 
-    if (findDocument.length > 0) {
+    if (findDocument) {
       const documentRecord: DocumentRecord = {
         timestamp: new Date(),
         ...document,
-        docId: findDocument[0].docId,
-        deleted: false,
+        docId: findDocument.docId,
+        active: true,
       } as any;
-
-      return this.collection.insertOne(documentRecord, { session });
+      //
+      const documentUpdated = await this.collection.insertOne(documentRecord, {
+        session,
+      });
+      console.log('🚀 ~ ModelDocument ~ documentUpdated:', documentUpdated);
+      await this.collection.updateOne(
+        { docId },
+        { active: false, nextId: documentUpdated.insertedId }
+      );
+      return documentUpdated;
     }
 
     throw new Error('No documents found to update');
@@ -133,7 +142,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public async findOne(filter: Filter<any>, session?: ClientSession) {
     logger.debug(`ModelDocument::findOne()`, { filter });
     return this.collection.findOne(
-      { ...filter, deleted: false },
+      { ...filter, active: true },
       {
         sort: { timestamp: -1 },
         session,

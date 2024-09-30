@@ -46,7 +46,7 @@ function buildDocumentFields(
       (key) =>
         key !== '_id' &&
         key !== 'docId' &&
-        key !== 'deleted' &&
+        key !== 'active' &&
         key !== 'timestamp' &&
         key !== 'metadata'
     )
@@ -590,7 +590,7 @@ async function searchDocuments(
     // const matchQuery = buildMongoQuery(query);
 
     const pipeline = buildPipeline(
-      query ? parseQuery(query) : null,
+      query ? { ...parseQuery(query) } : null,
       pagination
     );
 
@@ -621,6 +621,7 @@ async function searchDocuments(
         };
       }
     );
+    console.log('🚀 ~ transformedDocuments:', transformedDocuments);
 
     return transformedDocuments;
   }
