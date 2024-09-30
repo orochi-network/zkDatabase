@@ -137,7 +137,7 @@ export async function buildSchema(
   const indexes: string[] = [];
 
   if (!schema) {
-    throw new Error('Error schema does not found');
+    throw new Error('Schema not found');
   }
 
   schema.fields.forEach((fieldName) => {
