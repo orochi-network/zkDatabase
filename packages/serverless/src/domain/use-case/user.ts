@@ -22,7 +22,7 @@ export async function findUser(
   }
 
   return (
-    await modelUser.find(query ? parseQuery(query) : {}, {
+    await modelUser.find(query || {}, {
       session,
       ...options,
     })
@@ -66,7 +66,7 @@ export async function signUpUser(
           { publicKey: user.publicKey },
         ],
       });
-  
+
       if (existingUser) {
         if (existingUser.email === user.email) {
           throw new Error('A user with this email already exists');
@@ -93,7 +93,6 @@ export async function signUpUser(
     if (result && result.acknowledged) {
       return user;
     }
-
 
     // TODO: Return more meaningful error
     throw new Error('Unable to create new user');
