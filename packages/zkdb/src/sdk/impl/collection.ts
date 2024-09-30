@@ -220,16 +220,12 @@ export class CollectionQueryImpl implements ZKCollection {
     result.unwrap();
   }
 
-  async setPermissions(permissions: Permissions): Promise<Ownership> {
+  async setPermissions(permission: Permissions): Promise<Ownership> {
     const result = await this.apiClient.permission.set({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
-      permission: {
-        permissionOwner: permissions.permissionOwner,
-        permissionGroup: permissions.permissionGroup,
-        permissionOther: permissions.permissionOther,
-      },
+      permission,
     });
 
     return result.unwrap();
