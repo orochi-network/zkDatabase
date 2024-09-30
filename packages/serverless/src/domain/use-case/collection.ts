@@ -130,7 +130,6 @@ async function doesIndexExist(
       session
     )
   ) {
-    // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(databaseName, collectionName).isIndexed(
       indexName
     );
@@ -170,9 +169,8 @@ async function dropIndex(
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
-    const index = `${indexName}_1`
+    const index = `${indexName}_1`;
     if (await doesIndexExist(databaseName, actor, collectionName, index)) {
-      // TODO: Should we check if index fields exist for a collection
       return ModelCollection.getInstance(
         databaseName,
         collectionName
