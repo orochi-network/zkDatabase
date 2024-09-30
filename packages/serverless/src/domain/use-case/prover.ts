@@ -1,13 +1,12 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
-import { TMerkleProof, ModelMerkleTree, ModelQueueTask } from '@zkdb/storage';
+import { ModelMerkleTree, ModelQueueTask, TMerkleProof } from '@zkdb/storage';
 
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import ModelDocument from '../../model/abstract/document.js';
+import { ModelDocument, ModelDocumentMetadata } from '@model';
 
-import { DocumentFields } from '../types/document.js';
-import { buildSchema } from './schema.js';
+import { DocumentFields } from '../types';
+import { buildSchema } from './schema';
 
 // Prove the creation of a document
 export async function proveCreateDocument(

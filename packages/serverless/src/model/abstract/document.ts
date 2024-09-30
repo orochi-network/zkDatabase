@@ -1,11 +1,11 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
+import { PermissionBasic } from '@common';
+import { logger } from '@helper';
+import { SchemaField } from '@model';
 import { ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
-import { PermissionBasic } from '../../common/permission.js';
-import logger from '../../helper/logger.js';
-import { SchemaField } from '../database/collection-metadata.js';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 

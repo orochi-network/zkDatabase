@@ -1,11 +1,9 @@
+import { logger } from '@helper';
+import { ModelUser } from '@model';
 import Client from 'mina-signer';
 import { ClientSession } from 'mongodb';
-import ModelUser from '../../model/global/user.js';
-import { Pagination } from '../types/pagination.js';
-import { Signature } from '../types/proof.js';
-import { User } from '../types/user.js';
-import { FilterCriteria, parseQuery } from '../utils/document.js';
-import logger from '../../helper/logger.js';
+import { Pagination, Signature, User } from '../types';
+import { FilterCriteria, parseQuery } from '../utils';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function findUser(
@@ -66,7 +64,7 @@ export async function signUpUser(
           { publicKey: user.publicKey },
         ],
       });
-  
+
       if (existingUser) {
         if (existingUser.email === user.email) {
           throw new Error('A user with this email already exists');
@@ -93,7 +91,6 @@ export async function signUpUser(
     if (result && result.acknowledged) {
       return user;
     }
-
 
     // TODO: Return more meaningful error
     throw new Error('Unable to create new user');

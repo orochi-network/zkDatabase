@@ -1,14 +1,14 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, publicKey, userName } from './common.js';
+import publicWrapper, { authorizeWrapper } from '../validation';
+import { databaseName, pagination, publicKey, userName } from './common';
 import {
   changeDatabaseOwner,
   createDatabase,
   getDatabases,
-} from '../../domain/use-case/database.js';
-import { Pagination } from '../types/pagination.js';
+} from '../../domain';
+import { Pagination } from '../types';
 
 export type TDatabaseRequest = {
   databaseName: string;

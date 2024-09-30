@@ -6,15 +6,16 @@ import {
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Fill } from '@orochi-network/queue';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import ModelGroup from '../../model/database/group.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { Database } from '../types/database.js';
-import { Pagination } from '../types/pagination.js';
-import { isUserExist } from './user.js';
-import { FilterCriteria } from '../utils/document.js';
-import { readCollectionInfo } from './collection.js';
+import {
+  ModelDocumentMetadata,
+  ModelGroup,
+  ModelCollectionMetadata,
+  ModelUserGroup,
+} from '@model';
+import { Database, Pagination } from '../types';
+import { isUserExist } from './user';
+import { FilterCriteria } from '../utils';
+import { readCollectionInfo } from './collection';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(

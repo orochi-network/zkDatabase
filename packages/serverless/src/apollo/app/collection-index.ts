@@ -1,13 +1,14 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
+
 import {
   createIndex,
   doesIndexExist,
   dropIndex,
   listIndexes,
-} from '../../domain/use-case/collection.js';
-import { authorizeWrapper } from '../validation.js';
+} from '../../domain/use-case';
+import { authorizeWrapper } from '../validation';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
 import {
   collectionName,

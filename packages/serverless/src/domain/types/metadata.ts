@@ -1,4 +1,4 @@
-import { PermissionSet } from './permission.js';
+import { PermissionSet } from './permission';
 
 export type CollectionMetadata = {
   userName: string;

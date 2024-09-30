@@ -1,19 +1,17 @@
 /* eslint-disable import/prefer-default-export */
+import { PermissionBinary } from '@common';
+import { DocumentRecord, ModelDocument } from '@model';
 import { DatabaseEngine, zkDatabaseConstants } from '@zkdb/storage';
 import { ClientSession, WithId } from 'mongodb';
-import { Pagination } from '../types/pagination.js';
 import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
-import { Document, DocumentFields } from '../types/document.js';
-import { getUsersGroup } from './group.js';
-import { isDatabaseOwner } from './database.js';
-import { PermissionBinary } from '../../common/permission.js';
-import ModelDocument, {
-  DocumentRecord,
-} from '../../model/abstract/document.js';
-import { HistoryDocument } from '../types/document-history.js';
+  Document,
+  DocumentFields,
+  HistoryDocument,
+  Pagination,
+} from '../types';
+import { isDatabaseOwner } from './database';
+import { getUsersGroup } from './group';
+import { hasCollectionPermission, hasDocumentPermission } from './permission';
 
 function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>

@@ -1,4 +1,4 @@
-import { ProvableTypeString } from '../common/schema.js';
+import { ProvableTypeString } from '../common';
 
 export type DocumentFields = Array<{
   name: string;

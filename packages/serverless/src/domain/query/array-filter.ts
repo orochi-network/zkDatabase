@@ -1,4 +1,4 @@
-import { Condition, QueryOptions } from '../types/search.js';
+import { Condition, QueryOptions } from '../types';
 
 const MAX_RECURSION_DEPTH = 10;
 

@@ -1,12 +1,8 @@
+import { PermissionBinary } from '@common';
+import { ModelCollectionMetadata, ModelDocumentMetadata } from '@model';
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { CollectionMetadata } from '../types/metadata.js';
-import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
-import { PermissionBinary } from '../../common/permission.js';
+import { CollectionMetadata } from '../types';
+import { hasCollectionPermission, hasDocumentPermission } from './permission';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function readMetadata(

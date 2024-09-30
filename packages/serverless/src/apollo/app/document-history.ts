@@ -1,15 +1,12 @@
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
-import {
-  listHistoryDocuments,
-  readHistoryDocument,
-} from '../../domain/use-case/document-history.js';
-import { collectionName, databaseName, pagination } from './common.js';
-import mapPagination from '../mapper/pagination.js';
-import { TCollectionRequest } from './collection.js';
-import { Pagination } from '../types/pagination.js';
+import { authorizeWrapper } from '../validation';
+import { listHistoryDocuments, readHistoryDocument } from '../../domain';
+import { collectionName, databaseName, pagination } from './common';
+import { mapPagination } from '../mapper/pagination';
+import { TCollectionRequest } from './collection';
+import { Pagination } from '../types/pagination';
 
 export type TDocumentHistoryGetRequest = TCollectionRequest & {
   docId: string;

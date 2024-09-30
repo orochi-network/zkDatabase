@@ -1,10 +1,10 @@
+import { getWitnessByDocumentId } from '@domain';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree.js';
-import publicWrapper from '../validation.js';
-import { databaseName, indexNumber, objectId } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import publicWrapper from '../validation';
+import { databaseName, indexNumber, objectId } from './common';
+import { TDatabaseRequest } from './database';
 
 export type TMerkleTreeIndexRequest = TDatabaseRequest & {
   index: bigint;

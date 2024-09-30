@@ -1,15 +1,14 @@
+import { logger } from '@helper';
+import { ModelCollectionMetadata } from '@model';
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import {
   ProvableTypeMap,
   ProvableTypeString,
   Schema,
   SchemaEncoded,
-} from '../common/schema.js';
-import { DocumentFields } from '../types/document.js';
-import { DocumentSchema } from '../types/schema.js';
+} from '../common';
+import { DocumentFields, DocumentSchema } from '../types';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 

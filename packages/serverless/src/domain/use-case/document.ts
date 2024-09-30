@@ -1,4 +1,17 @@
 import {
+  PermissionBinary,
+  setPartialIntoPermission,
+  ZKDATABASE_GROUP_SYSTEM,
+  ZKDATABASE_USER_SYSTEM,
+} from '@common';
+import { getCurrentTime } from '@helper';
+import {
+  DocumentRecord,
+  ModelDocument,
+  ModelDocumentMetadata,
+  ModelCollectionMetadata,
+} from '@model';
+import {
   DatabaseEngine,
   ModelQueueTask,
   ModelSequencer,
@@ -6,37 +19,24 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { ClientSession, WithId } from 'mongodb';
-import { WithProofStatus } from '../types/proof.js';
 import {
-  PermissionBinary,
-  setPartialIntoPermission,
-} from '../../common/permission.js';
-import ModelDocument, {
-  DocumentRecord,
-} from '../../model/abstract/document.js';
-import { Document, DocumentFields } from '../types/document.js';
-import { Permissions } from '../types/permission.js';
-import {
-  hasDocumentPermission,
-  hasCollectionPermission,
-} from './permission.js';
+  Document,
+  DocumentFields,
+  DocumentMetadata,
+  Pagination,
+  Permissions,
+  WithMetadata,
+  WithProofStatus,
+} from '../types';
+import { FilterCriteria, parseQuery } from '../utils';
+import { isDatabaseOwner } from './database';
+import { getUsersGroup } from './group';
+import { hasCollectionPermission, hasDocumentPermission } from './permission';
 import {
   proveCreateDocument,
   proveDeleteDocument,
   proveUpdateDocument,
-} from './prover.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import {
-  ZKDATABASE_GROUP_SYSTEM,
-  ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { getUsersGroup } from './group.js';
-import { Pagination } from '../types/pagination.js';
-import { isDatabaseOwner } from './database.js';
-import { FilterCriteria, parseQuery } from '../utils/document.js';
-import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
+} from './prover';
 
 function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
@@ -631,10 +631,10 @@ async function searchDocuments(
 }
 
 export {
+  createDocument,
+  deleteDocument,
   findDocumentsWithMetadata,
   readDocument,
-  createDocument,
-  updateDocument,
-  deleteDocument,
   searchDocuments,
+  updateDocument,
 };

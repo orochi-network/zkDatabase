@@ -4,7 +4,7 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import ModelGroup from './group.js';
+import ModelGroup from './group';
 
 export interface DocumentUserGroup extends Document {
   userName: string;

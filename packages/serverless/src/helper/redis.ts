@@ -1,5 +1,5 @@
 import { RedisClient } from '@orochi-network/framework';
-import { config } from './config.js';
+import { config } from './config';
 
 export const RedisInstance = RedisClient.getInstance<
   'dbLockKey' | 'expressSession' | 'accessTokenDigest'

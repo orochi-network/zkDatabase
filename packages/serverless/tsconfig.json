@@ -1,23 +1,28 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "target": "ESNext",
     "module": "ESNext",
-    "outDir": "./build",
+    "moduleResolution": "Bundler",
     "rootDir": ".",
-    "baseUrl": "src",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "strictPropertyInitialization": false,
-    "noFallthroughCasesInSwitch": true,
-    "types": ["node", "jest"],
-    "composite": true,
-    "declarationMap": false,
-    "preserveSymlinks": true
+    "experimentalDecorators": true,
+    "baseUrl": "./",
+    "paths": {
+      "@apollo-app": ["./src/apollo"],
+      "@common": ["./src/common"],
+      "@domain": ["./src/domain"],
+      "@helper": ["./src/helper"],
+      "@model": ["./src/model"],
+      "@service": ["./src/service"],
+    }, 
+    "outDir": "build",
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": true
   },
   "references": [{ "path": "../storage" }],
-  "include": ["**/*.ts"],
+  "include":  ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts"]
 }

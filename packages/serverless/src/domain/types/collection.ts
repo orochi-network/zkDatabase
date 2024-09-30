@@ -1,9 +1,9 @@
-import { CollectionMetadata } from "./metadata.js";
-import { DocumentSchema } from "./schema.js";
+import { CollectionMetadata } from './metadata';
+import { DocumentSchema } from './schema';
 
 export type Collection = {
-  name: string,
-  indexes: string[],
-  schema: DocumentSchema,
-  ownership: CollectionMetadata
-}
+  name: string;
+  indexes: string[];
+  schema: DocumentSchema;
+  ownership: CollectionMetadata;
+};

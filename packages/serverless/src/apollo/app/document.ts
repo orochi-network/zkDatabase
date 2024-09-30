@@ -1,29 +1,27 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
+import {
+  createDocument,
+  deleteDocument,
+  findDocumentsWithMetadata,
+  readDocument,
+  searchDocuments,
+  updateDocument,
+} from '@domain';
+import { gql } from '@helper';
+import { DocumentRecord } from '@model';
 import { withTransaction } from '@zkdb/storage';
-import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
-import { DocumentRecord } from '../../model/abstract/document.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { mapPagination } from '../mapper';
+import { Pagination, PermissionsData, TDocumentFields } from '../types';
+import { authorizeWrapper } from '../validation';
+import { TCollectionRequest } from './collection';
 import {
   collectionName,
   databaseName,
   documentField,
   pagination,
   permissionDetail,
-} from './common.js';
-import {
-  createDocument,
-  deleteDocument,
-  readDocument,
-  searchDocuments,
-  updateDocument,
-  findDocumentsWithMetadata,
-} from '../../domain/use-case/document.js';
-import { PermissionsData } from '../types/permission.js';
-import { TDocumentFields } from '../types/document.js';
-import { Pagination } from '../types/pagination.js';
-import mapPagination from '../mapper/pagination.js';
-import { gql } from '../../helper/common.js';
+} from './common';
 
 export type TDocumentFindRequest = TCollectionRequest & {
   documentQuery: { [key: string]: string };
