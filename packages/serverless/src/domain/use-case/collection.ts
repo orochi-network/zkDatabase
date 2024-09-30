@@ -169,6 +169,7 @@ async function dropIndex(
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
+    // TODO: Allow people to choose the sorting order
     const index = `${indexName}_1`;
     if (await doesIndexExist(databaseName, actor, collectionName, index)) {
       return ModelCollection.getInstance(
