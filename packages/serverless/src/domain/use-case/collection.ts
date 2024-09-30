@@ -58,10 +58,13 @@ async function readCollectionInfo(
   databaseName: string,
   collectionName: string
 ): Promise<Collection> {
-  const indexes = await ModelCollection.getInstance(
+  const modelCollection = ModelCollection.getInstance(
     databaseName,
     collectionName
-  ).listIndexes();
+  );
+  const indexes = await modelCollection.listIndexes();
+  const sizeOnDisk = await modelCollection.size();
+
   const schema = await getSchemaDefinition(databaseName, collectionName);
   const ownership = await readMetadata(
     databaseName,
@@ -70,7 +73,9 @@ async function readCollectionInfo(
     ZKDATABASE_USER_NOBODY
   );
 
-  return { name: collectionName, indexes, schema, ownership };
+  await ModelCollection.getInstance(databaseName, collectionName).size();
+
+  return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
 }
 
 async function listCollections(databaseName: string): Promise<Collection[]> {
