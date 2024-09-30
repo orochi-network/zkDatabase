@@ -1,25 +1,28 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
-import { withTransaction } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  databaseName,
-  userName,
-  collectionName,
-  objectId,
-  permissionDetail,
-} from './common.js';
-import { TCollectionRequest } from './collection.js';
-import { PermissionRecord } from '../../common/permission.js';
-import { FullPermissionsData, TPermissionGroup } from '../types/permission.js';
-import { setPermissions } from '../../domain/use-case/permission.js';
+import { PermissionRecord } from '@common';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
-} from '../../domain/use-case/ownership.js';
-import { TOwnershipGroup } from '../types/ownership.js';
-import { readMetadata } from '../../domain/use-case/metadata.js';
-import { getSchemaDefinition } from '../../domain/use-case/schema.js';
+  getSchemaDefinition,
+  readMetadata,
+  setPermissions,
+} from '@domain';
+import { withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import {
+  FullPermissionsData,
+  TPermissionGroup,
+  TOwnershipGroup,
+} from '../types';
+import publicWrapper, { authorizeWrapper } from '../validation';
+import { TCollectionRequest } from './collection';
+import {
+  collectionName,
+  databaseName,
+  objectId,
+  permissionDetail,
+  userName,
+} from './common';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 

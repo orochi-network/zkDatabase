@@ -1,8 +1,8 @@
+import { userName } from '@apollo-app';
+import { TJWTAuthenticationPayload } from '@helper';
 import { Request } from 'express';
 import Joi from 'joi';
-import { userName } from '../apollo/app/common.js';
-import { ZKDATABASE_USER_NOBODY } from './const.js';
-import { TJWTAuthenticationPayload } from '../helper/jwt.js';
+import { ZKDATABASE_USER_NOBODY } from './const';
 
 export type TPublicContext = {
   req: Request;

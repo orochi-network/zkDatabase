@@ -1,27 +1,24 @@
+import { TPublicContext } from '@common';
+import { findUser as findUserDomain, signUpUser } from '@domain';
+import {
+  ACESS_TOKEN_EXPIRE_TIME,
+  calculateAccessTokenDigest,
+  gql,
+  headerToAccessToken,
+  JwtAuthorization,
+  RedisInstance,
+  sessionDestroy,
+} from '@helper';
+import { ModelUser } from '@model';
 import { withTransaction } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
-import { TPublicContext } from '../../common/types.js';
-import {
-  findUser as findUserDomain,
-  signUpUser,
-} from '../../domain/use-case/user.js';
-import { gql } from '../../helper/common.js';
-import {
-  ACESS_TOKEN_EXPIRE_TIME,
-  calculateAccessTokenDigest,
-  headerToAccessToken,
-  JwtAuthorization,
-} from '../../helper/jwt.js';
-import RedisInstance from '../../helper/redis.js';
-import { sessionDestroy } from '../../helper/session.js';
-import ModelUser from '../../model/global/user.js';
-import mapPagination from '../mapper/pagination.js';
-import { Pagination } from '../types/pagination.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { pagination } from './common.js';
+import { mapPagination } from '../mapper';
+import { Pagination } from '../types';
+import publicWrapper, { authorizeWrapper } from '../validation';
+import { pagination } from './common';
 
 // We extend express session to define session expiration time
 declare module 'express-session' {

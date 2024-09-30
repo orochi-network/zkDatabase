@@ -1,4 +1,4 @@
-import { Collection } from './collection.js';
+import { Collection } from './collection';
 
 export type Database = {
   databaseName: string;

@@ -1,6 +1,6 @@
 import { RedisClient, TRedisCache } from '@orochi-network/framework';
-import logger from './logger.js';
-import { RedisInstance } from './redis.js';
+import logger from './logger';
+import { RedisInstance } from './redis';
 
 export const LOCK_KEY = 'my-lock-key';
 const LOCK_EXPIRATION = 300; // in seconds

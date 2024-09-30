@@ -1,4 +1,4 @@
-import { Document } from './document.js';
+import { Document } from './document';
 
 export type HistoryDocument = {
   docId: string;

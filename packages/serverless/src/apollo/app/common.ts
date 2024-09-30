@@ -1,7 +1,6 @@
 import Joi from 'joi';
-import { PermissionRecord } from '../../common/permission.js';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
-import { TDocumentField } from '../types/document.js';
+import { PermissionRecord, O1JS_VALID_TYPE } from '../../common';
+import { TDocumentField } from '../types';
 
 export const objectId = Joi.string()
   .trim()
@@ -99,3 +98,5 @@ export const search = Joi.object({
   search: Joi.optional(),
   pagination,
 });
+
+export { O1JS_VALID_TYPE };

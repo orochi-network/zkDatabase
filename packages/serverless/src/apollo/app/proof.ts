@@ -1,10 +1,10 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
+import { hasDocumentPermission } from '@domain';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, objectId } from './common.js';
-import { hasDocumentPermission } from '../../domain/use-case/permission.js';
-import { TCollectionRequest } from './collection.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { authorizeWrapper, publicWrapper } from '../validation';
+import { TCollectionRequest } from './collection';
+import { collectionName, databaseName, objectId } from './common';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql

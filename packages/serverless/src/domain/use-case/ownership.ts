@@ -1,13 +1,12 @@
-import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import ModelUser from '../../model/global/user.js';
-import { OwnershipGroup } from '../types/ownership.js';
-import { isGroupExist } from './group.js';
 import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+  ModelCollectionMetadata,
+  ModelDocumentMetadata,
+  ModelUser,
+} from '@model';
+import { ClientSession } from 'mongodb';
+import { OwnershipGroup } from '../types';
+import { isGroupExist } from './group';
+import { hasCollectionPermission, hasDocumentPermission } from './permission';
 
 export async function changeDocumentOwnership(
   databaseName: string,

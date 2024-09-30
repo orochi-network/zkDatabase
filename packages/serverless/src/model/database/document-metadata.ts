@@ -4,7 +4,7 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { PermissionBasic } from '../../common/permission.js';
+import { PermissionBasic } from '@common';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;

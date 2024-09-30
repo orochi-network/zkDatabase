@@ -1,7 +1,10 @@
-import Joi from 'joi';
+import {
+  TAuthorizedContext,
+  TPublicContext,
+  ZKDATABASE_USER_NOBODY,
+} from '@common';
 import { GraphQLError, GraphQLResolveInfo } from 'graphql';
-import { ZKDATABASE_USER_NOBODY } from '../common/const.js';
-import { TAuthorizedContext, TPublicContext } from '../common/types.js';
+import Joi from 'joi';
 
 export type THandler<R, T, C> = (
   _root: R,

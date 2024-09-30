@@ -1,5 +1,5 @@
-import { Search } from '../types/search.js';
-import { Condition, SearchInput } from '../../domain/types/search.js';
+import { Condition, SearchInput } from '@domain';
+import { Search } from '../types';
 
 export default function mapSearchToQueryOptions<T>(
   search: Search

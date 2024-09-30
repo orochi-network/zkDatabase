@@ -4,8 +4,8 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
+import { ZKDATABASE_USER_SYSTEM } from '@common';
+import { getCurrentTime } from '@helper';
 
 export interface GroupSchema extends Document {
   groupName: string;

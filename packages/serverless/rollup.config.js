@@ -10,11 +10,12 @@ export default {
     preserveModules: false, // Bundle into a single index.js if set to `false`
     sourcemap: true,
   },
+
   plugins: [
     alias({
       entries: [
         { find: '@', replacement: 'src' },
-        { find: '@apollo', replacement: 'src/apollo' },
+        { find: '@apollo-app', replacement: 'src/apollo' },
         { find: '@domain', replacement: 'src/domain' },
         { find: '@helper', replacement: 'src/helper' },
         { find: '@model', replacement: 'src/model' },

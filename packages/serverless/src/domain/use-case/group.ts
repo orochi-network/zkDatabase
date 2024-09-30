@@ -1,8 +1,7 @@
 import { ClientSession } from 'mongodb';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { isDatabaseOwner } from './database.js';
-import { areUsersExist } from './user.js';
+import { ModelGroup, ModelUserGroup } from '@model';
+import { isDatabaseOwner } from './database';
+import { areUsersExist } from './user';
 
 async function isGroupExist(
   databaseName: string,

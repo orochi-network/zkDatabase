@@ -4,18 +4,14 @@ import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import {
   databaseName,
   collectionName,
+  O1JS_VALID_TYPE,
   permissionDetail,
   groupName,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { PermissionsData } from '../types/permission.js';
-import { SchemaData } from '../types/schema.js';
-import {
-  createCollection,
-  listCollections,
-} from '../../domain/use-case/collection.js';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
+} from './common';
+import { TDatabaseRequest } from './database';
+import publicWrapper, { authorizeWrapper } from '../validation';
+import { PermissionsData, SchemaData } from '../types';
+import { createCollection, listCollections } from '../../domain';
 
 export const schemaField = Joi.object({
   name: Joi.string()

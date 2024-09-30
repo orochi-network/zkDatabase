@@ -1,12 +1,10 @@
-import { Pagination } from '../../domain/types/pagination.js';
-import { Pagination as PaginationPayload } from '../types/pagination.js';
+import { Pagination } from '@domain';
+import { Pagination as PaginationPayload } from '../types';
 
 const DEFAULT_OFFSET = 0;
 const DEFAULT_LIMIT = 10;
 
-export default function mapPagination(
-  pagination: PaginationPayload
-): Pagination {
+export function mapPagination(pagination: PaginationPayload): Pagination {
   if (!pagination) {
     return {
       limit: DEFAULT_LIMIT,
@@ -19,3 +17,5 @@ export default function mapPagination(
     offset: pagination.offset,
   };
 }
+
+export default mapPagination;

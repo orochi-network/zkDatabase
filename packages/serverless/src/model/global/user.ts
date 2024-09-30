@@ -1,14 +1,11 @@
-import { Document } from 'mongodb';
+import { ZKDATABASE_USER_NOBODY, ZKDATABASE_USER_SYSTEM } from '@common';
+import { getCurrentTime, objectToLookupPattern } from '@helper';
 import {
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import {
-  ZKDATABASE_USER_NOBODY,
-  ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
+import { Document } from 'mongodb';
 
 export interface DocumentUser extends Document {
   userName: string;
@@ -73,6 +70,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     const result = await this.collection.find({
       $or: objectToLookupPattern(searchingInfo),
     });
+    console.log('🚀 ~ ModelUser ~ result:', result);
 
     return result.toArray();
   }

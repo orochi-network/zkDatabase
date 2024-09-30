@@ -10,16 +10,16 @@ import fileupload from 'express-fileupload';
 import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
-import { ResolversApp, TypedefsApp } from './apollo/index.js';
-import { nobodyContext, TApplicationContext } from './common/types.js';
-import { config } from './helper/config.js';
+import { nobodyContext, TApplicationContext } from '@common';
 import {
+  config,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
-} from './helper/jwt.js';
-import logger from './helper/logger.js';
-import RedisInstance from './helper/redis.js';
+  logger,
+  RedisInstance,
+} from '@helper';
+import { ResolversApp, TypedefsApp } from '@apollo-app';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
