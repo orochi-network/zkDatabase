@@ -28,7 +28,7 @@ export type TOwnershipRequest = {
 
 export type TOwnershipResponse = {
   userName: string;
-  userGroup: string;
+  groupName: string;
   permissionOwner?: TPermissionSet;
   permissionGroup?: TPermissionSet;
   permissionOther?: TPermissionSet;

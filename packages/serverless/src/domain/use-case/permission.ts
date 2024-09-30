@@ -4,6 +4,7 @@ import {
   PermissionBinary,
   PermissionRecord,
   PermissionType,
+  setPartialIntoPermission,
   ZKDATABASE_NO_PERMISSION_RECORD,
 } from '../../common/permission.js';
 import logger from '../../helper/logger.js';
@@ -217,25 +218,56 @@ export async function setPermissions(
       ? new ModelDocumentMetadata(databaseName)
       : ModelCollectionMetadata.getInstance(databaseName);
 
-    const update = {
-      permissionOwner: PermissionBinary.toBinaryPermission({
-        ...permissions.permissionOwner,
-        system: false,
-      }),
-      permissionGroup: PermissionBinary.toBinaryPermission({
-        ...permissions.permissionGroup,
-      }),
-      permissionOther: PermissionBinary.toBinaryPermission({
-        ...permissions.permissionOther,
-        system: false,
-      }),
+    const locationQuery = {
+      collection: collectionName,
+      ...(docId && { docId }),
     };
 
-    const updateQuery = { collection: collectionName, ...(docId && { docId }) };
+    const currentPermissions = await modelPermission.findOne(locationQuery);
+
+    if (!currentPermissions) {
+      throw Error('Metadata is empty');
+    }
+
+    const permissionOwner = PermissionBinary.toBinaryPermission(
+      setPartialIntoPermission(
+        PermissionBinary.fromBinaryPermission(
+          currentPermissions.permissionOwner
+        ),
+        permissions.permissionOwner
+      )
+    );
+
+    const permissionGroup = PermissionBinary.toBinaryPermission(
+      setPartialIntoPermission(
+        PermissionBinary.fromBinaryPermission(
+          currentPermissions.permissionGroup
+        ),
+        permissions.permissionGroup
+      )
+    );
+
+    const permissionOther = PermissionBinary.toBinaryPermission({
+      ...setPartialIntoPermission(
+        PermissionBinary.fromBinaryPermission(
+          currentPermissions.permissionOther
+        ),
+        permissions.permissionOther
+      ),
+      system: false,
+    });
+
+    PermissionBinary.fromBinary(permissionGroup);
+
+    const update = {
+      permissionOwner,
+      permissionGroup,
+      permissionOther,
+    };
 
     try {
       const result = await modelPermission.updateMany(
-        updateQuery,
+        locationQuery,
         { $set: update },
         { session }
       );

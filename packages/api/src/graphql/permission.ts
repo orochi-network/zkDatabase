@@ -64,7 +64,7 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => ({
       userName: data.permissionSet.userName,
-      userGroup: data.permissionSet.userGroup,
+      groupName: data.permissionSet.groupName,
       permissions: {
         permissionOwner: data.permissionSet.permissionOwner,
         permissionGroup: data.permissionSet.permissionGroup,
@@ -117,7 +117,7 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => ({
       userName: data.permissionList.userName,
-      userGroup: data.permissionList.userGroup,
+      groupName: data.permissionList.groupName,
       permissions: {
         permissionOwner: data.permissionList.permissionOwner,
         permissionGroup: data.permissionList.permissionGroup,
