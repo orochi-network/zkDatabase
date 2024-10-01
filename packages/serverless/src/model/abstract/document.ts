@@ -64,12 +64,12 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
   public async insertOne(document: DocumentRecord, session?: ClientSession) {
     logger.debug(`ModelDocument::updateDocument()`);
-    const documentRecord: DocumentRecord = {
+    const documentRecord = {
       timestamp: new Date(),
       ...document,
       docId: randomUUID(),
       active: true,
-    } as any;
+    } as DocumentRecord;
 
     const result = await this.collection.insertOne(documentRecord, { session });
 
@@ -83,28 +83,40 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public async updateOne(
     docId: string,
     document: DocumentRecord,
-    session?: ClientSession
+    session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
     const findDocument = await this.findOne({ docId });
 
     if (findDocument) {
-      const documentRecord: DocumentRecord = {
+      const documentRecord = {
         timestamp: new Date(),
         ...document,
         docId: findDocument.docId,
         active: true,
-      } as any;
+      } as DocumentRecord;
       //
-      const documentUpdated = await this.collection.insertOne(documentRecord, {
-        session,
-      });
-      console.log('🚀 ~ ModelDocument ~ documentUpdated:', documentUpdated);
-      await this.collection.updateOne(
-        { docId },
-        { active: false, nextId: documentUpdated.insertedId }
-      );
-      return documentUpdated;
+      session?.startTransaction();
+      try {
+        const documentUpdated = await this.collection.insertOne(
+          documentRecord,
+          {
+            session,
+          }
+        );
+
+        await this.collection.findOneAndUpdate(
+          { _id: findDocument._id },
+          {
+            $set: { active: false, nextId: documentUpdated.insertedId },
+          }
+        );
+        await session?.commitTransaction();
+        await session?.endSession();
+        return documentUpdated;
+      } catch (error) {
+        await session?.abortTransaction();
+      }
     }
 
     throw new Error('No documents found to update');
@@ -122,7 +134,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         filter: { docId },
         update: {
           $set: {
-            deleted: true,
+            active: false,
           },
         },
       },

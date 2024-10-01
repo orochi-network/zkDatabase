@@ -156,7 +156,7 @@ async function listHistoryDocuments(
         docId: historyDocument._id,
         documents,
         metadata: historyDocument.metadata,
-        deleted: historyDocument.deleted,
+        active: historyDocument.active,
       };
     });
 
@@ -230,7 +230,7 @@ async function readHistoryDocument(
   return {
     docId,
     documents,
-    deleted: documentHistoryRecords[0].deleted,
+    active: documentHistoryRecords[0].active,
   };
 }
 

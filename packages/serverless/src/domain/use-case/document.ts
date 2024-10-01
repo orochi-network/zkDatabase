@@ -267,7 +267,7 @@ async function updateDocument(
   actor: string,
   filter: FilterCriteria,
   update: DocumentFields,
-  session?: ClientSession
+  session: ClientSession
 ) {
   if (
     !(await hasCollectionPermission(
@@ -590,7 +590,7 @@ async function searchDocuments(
     // const matchQuery = buildMongoQuery(query);
 
     const pipeline = buildPipeline(
-      query ? { ...parseQuery(query) } : null,
+      query ? { ...parseQuery(query), active: true } : null,
       pagination
     );
 
@@ -621,7 +621,6 @@ async function searchDocuments(
         };
       }
     );
-    console.log('🚀 ~ transformedDocuments:', transformedDocuments);
 
     return transformedDocuments;
   }
