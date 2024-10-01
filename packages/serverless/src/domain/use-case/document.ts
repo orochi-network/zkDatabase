@@ -38,7 +38,7 @@ import { isDatabaseOwner } from './database.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
 
-function buildDocumentFields(
+export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
 ): DocumentFields {
   return Object.keys(documentRecord)
@@ -46,7 +46,7 @@ function buildDocumentFields(
       (key) =>
         key !== '_id' &&
         key !== 'docId' &&
-        key !== 'deleted' &&
+        key !== 'active' &&
         key !== 'timestamp' &&
         key !== 'metadata'
     )
@@ -267,7 +267,7 @@ async function updateDocument(
   actor: string,
   filter: FilterCriteria,
   update: DocumentFields,
-  session?: ClientSession
+  session: ClientSession
 ) {
   if (
     !(await hasCollectionPermission(
@@ -590,7 +590,7 @@ async function searchDocuments(
     // const matchQuery = buildMongoQuery(query);
 
     const pipeline = buildPipeline(
-      query ? parseQuery(query) : null,
+      query ? { ...parseQuery(query), active: true } : null,
       pagination
     );
 

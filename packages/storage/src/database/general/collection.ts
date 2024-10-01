@@ -90,11 +90,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   }
 
   public async size(): Promise<number> {
-    return (
-      (await this.db.command({ collStats: this.collectionName })) as {
-        size: number;
-      }
-    ).size;
+    return (await this.db.command({ collStats: this.collectionName })).size;
   }
 }
 

@@ -20,15 +20,15 @@ export class GlobalContextImpl implements GlobalContext {
       query: filter,
       pagination,
     });
-    
-    return result.unwrap().map(
-      ({ databaseName, merkleHeight, collections, databaseSize }) => ({
+
+    return result
+      .unwrap()
+      .map(({ databaseName, merkleHeight, collections, databaseSize }) => ({
         databaseName,
         merkleHeight,
         collections: collections.map(({ name }) => name),
         databaseSize,
-      })
-    );
+      }));
   }
 
   async users(

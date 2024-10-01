@@ -17,7 +17,8 @@ export type DocumentPermission = Pick<
 export type DocumentRecord = Document & {
   _id?: ObjectId;
   docId: string;
-  deleted: boolean;
+  active: boolean;
+  nextId?: ObjectId;
   timestamp?: Date;
 } & {
   [key: string]: DocumentField;
@@ -40,7 +41,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName!);
+    return ModelDatabase.getInstance(this.databaseName);
   }
 
   get modelCollection() {
@@ -63,12 +64,12 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
 
   public async insertOne(document: DocumentRecord, session?: ClientSession) {
     logger.debug(`ModelDocument::updateDocument()`);
-    const documentRecord: DocumentRecord = {
+    const documentRecord = {
       timestamp: new Date(),
       ...document,
       docId: randomUUID(),
-      deleted: false,
-    } as any;
+      active: true,
+    } as DocumentRecord;
 
     const result = await this.collection.insertOne(documentRecord, { session });
 
@@ -82,20 +83,35 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public async updateOne(
     docId: string,
     document: DocumentRecord,
-    session?: ClientSession
+    session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
-    const findDocument = await this.find({ docId });
+    const findDocument = await this.findOne({ docId });
 
-    if (findDocument.length > 0) {
-      const documentRecord: DocumentRecord = {
+    if (findDocument) {
+      const documentRecord = {
         timestamp: new Date(),
         ...document,
-        docId: findDocument[0].docId,
-        deleted: false,
-      } as any;
+        docId: findDocument.docId,
+        active: true,
+      } as DocumentRecord;
+      // Insert new document
+      const documentUpdated = await this.collection.insertOne(documentRecord, {
+        session,
+      });
+      // Set old document to active: false
+      // Point the nextId to updated document to keep track history
+      await this.collection.findOneAndUpdate(
+        { _id: findDocument._id },
+        {
+          $set: { active: false, nextId: documentUpdated.insertedId },
+        },
+        {
+          session,
+        }
+      );
 
-      return this.collection.insertOne(documentRecord, { session });
+      return documentUpdated;
     }
 
     throw new Error('No documents found to update');
@@ -113,7 +129,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         filter: { docId },
         update: {
           $set: {
-            deleted: true,
+            active: false,
           },
         },
       },
@@ -133,7 +149,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public async findOne(filter: Filter<any>, session?: ClientSession) {
     logger.debug(`ModelDocument::findOne()`, { filter });
     return this.collection.findOne(
-      { ...filter, deleted: false },
+      { ...filter, active: true },
       {
         sort: { timestamp: -1 },
         session,
