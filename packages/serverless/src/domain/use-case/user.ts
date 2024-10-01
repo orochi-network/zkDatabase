@@ -19,7 +19,7 @@ export async function searchUser(
       {
         $or: objectToLookupPattern(query, { regexSearch: true }),
       },
-      { ...pagination }
+      pagination
     )
     .toArray();
 
