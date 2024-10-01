@@ -1,13 +1,12 @@
+/* eslint-disable max-len */
 /* eslint-disable max-classes-per-file */
-import { DatabaseEngine } from '@zkdb/storage';
-import {
-  CircuitString,
-  MerkleTree,
-  PrivateKey,
-  Provable,
-  PublicKey,
-  UInt64,
-} from 'o1js';
+import { DatabaseEngine, withTransaction } from '@zkdb/storage';
+import { CircuitString, MerkleTree, PrivateKey, PublicKey, UInt64 } from 'o1js';
+import { Schema } from '../../../src/domain/common/schema.js';
+import { FullPermissions } from '../../../src/domain/types/permission.js';
+import { createCollection } from '../../../src/domain/use-case/collection.js';
+import { createDatabase } from '../../../src/domain/use-case/database.js';
+import { readHistoryDocument } from '../../../src/domain/use-case/document-history.js';
 import {
   createDocument,
   deleteDocument,
@@ -15,16 +14,11 @@ import {
   searchDocuments,
   updateDocument,
 } from '../../../src/domain/use-case/document.js';
-import { createCollection } from '../../../src/domain/use-case/collection.js';
-import { createDatabase } from '../../../src/domain/use-case/database.js';
-import { Schema } from '../../../src/domain/common/schema.js';
 import { createGroup } from '../../../src/domain/use-case/group.js';
-import { setPermissions } from '../../../src/domain/use-case/permission.js';
-import { FullPermissions } from '../../../src/domain/types/permission.js';
-import { readHistoryDocument } from '../../../src/domain/use-case/document-history.js';
-import { changeDocumentOwnership } from '../../../src/domain/use-case/ownership.js';
-import ModelUser from '../../../src/model/global/user.js';
 import { readMetadata } from '../../../src/domain/use-case/metadata.js';
+import { changeDocumentOwnership } from '../../../src/domain/use-case/ownership.js';
+import { setPermissions } from '../../../src/domain/use-case/permission.js';
+import ModelUser from '../../../src/model/global/user.js';
 
 const DB_NAME = 'test-db';
 const DB_OWNER = 'god';
@@ -220,13 +214,15 @@ describe('Document Management Integration Tests', () => {
         person.serialize(),
         DEFAULT_PERMISSIONS
       );
-
-      await updateDocument(
-        DB_NAME,
-        TEST_COLLECTION,
-        COLLECTION_OWNER,
-        { name: 'John' },
-        updatePerson.serialize()
+      await withTransaction((session) =>
+        updateDocument(
+          DB_NAME,
+          TEST_COLLECTION,
+          COLLECTION_OWNER,
+          { name: 'John' },
+          updatePerson.serialize(),
+          session
+        )
       );
 
       const fetchedDocument = await readDocument(
@@ -293,13 +289,15 @@ describe('Document Management Integration Tests', () => {
         person.serialize(),
         DEFAULT_PERMISSIONS
       );
-
-      await updateDocument(
-        DB_NAME,
-        TEST_COLLECTION,
-        COLLECTION_OWNER,
-        { name: 'John' },
-        updatePerson.serialize()
+      await withTransaction((session) =>
+        updateDocument(
+          DB_NAME,
+          TEST_COLLECTION,
+          COLLECTION_OWNER,
+          { name: 'John' },
+          updatePerson.serialize(),
+          session
+        )
       );
 
       const fetchedDocument = await readDocument(
@@ -349,12 +347,15 @@ describe('Document Management Integration Tests', () => {
         DEFAULT_PERMISSIONS
       );
 
-      await updateDocument(
-        DB_NAME,
-        TEST_COLLECTION,
-        COLLECTION_OWNER,
-        { name: 'John' },
-        updatePerson.serialize()
+      await withTransaction((session) =>
+        updateDocument(
+          DB_NAME,
+          TEST_COLLECTION,
+          COLLECTION_OWNER,
+          { name: 'John' },
+          updatePerson.serialize(),
+          session
+        )
       );
 
       const fetchedDocument = await readDocument(
@@ -386,7 +387,7 @@ describe('Document Management Integration Tests', () => {
 
       expect(fetchedPerson1).toEqual(person);
       expect(fetchedPerson2).toEqual(updatePerson);
-      expect(documents?.deleted).toBeTruthy();
+      expect(documents?.active).toBeFalsy();
     });
   });
 
@@ -449,7 +450,7 @@ describe('Document Management Integration Tests', () => {
 
   describe('Search Document', () => {
     test('list document 3 documents out of 6 because of read other is false', async () => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${i}`),
           age: UInt64.from(i),
@@ -464,7 +465,7 @@ describe('Document Management Integration Tests', () => {
         );
       }
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${10 + i}`),
           age: UInt64.from(10 + i),
@@ -533,7 +534,7 @@ describe('Document Management Integration Tests', () => {
       );
 
       expect(listDocuments.length).toEqual(3);
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${10 + i}`),
           age: UInt64.from(10 + i),
@@ -543,7 +544,7 @@ describe('Document Management Integration Tests', () => {
     });
 
     test('search document by age and return 0 out of 6, the document exists, but does not have permission`', async () => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${i}`),
           age: UInt64.from(i),
@@ -558,7 +559,7 @@ describe('Document Management Integration Tests', () => {
         );
       }
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${10 + i}`),
           age: UInt64.from(10 + i),
@@ -630,7 +631,7 @@ describe('Document Management Integration Tests', () => {
     });
 
     test('search document by age and return 2 out of 6', async () => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${i}`),
           age: UInt64.from(i),
@@ -645,7 +646,7 @@ describe('Document Management Integration Tests', () => {
         );
       }
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${10 + i}`),
           age: UInt64.from(10 + i),
@@ -717,7 +718,7 @@ describe('Document Management Integration Tests', () => {
     });
 
     test('search document by age greater than and return 3 out of 6', async () => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${i}`),
           age: UInt64.from(i),
@@ -732,7 +733,7 @@ describe('Document Management Integration Tests', () => {
         );
       }
 
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 3; i += 1) {
         const person = new Person({
           name: CircuitString.fromString(`John ${10 + i}`),
           age: UInt64.from(10 + i),
