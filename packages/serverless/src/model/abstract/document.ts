@@ -105,6 +105,9 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         { _id: findDocument._id },
         {
           $set: { active: false, nextId: documentUpdated.insertedId },
+        },
+        {
+          session,
         }
       );
 
