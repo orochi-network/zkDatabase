@@ -38,7 +38,7 @@ import { isDatabaseOwner } from './database.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
 
-function buildDocumentFields(
+export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
 ): DocumentFields {
   return Object.keys(documentRecord)
