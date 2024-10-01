@@ -14,7 +14,8 @@ env:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: [self-hosted, linux]
+    # runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -22,13 +23,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Fetch enough commit history
+          fetch-depth: 0  # Fetch enough commit history
 
       - name: Detect changed packages
         id: changed
         run: |
-          # Detect all changed packages
-          CHANGED_PACKAGES=$(git diff --name-only HEAD~1 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
+          # Find the last two merge commits
+          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 10)
+          MERGE_ARRAY=($LAST_MERGE)
+          LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
+          PREV_MERGE_COMMIT=${MERGE_ARRAY[9]}
+          
+          # Show the two merge commits
+          echo "Last merge commit: $LAST_MERGE_COMMIT"
+          echo "Previous merge commit: $PREV_MERGE_COMMIT"
+          
+          # Get the diff between the two merge commits
+          CHANGED_PACKAGES=$(git diff --name-only $PREV_MERGE_COMMIT $LAST_MERGE_COMMIT -- packages/ | cut -d '/' -f 1-2 | sort -u)
           echo "Detected changes: $CHANGED_PACKAGES"
 
           # Clean up carriage returns or special characters and split on new lines
@@ -122,36 +133,50 @@ jobs:
             echo "Broker Service not in changed packages."
           fi
 
-      - name: Build & Push Proof Service Image
-        run: |
-          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
-          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"3"* ]]; then
-            echo "Building and pushing Proof Service..."
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
-            docker build -t ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest \
-              -f packages/proof-service/Dockerfile \
-              --platform=linux/amd64 \
-              --secret id=npm,src=npm-token .
-            docker tag ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
-            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest
-            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
-          else
-            echo "Proof Service not in changed packages."
-          fi
+          # Set up SSH for GitOps push
+          eval $(ssh-agent -s)
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add -
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          
+          version-test=$(echo "${{ github.sha }}""
+          # Process each service dynamically using arrays
+          for i in ${!SERVICES[@]}; do
+            SERVICE="${SERVICES[$i]}"
+            DOCKER_REPO="${DOCKER_REPOS[$i]}"
+            VALUES_PATH="${VALUES_PATHS[$i]}"
+            NUM=$((i + 1))
 
-      - name: Build & Push Serverless Service Image
-        run: |
-          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
-          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"1"* ]]; then
-            echo "Building and pushing Serverless Service..."
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
-            docker build -t ${{ env.DOCKER_REPO_SERVERLESS }}:latest \
-              -f packages/serverless/Dockerfile \
-              --platform=linux/amd64 \
-              --secret id=npm,src=npm-token .
-            docker tag ${{ env.DOCKER_REPO_SERVERLESS }}:latest ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
-            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:latest
-            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
-          else
-            echo "Serverless Service not in changed packages."
-          fi
+            # Ensure Docker repo is not empty before proceeding
+            if [[ -n "$DOCKER_REPO" && "${{ needs.detect-changes.outputs.filtered_packages }}" == *"$NUM"* ]]; then
+              echo "Building and pushing $SERVICE..."
+              echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
+
+              # Build the Docker image with a valid tag
+              docker build -t "$DOCKER_REPO:latest" \
+                -f "packages/$SERVICE/Dockerfile" \
+                --secret id=npm,src=./npm-token \
+                --platform=linux/amd64 .
+              docker push "$DOCKER_REPO:latest"
+              docker push "$DOCKER_REPO:${{ env.version }}"
+
+              # GitOps push for the service
+              # Clone the GitOps repository (once for all services)
+              git config --global user.name "GitOps Updater"
+              git config --global user.email "minhan112001@gmail.com"
+              git clone git@github.com:ZKP-Labs/test-argoCD.git
+              cd test-argoCD
+              git checkout ${GITOPSBRANCH}
+              sed -i "s| tag: .*| tag: ${version}|" "$VALUES_PATH"
+              git fetch origin
+              git add "$VALUES_PATH"
+              git commit -m "$SERVICE: Update version to ${version}"
+              git push origin ${GITOPSBRANCH}
+            else
+              echo "$SERVICE not changed or invalid Docker repo, skipping."
+            fi
+          done
+
+          # Clean up GitOps repo
+          cd ..
+          rm -rf test-argoCD
