@@ -6,11 +6,12 @@ import Client from 'mina-signer';
 import { TPublicContext } from '../../common/types.js';
 import {
   findUser as findUserDomain,
+  searchUser as searchUserDomain,
   signUpUser,
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
 import {
-  ACESS_TOKEN_EXPIRE_TIME,
+  ACCESS_TOKEN_EXPIRE_DAY,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
@@ -86,6 +87,17 @@ export type TUserFindRequest = {
   pagination: Pagination;
 };
 
+type TUserSearchRequest = {
+  query: { [key: string]: string };
+  pagination: Pagination;
+};
+
+type TUserInfo = {
+  userName: string;
+  email: string;
+  publicKey: string;
+};
+
 export const SignUpRequest = Joi.object<TSignUpRequest>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
@@ -105,6 +117,15 @@ export const SignUpWrapper = Joi.object<TSignUpWrapper>({
 
 export const USER_FIND_REQUEST = Joi.object<TUserFindRequest>({
   query: Joi.object(),
+  pagination,
+});
+
+export const USER_SEARCH_REQUEST = Joi.object<TUserSearchRequest>({
+  query: Joi.object<TUserInfo>({
+    userName: Joi.string().min(1).max(256),
+    email: Joi.string().email(),
+    publicKey: Joi.string().min(1).max(256),
+  }),
   pagination,
 });
 
@@ -152,9 +173,16 @@ export const typeDefsUser = gql`
     publicKey: String!
   }
 
+  input FindUser {
+    userName: String
+    email: String
+    publicKey: String
+  }
+
   extend type Query {
     userSignInData: SignInResponse
-    findUser(query: JSON!, pagination: PaginationInput): [User]!
+    findUser(query: FindUser!, pagination: PaginationInput): [User]!
+    searchUser(query: FindUser!, pagination: PaginationInput): [User]!
   }
 
   extend type Mutation {
@@ -176,6 +204,13 @@ const userSignInData = authorizeWrapper(
       return user;
     }
     throw new Error('User not found');
+  }
+);
+
+const searchUser = publicWrapper(
+  USER_SEARCH_REQUEST,
+  async (_root: unknown, args: TUserSearchRequest) => {
+    return searchUserDomain(args.query, mapPagination(args.pagination));
   }
 );
 
@@ -227,7 +262,7 @@ const userSignIn = publicWrapper(
         const accessTokenDigest = calculateAccessTokenDigest(accessToken);
         await RedisInstance.accessTokenDigest(accessTokenDigest).set(
           JSON.stringify({ userName, email }),
-          { EX: ACESS_TOKEN_EXPIRE_TIME }
+          { EX: ACCESS_TOKEN_EXPIRE_DAY }
         );
         return {
           ...user,
@@ -281,6 +316,7 @@ type TUserResolver = {
   Query: {
     userSignInData: typeof userSignInData;
     findUser: typeof findUser;
+    searchUser: typeof searchUser;
   };
   Mutation: {
     userGetEcdsaChallenge: typeof userGetEcdsaChallenge;
@@ -295,6 +331,7 @@ export const resolversUser: TUserResolver = {
   Query: {
     userSignInData,
     findUser,
+    searchUser,
   },
   Mutation: {
     userGetEcdsaChallenge,
