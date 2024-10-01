@@ -1,4 +1,9 @@
-import { CreateIndexesOptions, IndexSpecification, Document, DropIndexesOptions } from 'mongodb';
+import {
+  CreateIndexesOptions,
+  IndexSpecification,
+  Document,
+  DropIndexesOptions,
+} from 'mongodb';
 import { isOk } from '../../helper/common.js';
 import ModelBasic from '../base/basic.js';
 import ModelDatabase from './database.js';
@@ -69,7 +74,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return indexArray.some((index) => index.name === indexName);
   }
 
-  public async dropIndex(indexName: string, options?: DropIndexesOptions): Promise<boolean> {
+  public async dropIndex(
+    indexName: string,
+    options?: DropIndexesOptions
+  ): Promise<boolean> {
     return isOk(async () => this.collection.dropIndex(indexName, options));
   }
 
@@ -79,6 +87,14 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
       Object.keys(index.key).forEach((key) => keySet.add(key));
     });
     return Array.from(keySet);
+  }
+
+  public async size(): Promise<number> {
+    return (
+      (await this.db.command({ collStats: this.collectionName })) as {
+        size: number;
+      }
+    ).size;
   }
 }
 

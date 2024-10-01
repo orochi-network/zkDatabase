@@ -6,4 +6,5 @@ export type Collection = {
   indexes: string[],
   schema: DocumentSchema,
   ownership: CollectionMetadata
+  sizeOnDisk: number
 }
