@@ -18,8 +18,9 @@ type SchemaFieldOutput {
 
 type CollectionDescriptionOutput {
   name: String!
-  indexes: [String]!,
-  schema: [SchemaFieldOutput!]!,
+  indexes: [String]!
+  schema: [SchemaFieldOutput!]!
   ownership : CollectionMetadataOutput!
+  sizeOnDisk: Int!
 }
 `;
