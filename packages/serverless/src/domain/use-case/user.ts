@@ -1,5 +1,5 @@
 import Client from 'mina-signer';
-import { ClientSession } from 'mongodb';
+import { ClientSession, FindOptions } from 'mongodb';
 import ModelUser from '../../model/global/user.js';
 import { Pagination } from '../types/pagination.js';
 import { Signature } from '../types/proof.js';
@@ -7,7 +7,6 @@ import { User } from '../types/user.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import logger from '../../helper/logger.js';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function findUser(
   query?: FilterCriteria,
   pagination?: Pagination,
@@ -15,7 +14,7 @@ export async function findUser(
 ): Promise<User[]> {
   const modelUser = new ModelUser();
 
-  const options: any = {};
+  const options: FindOptions = {};
   if (pagination) {
     options.limit = pagination.limit;
     options.skip = pagination.offset;
