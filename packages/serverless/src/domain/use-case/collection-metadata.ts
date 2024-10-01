@@ -19,7 +19,6 @@ export async function createCollectionMetadata(
   group: string,
   session?: ClientSession
 ) {
-  console.log('🚀 ~ schema:', schema);
   const permissionOwner = PermissionBinary.toBinaryPermission(
     partialToPermission(permissions.permissionOwner)
   );

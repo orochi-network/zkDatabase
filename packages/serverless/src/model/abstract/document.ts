@@ -41,7 +41,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName!);
+    return ModelDatabase.getInstance(this.databaseName);
   }
 
   get modelCollection() {
@@ -95,28 +95,23 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
         docId: findDocument.docId,
         active: true,
       } as DocumentRecord;
-      //
-      session?.startTransaction();
-      try {
-        const documentUpdated = await this.collection.insertOne(
-          documentRecord,
-          {
-            session,
-          }
-        );
+      // Insert new document
+      const documentUpdated = await this.collection.insertOne(documentRecord, {
+        session,
+      });
+      // Set old document to active: false
+      // Point the nextId to updated document to keep track history
+      await this.collection.findOneAndUpdate(
+        { _id: findDocument._id },
+        {
+          $set: { active: false, nextId: documentUpdated.insertedId },
+        },
+        {
+          session,
+        }
+      );
 
-        await this.collection.findOneAndUpdate(
-          { _id: findDocument._id },
-          {
-            $set: { active: false, nextId: documentUpdated.insertedId },
-          }
-        );
-        await session?.commitTransaction();
-        await session?.endSession();
-        return documentUpdated;
-      } catch (error) {
-        await session?.abortTransaction();
-      }
+      return documentUpdated;
     }
 
     throw new Error('No documents found to update');
