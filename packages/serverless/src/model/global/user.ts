@@ -38,7 +38,6 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
       zkDatabaseConstants.globalDatabase,
       ModelUser.collectionName
     );
-    collection.index({ name: 'text', email: 'text' });
     if (!(await collection.isExist())) {
       collection.index({ userName: 1 }, { unique: true });
       collection.index({ publicKey: 1 }, { unique: true });

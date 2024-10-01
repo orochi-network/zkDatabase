@@ -19,5 +19,5 @@
   },
   "references": [{ "path": "../storage" }],
   "include": ["**/*.ts"],
-  "exclude": ["build", "node_modules", "typechain/**/*.ts"]
+  "exclude": ["build", "node_modules", "typechain/**/*.ts", "test/**/*.test.ts"]
 }

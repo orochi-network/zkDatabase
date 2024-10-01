@@ -228,7 +228,7 @@ async function createDocument(
   await modelDocumentMetadata.insertOne(
     {
       collection: collectionName,
-      docId: insertResult.docId!,
+      docId: insertResult.docId,
       merkleIndex,
       ...{
         // I'm set these to system user and group as default
