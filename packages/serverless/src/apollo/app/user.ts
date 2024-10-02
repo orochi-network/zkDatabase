@@ -187,8 +187,8 @@ export const typeDefsUser = gql`
 
   extend type Query {
     userSignInData: SignInResponse
-    findUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
-    searchUser(query: FindUser!, pagination: PaginationInput): [User]!
+    findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
+    searchUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
   }
 
   extend type Mutation {

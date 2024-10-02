@@ -11,20 +11,27 @@ import { objectToLookupPattern } from '../../helper/common.js';
 export async function searchUser(
   query: { [key: string]: string },
   pagination?: Pagination
-): Promise<User[]> {
+): Promise<PaginationReturn<User[]>> {
   const modelUser = new ModelUser();
+
+  const filter = {
+    $or: objectToLookupPattern(query, { regexSearch: true }),
+  }
 
   const findUsers = await modelUser.collection
     .find(
-      {
-        $or: objectToLookupPattern(query, { regexSearch: true }),
-      },
+      filter,
       pagination
     )
     .toArray();
 
-  return findUsers;
+  return {
+    data: findUsers,
+    offset: pagination?.offset ?? 0,
+    totalSize: await modelUser.count(filter)
+  }
 }
+
 export async function findUser(
   query?: FilterCriteria,
   pagination?: Pagination,
@@ -46,7 +53,7 @@ export async function findUser(
       })
     ).toArray(),
     offset: pagination?.offset ?? 0,
-    totalSize: await modelUser.count(),
+    totalSize: await modelUser.count(query),
   };
 }
 
@@ -101,7 +108,7 @@ export async function signUpUser(
       }
     } catch (error) {
       logger.error('Error checking existing user:', error);
-      throw error; // Re-throw the error after logging
+      throw error;
     }
 
     // TODO: Check user existence by public key

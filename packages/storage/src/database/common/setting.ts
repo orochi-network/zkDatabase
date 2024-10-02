@@ -121,7 +121,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     }
   }
 
-  public async count() {
-    return await this.collection.countDocuments();
+  public async count(filter?: Filter<DbSetting>) {
+    return await this.collection.countDocuments(filter);
   }
 }

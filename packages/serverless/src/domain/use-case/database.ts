@@ -110,7 +110,7 @@ export async function getDatabases(
   return {
     data: databases.filter(Boolean),
     offset: pagination.offset,
-    totalSize: await modelSetting.count(),
+    totalSize: await modelSetting.count(filter),
   };
 }
 

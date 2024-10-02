@@ -166,6 +166,10 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     logger.debug(`ModelDocument::find()`, { filter });
     return this.collection.find(filter || {}, { session }).toArray();
   }
+
+  public async countActiveDocuments(filter?: Filter<any>) {
+    return this.collection.countDocuments({ ...filter, active: true });
+  }
 }
 
 export default ModelDocument;

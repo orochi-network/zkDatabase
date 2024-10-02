@@ -568,7 +568,7 @@ async function searchDocuments(
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
-  pagination: Pagination = {offset: 0, limit: 100},
+  pagination: Pagination = { offset: 0, limit: 100 },
   session: ClientSession | undefined = undefined
 ): Promise<PaginationReturn<Array<Document>>> {
   if (
@@ -615,18 +615,21 @@ async function searchDocuments(
         const fields: DocumentFields = buildDocumentFields(documentRecord);
 
         return {
-          data: {
-            docId: documentRecord.docId,
-            fields,
-            createdAt: documentRecord.timestamp,
-          },
-          offset: pagination.offset,
-          totalSize: await ModelDocument.getInstance(databaseName, collectionName).count()
+          docId: documentRecord.docId,
+          fields,
+          createdAt: documentRecord.timestamp,
         };
       }
     );
 
-    return transformedDocuments;
+    return {
+      data: transformedDocuments,
+      offset: pagination.offset,
+      totalSize: await ModelDocument.getInstance(
+        databaseName,
+        collectionName
+      ).countActiveDocuments(),
+    };
   }
 
   throw new Error(
