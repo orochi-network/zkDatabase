@@ -11,7 +11,7 @@ import {
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
 import {
-  ACESS_TOKEN_EXPIRE_TIME,
+  ACCESS_TOKEN_EXPIRE_DAY,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
@@ -92,6 +92,12 @@ type TUserSearchRequest = {
   pagination: Pagination;
 };
 
+type TUserInfo = {
+  userName: string;
+  email: string;
+  publicKey: string;
+};
+
 export const SignUpRequest = Joi.object<TSignUpRequest>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
@@ -115,7 +121,11 @@ export const USER_FIND_REQUEST = Joi.object<TUserFindRequest>({
 });
 
 export const USER_SEARCH_REQUEST = Joi.object<TUserSearchRequest>({
-  query: Joi.object(),
+  query: Joi.object<TUserInfo>({
+    userName: Joi.string().min(1).max(256),
+    email: Joi.string().email(),
+    publicKey: Joi.string().min(1).max(256),
+  }),
   pagination,
 });
 
@@ -166,6 +176,7 @@ export const typeDefsUser = gql`
   input FindUser {
     userName: String
     email: String
+    publicKey: String
   }
 
   extend type Query {
@@ -251,7 +262,7 @@ const userSignIn = publicWrapper(
         const accessTokenDigest = calculateAccessTokenDigest(accessToken);
         await RedisInstance.accessTokenDigest(accessTokenDigest).set(
           JSON.stringify({ userName, email }),
-          { EX: ACESS_TOKEN_EXPIRE_TIME }
+          { EX: ACCESS_TOKEN_EXPIRE_DAY }
         );
         return {
           ...user,
