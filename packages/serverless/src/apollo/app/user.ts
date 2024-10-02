@@ -187,6 +187,7 @@ export const typeDefsUser = gql`
 
   extend type Query {
     userSignInData: SignInResponse
+    # TODO: Replace JSON 
     findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
     searchUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
   }
