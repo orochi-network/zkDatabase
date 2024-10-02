@@ -60,18 +60,24 @@ type Member {
   createdAt: String!,
 }
 
-type GroupInfo {
+type GroupInfoDetail {
   groupName: String!,
   description: String!,
   createdAt: String!,
   createBy: String!
   members: [Member]
 }
+type GroupInfo {
+  groupName: String!
+  description: String!
+  createdAt: Int!
+  createBy: String!
+}
 
 extend type Query {
   groupListAll(databaseName: String!): [GroupInfo]!
   groupListByUser(databaseName: String!, userName: String!): [String]!
-  groupInfo(databaseName: String!, groupName: String!): GroupInfo!
+  groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail!
 }
 
 extend type Mutation {
@@ -116,10 +122,8 @@ const groupListAll = publicWrapper(
     const modelGroup = new ModelGroup(args.databaseName);
     const groups = await (await modelGroup.find({})).toArray();
     return groups.map((group) => ({
-      name: group.groupName,
-      description: group.description,
+      ...group,
       createdAt: group.createdAt.getSeconds(),
-      createdBy: group.createBy,
     }));
   }
 );
@@ -139,7 +143,7 @@ const groupListByUser = publicWrapper(
   }
 );
 
-const groupInfo = publicWrapper(
+const groupInfoDetail = publicWrapper(
   Joi.object({
     databaseName,
     groupName,
@@ -240,7 +244,7 @@ type TGroupResolver = {
   Query: {
     groupListAll: typeof groupListAll;
     groupListByUser: typeof groupListByUser;
-    groupInfo: typeof groupInfo;
+    groupInfoDetail: typeof groupInfoDetail;
   };
   Mutation: {
     groupCreate: typeof groupCreate;
@@ -256,7 +260,7 @@ export const resolversGroup: TGroupResolver = {
   Query: {
     groupListAll,
     groupListByUser,
-    groupInfo,
+    groupInfoDetail,
   },
   Mutation: {
     groupCreate,
