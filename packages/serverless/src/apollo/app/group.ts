@@ -1,6 +1,16 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import {
+  addUsersToGroup,
+  changeGroupDescription,
+  createGroup,
+  excludeUsersToGroup,
+  getGroupInfo,
+  renameGroup,
+} from '../../domain/use-case/group.js';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   databaseName,
@@ -10,15 +20,6 @@ import {
   userName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import {
-  addUsersToGroup,
-  excludeUsersToGroup,
-  changeGroupDescription,
-  createGroup,
-  renameGroup,
-} from '../../domain/use-case/group.js';
 
 export type TGroupRequest = TDatabaseRequest & {
   groupName: string;
@@ -54,11 +55,17 @@ scalar JSON
 type Query
 type Mutation
 
+type Member {
+  userName: String!
+  createdAt: String!,
+}
+
 type GroupInfo {
-  name: String!,
+  groupName: String!,
   description: String!,
-  createdAt: Int!,
-  createdBy: String!
+  createdAt: String!,
+  createBy: String!
+  members: [Member]
 }
 
 extend type Query {
@@ -138,15 +145,9 @@ const groupInfo = publicWrapper(
     groupName,
   }),
   async (_root: unknown, args: TGroupRequest) => {
-    const modelUserGroup = new ModelGroup(args.databaseName);
-    const group = await modelUserGroup.findGroup(args.groupName);
+    const group = await getGroupInfo(args.databaseName, args.groupName);
     if (group) {
-      return {
-        name: group.groupName,
-        description: group.description,
-        createdAt: group.createdAt.getSeconds(),
-        createdBy: group.createBy,
-      };
+      return group;
     }
     throw Error(`Group ${args.groupName} does not exist`);
   }

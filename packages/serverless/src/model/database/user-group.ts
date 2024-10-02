@@ -4,7 +4,7 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import ModelGroup from './group.js';
+import ModelGroup, { GroupSchema } from './group.js';
 
 export interface DocumentUserGroup extends Document {
   userName: string;
@@ -12,6 +12,8 @@ export interface DocumentUserGroup extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type TGroupInfo = GroupSchema & { members: DocumentUserGroup[] };
 
 export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
   private static collectionName =
@@ -21,11 +23,23 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     super(databaseName, ModelUserGroup.collectionName);
   }
 
+  public async getGroupInfo(groupName: string): Promise<TGroupInfo> {
+    const modelGroup = new ModelGroup(this.databaseName);
+    const group = await modelGroup.findOne({ groupName });
+    if (!group) {
+      throw new Error('Group not existed');
+    }
+    return {
+      ...group,
+      members: await (await this.find({ groupId: group._id })).toArray(),
+    };
+  }
+
   public async checkMembership(
     userName: string,
     groupName: string
   ): Promise<boolean> {
-    const modelGroup = new ModelGroup(this.databaseName!);
+    const modelGroup = new ModelGroup(this.databaseName);
     const group = await modelGroup.findOne({ groupName });
     if (!group) {
       return false;
