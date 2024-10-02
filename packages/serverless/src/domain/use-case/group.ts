@@ -87,6 +87,7 @@ async function addUserToGroups(
   const result = await modelUserGroup.addUserToGroup(actor, groups, {
     session,
   });
+  console.log('🚀 ~ result:', result);
 
   return result.isOk();
 }
