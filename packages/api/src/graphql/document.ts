@@ -11,6 +11,7 @@ import {
   TMerkleWitness,
   TPermissions,
   TPagination,
+  TPaginationResponse,
 } from "./types";
 
 const DOCUMENT_DELETE = gql`
@@ -103,13 +104,17 @@ const DOCUMENT_FIND_MANY = gql`
       documentQuery: $documentQuery
       pagination: $pagination
     ) {
-      docId
-      fields {
-        name
-        kind
-        value
+      totalSize: Int!,
+      offset: Int!
+      data {
+        docId
+        fields {
+          name
+          kind
+          value
+        }
+        createdAt
       }
-      createdAt
     }
   }
 `;
@@ -178,8 +183,8 @@ export const document = <T>(client: TApolloClient<T>) => ({
       documentQuery: any;
       pagination?: TPagination;
     },
-    { documentsFind: TDocumentPayload[] }
-  >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind),
+    { documentsFind: TPaginationResponse<TDocumentPayload[]> }
+  >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind.data),
   history: createQueryFunction<
     TDocumentHistoryPayload,
     { databaseName: string; collectionName: string; docId: string },
