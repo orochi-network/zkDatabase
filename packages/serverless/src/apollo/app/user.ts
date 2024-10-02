@@ -170,7 +170,7 @@ export const typeDefsUser = gql`
   type User {
     userName: String!
     email: String!
-    publicKey: String!
+    publicKey: String! 
   }
 
   input FindUser {
@@ -179,10 +179,17 @@ export const typeDefsUser = gql`
     publicKey: String
   }
 
+  type UserPaginationOutput {
+    data: [User]!
+    totalSize: Int!
+    offset: Int!
+  }
+
   extend type Query {
     userSignInData: SignInResponse
-    findUser(query: FindUser!, pagination: PaginationInput): [User]!
-    searchUser(query: FindUser!, pagination: PaginationInput): [User]!
+    # TODO: Replace JSON 
+    findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
+    searchUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
   }
 
   extend type Mutation {
