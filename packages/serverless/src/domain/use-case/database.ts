@@ -42,7 +42,7 @@ export async function createDatabase(
 
 export async function getDatabases(
   filter: FilterCriteria,
-  pagination: Pagination = { offset: 0, limit: 100 }
+  pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
   const dbEngine = DatabaseEngine.getInstance();
   const databasesInfo = await dbEngine.client.db().admin().listDatabases();
@@ -51,7 +51,7 @@ export async function getDatabases(
     return {
       data: [],
       totalSize: 0,
-      offset: pagination.offset,
+      offset: pagination?.offset ?? 0,
     };
   }
 
@@ -109,7 +109,7 @@ export async function getDatabases(
 
   return {
     data: databases.filter(Boolean),
-    offset: pagination.offset,
+    offset: pagination?.offset ?? 0,
     totalSize: await modelSetting.count(filter),
   };
 }
