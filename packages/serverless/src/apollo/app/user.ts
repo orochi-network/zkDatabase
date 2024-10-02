@@ -11,7 +11,7 @@ import {
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
 import {
-  ACCESS_TOKEN_EXPIRE_DAY,
+  ACCESS_TOKEN_EXPIRE_TIME,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
@@ -269,7 +269,7 @@ const userSignIn = publicWrapper(
         const accessTokenDigest = calculateAccessTokenDigest(accessToken);
         await RedisInstance.accessTokenDigest(accessTokenDigest).set(
           JSON.stringify({ userName, email }),
-          { EX: ACCESS_TOKEN_EXPIRE_DAY }
+          { EX: ACCESS_TOKEN_EXPIRE_TIME }
         );
         return {
           ...user,

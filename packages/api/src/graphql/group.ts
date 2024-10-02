@@ -4,7 +4,7 @@ import {
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TGroupInfo } from "./types";
+import { TGroupInfo, TGroupInfoDetail } from "./types";
 
 export const group = <T>(client: TApolloClient<T>) => ({
   addUser: createMutateFunction<
@@ -113,9 +113,9 @@ export const group = <T>(client: TApolloClient<T>) => ({
     (data) => data.groupRename
   ),
   info: createQueryFunction<
-    TGroupInfo,
+    TGroupInfoDetail,
     { databaseName: string; groupName: string },
-    { groupInfo: TGroupInfo }
+    { groupInfo: TGroupInfoDetail }
   >(
     client,
     gql`

@@ -134,7 +134,6 @@ export async function isDatabaseOwner(
   const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });
-
   if (setting) {
     return setting.databaseOwner === actor;
   }

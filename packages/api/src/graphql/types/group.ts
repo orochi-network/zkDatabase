@@ -1,6 +1,14 @@
-export type TGroupInfo = {
-  name: string;
+export type TGroupInfoDetail = {
+  groupName: string;
   description: string;
   createdAt: number;
-  createdBy: string;
+  createBy: string;
+  members: Array<{ userName: string; createdAt: number }>;
+};
+
+export type TGroupInfo = {
+  groupName: string;
+  description: string;
+  createdAt: number;
+  createBy: string;
 };
