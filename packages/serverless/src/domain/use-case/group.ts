@@ -56,7 +56,17 @@ async function getGroupInfo(
     );
   }
   const modelUserGroup = new ModelUserGroup(databaseName);
-  return modelUserGroup.getGroupInfo(groupName);
+  const modelGroup = new ModelGroup(databaseName);
+  const group = await modelGroup.findOne({ groupName });
+  if (!group) {
+    throw new Error('Group not existed');
+  }
+  return {
+    ...group,
+    members: await (
+      await modelUserGroup.find({ groupId: group._id })
+    ).toArray(),
+  };
 }
 async function checkUserGroupMembership(
   databaseName: string,

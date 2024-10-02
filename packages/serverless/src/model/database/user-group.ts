@@ -23,18 +23,6 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     super(databaseName, ModelUserGroup.collectionName);
   }
 
-  public async getGroupInfo(groupName: string): Promise<TGroupInfo> {
-    const modelGroup = new ModelGroup(this.databaseName);
-    const group = await modelGroup.findOne({ groupName });
-    if (!group) {
-      throw new Error('Group not existed');
-    }
-    return {
-      ...group,
-      members: await (await this.find({ groupId: group._id })).toArray(),
-    };
-  }
-
   public async checkMembership(
     userName: string,
     groupName: string

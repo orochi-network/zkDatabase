@@ -124,12 +124,9 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
-  console.log('🚀 ~ actor:', actor);
   const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });
-  console.log('🚀 ~ setting ~ setting:', setting);
-
   if (setting) {
     return setting.databaseOwner === actor;
   }

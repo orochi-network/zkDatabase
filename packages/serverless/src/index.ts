@@ -109,16 +109,18 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
           const {
             payload: { userName, email },
           } = await JwtAuthorization.verify(accessToken);
-          const serverRawSideAcessToken =
+          const serverRawSideAccessToken =
             await RedisInstance.accessTokenDigest(accessTokenDigest).get();
-          const serverSideAcessToken =
-            typeof serverRawSideAcessToken === 'string'
-              ? JSON.parse(serverRawSideAcessToken)
-              : serverRawSideAcessToken;
-          if (serverSideAcessToken) {
+
+          const serverSideAccessToken =
+            typeof serverRawSideAccessToken === 'string'
+              ? JSON.parse(serverRawSideAccessToken)
+              : serverRawSideAccessToken;
+
+          if (serverSideAccessToken) {
             if (
-              userName === serverSideAcessToken.userName &&
-              serverSideAcessToken.email === email
+              userName === serverSideAccessToken.userName &&
+              serverSideAccessToken.email === email
             ) {
               return { sessionId: req.sessionID, userName, email, req };
             }
