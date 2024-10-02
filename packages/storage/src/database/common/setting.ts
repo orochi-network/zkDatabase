@@ -120,4 +120,8 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
       throw new Error(`Failed to find settings: ${error}`);
     }
   }
+
+  public async count() {
+    return await this.collection.countDocuments();
+  }
 }

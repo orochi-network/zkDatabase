@@ -1,10 +1,10 @@
 import Client from 'mina-signer';
 import { ClientSession } from 'mongodb';
 import ModelUser from '../../model/global/user.js';
-import { Pagination } from '../types/pagination.js';
+import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
-import { FilterCriteria, parseQuery } from '../utils/document.js';
+import { FilterCriteria } from '../utils/document.js';
 import logger from '../../helper/logger.js';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -12,7 +12,7 @@ export async function findUser(
   query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
-): Promise<User[]> {
+): Promise<PaginationReturn<User[]>> {
   const modelUser = new ModelUser();
 
   const options: any = {};
@@ -21,12 +21,16 @@ export async function findUser(
     options.skip = pagination.offset;
   }
 
-  return (
-    await modelUser.find(query || {}, {
-      session,
-      ...options,
-    })
-  ).toArray();
+  return {
+    data: await (
+      await modelUser.find(query || {}, {
+        session,
+        ...options,
+      })
+    ).toArray(),
+    offset: pagination?.offset ?? 0,
+    totalSize: await modelUser.count(),
+  };
 }
 
 export async function isUserExist(userName: string): Promise<boolean> {

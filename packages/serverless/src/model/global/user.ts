@@ -107,6 +107,10 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     }
     return null;
   }
+
+  public count() {
+    return this.collection.countDocuments();
+  }
 }
 
 export default ModelUser;

@@ -33,7 +33,7 @@ import {
 import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import { getUsersGroup } from './group.js';
-import { Pagination } from '../types/pagination.js';
+import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { isDatabaseOwner } from './database.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
@@ -568,9 +568,9 @@ async function searchDocuments(
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
-  pagination?: Pagination,
-  session?: ClientSession
-): Promise<Array<Document>> {
+  pagination: Pagination = {offset: 0, limit: 100},
+  session: ClientSession | undefined = undefined
+): Promise<PaginationReturn<Array<Document>>> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -615,9 +615,13 @@ async function searchDocuments(
         const fields: DocumentFields = buildDocumentFields(documentRecord);
 
         return {
-          docId: documentRecord.docId,
-          fields,
-          createdAt: documentRecord.timestamp,
+          data: {
+            docId: documentRecord.docId,
+            fields,
+            createdAt: documentRecord.timestamp,
+          },
+          offset: pagination.offset,
+          totalSize: await ModelDocument.getInstance(databaseName, collectionName).count()
         };
       }
     );

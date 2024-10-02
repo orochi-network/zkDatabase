@@ -11,7 +11,7 @@ import ModelGroup from '../../model/database/group.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
-import { Pagination } from '../types/pagination.js';
+import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
@@ -42,13 +42,17 @@ export async function createDatabase(
 
 export async function getDatabases(
   filter: FilterCriteria,
-  pagination?: Pagination
-): Promise<Database[]> {
+  pagination: Pagination = { offset: 0, limit: 100 }
+): Promise<PaginationReturn<Database[]>> {
   const dbEngine = DatabaseEngine.getInstance();
   const databasesInfo = await dbEngine.client.db().admin().listDatabases();
 
   if (!databasesInfo?.databases?.length) {
-    return [];
+    return {
+      data: [],
+      totalSize: 0,
+      offset: pagination.offset,
+    };
   }
 
   const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
@@ -60,16 +64,15 @@ export async function getDatabases(
       {}
     );
 
-  const settings = await ModelDbSetting.getInstance().findSettingsByFields(
-    filter,
-    {
-      skip: pagination?.offset,
-      limit: pagination?.limit,
-    }
-  );
+  const modelSetting = ModelDbSetting.getInstance();
+
+  const settings = await modelSetting.findSettingsByFields(filter, {
+    skip: pagination?.offset,
+    limit: pagination?.limit,
+  });
 
   if (!settings?.length) {
-    return [];
+    throw Error('Settings were not found');
   }
 
   const collectionsCache: Record<string, string[]> = {};
@@ -104,7 +107,11 @@ export async function getDatabases(
     )
   ).map(({ result }) => result);
 
-  return databases.filter(Boolean);
+  return {
+    data: databases.filter(Boolean),
+    offset: pagination.offset,
+    totalSize: await modelSetting.count(),
+  };
 }
 
 export async function getDatabaseSetting(

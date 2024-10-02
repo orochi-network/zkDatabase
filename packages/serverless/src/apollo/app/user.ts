@@ -149,12 +149,18 @@ export const typeDefsUser = gql`
   type User {
     userName: String!
     email: String!
-    publicKey: String!
+    publicKey: String! 
+  }
+
+  type UserPaginationOutput {
+    data: [User]!
+    totalSize: Int!
+    offset: Int!
   }
 
   extend type Query {
     userSignInData: SignInResponse
-    findUser(query: JSON!, pagination: PaginationInput): [User]!
+    findUser(query: JSON!, pagination: PaginationInput): UserPaginationOutput!
   }
 
   extend type Mutation {

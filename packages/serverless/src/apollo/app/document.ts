@@ -102,6 +102,12 @@ export const typeDefsDocument = gql`
     proofStatus: String
   }
 
+  type DocumentPaginationOutput {
+    data: [DocumentOutput]!
+    totalSize: Int!
+    offset: Int!
+  }
+
   extend type Query {
     documentFind(
       databaseName: String!
@@ -113,7 +119,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       documentQuery: JSON!
       pagination: PaginationInput
-    ): [DocumentOutput]!
+    ): DocumentPaginationOutput!
     documentsWithMetadataFind(
       databaseName: String!
       collectionName: String!
