@@ -1,37 +1,18 @@
 /* eslint-disable import/prefer-default-export */
 import { DatabaseEngine, zkDatabaseConstants } from '@zkdb/storage';
-import { ClientSession, WithId } from 'mongodb';
+import { ClientSession } from 'mongodb';
+import { PermissionBinary } from '../../common/permission.js';
+import ModelDocument from '../../model/abstract/document.js';
+import { HistoryDocument } from '../types/document-history.js';
+import { Document } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
+import { isDatabaseOwner } from './database.js';
+import { getUsersGroup } from './group.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
-import { Document, DocumentFields } from '../types/document.js';
-import { getUsersGroup } from './group.js';
-import { isDatabaseOwner } from './database.js';
-import { PermissionBinary } from '../../common/permission.js';
-import ModelDocument, {
-  DocumentRecord,
-} from '../../model/abstract/document.js';
-import { HistoryDocument } from '../types/document-history.js';
-
-function buildDocumentFields(
-  documentRecord: WithId<DocumentRecord>
-): DocumentFields {
-  return Object.keys(documentRecord)
-    .filter(
-      (key) =>
-        key !== '_id' &&
-        key !== 'docId' &&
-        key !== 'deleted' &&
-        key !== 'timestamp'
-    )
-    .map((key) => ({
-      name: documentRecord[key].name,
-      kind: documentRecord[key].kind,
-      value: documentRecord[key].value,
-    }));
-}
+import { buildDocumentFields } from './document.js';
 
 function buildHistoryPipeline(pagination: Pagination): Array<any> {
   return [
@@ -156,7 +137,7 @@ async function listHistoryDocuments(
         docId: historyDocument._id,
         documents,
         metadata: historyDocument.metadata,
-        deleted: historyDocument.deleted,
+        active: historyDocument.active,
       };
     });
 
@@ -230,7 +211,7 @@ async function readHistoryDocument(
   return {
     docId,
     documents,
-    deleted: documentHistoryRecords[0].deleted,
+    active: documentHistoryRecords[0].active,
   };
 }
 

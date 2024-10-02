@@ -1,13 +1,30 @@
 import Client from 'mina-signer';
-import { ClientSession } from 'mongodb';
+import { ClientSession, FindOptions } from 'mongodb';
+import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
 import { FilterCriteria } from '../utils/document.js';
-import logger from '../../helper/logger.js';
+import { objectToLookupPattern } from '../../helper/common.js';
 
-// eslint-disable-next-line import/prefer-default-export
+export async function searchUser(
+  query: { [key: string]: string },
+  pagination?: Pagination
+): Promise<User[]> {
+  const modelUser = new ModelUser();
+
+  const findUsers = await modelUser.collection
+    .find(
+      {
+        $or: objectToLookupPattern(query, { regexSearch: true }),
+      },
+      pagination
+    )
+    .toArray();
+
+  return findUsers;
+}
 export async function findUser(
   query?: FilterCriteria,
   pagination?: Pagination,
@@ -15,7 +32,7 @@ export async function findUser(
 ): Promise<PaginationReturn<User[]>> {
   const modelUser = new ModelUser();
 
-  const options: any = {};
+  const options: FindOptions = {};
   if (pagination) {
     options.limit = pagination.limit;
     options.skip = pagination.offset;
@@ -36,7 +53,7 @@ export async function findUser(
 export async function isUserExist(userName: string): Promise<boolean> {
   const modelUser = new ModelUser();
 
-  return (await modelUser.find({ userName })) !== null;
+  return (await modelUser.findOne({ userName })) !== null;
 }
 
 export async function areUsersExist(userNames: string[]) {

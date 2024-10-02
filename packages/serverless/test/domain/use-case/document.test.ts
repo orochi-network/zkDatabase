@@ -1,5 +1,5 @@
 /* eslint-disable max-classes-per-file */
-import { DatabaseEngine } from '@zkdb/storage';
+import { DatabaseEngine, withTransaction } from '@zkdb/storage';
 import { Field, MerkleTree, PrivateKey, PublicKey } from 'o1js';
 import {
   createDocument,
@@ -316,12 +316,15 @@ describe('Document Management Integration Tests', () => {
       );
 
       await expect(async () =>
-        updateDocument(
-          DB_NAME,
-          TEST_COLLECTION,
-          COLLECTION_OWNER,
-          { name: '12' },
-          newJohn.serialize()
+        withTransaction((session) =>
+          updateDocument(
+            DB_NAME,
+            TEST_COLLECTION,
+            COLLECTION_OWNER,
+            { name: '12' },
+            newJohn.serialize(),
+            session
+          )
         )
       ).rejects.toBeDefined();
     });
@@ -356,12 +359,15 @@ describe('Document Management Integration Tests', () => {
       );
 
       await expect(async () =>
-        updateDocument(
-          DB_NAME,
-          TEST_COLLECTION,
-          COLLECTION_OWNER,
-          { name: '12' },
-          newJohn.serialize()
+        withTransaction((session) =>
+          updateDocument(
+            DB_NAME,
+            TEST_COLLECTION,
+            COLLECTION_OWNER,
+            { name: '12' },
+            newJohn.serialize(),
+            session
+          )
         )
       ).rejects.toBeDefined();
     });
@@ -406,12 +412,15 @@ describe('Document Management Integration Tests', () => {
 
       merkleTree.setLeaf(1n, newJohn.hash());
 
-      const newWitness = await updateDocument(
-        DB_NAME,
-        TEST_COLLECTION,
-        COLLECTION_OWNER,
-        { name: 12 },
-        john.serialize()
+      const newWitness = await withTransaction((session) =>
+        updateDocument(
+          DB_NAME,
+          TEST_COLLECTION,
+          COLLECTION_OWNER,
+          { name: 12 },
+          john.serialize(),
+          session
+        )
       );
 
       const updatedDocument = await readDocument(
@@ -450,14 +459,17 @@ describe('Document Management Integration Tests', () => {
       merkleTree.setLeaf(1n, newJohn.hash());
 
       await expect(async () =>
-        updateDocument(
-          DB_NAME,
-          TEST_COLLECTION,
-          COLLECTION_OWNER,
-          {
-            name: 16,
-          },
-          newJohn.serialize()
+        withTransaction((session) =>
+          updateDocument(
+            DB_NAME,
+            TEST_COLLECTION,
+            COLLECTION_OWNER,
+            {
+              name: 16,
+            },
+            newJohn.serialize(),
+            session
+          )
         )
       ).rejects.toBeDefined();
     });

@@ -26,13 +26,22 @@ export function getCurrentTime(): Date {
   return cache.timestamp;
 }
 
-export function objectToLookupPattern(obj: {
-  [key: string]: any;
-}): { [key: string]: any }[] {
+export function objectToLookupPattern(
+  obj: {
+    [key: string]: any;
+  },
+  options?: {
+    regexSearch: boolean;
+  }
+): { [key: string]: any }[] {
   const entries = Object.entries(obj);
   const result = [];
   for (let i = 0; i < entries.length; i += 1) {
-    result.push({ [entries[i][0]]: entries[i][1] });
+    result.push({
+      [entries[i][0]]: options?.regexSearch
+        ? new RegExp(entries[i][1])
+        : entries[i][1],
+    });
   }
   return result;
 }
