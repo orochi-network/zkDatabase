@@ -128,7 +128,7 @@ jobs:
 
           git config --global user.name "${{ secrets.GITOPS_USER }}"
           git config --global user.email "${{ secrets.GITOPS_EMAIL }}"
-          git clone git@github.com:${{ secrets.GITOPS_REPO }}
+          git clone ${{ secrets.GITOPS_REPO }}
 
 
 
