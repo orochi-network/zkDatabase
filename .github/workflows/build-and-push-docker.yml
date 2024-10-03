@@ -110,7 +110,7 @@ jobs:
               echo "$SERVICE not changed or invalid Docker repo, skipping."
             fi
           done
-          echo "::set-output name=changed_services::$CHANGED_SERVICES"
+          echo "changed_services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
   gitops-push:
     name: Push Changes to GitOps
