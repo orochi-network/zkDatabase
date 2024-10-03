@@ -1,6 +1,6 @@
 export type GroupDescription = {
-  name: string,
+  groupName: string,
   description: string
-  createdBy: string,
+  createBy: string,
   createdAt: Date
 }
