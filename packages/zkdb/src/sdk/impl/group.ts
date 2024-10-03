@@ -51,10 +51,10 @@ export class ZKGroupImpl implements ZKGroup {
 
     const groupDescription = result.unwrap();
     return {
-      name: groupDescription.name,
+      groupName: groupDescription.groupName,
       description: groupDescription.description,
       createdAt: new Date(groupDescription.createdAt),
-      createdBy: groupDescription.createdBy,
+      createBy: groupDescription.createBy,
     };
   }
 }
