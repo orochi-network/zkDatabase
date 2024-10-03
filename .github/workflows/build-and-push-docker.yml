@@ -132,7 +132,7 @@ jobs:
 
 
 
-          cd test-argoCD
+          cd test-argo-cd
           git checkout ${{ env.gitopsbranch }}
           IFS=' ' read -r -a CHANGED_SERVICES_ARRAY <<< "${{ needs.build.outputs.changed_services }}"
           CHANGED_SERVICES=$(IFS=,; echo "${CHANGED_SERVICES_ARRAY[*]}")
@@ -146,3 +146,6 @@ jobs:
           echo "Committing and pushing changes for ${CHANGED_SERVICES} to ${{ env.gitopsbranch }} version ${{ env.version }}"
           git commit -m "Update versions for: ${CHANGED_SERVICES} to ${{ env.version }}"
           git push origin ${{ env.gitopsbranch }}
+
+          cd ..
+          rm -rf test-argo-cd
