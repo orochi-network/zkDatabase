@@ -5,12 +5,6 @@ on:
     branches:
       - main
 
-env:
-  DOCKER_REPO_BROKER_SERVICE: orochinetwork/zkdb-broker-service
-  DOCKER_REPO_PROOF_SERVICE: orochinetwork/zkdb-proof-service
-  DOCKER_REPO_SERVERLESS: orochinetwork/zkdb-serverless
-  NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
-
 jobs:
   detect-changes:
     name: Detect Changes
@@ -22,76 +16,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Fetch enough commit history
+          fetch-depth: 0  # Fetch full commit history
 
-      - name: Detect changed packages
+      - name: Detect last two merge commits and diff
         id: changed
         run: |
-          # Detect all changed packages
-          CHANGED_PACKAGES=$(git diff --name-only HEAD~1 HEAD -- packages/ | cut -d '/' -f 1-2 | sort -u)
-          echo "Detected changes: $CHANGED_PACKAGES"
-
-          # Clean up carriage returns or special characters and split on new lines
+          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 10)
+          MERGE_ARRAY=($LAST_MERGE)
+          LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
+          PREV_MERGE_COMMIT=${MERGE_ARRAY[9]}
+          
+          echo "Last merge commit: $LAST_MERGE_COMMIT"
+          echo "Previous merge commit: $PREV_MERGE_COMMIT"
+          
+          CHANGED_PACKAGES=$(git diff --name-only $PREV_MERGE_COMMIT $LAST_MERGE_COMMIT -- packages/ | cut -d '/' -f 1-2 | sort -u)
           CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
           echo "Cleaned packages: $CLEANED_PACKAGES"
-
-          # Save cleaned package names to environment
           echo "changed_packages=$CLEANED_PACKAGES" >> $GITHUB_ENV
 
       - name: Filter packages using case statement and map to numbers
         id: filter
         run: |
           CHANGED_PACKAGES="${{ env.changed_packages }}"
+          echo "Changed packages: $CHANGED_PACKAGES"
           FILTERED_PACKAGES=""
 
-          # Debugging - print out each package to see what's being processed
-          echo "Changed packages: $CHANGED_PACKAGES"
-
-          # Split the CHANGED_PACKAGES string into an array
           IFS=' ' read -r -a PACKAGE_ARRAY <<< "$CHANGED_PACKAGES"
-
-          # Declare an associative array to map package names to numbers
-          declare -A PACKAGE_MAP
-          PACKAGE_MAP["packages/serverless"]=1
-          PACKAGE_MAP["packages/broker-service"]=2
-          PACKAGE_MAP["packages/proof-service"]=3
-
-          # Loop through the detected changes and map the packages to numbers
           for PACKAGE in "${PACKAGE_ARRAY[@]}"; do
             case $PACKAGE in
-              "packages/serverless")
-                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/serverless"]}"
-                echo "serverless changed (mapped to 1)"
-                ;;
-              "packages/broker-service")
-                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/broker-service"]}"
-                echo "broker-service changed (mapped to 2)"
-                ;;
-              "packages/proof-service")
-                FILTERED_PACKAGES="$FILTERED_PACKAGES ${PACKAGE_MAP["packages/proof-service"]}"
-                echo "proof-service changed (mapped to 3)"
-                ;;
-              *)
-                echo "No match for package: $PACKAGE"
-                ;;
+              "packages/serverless") FILTERED_PACKAGES="$FILTERED_PACKAGES 1" ;;
+              "packages/broker-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 2" ;;
+              "packages/proof-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 3" ;;
+              "packages/ftp") FILTERED_PACKAGES="$FILTERED_PACKAGES 4" ;;
             esac
           done
 
-          # Trim any leading/trailing spaces in FILTERED_PACKAGES
           FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
-
-          # Output the mapped numbers using Environment Files and set job output
-          if [ -z "$FILTERED_PACKAGES" ]; then
-            echo "No required packages changed."
-            exit 0
-          else
-            echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
-          fi
+          echo "Filtered packages: ${FILTERED_PACKAGES[@]}"
+          echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
 
   build:
-    name: Build & Push Docker Images
+    name: Build & Push Docker Images and Push to GitOps
     needs: detect-changes
     runs-on: [self-hosted, linux]
+    outputs:
+      changed_services: ${{ steps.build.outputs.changed_services }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -105,53 +75,77 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USER }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build & Push Broker Service Image
+      - name: Build & Push Docker Images
+        id: build
         run: |
-          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
-          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"2"* ]]; then
-            echo "Building and pushing Broker Service..."
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
-            docker build -t ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest \
-              -f packages/broker-service/Dockerfile \
-              --platform=linux/amd64 \
-              --secret id=npm,src=npm-token .
-            docker tag ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest ${{ env.DOCKER_REPO_BROKER_SERVICE }}:${{ github.sha }}
-            docker push ${{ env.DOCKER_REPO_BROKER_SERVICE }}:latest
-            docker push ${{ env.DOCKER_REPO_BROKER_SERVICE }}:${{ github.sha }}
-          else
-            echo "Broker Service not in changed packages."
-          fi
+          SERVICES=("serverless" "broker" "proof" "ftp")
+          DOCKER_REPOS=(
+            "orochinetwork/zkdb-serverless"
+            "orochinetwork/zkdb-broker-service"
+            "orochinetwork/zkdb-proof-service"
+            "orochinetwork/zkdb-ftp"
+          )
+          CHANGED_SERVICES=""
+          for i in ${!SERVICES[@]}; do
+            SERVICE="${SERVICES[$i]}"
+            DOCKER_REPO="${DOCKER_REPOS[$i]}"
+            NUM=$((i + 1))
+            if [[ -n "$DOCKER_REPO" && "${{ needs.detect-changes.outputs.filtered_packages }}" == *"$NUM"* ]]; then
+              echo "Building and pushing $SERVICE..."
+              echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
 
-      - name: Build & Push Proof Service Image
-        run: |
-          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
-          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"3"* ]]; then
-            echo "Building and pushing Proof Service..."
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
-            docker build -t ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest \
-              -f packages/proof-service/Dockerfile \
-              --platform=linux/amd64 \
-              --secret id=npm,src=npm-token .
-            docker tag ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
-            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:latest
-            docker push ${{ env.DOCKER_REPO_PROOF_SERVICE }}:${{ github.sha }}
-          else
-            echo "Proof Service not in changed packages."
-          fi
+              # Build the Docker image with a valid tag
+              docker build -t "$DOCKER_REPO:latest" \
+                -f "packages/$SERVICE/Dockerfile" \
+                --secret id=npm,src=./npm-token \
+                --platform=linux/amd64 .
+              
+              docker push "$DOCKER_REPO:latest"
+              docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
+              docker push "$DOCKER_REPO:${{ env.version }}"
 
-      - name: Build & Push Serverless Service Image
+              CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
+            else
+              echo "$SERVICE not changed or invalid Docker repo, skipping."
+            fi
+          done
+          echo "::set-output name=changed_services::$CHANGED_SERVICES"
+
+  gitops-push:
+    name: Push Changes to GitOps
+    needs: build
+    runs-on: [self-hosted, linux]
+    env:
+      version: ${{ github.sha }}
+      gitopsbranch: main
+    steps:
+      - name: Push changes to GitOps
         run: |
-          echo "Filtered Packages: ${{ needs.detect-changes.outputs.filtered_packages }}"
-          if [[ "${{ needs.detect-changes.outputs.filtered_packages }}" == *"1"* ]]; then
-            echo "Building and pushing Serverless Service..."
-            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token
-            docker build -t ${{ env.DOCKER_REPO_SERVERLESS }}:latest \
-              -f packages/serverless/Dockerfile \
-              --platform=linux/amd64 \
-              --secret id=npm,src=npm-token .
-            docker tag ${{ env.DOCKER_REPO_SERVERLESS }}:latest ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
-            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:latest
-            docker push ${{ env.DOCKER_REPO_SERVERLESS }}:${{ github.sha }}
-          else
-            echo "Serverless Service not in changed packages."
-          fi
+          eval $(ssh-agent -s)
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add -
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+          git config --global user.name "${{ secrets.GITOPS_USER }}"
+          git config --global user.email "${{ secrets.GITOPS_EMAIL }}"
+          git clone ${{ secrets.GITOPS_REPO }}
+
+
+
+          cd test-argo-cd
+          git checkout ${{ env.gitopsbranch }}
+          IFS=' ' read -r -a CHANGED_SERVICES_ARRAY <<< "${{ needs.build.outputs.changed_services }}"
+          CHANGED_SERVICES=$(IFS=,; echo "${CHANGED_SERVICES_ARRAY[*]}")
+          echo "Changed services: $CHANGED_SERVICES"
+          for SERVICE in "${CHANGED_SERVICES_ARRAY[@]}"; do
+            VALUES_PATH="services/orochi/zkDatabase/$SERVICE/zkdb-$SERVICE/values.yaml"
+            sed -i "s| tag: .*| tag: ${{ env.version }}|" "$VALUES_PATH"
+            git add "$VALUES_PATH"
+          done
+
+          echo "Committing and pushing changes for ${CHANGED_SERVICES} to ${{ env.gitopsbranch }} version ${{ env.version }}"
+          git commit -m "Update versions for: ${CHANGED_SERVICES} to ${{ env.version }}"
+          git push origin ${{ env.gitopsbranch }}
+
+          cd ..
+          rm -rf test-argo-cd
