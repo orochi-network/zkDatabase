@@ -10,6 +10,7 @@ import {
   TSignUpData,
   TUser,
   TPagination,
+  TPaginationResponse,
 } from "./types";
 
 export type TUserSignUpRecord = TUser;
@@ -70,11 +71,15 @@ const USER_SIGN_UP = gql`
 `;
 
 const USER_FIND_ONE = gql`
-  query SearchUser($search: SearchInput, $pagination: PaginationInput) {
-    searchUser(search: $search, pagination: $pagination) {
-      email
-      publicKey
-      userName
+  query FindUser($query: JSON, $pagination: PaginationInput) {
+    findUser(query: $query, pagination: $pagination) {
+      totalSize: Int!,
+      offset: Int!
+      data {
+        email
+        publicKey
+        userName
+      }
     }
   }
 `;
@@ -120,8 +125,8 @@ export const user = <T>(client: TApolloClient<T>) => ({
   findMany: createQueryFunction<
     TUser[],
     { query: any; pagination: TPagination },
-    { searchUser: TUser[] }
-  >(client, USER_FIND_ONE, (data) => data.searchUser),
+    { searchUser: TPaginationResponse<TUser[]> }
+  >(client, USER_FIND_ONE, (data) => data.searchUser.data),
   userInfo: createQueryFunction<
     TUserSignInRecord,
     undefined,

@@ -11,7 +11,7 @@ import {
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
 import {
-  ACCESS_TOKEN_EXPIRE_DAY,
+  ACCESS_TOKEN_EXPIRE_TIME,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
@@ -170,7 +170,7 @@ export const typeDefsUser = gql`
   type User {
     userName: String!
     email: String!
-    publicKey: String!
+    publicKey: String! 
   }
 
   input FindUser {
@@ -179,10 +179,17 @@ export const typeDefsUser = gql`
     publicKey: String
   }
 
+  type UserPaginationOutput {
+    data: [User]!
+    totalSize: Int!
+    offset: Int!
+  }
+
   extend type Query {
     userSignInData: SignInResponse
-    findUser(query: FindUser!, pagination: PaginationInput): [User]!
-    searchUser(query: FindUser!, pagination: PaginationInput): [User]!
+    # TODO: Replace JSON 
+    findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
+    searchUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
   }
 
   extend type Mutation {
@@ -262,7 +269,7 @@ const userSignIn = publicWrapper(
         const accessTokenDigest = calculateAccessTokenDigest(accessToken);
         await RedisInstance.accessTokenDigest(accessTokenDigest).set(
           JSON.stringify({ userName, email }),
-          { EX: ACCESS_TOKEN_EXPIRE_DAY }
+          { EX: ACCESS_TOKEN_EXPIRE_TIME }
         );
         return {
           ...user,

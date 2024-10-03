@@ -1,6 +1,16 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import {
+  addUsersToGroup,
+  changeGroupDescription,
+  createGroup,
+  excludeUsersToGroup,
+  getGroupInfo,
+  renameGroup,
+} from '../../domain/use-case/group.js';
+import ModelGroup from '../../model/database/group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   databaseName,
@@ -10,15 +20,6 @@ import {
   userName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import {
-  addUsersToGroup,
-  excludeUsersToGroup,
-  changeGroupDescription,
-  createGroup,
-  renameGroup,
-} from '../../domain/use-case/group.js';
 
 export type TGroupRequest = TDatabaseRequest & {
   groupName: string;
@@ -54,17 +55,29 @@ scalar JSON
 type Query
 type Mutation
 
-type GroupInfo {
-  name: String!,
+type Member {
+  userName: String!
+  createdAt: String!,
+}
+
+type GroupInfoDetail {
+  groupName: String!,
   description: String!,
-  createdAt: Int!,
-  createdBy: String!
+  createdAt: String!,
+  createBy: String!
+  members: [Member]
+}
+type GroupInfo {
+  groupName: String!
+  description: String!
+  createdAt: Int!
+  createBy: String!
 }
 
 extend type Query {
   groupListAll(databaseName: String!): [GroupInfo]!
   groupListByUser(databaseName: String!, userName: String!): [String]!
-  groupInfo(databaseName: String!, groupName: String!): GroupInfo!
+  groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail!
 }
 
 extend type Mutation {
@@ -109,10 +122,8 @@ const groupListAll = publicWrapper(
     const modelGroup = new ModelGroup(args.databaseName);
     const groups = await (await modelGroup.find({})).toArray();
     return groups.map((group) => ({
-      name: group.groupName,
-      description: group.description,
+      ...group,
       createdAt: group.createdAt.getSeconds(),
-      createdBy: group.createBy,
     }));
   }
 );
@@ -132,21 +143,15 @@ const groupListByUser = publicWrapper(
   }
 );
 
-const groupInfo = publicWrapper(
+const groupInfoDetail = publicWrapper(
   Joi.object({
     databaseName,
     groupName,
   }),
   async (_root: unknown, args: TGroupRequest) => {
-    const modelUserGroup = new ModelGroup(args.databaseName);
-    const group = await modelUserGroup.findGroup(args.groupName);
+    const group = await getGroupInfo(args.databaseName, args.groupName);
     if (group) {
-      return {
-        name: group.groupName,
-        description: group.description,
-        createdAt: group.createdAt.getSeconds(),
-        createdBy: group.createBy,
-      };
+      return group;
     }
     throw Error(`Group ${args.groupName} does not exist`);
   }
@@ -239,7 +244,7 @@ type TGroupResolver = {
   Query: {
     groupListAll: typeof groupListAll;
     groupListByUser: typeof groupListByUser;
-    groupInfo: typeof groupInfo;
+    groupInfoDetail: typeof groupInfoDetail;
   };
   Mutation: {
     groupCreate: typeof groupCreate;
@@ -255,7 +260,7 @@ export const resolversGroup: TGroupResolver = {
   Query: {
     groupListAll,
     groupListByUser,
-    groupInfo,
+    groupInfoDetail,
   },
   Mutation: {
     groupCreate,

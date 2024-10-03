@@ -2,7 +2,7 @@ import Client from 'mina-signer';
 import { ClientSession, FindOptions } from 'mongodb';
 import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
-import { Pagination } from '../types/pagination.js';
+import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
 import { FilterCriteria } from '../utils/document.js';
@@ -11,25 +11,32 @@ import { objectToLookupPattern } from '../../helper/common.js';
 export async function searchUser(
   query: { [key: string]: string },
   pagination?: Pagination
-): Promise<User[]> {
+): Promise<PaginationReturn<User[]>> {
   const modelUser = new ModelUser();
+
+  const filter = {
+    $or: objectToLookupPattern(query, { regexSearch: true }),
+  }
 
   const findUsers = await modelUser.collection
     .find(
-      {
-        $or: objectToLookupPattern(query, { regexSearch: true }),
-      },
+      filter,
       pagination
     )
     .toArray();
 
-  return findUsers;
+  return {
+    data: findUsers,
+    offset: pagination?.offset ?? 0,
+    totalSize: await modelUser.count(filter)
+  }
 }
+
 export async function findUser(
   query?: FilterCriteria,
   pagination?: Pagination,
   session?: ClientSession
-): Promise<User[]> {
+): Promise<PaginationReturn<User[]>> {
   const modelUser = new ModelUser();
 
   const options: FindOptions = {};
@@ -38,18 +45,21 @@ export async function findUser(
     options.skip = pagination.offset;
   }
 
-  return (
-    await modelUser.find(query || {}, {
-      session,
-      ...options,
-    })
-  ).toArray();
+  return {
+    data: await (
+      await modelUser.find(query || {}, {
+        session,
+        ...options,
+      })
+    ).toArray(),
+    offset: pagination?.offset ?? 0,
+    totalSize: await modelUser.count(query),
+  };
 }
 
 export async function isUserExist(userName: string): Promise<boolean> {
   const modelUser = new ModelUser();
-
-  return (await modelUser.find({ userName })) !== null;
+  return (await modelUser.findOne({ userName })) !== null;
 }
 
 export async function areUsersExist(userNames: string[]) {
@@ -97,7 +107,7 @@ export async function signUpUser(
       }
     } catch (error) {
       logger.error('Error checking existing user:', error);
-      throw error; // Re-throw the error after logging
+      throw error;
     }
 
     // TODO: Check user existence by public key

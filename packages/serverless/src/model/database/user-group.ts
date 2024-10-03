@@ -4,7 +4,7 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import ModelGroup from './group.js';
+import ModelGroup, { GroupSchema } from './group.js';
 
 export interface DocumentUserGroup extends Document {
   userName: string;
@@ -12,6 +12,8 @@ export interface DocumentUserGroup extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type TGroupInfo = GroupSchema & { members: DocumentUserGroup[] };
 
 export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
   private static collectionName =
@@ -25,7 +27,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     userName: string,
     groupName: string
   ): Promise<boolean> {
-    const modelGroup = new ModelGroup(this.databaseName!);
+    const modelGroup = new ModelGroup(this.databaseName);
     const group = await modelGroup.findOne({ groupName });
     if (!group) {
       return false;
@@ -38,14 +40,14 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     userName: string,
     options?: FindOptions
   ): Promise<string[]> {
-    const modelGroup = new ModelGroup(this.databaseName!);
+    const modelGroup = new ModelGroup(this.databaseName);
     const groupsList = await modelGroup.find(
       {
         _id: { $in: await this.listGroupId(userName) },
       },
       options
     );
-    return groupsList.map((group) => group.groupName!).toArray();
+    return groupsList.map((group) => group.groupName).toArray();
   }
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
@@ -54,7 +56,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
-    const modelGroup = new ModelGroup(this.databaseName!);
+    const modelGroup = new ModelGroup(this.databaseName);
     const availableGroups = await modelGroup.find({
       groupName: { $in: groupName },
     });

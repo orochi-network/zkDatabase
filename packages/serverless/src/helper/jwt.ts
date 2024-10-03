@@ -18,7 +18,7 @@ export const JwtAuthorization =
   JWTAuthentication.getInstance<TJWTAuthenticationPayload>(
     config.JWT_SECRET,
     'HS256',
-    `${ACCESS_TOKEN_EXPIRE_DAY}d`
+    `${ACCESS_TOKEN_EXPIRE_TIME}d`
   );
 
 export const calculateAccessTokenDigest = (accessToken: string) =>

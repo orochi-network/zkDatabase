@@ -9,6 +9,7 @@ import {
   TDatabaseSettings,
   TDatabaseStatus,
   TPagination,
+  TPaginationResponse,
 } from "./types";
 
 const DATABASE_CHANGE_OWNER = gql`
@@ -49,42 +50,46 @@ const DATABASE_STATUS = gql`
 const DATABASE_LIST = gql`
   query GetDbList($query: JSON, $pagination: PaginationInput) {
     dbList(query: $query, pagination: $pagination) {
-      databaseName
-      databaseOwner
-      databaseSize
-      merkleHeight
-      collections {
-        name
-        indexes
-        schema {
-          order
+      totalSize: Int!,
+      offset: Int!
+      data {
+        databaseName
+        databaseOwner
+        databaseSize
+        merkleHeight
+        collections {
           name
-          kind
-          indexed
-        }
-        ownership {
-          userName
-          groupName
-          permissionOwner {
-            read
-            write
-            delete
-            create
-            system
+          indexes
+          schema {
+            order
+            name
+            kind
+            indexed
           }
-          permissionGroup {
-            read
-            write
-            delete
-            create
-            system
-          }
-          permissionOther {
-            read
-            write
-            delete
-            create
-            system
+          ownership {
+            userName
+            groupName
+            permissionOwner {
+              read
+              write
+              delete
+              create
+              system
+            }
+            permissionGroup {
+              read
+              write
+              delete
+              create
+              system
+            }
+            permissionOther {
+              read
+              write
+              delete
+              create
+              system
+            }
           }
         }
       }
@@ -116,6 +121,6 @@ export const database = <T>(client: TApolloClient<T>) => ({
   list: createQueryFunction<
     TDatabase[],
     { query: any; pagination: TPagination },
-    { dbList: TDatabase[] }
-  >(client, DATABASE_LIST, (data) => data.dbList),
+    { dbList: TPaginationResponse<TDatabase[]> }
+  >(client, DATABASE_LIST, (data) => data.dbList.data),
 });

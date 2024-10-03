@@ -70,8 +70,14 @@ type DbDescription {
   collections: [CollectionDescriptionOutput]!
 }
 
+type DatabasePaginationOutput {
+  data: [DbDescription]!
+  totalSize: Int!
+  offset: Int!
+}
+
 extend type Query {
-  dbList(query: JSON, pagination: PaginationInput): [DbDescription]!
+  dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
   dbStats(databaseName: String!): JSON
   dbSetting(databaseName: String!): DbSetting!
   #dbFindIndex(databaseName: String!, index: Int!): JSON
