@@ -8,7 +8,7 @@ on:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: ["self-hosted", "linux", "ubuntu-latest"]
+    runs-on: [self-hosted, linux]
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -58,7 +58,7 @@ jobs:
   build:
     name: Build & Push Docker Images and Push to GitOps
     needs: detect-changes
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     outputs:
       changed_services: ${{ steps.build.outputs.changed_services }}
 
@@ -94,7 +94,7 @@ jobs:
               echo "Building and pushing $SERVICE..."
               echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
 
-              Build the Docker image with a valid tag
+              # Build the Docker image with a valid tag
               docker build -t "$DOCKER_REPO:latest" \
                 -f "packages/$SERVICE/Dockerfile" \
                 --secret id=npm,src=./npm-token \
@@ -114,10 +114,10 @@ jobs:
   gitops-push:
     name: Push Changes to GitOps
     needs: build
-    [self-hosted, linux]
+    runs-on: [self-hosted, linux]
     env:
       version: ${{ github.sha }}
-      gitopsbranch: devops/test-gitops
+      gitopsbranch: main
     steps:
       - name: Push changes to GitOps
         run: |
@@ -126,9 +126,11 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-          git config --global user.name "GitOps Updater"
-          git config --global user.email "minhan112001@gmail.com"
-          git clone git@github.com:ZKP-Labs/test-argoCD.git
+          git config --global user.name "${{ secrets.GITOPS_USER }}"
+          git config --global user.email "${{ secrets.GITOPS_EMAIL }}"
+          git clone git@github.com:${{ secrets.GITOPS_REPO }}
+
+
 
           cd test-argoCD
           git checkout ${{ env.gitopsbranch }}
