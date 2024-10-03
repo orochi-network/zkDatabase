@@ -73,8 +73,8 @@ const USER_SIGN_UP = gql`
 const USER_FIND_ONE = gql`
   query FindUser($query: JSON, $pagination: PaginationInput) {
     findUser(query: $query, pagination: $pagination) {
-      totalSize: Int!,
-      offset: Int!
+      totalSize
+      offset
       data {
         email
         publicKey

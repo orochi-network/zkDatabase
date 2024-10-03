@@ -104,8 +104,8 @@ const DOCUMENT_FIND_MANY = gql`
       documentQuery: $documentQuery
       pagination: $pagination
     ) {
-      totalSize: Int!,
-      offset: Int!
+      totalSize
+      offset
       data {
         docId
         fields {
