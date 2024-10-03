@@ -61,7 +61,8 @@ jobs:
     runs-on: [self-hosted, linux]
     outputs:
       changed_services: ${{ steps.build.outputs.changed_services }}
-
+    env:
+      version: ${{ github.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,9 +100,9 @@ jobs:
                 -f "packages/$SERVICE/Dockerfile" \
                 --secret id=npm,src=./npm-token \
                 --platform=linux/amd64 .
-              
-              docker push "$DOCKER_REPO:latest"
+
               docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
+              docker push "$DOCKER_REPO:latest"
               docker push "$DOCKER_REPO:${{ env.version }}"
 
               CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
