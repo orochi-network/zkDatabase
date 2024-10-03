@@ -97,13 +97,16 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    return createCollection(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.groupName,
-      args.schema,
-      args.permissions
+    return withTransaction((session) =>
+      createCollection(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.groupName,
+        args.schema,
+        args.permissions,
+        session
+      )
     );
   }
 );
