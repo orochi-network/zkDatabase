@@ -1,15 +1,16 @@
-import { Fill } from '@orochi-network/queue';
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { Fill } from '@orochi-network/queue';
 import { ClientSession } from 'mongodb';
-import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
-import { Collection } from '../types/collection.js';
-import { Permissions } from '../types/permission.js';
 import { DocumentSchemaInput } from '../types/schema.js';
+import { Permissions } from '../types/permission.js';
+import logger from '../../helper/logger.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isGroupExist } from './group.js';
-import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
+import { Collection } from '../types/collection.js';
 import { getSchemaDefinition } from './schema.js';
+import { readMetadata } from './metadata.js';
+import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
 
 async function createCollection(
   databaseName: string,
@@ -34,17 +35,23 @@ async function createCollection(
     );
   }
 
-  await modelDatabase.createCollection(collectionName);
-  await createCollectionMetadata(
-    databaseName,
-    collectionName,
-    schema,
-    permissions,
-    actor,
-    groupName,
-    session
-  );
-  return true;
+  try {
+    await modelDatabase.createCollection(collectionName);
+    await createCollectionMetadata(
+      databaseName,
+      collectionName,
+      schema,
+      permissions,
+      actor,
+      groupName,
+      session
+    );
+    return true;
+  } catch (error) {
+    await modelDatabase.dropCollection(collectionName);
+    logger.error(error);
+    throw error;
+  }
 }
 
 async function readCollectionInfo(
@@ -198,9 +205,9 @@ export async function collectionExist(
 export {
   createCollection,
   createIndex,
-  doesIndexExist,
   dropIndex,
-  listCollections,
   listIndexes,
+  doesIndexExist,
+  listCollections,
   readCollectionInfo,
 };
