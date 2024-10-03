@@ -8,7 +8,7 @@ on:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -58,7 +58,7 @@ jobs:
   build:
     name: Build & Push Docker Images and Push to GitOps
     needs: detect-changes
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       changed_services: ${{ steps.build.outputs.changed_services }}
     env:
@@ -96,26 +96,26 @@ jobs:
               echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
 
               # Build the Docker image with a valid tag
-              docker build -t "$DOCKER_REPO:latest" \
-                -f "packages/$SERVICE/Dockerfile" \
-                --secret id=npm,src=./npm-token \
-                --platform=linux/amd64 .
+              # docker build -t "$DOCKER_REPO:latest" \
+              #   -f "packages/$SERVICE/Dockerfile" \
+              #   --secret id=npm,src=./npm-token \
+              #   --platform=linux/amd64 .
 
-              docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
-              docker push "$DOCKER_REPO:latest"
-              docker push "$DOCKER_REPO:${{ env.version }}"
+              # docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
+              # docker push "$DOCKER_REPO:latest"
+              # docker push "$DOCKER_REPO:${{ env.version }}"
 
               CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
             else
               echo "$SERVICE not changed or invalid Docker repo, skipping."
             fi
           done
-          echo "::set-output name=changed_services::$CHANGED_SERVICES"
+          echo "changed_services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
   gitops-push:
     name: Push Changes to GitOps
     needs: build
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     env:
       version: ${{ github.sha }}
       gitopsbranch: main
