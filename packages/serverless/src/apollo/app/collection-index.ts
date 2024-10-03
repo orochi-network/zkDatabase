@@ -1,6 +1,5 @@
-import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { withTransaction } from '@zkdb/storage';
+import Joi from 'joi';
 import {
   createIndex,
   doesIndexExist,
@@ -8,7 +7,7 @@ import {
   listIndexes,
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest, CollectionRequest } from './collection.js';
+import { CollectionRequest, TCollectionRequest } from './collection.js';
 import { collectionName, databaseName, indexName, indexes } from './common.js';
 
 // Index request
@@ -72,22 +71,17 @@ export const typeDefsCollectionIndex = `#graphql
 const indexList = authorizeWrapper(
   IndexListRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
-    withTransaction((session) =>
-      listIndexes(args.databaseName, ctx.userName, args.collectionName, session)
-    )
+    listIndexes(args.databaseName, ctx.userName, args.collectionName)
 );
 
 const indexExist = authorizeWrapper(
   IndexDetailRequest,
   async (_root: unknown, args: TIndexDetailRequest, ctx) =>
-    withTransaction((session) =>
-      doesIndexExist(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.indexName,
-        session
-      )
+    doesIndexExist(
+      args.databaseName,
+      ctx.userName,
+      args.collectionName,
+      args.indexName
     )
 );
 
