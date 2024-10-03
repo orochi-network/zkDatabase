@@ -114,7 +114,7 @@ jobs:
   gitops-push:
     name: Push Changes to GitOps
     needs: build
-    runs-on: ubuntu-latest
+    [self-hosted, linux]
     env:
       version: ${{ github.sha }}
       gitopsbranch: devops/test-gitops
