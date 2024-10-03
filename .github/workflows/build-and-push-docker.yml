@@ -8,7 +8,7 @@ on:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: ["self-hosted", "linux", "ubuntu-latest"]
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -21,33 +21,25 @@ jobs:
       - name: Detect last two merge commits and diff
         id: changed
         run: |
-        # # debug
-        #   git stash
-        #   git checkout main
-        # # debug
-        
-          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 2)
+          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 10)
           MERGE_ARRAY=($LAST_MERGE)
           LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
-          PREV_MERGE_COMMIT=${MERGE_ARRAY[1]}
+          PREV_MERGE_COMMIT=${MERGE_ARRAY[9]}
           
           echo "Last merge commit: $LAST_MERGE_COMMIT"
           echo "Previous merge commit: $PREV_MERGE_COMMIT"
           
           CHANGED_PACKAGES=$(git diff --name-only $PREV_MERGE_COMMIT $LAST_MERGE_COMMIT -- packages/ | cut -d '/' -f 1-2 | sort -u)
           CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
+          echo "Cleaned packages: $CLEANED_PACKAGES"
           echo "changed_packages=$CLEANED_PACKAGES" >> $GITHUB_ENV
 
       - name: Filter packages using case statement and map to numbers
         id: filter
         run: |
           CHANGED_PACKAGES="${{ env.changed_packages }}"
+          echo "Changed packages: $CHANGED_PACKAGES"
           FILTERED_PACKAGES=""
-          declare -A PACKAGE_MAP
-          PACKAGE_MAP["packages/serverless"]=1
-          PACKAGE_MAP["packages/broker-service"]=2
-          PACKAGE_MAP["packages/proof-service"]=3
-          PACKAGE_MAP["packages/ftp"]=4
 
           IFS=' ' read -r -a PACKAGE_ARRAY <<< "$CHANGED_PACKAGES"
           for PACKAGE in "${PACKAGE_ARRAY[@]}"; do
@@ -60,6 +52,7 @@ jobs:
           done
 
           FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
+          echo "Filtered packages: ${FILTERED_PACKAGES[@]}"
           echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
 
   build:
@@ -85,9 +78,7 @@ jobs:
       - name: Build & Push Docker Images
         id: build
         run: |
-        # # debug
-          # SERVICES=("serverless" "broker" "proof" "ftp")
-        # # debug
+          SERVICES=("serverless" "broker" "proof" "ftp")
           DOCKER_REPOS=(
             "orochinetwork/zkdb-serverless"
             "orochinetwork/zkdb-broker-service"
@@ -101,6 +92,18 @@ jobs:
             NUM=$((i + 1))
             if [[ -n "$DOCKER_REPO" && "${{ needs.detect-changes.outputs.filtered_packages }}" == *"$NUM"* ]]; then
               echo "Building and pushing $SERVICE..."
+              echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
+
+              Build the Docker image with a valid tag
+              docker build -t "$DOCKER_REPO:latest" \
+                -f "packages/$SERVICE/Dockerfile" \
+                --secret id=npm,src=./npm-token \
+                --platform=linux/amd64 .
+              
+              docker push "$DOCKER_REPO:latest"
+              docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
+              docker push "$DOCKER_REPO:${{ env.version }}"
+
               CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
             else
               echo "$SERVICE not changed or invalid Docker repo, skipping."
@@ -116,7 +119,7 @@ jobs:
       version: ${{ github.sha }}
       gitopsbranch: devops/test-gitops
     steps:
-      - name: Set up SSH
+      - name: Push changes to GitOps
         run: |
           eval $(ssh-agent -s)
           echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add -
