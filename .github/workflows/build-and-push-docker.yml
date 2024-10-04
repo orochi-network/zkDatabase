@@ -99,7 +99,7 @@ jobs:
 
               # Build the Docker image with a valid tag
               docker build -t "$DOCKER_REPO:latest" \
-                -f "packages/$SERVICES_BUILD/Dockerfile" \
+                -f "packages/$SERVICE_BUILD/Dockerfile" \
                 --secret id=npm,src=./npm-token \
                 --platform=linux/amd64 .
 
@@ -121,19 +121,18 @@ jobs:
     env:
       version: ${{ github.sha }}
       gitopsbranch: main
+    if: ${{ needs.build.outputs.changed_services != '' }}
     steps:
       - name: Push changes to GitOps
         run: |
           eval $(ssh-agent -s)
-          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add -
+          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add - > /dev/null 2>&1
           mkdir -p ~/.ssh
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
           git config --global user.name "${{ secrets.GITOPS_USER }}"
           git config --global user.email "${{ secrets.GITOPS_EMAIL }}"
           git clone ${{ secrets.GITOPS_REPO }}
-
-
 
           cd test-argo-cd
           git checkout ${{ env.gitopsbranch }}
@@ -152,3 +151,10 @@ jobs:
 
           cd ..
           rm -rf test-argo-cd
+  notify_no_build:
+    runs-on: [self-hosted, linux]
+    needs: build
+    if: ${{ needs.build.outputs.changed_services == '' }}
+    steps:
+      - name: Notify no changes
+        run: echo "No changes detected, skipping GitOps push."
