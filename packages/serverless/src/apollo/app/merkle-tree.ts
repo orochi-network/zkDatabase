@@ -48,7 +48,7 @@ type MerkleProof {
 extend type Query {
   getNode(databaseName: String!, level: Int!, index: String!): String!
   getRoot(databaseName: String!): String!
-  getWitness(databaseName: String!, root: String!, index: String!): [MerkleProof]!
+  getWitness(databaseName: String!, index: String!): [MerkleProof]!
   getWitnessByDocument(databaseName: String!, docId: String!): [MerkleProof]!
 }
 `;
@@ -57,9 +57,7 @@ const getWitness = publicWrapper(
   MerkleTreeIndexRequest,
   async (_root: unknown, args: TMerkleTreeIndexRequest) => {
     const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
-    return withTransaction((session) =>
-      merkleTreeService.getWitness(BigInt(args.index), new Date(), { session })
-    );
+    return merkleTreeService.getWitness(BigInt(args.index), new Date());
   }
 );
 
