@@ -35,23 +35,17 @@ async function createCollection(
     );
   }
 
-  try {
-    await modelDatabase.createCollection(collectionName);
-    await createCollectionMetadata(
-      databaseName,
-      collectionName,
-      schema,
-      permissions,
-      actor,
-      groupName,
-      session
-    );
-    return true;
-  } catch (error) {
-    await modelDatabase.dropCollection(collectionName);
-    logger.error(error);
-    throw error;
-  }
+  await modelDatabase.createCollection(collectionName, session);
+  await createCollectionMetadata(
+    databaseName,
+    collectionName,
+    schema,
+    permissions,
+    actor,
+    groupName,
+    session
+  );
+  return true;
 }
 
 async function readCollectionInfo(

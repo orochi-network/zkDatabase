@@ -1,4 +1,9 @@
-import { ObjectId, Document, ListDatabasesResult } from 'mongodb';
+import {
+  ObjectId,
+  Document,
+  ListDatabasesResult,
+  ClientSession,
+} from 'mongodb';
 import ModelBasic from '../base/basic.js';
 import {
   zkDatabaseConstants,
@@ -53,10 +58,13 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     );
   }
 
-  public async createCollection(collectionName: string): Promise<void> {
+  public async createCollection(
+    collectionName: string,
+    session?: ClientSession
+  ): Promise<void> {
     const isExist = await this.isCollectionExist(collectionName);
     if (!isExist) {
-      await this.db.createCollection(collectionName);
+      await this.db.createCollection(collectionName, { session });
     }
   }
 
