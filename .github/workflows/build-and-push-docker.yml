@@ -21,10 +21,10 @@ jobs:
       - name: Detect last two merge commits and diff
         id: changed
         run: |
-          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 10)
+          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 2)
           MERGE_ARRAY=($LAST_MERGE)
           LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
-          PREV_MERGE_COMMIT=${MERGE_ARRAY[9]}
+          PREV_MERGE_COMMIT=${MERGE_ARRAY[1]}
           
           echo "Last merge commit: $LAST_MERGE_COMMIT"
           echo "Previous merge commit: $PREV_MERGE_COMMIT"
@@ -63,6 +63,9 @@ jobs:
       changed_services: ${{ steps.build.outputs.changed_services }}
     env:
       version: ${{ github.sha }}
+      SERVICES: "serverless broker proof ftp"
+      SERVICES_BUILD:  "serverless broker-service proof-service ftp"
+      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-proof-service orochinetwork/zkdb-ftp"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,26 +81,25 @@ jobs:
 
       - name: Build & Push Docker Images
         id: build
-        run: |
-          SERVICES=("serverless" "broker" "proof" "ftp")
-          DOCKER_REPOS=(
-            "orochinetwork/zkdb-serverless"
-            "orochinetwork/zkdb-broker-service"
-            "orochinetwork/zkdb-proof-service"
-            "orochinetwork/zkdb-ftp"
-          )
+        run: | 
+          IFS=' ' read -r -a DOCKER_REPOS <<< "${{env.DOCKER_REPOS}}"
+          IFS=' ' read -r -a SERVICES_BUILD <<< "${{env.SERVICES_BUILD}}"
+          IFS=' ' read -r -a SERVICES <<< "${{env.SERVICES}}"
           CHANGED_SERVICES=""
-          for i in ${!SERVICES[@]}; do
+          for i in ${!SERVICES_BUILD[@]}; do
+            SERVICE_BUILD="${SERVICES_BUILD[$i]}"
             SERVICE="${SERVICES[$i]}"
+            echo "Service: $SERVICE"
+            echo "Service-Build: $SERVICE_BUILD"
             DOCKER_REPO="${DOCKER_REPOS[$i]}"
             NUM=$((i + 1))
             if [[ -n "$DOCKER_REPO" && "${{ needs.detect-changes.outputs.filtered_packages }}" == *"$NUM"* ]]; then
-              echo "Building and pushing $SERVICE..."
+              echo "Building and pushing $SERVICE_BUILD..."
               echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
 
               # Build the Docker image with a valid tag
               docker build -t "$DOCKER_REPO:latest" \
-                -f "packages/$SERVICE/Dockerfile" \
+                -f "packages/$SERVICES_BUILD/Dockerfile" \
                 --secret id=npm,src=./npm-token \
                 --platform=linux/amd64 .
 
