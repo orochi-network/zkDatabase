@@ -18,12 +18,20 @@ export type TMerkleProof = {
   isLeft: boolean;
 };
 
-export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
+export type TMerkleNode = {
+  nodeId: ObjectId;
+  timestamp: Date;
+  hash: string;
+  level: number;
+  index: number;
+};
+
+export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private static instances = new Map<string, ModelMerkleTree>();
 
-  private zeroes!: Field[];
+  private zeroes: Field[] = [];
 
-  private height!: number;
+  private _height: number = 0;
 
   private constructor(databaseName: string) {
     super(databaseName, zkDatabaseConstants.databaseCollections.merkleTree, {
@@ -55,14 +63,14 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
       return modelMerkleTree;
     }
 
-    throw Error(`${databaseName} setting has not been found.`)
+    throw Error(`${databaseName} setting has not been found.`);
   }
 
-  public setHeight(newHeight: number): void {
-    if (this.height) {
+  private setHeight(newHeight: number): void {
+    if (this._height) {
       return;
     }
-    this.height = newHeight;
+    this._height = newHeight;
     this.generateZeroNodes(newHeight);
   }
 
@@ -76,7 +84,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
   }
 
   public async getRoot(timestamp: Date): Promise<Field> {
-    const root = await this.getNode(this.height - 1, 0n, timestamp);
+    const root = await this.getNode(this._height - 1, 0n, timestamp);
     return Field(root);
   }
 
@@ -87,14 +95,14 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     options?: FindOptions
   ): Promise<void> {
     const witnesses = await this.getWitness(index, timestamp, options);
-    const ExtendedWitnessClass = createExtendedMerkleWitness(this.height);
+    const ExtendedWitnessClass = createExtendedMerkleWitness(this._height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
 
     let currIndex = BigInt(index);
     const inserts = [];
 
-    for (let level = 0; level < this.height; level += 1) {
+    for (let level = 0; level < this._height; level += 1) {
       const dataToInsert = {
         nodeId: ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex),
         timestamp,
@@ -134,7 +142,7 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     let currIndex = BigInt(index);
 
     const witnessPromises: Promise<TMerkleProof>[] = [];
-    for (let level = 0; level < this.height - 1; level += 1) {
+    for (let level = 0; level < this._height - 1; level += 1) {
       const isLeft = currIndex % 2n === 0n;
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
@@ -186,6 +194,75 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     }
   }
 
+  public async getNodesByLevel(
+    level: number,
+    timestamp: Date,
+    options?: FindOptions
+  ): Promise<TMerkleNode[]> {
+    const query = {
+      level,
+      timestamp: { $lte: timestamp },
+    };
+
+    const pipeline: any[] = [
+      { $match: query },
+      { $sort: { index: 1, timestamp: -1 } },
+      {
+        $group: {
+          _id: '$index',
+          node: { $first: '$$ROOT' },
+        },
+      },
+      { $replaceRoot: { newRoot: '$node' } },
+      { $sort: { index: 1 } },
+    ];
+
+    if (options?.projection) {
+      pipeline.push({ $project: options.projection });
+    }
+
+    if (options?.limit) {
+      pipeline.push({ $limit: options.limit });
+    }
+
+    const latestNodes = await this.collection
+      .aggregate<TMerkleNode>(pipeline)
+      .toArray();
+
+    return latestNodes;
+  }
+
+  public async countLatestNodesByLevel(
+    level: number,
+    timestamp: Date
+  ): Promise<number> {
+    const query = {
+      level,
+      timestamp: { $lte: timestamp },
+    };
+
+    const latestNodesAggregation = await this.collection
+      .aggregate([
+        { $match: query },
+        { $sort: { index: 1, timestamp: -1 } },
+        {
+          $group: {
+            _id: '$index',
+            latestTimestamp: { $first: '$timestamp' },
+          },
+        },
+        { $count: 'totalLatestNodes' },
+      ])
+      .toArray();
+
+    const totalLatestNodes =
+      latestNodesAggregation.length > 0
+        ? latestNodesAggregation[0].totalLatestNodes
+        : 0;
+
+    return totalLatestNodes;
+  }
+
   private static encodeLevelAndIndexToObjectId(
     level: number,
     index: bigint
@@ -195,8 +272,12 @@ export class ModelMerkleTree extends ModelGeneral<MerkleProof> {
     return new ObjectId(hash.digest('hex').substring(0, 24));
   }
 
+  public get height(): number {
+    return this._height;
+  }  
+
   public get leafCount() {
-    return 2n ** BigInt(this.height - 1);
+    return 2n ** BigInt(this._height - 1);
   }
 }
 

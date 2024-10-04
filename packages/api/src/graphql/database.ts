@@ -50,8 +50,8 @@ const DATABASE_STATUS = gql`
 const DATABASE_LIST = gql`
   query GetDbList($query: JSON, $pagination: PaginationInput) {
     dbList(query: $query, pagination: $pagination) {
-      totalSize: Int!,
-      offset: Int!
+      totalSize
+      offset
       data {
         databaseName
         databaseOwner

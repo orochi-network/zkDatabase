@@ -1,10 +1,15 @@
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { getWitnessByDocumentId } from '../../domain/use-case/merkle-tree.js';
+import {
+  getMerkleNodesByLevel,
+  getWitnessByDocumentId,
+  getMerkleTreeInfo as getMerkleTreeInfoDomain,
+} from '../../domain/use-case/merkle-tree.js';
 import publicWrapper from '../validation.js';
-import { databaseName, indexNumber, objectId } from './common.js';
+import { databaseName, indexNumber, objectId, pagination } from './common.js';
 import { TDatabaseRequest } from './database.js';
+import { Pagination } from '../types/pagination.js';
 
 export type TMerkleTreeIndexRequest = TDatabaseRequest & {
   index: bigint;
@@ -17,6 +22,22 @@ export type TMerkleTreeWitnessByDocumentRequest = TDatabaseRequest & {
 export type TMerkleTreeGetNodeRequest = TMerkleTreeIndexRequest & {
   level: number;
 };
+
+export type TMerkleTreeGetNodesByLevelRequest = TDatabaseRequest & {
+  level: number;
+  pagination: Pagination;
+};
+
+export const MerkleTreeGetNodesByLevelRequest =
+  Joi.object<TMerkleTreeGetNodesByLevelRequest>({
+    databaseName,
+    level: Joi.number().required(),
+    pagination,
+  });
+
+export const MerkleTreeInfoRequest = Joi.object<TDatabaseRequest>({
+  databaseName,
+});
 
 export const MerkleTreeIndexRequest = Joi.object<TMerkleTreeIndexRequest>({
   databaseName,
@@ -45,8 +66,27 @@ type MerkleProof {
   sibling: String!
 }
 
+type MerkleNode {
+  index: Int!,
+  level: Int!,
+  hash: String!
+}
+
+type MerkleNodePaginationOutput {
+  data: [MerkleNode]!
+  totalSize: Int!
+  offset: Int!
+}
+
+type MerkleTreeInfo {
+  merkleRoot: String!
+  merkleHeight: Int!
+}
+
 extend type Query {
   getNode(databaseName: String!, level: Int!, index: String!): String!
+  getNodesByLevel(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
+  getMerkleTreeInfo(databaseName: String!): MerkleTreeInfo!
   getRoot(databaseName: String!): String!
   getWitness(databaseName: String!, index: String!): [MerkleProof]!
   getWitnessByDocument(databaseName: String!, docId: String!): [MerkleProof]!
@@ -80,6 +120,18 @@ const getNode = publicWrapper(
   }
 );
 
+const getNodesByLevel = publicWrapper(
+  MerkleTreeGetNodesByLevelRequest,
+  async (_root: unknown, args: TMerkleTreeGetNodesByLevelRequest) =>
+    getMerkleNodesByLevel(args.databaseName, args.level, args.pagination)
+);
+
+const getMerkleTreeInfo = publicWrapper(
+  MerkleTreeInfoRequest,
+  async (_root: unknown, args: TDatabaseRequest) =>
+    getMerkleTreeInfoDomain(args.databaseName)
+);
+
 const getRoot = publicWrapper(
   Joi.object({
     databaseName,
@@ -97,6 +149,8 @@ type TMerkleTreeResolver = {
     getNode: typeof getNode;
     getWitnessByDocument: typeof getWitnessByDocument;
     getRoot: typeof getRoot;
+    getNodesByLevel: typeof getNodesByLevel;
+    getMerkleTreeInfo: typeof getMerkleTreeInfo;
   };
 };
 
@@ -107,5 +161,7 @@ export const resolversMerkleTree: TMerkleTreeResolver = {
     getNode,
     getWitnessByDocument,
     getRoot,
+    getNodesByLevel,
+    getMerkleTreeInfo,
   },
 };

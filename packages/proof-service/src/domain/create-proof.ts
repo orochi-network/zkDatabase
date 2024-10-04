@@ -55,8 +55,7 @@ export async function createProof(taskId: string) {
       throw new Error('Merkle Tree height is null');
     }
 
-    const merkleTree = ModelMerkleTree.getInstance(task.database);
-    merkleTree.setHeight(merkleHeight);
+    const merkleTree = await ModelMerkleTree.load(task.database);
 
     if (!CircuitFactory.contains(circuitName)) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
