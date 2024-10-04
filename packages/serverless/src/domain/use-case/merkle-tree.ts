@@ -20,7 +20,7 @@ export async function getWitnessByDocumentId(
     throw Error(`Metadata has not been found`);
   }
 
-  const merkleTree = ModelMerkleTree.getInstance(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName);
 
   return merkleTree.getWitness(BigInt(docMetadata.merkleIndex), new Date(), {
     session,

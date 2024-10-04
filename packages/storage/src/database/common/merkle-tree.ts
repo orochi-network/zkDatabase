@@ -29,9 +29,9 @@ export type TMerkleNode = {
 export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private static instances = new Map<string, ModelMerkleTree>();
 
-  private zeroes!: Field[];
+  private zeroes: Field[] = [];
 
-  private _height!: number;
+  private _height: number = 0;
 
   private constructor(databaseName: string) {
     super(databaseName, zkDatabaseConstants.databaseCollections.merkleTree, {
@@ -66,7 +66,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     throw Error(`${databaseName} setting has not been found.`);
   }
 
-  public setHeight(newHeight: number): void {
+  private setHeight(newHeight: number): void {
     if (this._height) {
       return;
     }
