@@ -6,6 +6,7 @@ import {
   doesIndexExist,
   dropIndex,
   listIndexes,
+  listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest, CollectionRequest } from './collection.js';
@@ -40,13 +41,29 @@ export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   indexes,
 });
 
+export type CollectionIndex = {
+  name: string;
+  size: number;
+  accesses: number;
+  since: Date;
+};
+
 export const typeDefsCollectionIndex = `#graphql
   scalar JSON
+  scalar Date
   type Query
   type Mutation
 
+  type CollectionIndex {
+    name: String!
+    size: Int!
+    accesses: Int!
+    since: Date!
+  }
+
   extend type Query {
     indexList(databaseName: String!, collectionName: String!): [String]!
+    indexListInfo(databaseName: String!, collectionName: String!): [CollectionIndex]!
     indexExist(
       databaseName: String!
       collectionName: String!
@@ -75,6 +92,12 @@ const indexList = authorizeWrapper(
     withTransaction((session) =>
       listIndexes(args.databaseName, ctx.userName, args.collectionName, session)
     )
+);
+
+const indexListInfo = authorizeWrapper(
+  IndexListRequest,
+  async (_root: unknown, args: TIndexListRequest, ctx) =>
+    listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
 );
 
 const indexExist = authorizeWrapper(
@@ -119,6 +142,7 @@ type TCollectionIndexResolvers = {
   Query: {
     indexList: typeof indexList;
     indexExist: typeof indexExist;
+    indexListInfo: typeof indexListInfo;
   };
   Mutation: {
     indexCreate: typeof indexCreate;
@@ -131,6 +155,7 @@ export const resolversCollectionIndex: TCollectionIndexResolvers = {
   Query: {
     indexList,
     indexExist,
+    indexListInfo,
   },
   Mutation: {
     indexCreate,
