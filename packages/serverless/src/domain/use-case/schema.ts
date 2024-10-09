@@ -46,7 +46,7 @@ export async function validateDocumentSchema(
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
-    throw new Error('Schema not found');
+    throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
   const schemaFieldNames = new Set(
@@ -130,7 +130,7 @@ export async function buildSchema(
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
-    throw new Error('Schema not found');
+    throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
   const encodedDocument: SchemaEncoded = [];
@@ -138,7 +138,7 @@ export async function buildSchema(
   const indexes: string[] = [];
 
   if (!schema) {
-    throw new Error('Schema not found');
+    throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
   schema.fields.forEach((fieldName) => {
@@ -171,7 +171,7 @@ export async function getSchemaDefinition(
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (!schema) {
-    throw new Error('Schema not found');
+    throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
   return schema.fields.map((f) => schema[f]);

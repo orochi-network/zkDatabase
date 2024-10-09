@@ -44,7 +44,7 @@ async function run() {
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, "")
   await zkdb
     .database(DB_NAME)
-    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, {
+    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt,[],{
       permissionOwner: AccessPermissions.fullAdminPermissions,
       permissionGroup: AccessPermissions.fullAccessPermissions,
       permissionOther: AccessPermissions.noPermissions,

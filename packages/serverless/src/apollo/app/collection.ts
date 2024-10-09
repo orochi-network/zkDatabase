@@ -6,6 +6,7 @@ import {
   collectionName,
   permissionDetail,
   groupName,
+  indexes,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
@@ -13,6 +14,7 @@ import { PermissionsData } from '../types/permission.js';
 import { SchemaData } from '../types/schema.js';
 import {
   createCollection,
+  createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
@@ -24,7 +26,6 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean(),
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -36,6 +37,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
+  indexes: string[];
   permissions: PermissionsData;
 };
 
@@ -49,6 +51,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   databaseName,
   groupName,
   schema: schemaFields,
+  indexes: Joi.array().items(Joi.string().optional()),
   permissions: permissionDetail,
 });
 
@@ -68,6 +71,7 @@ extend type Mutation {
     collectionName: String!,
     groupName: String!,
     schema: [SchemaFieldInput!]!, 
+    indexes: [String],
     permissions: PermissionDetailInput
   ): Boolean
 }
@@ -97,7 +101,7 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    return withTransaction((session) =>
+    const createCollectionResult = await withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -108,6 +112,17 @@ const collectionCreate = authorizeWrapper(
         session
       )
     );
+
+    if (createCollectionResult) {
+      await createIndex(
+        args.databaseName,
+        ctx.userName,
+        args.collectionName,
+        args.indexes
+      );
+    }
+
+    return createCollectionResult;
   }
 );
 

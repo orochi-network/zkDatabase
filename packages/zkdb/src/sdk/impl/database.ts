@@ -35,6 +35,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     collectionName: string,
     groupName: string,
     type: T,
+    indexes: string[],
     permissions: Permissions
   ): Promise<boolean> {
     const result = await this.apiClient.collection.create({
@@ -42,6 +43,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
       collectionName: collectionName,
       groupName,
       schema: type.getSchema(),
+      indexes,
       permissions,
     });
 

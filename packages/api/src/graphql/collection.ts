@@ -13,13 +13,15 @@ const COLLECTION_CREATE = gql`
     $collectionName: String!
     $groupName: String!
     $schema: [SchemaFieldInput!]!
+    $indexes: [String],
     $permissions: PermissionDetailInput
   ) {
     collectionCreate(
       databaseName: $databaseName
       collectionName: $collectionName
       groupName: $groupName
-      schema: $schema
+      schema: $schema,
+      indexes: $indexes,
       permissions: $permissions
     )
   }
@@ -89,6 +91,7 @@ export type TCollectionExistResponse = { collectionExist: boolean };
 export type TCollectionCreateRequest = TCollectionExistRequest & {
   groupName: string;
   schema: TSchema;
+  indexes: string[],
   permissions: TPermissions;
 };
 

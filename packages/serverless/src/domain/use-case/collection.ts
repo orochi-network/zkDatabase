@@ -3,7 +3,6 @@ import { Fill } from '@orochi-network/queue';
 import { ClientSession } from 'mongodb';
 import { DocumentSchemaInput } from '../types/schema.js';
 import { Permissions } from '../types/permission.js';
-import logger from '../../helper/logger.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isGroupExist } from './group.js';
 import { hasCollectionPermission } from './permission.js';
@@ -11,6 +10,31 @@ import { Collection } from '../types/collection.js';
 import { getSchemaDefinition } from './schema.js';
 import { readMetadata } from './metadata.js';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
+
+async function createIndex(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  indexNames: string[]
+): Promise<boolean> {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'system'
+    )
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(databaseName, collectionName).index(
+      indexNames || []
+    );
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
+  );
+}
 
 async function createCollection(
   databaseName: string,
@@ -21,6 +45,7 @@ async function createCollection(
   permissions: Permissions,
   session?: ClientSession
 ): Promise<boolean> {
+
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelDatabase.isCollectionExist(collectionName)) {
@@ -36,6 +61,7 @@ async function createCollection(
   }
 
   await modelDatabase.createCollection(collectionName, session);
+
   await createCollectionMetadata(
     databaseName,
     collectionName,
@@ -136,26 +162,6 @@ async function doesIndexExist(
 
   throw Error(
     `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
-  );
-}
-
-async function createIndex(
-  databaseName: string,
-  actor: string,
-  collectionName: string,
-  indexNames: string[]
-): Promise<boolean> {
-  if (
-    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
-  ) {
-    // TODO: Should we check if index fields exist for a collection
-    return ModelCollection.getInstance(databaseName, collectionName).index(
-      indexNames || []
-    );
-  }
-
-  throw Error(
-    `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
   );
 }
 

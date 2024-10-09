@@ -45,12 +45,12 @@ async function run() {
 
   const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
+  // const tx = await zkdb
+  //   .fromBlockchain()
+  //   .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
-  console.log('deployment hash', tx.hash);
-  await tx.wait();
+  // console.log('deployment hash', tx.hash);
+  // await tx.wait();
 
   await zkdb
     .fromGlobal()
@@ -60,7 +60,7 @@ async function run() {
 
   await zkdb
     .database(DB_NAME)
-    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, {
+    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, [],{
       permissionOwner: AccessPermissions.fullAdminPermissions,
       permissionGroup: AccessPermissions.fullAccessPermissions,
       permissionOther: AccessPermissions.noPermissions,

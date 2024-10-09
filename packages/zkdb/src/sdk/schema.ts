@@ -57,7 +57,6 @@ export type ProvableTypeString = keyof typeof ProvableTypeMap;
 export type SchemaFieldDefinition = {
   name: string;
   kind: ProvableTypeString;
-  indexed: boolean;
 };
 
 export type SchemaDefinition = SchemaFieldDefinition[];
@@ -78,8 +77,6 @@ export function toInnerStructure<T extends SchemaDefinition>(
   return result as ProvableMapped<T>;
 }
 
-type Indexes<T> = Array<keyof T>;
-
 export type DocumentEncoded = {
   name: string;
   kind: ProvableTypeString;
@@ -93,8 +90,7 @@ export type SchemaType<
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
-    type: A,
-    indexes: Indexes<A> = []
+    type: A
   ): SchemaType<A, T> {
     class Document extends Struct(type) {
       private static schemaEntries: SchemaFieldDefinition[] = Object.entries(
@@ -103,15 +99,13 @@ export class Schema {
         return {
           name,
           kind: (kind as any).name.replace(/^_/, ''),
-          indexed: indexes.includes(name as keyof A),
         };
       });
 
       public static getSchema(): SchemaDefinition {
-        return Document.schemaEntries.map(({ name, kind, indexed }) => ({
+        return Document.schemaEntries.map(({ name, kind }) => ({
           name,
-          kind,
-          indexed,
+          kind
         }));
       }
 
