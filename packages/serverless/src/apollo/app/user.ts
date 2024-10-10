@@ -252,8 +252,6 @@ const userGetEcdsaChallenge = async (
 const userSignIn = publicWrapper(
   SignInRequest,
   async (_root: unknown, args: TSignInRequest, context) => {
-    console.log('🚀 ~ context.req.session:', context.req.session);
-
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
     }
