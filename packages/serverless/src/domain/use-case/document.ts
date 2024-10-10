@@ -6,37 +6,37 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { ClientSession, WithId } from 'mongodb';
-import { WithProofStatus } from '../types/proof.js';
+import {
+  ZKDATABASE_GROUP_SYSTEM,
+  ZKDATABASE_USER_SYSTEM,
+} from '../../common/const.js';
 import {
   PermissionBinary,
   setPartialIntoPermission,
 } from '../../common/permission.js';
+import { getCurrentTime } from '../../helper/common.js';
 import ModelDocument, {
   DocumentRecord,
 } from '../../model/abstract/document.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { Document, DocumentFields } from '../types/document.js';
+import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
+import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { Permissions } from '../types/permission.js';
+import { WithProofStatus } from '../types/proof.js';
+import { FilterCriteria, parseQuery } from '../utils/document.js';
+import { isDatabaseOwner } from './database.js';
+import { getUsersGroup } from './group.js';
 import {
-  hasDocumentPermission,
   hasCollectionPermission,
+  hasDocumentPermission,
 } from './permission.js';
 import {
   proveCreateDocument,
   proveDeleteDocument,
   proveUpdateDocument,
 } from './prover.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import {
-  ZKDATABASE_GROUP_SYSTEM,
-  ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { getUsersGroup } from './group.js';
-import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { isDatabaseOwner } from './database.js';
-import { FilterCriteria, parseQuery } from '../utils/document.js';
-import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
 
 export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
@@ -638,10 +638,10 @@ async function searchDocuments(
 }
 
 export {
+  createDocument,
+  deleteDocument,
   findDocumentsWithMetadata,
   readDocument,
-  createDocument,
-  updateDocument,
-  deleteDocument,
   searchDocuments,
+  updateDocument,
 };

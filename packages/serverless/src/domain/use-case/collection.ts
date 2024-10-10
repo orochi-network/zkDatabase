@@ -1,16 +1,16 @@
-import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { Fill } from '@orochi-network/queue';
+import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DocumentSchemaInput } from '../types/schema.js';
-import { Permissions } from '../types/permission.js';
-import { createCollectionMetadata } from './collection-metadata.js';
-import { isGroupExist } from './group.js';
-import { hasCollectionPermission } from './permission.js';
-import { Collection } from '../types/collection.js';
-import { getSchemaDefinition } from './schema.js';
-import { readMetadata } from './metadata.js';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
 import { CollectionIndex } from '../types/collection-index.js';
+import { Collection } from '../types/collection.js';
+import { Permissions } from '../types/permission.js';
+import { DocumentSchemaInput } from '../types/schema.js';
+import { createCollectionMetadata } from './collection-metadata.js';
+import { isGroupExist } from './group.js';
+import { readMetadata } from './metadata.js';
+import { hasCollectionPermission } from './permission.js';
+import { getSchemaDefinition } from './schema.js';
 
 async function createIndex(
   databaseName: string,
@@ -19,12 +19,7 @@ async function createIndex(
   indexNames: string[]
 ): Promise<boolean> {
   if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'system'
-    )
+    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
     // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(databaseName, collectionName).index(
@@ -46,7 +41,6 @@ async function createCollection(
   permissions: Permissions,
   session?: ClientSession
 ): Promise<boolean> {
-
   const modelDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelDatabase.isCollectionExist(collectionName)) {
@@ -139,7 +133,6 @@ async function listIndexes(
     `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
   );
 }
-
 export async function listIndexesInfo(
   databaseName: string,
   collectionName: string,
@@ -168,26 +161,27 @@ export async function listIndexesInfo(
     });
 
     const indexes = await modelCollection.collection.indexes();
-
+    await modelCollection.collection.indexInformation();
     const validIndexes = indexes.filter(
       (indexDef): indexDef is typeof indexDef & { name: string } =>
         indexDef.name !== undefined
     );
 
     const indexList: CollectionIndex[] = validIndexes.map((indexDef) => {
-      const { name } = indexDef;
+      const { name, key } = indexDef;
       const size = indexSizes[name] || 0;
       const usageStats = indexUsageMap[name] || {};
       const accesses = usageStats.accesses?.ops || 0;
       const since = usageStats.accesses?.since
         ? new Date(usageStats.accesses.since)
         : new Date(0);
-
+      const properties = Object.keys(key).length > 1 ? 'compound' : 'unique';
       return {
         name,
         size,
         accesses,
         since,
+        properties,
       };
     });
 
@@ -265,9 +259,9 @@ export async function collectionExist(
 export {
   createCollection,
   createIndex,
-  dropIndex,
-  listIndexes,
   doesIndexExist,
+  dropIndex,
   listCollections,
+  listIndexes,
   readCollectionInfo,
 };
