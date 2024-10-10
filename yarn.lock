@@ -4217,16 +4217,6 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zkdb/api@file:packages/api":
-  version "1.1.5"
-  dependencies:
-    "@apollo/client" "^3.10.6"
-    "@types/node" "^22.6.1"
-    graphql "^16.9.0"
-    react "^18.3.1"
-    react-dom "^18.3.1"
-    typescript "^5.6.2"
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -15380,16 +15370,6 @@ zen-observable@0.8.15:
   version "0.8.15"
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.15.tgz#96415c512d8e3ffd920afd3889604e30b9eaac15"
   integrity sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==
-
-"zkdb@file:packages/zkdb":
-  version "1.2.1"
-  dependencies:
-    "@zkdb/api" "file:packages/api"
-    "@zkdb/smart-contract" "^1.1.0"
-    graphql "^16.9.0"
-    graphql-request "^7.1.0"
-    jest-worker "^29.7.0"
-    zkdb "file:packages/zkdb"
 
 zod@^3.17.3, zod@^3.22.2, zod@^3.23.8:
   version "3.23.8"
