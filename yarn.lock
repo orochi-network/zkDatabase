@@ -4217,16 +4217,6 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zkdb/api@/Users/transang/Desktop/SangMain/work/orochi/work/orochi/zkDatabase/packages/api":
-  version "1.1.5"
-  dependencies:
-    "@apollo/client" "^3.10.6"
-    "@types/node" "^22.6.1"
-    graphql "^16.9.0"
-    react "^18.3.1"
-    react-dom "^18.3.1"
-    typescript "^5.6.2"
-
 "@zkdb/api@file:packages/api":
   version "1.1.5"
   dependencies:
@@ -4236,12 +4226,6 @@
     react "^18.3.1"
     react-dom "^18.3.1"
     typescript "^5.6.2"
-
-"@zkdb/storage@file:packages/storage":
-  version "1.1.0"
-  dependencies:
-    "@orochi-network/framework" "^2.3.19"
-    mongodb "^6.9.0"
 
 abbrev@1:
   version "1.1.1"
