@@ -242,7 +242,6 @@ const userGetEcdsaChallenge = async (
   const { req } = context;
   // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
-  console.log('🚀 ~ req.session:', req.session);
 
   req.session.save();
 
