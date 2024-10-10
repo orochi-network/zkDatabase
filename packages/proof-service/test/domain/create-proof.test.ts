@@ -55,4 +55,3 @@ describe('create proof', () => {
     await dropDatabases();
   });
 });
- 

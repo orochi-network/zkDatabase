@@ -3,14 +3,14 @@ export class Context<T = any> {
 
   #contextCallback: () => T | null = () => null;
 
-  getInstance<T>(instanceName: string = "default"): Context<T> {
+  public static getInstance<T>(instanceName: string = "default"): Context<T> {
     if (!Context.#instances.has(instanceName)) {
       Context.#instances.set(instanceName, new Context());
     }
     return Context.#instances.get(instanceName) as Context<T>;
   }
 
-  setContextCallback(fn: () => T | null): void {
+  public setContextCallback(fn: () => T | null): void {
     this.#contextCallback = fn;
   }
 

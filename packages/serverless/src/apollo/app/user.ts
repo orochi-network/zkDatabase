@@ -170,7 +170,7 @@ export const typeDefsUser = gql`
   type User {
     userName: String!
     email: String!
-    publicKey: String! 
+    publicKey: String!
   }
 
   input FindUser {
@@ -187,9 +187,12 @@ export const typeDefsUser = gql`
 
   extend type Query {
     userSignInData: SignInResponse
-    # TODO: Replace JSON 
+    # TODO: Replace JSON
     findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
-    searchUser(query: FindUser!, pagination: PaginationInput): UserPaginationOutput!
+    searchUser(
+      query: FindUser!
+      pagination: PaginationInput
+    ): UserPaginationOutput!
   }
 
   extend type Mutation {
@@ -239,6 +242,7 @@ const userGetEcdsaChallenge = async (
   const { req } = context;
   // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
+
   req.session.save();
 
   return req.session.ecdsaChallenge;
