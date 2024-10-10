@@ -11,6 +11,7 @@ import { Collection } from '../types/collection.js';
 import { getSchemaDefinition } from './schema.js';
 import { readMetadata } from './metadata.js';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
+import { CollectionIndex } from '../types/collection-index.js';
 
 async function createCollection(
   databaseName: string,
@@ -106,6 +107,65 @@ async function listIndexes(
       databaseName,
       collectionName
     ).listIndexes();
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
+  );
+}
+
+export async function listIndexesInfo(
+  databaseName: string,
+  collectionName: string,
+  actor: string
+): Promise<CollectionIndex[]> {
+  if (
+    await hasCollectionPermission(databaseName, collectionName, actor, 'read')
+  ) {
+    const modelCollection = ModelCollection.getInstance(
+      databaseName,
+      collectionName
+    );
+
+    const stats = await modelCollection.info();
+    const indexSizes = stats.indexSizes || {};
+
+    const indexUsageStats = await modelCollection.collection
+      .aggregate([{ $indexStats: {} }])
+      .toArray();
+
+    const indexUsageMap: { [key: string]: any } = {};
+    indexUsageStats.forEach((stat) => {
+      if (stat.name !== undefined) {
+        indexUsageMap[stat.name] = stat;
+      }
+    });
+
+    const indexes = await modelCollection.collection.indexes();
+
+    const validIndexes = indexes.filter(
+      (indexDef): indexDef is typeof indexDef & { name: string } =>
+        indexDef.name !== undefined
+    );
+
+    const indexList: CollectionIndex[] = validIndexes.map((indexDef) => {
+      const { name } = indexDef;
+      const size = indexSizes[name] || 0;
+      const usageStats = indexUsageMap[name] || {};
+      const accesses = usageStats.accesses?.ops || 0;
+      const since = usageStats.accesses?.since
+        ? new Date(usageStats.accesses.since)
+        : new Date(0);
+
+      return {
+        name,
+        size,
+        accesses,
+        since,
+      };
+    });
+
+    return indexList;
   }
 
   throw Error(

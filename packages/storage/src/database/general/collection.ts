@@ -92,6 +92,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   public async size(): Promise<number> {
     return (await this.db.command({ collStats: this.collectionName })).size;
   }
+
+  public async info() {
+    return this.db.command({ collStats: this.collectionName });
+  }
 }
 
 export default ModelCollection;

@@ -42,7 +42,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     });
   }
 
-  public static getInstance(databaseName: string): ModelMerkleTree {
+  private static getInstance(databaseName: string): ModelMerkleTree {
     if (!ModelMerkleTree.instances.has(databaseName)) {
       ModelMerkleTree.instances.set(
         databaseName,
