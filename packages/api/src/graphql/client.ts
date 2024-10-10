@@ -1,22 +1,22 @@
 import {
   ApolloClient,
-  InMemoryCache,
-  HttpLink,
   ApolloLink,
+  HttpLink,
+  InMemoryCache,
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
 import { Context } from "@authentication";
-import { database } from "./database";
 import { collection } from "./collection";
 import { collectionIndex } from "./collection-index";
+import { database } from "./database";
 import { document } from "./document";
-import { user } from "./user";
 import { group } from "./group";
+import { merkle } from "./merkle";
 import { ownership } from "./ownership";
 import { permission } from "./permission";
-import { merkle } from "./merkle";
 import { proof } from "./proof";
+import { user } from "./user";
 
 export interface IApiClient<T = any> {
   api: ApiClient<T>;
@@ -36,7 +36,7 @@ export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   context: Context<T> = new Context<T>();
-
+  cookies: Context<string> = new Context<string>();
   public setContext(fn: () => T | null) {
     this.context.setContextCallback(fn);
   }
@@ -51,27 +51,47 @@ export class ApiClient<T = any> {
 
   constructor(uri: string) {
     const context = new Context<T>();
+
     const removeTypenameLink = removeTypenameFromVariables();
     this.context = context;
-    const httpLink = new HttpLink({ uri, credentials: "include" });
-    const authLink = setContext(async (_, { headers }) => {
-      const token = this.context.getContext();
-      return token
-        ? {
-            headers: {
-              ...headers,
-              authorization: `Bearer ${token}`,
-            },
+
+    const httpLink = new HttpLink({
+      uri,
+      credentials: "include",
+      fetch: async (
+        uri: string | URL | globalThis.Request,
+        options?: RequestInit
+      ) => {
+        return fetch(uri, {
+          ...options,
+          credentials: "include", // This ensures cookies are sent with the request
+        }).then((response: Response) => {
+          const cookies = response.headers.get("set-cookie");
+          if (cookies) {
+            // Set cookies to store connect.sid
+            this.cookies.setContextCallback(() => cookies);
           }
-        : { headers };
+          return response;
+        });
+      },
     });
+
+    const authLink = setContext(async (_, headers) => {
+      const token = context.getContext();
+      return {
+        headers: {
+          ...headers,
+          cookie: this.cookies.getContext(),
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
+      };
+    });
+
     this.#client = new ApolloClient({
       link: ApolloLink.from([removeTypenameLink, authLink, httpLink]),
-      credentials: "include",
       cache: new InMemoryCache({ addTypename: false }),
     });
   }
-
   public static newInstance<T = any>(url: string): IApiClient<T> {
     const api = new ApiClient<T>(url);
     return {

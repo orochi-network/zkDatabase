@@ -55,12 +55,9 @@ export class Authenticator {
   }
 
   public async signIn() {
-    const proof = await this.signer.signMessage(
-      (await this.user.ecdsa(undefined)).unwrap()
-    );
-
+    const ecdsa = (await this.user.ecdsa(undefined)).unwrap();
+    const proof = await this.signer.signMessage(ecdsa);
     const userData = (await this.user.signIn({ proof })).unwrap();
-
     this.#storage.set(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
 
     this.#storage.set(

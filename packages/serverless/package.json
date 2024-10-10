@@ -78,7 +78,7 @@
     "@apollo/server": "^4.11.0",
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/queue": "^0.1.11",
-    "@zkdb/storage": "^1.1.0",
+    "@zkdb/storage": "/Users/transang/Desktop/SangMain/work/orochi/work/orochi/zkDatabase/packages/storage",
     "axios": "^1.5.0",
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",

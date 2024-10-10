@@ -100,6 +100,8 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => {
+        console.log('🚀 ~ context: ~ req:', req.cookies);
+
         if (
           typeof req.headers.authorization === 'string' &&
           req.headers.authorization.startsWith('Bearer ')
