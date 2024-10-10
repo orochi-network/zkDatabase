@@ -3,4 +3,5 @@ export type CollectionIndex = {
   size: number;
   accesses: number;
   since: Date;
+  properties: 'compound' | 'unique';
 };

@@ -45,6 +45,7 @@ export type CollectionIndex = {
   size: number;
   accesses: number;
   since: Date;
+  properties: 'compound' | 'unique';
 };
 
 export const typeDefsCollectionIndex = `#graphql
@@ -58,6 +59,7 @@ export const typeDefsCollectionIndex = `#graphql
     size: Int!
     accesses: Int!
     since: Date!
+    properties: String!
   }
 
   extend type Query {
