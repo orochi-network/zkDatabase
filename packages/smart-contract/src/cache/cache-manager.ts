@@ -1,7 +1,7 @@
 import { Cache } from 'o1js';
-import { CacheType } from '../types/cache-type.js';
+import { CacheType } from '@types';
 import { join } from 'path';
-import { downloadCache } from './cache-downloader.js';
+import { downloadCache } from './cache-downloader';
 
 export const DOWNLOADS = 'downloads';
 

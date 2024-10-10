@@ -1,4 +1,3 @@
-import { ModelCollection } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { DocumentSchemaInput } from '../types/schema.js';
 import { getCurrentTime } from '../../helper/common.js';
@@ -40,25 +39,15 @@ export async function createCollectionMetadata(
     createdAt: getCurrentTime(),
     updatedAt: getCurrentTime(),
   };
-  const indexKeys = [];
+
   for (let i = 0; i < schema.length; i += 1) {
-    const { name, kind, indexed } = schema[i];
+    const { name, kind } = schema[i];
     schemaDef.fields.push(name);
     schemaDef[name] = {
       order: i,
       name,
       kind,
-      indexed,
     };
-    if (indexed) {
-      indexKeys.push(`${name}.name`);
-    }
-  }
-  // Create index and collection
-  if (indexKeys.length > 0) {
-    await new ModelCollection(databaseName, collectionName).index(indexKeys, {
-      session,
-    });
   }
 
   await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef, {

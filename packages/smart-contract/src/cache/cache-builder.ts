@@ -1,8 +1,7 @@
 import { Cache } from 'o1js';
 import { join } from 'path';
-import { RollUpProgram } from '../proof/proof-program.js';
-import { CacheType } from '../types/cache-type.js';
-import { getZkDbSmartContractClass } from '../contracts/zkdb-app.js';
+import { getZkDbSmartContractClass } from '@contracts';
+import { RollUpProgram } from '@proof';
 
 export async function buildCircuitCache(
   merkleHeight: number,

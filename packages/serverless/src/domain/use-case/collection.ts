@@ -12,6 +12,26 @@ import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
 
+async function createIndex(
+  databaseName: string,
+  actor: string,
+  collectionName: string,
+  indexNames: string[]
+): Promise<boolean> {
+  if (
+    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
+  ) {
+    // TODO: Should we check if index fields exist for a collection
+    return ModelCollection.getInstance(databaseName, collectionName).index(
+      indexNames || []
+    );
+  }
+
+  throw Error(
+    `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
+  );
+}
+
 async function createCollection(
   databaseName: string,
   collectionName: string,
@@ -36,6 +56,7 @@ async function createCollection(
   }
 
   await modelDatabase.createCollection(collectionName, session);
+
   await createCollectionMetadata(
     databaseName,
     collectionName,
@@ -195,42 +216,6 @@ async function doesIndexExist(
 
   throw Error(
     `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
-  );
-}
-
-async function createIndex(
-  databaseName: string,
-  actor: string,
-  collectionName: string,
-  indexNames: string[]
-): Promise<boolean> {
-  if (
-    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
-  ) {
-    const modelCollection = ModelCollection.getInstance(
-      databaseName,
-      collectionName
-    );
-    // Check if fields exist in the collection
-    const doc = await modelCollection.collection.findOne({});
-    if (!doc) {
-      throw Error('Collection is empty');
-    }
-
-    const existingFields = Object.keys(doc);
-    const validIndexNames = indexNames.filter((name) =>
-      existingFields.includes(name)
-    );
-
-    if (validIndexNames.length !== indexNames.length) {
-      throw Error('Some specified index fields do not exist in the collection');
-    }
-
-    return modelCollection.index(validIndexNames || []);
-  }
-
-  throw Error(
-    `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
   );
 }
 

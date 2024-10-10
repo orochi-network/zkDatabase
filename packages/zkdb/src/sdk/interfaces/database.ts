@@ -23,6 +23,7 @@ export interface ZKDatabase {
     collectionName: string,
     groupName: string,
     type: T,
+    indexes: string[],
     permissions: Permissions
   ): Promise<boolean>;
   // Ownership

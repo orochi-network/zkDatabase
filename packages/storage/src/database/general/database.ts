@@ -49,10 +49,6 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   }
 
   public async isCollectionExist(collectionName: string): Promise<boolean> {
-    console.log(
-      `(await this.listCollections()) `,
-      await this.listCollections()
-    );
     return (await this.listCollections()).some(
       (collection) => collection === collectionName
     );
