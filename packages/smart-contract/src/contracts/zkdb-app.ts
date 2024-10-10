@@ -15,8 +15,8 @@ import {
   method,
   state,
 } from 'o1js';
-import { DatabaseRollUp, RollUpProgram } from '../proof/proof-program.js';
-import { MinaTransaction } from '../types/transaction.js';
+import { DatabaseRollUp, RollUpProgram } from '@proof';
+import { MinaTransaction } from '@types';
 
 export type ZKDatabaseSmartContractClass = ReturnType<
   typeof getZkDbSmartContractClass

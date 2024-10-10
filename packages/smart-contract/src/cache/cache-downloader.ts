@@ -1,7 +1,5 @@
-import { CacheType } from '../types/cache-type.js';
 import * as ftp from 'basic-ftp';
 import * as path from 'path';
-import * as fs from 'fs';
 import { downloadDirectory } from './ftp-downloader.js';
 
 export async function downloadCache(

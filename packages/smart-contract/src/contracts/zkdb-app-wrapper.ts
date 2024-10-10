@@ -1,21 +1,18 @@
 import {
   AccountUpdate,
-  Bool,
-  Field,
   JsonProof,
   Mina,
   PublicKey,
-  SmartContract,
   VerificationKey,
   ZkProgram,
 } from 'o1js';
-import { DatabaseRollUp, RollUpProgram } from '../proof/proof-program.js';
-import { MinaTransaction } from '../types/transaction.js';
+import { DatabaseRollUp, RollUpProgram } from '@proof';
+import { MinaTransaction } from '@types';
 import {
   getZkDbSmartContractClass,
   ZKDatabaseSmartContractClass,
-} from './zkdb-app.js';
-import { CacheManager } from '../cache/cache-manager.js';
+} from './zkdb-app';
+import { CacheManager } from '@cache';
 
 export class ZKDatabaseSmartContractWrapper {
   private _smartContract: ZKDatabaseSmartContractClass;
