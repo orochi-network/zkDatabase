@@ -6,7 +6,7 @@ import {
   Bool,
   Provable,
 } from 'o1js';
-import { ProofStateInput, ProofStateOutput } from './proof-state.js';
+import { ProofStateInput, ProofStateOutput } from './proof-state';
 
 export type DatabaseRollUp = ReturnType<typeof RollUpProgram>;
 
@@ -83,7 +83,8 @@ export function RollUpProgram(merkleTreeHeight: number) {
 
           // check if current off-chain on-chain state is different from real on-chain state
           state.previousOnChainState.assertEquals(
-            prevProof.publicOutput.onChainState);
+            prevProof.publicOutput.onChainState
+          );
 
           // check if there was really a proof that which were provided to on-chain to update state
           rollupProof.publicOutput.newOffChainState.assertEquals(
@@ -123,22 +124,25 @@ export function RollUpProgram(merkleTreeHeight: number) {
 
           prevProof.publicInput.previousOnChainState.assertEquals(
             state.previousOnChainState,
-            "The previous root stored off-chain is different from the root stored on-chain"
+            'The previous root stored off-chain is different from the root stored on-chain'
           );
 
           state.currentOnChainState.assertEquals(
             prevProof.publicOutput.onChainState,
-            "The root stored off-chain is different from the root stored on-chain"
+            'The root stored off-chain is different from the root stored on-chain'
           );
 
           prevProof.publicOutput.newOffChainState.assertEquals(
             state.currentOffChainState,
-            "The previous off-chain state is different from the current off-chain state. Must be consistent."
+            'The previous off-chain state is different from the current off-chain state. Must be consistent.'
           );
 
           witness
             .calculateRoot(oldLeaf)
-            .assertEquals(state.currentOffChainState, "The root with old leaf does not equal current off-chain state");
+            .assertEquals(
+              state.currentOffChainState,
+              'The root with old leaf does not equal current off-chain state'
+            );
 
           const newOffChainState = witness.calculateRoot(newLeaf);
 

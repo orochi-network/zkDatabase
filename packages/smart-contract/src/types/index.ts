@@ -1,2 +1,2 @@
-export { MinaTransaction } from './transaction.js';
-export { CacheType } from './cache-type.js';
+export * from './transaction';
+export * from './cache-type';

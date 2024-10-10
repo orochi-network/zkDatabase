@@ -1,2 +1,2 @@
-export { ZKDatabaseSmartContractWrapper } from "./zkdb-app-wrapper.js";
-export { getZkDbSmartContractClass, ZKDatabaseSmartContractClass as ZKDatabaseSmartContract } from "./zkdb-app.js";
+export * from './zkdb-app-wrapper';
+export * from './zkdb-app';

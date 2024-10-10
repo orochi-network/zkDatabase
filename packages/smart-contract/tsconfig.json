@@ -8,6 +8,15 @@
     "lib": ["dom", "esnext"],
     "outDir": "./build/",
     "rootDir": ".",
+    "baseUrl": "./",
+    "paths": {
+      "@archive-node": ["./src/archive-node"],
+      "@contracts": ["./src/contracts"],
+      "@proof": ["./src/proof"],
+      "@types": ["./src/types"],
+      "@cache": ["./src/cache"],
+
+    },
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
