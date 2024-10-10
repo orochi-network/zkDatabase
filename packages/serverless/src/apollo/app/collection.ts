@@ -114,12 +114,16 @@ const collectionCreate = authorizeWrapper(
     );
 
     if (createCollectionResult) {
-      await createIndex(
+      const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,
         args.collectionName,
         args.indexes
       );
+
+      if (!indexResult) {
+        throw Error('Failed to create index')
+      }
     }
 
     return createCollectionResult;
