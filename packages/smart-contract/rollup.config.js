@@ -57,7 +57,7 @@ export default [
       dir: 'build',
       preserveModules: false, // If will build to a single index.js file if it 'false'
       sourcemap: true,
-      name: 'zkdb/smart-contract',
+      name: '@zkdb/smart-contract',
     },
     plugins: [
       commonjs(),
