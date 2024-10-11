@@ -14,7 +14,7 @@ import {
   MerkleMapWitness,
   Struct,
   Field,
-  Bool
+  Bool,
 } from 'o1js';
 
 /**
@@ -105,7 +105,7 @@ export class Schema {
       public static getSchema(): SchemaDefinition {
         return Document.schemaEntries.map(({ name, kind }) => ({
           name,
-          kind
+          kind,
         }));
       }
 

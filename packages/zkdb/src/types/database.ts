@@ -6,6 +6,6 @@ export type Database = {
 };
 
 export type DatabaseSettings = {
-  publicKey: string
-  merkleHeight: number
-}
+  publicKey: string;
+  merkleHeight: number;
+};
