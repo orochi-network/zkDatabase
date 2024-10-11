@@ -25,7 +25,6 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean().required(),
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -37,7 +36,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
-  indexes?: string[];
+  indexes: string[];
   permissions: PermissionsData;
 };
 
@@ -113,7 +112,7 @@ const collectionCreate = authorizeWrapper(
       )
     );
 
-    if (args.indexes && createCollectionResult) {
+    if (createCollectionResult) {
       const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,
