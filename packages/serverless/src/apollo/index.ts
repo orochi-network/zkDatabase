@@ -31,7 +31,7 @@ export const TypedefsApp = [
   typeDefsDocumentHistory,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
-  typeCommonDefsMetadata
+  typeCommonDefsMetadata,
 ];
 
 type Resolver =
