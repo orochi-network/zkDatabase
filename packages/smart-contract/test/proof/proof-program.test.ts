@@ -110,7 +110,7 @@ describe('RollUpProgram', () => {
       Field(0),
       Field(2)
     );
-    
+
     proofState = new ProofStateInput({
       previousOnChainState: currRoot,
       currentOnChainState: proofInit.publicOutput.newOffChainState,
