@@ -25,7 +25,6 @@ export type OperatorFor<T> = T extends string
     ? NumberOperator
     : never;
 
-
 export class QueryBuilder<T> {
   private query: SearchInput<T> = {};
   private currentGroup: SearchInput<T>[] = [];
