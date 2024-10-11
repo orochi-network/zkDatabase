@@ -234,7 +234,7 @@ async function dropIndex(
       return ModelCollection.getInstance(
         databaseName,
         collectionName
-      ).dropIndex(indexName);
+      ).dropIndex(index);
     }
 
     throw Error(
