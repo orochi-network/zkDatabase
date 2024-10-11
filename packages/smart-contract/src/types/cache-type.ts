@@ -1,1 +1,1 @@
-export type CacheType = "user-database-zkapp" | "rollup-zkprogram";
+export type CacheType = 'user-database-zkapp' | 'rollup-zkprogram';

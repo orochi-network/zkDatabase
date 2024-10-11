@@ -14,8 +14,7 @@
       "@contracts": ["./src/contracts"],
       "@proof": ["./src/proof"],
       "@types": ["./src/types"],
-      "@cache": ["./src/cache"],
-
+      "@cache": ["./src/cache"]
     },
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "forceConsistentCasingInFileNames": true,
