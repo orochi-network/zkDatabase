@@ -1,6 +1,6 @@
 {
   "name": "zkdb",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -31,8 +31,8 @@
     "prepare": "cd .. && cd .. && husky install packages/zkdb/.husky",
     "test": "echo 'hello world'",
     "testw": "node ../../node_modules/jest/bin/jest.js --watch",
-    "lint": "npx eslint ./src/**/*.ts --fix",
-    "lint-check": "npx eslint ./src/**/*.ts --debug"
+    "lint": "eslint ./src/**/*.ts --fix && prettier . --write",
+    "lint-check": "eslint ./src/**/*.ts --debug"
   },
   "typesVersions": {
     "*": {
@@ -52,7 +52,7 @@
   ],
   "lint-staged": {
     "**/*": [
-      "eslint src/* --fix",
+      "eslint ./src/**/*.ts --fix",
       "prettier --write --ignore-unknown"
     ]
   },
@@ -61,6 +61,8 @@
     "@babel/plugin-transform-modules-commonjs": "^7.23.3",
     "@babel/preset-env": "^7.25.4",
     "@babel/preset-typescript": "^7.23.3",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.12.0",
     "@jest/globals": "^29.7.0",
     "@rollup/plugin-commonjs": "^28.0.0",
     "@rollup/plugin-node-resolve": "^15.3.0",
@@ -69,14 +71,16 @@
     "@types/jest": "^29.5.12",
     "@types/mock-fs": "^4.13.3",
     "@types/node": "^22.6.1",
-    "@typescript-eslint/eslint-plugin": "^6.7.0",
-    "@typescript-eslint/parser": "^6.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.8.1",
+    "@typescript-eslint/parser": "^8.8.1",
     "babel-jest": "^29.7.0",
-    "eslint": "^8.49.0",
+    "eslint": "^9.12.0",
     "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-flat-gitignore": "^0.3.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-alias": "^1.1.2",
     "eslint-import-resolver-typescript": "^3.6.0",
-    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^27.6.3",
     "eslint-plugin-o1js": "^0.4.0",
     "husky": "^7.0.1",

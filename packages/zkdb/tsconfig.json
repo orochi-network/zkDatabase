@@ -24,7 +24,7 @@
       "@sdk": ["./src/sdk"],
       "@types": ["./src/types"],
       "@utils": ["./src/utils"],
-      "@tests": ["./src/tests"],
+      "@tests": ["./src/tests"]
     }
   },
   "references": [{ "path": "../api" }, { "path": "../smart-contract" }],

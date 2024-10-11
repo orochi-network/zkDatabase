@@ -1,6 +1,6 @@
-import { Field } from "o1js"
+import { Field } from 'o1js';
 
 export type MerkleWitness = {
-  isLeft: boolean,
-  sibling: Field
-}[]
+  isLeft: boolean;
+  sibling: Field;
+}[];
