@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 
 export default [
   {
@@ -13,6 +14,7 @@ export default [
       sourcemap: true,
     },
     plugins: [
+      resolve(),
       commonjs(),
       alias({
         entries: [
@@ -36,6 +38,7 @@ export default [
       sourcemap: true,
     },
     plugins: [
+      resolve(),
       commonjs(),
       alias({
         entries: [
@@ -60,6 +63,7 @@ export default [
       name: '@zkdb/smart-contract',
     },
     plugins: [
+      resolve(),
       commonjs(),
       alias({
         entries: [
