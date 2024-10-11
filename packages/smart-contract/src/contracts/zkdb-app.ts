@@ -1,22 +1,15 @@
+import { DatabaseRollUp } from '@proof';
 import {
-  AccountUpdate,
   Bool,
   Field,
-  JsonProof,
   MerkleTree,
-  Mina,
-  PrivateKey,
   Provable,
-  PublicKey,
-  Reducer,
   SmartContract,
   State,
   ZkProgram,
   method,
   state,
 } from 'o1js';
-import { DatabaseRollUp, RollUpProgram } from '@proof';
-import { MinaTransaction } from '@types';
 
 export type ZKDatabaseSmartContractClass = ReturnType<
   typeof getZkDbSmartContractClass
