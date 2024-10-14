@@ -99,3 +99,5 @@ export const search = Joi.object({
   search: Joi.optional(),
   pagination,
 });
+
+export const sortingOrder = Joi.string().valid(['ASC', 'DESC']).required();

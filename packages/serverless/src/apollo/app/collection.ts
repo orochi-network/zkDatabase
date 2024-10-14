@@ -1,22 +1,22 @@
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
+import GraphQLJSON from 'graphql-type-json';
+import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import {
-  createCollection,
-  createIndex,
-  listCollections,
-} from '../../domain/use-case/collection.js';
-import { PermissionsData } from '../types/permission.js';
-import { SchemaData } from '../types/schema.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  collectionName,
   databaseName,
-  groupName,
+  collectionName,
   permissionDetail,
+  groupName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { PermissionsData } from '../types/permission.js';
+import { SchemaData } from '../types/schema.js';
+import {
+  createCollection,
+  listCollections,
+} from '../../domain/use-case/collection.js';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
+import { TCollectionIndex } from '../types/collection-index.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -25,6 +25,7 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
+  indexed: Joi.boolean(),
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -36,7 +37,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
-  indexes: string[];
+  indexes: TCollectionIndex[];
   permissions: PermissionsData;
 };
 
@@ -50,7 +51,6 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   databaseName,
   groupName,
   schema: schemaFields,
-  indexes: Joi.array().items(Joi.string().optional()),
   permissions: permissionDetail,
 });
 
@@ -70,7 +70,6 @@ extend type Mutation {
     collectionName: String!,
     groupName: String!,
     schema: [SchemaFieldInput!]!, 
-    indexes: [String],
     permissions: PermissionDetailInput
   ): Boolean
 }
@@ -100,7 +99,7 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    const createCollectionResult = await withTransaction((session) =>
+    return withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -111,21 +110,6 @@ const collectionCreate = authorizeWrapper(
         session
       )
     );
-
-    if (createCollectionResult) {
-      const indexResult = await createIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.indexes
-      );
-
-      if (!indexResult) {
-        throw Error('Failed to create index');
-      }
-    }
-
-    return createCollectionResult;
   }
 );
 

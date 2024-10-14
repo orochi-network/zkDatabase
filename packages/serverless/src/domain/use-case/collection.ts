@@ -2,7 +2,10 @@ import { Fill } from '@orochi-network/queue';
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
-import { CollectionIndex } from '../types/collection-index.js';
+import {
+  CollectionIndex,
+  CollectionIndexInfo,
+} from '../types/collection-index.js';
 import { Collection } from '../types/collection.js';
 import { Permissions } from '../types/permission.js';
 import { DocumentSchemaInput } from '../types/schema.js';
@@ -11,19 +14,24 @@ import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
+import { Sorting } from '../types/sorting.js';
+
+function mapSorting(sorting: Sorting): 1 | -1 {
+  return sorting === 'ASC' ? 1 : -1;
+}
 
 async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  indexNames: string[]
+  indexes: CollectionIndex[]
 ): Promise<boolean> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
     // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(databaseName, collectionName).index(
-      indexNames || []
+      indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
     );
   }
 
@@ -137,7 +145,7 @@ export async function listIndexesInfo(
   databaseName: string,
   collectionName: string,
   actor: string
-): Promise<CollectionIndex[]> {
+): Promise<CollectionIndexInfo[]> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'read')
   ) {
@@ -167,7 +175,7 @@ export async function listIndexesInfo(
         indexDef.name !== undefined
     );
 
-    const indexList: CollectionIndex[] = validIndexes.map((indexDef) => {
+    const indexList: CollectionIndexInfo[] = validIndexes.map((indexDef) => {
       const { name, key } = indexDef;
       const size = indexSizes[name] || 0;
       const usageStats = indexUsageMap[name] || {};
