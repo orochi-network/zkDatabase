@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/smart-contract",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "",
   "author": "",
   "license": "Apache-2.0",
@@ -10,7 +10,7 @@
     "zkdatabase"
   ],
   "type": "module",
-  "main": "build/src/index.c.js",
+  "main": "build/src/index.cjs.js",
   "module": "build/src/index.esm.js",
   "exports": {
     ".": {
