@@ -16,20 +16,17 @@ export async function searchUser(
 
   const filter = {
     $or: objectToLookupPattern(query, { regexSearch: true }),
-  }
+  };
 
   const findUsers = await modelUser.collection
-    .find(
-      filter,
-      pagination
-    )
+    .find(filter, pagination)
     .toArray();
 
   return {
     data: findUsers,
     offset: pagination?.offset ?? 0,
-    totalSize: await modelUser.count(filter)
-  }
+    totalSize: await modelUser.count(filter),
+  };
 }
 
 export async function findUser(
