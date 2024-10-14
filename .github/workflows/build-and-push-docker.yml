@@ -1,4 +1,4 @@
-name: 'Build & Push Selected Docker Images to Docker Hub'
+name: 'Build & Push All Docker Images to Docker Hub with Change Detection'
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -58,7 +58,7 @@ jobs:
   build:
     name: Build & Push Docker Images and Push to GitOps
     needs: detect-changes
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     outputs:
       changed_services: ${{ steps.build.outputs.changed_services }}
     env:
@@ -85,43 +85,36 @@ jobs:
           IFS=' ' read -r -a DOCKER_REPOS <<< "${{env.DOCKER_REPOS}}"
           IFS=' ' read -r -a SERVICES_BUILD <<< "${{env.SERVICES_BUILD}}"
           IFS=' ' read -r -a SERVICES <<< "${{env.SERVICES}}"
-          CHANGED_SERVICES=""
+          CHANGED_SERVICES="${{ needs.detect-changes.outputs.filtered_packages }}"
+          
           for i in ${!SERVICES_BUILD[@]}; do
             SERVICE_BUILD="${SERVICES_BUILD[$i]}"
             SERVICE="${SERVICES[$i]}"
-            echo "Service: $SERVICE"
-            echo "Service-Build: $SERVICE_BUILD"
             DOCKER_REPO="${DOCKER_REPOS[$i]}"
-            NUM=$((i + 1))
-            if [[ -n "$DOCKER_REPO" && "${{ needs.detect-changes.outputs.filtered_packages }}" == *"$NUM"* ]]; then
-              echo "Building and pushing $SERVICE_BUILD..."
-              echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
+            
+            echo "Building and pushing $SERVICE_BUILD..."
+            echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
 
-              # Build the Docker image with a valid tag
-              docker build -t "$DOCKER_REPO:latest" \
-                -f "packages/$SERVICE_BUILD/Dockerfile" \
-                --secret id=npm,src=./npm-token \
-                --platform=linux/amd64 .
+            # Build the Docker image with a valid tag
+            docker build -t "$DOCKER_REPO:latest" \
+              -f "packages/$SERVICE_BUILD/Dockerfile" \
+              --secret id=npm,src=./npm-token \
+              --platform=linux/amd64 .
 
-              docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
-              docker push "$DOCKER_REPO:latest"
-              docker push "$DOCKER_REPO:${{ env.version }}"
+            docker tag "$DOCKER_REPO:latest" "$DOCKER_REPO:${{ env.version }}"
+            docker push "$DOCKER_REPO:latest"
+            docker push "$DOCKER_REPO:${{ env.version }}"
 
-              CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
-            else
-              echo "$SERVICE not changed or invalid Docker repo, skipping."
-            fi
           done
           echo "changed_services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
   gitops-push:
     name: Push Changes to GitOps
     needs: build
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     env:
       version: ${{ github.sha }}
       gitopsbranch: main
-    if: ${{ needs.build.outputs.changed_services != '' }}
     steps:
       - name: Push changes to GitOps
         run: |
@@ -136,7 +129,7 @@ jobs:
 
           cd test-argo-cd
           git checkout ${{ env.gitopsbranch }}
-          IFS=' ' read -r -a CHANGED_SERVICES_ARRAY <<< "${{ needs.build.outputs.changed_services }}"
+          CHANGED_SERVICES_ARRAY=("serverless" "broker" "proof" "ftp")
           CHANGED_SERVICES=$(IFS=,; echo "${CHANGED_SERVICES_ARRAY[*]}")
           echo "Changed services: $CHANGED_SERVICES"
           for SERVICE in "${CHANGED_SERVICES_ARRAY[@]}"; do
@@ -151,10 +144,3 @@ jobs:
 
           cd ..
           rm -rf test-argo-cd
-  notify_no_build:
-    runs-on: [self-hosted, linux]
-    needs: build
-    if: ${{ needs.build.outputs.changed_services == '' }}
-    steps:
-      - name: Notify no changes
-        run: echo "No changes detected, skipping GitOps push."
