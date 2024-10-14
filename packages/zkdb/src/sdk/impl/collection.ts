@@ -12,6 +12,7 @@ import {
 import { ZKDocumentImpl } from './document';
 import { DocumentEncoded, ProvableTypeString } from '../schema';
 import { ZKCollection, ZKDocument } from '../interfaces';
+import { IndexField } from 'src/types/collection-index';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;
@@ -37,11 +38,14 @@ export class CollectionQueryImpl implements ZKCollection {
     return result.unwrap();
   }
 
-  async createIndexes(indexes: string[]): Promise<boolean> {
+  async createIndexes(indexes: IndexField[]): Promise<boolean> {
     const result = await this.apiClient.index.create({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      indexes,
+      indexes: indexes.map(({ name, sorting }) => ({
+        name,
+        sorting: sorting === 'asc' ? 'ASC' : 'DESC',
+      })),
     });
 
     return result.unwrap();

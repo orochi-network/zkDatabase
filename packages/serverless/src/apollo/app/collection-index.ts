@@ -7,7 +7,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
 import { collectionName, databaseName, indexName, indexes } from './common.js';
 import { TCollectionIndex } from '../types/collection-index.js';
@@ -54,16 +54,6 @@ export const typeDefsCollectionIndex = `#graphql
   scalar Date
   type Query
   type Mutation
-
-  enum SortingOrder {
-    ASC
-    DESC
-  }
-
-  input IndexInput {
-    name: String!
-    sorting: SortingOrder!
-  }
 
   type CollectionIndex {
     name: String!
@@ -122,7 +112,7 @@ const indexExist = authorizeWrapper(
 );
 
 // Mutation
-const indexCreate = publicWrapper(
+const indexCreate = authorizeWrapper(
   IndexCreateRequest,
   async (_root: unknown, args: TIndexCreateRequest, ctx) =>
     createIndex(

@@ -56,7 +56,7 @@ async function run() {
     .listIndexes();
   console.log(indexes);
 
-  await zkdb.database(DB_NAME).from(COLLECTION_NAME).createIndexes(['name']);
+  await zkdb.database(DB_NAME).from(COLLECTION_NAME).createIndexes([]);
 
   indexes = await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes();
   console.log(indexes);
