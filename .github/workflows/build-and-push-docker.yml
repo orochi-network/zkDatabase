@@ -8,7 +8,7 @@ on:
 jobs:
   detect-changes:
     name: Detect Changes
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     outputs:
       filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
 
@@ -58,7 +58,7 @@ jobs:
   build:
     name: Build & Push Docker Images and Push to GitOps
     needs: detect-changes
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     outputs:
       changed_services: ${{ steps.build.outputs.changed_services }}
     env:
@@ -111,7 +111,7 @@ jobs:
   gitops-push:
     name: Push Changes to GitOps
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     env:
       version: ${{ github.sha }}
       gitopsbranch: main
