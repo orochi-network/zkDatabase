@@ -49,28 +49,4 @@ export default [
       typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
     ],
   },
-  {
-    input: 'src/index.ts',
-    output: {
-      entryFileNames: 'src/index.umd.js',
-      format: 'umd',
-      dir: 'build',
-      preserveModules: false, // If will build to a single index.js file if it 'false'
-      sourcemap: true,
-      name: '@zkdb/smart-contract',
-    },
-    plugins: [
-      commonjs(),
-      alias({
-        entries: [
-          { find: '@', replacement: 'src' },
-          { find: '@archive-node', replacement: 'src/archive-node' },
-          { find: '@contracts', replacement: 'src/contracts' },
-          { find: '@proof', replacement: 'src/proof' },
-          { find: '@types', replacement: 'src/types' },
-        ],
-      }),
-      typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
-    ],
-  },
 ];
