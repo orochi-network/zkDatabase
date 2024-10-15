@@ -171,7 +171,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { _id: taskId  },
+      { _id: taskId },
       { $set: { status: 'proving' } },
       options
     );
@@ -185,7 +185,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     await this.collection.updateOne(
-      { _id: taskId  },
+      { _id: taskId },
       { $set: { status: 'proved' } },
       options
     );
