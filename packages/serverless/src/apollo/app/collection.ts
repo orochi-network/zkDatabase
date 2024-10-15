@@ -25,7 +25,7 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean(),
+  indexed: Joi.boolean().required(),
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -37,7 +37,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
-  indexes: TCollectionIndex[];
+  indexes?: string[];
   permissions: PermissionsData;
 };
 
@@ -112,6 +112,21 @@ const collectionCreate = authorizeWrapper(
         session
       )
     );
+
+    if (args.indexes && createCollectionResult) {
+      const indexResult = await createIndex(
+        args.databaseName,
+        ctx.userName,
+        args.collectionName,
+        args.indexes
+      );
+
+      if (!indexResult) {
+        throw Error('Failed to create index');
+      }
+    }
+
+    return createCollectionResult;
   }
 );
 
