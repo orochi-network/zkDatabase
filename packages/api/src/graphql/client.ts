@@ -76,16 +76,18 @@ export class ApiClient<T = any> {
       },
     });
 
-    const authLink = setContext(async (_, headers) => {
+    const authLink = setContext(async (_, { headers }) => {
       const token = context.getContext();
+      const cookie = this.cookies.getContext();
       return {
         headers: {
           ...headers,
-          cookie: this.cookies.getContext(),
+          ...(cookie ? { cookie } : {}),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
       };
     });
+    
 
     this.#client = new ApolloClient({
       link: ApolloLink.from([removeTypenameLink, authLink, httpLink]),
