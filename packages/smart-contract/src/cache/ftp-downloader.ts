@@ -1,31 +1,38 @@
-import * as ftp from 'basic-ftp';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import type { Client } from 'basic-ftp';
+import { getNodeDependencies } from 'src/helper/environment';
 
 export const downloadFile = async (
-  client: ftp.Client,
+  client: Client,
   remotePath: string,
   localPath: string
 ) => {
-  await fs.mkdir(join(localPath, '..'), { recursive: true });
-  await client.downloadTo(localPath, remotePath);
+  const node = await getNodeDependencies();
+  if (node) {
+    await node.fs.mkdir(node.path.join(localPath, '..'), { recursive: true });
+    await client.downloadTo(localPath, remotePath);
+  }
 };
 
 export const downloadDirectory = async (
-  client: ftp.Client,
+  client: Client,
   remoteDir: string,
   localDir: string
 ) => {
-  await fs.mkdir(localDir, { recursive: true });
-  const list = await client.list(remoteDir);
-  for (const item of list) {
-    const remotePath = join(remoteDir, item.name).replace(/\\/g, '/');
-    const localPath = join(localDir, item.name);
+  const node = await getNodeDependencies();
+  if (node) {
+    await node.fs.mkdir(localDir, { recursive: true });
+    const list = await client.list(remoteDir);
+    for (const item of list) {
+      const remotePath = node.path
+        .join(remoteDir, item.name)
+        .replace(/\\/g, '/');
+      const localPath = node.path.join(localDir, item.name);
 
-    if (item.isDirectory) {
-      await downloadDirectory(client, remotePath, localPath);
-    } else {
-      await downloadFile(client, remotePath, localPath);
+      if (item.isDirectory) {
+        await downloadDirectory(client, remotePath, localPath);
+      } else {
+        await downloadFile(client, remotePath, localPath);
+      }
     }
   }
 };
