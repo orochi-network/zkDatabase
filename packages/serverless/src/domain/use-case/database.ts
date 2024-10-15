@@ -72,7 +72,12 @@ export async function getDatabases(
   });
 
   if (!settings?.length) {
-    throw Error('Settings were not found');
+    // When user don't have any DB
+    return {
+      data: [],
+      totalSize: 0,
+      offset: pagination?.offset ?? 0,
+    };
   }
 
   const collectionsCache: Record<string, string[]> = {};
