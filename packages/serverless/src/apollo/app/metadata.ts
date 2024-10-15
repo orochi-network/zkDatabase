@@ -57,13 +57,6 @@ enum OwnershipGroup {
   Group
 }
 
-type SchemaField {
-  order: Int!
-  name: String!
-  kind: String!
-  indexed: Boolean
-}
-
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(
@@ -75,7 +68,7 @@ extend type Query {
   collectionSchema(
     databaseName: String!
     collectionName: String!
-  ): [SchemaField!]
+  ): [SchemaFieldOutput!]
 }
 
 extend type Mutation {

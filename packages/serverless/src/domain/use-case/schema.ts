@@ -135,7 +135,6 @@ export async function buildSchema(
 
   const encodedDocument: SchemaEncoded = [];
   const structType: { [key: string]: any } = {};
-  const indexes: string[] = [];
 
   if (!schema) {
     throw new Error(`Schema not found for collection ${collectionName}`);
@@ -151,13 +150,9 @@ export async function buildSchema(
     const { name, kind, value } = documentField;
     structType[name] = ProvableTypeMap[kind as ProvableTypeString];
     encodedDocument.push({ name, kind, value });
-
-    if (schema[fieldName].indexed) {
-      indexes.push(name);
-    }
   });
 
-  const structuredSchema = Schema.create(structType, indexes);
+  const structuredSchema = Schema.create(structType);
 
   return structuredSchema.deserialize(encodedDocument);
 }

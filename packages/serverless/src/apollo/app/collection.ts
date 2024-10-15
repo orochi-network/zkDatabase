@@ -6,6 +6,7 @@ import {
   collectionName,
   permissionDetail,
   groupName,
+  collectionIndex,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
@@ -13,6 +14,7 @@ import { PermissionsData } from '../types/permission.js';
 import { SchemaData } from '../types/schema.js';
 import {
   createCollection,
+  createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
@@ -24,8 +26,7 @@ export const schemaField = Joi.object({
     .required(),
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
-    .required(),
-  indexed: Joi.boolean().required(),
+    .required()
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -37,7 +38,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
-  indexes?: string[];
+  indexes?: TCollectionIndex[];
   permissions: PermissionsData;
 };
 
@@ -50,7 +51,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
-  indexes: Joi.array().items(Joi.string()),
+  indexes: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
   permissions: permissionDetail,
 });
@@ -101,7 +102,7 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    return withTransaction((session) =>
+    const createCollectionResult = await withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -113,7 +114,7 @@ const collectionCreate = authorizeWrapper(
       )
     );
 
-    if (args.indexes && createCollectionResult) {
+    if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,

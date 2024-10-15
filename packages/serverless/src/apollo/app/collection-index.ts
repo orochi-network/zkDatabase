@@ -9,7 +9,13 @@ import {
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, indexName, indexes } from './common.js';
+import {
+  collectionIndex,
+  collectionName,
+  databaseName,
+  indexName,
+  indexes,
+} from './common.js';
 import { TCollectionIndex } from '../types/collection-index.js';
 
 // Index request
@@ -38,7 +44,7 @@ export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
 export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   collectionName,
   databaseName,
-  indexes,
+  indexes: Joi.array().items(collectionIndex),
 });
 
 export type CollectionIndex = {
