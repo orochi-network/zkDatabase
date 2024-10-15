@@ -14,7 +14,7 @@ const COLLECTION_CREATE = gql`
     $collectionName: String!
     $groupName: String!
     $schema: [SchemaFieldInput!]!
-    $indexes: [String]
+    $indexes: [IndexInput]
     $permissions: PermissionDetailInput
   ) {
     collectionCreate(

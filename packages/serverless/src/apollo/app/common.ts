@@ -100,4 +100,4 @@ export const search = Joi.object({
   pagination,
 });
 
-export const sortingOrder = Joi.string().valid(['ASC', 'DESC']).required();
+export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']).required();

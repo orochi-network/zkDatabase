@@ -10,7 +10,7 @@ const COLLECTION_INDEX_CREATE = gql`
   mutation IndexCreate(
     $databaseName: String!
     $collectionName: String!
-    $indexes: [String]!
+    $indexes: [IndexInput!]!
   ) {
     indexCreate(
       databaseName: $databaseName

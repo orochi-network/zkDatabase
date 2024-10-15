@@ -50,6 +50,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
+  indexes: Joi.array().items(Joi.string()),
   schema: schemaFields,
   permissions: permissionDetail,
 });
@@ -70,6 +71,7 @@ extend type Mutation {
     collectionName: String!,
     groupName: String!,
     schema: [SchemaFieldInput!]!, 
+    indexes: [IndexInput],
     permissions: PermissionDetailInput
   ): Boolean
 }
