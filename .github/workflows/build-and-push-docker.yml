@@ -141,6 +141,10 @@ jobs:
           echo "Committing and pushing changes for ${CHANGED_SERVICES} to ${{ env.gitopsbranch }} version ${{ env.version }}"
           git commit -m "Update versions for: ${CHANGED_SERVICES} to ${{ env.version }}"
           git push origin ${{ env.gitopsbranch }}
-
-          cd ..
+  cleanup:
+    name: Cleanup
+    runs-on: [self-hosted, linux]
+    steps:
+      - name: Cleanup
+        run: |
           rm -rf test-argo-cd
