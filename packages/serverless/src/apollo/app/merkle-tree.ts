@@ -4,7 +4,9 @@ import Joi from 'joi';
 import {
   getMerkleNodesByLevel,
   getWitnessByDocumentId,
+  getMerkleWitnessPath,
   getMerkleTreeInfo as getMerkleTreeInfoDomain,
+  getChildrenNodes as getChildrenNodesDomain,
 } from '../../domain/use-case/merkle-tree.js';
 import publicWrapper from '../validation.js';
 import { databaseName, indexNumber, objectId, pagination } from './common.js';
@@ -72,6 +74,14 @@ type MerkleNode {
   hash: String!
 }
 
+type MerkleWitnessNode {
+  hash: String!
+  level: Int!
+  index: Int!
+  witness: Boolean!
+  target: Boolean!
+}
+
 type MerkleNodePaginationOutput {
   data: [MerkleNode]!
   totalSize: Int!
@@ -86,10 +96,12 @@ type MerkleTreeInfo {
 extend type Query {
   getNode(databaseName: String!, level: Int!, index: String!): String!
   getNodesByLevel(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
+  getChildrenNodes(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
   getMerkleTreeInfo(databaseName: String!): MerkleTreeInfo!
   getRoot(databaseName: String!): String!
   getWitness(databaseName: String!, index: String!): [MerkleProof]!
   getWitnessByDocument(databaseName: String!, docId: String!): [MerkleProof]!
+  getWitnessPath(databaseName: String!, docId: String!): [MerkleWitnessNode]!
 }
 `;
 
@@ -142,6 +154,18 @@ const getRoot = publicWrapper(
   }
 );
 
+const getChildrenNodes = publicWrapper(
+  MerkleTreeGetNodeRequest,
+  async (_root: unknown, args: TMerkleTreeGetNodeRequest) =>
+    getChildrenNodesDomain(args.databaseName, args.level, BigInt(args.index))
+);
+
+const getWitnessPath = publicWrapper(
+  MerkleTreeWitnessByDocumentRequest,
+  async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) =>
+    getMerkleWitnessPath(args.databaseName, args.docId)
+);
+
 type TMerkleTreeResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
@@ -151,6 +175,8 @@ type TMerkleTreeResolver = {
     getRoot: typeof getRoot;
     getNodesByLevel: typeof getNodesByLevel;
     getMerkleTreeInfo: typeof getMerkleTreeInfo;
+    getChildrenNodes: typeof getChildrenNodes;
+    getWitnessPath: typeof getWitnessPath;
   };
 };
 
@@ -163,5 +189,7 @@ export const resolversMerkleTree: TMerkleTreeResolver = {
     getRoot,
     getNodesByLevel,
     getMerkleTreeInfo,
+    getChildrenNodes,
+    getWitnessPath,
   },
 };

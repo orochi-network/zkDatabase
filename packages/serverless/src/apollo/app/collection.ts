@@ -25,7 +25,7 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean().required(),
+  indexed: Joi.boolean().optional(),
 });
 
 export const schemaFields = Joi.array().items(schemaField);

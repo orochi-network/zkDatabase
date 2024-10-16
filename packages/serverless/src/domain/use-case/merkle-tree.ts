@@ -70,3 +70,84 @@ export async function getMerkleTreeInfo(
     merkleHeight: modelMerkleTree.height,
   };
 }
+
+export async function getChildrenNodes(
+  databaseName: string,
+  parentLevel: number,
+  parentIndex: bigint
+): Promise<MerkleNode[]> {
+  if (!Number.isInteger(parentLevel) || parentLevel < 0) {
+    throw new Error(
+      `Invalid parentLevel: ${parentLevel}. It must be a non-negative integer.`
+    );
+  }
+
+  if (parentIndex < 0) {
+    throw new Error(
+      `Invalid parentIndex: ${parentIndex}. It must be a non-negative integer.`
+    );
+  }
+
+  if (parentLevel <= 0) {
+    throw new Error(
+      `Invalid parentLevel: ${parentLevel}. Leaves do not have children nodes.`
+    );
+  }
+
+  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+
+  if (parentLevel >= modelMerkleTree.height) {
+    throw new Error(
+      `Invalid parentLevel: ${parentLevel}. The Merkle Tree has a height of ${modelMerkleTree.height}.`
+    );
+  }
+
+  const currentDate = new Date();
+
+  const childrenLevel = parentLevel - 1;
+  const leftChildIndex = parentIndex * 2n;
+  const rightChildIndex = leftChildIndex + 1n;
+
+  const leftNodeField = await modelMerkleTree.getNode(
+    childrenLevel,
+    leftChildIndex,
+    currentDate
+  );
+  const rightNodeField = await modelMerkleTree.getNode(
+    childrenLevel,
+    rightChildIndex,
+    currentDate
+  );
+
+  return [
+    {
+      hash: leftNodeField.toString(),
+      index: Number(leftChildIndex),
+      level: childrenLevel,
+    },
+    {
+      hash: rightNodeField.toString(),
+      index: Number(rightChildIndex),
+      level: childrenLevel,
+    },
+  ];
+}
+
+export async function getMerkleWitnessPath(
+  databaseName: string,
+  docId: string,
+) {
+  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+  const docMetadata = await modelDocumentMetadata.findOne({
+    docId,
+  });
+
+  if (!docMetadata) {
+    throw Error(`Metadata has not been found`);
+  }
+
+  const merkleTree = await ModelMerkleTree.load(databaseName);
+
+  return merkleTree.getWitnessPath(BigInt(docMetadata.merkleIndex), new Date());
+}

@@ -26,6 +26,14 @@ export type TMerkleNode = {
   index: number;
 };
 
+export type TMerkleWitnessNode = {
+  hash: Field;
+  level: number;
+  index: number;
+  witness: boolean;
+  target: boolean;
+};
+
 export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private static instances = new Map<string, ModelMerkleTree>();
 
@@ -158,6 +166,72 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     }
 
     return Promise.all(witnessPromises);
+  }
+
+  public async getWitnessPath(
+    index: bigint,
+    timestamp: Date,
+    options?: FindOptions
+  ): Promise<TMerkleWitnessNode[]> {
+    if (index >= this.leafCount) {
+      throw new Error(
+        `index ${index} is out of range for ${this.leafCount} leaves.`
+      );
+    }
+
+    let currIndex = BigInt(index);
+
+    const witnessPath: TMerkleWitnessNode[] = [];
+
+    for (let level = 0; level < this._height - 1; level += 1) {
+      const isLeft = currIndex % 2n === 0n;
+      const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
+
+      witnessPath.push(
+        await this.getNode(level, currIndex, timestamp, options).then(
+          (node) => {
+            return {
+              hash: node,
+              level,
+              index: Number(currIndex),
+              witness: false,
+              target: currIndex === index,
+            };
+          }
+        )
+      );
+
+      witnessPath.push(
+        await this.getNode(level, siblingIndex, timestamp, options).then(
+          (node) => {
+            return {
+              hash: node,
+              level,
+              index: Number(siblingIndex),
+              witness: true,
+              target: false,
+            };
+          }
+        )
+      );
+
+      currIndex /= 2n;
+    }
+
+    witnessPath.push(
+      await this.getNode(this._height - 1, 0n, timestamp, options).then(
+        (node) => {
+          return {
+            hash: node,
+            level: this.height - 1,
+            index: Number(0n),
+            witness: false,
+            target: false,
+          };
+        }
+      )
+    )
+    return witnessPath;
   }
 
   public async getNode(
