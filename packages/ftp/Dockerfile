@@ -42,18 +42,14 @@ RUN addgroup -S appuser && adduser -S -G appuser -h /usr/src/app appuser
 WORKDIR /usr/src/app
 
 # Copy the necessary directories and node_modules from the builder stage
-COPY --from=builder /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
-COPY --from=builder /usr/src/app/packages/ftp /usr/src/app/packages/ftp
-COPY --from=builder /usr/src/app/node_modules /usr/src/app/node_modules
-COPY --from=builder /usr/src/app/package.json /usr/src/app/package.json
-COPY --from=builder /usr/src/app/yarn.lock /usr/src/app/yarn.lock
-
-# Ensure the non-root user owns the working directory
-RUN chown -R appuser:appuser /usr/src/app
+COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
+COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/ftp /usr/src/app/packages/ftp
+COPY --from=builder --chown=appuser:appuser /usr/src/app/node_modules /usr/src/app/node_modules
+COPY --from=builder --chown=appuser:appuser /usr/src/app/package.json /usr/src/app/package.json
+COPY --from=builder --chown=appuser:appuser /usr/src/app/yarn.lock /usr/src/app/yarn.lock
 
 # Switch to the non-root user
 USER appuser
-
 
 # Set the working directory for the FTP package
 WORKDIR /usr/src/app/packages/ftp
