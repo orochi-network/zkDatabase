@@ -274,7 +274,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
 
   public get height(): number {
     return this._height;
-  }  
+  }
 
   public get leafCount() {
     return 2n ** BigInt(this._height - 1);

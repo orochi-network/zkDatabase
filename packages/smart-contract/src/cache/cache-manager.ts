@@ -1,8 +1,7 @@
-import { Cache } from 'o1js';
 import { CacheType } from '@types';
-import { join } from 'path';
+import { Cache } from 'o1js';
+import { getNodeDependencies } from '../helper/environment';
 import { downloadCache } from './cache-downloader';
-import { isNode } from '../helper/environment';
 
 export const DOWNLOADS = 'downloads';
 
@@ -11,12 +10,14 @@ export class CacheManager {
     type: CacheType,
     merkleHeight: number
   ): Promise<Cache> {
-    if (isNode()) {
+    const node = await getNodeDependencies();
+
+    if (node) {
       // TODO: Check cache to avoid redownloaded
-      const identifier = join(type, merkleHeight.toString());
+      const identifier = node.path.join(type, merkleHeight.toString());
       await downloadCache(DOWNLOADS, identifier);
 
-      const cachePath = join(DOWNLOADS, identifier);
+      const cachePath = node.path.join(DOWNLOADS, identifier);
 
       return Cache.FileSystem(cachePath);
     } else {
