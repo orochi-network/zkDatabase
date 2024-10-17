@@ -80,12 +80,12 @@ extend type Mutation {
 `;
 
 // Query
-const collectionList = publicWrapper(
+const collectionList = authorizeWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest) =>
-    listCollections(args.databaseName)
+  async (_root: unknown, args: TDatabaseRequest, ctx) =>
+    listCollections(args.databaseName, ctx.userName)
 );
 
 const collectionExist = publicWrapper(

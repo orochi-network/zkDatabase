@@ -163,10 +163,12 @@ export async function getSchemaDefinition(
   databaseName: string,
   collectionName: string,
   actor: string,
+  skipPermissionCheck: boolean = false,
   session?: ClientSession
 ): Promise<DocumentSchema> {
   if (
-    !(await hasCollectionPermission(
+    skipPermissionCheck ||
+    (await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
@@ -174,22 +176,27 @@ export async function getSchemaDefinition(
       session
     ))
   ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+    const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+    const schema = await modelSchema.getMetadata(collectionName, { session });
+
+    const indexes = await listIndexes(
+      databaseName,
+      actor,
+      collectionName,
+      true
     );
+
+    if (!schema) {
+      throw new Error(`Schema not found for collection ${collectionName}`);
+    }
+
+    return schema.fields.map((f) => ({
+      ...schema[f],
+      indexed: indexes.some((index) => index === f),
+    }));
   }
 
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName, { session });
-
-  const indexes = await listIndexes(databaseName, actor, collectionName);
-
-  if (!schema) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
-  }
-
-  return schema.fields.map((f) => ({
-    ...schema[f],
-    indexed: indexes.some((index) => index === f),
-  }));
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
 }
