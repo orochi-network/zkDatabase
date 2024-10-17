@@ -10,6 +10,8 @@ import {
 } from '../common/schema.js';
 import { DocumentFields } from '../types/document.js';
 import { DocumentSchema } from '../types/schema.js';
+import { listIndexes } from './collection.js';
+import { hasCollectionPermission } from './permission.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -160,14 +162,34 @@ export async function buildSchema(
 export async function getSchemaDefinition(
   databaseName: string,
   collectionName: string,
+  actor: string,
   session?: ClientSession
 ): Promise<DocumentSchema> {
+  if (
+    !(await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+    );
+  }
+
   const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
   const schema = await modelSchema.getMetadata(collectionName, { session });
+
+  const indexes = await listIndexes(databaseName, actor, collectionName);
 
   if (!schema) {
     throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
-  return schema.fields.map((f) => schema[f]);
+  return schema.fields.map((f) => ({
+    ...schema[f],
+    indexed: indexes.some((index) => index === f),
+  }));
 }

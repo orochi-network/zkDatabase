@@ -111,15 +111,13 @@ const permissionList = authorizeWrapper(
   }
 );
 
-const collectionSchema = publicWrapper(
+const collectionSchema = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest, _) =>
-    withTransaction((session) =>
-      getSchemaDefinition(args.databaseName, args.collectionName, session)
-    )
+  async (_root: unknown, args: TCollectionRequest, ctx) =>
+    getSchemaDefinition(args.databaseName, args.collectionName, ctx.userName)
 );
 
 // Mutation

@@ -79,7 +79,8 @@ async function createCollection(
 
 async function readCollectionInfo(
   databaseName: string,
-  collectionName: string
+  collectionName: string,
+  actor: string
 ): Promise<Collection> {
   const modelCollection = ModelCollection.getInstance(
     databaseName,
@@ -88,7 +89,8 @@ async function readCollectionInfo(
   const indexes = await modelCollection.listIndexes();
   const sizeOnDisk = await modelCollection.size();
 
-  const schema = await getSchemaDefinition(databaseName, collectionName);
+  const schema = await getSchemaDefinition(databaseName, actor, collectionName);
+
   const ownership = await readMetadata(
     databaseName,
     collectionName,
