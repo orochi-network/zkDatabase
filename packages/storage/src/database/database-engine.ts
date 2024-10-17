@@ -27,8 +27,8 @@ export class DatabaseEngine {
   }
 
   public async isDatabase(database: string): Promise<boolean> {
-    const databases = await this.client.db().admin().listDatabases();
-    return databases.databases.some((db) => db.name === database);
+    const { databases } = await this.client.db().admin().listDatabases();
+    return databases.some((db) => db.name === database);
   }
 
   public async isCollection(

@@ -117,12 +117,12 @@ const dbSetting = publicWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, _ctx) => {
-    const databases = await DatabaseEngine.getInstance()
+    const { databases } = await DatabaseEngine.getInstance()
       .client.db()
       .admin()
       .listDatabases();
 
-    const isDatabaseExist = databases.databases.some(
+    const isDatabaseExist = databases.some(
       (db) => db.name === args.databaseName
     );
 
