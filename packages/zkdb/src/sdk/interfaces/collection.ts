@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import { IndexField } from 'src/types/collection-index';
 import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
 import { ZKDocument } from '../interfaces';
 import { DocumentEncoded } from '../schema.js';
@@ -60,6 +61,6 @@ export interface ZKCollection extends Ownable {
   ): Promise<MerkleWitness>;
 
   listIndexes(): Promise<string[]>;
-  createIndexes(indexes: string[]): Promise<boolean>;
+  createIndexes(indexes: IndexField[]): Promise<boolean>;
   dropIndex(indexName: string): Promise<boolean>;
 }
