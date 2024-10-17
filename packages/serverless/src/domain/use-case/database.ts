@@ -23,9 +23,10 @@ export async function createDatabase(
   actor: string,
   appPublicKey: string
 ) {
+  // Case database already exist
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
     // Ensure database existing
-    return true;
+    throw new Error(`Database name ${databaseName} already taken`);
   }
   await ModelDocumentMetadata.init(databaseName);
   await ModelCollectionMetadata.init(databaseName);
