@@ -91,6 +91,10 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     this.zeroes = zeroes;
   }
 
+  public getZeroNodes() {
+    return this.zeroes;
+  }
+
   public async getRoot(timestamp: Date): Promise<Field> {
     const root = await this.getNode(this._height - 1, 0n, timestamp);
     return Field(root);

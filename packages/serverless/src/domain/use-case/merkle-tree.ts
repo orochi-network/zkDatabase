@@ -3,6 +3,7 @@ import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { MerkleNode, MerkleTreeInfo } from '../types/merkle-tree.js';
+import { Field } from 'o1js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function getWitnessByDocumentId(
@@ -34,6 +35,8 @@ export async function getMerkleNodesByLevel(
 ): Promise<PaginationReturn<MerkleNode[]>> {
   const modelMerkleTree = await ModelMerkleTree.load(databaseName);
 
+  const zeroNodes = modelMerkleTree.getZeroNodes();
+
   if (nodeLevel < modelMerkleTree.height) {
     const nodes = (
       await modelMerkleTree.getNodesByLevel(nodeLevel, new Date(), {
@@ -43,6 +46,7 @@ export async function getMerkleNodesByLevel(
       level,
       index,
       hash,
+      empty: zeroNodes[level].equals(Field(hash)).toBoolean()
     }));
 
     return {
@@ -119,23 +123,27 @@ export async function getChildrenNodes(
     currentDate
   );
 
+  const zeroNodes = modelMerkleTree.getZeroNodes();
+
   return [
     {
       hash: leftNodeField.toString(),
       index: Number(leftChildIndex),
       level: childrenLevel,
+      empty: zeroNodes[childrenLevel].equals(leftNodeField).toBoolean(),
     },
     {
       hash: rightNodeField.toString(),
       index: Number(rightChildIndex),
       level: childrenLevel,
+      empty: zeroNodes[childrenLevel].equals(rightNodeField).toBoolean(),
     },
   ];
 }
 
 export async function getMerkleWitnessPath(
   databaseName: string,
-  docId: string,
+  docId: string
 ) {
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
