@@ -4,6 +4,7 @@ import { ZKCollection } from './collection';
 import { DatabaseSettings, GroupDescription, Permissions } from '../../types';
 import { SchemaDefinition } from '../schema';
 import { ZKGroup } from './group';
+import { IndexField } from '../../types/collection-index';
 
 export interface ZKDatabase {
   from(name: string): ZKCollection;
@@ -23,7 +24,7 @@ export interface ZKDatabase {
     collectionName: string,
     groupName: string,
     type: T,
-    indexes: string[],
+    indexes: IndexField[],
     permissions: Permissions
   ): Promise<boolean>;
   // Ownership
