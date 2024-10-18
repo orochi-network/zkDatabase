@@ -115,16 +115,12 @@ const getDatabaseProofStatus = publicWrapper(
     });
 
     if (task) {
-      return 'EMPTY';
+      return 'PENDING';
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
 
-      if (proof) {
-        return 'PROVED';
-      } else {
-        return 'PENDING';
-      }
+      return proof ? 'PROVED' : 'EMPTY';
     }
   }
 );
