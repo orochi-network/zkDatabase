@@ -5,6 +5,7 @@ import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import { TCollectionRequest } from './collection.js';
+import { EDatabaseProofStatus } from '../../domain/types/proof-status.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -25,7 +26,7 @@ enum ProofStatus {
   FAILED
 }
 
-enum EDatabaseProofStatus {
+enum DatabaseProofStatus {
   EMPTY
   PENDING
   PROVED
@@ -33,7 +34,7 @@ enum EDatabaseProofStatus {
 
 extend type Query {
   getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
-  getDatabaseProofStatus(databaseName: String!): EDatabaseProofStatus!
+  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
   getProof(databaseName: String!): Proof
 }
 `;
@@ -115,12 +116,12 @@ const getDatabaseProofStatus = publicWrapper(
     });
 
     if (task) {
-      return 'PENDING';
+      return EDatabaseProofStatus.PENDING;
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
 
-      return proof ? 'PROVED' : 'EMPTY';
+      return proof ? EDatabaseProofStatus.PROVED : EDatabaseProofStatus.EMPTY;
     }
   }
 );
