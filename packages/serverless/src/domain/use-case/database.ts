@@ -100,7 +100,9 @@ export async function getDatabases(
             readCollectionInfo(databaseName, collectionName)
         );
 
-        const collections = (await Fill(promises)).map(({ result }) => result);
+        const collections = (await Fill(promises))
+          .map(({ result }) => result)
+          .filter(Boolean);
 
         return {
           databaseName,
@@ -111,7 +113,9 @@ export async function getDatabases(
         } as Database;
       })
     )
-  ).map(({ result }) => result);
+  )
+    .map(({ result }) => result)
+    .filter(Boolean);
 
   return {
     data: databases.filter(Boolean),

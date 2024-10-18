@@ -1,5 +1,5 @@
 export enum EDatabaseProofStatus {
-  EMPTY,
-  PENDING,
-  PROVED
+  Empty = 'EMPTY',
+  Pending = 'PENDING',
+  Proved = 'PROVED',
 }
