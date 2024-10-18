@@ -116,12 +116,12 @@ const getDatabaseProofStatus = publicWrapper(
     });
 
     if (task) {
-      return EDatabaseProofStatus.PENDING;
+      return EDatabaseProofStatus.Pending;
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
 
-      return proof ? EDatabaseProofStatus.PROVED : EDatabaseProofStatus.EMPTY;
+      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.Empty;
     }
   }
 );

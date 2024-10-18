@@ -104,7 +104,9 @@ async function listCollections(databaseName: string): Promise<Collection[]> {
           readCollectionInfo(databaseName, collectionName)
       )
     )
-  ).map(({ result }) => result);
+  )
+    .map(({ result }) => result)
+    .filter(Boolean);
 }
 
 async function listIndexes(
