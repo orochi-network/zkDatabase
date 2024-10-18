@@ -25,7 +25,7 @@ enum ProofStatus {
   FAILED
 }
 
-enum DatabaseProofStatus {
+enum EDatabaseProofStatus {
   EMPTY
   PENDING
   PROVED
@@ -33,7 +33,7 @@ enum DatabaseProofStatus {
 
 extend type Query {
   getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
-  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
+  getDatabaseProofStatus(databaseName: String!): EDatabaseProofStatus!
   getProof(databaseName: String!): Proof
 }
 `;
