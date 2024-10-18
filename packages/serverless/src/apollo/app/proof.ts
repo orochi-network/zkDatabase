@@ -5,6 +5,7 @@ import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import { TCollectionRequest } from './collection.js';
+import { EDatabaseProofStatus } from '../../domain/types/proof-status.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -25,8 +26,15 @@ enum ProofStatus {
   FAILED
 }
 
+enum DatabaseProofStatus {
+  EMPTY
+  PENDING
+  PROVED
+}
+
 extend type Query {
   getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
+  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
   getProof(databaseName: String!): Proof
 }
 `;
@@ -95,11 +103,35 @@ const getProof = publicWrapper(
   }
 );
 
+const getDatabaseProofStatus = publicWrapper(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root: unknown, args: TProofRequest) => {
+    const modelTask = ModelQueueTask.getInstance();
+
+    const task = await modelTask.findOne({
+      database: args.databaseName,
+      status: { $in: ['proving', 'queued'] },
+    });
+
+    if (task) {
+      return EDatabaseProofStatus.PENDING;
+    } else {
+      const modelProof = ModelProof.getInstance();
+      const proof = await modelProof.getProof(args.databaseName);
+
+      return proof ? EDatabaseProofStatus.PROVED : EDatabaseProofStatus.EMPTY;
+    }
+  }
+);
+
 type TProofResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     getProofStatus: typeof getProofStatus;
     getProof: typeof getProof;
+    getDatabaseProofStatus: typeof getDatabaseProofStatus;
   };
 };
 
@@ -108,5 +140,6 @@ export const resolversProof: TProofResolver = {
   Query: {
     getProofStatus,
     getProof,
+    getDatabaseProofStatus,
   },
 };
