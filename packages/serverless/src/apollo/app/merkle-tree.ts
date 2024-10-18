@@ -72,6 +72,7 @@ type MerkleNode {
   index: Int!,
   level: Int!,
   hash: String!
+  empty: Boolean!
 }
 
 type MerkleWitnessNode {
