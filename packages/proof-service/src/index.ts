@@ -5,11 +5,13 @@ import { config } from './helper/config.js';
 import { Mina } from 'o1js';
 
 (async () => {
-  const DEV_NET = Mina.Network({
-    mina: 'https://api.minascan.io/node/devnet/v1/graphql',
+  const network = Mina.Network({
+    networkId: 'mainnet',
+    mina: 'https://api.minascan.io/node/mainnet/v1/graphql',
   });
 
-  Mina.setActiveInstance(DEV_NET);
+  Mina.setActiveInstance(network);
+
   const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
