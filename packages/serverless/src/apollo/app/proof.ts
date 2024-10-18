@@ -25,8 +25,15 @@ enum ProofStatus {
   FAILED
 }
 
+enum DatabaseProofStatus {
+  EMPTY
+  PENDING
+  PROVED
+}
+
 extend type Query {
   getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
+  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
   getProof(databaseName: String!): Proof
 }
 `;
@@ -95,11 +102,39 @@ const getProof = publicWrapper(
   }
 );
 
+const getDatabaseProofStatus = publicWrapper(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root: unknown, args: TProofRequest) => {
+    const modelTask = ModelQueueTask.getInstance();
+
+    const task = await modelTask.findOne({
+      database: args.databaseName,
+      status: { $in: ['proving', 'queued'] },
+    });
+
+    if (task) {
+      return 'EMPTY';
+    } else {
+      const modelProof = ModelProof.getInstance();
+      const proof = await modelProof.getProof(args.databaseName);
+
+      if (proof) {
+        return 'PROVED';
+      } else {
+        return 'PENDING';
+      }
+    }
+  }
+);
+
 type TProofResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     getProofStatus: typeof getProofStatus;
     getProof: typeof getProof;
+    getDatabaseProofStatus: typeof getDatabaseProofStatus;
   };
 };
 
@@ -108,5 +143,6 @@ export const resolversProof: TProofResolver = {
   Query: {
     getProofStatus,
     getProof,
+    getDatabaseProofStatus,
   },
 };
