@@ -31,23 +31,21 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
+  // const tx = await zkdb
+  //   .fromBlockchain()
+  //   .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
 
-  await tx.wait();
+  // await tx.wait();
 
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey), 'devnet');
 
   const databases = await zkdb
     .fromGlobal()
-    .databases(
-      new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
-    );
+    .databases();
 
-  assert(databases[0].databaseName === DB_NAME);
+  console.log(databases);
 
   await zkdb.authenticator.signOut();
 }

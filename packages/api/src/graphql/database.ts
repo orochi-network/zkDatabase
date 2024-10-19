@@ -23,11 +23,13 @@ const DATABASE_CREATE = gql`
     $databaseName: String!
     $merkleHeight: Int!
     $publicKey: String!
+    $networkId: String!
   ) {
     dbCreate(
       databaseName: $databaseName
       merkleHeight: $merkleHeight
       publicKey: $publicKey
+      networkId: $networkId
     )
   }
 `;
@@ -105,7 +107,12 @@ export const database = <T>(client: TApolloClient<T>) => ({
   >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
   create: createMutateFunction<
     boolean,
-    { databaseName: string; merkleHeight: number; publicKey: string },
+    {
+      databaseName: string;
+      merkleHeight: number;
+      publicKey: string;
+      networkId: string;
+    },
     { dbCreate: boolean }
   >(client, DATABASE_CREATE, (data) => data.dbCreate),
   setting: createQueryFunction<

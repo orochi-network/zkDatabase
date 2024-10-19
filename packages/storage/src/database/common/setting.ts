@@ -13,6 +13,7 @@ export type DbSetting = {
   merkleHeight: number;
   appPublicKey: string;
   databaseOwner: string;
+  networkId: string
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {

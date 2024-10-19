@@ -6,12 +6,21 @@ import {
 import {
   ModelDbSetting,
   ModelMerkleTree,
+  ModelNetwork,
   ModelProof,
   ModelQueueTask,
   withTransaction,
 } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
-import { fetchAccount, Field, MerkleWitness, PublicKey, ZkProgram } from 'o1js';
+import {
+  fetchAccount,
+  Field,
+  MerkleWitness,
+  Mina,
+  NetworkId,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import logger from '../helper/logger.js';
 
@@ -33,12 +42,28 @@ export async function createProof(taskId: string) {
   try {
     const circuitName = `${task.database}.${task.collection}`;
     const modelDbSetting = ModelDbSetting.getInstance();
-    const { merkleHeight, appPublicKey } =
+    const { merkleHeight, appPublicKey, networkId } =
       (await modelDbSetting.getSetting(task.database)) || {};
 
     if (!merkleHeight || !appPublicKey) {
       throw new Error('Setting is wrong, unable to deconstruct settings');
     }
+
+    const network = await ModelNetwork.getInstance().findOne({
+      id: networkId,
+      active: true,
+    });
+
+    if (network) {
+      throw Error('No active network found');
+    }
+
+    Mina.setActiveInstance(
+      Mina.Network({
+        networkId: network!.id as NetworkId,
+        mina: network!.endpoint,
+      })
+    );
 
     const publicKey = PublicKey.fromBase58(appPublicKey);
 

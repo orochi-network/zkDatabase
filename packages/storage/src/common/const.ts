@@ -19,6 +19,9 @@ export const zkDatabaseConstants = {
 
     // Proof storage
     proof: 'proof',
+
+    // Mina network
+    network: 'network',
   },
 
   // Collections that are common across different databases

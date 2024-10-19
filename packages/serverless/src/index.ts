@@ -20,6 +20,7 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
+import { fillNetworks } from './domain/use-case/network.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -29,6 +30,8 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
   }
+
+  await fillNetworks();
 
   RedisInstance.event.on('error', logger.error);
 

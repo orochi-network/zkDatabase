@@ -8,6 +8,7 @@ import { ModelCollection } from './general/collection.js';
 import { ModelMerkleTree, TMerkleProof } from './common/merkle-tree.js';
 import { ModelDbSetting, DbSetting } from './common/setting.js';
 import { ModelSequencer, SequencedItem } from './common/sequencer.js';
+import { ModelNetwork } from './global/network.js';
 import withTransaction from './transaction/transaction-manager.js';
 
 export {
@@ -26,5 +27,6 @@ export {
   TaskEntity,
   ModelSequencer,
   SequencedItem,
+  ModelNetwork,
   withTransaction,
 };

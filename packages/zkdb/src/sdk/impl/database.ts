@@ -5,6 +5,7 @@ import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
+import { NetworkId } from '../../types/network';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
@@ -85,16 +86,6 @@ export class ZKDatabaseImpl implements ZKDatabase {
     });
 
     return result.unwrap().map((collection) => collection.name);
-  }
-
-  async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
-    const result = await this.apiClient.db.create({
-      databaseName: this.databaseName,
-      merkleHeight,
-      publicKey: publicKey.toBase58(),
-    });
-
-    return result.unwrap();
   }
 
   async getSettings(): Promise<DatabaseSettings> {

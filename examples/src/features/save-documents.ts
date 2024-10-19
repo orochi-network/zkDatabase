@@ -54,7 +54,7 @@ async function run() {
 
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey), 'devnet');
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 

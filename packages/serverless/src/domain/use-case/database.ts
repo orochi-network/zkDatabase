@@ -3,6 +3,7 @@ import {
   DbSetting,
   ModelDatabase,
   ModelDbSetting,
+  ModelNetwork,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Fill } from '@orochi-network/queue';
@@ -21,7 +22,8 @@ export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
   actor: string,
-  appPublicKey: string
+  appPublicKey: string,
+  networkId: string
 ) {
   // Case database already exist
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
@@ -32,12 +34,24 @@ export async function createDatabase(
   await ModelCollectionMetadata.init(databaseName);
   await ModelGroup.init(databaseName);
   await ModelUserGroup.init(databaseName);
-  await ModelDbSetting.getInstance().createSetting({
-    databaseName,
-    merkleHeight,
-    appPublicKey,
-    databaseOwner: actor,
-  });
+
+  const modelNetwork = ModelNetwork.getInstance();
+
+  const networks = await (
+    await modelNetwork.find({ id: networkId, active: true })
+  ).toArray();
+
+  if (networks.length > 0) {
+    await ModelDbSetting.getInstance().createSetting({
+      databaseName,
+      merkleHeight,
+      appPublicKey,
+      databaseOwner: actor,
+      networkId,
+    });
+  } else {
+    throw Error('Wrong Network Type');
+  }
   return true;
 }
 

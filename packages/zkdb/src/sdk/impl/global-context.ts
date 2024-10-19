@@ -4,6 +4,7 @@ import { PublicKey } from 'o1js';
 import { IApiClient } from '@zkdb/api';
 import { GlobalContext } from '../interfaces';
 import { User, Database, FilterCriteria, Pagination } from '../../types';
+import { NetworkId } from '../../types/network';
 
 export class GlobalContextImpl implements GlobalContext {
   private apiClient: IApiClient;
@@ -49,12 +50,14 @@ export class GlobalContextImpl implements GlobalContext {
   async createDatabase(
     databaseName: string,
     merkleHeight: number,
-    publicKey: PublicKey
+    publicKey: PublicKey,
+    networkId: NetworkId
   ): Promise<boolean> {
     const result = await this.apiClient.db.create({
       databaseName,
       merkleHeight,
       publicKey: publicKey.toBase58(),
+      networkId
     });
 
     return result.unwrap();

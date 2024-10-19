@@ -1,4 +1,5 @@
 import { Collection } from './collection.js';
+import { NetworkId } from './network.js';
 
 export type Database = {
   databaseName: string;
@@ -6,4 +7,5 @@ export type Database = {
   merkleHeight: number;
   collections: Collection[];
   databaseSize: number;
+  networkId: NetworkId
 };
