@@ -37,7 +37,7 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map(), 'devnet');
 
   await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
@@ -54,7 +54,7 @@ async function run() {
 
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey), 'devnet');
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 

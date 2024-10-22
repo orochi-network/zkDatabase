@@ -7,6 +7,7 @@ import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { objectToLookupPattern } from '../../helper/common.js';
+import { NetworkId } from '../types/network.js';
 
 export async function searchUser(
   query: { [key: string]: string },
@@ -59,16 +60,17 @@ export async function isUserExist(userName: string): Promise<boolean> {
   return (await modelUser.findOne({ userName })) !== null;
 }
 
-export async function areUsersExist(userNames: string[]) {
+export async function areUsersExist(userNames: string[], networkId: NetworkId) {
   const modelUser = new ModelUser();
 
-  return modelUser.areUsersExist(userNames);
+  return modelUser.areUsersExist(userNames, networkId);
 }
 
 export async function signUpUser(
   user: User,
   userData: any,
-  signature: Signature
+  signature: Signature,
+  networkId: NetworkId
 ) {
   // @todo: We should move network config to ENV
   const client = new Client({ network: 'mainnet' });
@@ -84,10 +86,15 @@ export async function signUpUser(
 
     try {
       const existingUser = await modelUser.collection.findOne({
-        $or: [
-          { email: user.email },
-          { userName: user.userName },
-          { publicKey: user.publicKey },
+        $and: [
+          { networkId },
+          {
+            $or: [
+              { email: user.email },
+              { userName: user.userName },
+              { publicKey: user.publicKey },
+            ],
+          },
         ],
       });
 
@@ -112,7 +119,8 @@ export async function signUpUser(
       user.userName,
       user.email,
       user.publicKey,
-      userData.userData
+      userData.userData,
+      networkId
     );
     if (result && result.acknowledged) {
       return user;

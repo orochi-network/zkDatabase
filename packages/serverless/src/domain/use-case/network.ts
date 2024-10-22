@@ -1,4 +1,5 @@
 import { ModelNetwork } from '@zkdb/storage';
+import { Network } from '../types/network';
 
 export async function fillNetworks() {
   const modelNetwork = ModelNetwork.getInstance();
@@ -8,15 +9,21 @@ export async function fillNetworks() {
   if (networks.length === 0) {
     await modelNetwork.insertMany([
       {
-        id: 'mainnet',
-        endpoint: 'https://api.minascan.io/node/devnet/v1/graphql',
+        networkId: 'mainnet',
+        endpoint: 'https://api.minascan.io/node/mainnet/v1/graphql',
         active: true,
       },
       {
-        id: 'devnet',
-        endpoint: 'https://api.minascan.io/node/mainnet/v1/graphql',
+        networkId: 'devnet',
+        endpoint: 'https://api.minascan.io/node/devnet/v1/graphql',
         active: true,
       },
     ]);
   }
+}
+
+export async function getNetworks(): Promise<Network[]> {
+  const modelNetwork = ModelNetwork.getInstance();
+
+  return (await modelNetwork.find()).toArray();
 }

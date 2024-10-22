@@ -8,9 +8,11 @@ import { NetworkId } from '../../types/network';
 
 export class GlobalContextImpl implements GlobalContext {
   private apiClient: IApiClient;
+  private networkId: NetworkId;
 
-  constructor(apiClient: IApiClient) {
+  constructor(apiClient: IApiClient, networkId: NetworkId) {
     this.apiClient = apiClient;
+    this.networkId = networkId;
   }
 
   async databases(
@@ -18,6 +20,7 @@ export class GlobalContextImpl implements GlobalContext {
     pagination: Pagination = { offset: 0, limit: 10 }
   ): Promise<Database[]> {
     const result = await this.apiClient.db.list({
+      networkId: this.networkId,
       query: filter,
       pagination,
     });
@@ -42,6 +45,7 @@ export class GlobalContextImpl implements GlobalContext {
         limit: 10,
         offset: 0,
       },
+      networkId: this.networkId
     });
 
     return result.unwrap();
@@ -50,14 +54,13 @@ export class GlobalContextImpl implements GlobalContext {
   async createDatabase(
     databaseName: string,
     merkleHeight: number,
-    publicKey: PublicKey,
-    networkId: NetworkId
+    publicKey: PublicKey
   ): Promise<boolean> {
     const result = await this.apiClient.db.create({
       databaseName,
       merkleHeight,
       publicKey: publicKey.toBase58(),
-      networkId
+      networkId: this.networkId
     });
 
     return result.unwrap();

@@ -52,6 +52,7 @@ const historyDocumentGet = authorizeWrapper(
   async (_root: unknown, args: TDocumentHistoryGetRequest, ctx) => {
     const document = await withTransaction((session) =>
       readHistoryDocument(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -78,6 +79,7 @@ const documentsHistoryList = authorizeWrapper(
   async (_root: unknown, args: TDocumentHistoryListRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await listHistoryDocuments(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,

@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { IApiClient, TSignInInfo } from '@zkdb/api';
 import { Signer } from '../signer';
+import { NetworkId } from '../../types/network';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 
@@ -21,14 +22,18 @@ export class Authenticator {
 
   private apiClient: IApiClient;
 
+  private network: NetworkId;
+
   constructor(
     signer: Signer,
     apiClient: IApiClient,
-    storage: ISecureStorage = new Map<string, string>()
+    storage: ISecureStorage = new Map<string, string>(),
+    networkId: NetworkId
   ) {
     this.#signer = signer;
     this.apiClient = apiClient;
     this.#storage = storage;
+    this.network = networkId;
   }
 
   private get user() {
@@ -57,7 +62,9 @@ export class Authenticator {
   public async signIn() {
     const ecdsa = (await this.user.ecdsa(undefined)).unwrap();
     const proof = await this.signer.signMessage(ecdsa);
-    const userData = (await this.user.signIn({ proof })).unwrap();
+    const userData = (
+      await this.user.signIn({ proof, networkId: this.network })
+    ).unwrap();
     this.#storage.set(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
 
     this.#storage.set(
@@ -89,6 +96,7 @@ export class Authenticator {
           timestamp: this.timestamp(),
           userData: {},
         },
+        networkId: this.network,
       })
     ).unwrap();
   }

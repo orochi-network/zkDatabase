@@ -8,8 +8,10 @@ import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
+import { NetworkId } from '../types/network.js';
 
 export async function changeDocumentOwnership(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   docId: string,
@@ -20,6 +22,7 @@ export async function changeDocumentOwnership(
 ) {
   if (
     !(await hasDocumentPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -33,15 +36,21 @@ export async function changeDocumentOwnership(
     );
   }
 
-  const modelMetadata = new ModelDocumentMetadata(databaseName);
+  const modelMetadata = ModelDocumentMetadata.getInstance(
+    databaseName,
+    networkId
+  );
 
   if (group === 'User') {
     const modelUser = new ModelUser();
 
     if (
-      !(await modelUser.isUserExist({
-        userName: newOwner,
-      }))
+      !(await modelUser.isUserExist(
+        {
+          userName: newOwner,
+        },
+        networkId
+      ))
     ) {
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
@@ -57,7 +66,7 @@ export async function changeDocumentOwnership(
       { session }
     );
   } else {
-    if (!isGroupExist(databaseName, newOwner, session)) {
+    if (!isGroupExist(databaseName, newOwner, networkId, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
     await modelMetadata.updateOne(
@@ -74,6 +83,7 @@ export async function changeDocumentOwnership(
 }
 
 export async function changeCollectionOwnership(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -83,6 +93,7 @@ export async function changeCollectionOwnership(
 ) {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -95,15 +106,21 @@ export async function changeCollectionOwnership(
     );
   }
 
-  const modelMetadata = ModelCollectionMetadata.getInstance(databaseName);
+  const modelMetadata = ModelCollectionMetadata.getInstance(
+    databaseName,
+    networkId
+  );
 
   if (group === 'User') {
     const modelUser = new ModelUser();
 
     if (
-      !(await modelUser.isUserExist({
-        userName: newOwner,
-      }))
+      !(await modelUser.isUserExist(
+        {
+          userName: newOwner,
+        },
+        networkId
+      ))
     ) {
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
@@ -118,7 +135,7 @@ export async function changeCollectionOwnership(
       { session }
     );
   } else {
-    if (!isGroupExist(databaseName, newOwner, session)) {
+    if (!isGroupExist(databaseName, newOwner, networkId, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
     await modelMetadata.updateOne(

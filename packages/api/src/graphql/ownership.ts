@@ -13,6 +13,7 @@ export const ownership = <T>(client: TApolloClient<T>) => ({
     client,
     gql`
       mutation PermissionOwn(
+        $networkId: NetworkId!
         $databaseName: String!
         $collection: String!
         $docId: String
@@ -20,6 +21,7 @@ export const ownership = <T>(client: TApolloClient<T>) => ({
         $newOwner: String!
       ) {
         permissionOwn(
+          networkId: $networkId
           databaseName: $databaseName
           collection: $collection
           docId: $docId

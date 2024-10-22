@@ -1,3 +1,5 @@
+import { TNetworkId } from "./network";
+
 export type TOwnership = {
   userName: string;
   groupName: string;
@@ -21,6 +23,7 @@ export type TPermissions = {
 };
 
 export type TOwnershipRequest = {
+  networkId: TNetworkId;
   databaseName: string;
   collectionName: string;
   docId?: string;
@@ -33,4 +36,3 @@ export type TOwnershipResponse = {
   permissionGroup?: TPermissionSet;
   permissionOther?: TPermissionSet;
 };
-

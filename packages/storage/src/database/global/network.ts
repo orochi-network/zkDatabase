@@ -1,8 +1,10 @@
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelGeneral from '../base/general.js';
 
+export type NetworkId = 'mainnet' | 'devnet';
+
 export type Network = {
-  id: string
+  networkId: NetworkId
   endpoint: string
   active: boolean
 };

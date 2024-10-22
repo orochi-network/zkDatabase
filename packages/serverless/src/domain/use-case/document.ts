@@ -37,6 +37,7 @@ import {
   proveDeleteDocument,
   proveUpdateDocument,
 } from './prover.js';
+import { NetworkId } from '../types/network.js';
 
 export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
@@ -93,6 +94,7 @@ function documentFieldsToDocumentRecord(
 }
 
 async function readDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -101,6 +103,7 @@ async function readDocument(
 ): Promise<Document | null> {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -113,7 +116,7 @@ async function readDocument(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
 
   const documentRecord = await modelDocument.findOne(
     parseQuery(filter),
@@ -125,6 +128,7 @@ async function readDocument(
   }
 
   const hasReadPermission = await hasDocumentPermission(
+    networkId,
     databaseName,
     collectionName,
     actor,
@@ -147,6 +151,7 @@ async function readDocument(
 }
 
 async function createDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -156,6 +161,7 @@ async function createDocument(
 ) {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -168,7 +174,7 @@ async function createDocument(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
 
   if (document.length === 0) {
     throw new Error('Document array is empty. At least one field is required.');
@@ -181,13 +187,13 @@ async function createDocument(
   const insertResult = await modelDocument.insertOne(documentRecord, session);
 
   // 2. Create new sequence value
-  const sequencer = ModelSequencer.getInstance(databaseName);
+  const sequencer = ModelSequencer.getInstance(databaseName, networkId);
   const merkleIndex = await sequencer.getNextValue('merkle-index', session);
 
   // 3. Create Metadata
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
 
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName, networkId);
 
   const documentSchema = await modelSchema.getMetadata(collectionName, {
     session,
@@ -251,6 +257,7 @@ async function createDocument(
 
   // 4. Prove document creation
   const witness = await proveCreateDocument(
+    networkId,
     databaseName,
     collectionName,
     insertResult.docId!,
@@ -262,6 +269,7 @@ async function createDocument(
 }
 
 async function updateDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -271,6 +279,7 @@ async function updateDocument(
 ) {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -283,7 +292,7 @@ async function updateDocument(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
 
   const oldDocumentRecord = await modelDocument.findOne(
     parseQuery(filter),
@@ -293,6 +302,7 @@ async function updateDocument(
   if (oldDocumentRecord) {
     if (
       !(await hasDocumentPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -322,6 +332,7 @@ async function updateDocument(
     );
 
     const witness = await proveUpdateDocument(
+      networkId,
       databaseName,
       collectionName,
       oldDocumentRecord.docId,
@@ -348,6 +359,7 @@ async function updateDocument(
 }
 
 async function deleteDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -356,6 +368,7 @@ async function deleteDocument(
 ) {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -368,13 +381,14 @@ async function deleteDocument(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
 
   const findResult = await modelDocument.findOne(parseQuery(filter), session);
 
   if (findResult) {
     if (
       !(await hasDocumentPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -389,6 +403,7 @@ async function deleteDocument(
     }
 
     const witness = await proveDeleteDocument(
+      networkId,
       databaseName,
       collectionName,
       findResult.docId,
@@ -471,6 +486,7 @@ function filterDocumentsByPermissions(
 }
 
 async function findDocumentsWithMetadata(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -480,6 +496,7 @@ async function findDocumentsWithMetadata(
 ): Promise<WithProofStatus<WithMetadata<Document>>[]> {
   if (
     await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -492,7 +509,7 @@ async function findDocumentsWithMetadata(
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
 
-    const userGroups = await getUsersGroup(databaseName, actor);
+    const userGroups = await getUsersGroup(databaseName, actor, networkId);
     const tasks =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
@@ -507,7 +524,7 @@ async function findDocumentsWithMetadata(
 
     let filteredDocuments: any[];
 
-    if (!(await isDatabaseOwner(databaseName, actor))) {
+    if (!(await isDatabaseOwner(databaseName, actor, networkId))) {
       filteredDocuments = filterDocumentsByPermissions(
         documentsWithMetadata,
         actor,
@@ -564,6 +581,7 @@ async function findDocumentsWithMetadata(
 }
 
 async function searchDocuments(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -573,6 +591,7 @@ async function searchDocuments(
 ): Promise<PaginationReturn<Array<Document>>> {
   if (
     await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -585,7 +604,7 @@ async function searchDocuments(
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
 
-    const userGroups = await getUsersGroup(databaseName, actor);
+    const userGroups = await getUsersGroup(databaseName, actor, networkId);
 
     // const matchQuery = buildMongoQuery(query);
 
@@ -600,7 +619,7 @@ async function searchDocuments(
 
     let filteredDocuments: any[];
 
-    if (!(await isDatabaseOwner(databaseName, actor))) {
+    if (!(await isDatabaseOwner(databaseName, actor, networkId))) {
       filteredDocuments = filterDocumentsByPermissions(
         documentsWithMetadata,
         actor,
@@ -627,7 +646,8 @@ async function searchDocuments(
       offset: pagination.offset,
       totalSize: await ModelDocument.getInstance(
         databaseName,
-        collectionName
+        collectionName,
+        networkId
       ).countActiveDocuments(),
     };
   }

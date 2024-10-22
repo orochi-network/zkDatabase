@@ -7,9 +7,11 @@ import {
   hasDocumentPermission,
 } from './permission.js';
 import { PermissionBinary } from '../../common/permission.js';
+import { NetworkId } from '../types/network.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function readMetadata(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   docId: string | null,
@@ -21,6 +23,7 @@ export async function readMetadata(
   if (checkPermissions) {
     const hasReadPermission = docId
       ? await hasDocumentPermission(
+          networkId,
           databaseName,
           collectionName,
           actor,
@@ -29,6 +32,7 @@ export async function readMetadata(
           session
         )
       : await hasCollectionPermission(
+          networkId,
           databaseName,
           collectionName,
           actor,
@@ -44,8 +48,8 @@ export async function readMetadata(
   }
 
   const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+    ? ModelDocumentMetadata.getInstance(databaseName, networkId)
+    : ModelCollectionMetadata.getInstance(databaseName, networkId);
 
   const key = docId
     ? { docId, collection: collectionName }

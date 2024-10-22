@@ -2,27 +2,29 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, publicKey, userName } from './common.js';
+import { databaseName, networkId, pagination, publicKey, userName } from './common.js';
 import {
   changeDatabaseOwner,
   createDatabase,
   getDatabases,
 } from '../../domain/use-case/database.js';
 import { Pagination } from '../types/pagination.js';
+import { NetworkId } from '../../domain/types/network.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
+  networkId: NetworkId;
 };
 
 export type TDatabaseSearchRequest = {
   query: { [key: string]: string };
   pagination: Pagination;
+  networkId: NetworkId;
 };
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
   publicKey: string;
-  networkId: string
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -37,12 +39,13 @@ const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
   publicKey,
-  networkId: Joi.string().required()
+  networkId
 });
 
 const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
   databaseName,
   newOwner: userName,
+  networkId
 });
 
 export const typeDefsDatabase = `#graphql
@@ -69,8 +72,8 @@ type DbDescription {
   databaseSize: String!,
   databaseOwner: String!,
   merkleHeight: Int!,
-  collections: [CollectionDescriptionOutput]!
-  networkId: String!
+  collections: [CollectionDescriptionOutput]!,
+  networkId: NetworkId!
 }
 
 type DatabasePaginationOutput {
@@ -80,15 +83,15 @@ type DatabasePaginationOutput {
 }
 
 extend type Query {
-  dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
-  dbStats(databaseName: String!): JSON
-  dbSetting(databaseName: String!): DbSetting!
-  #dbFindIndex(databaseName: String!, index: Int!): JSON
+  dbList(networkId: NetworkId!, query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
+  dbStats(networkId: NetworkId!, databaseName: String!): JSON
+  dbSetting(networkId: NetworkId!, databaseName: String!): DbSetting!
+  #dbFindIndex(networkId: NetworkId!, databaseName: String!, index: Int!): JSON
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!, networkId: String!): Boolean
-  dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
+  dbCreate(networkId: NetworkId!, databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
+  dbChangeOwner(networkId: NetworkId!, databaseName: String!, newOwner: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
@@ -98,26 +101,29 @@ export const merkleHeight = Joi.number().integer().positive().required();
 const databaseSearch = Joi.object({
   query: Joi.object().optional(),
   pagination,
+  networkId
 });
 
 // Query
 const dbStats = publicWrapper(
   Joi.object({
     databaseName,
+    networkId
   }),
   async (_root: unknown, args: TDatabaseRequest, _ctx) =>
-    ModelDatabase.getInstance(args.databaseName).stats()
+    ModelDatabase.getInstance(args.databaseName, args.networkId).stats()
 );
 
-const dbList = publicWrapper(
+const dbList = authorizeWrapper(
   databaseSearch,
   async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
-    getDatabases(args.query, args.pagination)
+    getDatabases(args.networkId, _ctx.userName, args.query, args.pagination)
 );
 
 const dbSetting = publicWrapper(
   Joi.object({
     databaseName,
+    networkId
   }),
   async (_root: unknown, args: TDatabaseRequest, _ctx) => {
     const { databases } = await DatabaseEngine.getInstance()
@@ -134,7 +140,8 @@ const dbSetting = publicWrapper(
     }
 
     const setting = await ModelDbSetting.getInstance().getSetting(
-      args.databaseName
+      args.databaseName,
+      args.networkId
     );
 
     if (setting) {
@@ -163,7 +170,12 @@ const dbCreate = authorizeWrapper(
 const dbChangeOwner = authorizeWrapper(
   DatabaseChangeOwnerRequest,
   async (_root: unknown, args: TDatabaseChangeOwnerRequest, ctx) =>
-    changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
+    changeDatabaseOwner(
+      args.databaseName,
+      ctx.userName,
+      args.newOwner,
+      args.networkId
+    )
 );
 
 type TDatabaseResolver = {

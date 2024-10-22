@@ -7,13 +7,14 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelBasic from '../base/basic.js';
+import { NetworkId } from '../global/network.js';
 
 export type DbSetting = {
   databaseName: string;
   merkleHeight: number;
   appPublicKey: string;
   databaseOwner: string;
-  networkId: string
+  networkId: NetworkId
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
@@ -22,7 +23,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      zkDatabaseConstants.databaseCollections.setting
+      zkDatabaseConstants.globalCollections.setting
     );
   }
 
@@ -94,10 +95,11 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
 
   public async getSetting(
     databaseName: string,
+    networkId: NetworkId,
     options?: FindOptions
   ): Promise<DbSetting | null> {
     try {
-      const setting = await this.collection.findOne({ databaseName }, options);
+      const setting = await this.collection.findOne({ databaseName, networkId }, options);
       return setting;
     } catch (error) {
       throw new Error(`Failed to get setting: ${error}`);

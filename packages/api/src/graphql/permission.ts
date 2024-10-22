@@ -25,12 +25,14 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     client,
     gql`
       mutation PermissionSet(
+        $networkId: NetworkId!
         $databaseName: String!
         $collectionName: String!
         $docId: String
         $permission: PermissionDetailInput!
       ) {
         permissionSet(
+          networkId: $networkId
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId
@@ -80,11 +82,13 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     client,
     gql`
       query PermissionList(
+        $networkId: NetworkId!
         $databaseName: String!
         $collectionName: String!
         $docId: String
       ) {
         permissionList(
+          networkId: $networkId
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId

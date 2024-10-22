@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { DatabaseEngine, ModelBasic, ModelCollection, ModelDatabase, NetworkId } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
 import { PermissionBasic } from '../../common/permission.js';
@@ -40,23 +40,14 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     });
   }
 
-  get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
-  }
+  public static getInstance(databaseName: string, collectionName: string, networkId: NetworkId) {
+    const dbName = DatabaseEngine.getValidName(databaseName, networkId);
 
-  get modelCollection() {
-    return ModelCollection.getInstance(
-      this.databaseName!,
-      this.collectionName!
-    );
-  }
-
-  public static getInstance(databaseName: string, collectionName: string) {
-    const key = `${databaseName}.${collectionName}`;
+    const key = `${dbName}.${collectionName}`;
     if (!ModelDocument.instances.has(key)) {
       ModelDocument.instances.set(
         key,
-        new ModelDocument(databaseName, collectionName)
+        new ModelDocument(dbName, collectionName)
       );
     }
     return ModelDocument.instances.get(key)!;

@@ -1,5 +1,6 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
 import logger from '../helper/logger.js';
+import { NetworkId } from './global/network.js';
 
 export class DatabaseEngine {
   private static instance: DatabaseEngine | null = null;
@@ -26,9 +27,18 @@ export class DatabaseEngine {
     return DatabaseEngine.instance;
   }
 
-  public async isDatabase(database: string): Promise<boolean> {
+  public static getValidName(databaseName: string, networkId: NetworkId) {
+    return `${databaseName}-${networkId}`;
+  }
+
+  public async isDatabase(
+    database: string,
+    networkId: NetworkId
+  ): Promise<boolean> {
     const { databases } = await this.client.db().admin().listDatabases();
-    return databases.some((db) => db.name === database);
+    return databases.some(
+      (db) => db.name === DatabaseEngine.getValidName(database, networkId)
+    );
   }
 
   public async isCollection(

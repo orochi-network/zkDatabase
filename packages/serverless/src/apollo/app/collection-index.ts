@@ -9,7 +9,13 @@ import {
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, indexName, indexes } from './common.js';
+import {
+  collectionName,
+  databaseName,
+  indexName,
+  indexes,
+  networkId,
+} from './common.js';
 
 // Index request
 export type TIndexNameRequest = {
@@ -32,12 +38,14 @@ export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
   collectionName,
   databaseName,
   indexName,
+  networkId,
 });
 
 export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   collectionName,
   databaseName,
   indexes,
+  networkId,
 });
 
 export type CollectionIndex = {
@@ -63,9 +71,10 @@ export const typeDefsCollectionIndex = `#graphql
   }
 
   extend type Query {
-    indexList(databaseName: String!, collectionName: String!): [String]!
-    indexListInfo(databaseName: String!, collectionName: String!): [CollectionIndex]!
+    indexList(networkId: NetworkId!, databaseName: String!, collectionName: String!): [String]!
+    indexListInfo(networkId: NetworkId!, databaseName: String!, collectionName: String!): [CollectionIndex]!
     indexExist(
+      networkId: NetworkId!,
       databaseName: String!
       collectionName: String!
       indexName: String!
@@ -74,11 +83,13 @@ export const typeDefsCollectionIndex = `#graphql
 
   extend type Mutation {
     indexCreate(
+      networkId: NetworkId!,
       databaseName: String!
       collectionName: String!
       indexes: [String]!
     ): Boolean
     indexDrop(
+      networkId: NetworkId!,
       databaseName: String!
       collectionName: String!
       indexName: String!
@@ -90,13 +101,23 @@ export const typeDefsCollectionIndex = `#graphql
 const indexList = authorizeWrapper(
   IndexListRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexes(args.databaseName, ctx.userName, args.collectionName)
+    listIndexes(
+      args.databaseName,
+      ctx.userName,
+      args.collectionName,
+      args.networkId
+    )
 );
 
 const indexListInfo = authorizeWrapper(
   IndexListRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
+    listIndexesInfoDomain(
+      args.databaseName,
+      args.collectionName,
+      ctx.userName,
+      args.networkId
+    )
 );
 
 const indexExist = authorizeWrapper(
@@ -106,7 +127,8 @@ const indexExist = authorizeWrapper(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.indexName
+      args.indexName,
+      args.networkId
     )
 );
 
@@ -115,10 +137,11 @@ const indexCreate = authorizeWrapper(
   IndexCreateRequest,
   async (_root: unknown, args: TIndexCreateRequest, ctx) =>
     createIndex(
+      args.networkId,
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.indexes
+      args.indexes,
     )
 );
 
@@ -129,7 +152,8 @@ const indexDrop = authorizeWrapper(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.indexName
+      args.indexName,
+      args.networkId
     )
 );
 

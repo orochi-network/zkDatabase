@@ -11,32 +11,41 @@ import {
   TPagination,
   TPaginationResponse,
 } from "./types";
+import { TNetworkId } from "./types/network.js";
 
 const DATABASE_CHANGE_OWNER = gql`
-  mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
-    dbChangeOwner(databaseName: $databaseName, newOwner: $newOwner)
+  mutation DbChangeOwner(
+    $networkId: NetworkId!
+    $databaseName: String!
+    $newOwner: String!
+  ) {
+    dbChangeOwner(
+      networkId: $networkId
+      databaseName: $databaseName
+      newOwner: $newOwner
+    )
   }
 `;
 
 const DATABASE_CREATE = gql`
   mutation DbCreate(
+    $networkId: NetworkId!
     $databaseName: String!
     $merkleHeight: Int!
     $publicKey: String!
-    $networkId: String!
   ) {
     dbCreate(
+      networkId: $networkId
       databaseName: $databaseName
       merkleHeight: $merkleHeight
       publicKey: $publicKey
-      networkId: $networkId
     )
   }
 `;
 
 const DATABASE_SETTING = gql`
-  query GetDbSettings($databaseName: String!) {
-    dbSetting(databaseName: $databaseName) {
+  query GetDbSettings($networkId: NetworkId!, $databaseName: String!) {
+    dbSetting(networkId: $networkId, databaseName: $databaseName) {
       merkleHeight
       publicKey
     }
@@ -44,14 +53,14 @@ const DATABASE_SETTING = gql`
 `;
 
 const DATABASE_STATUS = gql`
-  query GetDbStats($databaseName: String!) {
-    dbStats(databaseName: $databaseName)
+  query GetDbStats($networkId: NetworkId!, $databaseName: String!) {
+    dbStats(networkId: $networkId, databaseName: $databaseName)
   }
 `;
 
 const DATABASE_LIST = gql`
-  query GetDbList($query: JSON, $pagination: PaginationInput) {
-    dbList(query: $query, pagination: $pagination) {
+  query GetDbList($networkId: NetworkId!, $query: JSON, $pagination: PaginationInput) {
+    dbList(networkId: $networkId, query: $query, pagination: $pagination) {
       totalSize
       offset
       data {
@@ -102,32 +111,32 @@ const DATABASE_LIST = gql`
 export const database = <T>(client: TApolloClient<T>) => ({
   transferOwnership: createMutateFunction<
     boolean,
-    { databaseName: string; newOwner: string },
+    { networkId: TNetworkId; databaseName: string; newOwner: string },
     { dbChangeOwner: boolean }
   >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
   create: createMutateFunction<
     boolean,
     {
+      networkId: TNetworkId;
       databaseName: string;
       merkleHeight: number;
       publicKey: string;
-      networkId: string;
     },
     { dbCreate: boolean }
   >(client, DATABASE_CREATE, (data) => data.dbCreate),
   setting: createQueryFunction<
     TDatabaseSettings,
-    { databaseName: string },
+    { networkId: TNetworkId; databaseName: string },
     { dbSetting: TDatabaseSettings }
   >(client, DATABASE_SETTING, (data) => data.dbSetting),
   status: createQueryFunction<
     TDatabaseStatus,
-    { databaseName: string },
+    { networkId: TNetworkId; databaseName: string },
     { dbStats: TDatabaseStatus }
   >(client, DATABASE_STATUS, (data) => data.dbStats),
   list: createQueryFunction<
     TDatabase[],
-    { query: any; pagination: TPagination },
+    { networkId: TNetworkId; query: any; pagination: TPagination },
     { dbList: TPaginationResponse<TDatabase[]> }
   >(client, DATABASE_LIST, (data) => data.dbList.data),
 });

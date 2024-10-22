@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import publicWrapper from '../validation.js';
-import { ModelNetwork } from '@zkdb/storage';
+import { getNetworks as getNetworksDomain } from '../../domain/use-case/network.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsNetwork = `#graphql
@@ -21,11 +21,7 @@ extend type Query {
 
 const getNetworks = publicWrapper(
   Joi.object().unknown(),
-  async (_root: unknown, args: any) => {
-    const modelNetwork = ModelNetwork.getInstance();
-
-    return (await modelNetwork.find()).toArray();
-  }
+  async (_root: unknown, args: any) => getNetworksDomain()
 );
 
 type TNetworkResolver = {

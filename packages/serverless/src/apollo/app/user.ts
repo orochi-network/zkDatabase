@@ -22,7 +22,8 @@ import ModelUser from '../../model/global/user.js';
 import mapPagination from '../mapper/pagination.js';
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { pagination } from './common.js';
+import { networkId, pagination } from './common.js';
+import { NetworkId } from '../../domain/types/network.js';
 
 // We extend express session to define session expiration time
 declare module 'express-session' {
@@ -69,10 +70,12 @@ export const SignatureProof = Joi.object<TSignatureProof>({
 
 export type TSignInRequest = {
   proof: TSignatureProof;
+  networkId: NetworkId;
 };
 
 export const SignInRequest = Joi.object<TSignInRequest>({
   proof: SignatureProof.required(),
+  networkId,
 });
 
 export type TSignUpRequest = {
@@ -108,11 +111,13 @@ export const SignUpRequest = Joi.object<TSignUpRequest>({
 export type TSignUpWrapper = {
   signUp: TSignUpRequest;
   proof: TSignatureProof;
+  networkId: NetworkId;
 };
 
 export const SignUpWrapper = Joi.object<TSignUpWrapper>({
   signUp: SignUpRequest.required(),
   proof: SignatureProof.required(),
+  networkId,
 });
 
 export const USER_FIND_REQUEST = Joi.object<TUserFindRequest>({
@@ -196,10 +201,14 @@ export const typeDefsUser = gql`
   }
 
   extend type Mutation {
-    userSignIn(proof: ProofInput!): SignInResponse
+    userSignIn(proof: ProofInput!, networkId: NetworkId!): SignInResponse
     userGetEcdsaChallenge: String!
     userSignOut: Boolean
-    userSignUp(signUp: SignUp!, proof: ProofInput!): SignUpData
+    userSignUp(
+      signUp: SignUp!
+      proof: ProofInput!
+      networkId: NetworkId!
+    ): SignUpData
   }
 `;
 
@@ -265,6 +274,7 @@ const userSignIn = publicWrapper(
       const modelUser = new ModelUser();
       const user = await modelUser.findOne({
         publicKey: args.proof.publicKey,
+        networkId: args.networkId,
       });
 
       if (user) {
@@ -317,7 +327,8 @@ const userSignUp = publicWrapper(
         publicKey: proof.publicKey,
       },
       userData,
-      proof
+      proof,
+      args.networkId
     );
   }
 );

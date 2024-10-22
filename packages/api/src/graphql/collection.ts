@@ -6,9 +6,11 @@ import {
 } from "./common";
 import { TPermissions, TSchema } from "./types";
 import { Collection } from "./types/collection";
+import { TNetworkId } from "./types/network";
 
 const COLLECTION_CREATE = gql`
   mutation CollectionCreate(
+    $networkId: NetworkId!
     $databaseName: String!
     $collectionName: String!
     $groupName: String!
@@ -17,6 +19,7 @@ const COLLECTION_CREATE = gql`
     $permissions: PermissionDetailInput
   ) {
     collectionCreate(
+      networkId: $networkId
       databaseName: $databaseName
       collectionName: $collectionName
       groupName: $groupName
@@ -28,8 +31,13 @@ const COLLECTION_CREATE = gql`
 `;
 
 const COLLECTION_EXIST = gql`
-  query CollectionExist($databaseName: String!, $collectionName: String!) {
+  query CollectionExist(
+    $networkId: NetworkId!
+    $databaseName: String!
+    $collectionName: String!
+  ) {
     collectionExist(
+      networkId: $networkId
       databaseName: $databaseName
       collectionName: $collectionName
     )
@@ -37,8 +45,8 @@ const COLLECTION_EXIST = gql`
 `;
 
 const COLLECTION_LIST = gql`
-  query CollectionList($databaseName: String!) {
-    collectionList(databaseName: $databaseName) {
+  query CollectionList($networkId: NetworkId!, $databaseName: String!) {
+    collectionList(networkId: $networkId, databaseName: $databaseName) {
       name
       indexes
       schema {
@@ -78,12 +86,14 @@ const COLLECTION_LIST = gql`
 
 export type TCollectionListRequest = {
   databaseName: string;
+  networkId: TNetworkId;
 };
 
 export type TCollectionListResponse = { collectionList: Collection[] };
 
 export type TCollectionExistRequest = TCollectionListRequest & {
   collectionName: string;
+  networkId: TNetworkId;
 };
 
 export type TCollectionExistResponse = { collectionExist: boolean };
@@ -93,6 +103,7 @@ export type TCollectionCreateRequest = TCollectionExistRequest & {
   schema: TSchema;
   indexes: string[];
   permissions: TPermissions;
+  networkId: TNetworkId;
 };
 
 export type TCollectionCreateResponse = { collectionCreate: boolean };

@@ -1,6 +1,8 @@
 import { ClientSession } from 'mongodb';
 import ModelBasic from '../base/basic.js';
 import { zkDatabaseConstants } from '../../common/index.js';
+import { NetworkId } from '../global/network.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 export type SequencedItem = {
   _id: string;
@@ -14,12 +16,12 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
     super(databaseName, zkDatabaseConstants.databaseCollections.sequencer);
   }
 
-  public static getInstance(databaseName: string) {
-    const key = databaseName;
-    if (!ModelSequencer.instances.has(key)) {
-      ModelSequencer.instances.set(key, new ModelSequencer(databaseName));
+  public static getInstance(databaseName: string, networkId: NetworkId) {
+    const dbName = DatabaseEngine.getValidName(databaseName, networkId);
+    if (!ModelSequencer.instances.has(dbName)) {
+      ModelSequencer.instances.set(dbName, new ModelSequencer(dbName));
     }
-    return ModelSequencer.instances.get(key)!;
+    return ModelSequencer.instances.get(dbName)!;
   }
 
   async getNextValue(

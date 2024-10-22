@@ -8,6 +8,7 @@ import {
   collectionName,
   databaseName,
   documentField,
+  networkId,
   pagination,
   permissionDetail,
 } from './common.js';
@@ -48,6 +49,7 @@ export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   documentQuery: Joi.object(),
+  networkId
 });
 
 export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
@@ -55,6 +57,7 @@ export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
   collectionName,
   documentQuery: Joi.object(),
   pagination,
+  networkId
 });
 
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
@@ -62,6 +65,7 @@ export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   collectionName,
   documentPermission: permissionDetail.required(),
   documentRecord: Joi.required(),
+  networkId
 });
 
 export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
@@ -69,6 +73,7 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   collectionName,
   documentQuery: Joi.object(),
   documentRecord: Joi.required(),
+  networkId
 });
 
 export const typeDefsDocument = gql`
@@ -110,17 +115,20 @@ export const typeDefsDocument = gql`
 
   extend type Query {
     documentFind(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       documentQuery: JSON!
     ): DocumentOutput
     documentsFind(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       documentQuery: JSON!
       pagination: PaginationInput
     ): DocumentPaginationOutput!
     documentsWithMetadataFind(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       query: JSON!
@@ -130,6 +138,7 @@ export const typeDefsDocument = gql`
 
   extend type Mutation {
     documentCreate(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       documentRecord: [DocumentRecordInput!]!
@@ -137,6 +146,7 @@ export const typeDefsDocument = gql`
     ): [MerkleWitness!]!
 
     documentUpdate(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       documentQuery: JSON!
@@ -144,6 +154,7 @@ export const typeDefsDocument = gql`
     ): [MerkleWitness!]!
 
     documentDrop(
+      networkId: NetworkId!
       databaseName: String!
       collectionName: String!
       documentQuery: JSON!
@@ -157,6 +168,7 @@ const documentFind = authorizeWrapper(
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     const document = await withTransaction((session) =>
       readDocument(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -182,6 +194,7 @@ const documentsFind = authorizeWrapper(
   async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await searchDocuments(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -200,6 +213,7 @@ const documentsWithMetadataFind = authorizeWrapper(
   async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await findDocumentsWithMetadata(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -219,6 +233,7 @@ const documentCreate = authorizeWrapper(
   async (_root: unknown, args: TDocumentCreateRequest, ctx) => {
     return withTransaction((session) =>
       createDocument(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -243,6 +258,7 @@ const documentUpdate = authorizeWrapper(
 
     return withTransaction((session) =>
       updateDocument(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -259,6 +275,7 @@ const documentDrop = authorizeWrapper(
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     return withTransaction((session) =>
       deleteDocument(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         ctx.userName,

@@ -16,6 +16,7 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
+import { NetworkId } from '../types/network.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -23,22 +24,22 @@ export async function createDatabase(
   merkleHeight: number,
   actor: string,
   appPublicKey: string,
-  networkId: string
+  networkId: NetworkId
 ) {
   // Case database already exist
-  if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
+  if (await DatabaseEngine.getInstance().isDatabase(databaseName, networkId)) {
     // Ensure database existing
     throw new Error(`Database name ${databaseName} already taken`);
   }
-  await ModelDocumentMetadata.init(databaseName);
-  await ModelCollectionMetadata.init(databaseName);
-  await ModelGroup.init(databaseName);
-  await ModelUserGroup.init(databaseName);
+  await ModelDocumentMetadata.init(databaseName, networkId);
+  await ModelCollectionMetadata.init(databaseName, networkId);
+  await ModelGroup.init(databaseName, networkId);
+  await ModelUserGroup.init(databaseName, networkId);
 
   const modelNetwork = ModelNetwork.getInstance();
 
   const networks = await (
-    await modelNetwork.find({ id: networkId, active: true })
+    await modelNetwork.find({ networkId: networkId, active: true })
   ).toArray();
 
   if (networks.length > 0) {
@@ -56,6 +57,8 @@ export async function createDatabase(
 }
 
 export async function getDatabases(
+  networkId: NetworkId,
+  actor: string,
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
@@ -99,33 +102,41 @@ export async function getDatabases(
 
   const databases: Database[] = (
     await Fill(
-      settings.map((setting: DbSetting) => async () => {
-        const { databaseName, merkleHeight, databaseOwner } = setting;
-        const dbInfo = databaseInfoMap[databaseName];
-        const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
+      settings
+        .filter((settings) => settings.networkId === networkId)
+        .map((setting: DbSetting) => async () => {
+          const { databaseName, merkleHeight, databaseOwner, networkId } =
+            setting;
+          const dbInfo =
+            databaseInfoMap[
+              DatabaseEngine.getValidName(databaseName, networkId)
+            ];
+          const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-        const collectionNames =
-          collectionsCache[databaseName] ||
-          (collectionsCache[databaseName] =
-            await ModelDatabase.getInstance(databaseName).listCollections());
+          const collectionNames =
+            collectionsCache[databaseName] ||
+            (collectionsCache[databaseName] = await ModelDatabase.getInstance(
+              databaseName,
+              networkId
+            ).listCollections());
 
-        const promises = collectionNames.map(
-          (collectionName) => async () =>
-            readCollectionInfo(databaseName, collectionName)
-        );
+          const promises = collectionNames.map(
+            (collectionName) => async () =>
+              readCollectionInfo(databaseName, collectionName, actor, networkId)
+          );
 
-        const collections = (await Fill(promises))
-          .map(({ result }) => result)
-          .filter(Boolean);
+          const collections = (await Fill(promises))
+            .map(({ result }) => result)
+            .filter(Boolean);
 
-        return {
-          databaseName,
-          databaseOwner,
-          merkleHeight,
-          databaseSize,
-          collections,
-        } as Database;
-      })
+          return {
+            databaseName,
+            databaseOwner,
+            merkleHeight,
+            databaseSize,
+            collections,
+          } as Database;
+        })
     )
   )
     .map(({ result }) => result)
@@ -139,9 +150,13 @@ export async function getDatabases(
 }
 
 export async function getDatabaseSetting(
-  databaseName: string
+  databaseName: string,
+  networkId: NetworkId
 ): Promise<DbSetting> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName);
+  const setting = await ModelDbSetting.getInstance().getSetting(
+    databaseName,
+    networkId
+  );
 
   if (setting) {
     return setting;
@@ -153,11 +168,16 @@ export async function getDatabaseSetting(
 export async function isDatabaseOwner(
   databaseName: string,
   actor: string,
+  networkId: NetworkId,
   session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
-    session,
-  });
+  const setting = await ModelDbSetting.getInstance().getSetting(
+    databaseName,
+    networkId,
+    {
+      session,
+    }
+  );
   if (setting) {
     return setting.databaseOwner === actor;
   }
@@ -168,9 +188,10 @@ export async function isDatabaseOwner(
 export async function changeDatabaseOwner(
   databaseName: string,
   actor: string,
-  newOwner: string
+  newOwner: string,
+  networkId: NetworkId
 ): Promise<boolean> {
-  const dbSetting = await getDatabaseSetting(databaseName);
+  const dbSetting = await getDatabaseSetting(databaseName, networkId);
   const dbOwner = dbSetting.databaseOwner;
 
   if (actor === dbOwner) {

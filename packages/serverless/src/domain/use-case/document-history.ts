@@ -13,6 +13,7 @@ import {
   hasDocumentPermission,
 } from './permission.js';
 import { buildDocumentFields } from './document.js';
+import { NetworkId } from '../types/network.js';
 
 function buildHistoryPipeline(pagination: Pagination): Array<any> {
   return [
@@ -86,6 +87,7 @@ function filterDocumentsByPermissions(
 }
 
 async function listHistoryDocuments(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -94,6 +96,7 @@ async function listHistoryDocuments(
 ): Promise<HistoryDocument[]> {
   if (
     await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -106,7 +109,7 @@ async function listHistoryDocuments(
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
 
-    const userGroups = await getUsersGroup(databaseName, actor);
+    const userGroups = await getUsersGroup(databaseName, actor, networkId);
 
     const pipeline = buildHistoryPipeline(pagination);
 
@@ -116,7 +119,7 @@ async function listHistoryDocuments(
 
     let filteredDocuments: any[];
 
-    if (!(await isDatabaseOwner(databaseName, actor))) {
+    if (!(await isDatabaseOwner(databaseName, actor, networkId))) {
       filteredDocuments = filterDocumentsByPermissions(
         documentsWithMetadata,
         actor,
@@ -150,6 +153,7 @@ async function listHistoryDocuments(
 }
 
 async function readHistoryDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -158,6 +162,7 @@ async function readHistoryDocument(
 ): Promise<HistoryDocument | null> {
   if (
     !(await hasCollectionPermission(
+      networkId,
       databaseName,
       collectionName,
       actor,
@@ -170,7 +175,7 @@ async function readHistoryDocument(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
 
   const latestDocument = await modelDocument.findHistoryOne(docId, session);
 
@@ -179,6 +184,7 @@ async function readHistoryDocument(
   }
 
   const hasReadPermission = await hasDocumentPermission(
+    networkId,
     databaseName,
     collectionName,
     actor,

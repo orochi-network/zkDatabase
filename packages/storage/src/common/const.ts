@@ -38,9 +38,6 @@ export const zkDatabaseConstants = {
     // Permission
     permission: '_zkdatabase_permission',
 
-    // Database settings
-    setting: '_zkdatabase_db_setting',
-
     // Merkle tree collection
     merkleTree: '_zkdatabase_merkle_tree',
 

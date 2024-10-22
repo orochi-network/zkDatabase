@@ -8,7 +8,6 @@ export interface GlobalContext {
     databaseName: string,
     merkleHeight: number,
     publicKey: PublicKey,
-    networkId: NetworkId
   ): Promise<boolean>;
   databases(
     filter?: FilterCriteria,

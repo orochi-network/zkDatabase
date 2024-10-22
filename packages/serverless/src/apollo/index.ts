@@ -18,6 +18,7 @@ import {
 import { typeCommonDefsCollection } from './app/types/collection.js';
 import { typeCommonDefsMetadata } from './app/types/metadata.js';
 import { resolversNetwork, typeDefsNetwork } from './app/network.js';
+import { typeCommonDefsNetwork } from './app/types/network.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -30,10 +31,11 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
   typeDefsProof,
   typeDefsDocumentHistory,
+  typeDefsNetwork,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
   typeCommonDefsMetadata,
-  typeDefsNetwork
+  typeCommonDefsNetwork
 ];
 
 type Resolver =

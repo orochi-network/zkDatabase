@@ -29,7 +29,12 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(PRIVATE_KEY);
 
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  const zkdb = ZKDatabaseClient.newInstance(
+    SERVER_URL,
+    signer,
+    new Map(),
+    'devnet'
+  );
 
   await zkdb.authenticator.signUp('test-name', 'robot@gmail.com');
 
@@ -39,12 +44,12 @@ async function run() {
 
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey), 'devnet');
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
-  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, "")
+  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
   await zkdb
     .database(DB_NAME)
-    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt,[],{
+    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, [], {
       permissionOwner: AccessPermissions.fullAdminPermissions,
       permissionGroup: AccessPermissions.fullAccessPermissions,
       permissionOther: AccessPermissions.noPermissions,

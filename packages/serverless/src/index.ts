@@ -20,7 +20,10 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
-import { fillNetworks } from './domain/use-case/network.js';
+import { fillNetworks, getNetworks } from './domain/use-case/network.js';
+import ModelUser from './model/global/user.js';
+import ModelSetting from './model/global/setting.js';
+import ModelOwnership from './model/global/ownership.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -32,6 +35,10 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   }
 
   await fillNetworks();
+
+  ModelUser.init();
+  ModelSetting.init();
+  ModelOwnership.init();
 
   RedisInstance.event.on('error', logger.error);
 

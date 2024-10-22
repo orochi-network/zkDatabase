@@ -1,6 +1,6 @@
 export type NetworkId = 'mainnet' | 'devnet';
 
 export type Network = {
-  networkType: NetworkId;
+  networkId: NetworkId;
   endpoint: string;
 };

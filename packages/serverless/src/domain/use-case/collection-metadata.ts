@@ -7,9 +7,11 @@ import {
   partialToPermission,
 } from '../../common/permission.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { NetworkId } from '../types/network.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollectionMetadata(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   schema: DocumentSchemaInput,
@@ -50,7 +52,7 @@ export async function createCollectionMetadata(
     };
   }
 
-  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef, {
+  await ModelCollectionMetadata.getInstance(databaseName, networkId).insertOne(schemaDef, {
     session,
   });
 }

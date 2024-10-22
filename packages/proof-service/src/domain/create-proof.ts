@@ -40,28 +40,28 @@ export async function createProof(taskId: string) {
   }
 
   try {
-    const circuitName = `${task.database}.${task.collection}`;
+    const circuitName = `${task.databaseName}.${task.collectionName}`;
     const modelDbSetting = ModelDbSetting.getInstance();
     const { merkleHeight, appPublicKey, networkId } =
-      (await modelDbSetting.getSetting(task.database)) || {};
+      (await modelDbSetting.getSetting(task.databaseName, task.networkId)) || {};
 
     if (!merkleHeight || !appPublicKey) {
       throw new Error('Setting is wrong, unable to deconstruct settings');
     }
 
     const network = await ModelNetwork.getInstance().findOne({
-      id: networkId,
+      networkId,
       active: true,
     });
 
-    if (network) {
+    if (!network) {
       throw Error('No active network found');
     }
 
     Mina.setActiveInstance(
       Mina.Network({
-        networkId: network!.id as NetworkId,
-        mina: network!.endpoint,
+        networkId: network.networkId as NetworkId,
+        mina: network.endpoint,
       })
     );
 
@@ -80,7 +80,7 @@ export async function createProof(taskId: string) {
       throw new Error('Merkle Tree height is null');
     }
 
-    const merkleTree = await ModelMerkleTree.load(task.database);
+    const merkleTree = await ModelMerkleTree.load(task.databaseName, task.networkId);
 
     if (!CircuitFactory.contains(circuitName)) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
@@ -91,7 +91,7 @@ export async function createProof(taskId: string) {
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
-    const zkProof = await modelProof.getProof(task.database);
+    const zkProof = await modelProof.getProof(task.networkId, task.databaseName);
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
@@ -185,9 +185,10 @@ export async function createProof(taskId: string) {
       await modelProof.saveProof(
         {
           ...proof.toJSON(),
-          database: task.database,
-          collection: task.collection,
+          databaseName: task.databaseName,
+          collectionName: task.collectionName,
           merkleRoot: proof.publicOutput.newOffChainState.toString(),
+          networkId: task.networkId
         },
         { session }
       );

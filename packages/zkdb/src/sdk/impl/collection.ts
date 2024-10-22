@@ -12,26 +12,31 @@ import {
 import { ZKDocumentImpl } from './document';
 import { DocumentEncoded, ProvableTypeString } from '../schema';
 import { ZKCollection, ZKDocument } from '../interfaces';
+import { NetworkId } from '../../types/network';
 
 export class CollectionQueryImpl implements ZKCollection {
   private databaseName: string;
   private collectionName: string;
   private apiClient: IApiClient;
+  private networkId: NetworkId;
 
   constructor(
     databaseName: string,
     collectionName: string,
-    apiClient: IApiClient
+    apiClient: IApiClient,
+    networkId: NetworkId
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
     this.apiClient = apiClient;
+    this.networkId = networkId;
   }
 
   async listIndexes(): Promise<string[]> {
     const result = await this.apiClient.index.list({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
+      networkId: this.networkId
     });
 
     return result.unwrap();
@@ -39,6 +44,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async createIndexes(indexes: string[]): Promise<boolean> {
     const result = await this.apiClient.index.create({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       indexes,
@@ -49,6 +55,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async dropIndex(indexName: string): Promise<boolean> {
     const result = await this.apiClient.index.delete({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       indexName,
@@ -62,6 +69,7 @@ export class CollectionQueryImpl implements ZKCollection {
     pagination?: Pagination
   ): Promise<ZKDocument[]> {
     const result = await this.apiClient.doc.findMany({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentQuery: filter,
@@ -83,7 +91,8 @@ export class CollectionQueryImpl implements ZKCollection {
           })),
           createdAt: document.createdAt,
         },
-        this.apiClient
+        this.apiClient,
+        this.networkId
       );
     });
   }
@@ -92,6 +101,7 @@ export class CollectionQueryImpl implements ZKCollection {
     filter: Filter<T>
   ): Promise<ZKDocument | null> {
     const result = await this.apiClient.doc.findOne({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentQuery: filter,
@@ -111,7 +121,8 @@ export class CollectionQueryImpl implements ZKCollection {
         })),
         createdAt: document.createdAt,
       },
-      this.apiClient
+      this.apiClient,
+      this.networkId
     );
   }
 
@@ -120,6 +131,7 @@ export class CollectionQueryImpl implements ZKCollection {
     model: InstanceType<T>
   ): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.update({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentQuery: filter,
@@ -138,6 +150,7 @@ export class CollectionQueryImpl implements ZKCollection {
     filter: Filter<T>
   ): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.delete({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentQuery: filter,
@@ -178,6 +191,7 @@ export class CollectionQueryImpl implements ZKCollection {
       : await this.getOwnership();
 
     const result = await this.apiClient.doc.create({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentRecord: (model as any).serialize(),
@@ -198,6 +212,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async changeGroup(groupName: string): Promise<void> {
     const result = await this.apiClient.ownership.setOwnership({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
@@ -210,6 +225,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async changeOwner(userName: string): Promise<void> {
     const result = await this.apiClient.ownership.setOwnership({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
@@ -222,6 +238,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async setPermissions(permission: Permissions): Promise<Ownership> {
     const result = await this.apiClient.permission.set({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
@@ -233,6 +250,7 @@ export class CollectionQueryImpl implements ZKCollection {
 
   async getOwnership(): Promise<Ownership> {
     const result = await this.apiClient.permission.get({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,

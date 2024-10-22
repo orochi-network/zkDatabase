@@ -8,24 +8,27 @@ import ModelDocument from '../../model/abstract/document.js';
 
 import { DocumentFields } from '../types/document.js';
 import { buildSchema } from './schema.js';
+import { NetworkId } from '../types/network.js';
 
 // Prove the creation of a document
 export async function proveCreateDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   docId: string,
   document: DocumentFields,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   const schema = await buildSchema(
+    networkId,
     databaseName,
     collectionName,
     document,
     session
   );
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
 
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
@@ -51,9 +54,10 @@ export async function proveCreateDocument(
       hash: hash.toString(),
       status: 'queued',
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      databaseName: databaseName,
+      collectionName: collectionName,
       docId,
+      networkId
     },
     { session }
   );
@@ -63,22 +67,23 @@ export async function proveCreateDocument(
 
 // Prove the update of a document
 export async function proveUpdateDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   docId: string,
   newDocument: DocumentFields,
   session?: ClientSession
 ) {
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
   const oldDocument = await modelDocument.findOne({ docId }, session);
 
   if (!oldDocument) {
     throw new Error('Document does not exist');
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,
@@ -91,6 +96,7 @@ export async function proveUpdateDocument(
   }
 
   const schema = await buildSchema(
+    networkId,
     databaseName,
     collectionName,
     newDocument,
@@ -112,9 +118,10 @@ export async function proveUpdateDocument(
       hash: hash.toString(),
       status: 'queued',
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      databaseName: databaseName,
+      collectionName: collectionName,
       docId,
+      networkId
     },
     { session }
   );
@@ -126,21 +133,22 @@ export async function proveUpdateDocument(
 
 // Prove the deletion of a document
 export async function proveDeleteDocument(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   docId: string,
   session?: ClientSession
 ) {
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName, networkId);
   const document = await modelDocument.findOne({ docId }, session);
 
   if (!document) {
     throw new Error('Document does not exist to be proved');
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,
@@ -166,9 +174,10 @@ export async function proveDeleteDocument(
       hash: Field(0).toString(),
       status: 'queued',
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      databaseName: databaseName,
+      collectionName: collectionName,
       docId,
+      networkId
     },
     { session }
   );

@@ -12,6 +12,7 @@ import {
   TPagination,
   TPaginationResponse,
 } from "./types";
+import { TNetworkId } from "./types/network";
 
 export type TUserSignUpRecord = TUser;
 
@@ -44,8 +45,8 @@ export type TUserSignInResponse = {
 };
 
 const USER_SIGN_IN = gql`
-  mutation UserSignIn($proof: ProofInput!) {
-    userSignIn(proof: $proof) {
+  mutation UserSignIn($networkId: NetworkId!, $proof: ProofInput!) {
+    userSignIn(networkId: $networkId, proof: $proof) {
       userName
       accessToken
       userData
@@ -61,8 +62,12 @@ const USER_SIGN_OUT = gql`
 `;
 
 const USER_SIGN_UP = gql`
-  mutation UserSignUp($signUp: SignUp!, $proof: ProofInput!) {
-    userSignUp(signUp: $signUp, proof: $proof) {
+  mutation UserSignUp(
+    $networkId: NetworkId!
+    $signUp: SignUp!
+    $proof: ProofInput!
+  ) {
+    userSignUp(networkId: $networkId, signUp: $signUp, proof: $proof) {
       userName
       email
       publicKey
@@ -71,8 +76,12 @@ const USER_SIGN_UP = gql`
 `;
 
 const USER_FIND_ONE = gql`
-  query FindUser($query: JSON, $pagination: PaginationInput) {
-    findUser(query: $query, pagination: $pagination) {
+  query FindUser(
+    $networkId: NetworkId!
+    $query: JSON
+    $pagination: PaginationInput
+  ) {
+    findUser(networkId: $networkId, query: $query, pagination: $pagination) {
       totalSize
       offset
       data {
@@ -104,7 +113,7 @@ const ECDSA = gql`
 export const user = <T>(client: TApolloClient<T>) => ({
   signIn: createMutateFunction<
     TSignInInfo,
-    { proof: TSignatureProofData },
+    { networkId: TNetworkId; proof: TSignatureProofData },
     { userSignIn: TSignInInfo }
   >(client, USER_SIGN_IN, (data) => data.userSignIn),
   signOut: createMutateFunction<boolean, undefined, { userSignOut: boolean }>(
@@ -114,7 +123,7 @@ export const user = <T>(client: TApolloClient<T>) => ({
   ),
   signUp: createMutateFunction<
     TUser,
-    { proof: TSignatureProofData; signUp: TSignUpData },
+    { networkId: TNetworkId; proof: TSignatureProofData; signUp: TSignUpData },
     { userSignUp: TUserSignUpRecord }
   >(client, USER_SIGN_UP, (data) => data.userSignUp),
   ecdsa: createMutateFunction<
@@ -124,7 +133,7 @@ export const user = <T>(client: TApolloClient<T>) => ({
   >(client, ECDSA, (data) => data.userGetEcdsaChallenge),
   findMany: createQueryFunction<
     TUser[],
-    { query: any; pagination: TPagination },
+    { networkId: TNetworkId; query: any; pagination: TPagination },
     { searchUser: TPaginationResponse<TUser[]> }
   >(client, USER_FIND_ONE, (data) => data.searchUser.data),
   userInfo: createQueryFunction<
