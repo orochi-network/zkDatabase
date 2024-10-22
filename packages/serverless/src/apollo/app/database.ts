@@ -110,6 +110,7 @@ extend type Mutation {
   dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
   dbDeploy(databaseName: String!, merkleHeight: Int!, userPublicKey: String!): DbDeployResponse!
+  dbUpdateDeployedStatus(databaseName: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
