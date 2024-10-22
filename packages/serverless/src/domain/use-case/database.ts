@@ -47,34 +47,6 @@ export async function createDatabase(
     databaseOwner: actor,
     deployStatus: 'ready',
   });
-  // const network = Mina.Network(
-  //   'https://api.minascan.io/node/devnet/v1/graphql'
-  // );
-  // Mina.setActiveInstance(network);
-
-  // const zkWrapper = new ZKDatabaseSmartContractWrapper(
-  //   parseInt(merkleHeight.toString()),
-  //   PublicKey.fromBase58(appPublicKey)
-  // );
-  // await zkWrapper.compile();
-  // const signer = new NodeSigner(
-  //   PrivateKey.fromBase58(
-  //     'EKEivw9coc1rbFPU9vE7WH6v9NEQs443JhVJvB2S9Wn1SdaoEcaf'
-  //   )
-  // );
-
-  // const transaction = await zkWrapper.createAndProveDeployTransaction(
-  //   PublicKey.fromBase58(appPublicKey)
-  // );
-  // const tx = await signer.signTransaction(transaction, [
-  //   PrivateKey.fromBase58(
-  //     'EKEivw9coc1rbFPU9vE7WH6v9NEQs443JhVJvB2S9Wn1SdaoEcaf'
-  //   ),
-  // ]);
-  // console.log('🚀 ~ tx:', tx);
-  // const pendingTx = await tx.send();
-  // console.log('🚀 ~ tx:', pendingTx);
-  // console.log('🚀 ~ done');
 
   return true;
 }
