@@ -1,14 +1,15 @@
+import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { DatabaseEngine, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, publicKey, userName } from './common.js';
 import {
   changeDatabaseOwner,
   createDatabase,
+  deployDatabase,
   getDatabases,
 } from '../../domain/use-case/database.js';
 import { Pagination } from '../types/pagination.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { databaseName, pagination, userName } from './common.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -21,9 +22,11 @@ export type TDatabaseSearchRequest = {
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
-  publicKey: string;
 };
 
+export type TDatabaseDeployRequest = TDatabaseCreateRequest & {
+  userPublicKey: string;
+};
 export type TFindIndexRequest = TDatabaseRequest & {
   index: number;
 };
@@ -35,7 +38,16 @@ export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
-  publicKey,
+});
+
+const DatabaseDeployRequest = Joi.object<TDatabaseDeployRequest>({
+  databaseName,
+  merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
+  userPublicKey: Joi.string()
+    .trim()
+    .length(55)
+    .required()
+    .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
 });
 
 const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
@@ -51,6 +63,11 @@ type Mutation
 type DbSetting {
   merkleHeight: Int!
   publicKey: String!
+}
+
+type DbDeployResponse {
+  tx: JSON!
+  zkAppAddress: String!
 }
 
 input PaginationInput {
@@ -84,8 +101,9 @@ extend type Query {
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
+  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
+  dbDeploy(databaseName: String!, merkleHeight: Int!, userPublicKey: String!): DbDeployResponse!
   #dbDrop(databaseName: String!): Boolean
 }
 `;
@@ -148,14 +166,13 @@ const dbSetting = publicWrapper(
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    createDatabase(
-      args.databaseName,
-      args.merkleHeight,
-      ctx.userName,
-      args.publicKey
-    )
+    createDatabase(args.databaseName, args.merkleHeight, ctx.userName)
 );
-
+const dbDeploy = authorizeWrapper(
+  DatabaseDeployRequest,
+  async (_root: unknown, args: TDatabaseDeployRequest, ctx) =>
+    deployDatabase({ ...args, databaseOwner: ctx.userName })
+);
 const dbChangeOwner = authorizeWrapper(
   DatabaseChangeOwnerRequest,
   async (_root: unknown, args: TDatabaseChangeOwnerRequest, ctx) =>
@@ -172,6 +189,7 @@ type TDatabaseResolver = {
   Mutation: {
     dbCreate: typeof dbCreate;
     dbChangeOwner: typeof dbChangeOwner;
+    dbDeploy: typeof dbDeploy;
   };
 };
 
@@ -185,5 +203,6 @@ export const resolversDatabase: TDatabaseResolver = {
   Mutation: {
     dbCreate,
     dbChangeOwner,
+    dbDeploy,
   },
 };

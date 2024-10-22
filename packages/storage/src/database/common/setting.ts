@@ -11,8 +11,9 @@ import ModelBasic from '../base/basic.js';
 export type DbSetting = {
   databaseName: string;
   merkleHeight: number;
-  appPublicKey: string;
+  appPublicKey?: string;
   databaseOwner: string;
+  deployStatus: 'failed' | 'deployed' | 'ready';
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {

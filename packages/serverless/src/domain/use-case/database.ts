@@ -1,27 +1,36 @@
+import { Fill } from '@orochi-network/queue';
+import { ZKDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   DbSetting,
   ModelDatabase,
   ModelDbSetting,
 } from '@zkdb/storage';
+import ModelUser from '../../model/global/user.js';
 import { ClientSession } from 'mongodb';
-import { Fill } from '@orochi-network/queue';
+import { Mina, PrivateKey, PublicKey } from 'o1js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
+import { isUserExist } from './user.js';
+
+type DbDeployRequest = {
+  databaseName: string;
+  merkleHeight: number;
+  userPublicKey: string;
+  databaseOwner: string;
+};
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
-  actor: string,
-  appPublicKey: string
+  actor: string
 ) {
   // Case database already exist
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
@@ -35,10 +44,86 @@ export async function createDatabase(
   await ModelDbSetting.getInstance().createSetting({
     databaseName,
     merkleHeight,
-    appPublicKey,
     databaseOwner: actor,
+    deployStatus: 'ready',
   });
+  // const network = Mina.Network(
+  //   'https://api.minascan.io/node/devnet/v1/graphql'
+  // );
+  // Mina.setActiveInstance(network);
+
+  // const zkWrapper = new ZKDatabaseSmartContractWrapper(
+  //   parseInt(merkleHeight.toString()),
+  //   PublicKey.fromBase58(appPublicKey)
+  // );
+  // await zkWrapper.compile();
+  // const signer = new NodeSigner(
+  //   PrivateKey.fromBase58(
+  //     'EKEivw9coc1rbFPU9vE7WH6v9NEQs443JhVJvB2S9Wn1SdaoEcaf'
+  //   )
+  // );
+
+  // const transaction = await zkWrapper.createAndProveDeployTransaction(
+  //   PublicKey.fromBase58(appPublicKey)
+  // );
+  // const tx = await signer.signTransaction(transaction, [
+  //   PrivateKey.fromBase58(
+  //     'EKEivw9coc1rbFPU9vE7WH6v9NEQs443JhVJvB2S9Wn1SdaoEcaf'
+  //   ),
+  // ]);
+  // console.log('🚀 ~ tx:', tx);
+  // const pendingTx = await tx.send();
+  // console.log('🚀 ~ tx:', pendingTx);
+  // console.log('🚀 ~ done');
+
   return true;
+}
+
+export async function deployDatabase(args: DbDeployRequest) {
+  const { merkleHeight, databaseName, databaseOwner, userPublicKey } = args;
+  // Check db status first and these field a match
+  const [db, ..._] = await ModelDbSetting.getInstance().findSettingsByFields({
+    merkleHeight,
+    databaseName,
+    databaseOwner,
+    deployStatus: 'ready',
+  });
+
+  const user = await new ModelUser().findOne({ publicKey: userPublicKey });
+
+  if (!db || db.databaseOwner !== user?.userName) {
+    throw new Error(`Cannot find database ${databaseName}`);
+  }
+
+  // Set active network
+  const network = Mina.Network({
+    networkId: 'testnet',
+    mina: 'https://api.minascan.io/node/devnet/v1/graphql',
+  });
+  Mina.setActiveInstance(network);
+  // Create keypair for zkApp contract
+
+  const zkDbPrivateKey = PrivateKey.random();
+  const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+  await ModelDbSetting.getInstance().updateSetting(db.databaseName, {
+    appPublicKey: zkDbPublicKey.toBase58(),
+  });
+  // Init zk wrapper
+  const zkWrapper = new ZKDatabaseSmartContractWrapper(
+    merkleHeight,
+    zkDbPublicKey
+  );
+  // Compile
+  await zkWrapper.compile();
+  // Create unsigned transaction
+  let unsignedTx = await zkWrapper.createAndProveDeployTransaction(
+    PublicKey.fromBase58(userPublicKey)
+  );
+  unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+  return {
+    tx: unsignedTx,
+    zkAppAddress: zkDbPublicKey.toBase58(),
+  };
 }
 
 export async function getDatabases(
@@ -100,9 +185,7 @@ export async function getDatabases(
             readCollectionInfo(databaseName, collectionName)
         );
 
-        const collections = (await Fill(promises))
-          .map(({ result }) => result)
-          .filter(Boolean);
+        const collections = (await Fill(promises)).map(({ result }) => result);
 
         return {
           databaseName,
