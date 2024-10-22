@@ -6,6 +6,7 @@ import {
   createDatabase,
   deployDatabase,
   getDatabases,
+  updateDatabaseDeployedStatus,
 } from '../../domain/use-case/database.js';
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
@@ -55,6 +56,10 @@ const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
   newOwner: userName,
 });
 
+const DatabaseUpdateDeployedStatusRequest = Joi.object<TDatabaseRequest>({
+  databaseName,
+});
+
 export const typeDefsDatabase = `#graphql
 scalar JSON
 type Query
@@ -83,6 +88,7 @@ type DbDescription {
   databaseName: String!,
   databaseSize: String!,
   databaseOwner: String!,
+  deployStatus: String!,
   merkleHeight: Int!,
   collections: [CollectionDescriptionOutput]!
 }
@@ -179,6 +185,12 @@ const dbChangeOwner = authorizeWrapper(
     changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
 );
 
+const dbUpdateDeployedStatus = authorizeWrapper(
+  DatabaseUpdateDeployedStatusRequest,
+  async (_root: unknown, args: TDatabaseRequest, ctx) =>
+    updateDatabaseDeployedStatus(args.databaseName, ctx.userName)
+);
+
 type TDatabaseResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
@@ -190,6 +202,7 @@ type TDatabaseResolver = {
     dbCreate: typeof dbCreate;
     dbChangeOwner: typeof dbChangeOwner;
     dbDeploy: typeof dbDeploy;
+    dbUpdateDeployedStatus: typeof dbUpdateDeployedStatus;
   };
 };
 
@@ -203,6 +216,7 @@ export const resolversDatabase: TDatabaseResolver = {
   Mutation: {
     dbCreate,
     dbChangeOwner,
+    dbUpdateDeployedStatus,
     dbDeploy,
   },
 };

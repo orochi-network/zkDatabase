@@ -6,13 +6,13 @@ import {
   ModelDatabase,
   ModelDbSetting,
 } from '@zkdb/storage';
-import ModelUser from '../../model/global/user.js';
 import { ClientSession } from 'mongodb';
 import { Mina, PrivateKey, PublicKey } from 'o1js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
+import ModelUser from '../../model/global/user.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
@@ -69,9 +69,10 @@ export async function deployDatabase(args: DbDeployRequest) {
 
   // Set active network
   const network = Mina.Network({
-    networkId: 'testnet',
-    mina: 'https://api.minascan.io/node/devnet/v1/graphql',
+    networkId: 'mainnet',
+    mina: 'https://api.minascan.io/node/mainnet/v1/graphql',
   });
+
   Mina.setActiveInstance(network);
   // Create keypair for zkApp contract
 
@@ -96,6 +97,20 @@ export async function deployDatabase(args: DbDeployRequest) {
     tx: unsignedTx,
     zkAppAddress: zkDbPublicKey.toBase58(),
   };
+}
+
+export async function updateDatabaseDeployedStatus(
+  dbName: string,
+  dbOwner: string
+) {
+  const db = await getDatabaseSetting(dbName);
+  if (db.databaseOwner !== dbOwner) {
+    throw Error('You do not have permission to update the db');
+  }
+  await ModelDbSetting.getInstance().updateSetting(dbName, {
+    deployStatus: 'deployed',
+  });
+  return true;
 }
 
 export async function getDatabases(
@@ -143,7 +158,8 @@ export async function getDatabases(
   const databases: Database[] = (
     await Fill(
       settings.map((setting: DbSetting) => async () => {
-        const { databaseName, merkleHeight, databaseOwner } = setting;
+        const { databaseName, merkleHeight, databaseOwner, deployStatus } =
+          setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
@@ -164,6 +180,7 @@ export async function getDatabases(
           databaseOwner,
           merkleHeight,
           databaseSize,
+          deployStatus,
           collections,
         } as Database;
       })

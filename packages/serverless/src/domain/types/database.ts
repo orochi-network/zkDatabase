@@ -6,4 +6,5 @@ export type Database = {
   merkleHeight: number;
   collections: Collection[];
   databaseSize: number;
+  deployStatus?: 'failed' | 'deployed' | 'ready';
 };
