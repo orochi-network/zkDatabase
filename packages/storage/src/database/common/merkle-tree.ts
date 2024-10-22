@@ -6,6 +6,8 @@ import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js
 import ModelGeneral from '../base/general.js';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { ModelDbSetting } from './setting.js';
+import { NetworkId } from '../global/network.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
@@ -50,21 +52,23 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     });
   }
 
-  private static getInstance(databaseName: string): ModelMerkleTree {
-    if (!ModelMerkleTree.instances.has(databaseName)) {
+  private static getInstance(databaseName: string, networkId: NetworkId): ModelMerkleTree {
+    const dbName = DatabaseEngine.getValidName(databaseName, networkId);
+
+    if (!ModelMerkleTree.instances.has(dbName)) {
       ModelMerkleTree.instances.set(
-        databaseName,
-        new ModelMerkleTree(databaseName)
+        dbName,
+        new ModelMerkleTree(dbName)
       );
     }
-    return ModelMerkleTree.instances.get(databaseName)!;
+    return ModelMerkleTree.instances.get(dbName)!;
   }
 
-  public static async load(databaseName: string): Promise<ModelMerkleTree> {
-    const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
+  public static async load(databaseName: string, networkId: NetworkId): Promise<ModelMerkleTree> {
+    const modelMerkleTree = ModelMerkleTree.getInstance(databaseName, networkId);
     const modelSetting = ModelDbSetting.getInstance();
 
-    const setting = await modelSetting.getSetting(databaseName);
+    const setting = await modelSetting.getSetting(databaseName, networkId);
 
     if (setting) {
       modelMerkleTree.setHeight(setting.merkleHeight);

@@ -10,6 +10,7 @@ import {
 } from '../common/schema.js';
 import { DocumentFields } from '../types/document.js';
 import { DocumentSchema } from '../types/schema.js';
+import { NetworkId } from '../types/network.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -37,12 +38,13 @@ if (schemaVerification.size === 0) {
 
 // eslint-disable-next-line import/prefer-default-export
 export async function validateDocumentSchema(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   document: DocumentFields,
   session?: ClientSession
 ): Promise<boolean> {
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName, networkId);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
@@ -117,16 +119,17 @@ export async function validateDocumentSchema(
 }
 
 export async function buildSchema(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   document: DocumentFields,
   session?: ClientSession
 ) {
-  if (!(await validateDocumentSchema(databaseName, collectionName, document))) {
+  if (!(await validateDocumentSchema(networkId, databaseName, collectionName, document))) {
     throw new Error('Invalid schema');
   }
 
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName, networkId);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
@@ -163,11 +166,12 @@ export async function buildSchema(
 }
 
 export async function getSchemaDefinition(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   session?: ClientSession
 ): Promise<DocumentSchema> {
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName, networkId);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (!schema) {

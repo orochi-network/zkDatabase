@@ -9,6 +9,8 @@ import {
   zkDatabaseConstants,
   zkDatabaseMetadataCollections,
 } from '../../common/index.js';
+import { NetworkId } from '../global/network.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -23,20 +25,20 @@ export type DocumentMetaIndex = {
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
-  constructor(databaseName?: string) {
+  private constructor(databaseName?: string) {
     super(databaseName || zkDatabaseConstants.globalDatabase);
   }
 
   public static getInstance<T extends Document>(
-    databaseName: string
+    databaseName: string,
+    networkId: NetworkId
   ): ModelDatabase<T> {
-    if (!ModelDatabase.instances.has(databaseName)) {
-      ModelDatabase.instances.set(
-        databaseName,
-        new ModelDatabase<T>(databaseName)
-      );
+    const dbName = DatabaseEngine.getValidName(databaseName, networkId);
+
+    if (!ModelDatabase.instances.has(dbName)) {
+      ModelDatabase.instances.set(dbName, new ModelDatabase<T>(dbName));
     }
-    return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
+    return ModelDatabase.instances.get(dbName) as ModelDatabase<T>;
   }
 
   public async listCollections(): Promise<string[]> {

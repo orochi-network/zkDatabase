@@ -2,6 +2,7 @@ import { FindOptions, InsertOneOptions } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
+import { NetworkId } from './network.js';
 
 export type ZKProof = {
   publicInput: string[];
@@ -12,8 +13,9 @@ export type ZKProof = {
 
 export type ProofMetadata = {
   createdAt?: Date;
-  database: string;
-  collection: string;
+  databaseName: string;
+  collectionName: string;
+  networkId: NetworkId;
   merkleRoot: string;
 };
 
@@ -52,11 +54,12 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   }
 
   public async getProof(
-    database: string,
+    networkId: NetworkId,
+    databaseName: string,
     options?: FindOptions
   ): Promise<ZKProof | null> {
     const proof = await this.collection.findOne(
-      { database },
+      { databaseName, networkId },
       { ...options, sort: { createdAt: -1 } }
     );
     return proof as ProofDetails | null;

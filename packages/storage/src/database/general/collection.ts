@@ -8,6 +8,8 @@ import { isOk } from '../../helper/common.js';
 import ModelBasic from '../base/basic.js';
 import ModelDatabase from './database.js';
 import logger from '../../helper/logger.js';
+import { DatabaseEngine } from '../database-engine.js';
+import { NetworkId } from '../global/network.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -16,19 +18,23 @@ import logger from '../../helper/logger.js';
 export class ModelCollection<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelCollection<any>> = new Map();
 
-  public get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
+  private constructor(databaseName: string, collectionName: string) {
+    super(databaseName, collectionName);
   }
 
   public static getInstance<T extends Document>(
     databaseName: string,
-    collectionName: string
+    collectionName: string,
+    networkId?: NetworkId
   ): ModelCollection<T> {
-    const key = `${databaseName}.${collectionName}`;
+    const dbName = networkId
+      ? DatabaseEngine.getValidName(databaseName, networkId)
+      : databaseName;
+    const key = `${dbName}.${collectionName}`;
     if (!ModelCollection.instances.has(key)) {
       ModelCollection.instances.set(
         key,
-        new ModelCollection<T>(databaseName, collectionName)
+        new ModelCollection<T>(dbName, collectionName)
       );
     }
     return ModelCollection.instances.get(key) as ModelCollection<T>;

@@ -9,6 +9,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelGeneral from '../base/general.js';
+import { NetworkId } from './network.js';
 
 export type Status = 'queued' | 'proving' | 'proved' | 'failed';
 
@@ -17,8 +18,9 @@ export type TaskEntity = {
   hash: string;
   status: Status;
   createdAt: Date;
-  database: string;
-  collection: string;
+  databaseName: string;
+  collectionName: string;
+  networkId: NetworkId,
   docId: string;
   error?: string;
 };
@@ -125,7 +127,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
     try {
       const result = await this.collection
-        .find({ collection: collectionName })
+        .find({ collectionName: collectionName })
         .toArray();
       return result;
     } catch (error) {

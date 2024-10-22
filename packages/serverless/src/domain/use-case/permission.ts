@@ -13,8 +13,10 @@ import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { FullPermissions, PermissionGroup } from '../types/permission.js';
 import { isDatabaseOwner } from './database.js';
 import { checkUserGroupMembership } from './group.js';
+import { NetworkId } from '../types/network.js';
 
 async function fetchPermissionDetails(
+  networkId: NetworkId,
   databaseName: string,
   actor: string,
   metadata: PermissionBasic | null,
@@ -29,7 +31,13 @@ async function fetchPermissionDetails(
   }
 
   if (
-    await checkUserGroupMembership(databaseName, actor, metadata.group, session)
+    await checkUserGroupMembership(
+      databaseName,
+      actor,
+      metadata.group,
+      networkId,
+      session
+    )
   ) {
     return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
   }
@@ -38,6 +46,7 @@ async function fetchPermissionDetails(
 }
 
 export async function readPermission(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -45,18 +54,19 @@ export async function readPermission(
   session?: ClientSession
 ): Promise<PermissionRecord> {
   const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+    ? ModelDocumentMetadata.getInstance(databaseName, networkId)
+    : ModelCollectionMetadata.getInstance(databaseName, networkId);
 
   const key = docId
     ? { docId, collection: collectionName }
     : { collection: collectionName };
   const metadata = await modelMetadata.findOne(key, { session });
 
-  return fetchPermissionDetails(databaseName, actor, metadata);
+  return fetchPermissionDetails(networkId, databaseName, actor, metadata);
 }
 
 async function checkPermission(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -65,11 +75,12 @@ async function checkPermission(
   isDocument: boolean,
   session?: ClientSession
 ): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor)) {
+  if (await isDatabaseOwner(databaseName, actor, networkId)) {
     return true;
   }
 
   const permission = await readPermission(
+    networkId,
     databaseName,
     collectionName,
     actor,
@@ -80,6 +91,7 @@ async function checkPermission(
 }
 
 export async function hasDocumentPermission(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -88,6 +100,7 @@ export async function hasDocumentPermission(
   session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(
+    networkId,
     databaseName,
     collectionName,
     actor,
@@ -99,6 +112,7 @@ export async function hasDocumentPermission(
 }
 
 export async function hasCollectionPermission(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -106,6 +120,7 @@ export async function hasCollectionPermission(
   session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(
+    networkId,
     databaseName,
     collectionName,
     actor,
@@ -117,6 +132,7 @@ export async function hasCollectionPermission(
 }
 
 export async function changePermissions(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -127,6 +143,7 @@ export async function changePermissions(
 ) {
   const hasSystemPermission = docId
     ? await hasDocumentPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -135,6 +152,7 @@ export async function changePermissions(
         session
       )
     : await hasCollectionPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -150,8 +168,8 @@ export async function changePermissions(
   }
 
   const modelPermission = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+    ? ModelDocumentMetadata.getInstance(databaseName, networkId)
+    : ModelCollectionMetadata.getInstance(databaseName, networkId);
 
   let update: any;
 
@@ -189,6 +207,7 @@ export async function changePermissions(
 }
 
 export async function setPermissions(
+  networkId: NetworkId,
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -198,6 +217,7 @@ export async function setPermissions(
 ): Promise<boolean> {
   const hasSystemPermission = docId
     ? await hasDocumentPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -206,6 +226,7 @@ export async function setPermissions(
         session
       )
     : await hasCollectionPermission(
+        networkId,
         databaseName,
         collectionName,
         actor,
@@ -215,8 +236,8 @@ export async function setPermissions(
 
   if (hasSystemPermission) {
     const modelPermission = docId
-      ? new ModelDocumentMetadata(databaseName)
-      : ModelCollectionMetadata.getInstance(databaseName);
+      ? ModelDocumentMetadata.getInstance(databaseName, networkId)
+      : ModelCollectionMetadata.getInstance(databaseName, networkId);
 
     const locationQuery = {
       collection: collectionName,

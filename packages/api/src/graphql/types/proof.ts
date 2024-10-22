@@ -1,3 +1,5 @@
+import { TNetworkId } from "./network";
+
 export type TZKProof = {
   publicInput: string[];
   publicOutput: string[];
@@ -13,6 +15,7 @@ export enum TProofStatus {
 }
 
 export type TProofStatusRequest = {
+  networkId: TNetworkId,
   databaseName: string;
   collectionName: string;
   docId: string;

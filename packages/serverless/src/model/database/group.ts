@@ -1,7 +1,9 @@
 import { ClientSession, Document, InsertOneOptions } from 'mongodb';
 import {
+  DatabaseEngine,
   ModelCollection,
   ModelGeneral,
+  NetworkId,
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
@@ -19,8 +21,12 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
   private static collectionName: string =
     zkDatabaseConstants.databaseCollections.group;
 
-  constructor(databaseName: string) {
+  private constructor(databaseName: string) {
     super(databaseName, ModelGroup.collectionName);
+  }
+
+  public static getInstance(databaseName: string, networkId: NetworkId) {
+    return new ModelGroup(DatabaseEngine.getValidName(databaseName, networkId));
   }
 
   public async createGroup(
@@ -35,7 +41,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
         description: description || `Group ${groupName}`,
         createBy: createBy || ZKDATABASE_USER_SYSTEM,
         createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        updatedAt: getCurrentTime()
       },
       options
     );
@@ -48,13 +54,17 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
     return this.collection.findOne({ groupName }, { session });
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, networkId: NetworkId) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      ModelGroup.collectionName
+      ModelGroup.collectionName,
+      networkId
     );
     if (!(await collection.isExist())) {
-      await collection.index({ groupName: 1 }, { unique: true });
+      await collection.index(
+        { networkId: 1, groupName: 1 },
+        { unique: true, name: 'unique_groupName_per_network' }
+      );
     }
   }
 }

@@ -2,7 +2,7 @@ import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, objectId } from './common.js';
+import { collectionName, databaseName, networkId, objectId } from './common.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import { TCollectionRequest } from './collection.js';
 import { EDatabaseProofStatus } from '../../domain/types/proof-status.js';
@@ -33,9 +33,9 @@ enum DatabaseProofStatus {
 }
 
 extend type Query {
-  getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
-  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
-  getProof(databaseName: String!): Proof
+  getProofStatus(networkId: NetworkId!, databaseName: String!, collectionName: String!, docId: String): ProofStatus!
+  getDatabaseProofStatus(networkId: NetworkId!, databaseName: String!): DatabaseProofStatus!
+  getProof(networkId: NetworkId!, databaseName: String!): Proof
 }
 `;
 
@@ -48,6 +48,7 @@ const getProofStatus = authorizeWrapper(
     databaseName,
     collectionName,
     docId: objectId.optional(),
+    networkId
   }),
   async (_root: unknown, args: TProofRequest, ctx) => {
     return withTransaction(async (session) => {
@@ -55,6 +56,7 @@ const getProofStatus = authorizeWrapper(
 
       if (
         await hasDocumentPermission(
+          args.networkId,
           args.databaseName,
           args.collectionName,
           ctx.userName,
@@ -64,7 +66,7 @@ const getProofStatus = authorizeWrapper(
         )
       ) {
         const proof = await modelProof.findOne({
-          database: args.databaseName,
+          databaseName: args.databaseName,
           docId: args.docId,
         });
 
@@ -95,23 +97,25 @@ const getProofStatus = authorizeWrapper(
 const getProof = publicWrapper(
   Joi.object({
     databaseName,
+    networkId
   }),
   async (_root: unknown, args: TProofRequest) => {
     const modelProof = ModelProof.getInstance();
 
-    return modelProof.getProof(args.databaseName);
+    return modelProof.getProof(args.networkId, args.databaseName);
   }
 );
 
 const getDatabaseProofStatus = publicWrapper(
   Joi.object({
     databaseName,
+    networkId
   }),
   async (_root: unknown, args: TProofRequest) => {
     const modelTask = ModelQueueTask.getInstance();
 
     const task = await modelTask.findOne({
-      database: args.databaseName,
+      databaseName: args.databaseName,
       status: { $in: ['proving', 'queued'] },
     });
 
@@ -119,7 +123,7 @@ const getDatabaseProofStatus = publicWrapper(
       return EDatabaseProofStatus.Pending;
     } else {
       const modelProof = ModelProof.getInstance();
-      const proof = await modelProof.getProof(args.databaseName);
+      const proof = await modelProof.getProof(args.networkId, args.databaseName);
 
       return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.Empty;
     }

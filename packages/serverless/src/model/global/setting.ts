@@ -2,6 +2,7 @@ import { Document } from 'mongodb';
 import {
   ModelCollection,
   ModelGeneral,
+  NetworkId,
   zkDatabaseConstants,
 } from '@zkdb/storage';
 

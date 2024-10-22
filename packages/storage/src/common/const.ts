@@ -19,6 +19,9 @@ export const zkDatabaseConstants = {
 
     // Proof storage
     proof: 'proof',
+
+    // Mina network
+    network: 'network',
   },
 
   // Collections that are common across different databases
@@ -34,9 +37,6 @@ export const zkDatabaseConstants = {
 
     // Permission
     permission: '_zkdatabase_permission',
-
-    // Database settings
-    setting: '_zkdatabase_db_setting',
 
     // Merkle tree collection
     merkleTree: '_zkdatabase_merkle_tree',

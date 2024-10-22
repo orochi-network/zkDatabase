@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 import { createQueryFunction, TApolloClient } from "./common";
 import { TProofStatus, TProofStatusRequest, TZKProof, TUser } from "./types";
+import { TNetworkId } from "./types/network";
 export type TUserSignUpRecord = TUser;
 
 export const proof = <T>(client: TApolloClient<T>) => ({
@@ -12,11 +13,13 @@ export const proof = <T>(client: TApolloClient<T>) => ({
     client,
     gql`
       query GetProofStatus(
+        $networkId: NetworkId!
         $databaseName: String!
         $collectionName: String!
         $docId: String!
       ) {
         getProofStatus(
+          networkId: $networkId
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId
@@ -27,13 +30,13 @@ export const proof = <T>(client: TApolloClient<T>) => ({
   ),
   get: createQueryFunction<
     TZKProof,
-    { databaseName: string },
+    { networkId: TNetworkId, databaseName: string },
     { getProof: TZKProof }
   >(
     client,
     gql`
-      query GetProof($databaseName: String!) {
-        getProof(databaseName: $databaseName) {
+      query GetProof($networkId: NetworkId!, $databaseName: String!) {
+        getProof(networkId: $networkId, databaseName: $databaseName) {
           publicInput
           publicOutput
           maxProofsVerified

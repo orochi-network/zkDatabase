@@ -8,6 +8,7 @@ import {
   collectionName,
   objectId,
   permissionDetail,
+  networkId,
 } from './common.js';
 import { TCollectionRequest } from './collection.js';
 import { PermissionRecord } from '../../common/permission.js';
@@ -67,12 +68,14 @@ type SchemaField {
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(
+    networkId: NetworkId!,
     databaseName: String!
     collectionName: String!
     docId: String
   ): CollectionMetadataOutput
 
   collectionSchema(
+    networkId: NetworkId!,
     databaseName: String!
     collectionName: String!
   ): [SchemaField!]
@@ -80,6 +83,7 @@ extend type Query {
 
 extend type Mutation {
   permissionSet(
+    networkId: NetworkId!,
     databaseName: String!
     collectionName: String!
     docId: String
@@ -103,10 +107,12 @@ const permissionList = authorizeWrapper(
     databaseName,
     collectionName,
     docId: objectId.optional(),
+    networkId
   }),
   async (_root: unknown, args: TPermissionRequest, ctx) => {
     return withTransaction((session) =>
       readMetadata(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         args.docId,
@@ -122,10 +128,11 @@ const collectionSchema = publicWrapper(
   Joi.object({
     databaseName,
     collectionName,
+    networkId
   }),
   async (_root: unknown, args: TCollectionRequest, _) =>
     withTransaction((session) =>
-      getSchemaDefinition(args.databaseName, args.collectionName, session)
+      getSchemaDefinition(args.networkId, args.databaseName, args.collectionName, session)
     )
 );
 
@@ -136,10 +143,12 @@ const permissionSet = authorizeWrapper(
     collectionName,
     docId: objectId.optional(),
     permission: permissionDetail.required(),
+    networkId
   }),
   async (_root: unknown, args: TPermissionUpdateRequest, context) => {
     await withTransaction((session) =>
       setPermissions(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         context.userName,
@@ -151,6 +160,7 @@ const permissionSet = authorizeWrapper(
 
     return withTransaction((session) =>
       readMetadata(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         args.docId,
@@ -174,6 +184,7 @@ const permissionOwn = authorizeWrapper(
     if (args.docId) {
       await withTransaction((session) =>
         changeDocumentOwnership(
+          args.networkId,
           args.databaseName,
           args.collectionName,
           args.docId,
@@ -186,6 +197,7 @@ const permissionOwn = authorizeWrapper(
     } else {
       await withTransaction((session) =>
         changeCollectionOwnership(
+          args.networkId,
           args.databaseName,
           args.collectionName,
           context.userName,
@@ -198,6 +210,7 @@ const permissionOwn = authorizeWrapper(
 
     return withTransaction((session) =>
       readMetadata(
+        args.networkId,
         args.databaseName,
         args.collectionName,
         args.docId,

@@ -1,6 +1,8 @@
 import {
+  DatabaseEngine,
   ModelCollection,
   ModelGeneral,
+  NetworkId,
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document, FindOptions } from 'mongodb';
@@ -86,14 +88,15 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
     super(databaseName, ModelCollectionMetadata.collectionName);
   }
 
-  public static getInstance(databaseName: string): ModelCollectionMetadata {
+  public static getInstance(databaseName: string, networkId: NetworkId): ModelCollectionMetadata {
+    const dbName = DatabaseEngine.getValidName(databaseName, networkId);
     if (
-      typeof ModelCollectionMetadata.instances[databaseName] === 'undefined'
+      typeof ModelCollectionMetadata.instances[dbName] === 'undefined'
     ) {
-      ModelCollectionMetadata.instances[databaseName] =
-        new ModelCollectionMetadata(databaseName);
+      ModelCollectionMetadata.instances[dbName] =
+        new ModelCollectionMetadata(dbName);
     }
-    return ModelCollectionMetadata.instances[databaseName];
+    return ModelCollectionMetadata.instances[dbName];
   }
 
   public async getMetadata(
@@ -108,10 +111,11 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
     );
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, networkId: NetworkId) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      ModelCollectionMetadata.collectionName
+      ModelCollectionMetadata.collectionName,
+      networkId
     );
     if (!(await collection.isExist())) {
       await collection.index({ collection: 1 }, { unique: true });

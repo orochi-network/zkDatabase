@@ -1,7 +1,9 @@
 import { Document } from 'mongodb';
 import {
+  DatabaseEngine,
   ModelCollection,
   ModelGeneral,
+  NetworkId,
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { PermissionBasic } from '../../common/permission.js';
@@ -27,14 +29,21 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
   static collectionName: string =
     zkDatabaseConstants.databaseCollections.permission;
 
-  constructor(databaseName: string) {
+  private constructor(databaseName: string) {
     super(databaseName, ModelDocumentMetadata.collectionName);
   }
 
-  public static async init(databaseName: string) {
-    const collection = new ModelCollection(
+  public static getInstance(databaseName: string, networkId: NetworkId) {
+    return new ModelDocumentMetadata(
+      DatabaseEngine.getValidName(databaseName, networkId)
+    );
+  }
+
+  public static async init(databaseName: string, networkId: NetworkId) {
+    const collection = ModelCollection.getInstance(
       databaseName,
-      ModelDocumentMetadata.collectionName
+      ModelDocumentMetadata.collectionName,
+      networkId
     );
     if (!(await collection.isExist())) {
       await collection.index({ collection: 1, docId: 1 }, { unique: true });

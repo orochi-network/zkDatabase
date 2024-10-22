@@ -3,6 +3,7 @@ import {
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
+  NetworkId,
 } from '@zkdb/storage';
 import {
   ZKDATABASE_USER_NOBODY,
@@ -18,6 +19,7 @@ export interface DocumentUser extends Document {
   userData: any;
   createdAt: Date;
   updatedAt: Date;
+  networkId: NetworkId;
 }
 
 export class ModelUser extends ModelGeneral<DocumentUser> {
@@ -38,10 +40,27 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
       zkDatabaseConstants.globalDatabase,
       ModelUser.collectionName
     );
+
     if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true });
-      collection.index({ publicKey: 1 }, { unique: true });
-      collection.index({ email: 1 }, { unique: true });
+      await collection.index(
+        { networkId: 1, userName: 1 },
+        { unique: true, name: 'unique_userName_per_network' }
+      );
+
+      await collection.index(
+        { networkId: 1, publicKey: 1 },
+        { unique: true, name: 'unique_publicKey_per_network' }
+      );
+
+      await collection.index(
+        { networkId: 1, email: 1 },
+        { unique: true, name: 'unique_email_per_network' }
+      );
+
+      await collection.index(
+        { networkId: 1 },
+        { unique: false, name: 'index_networkId' }
+      );
     }
   }
 
@@ -54,12 +73,13 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   public async isUserExist(
     searchingInfo: Partial<
       Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
-    >
+    >,
+    networkId: NetworkId
   ) {
     // Search a user for given information is matched
     return (
       (await this.collection.countDocuments({
-        $or: objectToLookupPattern(searchingInfo),
+        $and: [{ networkId }, { $or: objectToLookupPattern(searchingInfo) }],
       })) > 0
     );
   }
@@ -67,20 +87,22 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   public async findUser(
     searchingInfo: Partial<
       Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
-    >
+    >,
+    networkId: NetworkId
   ) {
     // Search a user for given information is matched
     const result = await this.collection.find({
-      $or: objectToLookupPattern(searchingInfo),
+      $and: [{ networkId }, { $or: objectToLookupPattern(searchingInfo) }],
     });
 
     return result.toArray();
   }
 
-  public async areUsersExist(userNames: string[]) {
+  public async areUsersExist(userNames: string[], networkId: NetworkId) {
     const users = await this.collection
       .find({
         userName: { $in: userNames },
+        networkId,
       })
       .toArray();
 
@@ -91,10 +113,11 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     userName: string,
     email: string,
     publicKey: string,
-    userData: any
+    userData: any,
+    networkId: NetworkId
   ) {
     ModelUser.isValidUser(userName);
-    if (!(await this.isUserExist({ userName, email, publicKey }))) {
+    if (!(await this.isUserExist({ userName, email, publicKey }, networkId))) {
       return this.insertOne({
         userName,
         email,
@@ -103,6 +126,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
         activated: true,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
+        networkId,
       });
     }
     return null;

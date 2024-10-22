@@ -1,0 +1,1 @@
+export type TNetworkId = 'mainnet' | 'devnet';

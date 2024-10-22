@@ -17,6 +17,8 @@ import {
 } from './app/document-history.js';
 import { typeCommonDefsCollection } from './app/types/collection.js';
 import { typeCommonDefsMetadata } from './app/types/metadata.js';
+import { resolversNetwork, typeDefsNetwork } from './app/network.js';
+import { typeCommonDefsNetwork } from './app/types/network.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -29,9 +31,11 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
   typeDefsProof,
   typeDefsDocumentHistory,
+  typeDefsNetwork,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
   typeCommonDefsMetadata,
+  typeCommonDefsNetwork
 ];
 
 type Resolver =
@@ -44,7 +48,8 @@ type Resolver =
   | typeof resolversPermission
   | typeof resolversMerkleTree
   | typeof resolversProof
-  | typeof resolversDocumentHistory;
+  | typeof resolversDocumentHistory
+  | typeof resolversNetwork;
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -57,4 +62,5 @@ export const ResolversApp: Resolver[] = [
   resolversMerkleTree,
   resolversProof,
   resolversDocumentHistory,
+  resolversNetwork
 ];

@@ -14,6 +14,7 @@ import {
   collectionName,
   databaseName,
   groupName,
+  networkId,
   permissionDetail,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
@@ -44,6 +45,7 @@ export type TCollectionCreateRequest = TCollectionRequest & {
 export const CollectionRequest = Joi.object<TCollectionRequest>({
   collectionName,
   databaseName,
+  networkId
 });
 
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
@@ -53,6 +55,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   schema: schemaFields,
   indexes: Joi.array().items(Joi.string().optional()),
   permissions: permissionDetail,
+  networkId
 });
 
 export const typeDefsCollection = `#graphql
@@ -61,12 +64,13 @@ type Query
 type Mutation
 
 extend type Query {
-  collectionList(databaseName: String!): [CollectionDescriptionOutput]!
-  collectionExist(databaseName: String!, collectionName: String!): Boolean
+  collectionList(networkId: NetworkId!, databaseName: String!): [CollectionDescriptionOutput]!
+  collectionExist(networkId: NetworkId!, databaseName: String!, collectionName: String!): Boolean
 }
 
 extend type Mutation {
   collectionCreate(
+    networkId: NetworkId!,
     databaseName: String!, 
     collectionName: String!,
     groupName: String!,
@@ -81,20 +85,25 @@ extend type Mutation {
 const collectionList = publicWrapper(
   Joi.object({
     databaseName,
+    networkId,
   }),
   async (_root: unknown, args: TDatabaseRequest) =>
-    listCollections(args.databaseName)
+    listCollections(args.databaseName, "user-name", args.networkId)
 );
 
 const collectionExist = publicWrapper(
   Joi.object({
     databaseName,
     collectionName,
+    networkId,
   }),
   async (_root: unknown, args: TCollectionRequest) =>
-    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
-      (collection) => collection === args.collectionName
-    )
+    (
+      await ModelDatabase.getInstance(
+        args.databaseName,
+        args.networkId
+      ).listCollections()
+    ).some((collection) => collection === args.collectionName)
 );
 
 // Mutation
@@ -109,16 +118,18 @@ const collectionCreate = authorizeWrapper(
         args.groupName,
         args.schema,
         args.permissions,
+        args.networkId,
         session
       )
     );
 
-    if (args.indexes && createCollectionResult) {
+    if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(
+        args.networkId,
         args.databaseName,
         ctx.userName,
         args.collectionName,
-        args.indexes
+        args.indexes,
       );
 
       if (!indexResult) {

@@ -4,14 +4,16 @@ import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { MerkleNode, MerkleTreeInfo } from '../types/merkle-tree.js';
 import { Field } from 'o1js';
+import { NetworkId } from '../types/network.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function getWitnessByDocumentId(
+  networkId: NetworkId,
   databaseName: string,
   docId: string,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,
@@ -21,7 +23,7 @@ export async function getWitnessByDocumentId(
     throw Error(`Metadata has not been found`);
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   return merkleTree.getWitness(BigInt(docMetadata.merkleIndex), new Date(), {
     session,
@@ -29,11 +31,12 @@ export async function getWitnessByDocumentId(
 }
 
 export async function getMerkleNodesByLevel(
+  networkId: NetworkId,
   databaseName: string,
   nodeLevel: number,
   pagination?: Pagination
 ): Promise<PaginationReturn<MerkleNode[]>> {
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+  const modelMerkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   const zeroNodes = modelMerkleTree.getZeroNodes();
 
@@ -63,9 +66,10 @@ export async function getMerkleNodesByLevel(
 }
 
 export async function getMerkleTreeInfo(
+  networkId: NetworkId,
   databaseName: string
 ): Promise<MerkleTreeInfo> {
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+  const modelMerkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
 
@@ -76,6 +80,7 @@ export async function getMerkleTreeInfo(
 }
 
 export async function getChildrenNodes(
+  networkId: NetworkId,
   databaseName: string,
   parentLevel: number,
   parentIndex: bigint
@@ -98,7 +103,7 @@ export async function getChildrenNodes(
     );
   }
 
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+  const modelMerkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   if (parentLevel >= modelMerkleTree.height) {
     throw new Error(
@@ -142,10 +147,11 @@ export async function getChildrenNodes(
 }
 
 export async function getMerkleWitnessPath(
+  networkId: NetworkId,
   databaseName: string,
   docId: string
 ) {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = ModelDocumentMetadata.getInstance(databaseName, networkId);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,
@@ -155,7 +161,7 @@ export async function getMerkleWitnessPath(
     throw Error(`Metadata has not been found`);
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  const merkleTree = await ModelMerkleTree.load(databaseName, networkId);
 
   return merkleTree.getWitnessPath(BigInt(docMetadata.merkleIndex), new Date());
 }

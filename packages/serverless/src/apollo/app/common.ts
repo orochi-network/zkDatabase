@@ -99,3 +99,7 @@ export const search = Joi.object({
   search: Joi.optional(),
   pagination,
 });
+
+export const networkId = Joi.string()
+  .valid(...['mainnet', 'devnet'])
+  .required();

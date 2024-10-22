@@ -17,6 +17,7 @@ import {
   groupDescription,
   groupName,
   groupOptionalDescription,
+  networkId,
   userName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
@@ -42,12 +43,14 @@ export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
   groupDescription: groupOptionalDescription,
+  networkId,
 });
 
 export const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
   groupDescription,
+  networkId,
 });
 
 export const typeDefsGroup = `#graphql
@@ -75,37 +78,42 @@ type GroupInfo {
 }
 
 extend type Query {
-  groupListAll(databaseName: String!): [GroupInfo]!
-  groupListByUser(databaseName: String!, userName: String!): [String]!
-  groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail!
+  groupListAll(networkId: NetworkId!, databaseName: String!): [GroupInfo]!
+  groupListByUser(networkId: NetworkId!, databaseName: String!, userName: String!): [String]!
+  groupInfoDetail(networkId: NetworkId!, databaseName: String!, groupName: String!): GroupInfoDetail!
 }
 
 extend type Mutation {
   groupCreate(
+    networkId: NetworkId!,
     databaseName: String!,
     groupName: String!,
     groupDescription: String
   ): Boolean
 
   groupAddUsers(
+    networkId: NetworkId!,
     databaseName: String!,
     groupName: String!,
     userNames: [String!]!
   ): Boolean
 
   groupRemoveUsers(
+    networkId: NetworkId!,
     databaseName: String!,
     groupName: String!,
     userNames: [String!]!
   ): Boolean
 
   groupChangeDescription(
+    networkId: NetworkId!,
     databaseName: String!,
     groupName: String!,
     groupDescription: String!
   ): Boolean
 
   groupRename(
+    networkId: NetworkId!,
     databaseName: String!,
     groupName: String!,
     newGroupName: String!
@@ -117,9 +125,13 @@ extend type Mutation {
 const groupListAll = publicWrapper(
   Joi.object({
     databaseName,
+    networkId,
   }),
   async (_root: unknown, args: TDatabaseRequest) => {
-    const modelGroup = new ModelGroup(args.databaseName);
+    const modelGroup = ModelGroup.getInstance(
+      args.databaseName,
+      args.networkId
+    );
     const groups = await (await modelGroup.find({})).toArray();
     return groups.map((group) => ({
       ...group,
@@ -136,10 +148,14 @@ const groupListByUser = publicWrapper(
   Joi.object({
     databaseName,
     userName,
+    networkId,
   }),
   async (_root: unknown, args: TGroupListByUserRequest) => {
-    const modelUserGroup = new ModelUserGroup(args.databaseName);
-    return modelUserGroup.listGroupByUserName(args.userName);
+    const modelUserGroup = ModelUserGroup.getInstance(
+      args.databaseName,
+      args.networkId
+    );
+    return modelUserGroup.listGroupByUserName(args.userName, args.networkId);
   }
 );
 
@@ -147,9 +163,14 @@ const groupInfoDetail = publicWrapper(
   Joi.object({
     databaseName,
     groupName,
+    networkId,
   }),
   async (_root: unknown, args: TGroupRequest) => {
-    const group = await getGroupInfo(args.databaseName, args.groupName);
+    const group = await getGroupInfo(
+      args.databaseName,
+      args.groupName,
+      args.networkId
+    );
     if (group) {
       return group;
     }
@@ -162,6 +183,7 @@ const groupRename = authorizeWrapper(
     databaseName,
     groupName,
     newGroupName: groupName,
+    networkId,
   }),
   async (_root: unknown, args: TGroupRenameRequest, ctx) =>
     withTransaction(async (session) =>
@@ -170,6 +192,7 @@ const groupRename = authorizeWrapper(
         ctx.userName,
         args.groupName,
         args.newGroupName,
+        args.networkId,
         session
       )
     )
@@ -181,6 +204,7 @@ const groupCreate = authorizeWrapper(
     withTransaction(async (session) =>
       createGroup(
         args.databaseName,
+        args.networkId,
         ctx.userName,
         args.groupName,
         args.groupDescription,
@@ -194,6 +218,7 @@ const groupAddUsers = authorizeWrapper(
     databaseName,
     groupName,
     userNames: Joi.array().items(Joi.string().required()).required(),
+    networkId,
   }),
   async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
     withTransaction(async (session) =>
@@ -202,6 +227,7 @@ const groupAddUsers = authorizeWrapper(
         ctx.userName,
         args.groupName,
         args.userNames,
+        args.networkId,
         session
       )
     )
@@ -220,6 +246,7 @@ const groupRemoveUsers = authorizeWrapper(
         ctx.userName,
         args.groupName,
         args.userNames,
+        args.networkId,
         session
       )
     )
@@ -234,6 +261,7 @@ const groupChangeDescription = authorizeWrapper(
         ctx.userName,
         args.groupName,
         args.groupDescription,
+        args.networkId,
         session
       )
     )

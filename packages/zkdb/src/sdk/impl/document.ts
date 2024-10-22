@@ -9,6 +9,7 @@ import {
   ProofStatus,
 } from '../../types';
 import { ZKDocument } from '../interfaces';
+import { NetworkId } from '../../types/network';
 
 export class ZKDocumentImpl implements ZKDocument {
   private databaseName: string;
@@ -17,12 +18,14 @@ export class ZKDocumentImpl implements ZKDocument {
   private _id: string;
   private createdAt: Date;
   private apiClient: IApiClient;
+  private networkId: NetworkId;
 
   constructor(
     databaseName: string,
     collectionName: string,
     document: Document,
-    apiClient: IApiClient
+    apiClient: IApiClient,
+    networkId: NetworkId
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
@@ -30,6 +33,7 @@ export class ZKDocumentImpl implements ZKDocument {
     this._id = document.id;
     this.createdAt = document.createdAt;
     this.apiClient = apiClient;
+    this.networkId = networkId;
   }
 
   async getProofStatus(): Promise<ProofStatus> {
@@ -37,6 +41,7 @@ export class ZKDocumentImpl implements ZKDocument {
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
+      networkId: this.networkId
     });
 
     switch (result.unwrap()) {
@@ -53,6 +58,7 @@ export class ZKDocumentImpl implements ZKDocument {
 
   async changeGroup(groupName: string): Promise<void> {
     const result = await this.apiClient.ownership.setOwnership({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
@@ -65,6 +71,7 @@ export class ZKDocumentImpl implements ZKDocument {
 
   async changeOwner(userName: string): Promise<void> {
     const result = await this.apiClient.ownership.setOwnership({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
@@ -79,6 +86,7 @@ export class ZKDocumentImpl implements ZKDocument {
     const remotePermissions = await this.getOwnership();
 
     const result = await this.apiClient.permission.set({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
@@ -103,6 +111,7 @@ export class ZKDocumentImpl implements ZKDocument {
 
   async getOwnership(): Promise<Ownership> {
     const result = await this.apiClient.permission.get({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
@@ -113,6 +122,7 @@ export class ZKDocumentImpl implements ZKDocument {
 
   async getWitness(): Promise<MerkleWitness> {
     const result = await this.apiClient.merkle.witness({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       docId: this._id,
     });
@@ -145,6 +155,7 @@ export class ZKDocumentImpl implements ZKDocument {
 
   async delete(): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.delete({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       documentQuery: JSON.parse(JSON.stringify({ docId: this._id })),
@@ -161,6 +172,7 @@ export class ZKDocumentImpl implements ZKDocument {
   async getDocumentHistory(): Promise<ZKDocument[]> {
     const result = await this.apiClient.doc.history({
       databaseName: this.databaseName,
+      networkId: this.networkId,
       collectionName: this.collectionName,
       docId: this._id,
     });
@@ -179,7 +191,8 @@ export class ZKDocumentImpl implements ZKDocument {
             })),
             createdAt: document.createdAt,
           },
-          this.apiClient
+          this.apiClient,
+          this.networkId
         )
     );
   }

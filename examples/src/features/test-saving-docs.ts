@@ -32,7 +32,12 @@ async function run() {
     ? new AuroWalletSigner()
     : new NodeSigner(MY_PRIVATE_KEY);
 
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  const zkdb = ZKDatabaseClient.newInstance(
+    SERVER_URL,
+    signer,
+    new Map(),
+    'devnet'
+  );
 
   await zkdb.authenticator.signIn();
 

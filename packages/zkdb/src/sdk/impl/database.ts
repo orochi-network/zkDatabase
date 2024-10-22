@@ -5,19 +5,23 @@ import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
+import { NetworkId } from '../../types/network';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
   private apiClient: IApiClient;
+  private networkId: NetworkId;
 
-  constructor(databaseName: string, apiClient: IApiClient) {
+  constructor(databaseName: string, apiClient: IApiClient, networkId: NetworkId) {
     this.databaseName = databaseName;
     this.apiClient = apiClient;
+    this.networkId = networkId;
   }
 
   async getProof(): Promise<JsonProof> {
     const result = await this.apiClient.proof.get({
       databaseName: this.databaseName,
+      networkId: this.networkId
     });
 
     return result.unwrap();
@@ -27,7 +31,8 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return new CollectionQueryImpl(
       this.databaseName,
       collectionName,
-      this.apiClient
+      this.apiClient,
+      this.networkId
     );
   }
 
@@ -39,6 +44,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     permissions: Permissions
   ): Promise<boolean> {
     const result = await this.apiClient.collection.create({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       collectionName: collectionName,
       groupName,
@@ -52,6 +58,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
   async createGroup(groupName: string, description: string): Promise<boolean> {
     const result = await this.apiClient.group.create({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       groupName,
       groupDescription: description,
@@ -61,11 +68,12 @@ export class ZKDatabaseImpl implements ZKDatabase {
   }
 
   fromGroup(groupName: string): ZKGroup {
-    return new ZKGroupImpl(this.databaseName, groupName, this.apiClient);
+    return new ZKGroupImpl(this.databaseName, groupName, this.apiClient, this.networkId);
   }
 
   async getGroups(): Promise<GroupDescription[]> {
     const result = await this.apiClient.group.list({
+      networkId: this.networkId,
       databaseName: this.databaseName,
     });
 
@@ -81,24 +89,16 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
   async getCollections(): Promise<string[]> {
     const result = await this.apiClient.collection.list({
+      networkId: this.networkId,
       databaseName: this.databaseName,
     });
 
     return result.unwrap().map((collection) => collection.name);
   }
 
-  async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
-    const result = await this.apiClient.db.create({
-      databaseName: this.databaseName,
-      merkleHeight,
-      publicKey: publicKey.toBase58(),
-    });
-
-    return result.unwrap();
-  }
-
   async getSettings(): Promise<DatabaseSettings> {
     const result = await this.apiClient.db.setting({
+      networkId: this.networkId,
       databaseName: this.databaseName,
     });
     return result.unwrap();
@@ -106,6 +106,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
   async changeOwner(newOwner: string): Promise<boolean> {
     const result = await this.apiClient.db.transferOwnership({
+      networkId: this.networkId,
       databaseName: this.databaseName,
       newOwner,
     });
