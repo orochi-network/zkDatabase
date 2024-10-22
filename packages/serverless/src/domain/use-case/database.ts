@@ -15,6 +15,7 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
+import { redisQueue } from '../../helper/mq.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -38,6 +39,13 @@ export async function createDatabase(
     appPublicKey,
     databaseOwner: actor,
   });
+
+  await redisQueue.enqueue(
+    JSON.stringify({
+      payerAddress: appPublicKey,
+      merkleHeight,
+    })
+  );
   return true;
 }
 
