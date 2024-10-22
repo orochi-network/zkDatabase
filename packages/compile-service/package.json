@@ -1,0 +1,14 @@
+{
+  "name": "deploy-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@zkdb/smart-contract": "^1.1.6",
+    "o1js": "2.0.0",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.7"
+  }
+}
