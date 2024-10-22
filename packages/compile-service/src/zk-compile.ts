@@ -13,7 +13,6 @@ export class ZkCompileService {
   async compileAndCreateUnsignTx(request: string) {
     let req = JSON.parse(request);
     // Set active network
-    console.log(this.network);
     const network = Mina.Network(this.network);
     Mina.setActiveInstance(network);
     // Create keypair for zkApp contract
