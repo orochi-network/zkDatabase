@@ -181,7 +181,7 @@ async function listCollections(
     await Fill(
       availableCollections.map(
         (collectionName) => async () =>
-          readCollectionInfo(databaseName, collectionName, actor, false)
+          readCollectionInfo(databaseName, collectionName, actor, true)
       )
     )
   )
