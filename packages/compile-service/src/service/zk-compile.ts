@@ -1,17 +1,13 @@
 import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
 import { Mina, PrivateKey, PublicKey } from "o1js";
-
-export type TDeploymentRequest = {
-  payerAddress: string;
-  merkleHeight: number;
-};
+import { DbDeployQueue } from "..";
+import { logger } from "@helper";
 
 export class ZkCompileService {
   constructor(
     private readonly network: { networkId: "testnet" | "mainnet"; mina: string }
   ) {}
-  async compileAndCreateUnsignTx(request: string) {
-    let req = JSON.parse(request);
+  async compileAndCreateUnsignTx(req: DbDeployQueue) {
     // Set active network
     const network = Mina.Network(this.network);
     Mina.setActiveInstance(network);
@@ -24,10 +20,7 @@ export class ZkCompileService {
       req.merkleHeight,
       zkDbPublicKey
     );
-    console.log(
-      "🚀 ~ ZkCompileService ~ compileAndCreateUnsignTx ~ zkWrapper:",
-      zkWrapper
-    );
+    const start = performance.now();
     // Compile
     await zkWrapper.compile();
     // Create unsigned transaction
@@ -35,9 +28,15 @@ export class ZkCompileService {
       PublicKey.fromBase58(req.payerAddress)
     );
     unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const end = performance.now();
+    logger.info(
+      `Compile and deploy ${zkDbPublicKey} take ${(end - start) / 1000}s`
+    );
+
     return {
-      tx: unsignedTx,
-      zkAppAddress: zkDbPublicKey,
+      tx: unsignedTx.toJSON(),
+      zkAppAddress: zkDbPublicKey.toBase58(),
+      merkleHeight: req.merkleHeight,
     };
   }
 }

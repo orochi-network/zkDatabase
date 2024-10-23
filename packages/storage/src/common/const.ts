@@ -19,6 +19,8 @@ export const zkDatabaseConstants = {
 
     // Proof storage
     proof: 'proof',
+    // Deployed transaction
+    deploy: 'deploy_transaction',
   },
 
   // Collections that are common across different databases

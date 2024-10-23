@@ -1,6 +1,6 @@
 import * as redis from 'redis';
 
-export class RedisQueueService {
+export class RedisQueueService<T = any> {
   private redisClient: redis.RedisClientType;
   constructor(private readonly queueName: string) {
     this.redisClient = redis.createClient();
@@ -9,11 +9,11 @@ export class RedisQueueService {
     );
     this.redisClient.connect();
   }
-  async enqueue(data: any): Promise<void> {
+  async enqueue(data: T): Promise<void> {
     await this.redisClient.rPush(this.queueName, JSON.stringify(data));
   }
 
-  async dequeue(): Promise<any | null> {
+  async dequeue(): Promise<T | null> {
     const message = await this.redisClient.blPop(this.queueName, 0);
     return message ? JSON.parse(message['element']) : null;
   }

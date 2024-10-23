@@ -1,25 +1,46 @@
+import { DatabaseEngine, ModelDbDeployTx } from "@zkdb/storage";
 import { RedisQueueService } from "./message-queue";
-import { ZkCompileService } from "./zk-compile";
+import { ZkCompileService } from "@service";
+import { logger } from "@helper";
+export type DbDeployQueue = {
+  payerAddress: string;
+  merkleHeight: number;
+  databaseName: string;
+};
 
 (async () => {
+  // Init zkAppCompiler
   const zkAppCompiler = new ZkCompileService({
     networkId: "testnet",
     mina: "https://api.minascan.io/node/devnet/v1/graphql",
   });
+  // Init redis queue service
+  const redisQueue = new RedisQueueService<DbDeployQueue>(
+    "zkAppDeploymentQueue"
+  );
+  // Connect to db
+  const dbEngine = DatabaseEngine.getInstance(
+    "mongodb://localhost:27017/zk?directConnection=true"
+  );
 
-  const redisQueue = new RedisQueueService("zkAppDeploymentQueue");
+  if (!dbEngine.isConnected()) {
+    await dbEngine.connect();
+  }
 
   while (true) {
     const request = await redisQueue.dequeue();
-    console.log("🚀 ~ request:", request);
     if (request) {
+      logger.info(`Received ${request.databaseName} to queue`);
       try {
         const response = await zkAppCompiler.compileAndCreateUnsignTx(request);
-        // Send the unsigned transaction back to the user (implementation depends on your communication method)
-        // Send to user or storing to db
-        console.log("response", response);
+        await ModelDbDeployTx.getInstance().create({
+          merkleHeight: response.merkleHeight,
+          appPublicKey: response.zkAppAddress,
+          tx: JSON.stringify(response.tx),
+        });
+        logger.info(`Compile successfully: ${response.zkAppAddress}`);
       } catch (error) {
-        console.error("Error processing deployment request:", error);
+        logger.error("Error processing deployment request: ", error);
       }
     }
   }

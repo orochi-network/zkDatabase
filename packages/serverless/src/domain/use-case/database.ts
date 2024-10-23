@@ -44,6 +44,7 @@ export async function createDatabase(
     JSON.stringify({
       payerAddress: appPublicKey,
       merkleHeight,
+      databaseName,
     })
   );
   return true;
