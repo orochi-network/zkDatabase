@@ -30,7 +30,7 @@ export class ZkCompileService {
     unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
     const end = performance.now();
     logger.info(
-      `Compile and deploy ${zkDbPublicKey} take ${(end - start) / 1000}s`
+      `Compile and deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
     return {

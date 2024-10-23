@@ -1,4 +1,9 @@
-import { Filter, InsertOneOptions, InsertOneResult } from 'mongodb';
+import {
+  Filter,
+  FindOptions,
+  InsertOneOptions,
+  InsertOneResult,
+} from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import ModelBasic from '../base/basic.js';
 
@@ -6,7 +11,7 @@ export type DbDeploy = {
   databaseName: string;
   merkleHeight: number;
   appPublicKey: string;
-  databaseOwner: string;
+  tx: string;
 };
 
 export class ModelDbDeployTx extends ModelBasic<DbDeploy> {
@@ -38,6 +43,22 @@ export class ModelDbDeployTx extends ModelBasic<DbDeploy> {
     }
   }
 
+  public async getTx(
+    databaseName: string,
+    options?: FindOptions
+  ): Promise<DbDeploy | null> {
+    try {
+      const tx = await this.collection.findOne({ databaseName }, options);
+      return tx;
+    } catch (error) {
+      throw new Error(`Failed to get deploy transaction: ${error}`);
+    }
+  }
+
+  public async remove(databaseName: string) {
+    const res = await this.collection.deleteOne({ databaseName });
+    return res.deletedCount === 1;
+  }
   public async count(filter?: Filter<DbDeploy>) {
     return await this.collection.countDocuments(filter);
   }

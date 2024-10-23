@@ -11,7 +11,7 @@ import ModelBasic from '../base/basic.js';
 export type DbSetting = {
   databaseName: string;
   merkleHeight: number;
-  appPublicKey: string;
+  appPublicKey?: string;
   databaseOwner: string;
 };
 

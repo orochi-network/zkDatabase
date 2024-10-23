@@ -36,7 +36,8 @@ export type DbDeployQueue = {
         await ModelDbDeployTx.getInstance().create({
           merkleHeight: response.merkleHeight,
           appPublicKey: response.zkAppAddress,
-          tx: JSON.stringify(response.tx),
+          tx: response.tx,
+          databaseName: request.databaseName,
         });
         logger.info(`Compile successfully: ${response.zkAppAddress}`);
       } catch (error) {
