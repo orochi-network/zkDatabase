@@ -11,7 +11,8 @@
   "scripts": {
     "dev": "tsx ./src/index.ts",
     "start": "node ./build/src/index.js",
-    "build": "rm -rf ./build && rollup -c"
+    "build": "rm -rf ./build && rollup -c",
+    "start:prod": "yarn build && yarn start"
   },
   "peerDependencies": {
     "o1js": "1.9.*"
