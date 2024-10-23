@@ -33,7 +33,27 @@ async function createIndex(
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
-    // TODO: Should we check if index fields exist for a collection
+    const schema = await getSchemaDefinition(
+      databaseName,
+      collectionName,
+      actor,
+      true
+    );
+
+    // Collect all invalid index names
+    const invalidIndexes = indexes
+      .map(({ name }) => name)
+      .filter(
+        (name) => !schema.some(({ name: fieldName }) => fieldName === name)
+      );
+
+    if (invalidIndexes.length > 0) {
+      const invalidList = invalidIndexes.join(', ');
+      throw new Error(
+        `Invalid index fields: ${invalidList}. These fields are not part of the '${collectionName}' collection schema. Please ensure all index fields exist in the schema and are spelled correctly.`
+      );
+    }
+
     return ModelCollection.getInstance(databaseName, collectionName).index(
       indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
     );
@@ -195,6 +215,7 @@ async function listIndexes(
     `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
   );
 }
+
 export async function listIndexesInfo(
   databaseName: string,
   collectionName: string,
