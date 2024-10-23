@@ -6,7 +6,6 @@ scalar Date
 input SchemaFieldInput {
   name: String!
   kind: String!
-  indexed: Boolean
 }
 
 type SchemaFieldOutput {
