@@ -6,7 +6,9 @@ import { databaseName, pagination, publicKey, userName } from './common.js';
 import {
   changeDatabaseOwner,
   createDatabase,
+  deployDatabase,
   getDatabases,
+  updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
 import { Pagination } from '../types/pagination.js';
 
@@ -14,6 +16,10 @@ export type TDatabaseRequest = {
   databaseName: string;
 };
 
+export type TDatabaseUpdateDeployedRequest = {
+  databaseName: string;
+  appPublicKey: string;
+};
 export type TDatabaseSearchRequest = {
   query: { [key: string]: string };
   pagination: Pagination;
@@ -37,6 +43,16 @@ const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   merkleHeight: Joi.number().integer().positive().min(8).max(128).required(),
   publicKey,
 });
+
+const DatabaseUpdateDeployedRequest =
+  Joi.object<TDatabaseUpdateDeployedRequest>({
+    databaseName,
+    appPublicKey: Joi.string()
+      .trim()
+      .length(55)
+      .required()
+      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
+  });
 
 const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
   databaseName,
@@ -62,10 +78,18 @@ type Collection {
   name: String!
 }
 
+type DbDeploy {
+  databaseName: String!
+  merkleHeight: Int!
+  appPublicKey: String!
+  tx: String!
+}
+
 type DbDescription {
   databaseName: String!,
   databaseSize: String!,
   databaseOwner: String!,
+  appPublicKey: String,
   merkleHeight: Int!,
   collections: [CollectionDescriptionOutput]!
 }
@@ -86,6 +110,8 @@ extend type Query {
 extend type Mutation {
   dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
+  dbDeploy(databaseName: String!): DbDeploy!
+  dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
 `;
@@ -145,6 +171,20 @@ const dbSetting = publicWrapper(
   }
 );
 // Mutation
+const dbDeploy = authorizeWrapper(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root: unknown, args: TDatabaseRequest, _) =>
+    deployDatabase(args.databaseName)
+);
+
+const dbDeployedUpdate = authorizeWrapper(
+  DatabaseUpdateDeployedRequest,
+  async (_root: unknown, args: TDatabaseUpdateDeployedRequest, _) =>
+    updateDeployedDatabase(args.databaseName, args.appPublicKey)
+);
+
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
@@ -172,6 +212,8 @@ type TDatabaseResolver = {
   Mutation: {
     dbCreate: typeof dbCreate;
     dbChangeOwner: typeof dbChangeOwner;
+    dbDeploy: typeof dbDeploy;
+    dbDeployedUpdate: typeof dbDeployedUpdate;
   };
 };
 
@@ -183,7 +225,9 @@ export const resolversDatabase: TDatabaseResolver = {
     dbSetting,
   },
   Mutation: {
+    dbDeploy,
     dbCreate,
     dbChangeOwner,
+    dbDeployedUpdate,
   },
 };

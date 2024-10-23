@@ -7,6 +7,8 @@ import { ModelDatabase, DocumentMetaIndex } from './general/database.js';
 import { ModelCollection } from './general/collection.js';
 import { ModelMerkleTree, TMerkleProof } from './common/merkle-tree.js';
 import { ModelDbSetting, DbSetting } from './common/setting.js';
+import { ModelDbDeployTx } from './common/deploy-transaction.js';
+
 import { ModelSequencer, SequencedItem } from './common/sequencer.js';
 import withTransaction from './transaction/transaction-manager.js';
 
@@ -22,6 +24,7 @@ export {
   ModelMerkleTree,
   TMerkleProof,
   ModelDbSetting,
+  ModelDbDeployTx,
   DbSetting,
   TaskEntity,
   ModelSequencer,
