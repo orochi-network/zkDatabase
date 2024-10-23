@@ -103,7 +103,6 @@ export async function getDatabases(
     skip: pagination?.offset,
     limit: pagination?.limit,
   });
-  console.log('🚀 ~ settings:', settings);
 
   if (!settings?.length) {
     // When user don't have any DB
