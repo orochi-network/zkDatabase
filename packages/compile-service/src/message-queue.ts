@@ -1,9 +1,18 @@
-import * as redis from "redis";
+import {
+  type RedisClientOptions,
+  RedisFunctions,
+  RedisModules,
+  RedisScripts,
+  createClient,
+} from "redis";
 
 export class RedisQueueService<T> {
-  private redisClient: redis.RedisClientType;
-  constructor(private readonly queueName: string) {
-    this.redisClient = redis.createClient();
+  private redisClient: ReturnType<typeof createClient>;
+  constructor(
+    private readonly queueName: string,
+    options?: RedisClientOptions<RedisModules, RedisFunctions, RedisScripts>
+  ) {
+    this.redisClient = createClient(options);
     this.redisClient.on("error", (err) =>
       console.log("Redis Client Error:", err)
     );
