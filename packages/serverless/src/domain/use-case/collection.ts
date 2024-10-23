@@ -184,7 +184,9 @@ async function listCollections(
           readCollectionInfo(databaseName, collectionName, actor, false)
       )
     )
-  ).map(({ result }) => result);
+  )
+    .map(({ result }) => result)
+    .filter(Boolean);
 }
 
 async function listIndexes(
