@@ -23,6 +23,7 @@
     { "path": "./packages/proof-service" },
     { "path": "./packages/api" },
     { "path": "./packages/zkdb" },
+    { "path": "./packages/compile-service"},
     { "path": "./packages/serverless" },
     { "path": "./packages/broker-service" },
     { "path": "./packages/ftp" },
