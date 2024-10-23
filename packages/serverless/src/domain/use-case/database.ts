@@ -2,6 +2,7 @@ import {
   DatabaseEngine,
   DbSetting,
   ModelDatabase,
+  ModelDbDeployTx,
   ModelDbSetting,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
@@ -15,13 +16,14 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
+import { redisQueue } from '../../helper/mq.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
   actor: string,
-  appPublicKey: string
+  userPublicKey: string
 ) {
   // Case database already exist
   if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
@@ -35,10 +37,40 @@ export async function createDatabase(
   await ModelDbSetting.getInstance().createSetting({
     databaseName,
     merkleHeight,
-    appPublicKey,
     databaseOwner: actor,
   });
+
+  await redisQueue.enqueue(
+    JSON.stringify({
+      payerAddress: userPublicKey,
+      merkleHeight,
+      databaseName,
+    })
+  );
   return true;
+}
+export async function updateDeployedDatabase(
+  databaseName: string,
+  appPublicKey: string
+) {
+  try {
+    // Add appPublicKey for database that deployed
+    await ModelDbSetting.getInstance().updateSetting(databaseName, {
+      appPublicKey,
+    });
+    // Remove data from deploy transaction
+    await ModelDbDeployTx.getInstance().remove(databaseName);
+    return true;
+  } catch (err) {
+    throw new Error(`Cannot update deployed database ${err}`);
+  }
+}
+export async function deployDatabase(databaseName: string) {
+  const res = await ModelDbDeployTx.getInstance().getTx(databaseName);
+  if (!res) {
+    throw new Error('Cannot find transaction');
+  }
+  return res;
 }
 
 export async function getDatabases(
@@ -71,6 +103,7 @@ export async function getDatabases(
     skip: pagination?.offset,
     limit: pagination?.limit,
   });
+  console.log('🚀 ~ settings:', settings);
 
   if (!settings?.length) {
     // When user don't have any DB
@@ -86,7 +119,8 @@ export async function getDatabases(
   const databases: Database[] = (
     await Fill(
       settings.map((setting: DbSetting) => async () => {
-        const { databaseName, merkleHeight, databaseOwner } = setting;
+        const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
+          setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
@@ -110,6 +144,7 @@ export async function getDatabases(
           merkleHeight,
           databaseSize,
           collections,
+          appPublicKey,
         } as Database;
       })
     )
