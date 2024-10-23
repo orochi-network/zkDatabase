@@ -1,9 +1,19 @@
-import * as redis from 'redis';
+import {
+  type RedisClientOptions,
+  RedisFunctions,
+  RedisModules,
+  RedisScripts,
+  createClient,
+} from 'redis';
+import config from './config';
 
-export class RedisQueueService<T = any> {
-  private redisClient: redis.RedisClientType;
-  constructor(private readonly queueName: string) {
-    this.redisClient = redis.createClient();
+export class RedisQueueService<T> {
+  private redisClient: ReturnType<typeof createClient>;
+  constructor(
+    private readonly queueName: string,
+    options?: RedisClientOptions<RedisModules, RedisFunctions, RedisScripts>
+  ) {
+    this.redisClient = createClient(options);
     this.redisClient.on('error', (err) =>
       console.log('Redis Client Error:', err)
     );
@@ -15,8 +25,10 @@ export class RedisQueueService<T = any> {
 
   async dequeue(): Promise<T | null> {
     const message = await this.redisClient.blPop(this.queueName, 0);
-    return message ? JSON.parse(message['element']) : null;
+    return message ? JSON.parse(JSON.parse(message?.element || '{}')) : null;
   }
 }
 
-export const redisQueue = new RedisQueueService('zkAppDeploymentQueue');
+export const redisQueue = new RedisQueueService('zkAppDeploymentQueue', {
+  url: config.REDIS_URL,
+});

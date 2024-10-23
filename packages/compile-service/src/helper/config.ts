@@ -13,6 +13,7 @@ type TApplicationConfig = {
   NETWORK_ID: "mainnet" | "testnet";
   MINA_URL: string;
   LOG_LEVEL: TLogLevel;
+  REDIS_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(

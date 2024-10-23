@@ -17,7 +17,8 @@ export type DbDeployQueue = {
   });
   // Init redis queue service
   const redisQueue = new RedisQueueService<DbDeployQueue>(
-    "zkAppDeploymentQueue"
+    "zkAppDeploymentQueue",
+    { url: config.REDIS_URL }
   );
   // Connect to db
   const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
