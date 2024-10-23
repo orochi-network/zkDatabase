@@ -1,3 +1,7 @@
 import { LoggerLoader } from "@orochi-network/framework";
-
-export const logger = new LoggerLoader("zkDatabase", "debug", "string");
+import { config } from "./config";
+export const logger = new LoggerLoader(
+  "zkDatabase",
+  config.LOG_LEVEL,
+  "string"
+);

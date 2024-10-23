@@ -2,6 +2,7 @@ import { DatabaseEngine, ModelDbDeployTx } from "@zkdb/storage";
 import { RedisQueueService } from "./message-queue";
 import { ZkCompileService } from "@service";
 import { logger } from "@helper";
+import { config } from "./helper/config";
 export type DbDeployQueue = {
   payerAddress: string;
   merkleHeight: number;
@@ -11,17 +12,15 @@ export type DbDeployQueue = {
 (async () => {
   // Init zkAppCompiler
   const zkAppCompiler = new ZkCompileService({
-    networkId: "testnet",
-    mina: "https://api.minascan.io/node/devnet/v1/graphql",
+    networkId: config.NETWORK_ID,
+    mina: config.MINA_URL,
   });
   // Init redis queue service
   const redisQueue = new RedisQueueService<DbDeployQueue>(
     "zkAppDeploymentQueue"
   );
   // Connect to db
-  const dbEngine = DatabaseEngine.getInstance(
-    "mongodb://localhost:27017/zk?directConnection=true"
-  );
+  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
 
   if (!dbEngine.isConnected()) {
     await dbEngine.connect();
