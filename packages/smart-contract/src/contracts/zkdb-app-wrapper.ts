@@ -33,6 +33,8 @@ export class ZKDatabaseSmartContractWrapper {
 
   async compile() {
     if (!this.verificationKey) {
+      console.log('compiling');
+      const start = performance.now();
       try {
         const [rollUpCache, smartContractCache] = await Promise.all([
           CacheManager.provideCache('rollup-zkprogram', this.merkleHeight),
@@ -43,6 +45,9 @@ export class ZKDatabaseSmartContractWrapper {
         this.verificationKey = (
           await this._smartContract.compile({ cache: smartContractCache })
         ).verificationKey;
+
+        const end = performance.now();
+        console.log(`Execution time: ${end - start} milliseconds`);
       } catch (error) {
         console.error('Compilation error:', error);
         throw error;
@@ -66,7 +71,11 @@ export class ZKDatabaseSmartContractWrapper {
       }
     );
 
+    console.log('proving');
+    const start = performance.now();
     await tx.prove();
+    const end = performance.now();
+    console.log(`Execution time: ${end - start} milliseconds`);
     return tx;
   }
 
@@ -87,7 +96,11 @@ export class ZKDatabaseSmartContractWrapper {
         await zkApp.rollUp(proof);
       }
     );
+    const start = performance.now();
     await tx.prove();
+    const end = performance.now();
+    console.log(`Execution time: ${end - start} milliseconds`);
+
     return tx;
   }
 

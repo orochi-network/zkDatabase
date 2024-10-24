@@ -57,6 +57,9 @@
     "node": ">=18.14.0"
   },
   "dependencies": {
-    "basic-ftp": "^5.0.5"
+    "basic-ftp": "^5.0.5",
+    "@apollo/client": "^3.10.6",
+    "@types/node": "^22.6.1",
+    "graphql": "^16.9.0"
   }
 }
