@@ -1,8 +1,7 @@
 import { DatabaseEngine, ModelDbDeployTx } from "@zkdb/storage";
 import { RedisQueueService } from "./message-queue";
 import { ZkCompileService } from "@service";
-import { logger } from "@helper";
-import { config } from "./helper/config";
+import { logger, config } from "@helper";
 export type DbDeployQueue = {
   payerAddress: string;
   merkleHeight: number;

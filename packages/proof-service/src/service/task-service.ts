@@ -52,6 +52,7 @@ class TaskService {
     }
 
     logger.info('Max retries reached, stopping task fetching.');
+    process.exit(128);
   }
 }
 

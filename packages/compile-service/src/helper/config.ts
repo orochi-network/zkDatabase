@@ -21,7 +21,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     raw.NETWORK_ID = raw.NODE_ENV === "production" ? "mainnet" : "testnet";
     raw.MINA_URL =
       raw.NODE_ENV === "production"
-        ? "https://api.minascan.io/node/mainnet/v1/graphq"
+        ? "https://api.minascan.io/node/mainnet/v1/graphql"
         : "https://api.minascan.io/node/devnet/v1/graphql";
     return raw;
   },
