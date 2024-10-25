@@ -6,7 +6,6 @@ import {
 } from "./common";
 import { TPermissions, TSchema } from "./types";
 import { Collection } from "./types/collection";
-import { TCollectionIndex } from "./types/collection-index";
 
 const COLLECTION_CREATE = gql`
   mutation CollectionCreate(
@@ -14,7 +13,7 @@ const COLLECTION_CREATE = gql`
     $collectionName: String!
     $groupName: String!
     $schema: [SchemaFieldInput!]!
-    $indexes: [IndexInput]
+    $indexes: [String]
     $permissions: PermissionDetailInput
   ) {
     collectionCreate(
@@ -92,7 +91,7 @@ export type TCollectionExistResponse = { collectionExist: boolean };
 export type TCollectionCreateRequest = TCollectionExistRequest & {
   groupName: string;
   schema: TSchema;
-  indexes: TCollectionIndex[];
+  indexes: string[];
   permissions: TPermissions;
 };
 

@@ -5,7 +5,6 @@ import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
-import { IndexField } from '../../types/collection-index';
 
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
@@ -36,7 +35,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     collectionName: string,
     groupName: string,
     type: T,
-    indexes: IndexField[],
+    indexes: string[],
     permissions: Permissions
   ): Promise<boolean> {
     const result = await this.apiClient.collection.create({
@@ -44,10 +43,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
       collectionName: collectionName,
       groupName,
       schema: type.getSchema(),
-      indexes: indexes.map(({ name, sorting }) => ({
-        name,
-        sorting: sorting === 'asc' ? 'ASC' : 'DESC',
-      })),
+      indexes,
       permissions,
     });
 
