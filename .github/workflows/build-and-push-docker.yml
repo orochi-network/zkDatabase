@@ -48,6 +48,7 @@ jobs:
               "packages/broker-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 2" ;;
               "packages/proof-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 3" ;;
               "packages/ftp") FILTERED_PACKAGES="$FILTERED_PACKAGES 4" ;;
+              "packages/compile-service ") FILTERED_PACKAGES="$FILTERED_PACKAGES 5" ;;
             esac
           done
 
@@ -63,9 +64,9 @@ jobs:
       changed_services: ${{ steps.build.outputs.changed_services }}
     env:
       version: ${{ github.sha }}
-      SERVICES: "serverless broker proof ftp"
-      SERVICES_BUILD:  "serverless broker-service proof-service ftp"
-      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-proof-service orochinetwork/zkdb-ftp"
+      SERVICES: "serverless broker proof ftp compile"
+      SERVICES_BUILD:  "serverless broker-service proof-service ftp compile-service"
+      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-proof-service orochinetwork/zkdb-ftp orochinetwork/zkdb-compile-service"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -129,7 +130,7 @@ jobs:
 
           cd test-argo-cd
           git checkout ${{ env.gitopsbranch }}
-          CHANGED_SERVICES_ARRAY=("serverless" "broker" "proof" "ftp")
+          CHANGED_SERVICES_ARRAY=("serverless" "broker" "proof" "ftp" "compile")
           CHANGED_SERVICES=$(IFS=,; echo "${CHANGED_SERVICES_ARRAY[*]}")
           echo "Changed services: $CHANGED_SERVICES"
           for SERVICE in "${CHANGED_SERVICES_ARRAY[@]}"; do
