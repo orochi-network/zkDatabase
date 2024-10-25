@@ -68,6 +68,7 @@ export async function updateDeployedDatabase(
 export async function deployDatabase(databaseName: string) {
   const res = await ModelDbDeployTx.getInstance().getTx(databaseName);
   if (!res) {
+    // TODO: we will mark as a status here to show the re-deploy
     throw new Error('Cannot find transaction');
   }
   return res;

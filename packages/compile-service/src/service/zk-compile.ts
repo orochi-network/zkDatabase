@@ -1,5 +1,5 @@
 import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
-import { Mina, PrivateKey, PublicKey } from "o1js";
+import { Mina, PrivateKey, PublicKey, UInt64 } from "o1js";
 import { DbDeployQueue } from "..";
 import { logger } from "@helper";
 
@@ -11,8 +11,14 @@ export class ZkCompileService {
     // Set active network
     const network = Mina.Network(this.network);
     Mina.setActiveInstance(network);
+    // Checking the payer balance
+    const payerAccount = network.getAccount(
+      PublicKey.fromBase58(req.payerAddress)
+    );
+    if (payerAccount.balance.lessThan(UInt64.from(1.1))) {
+      throw new Error("Insufficient funds, need at least 1.1 Mina to deploy");
+    }
     // Create keypair for zkApp contract
-
     const zkDbPrivateKey = PrivateKey.random();
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
     // Init zk wrapper
