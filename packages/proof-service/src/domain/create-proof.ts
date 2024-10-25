@@ -11,7 +11,14 @@ import {
   withTransaction,
 } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
-import { fetchAccount, Field, MerkleWitness, PublicKey, ZkProgram } from 'o1js';
+import {
+  fetchAccount,
+  Field,
+  MerkleTree,
+  MerkleWitness,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import logger from '../helper/logger.js';
 
@@ -36,23 +43,10 @@ export async function createProof(taskId: string) {
     const { merkleHeight, appPublicKey } =
       (await modelDbSetting.getSetting(task.database)) || {};
 
-    if (!merkleHeight || !appPublicKey) {
-      throw new Error('Setting is wrong, unable to deconstruct settings');
-    }
-
-    const publicKey = PublicKey.fromBase58(appPublicKey);
-
-    const res = await fetchAccount({ publicKey });
-    const accountExists = res.error == null;
-
-    if (!accountExists) {
-      throw Error(
-        `Unable to generate proof because the smart contract ${appPublicKey} for the database does not exist`
-      );
-    }
-
     if (!merkleHeight) {
-      throw new Error('Merkle Tree height is null');
+      throw new Error(
+        `Something wrong, merkle height for ${task.database} database has not been found`
+      );
     }
 
     const merkleTree = await ModelMerkleTree.load(task.database);
@@ -84,11 +78,25 @@ export async function createProof(taskId: string) {
       new Date(task.createdAt.getTime() - 1)
     );
 
-    class ZkDbApp extends getZkDbSmartContractClass(merkleHeight, circuit) {}
-    const zkDbApp = new ZkDbApp(publicKey);
+    // Default values
+    let onChainRootState = new MerkleTree(merkleHeight).getRoot();
+    let prevOnChainRootState = Field(0);
 
-    const onChainRootState = zkDbApp.currentState.get();
-    const prevOnChainRootState = zkDbApp.prevState.get();
+    if (appPublicKey) {
+      const publicKey = PublicKey.fromBase58(appPublicKey);
+      const res = await fetchAccount({ publicKey });
+      const accountExists = res.error == null;
+      if (accountExists) {
+        class ZkDbApp extends getZkDbSmartContractClass(
+          merkleHeight,
+          circuit
+        ) {}
+        const zkDbApp = new ZkDbApp(publicKey);
+
+        prevOnChainRootState = zkDbApp.prevState.get();
+        prevOnChainRootState = zkDbApp.prevState.get();
+      }
+    }
 
     if (proof) {
       const prevProofOutput = proof.publicOutput as ProofStateOutput;
@@ -138,21 +146,6 @@ export async function createProof(taskId: string) {
         Field(task.hash)
       );
     }
-
-    // Use proofState here
-
-    // const allActions = await zkDbApp.reducer.fetchActions({
-    //   fromActionState: onChainActionState,
-    // });
-
-    // if (isEmptyArray(allActions) || isEmptyArray(allActions[0])) {
-    //   throw new Error('Unformatted action data');
-    // }
-
-    // const [[action]] = allActions;
-
-    // assert(Field(task.hash).equals(action.hash));
-    // assert(UInt64.from(task.merkleIndex).equals(action.index));
 
     // TODO: Should we consider both on-chain action and off-chain leaf. Off-chain leaf = On-chain action
 
