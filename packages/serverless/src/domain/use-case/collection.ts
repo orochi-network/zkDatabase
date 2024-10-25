@@ -2,10 +2,7 @@ import { Fill } from '@orochi-network/queue';
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
-import {
-  CollectionIndex,
-  CollectionIndexInfo,
-} from '../types/collection-index.js';
+import { CollectionIndex } from '../types/collection-index.js';
 import { Collection } from '../types/collection.js';
 import { Permissions } from '../types/permission.js';
 import { DocumentSchemaInput } from '../types/schema.js';
@@ -14,48 +11,19 @@ import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
-import { Sorting } from '../types/sorting.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { isDatabaseOwner } from './database.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { PermissionBinary } from '../../common/permission.js';
-
-function mapSorting(sorting: Sorting): 1 | -1 {
-  return sorting === 'ASC' ? 1 : -1;
-}
 
 async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  indexes: CollectionIndex[]
+  indexNames: string[]
 ): Promise<boolean> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
-    const schema = await getSchemaDefinition(
-      databaseName,
-      collectionName,
-      actor,
-      true
-    );
-
-    // Collect all invalid index names
-    const invalidIndexes = indexes
-      .map(({ name }) => name)
-      .filter(
-        (name) => !schema.some(({ name: fieldName }) => fieldName === name)
-      );
-
-    if (invalidIndexes.length > 0) {
-      const invalidList = invalidIndexes.join(', ');
-      throw new Error(
-        `Invalid index fields: ${invalidList}. These fields are not part of the '${collectionName}' collection schema. Please ensure all index fields exist in the schema and are spelled correctly.`
-      );
-    }
-
+    // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(databaseName, collectionName).index(
-      indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
+      indexNames || []
     );
   }
 
@@ -103,85 +71,37 @@ async function createCollection(
 
 async function readCollectionInfo(
   databaseName: string,
-  collectionName: string,
-  actor: string,
-  skipPermissionCheck: boolean = false
+  collectionName: string
 ): Promise<Collection> {
-  if (
-    skipPermissionCheck ||
-    (await hasCollectionPermission(databaseName, collectionName, actor, 'read'))
-  ) {
-    const modelCollection = ModelCollection.getInstance(
-      databaseName,
-      collectionName
-    );
-    const indexes = await modelCollection.listIndexes();
-    const sizeOnDisk = await modelCollection.size();
-
-    const schema = await getSchemaDefinition(
-      databaseName,
-      collectionName,
-      actor,
-      true
-    );
-
-    const ownership = await readMetadata(
-      databaseName,
-      collectionName,
-      null,
-      actor
-    );
-
-    await ModelCollection.getInstance(databaseName, collectionName).size();
-
-    return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
-  }
-
-  throw new Error(
-    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  const modelCollection = ModelCollection.getInstance(
+    databaseName,
+    collectionName
   );
+  const indexes = await modelCollection.listIndexes();
+  const sizeOnDisk = await modelCollection.size();
+
+  const schema = await getSchemaDefinition(databaseName, collectionName);
+  const ownership = await readMetadata(
+    databaseName,
+    collectionName,
+    null,
+    ZKDATABASE_USER_NOBODY
+  );
+
+  await ModelCollection.getInstance(databaseName, collectionName).size();
+
+  return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
 }
 
-async function listCollections(
-  databaseName: string,
-  actor: string
-): Promise<Collection[]> {
-  let availableCollections: string[] = [];
-
-  if (await isDatabaseOwner(databaseName, actor)) {
-    availableCollections =
-      await ModelDatabase.getInstance(databaseName).listCollections();
-  } else {
-    const collectionsMetadata = await (
-      await ModelCollectionMetadata.getInstance(databaseName).find()
-    ).toArray();
-
-    const modelUserGroup = new ModelUserGroup(databaseName);
-
-    const actorGroups = await modelUserGroup.listGroupByUserName(actor);
-
-    for (const metadata of collectionsMetadata) {
-      if (
-        (metadata.owner === actor &&
-          PermissionBinary.fromBinaryPermission(metadata.permissionOwner)[
-            'read'
-          ]) ||
-        (actorGroups.includes(metadata.group) &&
-          PermissionBinary.fromBinaryPermission(metadata.permissionGroup)[
-            'read'
-          ]) ||
-        PermissionBinary.fromBinary(metadata.permissionOther)['read']
-      ) {
-        availableCollections.push(metadata.collection);
-      }
-    }
-  }
+async function listCollections(databaseName: string): Promise<Collection[]> {
+  const collectionNames =
+    await ModelDatabase.getInstance(databaseName).listCollections();
 
   return (
     await Fill(
-      availableCollections.map(
+      collectionNames.map(
         (collectionName) => async () =>
-          readCollectionInfo(databaseName, collectionName, actor, true)
+          readCollectionInfo(databaseName, collectionName)
       )
     )
   )
@@ -193,18 +113,16 @@ async function listIndexes(
   databaseName: string,
   actor: string,
   collectionName: string,
-  skipPermissionCheck: boolean = false,
   session?: ClientSession
 ): Promise<string[]> {
   if (
-    skipPermissionCheck ||
-    (await hasCollectionPermission(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
       'read',
       session
-    ))
+    )
   ) {
     // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(
@@ -217,12 +135,11 @@ async function listIndexes(
     `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
   );
 }
-
 export async function listIndexesInfo(
   databaseName: string,
   collectionName: string,
   actor: string
-): Promise<CollectionIndexInfo[]> {
+): Promise<CollectionIndex[]> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'read')
   ) {
@@ -252,7 +169,7 @@ export async function listIndexesInfo(
         indexDef.name !== undefined
     );
 
-    const indexList: CollectionIndexInfo[] = validIndexes.map((indexDef) => {
+    const indexList: CollectionIndex[] = validIndexes.map((indexDef) => {
       const { name, key } = indexDef;
       const size = indexSizes[name] || 0;
       const usageStats = indexUsageMap[name] || {};

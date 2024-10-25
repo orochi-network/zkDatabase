@@ -11,6 +11,7 @@
   ],
   "type": "module",
   "main": "build/src/index.js",
+  
   "types": "build/src/index.d.ts",
   "scripts": {
     "build": "rm -rf ./build && rollup -c",

@@ -41,20 +41,14 @@ async function run() {
     .fromGlobal()
     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
-  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
+  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, "")
   await zkdb
     .database(DB_NAME)
-    .createCollection(
-      COLLECTION_NAME,
-      GROUP_NAME,
-      TShirt,
-      [{ name: 'name', sorting: 'desc' }],
-      {
-        permissionOwner: AccessPermissions.fullAdminPermissions,
-        permissionGroup: AccessPermissions.fullAccessPermissions,
-        permissionOther: AccessPermissions.noPermissions,
-      }
-    );
+    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt,[],{
+      permissionOwner: AccessPermissions.fullAdminPermissions,
+      permissionGroup: AccessPermissions.fullAccessPermissions,
+      permissionOther: AccessPermissions.noPermissions,
+    });
 
   let indexes = await zkdb
     .database(DB_NAME)
@@ -62,10 +56,7 @@ async function run() {
     .listIndexes();
   console.log(indexes);
 
-  await zkdb
-    .database(DB_NAME)
-    .from(COLLECTION_NAME)
-    .createIndexes([{ name: 'price', sorting: 'asc' }]);
+  await zkdb.database(DB_NAME).from(COLLECTION_NAME).createIndexes(['name']);
 
   indexes = await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes();
   console.log(indexes);
