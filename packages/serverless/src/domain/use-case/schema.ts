@@ -10,6 +10,8 @@ import {
 } from '../common/schema.js';
 import { DocumentFields } from '../types/document.js';
 import { DocumentSchema } from '../types/schema.js';
+import { listIndexes } from './collection.js';
+import { hasCollectionPermission } from './permission.js';
 
 const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
 
@@ -135,7 +137,6 @@ export async function buildSchema(
 
   const encodedDocument: SchemaEncoded = [];
   const structType: { [key: string]: any } = {};
-  const indexes: string[] = [];
 
   if (!schema) {
     throw new Error(`Schema not found for collection ${collectionName}`);
@@ -151,13 +152,9 @@ export async function buildSchema(
     const { name, kind, value } = documentField;
     structType[name] = ProvableTypeMap[kind as ProvableTypeString];
     encodedDocument.push({ name, kind, value });
-
-    if (schema[fieldName].indexed) {
-      indexes.push(name);
-    }
   });
 
-  const structuredSchema = Schema.create(structType, indexes);
+  const structuredSchema = Schema.create(structType);
 
   return structuredSchema.deserialize(encodedDocument);
 }
@@ -165,14 +162,41 @@ export async function buildSchema(
 export async function getSchemaDefinition(
   databaseName: string,
   collectionName: string,
+  actor: string,
+  skipPermissionCheck: boolean = false,
   session?: ClientSession
 ): Promise<DocumentSchema> {
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName, { session });
+  if (
+    skipPermissionCheck ||
+    (await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    ))
+  ) {
+    const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+    const schema = await modelSchema.getMetadata(collectionName, { session });
 
-  if (!schema) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
+    const indexes = await listIndexes(
+      databaseName,
+      actor,
+      collectionName,
+      true
+    );
+
+    if (!schema) {
+      throw new Error(`Schema not found for collection ${collectionName}`);
+    }
+
+    return schema.fields.map((f) => ({
+      ...schema[f],
+      indexed: indexes.some((index) => index === f),
+    }));
   }
 
-  return schema.fields.map((f) => schema[f]);
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
 }

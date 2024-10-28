@@ -9,7 +9,14 @@ import {
 } from '../../domain/use-case/collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, indexName, indexes } from './common.js';
+import {
+  collectionIndex,
+  collectionName,
+  databaseName,
+  indexName,
+  indexes,
+} from './common.js';
+import { TCollectionIndex } from '../types/collection-index.js';
 
 // Index request
 export type TIndexNameRequest = {
@@ -23,7 +30,7 @@ export const IndexListRequest = CollectionRequest;
 export type TIndexRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  indexes: string[];
+  indexes: TCollectionIndex[];
 };
 
 export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
@@ -37,7 +44,7 @@ export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
 export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   collectionName,
   databaseName,
-  indexes,
+  indexes: Joi.array().items(collectionIndex),
 });
 
 export type CollectionIndex = {
@@ -76,7 +83,7 @@ export const typeDefsCollectionIndex = `#graphql
     indexCreate(
       databaseName: String!
       collectionName: String!
-      indexes: [String]!
+      indexes: [IndexInput!]!
     ): Boolean
     indexDrop(
       databaseName: String!

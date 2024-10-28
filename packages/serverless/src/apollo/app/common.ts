@@ -99,3 +99,11 @@ export const search = Joi.object({
   search: Joi.optional(),
   pagination,
 });
+
+export const sortingOrder = Joi.string()
+  .valid(...['ASC', 'DESC'])
+
+export const collectionIndex = Joi.object({
+  name: indexName,
+  sorting: sortingOrder,
+});
