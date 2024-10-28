@@ -255,7 +255,7 @@ const userSignIn = publicWrapper(
       throw new Error('Invalid ECDSA challenge');
     }
 
-    const client = new Client({ network: 'mainnet' });
+    const client = new Client({ network: 'testnet' });
 
     if (args.proof.data !== context.req.session.ecdsaChallenge) {
       throw new Error('Invalid challenge message');

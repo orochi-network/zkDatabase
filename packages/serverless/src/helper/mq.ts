@@ -9,10 +9,12 @@ import config from './config';
 
 export class RedisQueueService<T> {
   private redisClient: ReturnType<typeof createClient>;
+  private uniqueList: string;
   constructor(
     private readonly queueName: string,
     options?: RedisClientOptions<RedisModules, RedisFunctions, RedisScripts>
   ) {
+    this.uniqueList = queueName + '_uniqueness';
     this.redisClient = createClient(options);
     this.redisClient.on('error', (err) =>
       console.log('Redis Client Error:', err)
@@ -20,12 +22,21 @@ export class RedisQueueService<T> {
     this.redisClient.connect();
   }
   async enqueue(data: T): Promise<void> {
-    await this.redisClient.rPush(this.queueName, JSON.stringify(data));
+    const payload = JSON.stringify(data);
+    const wasAdded = await this.redisClient.sAdd(this.uniqueList, payload);
+    if (wasAdded > 0) {
+      await this.redisClient.rPush(this.queueName, payload);
+    }
   }
 
   async dequeue(): Promise<T | null> {
     const message = await this.redisClient.blPop(this.queueName, 0);
-    return message ? JSON.parse(JSON.parse(message?.element || '{}')) : null;
+    if (message) {
+      const payload = JSON.parse(JSON.parse(message?.element || '{}'));
+      await this.redisClient.sRem(this.uniqueList, message.element);
+      return payload as T;
+    }
+    return null;
   }
 }
 
