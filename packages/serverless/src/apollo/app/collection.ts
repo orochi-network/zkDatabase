@@ -1,22 +1,24 @@
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
+import GraphQLJSON from 'graphql-type-json';
+import { ModelDatabase, withTransaction } from '@zkdb/storage';
+import {
+  databaseName,
+  collectionName,
+  permissionDetail,
+  groupName,
+  collectionIndex,
+} from './common.js';
+import { TDatabaseRequest } from './database.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { PermissionsData } from '../types/permission.js';
+import { SchemaData } from '../types/schema.js';
 import {
   createCollection,
   createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { PermissionsData } from '../types/permission.js';
-import { SchemaData } from '../types/schema.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  collectionName,
-  databaseName,
-  groupName,
-  permissionDetail,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
+import { TCollectionIndex } from '../types/collection-index.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -37,7 +39,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 export type TCollectionCreateRequest = TCollectionRequest & {
   groupName: string;
   schema: SchemaData;
-  indexes?: string[];
+  indexes?: TCollectionIndex[];
   permissions: PermissionsData;
 };
 
@@ -50,8 +52,8 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
+  indexes: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  indexes: Joi.array().items(Joi.string().optional()),
   permissions: permissionDetail,
 });
 
@@ -71,19 +73,19 @@ extend type Mutation {
     collectionName: String!,
     groupName: String!,
     schema: [SchemaFieldInput!]!, 
-    indexes: [String],
+    indexes: [IndexInput],
     permissions: PermissionDetailInput
   ): Boolean
 }
 `;
 
 // Query
-const collectionList = publicWrapper(
+const collectionList = authorizeWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest) =>
-    listCollections(args.databaseName)
+  async (_root: unknown, args: TDatabaseRequest, ctx) =>
+    listCollections(args.databaseName, ctx.userName)
 );
 
 const collectionExist = publicWrapper(
@@ -113,7 +115,7 @@ const collectionCreate = authorizeWrapper(
       )
     );
 
-    if (args.indexes && createCollectionResult) {
+    if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,

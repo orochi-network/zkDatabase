@@ -4,12 +4,13 @@ import {
   createQueryFunction,
   TApolloClient,
 } from "./common";
+import { TCollectionIndex } from "./types/collection-index";
 
 const COLLECTION_INDEX_CREATE = gql`
   mutation IndexCreate(
     $databaseName: String!
     $collectionName: String!
-    $indexes: [String]!
+    $indexes: [IndexInput!]!
   ) {
     indexCreate(
       databaseName: $databaseName
@@ -56,7 +57,7 @@ const COLLECTION_INDEX_LIST = gql`
 export const collectionIndex = <T>(client: TApolloClient<T>) => ({
   create: createMutateFunction<
     boolean,
-    { databaseName: string; collectionName: string; indexes: string[] },
+    { databaseName: string; collectionName: string; indexes: TCollectionIndex[] },
     { indexCreate: boolean }
   >(client, COLLECTION_INDEX_CREATE, (data) => data.indexCreate),
   delete: createMutateFunction<
