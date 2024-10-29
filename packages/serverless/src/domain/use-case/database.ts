@@ -16,8 +16,8 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
-import { readCollectionInfo } from './collection.js';
 import { isUserExist } from './user.js';
+import { listCollections, readCollectionInfo } from './collection.js';
 
 const MINA_DECIMAL = 1e9;
 
@@ -109,6 +109,7 @@ export async function deployDatabase(
 }
 
 export async function getDatabases(
+  actor: string,
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
@@ -148,8 +149,6 @@ export async function getDatabases(
     };
   }
 
-  const collectionsCache: Record<string, string[]> = {};
-
   const databases: Database[] = (
     await Fill(
       settings.map((setting: DbSetting) => async () => {
@@ -158,19 +157,7 @@ export async function getDatabases(
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-        const collectionNames =
-          collectionsCache[databaseName] ||
-          (collectionsCache[databaseName] =
-            await ModelDatabase.getInstance(databaseName).listCollections());
-
-        const promises = collectionNames.map(
-          (collectionName) => async () =>
-            readCollectionInfo(databaseName, collectionName)
-        );
-
-        const collections = (await Fill(promises))
-          .map(({ result }) => result)
-          .filter(Boolean);
+        const collections = await listCollections(databaseName, actor);
 
         return {
           databaseName,

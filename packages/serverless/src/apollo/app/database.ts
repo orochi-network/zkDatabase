@@ -134,10 +134,10 @@ const dbStats = publicWrapper(
     ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = publicWrapper(
+const dbList = authorizeWrapper(
   databaseSearch,
   async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
-    getDatabases(args.query, args.pagination)
+    getDatabases(_ctx.userName, args.query, args.pagination)
 );
 
 const dbSetting = publicWrapper(

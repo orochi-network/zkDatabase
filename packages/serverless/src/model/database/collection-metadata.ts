@@ -39,7 +39,6 @@ export type SchemaField = {
   name: string;
   kind: ProvableTypeString;
   value: any;
-  indexed: boolean;
 };
 
 export type SchemaBasic = {
@@ -51,7 +50,7 @@ export type SchemaBasic = {
 
 export type SchemaFieldDef = Omit<SchemaField, 'value'>;
 
-export type SchemaBuilder = Pick<SchemaField, 'name' | 'kind' | 'indexed'>;
+export type SchemaBuilder = Pick<SchemaField, 'name' | 'kind'>;
 
 export interface SchemaDefinition
   extends Document,

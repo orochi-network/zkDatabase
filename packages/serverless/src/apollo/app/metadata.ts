@@ -57,13 +57,6 @@ enum OwnershipGroup {
   Group
 }
 
-type SchemaField {
-  order: Int!
-  name: String!
-  kind: String!
-  indexed: Boolean
-}
-
 # If docId is not provided, it will return the permission of the collection
 extend type Query {
   permissionList(
@@ -75,7 +68,7 @@ extend type Query {
   collectionSchema(
     databaseName: String!
     collectionName: String!
-  ): [SchemaField!]
+  ): [SchemaFieldOutput!]
 }
 
 extend type Mutation {
@@ -118,15 +111,13 @@ const permissionList = authorizeWrapper(
   }
 );
 
-const collectionSchema = publicWrapper(
+const collectionSchema = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest, _) =>
-    withTransaction((session) =>
-      getSchemaDefinition(args.databaseName, args.collectionName, session)
-    )
+  async (_root: unknown, args: TCollectionRequest, ctx) =>
+    getSchemaDefinition(args.databaseName, args.collectionName, ctx.userName)
 );
 
 // Mutation
