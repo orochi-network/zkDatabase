@@ -7,7 +7,7 @@ import {
   ModelDbSetting,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { Mina, PublicKey, UInt64 } from 'o1js';
+import { fetchAccount, Mina, PublicKey, UInt64 } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
@@ -18,6 +18,8 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { readCollectionInfo } from './collection.js';
 import { isUserExist } from './user.js';
+
+const MINA_DECIMAL = 1e9;
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -82,8 +84,12 @@ export async function deployDatabase(
     });
     Mina.setActiveInstance(network);
     if (
-      Mina.getBalance(PublicKey.fromBase58(userPublicKey)).lessThan(
-        UInt64.from(1.1)
+      (
+        await fetchAccount({
+          publicKey: PublicKey.fromBase58(userPublicKey),
+        })
+      ).account?.balance.lessThanOrEqual(
+        UInt64.fromValue(BigInt(1 * MINA_DECIMAL))
       )
     ) {
       throw new Error('Your account need at least 1.1 Mina to create database');
