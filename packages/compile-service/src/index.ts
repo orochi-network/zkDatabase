@@ -1,9 +1,14 @@
 import { logger } from "@helper";
-import { ZkCompileService } from "@service";
-import { DatabaseEngine, ModelDbDeployTx } from "@zkdb/storage";
+import { ZkCompileService, UnsignedTransaction } from "@service";
+import { DatabaseEngine, ModelDbDeployTx, ModelProof } from "@zkdb/storage";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
+import { PrivateKey } from "o1js";
+
+export type TransactionType = "deploy" | "rollup";
+
 export type DbDeployQueue = {
+  transactionType: TransactionType;
   payerAddress: string;
   merkleHeight: number;
   databaseName: string;
@@ -32,14 +37,41 @@ export type DbDeployQueue = {
     if (request) {
       logger.info(`Received ${request.databaseName} to queue`);
       try {
-        const response = await zkAppCompiler.compileAndCreateUnsignTx(request);
+        let transaction: UnsignedTransaction;
+
+        if (request.transactionType === "deploy") {
+          const zkAppPrivateKey = PrivateKey.random();
+
+          transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            request.merkleHeight
+          );
+        } else {
+          const proof = await ModelProof.getInstance().getProof(
+            request.databaseName
+          );
+
+          const zkAppPrivateKey = PrivateKey.random();
+
+          if (proof) {
+            transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+              request.payerAddress,
+              zkAppPrivateKey,
+              request.merkleHeight,
+              proof
+            );
+          } else {
+            throw Error();
+          }
+        }
+
         await ModelDbDeployTx.getInstance().create({
-          merkleHeight: response.merkleHeight,
-          appPublicKey: response.zkAppAddress,
-          tx: response.tx,
+          transactionType: request.transactionType,
+          tx: JSON.stringify(transaction),
           databaseName: request.databaseName,
         });
-        logger.info(`Compile successfully: ${response.zkAppAddress}`);
+        logger.info(`Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`);
       } catch (error) {
         logger.error("Error processing deployment request: ", error);
       }

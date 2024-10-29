@@ -1,41 +1,85 @@
 import { logger } from "@helper";
 import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
-import { Mina, PrivateKey, PublicKey } from "o1js";
-import { DbDeployQueue } from "..";
+import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
+
+const MAX_MERKLE_TREE_HEIGHT = 128;
+
+export type UnsignedTransaction = JSON;
 
 export class ZkCompileService {
+  private compiledSmartContracts: Array<ZKDatabaseSmartContractWrapper>;
+
   constructor(
     private readonly network: { networkId: "testnet" | "mainnet"; mina: string }
-  ) {}
-  async compileAndCreateUnsignTx(req: DbDeployQueue) {
+  ) {
     // Set active network
-    const network = Mina.Network(this.network);
-    Mina.setActiveInstance(network);
-    // Create keypair for zkApp contract
-    const zkDbPrivateKey = PrivateKey.random();
+    Mina.setActiveInstance(Mina.Network(this.network));
+    this.compiledSmartContracts = new Array(MAX_MERKLE_TREE_HEIGHT);
+  }
+
+  private async getSmartContract(
+    merkleHeight: number
+  ): Promise<ZKDatabaseSmartContractWrapper> {
+    if (!this.compiledSmartContracts[merkleHeight - 1]) {
+      const zkWrapper = new ZKDatabaseSmartContractWrapper(merkleHeight);
+      await zkWrapper.compile();
+      this.compiledSmartContracts[merkleHeight - 1] = zkWrapper;
+    }
+
+    return this.compiledSmartContracts[merkleHeight - 1];
+  }
+
+  async compileAndCreateDeployUnsignTx(
+    payerAddress: string,
+    zkDbPrivateKey: PrivateKey,
+    merkleHeight: number
+  ): Promise<UnsignedTransaction> {
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
-    // Init zk wrapper
-    const zkWrapper = new ZKDatabaseSmartContractWrapper(
-      req.merkleHeight,
-      zkDbPublicKey
-    );
+
     const start = performance.now();
-    // Compile
-    await zkWrapper.compile();
-    // Create unsigned transaction
-    let unsignedTx = await zkWrapper.createAndProveDeployTransaction(
-      PublicKey.fromBase58(req.payerAddress)
-    );
+
+    const zkWrapper = await this.getSmartContract(merkleHeight);
+
+    let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+      sender: PublicKey.fromBase58(payerAddress),
+      zkApp: zkDbPublicKey,
+    });
+
     unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
     const end = performance.now();
     logger.info(
-      `Compile and deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
-    return {
-      tx: unsignedTx.toJSON(),
-      zkAppAddress: zkDbPublicKey.toBase58(),
-      merkleHeight: req.merkleHeight,
-    };
+    return unsignedTx.toJSON();
+  }
+
+  async compileAndCreateRollUpUnsignTx(
+    payerAddress: string,
+    zkDbPrivateKey: PrivateKey,
+    merkleHeight: number,
+    proof: JsonProof
+  ): Promise<UnsignedTransaction> {
+    const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+
+    const start = performance.now();
+
+    const zkWrapper = await this.getSmartContract(merkleHeight);
+
+    let unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
+      {
+        sender: PublicKey.fromBase58(payerAddress),
+        zkApp: zkDbPublicKey,
+      },
+      proof
+    );
+
+    unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const end = performance.now();
+    logger.info(
+      `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+    );
+
+    return unsignedTx.toJSON();
   }
 }

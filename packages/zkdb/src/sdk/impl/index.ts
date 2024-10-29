@@ -1,4 +1,3 @@
-export * from './blockchain';
 export * from './collection';
 export * from './database';
 export * from './document';

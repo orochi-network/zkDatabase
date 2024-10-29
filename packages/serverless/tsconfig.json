@@ -17,7 +17,7 @@
     "declarationMap": false,
     "preserveSymlinks": true
   },
-  "references": [{ "path": "../storage" }],
+  "references": [{ "path": "../storage"}, { "path": "../smart-contract" }],
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts", "test/**/*.test.ts"]
 }

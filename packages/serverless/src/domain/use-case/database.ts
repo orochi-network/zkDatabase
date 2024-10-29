@@ -12,8 +12,7 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
-
-const MINA_DECIMAL = 1e9;
+import ModelUser from '../../model/global/user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -47,6 +46,7 @@ export async function createDatabase(
   );
   return true;
 }
+
 export async function updateDeployedDatabase(
   databaseName: string,
   appPublicKey: string
@@ -57,49 +57,11 @@ export async function updateDeployedDatabase(
       appPublicKey,
     });
     // Remove data from deploy transaction
-    await ModelDbDeployTx.getInstance().remove(databaseName);
+    await ModelDbDeployTx.getInstance().remove(databaseName, 'deploy');
     return true;
   } catch (err) {
     throw new Error(`Cannot update deployed database ${err}`);
   }
-}
-export async function deployDatabase(
-  databaseName: string,
-  userPublicKey: string,
-  merkleHeight: string
-) {
-  const res = await ModelDbDeployTx.getInstance().getTx(databaseName);
-  if (!res) {
-    // This case we will compile manually because user create but they don't have balance
-    // Check balance of that user
-    const network = Mina.Network({
-      networkId: 'testnet',
-      mina: 'https://api.minascan.io/node/devnet/v1/graphql',
-    });
-    Mina.setActiveInstance(network);
-    if (
-      (
-        await fetchAccount({
-          publicKey: PublicKey.fromBase58(userPublicKey),
-        })
-      ).account?.balance.lessThanOrEqual(
-        UInt64.fromValue(BigInt(1 * MINA_DECIMAL))
-      )
-    ) {
-      throw new Error('Your account need at least 1.1 Mina to create database');
-    }
-    // If they have Mina, push it to a queue
-    await redisQueue.enqueue(
-      JSON.stringify({
-        key: databaseName,
-        payerAddress: userPublicKey,
-        merkleHeight,
-        databaseName,
-      })
-    );
-    throw new Error('Cannot find transaction');
-  }
-  return res;
 }
 
 export async function getDatabases(

@@ -18,6 +18,7 @@ import {
 import { typeCommonDefsCollection } from './app/types/collection.js';
 import { typeCommonDefsMetadata } from './app/types/metadata.js';
 import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
+import { resolversTransaction } from './app/transaction.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -46,7 +47,8 @@ type Resolver =
   | typeof resolversPermission
   | typeof resolversMerkleTree
   | typeof resolversProof
-  | typeof resolversDocumentHistory;
+  | typeof resolversDocumentHistory
+  | typeof resolversTransaction
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -59,4 +61,5 @@ export const ResolversApp: Resolver[] = [
   resolversMerkleTree,
   resolversProof,
   resolversDocumentHistory,
+  resolversTransaction
 ];
