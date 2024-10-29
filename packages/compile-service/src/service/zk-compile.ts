@@ -1,7 +1,7 @@
+import { logger } from "@helper";
 import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
 import { Mina, PrivateKey, PublicKey } from "o1js";
 import { DbDeployQueue } from "..";
-import { logger } from "@helper";
 
 export class ZkCompileService {
   constructor(
