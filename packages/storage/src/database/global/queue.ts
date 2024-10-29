@@ -8,6 +8,7 @@ import {
   WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
+import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 
 export type Status = 'queued' | 'proving' | 'proved' | 'failed';
@@ -29,6 +30,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
+      DB.proof,
       zkDatabaseConstants.globalCollections.queue
     );
   }

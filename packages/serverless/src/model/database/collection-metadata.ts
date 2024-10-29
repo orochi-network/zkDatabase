@@ -1,4 +1,5 @@
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
@@ -82,7 +83,7 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   }
 
   private constructor(databaseName: string) {
-    super(databaseName, ModelCollectionMetadata.collectionName);
+    super(databaseName, DB.service, ModelCollectionMetadata.collectionName);
   }
 
   public static getInstance(databaseName: string): ModelCollectionMetadata {

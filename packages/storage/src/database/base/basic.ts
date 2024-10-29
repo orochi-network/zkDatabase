@@ -1,6 +1,6 @@
 import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import { DatabaseEngine } from '../database-engine.js';
 import logger from '../../helper/logger.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 /**
  * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine
@@ -17,10 +17,11 @@ export default abstract class ModelBasic<T extends Document> {
 
   constructor(
     databaseName: string,
+    dbEngine: DatabaseEngine,
     collectionName?: string,
     collectionOptions?: CreateCollectionOptions
   ) {
-    this.dbEngine = DatabaseEngine.getInstance();
+    this.dbEngine = dbEngine;
     this.databaseName = databaseName;
     this.collectionName = collectionName;
     this.collectionOptions = collectionOptions;

@@ -12,6 +12,7 @@ type TApplicationConfig = {
   MONGODB_URL: string;
   SERVICE_HOST: string;
   SERVICE_PORT: number;
+  PROOF_MONGODB_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -36,6 +37,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     SERVICE_BIND: Joi.string()
       .pattern(/^http(|s):\/\//)
       .default("http://0.0.0.0:3000"),
+    PROOF_MONGODB_URL: Joi.string()
+      .trim()
+      .required()
+      .regex(/^mongodb([+a-z]+|):\/\//),
   }
 );
 

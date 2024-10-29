@@ -1,13 +1,14 @@
 import { ClientSession, MongoError } from 'mongodb';
-import { DatabaseEngine } from '../database-engine.js';
+import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 
 export default async function withTransaction<T>(
-  callback: (session: ClientSession) => Promise<T>
+  callback: (session: ClientSession) => Promise<T>,
+  type: 'service' | 'proof' = 'service'
 ): Promise<T | null> {
-  const session = DatabaseEngine.getInstance().client.startSession();
+  console.log('withTransaction type ', type);
+  const session = DB[type].client.startSession();
   let result: T | null = null;
-
   try {
     result = await session.withTransaction(
       async () => {

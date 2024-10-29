@@ -2,7 +2,7 @@ import { MongoClient, ServerApiVersion } from 'mongodb';
 import logger from '../helper/logger.js';
 
 export class DatabaseEngine {
-  private static instance: DatabaseEngine | null = null;
+  private static instances: Record<string, DatabaseEngine> = {};
   private mongoClient: MongoClient;
   private connection: MongoClient | null = null;
 
@@ -16,14 +16,11 @@ export class DatabaseEngine {
     });
   }
 
-  public static getInstance(uri?: string): DatabaseEngine {
-    if (!DatabaseEngine.instance) {
-      if (!uri) {
-        throw new Error('Database URL was not set');
-      }
-      DatabaseEngine.instance = new DatabaseEngine(uri);
+  public static getInstance(uri: string): DatabaseEngine {
+    if (!DatabaseEngine.instances[uri]) {
+      DatabaseEngine.instances[uri] = new DatabaseEngine(uri);
     }
-    return DatabaseEngine.instance;
+    return DatabaseEngine.instances[uri];
   }
 
   public async isDatabase(database: string): Promise<boolean> {

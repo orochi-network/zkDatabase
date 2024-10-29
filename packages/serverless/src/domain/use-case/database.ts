@@ -1,22 +1,16 @@
-import {
-  DatabaseEngine,
-  DbSetting,
-  ModelDatabase,
-  ModelDbDeployTx,
-  ModelDbSetting,
-} from '@zkdb/storage';
-import { ClientSession } from 'mongodb';
 import { Fill } from '@orochi-network/queue';
+import { DB, DbSetting, ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
+import { redisQueue } from '../../helper/mq.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
-import { listCollections, readCollectionInfo } from './collection.js';
-import { redisQueue } from '../../helper/mq.js';
+import { listCollections } from './collection.js';
+import { isUserExist } from './user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -26,7 +20,7 @@ export async function createDatabase(
   userPublicKey: string
 ) {
   // Case database already exist
-  if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
+  if (await DB.service.isDatabase(databaseName)) {
     // Ensure database existing
     throw new Error(`Database name ${databaseName} already taken`);
   }
@@ -78,8 +72,7 @@ export async function getDatabases(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
-  const dbEngine = DatabaseEngine.getInstance();
-  const databasesInfo = await dbEngine.client.db().admin().listDatabases();
+  const databasesInfo = await DB.service.client.db().admin().listDatabases();
 
   if (!databasesInfo?.databases?.length) {
     return {
@@ -121,7 +114,7 @@ export async function getDatabases(
           setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
-        
+
         const collections = await listCollections(databaseName, actor);
 
         return {
@@ -162,9 +155,12 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
+  console.log('🚀 ~ databaseName:', databaseName);
   const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });
+  console.log('🚀 ~ setting ~ setting:', setting);
+
   if (setting) {
     return setting.databaseOwner === actor;
   }

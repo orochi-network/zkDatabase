@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
 import { PermissionBasic } from '../../common/permission.js';
@@ -32,7 +32,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, collectionName, {
+    super(databaseName, DB.service, collectionName, {
       timeseries: {
         timeField: 'timestamp',
         granularity: 'seconds',

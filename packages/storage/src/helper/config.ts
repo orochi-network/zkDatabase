@@ -13,6 +13,7 @@ type TNodeEnv = (typeof NODE_ENV_VALUES)[number];
 type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
+  PROOF_MONGODB_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
@@ -22,6 +23,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
     .valid(...NODE_ENV_VALUES)
     .default('production'),
   MONGODB_URL: Joi.string()
+    .trim()
+    .required()
+    .regex(/^mongodb([+a-z]+|):\/\//),
+  PROOF_MONGODB_URL: Joi.string()
     .trim()
     .required()
     .regex(/^mongodb([+a-z]+|):\/\//),

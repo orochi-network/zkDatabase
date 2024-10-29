@@ -160,7 +160,7 @@ export async function createProof(taskId: string) {
         { session }
       );
       await queue.markTaskProcessed(task._id, { session });
-    });
+    }, 'proof');
 
     logger.debug('Task processed successfully.');
   } catch (error) {

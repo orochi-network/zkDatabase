@@ -11,5 +11,5 @@ export async function getNextTaskId(): Promise<string | null> {
     }
 
     return null;
-  });
+  }, "proof");
 }

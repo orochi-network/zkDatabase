@@ -14,6 +14,7 @@ type TApplicationConfig = {
   MINA_URL: string;
   LOG_LEVEL: TLogLevel;
   REDIS_URL: string;
+  PROOF_MONGODB_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -21,7 +22,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     raw.NETWORK_ID = raw.NODE_ENV === "production" ? "mainnet" : "testnet";
     raw.MINA_URL =
       raw.NODE_ENV === "production"
-        ? "https://api.minascan.io/node/mainnet/v1/graphq"
+        ? "https://api.minascan.io/node/mainnet/v1/graphql"
         : "https://api.minascan.io/node/devnet/v1/graphql";
     return raw;
   },
@@ -33,6 +34,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .default("production"),
     LOG_LEVEL: Joi.string().trim().default("debug"),
     MONGODB_URL: Joi.string()
+      .trim()
+      .required()
+      .regex(/^mongodb([+a-z]+|):\/\//),
+    PROOF_MONGODB_URL: Joi.string()
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),

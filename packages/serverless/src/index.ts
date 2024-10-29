@@ -25,9 +25,16 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
 (async () => {
   const app = express();
-  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
+  // DB service
+  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  // DB proof
+  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+  if (!serviceDb.isConnected()) {
+    await serviceDb.connect();
+  }
+
+  if (!proofDb.isConnected()) {
+    await proofDb.connect();
   }
 
   RedisInstance.event.on('error', logger.error);

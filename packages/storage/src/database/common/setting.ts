@@ -6,6 +6,7 @@ import {
   UpdateResult,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
+import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 export type DbSetting = {
@@ -21,6 +22,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       zkDatabaseConstants.databaseCollections.setting
     );
   }

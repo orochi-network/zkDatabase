@@ -13,6 +13,7 @@ export type TApplicationConfig = {
   SERVICE_PORT: number;
   SERVICE_ORIGIN: Map<string, boolean>;
   OROCHI_LOG: TLogLevel;
+  PROOF_MONGODB_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -39,6 +40,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
   {
     NODE_ENV: Joi.string().optional().default('production'),
     MONGODB_URL: Joi.string()
+      .trim()
+      .required()
+      .regex(/^mongodb([+a-z]+|):\/\//),
+    PROOF_MONGODB_URL: Joi.string()
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),

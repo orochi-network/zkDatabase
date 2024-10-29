@@ -5,6 +5,7 @@ import {
   InsertOneResult,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
+import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 export type DbDeploy = {
@@ -20,6 +21,7 @@ export class ModelDbDeployTx extends ModelBasic<DbDeploy> {
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       zkDatabaseConstants.globalCollections.deploy
     );
   }
