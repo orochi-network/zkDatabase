@@ -1,3 +1,4 @@
+import { Fill } from '@orochi-network/queue';
 import {
   DatabaseEngine,
   DbSetting,
@@ -6,17 +7,19 @@ import {
   ModelDbSetting,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { Fill } from '@orochi-network/queue';
+import { fetchAccount, Mina, PublicKey, UInt64 } from 'o1js';
+import { redisQueue } from '../../helper/mq.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { isUserExist } from './user.js';
 import { FilterCriteria } from '../utils/document.js';
+import { isUserExist } from './user.js';
 import { listCollections, readCollectionInfo } from './collection.js';
-import { redisQueue } from '../../helper/mq.js';
+
+const MINA_DECIMAL = 1e9;
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -42,6 +45,7 @@ export async function createDatabase(
 
   await redisQueue.enqueue(
     JSON.stringify({
+      key: databaseName,
       payerAddress: userPublicKey,
       merkleHeight,
       databaseName,
@@ -65,9 +69,40 @@ export async function updateDeployedDatabase(
     throw new Error(`Cannot update deployed database ${err}`);
   }
 }
-export async function deployDatabase(databaseName: string) {
+export async function deployDatabase(
+  databaseName: string,
+  userPublicKey: string,
+  merkleHeight: string
+) {
   const res = await ModelDbDeployTx.getInstance().getTx(databaseName);
   if (!res) {
+    // This case we will compile manually because user create but they don't have balance
+    // Check balance of that user
+    const network = Mina.Network({
+      networkId: 'testnet',
+      mina: 'https://api.minascan.io/node/devnet/v1/graphql',
+    });
+    Mina.setActiveInstance(network);
+    if (
+      (
+        await fetchAccount({
+          publicKey: PublicKey.fromBase58(userPublicKey),
+        })
+      ).account?.balance.lessThanOrEqual(
+        UInt64.fromValue(BigInt(1 * MINA_DECIMAL))
+      )
+    ) {
+      throw new Error('Your account need at least 1.1 Mina to create database');
+    }
+    // If they have Mina, push it to a queue
+    await redisQueue.enqueue(
+      JSON.stringify({
+        key: databaseName,
+        payerAddress: userPublicKey,
+        merkleHeight,
+        databaseName,
+      })
+    );
     throw new Error('Cannot find transaction');
   }
   return res;
@@ -121,7 +156,7 @@ export async function getDatabases(
           setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
-        
+
         const collections = await listCollections(databaseName, actor);
 
         return {

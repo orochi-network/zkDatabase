@@ -6,8 +6,8 @@ import { Mina } from 'o1js';
 
 (async () => {
   const network = Mina.Network({
-    networkId: 'mainnet',
-    mina: 'https://api.minascan.io/node/mainnet/v1/graphql',
+    networkId: 'testnet',
+    mina: 'https://api.minascan.io/node/devnet/v1/graphql',
   });
 
   Mina.setActiveInstance(network);
