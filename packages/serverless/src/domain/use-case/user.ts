@@ -7,6 +7,7 @@ import { Signature } from '../types/proof.js';
 import { User } from '../types/user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { objectToLookupPattern } from '../../helper/common.js';
+import config from '../../helper/config.js';
 
 export async function searchUser(
   query: { [key: string]: string },
@@ -70,8 +71,7 @@ export async function signUpUser(
   userData: any,
   signature: Signature
 ) {
-  // @todo: We should move network config to ENV
-  const client = new Client({ network: 'testnet' });
+  const client = new Client({ network: config.NETWORK_ID });
   if (client.verifyMessage(signature)) {
     const jsonData = JSON.parse(signature.data);
     if (jsonData.userName !== user.userName) {

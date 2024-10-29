@@ -1,9 +1,10 @@
-import { ClientSession, Document, InsertOneOptions } from 'mongodb';
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { ClientSession, Document, InsertOneOptions } from 'mongodb';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
 
@@ -20,7 +21,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
     zkDatabaseConstants.databaseCollections.group;
 
   constructor(databaseName: string) {
-    super(databaseName, ModelGroup.collectionName);
+    super(databaseName, DB.service, ModelGroup.collectionName);
   }
 
   public async createGroup(

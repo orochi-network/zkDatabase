@@ -1,9 +1,10 @@
-import { Document } from 'mongodb';
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { Document } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
@@ -30,7 +31,11 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   ];
 
   constructor() {
-    super(zkDatabaseConstants.globalDatabase, ModelUser.collectionName);
+    super(
+      zkDatabaseConstants.globalDatabase,
+      DB.service,
+      ModelUser.collectionName
+    );
   }
 
   public static async init() {

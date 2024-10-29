@@ -1,10 +1,11 @@
-import { Field, Poseidon } from 'o1js';
 import crypto from 'crypto';
-import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
-import logger from '../../helper/logger.js';
-import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
-import ModelGeneral from '../base/general.js';
+import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
+import { Field, Poseidon } from 'o1js';
 import { zkDatabaseConstants } from '../../common/const.js';
+import { DB } from '../../helper/db-instance.js';
+import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
+import logger from '../../helper/logger.js';
+import ModelGeneral from '../base/general.js';
 import { ModelDbSetting } from './setting.js';
 
 // Data type for merkle tree to be able to store in database
@@ -42,12 +43,17 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private _height: number = 0;
 
   private constructor(databaseName: string) {
-    super(databaseName, zkDatabaseConstants.databaseCollections.merkleTree, {
-      timeseries: {
-        timeField: 'timestamp',
-        granularity: 'seconds',
-      },
-    });
+    super(
+      databaseName,
+      DB.service,
+      zkDatabaseConstants.databaseCollections.merkleTree,
+      {
+        timeseries: {
+          timeField: 'timestamp',
+          granularity: 'seconds',
+        },
+      }
+    );
   }
 
   private static getInstance(databaseName: string): ModelMerkleTree {
@@ -234,7 +240,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
           };
         }
       )
-    )
+    );
     return witnessPath;
   }
 

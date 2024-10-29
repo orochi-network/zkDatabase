@@ -1,9 +1,10 @@
-import { Document } from 'mongodb';
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { Document } from 'mongodb';
 import { PermissionBasic } from '../../common/permission.js';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
@@ -28,12 +29,13 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
     zkDatabaseConstants.databaseCollections.permission;
 
   constructor(databaseName: string) {
-    super(databaseName, ModelDocumentMetadata.collectionName);
+    super(databaseName, DB.service, ModelDocumentMetadata.collectionName);
   }
 
   public static async init(databaseName: string) {
     const collection = new ModelCollection(
       databaseName,
+      DB.service,
       ModelDocumentMetadata.collectionName
     );
     if (!(await collection.isExist())) {

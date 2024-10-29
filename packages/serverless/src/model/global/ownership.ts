@@ -1,4 +1,5 @@
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
@@ -16,7 +17,11 @@ export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
   static collectionName: string = 'ownership';
 
   constructor() {
-    super(zkDatabaseConstants.globalDatabase, ModelOwnership.collectionName);
+    super(
+      zkDatabaseConstants.globalDatabase,
+      DB.service,
+      ModelOwnership.collectionName
+    );
   }
 
   public static async init() {

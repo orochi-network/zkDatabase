@@ -1,9 +1,10 @@
-import { ObjectId, Document, FindOptions, BulkWriteOptions } from 'mongodb';
 import {
+  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
 import ModelGroup, { GroupSchema } from './group.js';
 
 export interface DocumentUserGroup extends Document {
@@ -20,7 +21,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     zkDatabaseConstants.databaseCollections.userGroup;
 
   constructor(databaseName: string) {
-    super(databaseName, ModelUserGroup.collectionName);
+    super(databaseName, DB.service, ModelUserGroup.collectionName);
   }
 
   public async checkMembership(

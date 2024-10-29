@@ -8,10 +8,18 @@ import { TypedefsApp, ResolversApp } from "./apollo/index.js";
 
 (async () => {
   const app = express();
+  console.log("🚀 ~ config.PROOF_MONGODB_URL:", config.PROOF_MONGODB_URL);
 
-  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
+  // DB service
+  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  // DB proof
+  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+  if (!serviceDb.isConnected()) {
+    await serviceDb.connect();
+  }
+
+  if (!proofDb.isConnected()) {
+    await proofDb.connect();
   }
 
   app.use(express.json());

@@ -1,11 +1,5 @@
 import { Fill } from '@orochi-network/queue';
-import {
-  DatabaseEngine,
-  DbSetting,
-  ModelDatabase,
-  ModelDbDeployTx,
-  ModelDbSetting,
-} from '@zkdb/storage';
+import { DB, DbSetting, ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { fetchAccount, Mina, PublicKey, UInt64 } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
@@ -16,8 +10,8 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
+import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
-import { listCollections, readCollectionInfo } from './collection.js';
 
 const MINA_DECIMAL = 1e9;
 
@@ -29,7 +23,7 @@ export async function createDatabase(
   userPublicKey: string
 ) {
   // Case database already exist
-  if (await DatabaseEngine.getInstance().isDatabase(databaseName)) {
+  if (await DB.service.isDatabase(databaseName)) {
     // Ensure database existing
     throw new Error(`Database name ${databaseName} already taken`);
   }
@@ -113,8 +107,7 @@ export async function getDatabases(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
-  const dbEngine = DatabaseEngine.getInstance();
-  const databasesInfo = await dbEngine.client.db().admin().listDatabases();
+  const databasesInfo = await DB.service.client.db().admin().listDatabases();
 
   if (!databasesInfo?.databases?.length) {
     return {
@@ -197,9 +190,12 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
+  console.log('🚀 ~ databaseName:', databaseName);
   const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });
+  console.log('🚀 ~ setting ~ setting:', setting);
+
   if (setting) {
     return setting.databaseOwner === actor;
   }

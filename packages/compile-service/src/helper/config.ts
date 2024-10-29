@@ -14,6 +14,7 @@ type TApplicationConfig = {
   MINA_URL: string;
   LOG_LEVEL: TLogLevel;
   REDIS_URL: string;
+  PROOF_MONGODB_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -33,6 +34,10 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .default("production"),
     LOG_LEVEL: Joi.string().trim().default("debug"),
     MONGODB_URL: Joi.string()
+      .trim()
+      .required()
+      .regex(/^mongodb([+a-z]+|):\/\//),
+    PROOF_MONGODB_URL: Joi.string()
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),

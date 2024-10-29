@@ -1,13 +1,14 @@
 import {
   CreateIndexesOptions,
-  IndexSpecification,
   Document,
   DropIndexesOptions,
+  IndexSpecification,
 } from 'mongodb';
 import { isOk } from '../../helper/common.js';
+import { DB } from '../../helper/db-instance.js';
+import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import ModelDatabase from './database.js';
-import logger from '../../helper/logger.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -28,7 +29,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     if (!ModelCollection.instances.has(key)) {
       ModelCollection.instances.set(
         key,
-        new ModelCollection<T>(databaseName, collectionName)
+        new ModelCollection<T>(databaseName, DB.service, collectionName)
       );
     }
     return ModelCollection.instances.get(key) as ModelCollection<T>;
