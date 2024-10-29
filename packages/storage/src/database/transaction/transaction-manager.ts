@@ -6,7 +6,6 @@ export default async function withTransaction<T>(
   callback: (session: ClientSession) => Promise<T>,
   type: 'service' | 'proof' = 'service'
 ): Promise<T | null> {
-  console.log('withTransaction type ', type);
   const session = DB[type].client.startSession();
   let result: T | null = null;
   try {

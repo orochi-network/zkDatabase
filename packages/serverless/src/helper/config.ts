@@ -14,11 +14,13 @@ export type TApplicationConfig = {
   SERVICE_ORIGIN: Map<string, boolean>;
   OROCHI_LOG: TLogLevel;
   PROOF_MONGODB_URL: string;
+  NETWORK_ID: 'mainnet' | 'testnet';
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
     const result: any = { ...raw };
+    result.NETWORK_ID = raw.NODE_ENV === 'production' ? 'mainnet' : 'testnet';
     result.EXPRESS_SESSION_SECRET = createHash('sha256')
       .update('express-session')
       .update(raw.SERVICE_SECRET)

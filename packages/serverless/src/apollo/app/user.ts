@@ -23,6 +23,7 @@ import mapPagination from '../mapper/pagination.js';
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { pagination } from './common.js';
+import config from '../../helper/config.js';
 
 // We extend express session to define session expiration time
 declare module 'express-session' {
@@ -255,7 +256,7 @@ const userSignIn = publicWrapper(
       throw new Error('Invalid ECDSA challenge');
     }
 
-    const client = new Client({ network: 'mainnet' });
+    const client = new Client({ network: config.NETWORK_ID });
 
     if (args.proof.data !== context.req.session.ecdsaChallenge) {
       throw new Error('Invalid challenge message');
