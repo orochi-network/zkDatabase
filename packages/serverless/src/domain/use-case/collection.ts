@@ -1,7 +1,9 @@
 import { Fill } from '@orochi-network/queue';
 import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { ZKDATABASE_USER_NOBODY } from '../../common/const.js';
+import { PermissionBinary } from '../../common/permission.js';
+import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 import {
   CollectionIndex,
   CollectionIndexInfo,
@@ -9,16 +11,13 @@ import {
 import { Collection } from '../types/collection.js';
 import { Permissions } from '../types/permission.js';
 import { DocumentSchemaInput } from '../types/schema.js';
+import { Sorting } from '../types/sorting.js';
 import { createCollectionMetadata } from './collection-metadata.js';
+import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
-import { Sorting } from '../types/sorting.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { isDatabaseOwner } from './database.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { PermissionBinary } from '../../common/permission.js';
 
 function mapSorting(sorting: Sorting): 1 | -1 {
   return sorting === 'ASC' ? 1 : -1;
@@ -314,12 +313,11 @@ async function dropIndex(
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
     // TODO: Allow people to choose the sorting order
-    const index = `${indexName}_1`;
-    if (await doesIndexExist(databaseName, actor, collectionName, index)) {
+    if (await doesIndexExist(databaseName, actor, collectionName, indexName)) {
       return ModelCollection.getInstance(
         databaseName,
         collectionName
-      ).dropIndex(index);
+      ).dropIndex(indexName);
     }
 
     throw Error(
