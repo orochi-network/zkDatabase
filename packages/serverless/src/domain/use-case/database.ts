@@ -51,7 +51,7 @@ export async function createDatabase(
     return true;
   }
 
-  throw Error(`User ${actor} has not been found`)
+  throw Error(`User ${actor} has not been found`);
 }
 
 export async function updateDeployedDatabase(

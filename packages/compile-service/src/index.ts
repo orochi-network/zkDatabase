@@ -7,7 +7,7 @@ import {
   ModelProof,
   ModelSecureStorage,
 } from "@zkdb/storage";
-import { PrivateKey } from "o1js";
+import { PrivateKey, PublicKey } from "o1js";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
 
@@ -53,10 +53,10 @@ export type DbDeployQueue = {
         const secureStorage = ModelSecureStorage.getInstance();
 
         let transaction: UnsignedTransaction;
-
+        let zkAppPublicKey: string;
         if (request.transactionType === "deploy") {
           const zkAppPrivateKey = PrivateKey.random();
-
+          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
           const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
             Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
             Buffer.from(config.SERVICE_SECRET, "base64")
@@ -88,6 +88,8 @@ export type DbDeployQueue = {
 
           const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
 
+          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
+
           const proof = await ModelProof.getInstance().getProof(
             request.databaseName
           );
@@ -111,6 +113,7 @@ export type DbDeployQueue = {
           transactionType: request.transactionType,
           tx: JSON.stringify(transaction),
           databaseName: request.databaseName,
+          zkAppPublicKey,
         });
         logger.info(
           `Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`
