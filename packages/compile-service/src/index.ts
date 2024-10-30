@@ -1,14 +1,15 @@
 import { logger } from "@helper";
-import { ZkCompileService, UnsignedTransaction } from "@service";
+import { EncryptionKey } from "@orochi-network/vault";
+import { UnsignedTransaction, ZkCompileService } from "@service";
 import {
   DatabaseEngine,
   ModelDbDeployTx,
   ModelProof,
   ModelSecureStorage,
 } from "@zkdb/storage";
+import { PrivateKey } from "o1js";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
-import { PrivateKey } from "o1js";
 
 export type TransactionType = "deploy" | "rollup";
 
@@ -31,16 +32,23 @@ export type DbDeployQueue = {
     { url: config.REDIS_URL }
   );
   // Connect to db
-  const dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
+  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
 
-  if (!dbEngine.isConnected()) {
-    await dbEngine.connect();
+  if (!serviceDb.isConnected()) {
+    await serviceDb.connect();
+  }
+
+  if (!proofDb.isConnected()) {
+    await proofDb.connect();
   }
 
   while (true) {
     const request = await redisQueue.dequeue();
     if (request) {
       logger.info(`Received ${request.databaseName} to queue`);
+      console.log("🚀 ~ request:", request);
+
       try {
         const secureStorage = ModelSecureStorage.getInstance();
 
@@ -49,6 +57,11 @@ export type DbDeployQueue = {
         if (request.transactionType === "deploy") {
           const zkAppPrivateKey = PrivateKey.random();
 
+          const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
+            Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
+            Buffer.from(config.SERVICE_SECRET, "base64")
+          ).toString("base64");
+
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
@@ -56,7 +69,7 @@ export type DbDeployQueue = {
           );
 
           await secureStorage.insertOne({
-            privateKey: zkAppPrivateKey.toBase58(),
+            privateKey: encryptedZkAppPrivateKey,
             databaseName: request.databaseName,
           });
         } else if (request.transactionType === "rollup") {
@@ -67,13 +80,18 @@ export type DbDeployQueue = {
           if (!privateKey) {
             throw Error("Private key has not been found");
           }
+          // storing encryptedData:
+          const decryptedPrivateKey = EncryptionKey.decrypt(
+            Buffer.from(privateKey.privateKey, "base64"),
+            Buffer.from(config.SERVICE_SECRET, "base64")
+          ).toString();
 
-          const zkAppPrivateKey = PrivateKey.fromBase58(privateKey.privateKey);
+          const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
 
           const proof = await ModelProof.getInstance().getProof(
             request.databaseName
           );
-          
+
           if (!proof) {
             throw Error("Proof has not been found");
           }

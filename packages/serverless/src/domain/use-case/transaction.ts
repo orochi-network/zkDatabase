@@ -14,35 +14,35 @@ export async function enqueueTransaction(
   actor: string,
   transactionType: TransactionType
 ) {
-  if (await isDatabaseOwner(databaseName, actor)) {
-    if (transactionType === 'deploy') {
-      const settings =
-        await ModelDbSetting.getInstance().getSetting(databaseName);
-
-      if (settings?.appPublicKey) {
-        throw Error('Smart contract is already bound to database');
-      }
-    }
-
-    const tx = await ModelDbDeployTx.getInstance().getTx(
-      databaseName,
-      transactionType
-    );
-
-    if (tx) {
-      throw Error('You have already unprocessed transaction');
-    }
-
-    await redisQueue.enqueue(
-      JSON.stringify({
-        key: databaseName,
-        operation: transactionType,
-        databaseName,
-      })
-    );
+  if (!(await isDatabaseOwner(databaseName, actor))) {
+    throw Error('Only database owner can roll up the transaction');
   }
 
-  throw Error('Only database owner can roll up the transaction');
+  if (transactionType === 'deploy') {
+    const settings =
+      await ModelDbSetting.getInstance().getSetting(databaseName);
+
+    if (settings?.appPublicKey) {
+      throw Error('Smart contract is already bound to database');
+    }
+  }
+
+  const tx = await ModelDbDeployTx.getInstance().getTx(
+    databaseName,
+    transactionType
+  );
+
+  if (tx) {
+    throw Error('You have already unprocessed transaction');
+  }
+
+  await redisQueue.enqueue(
+    JSON.stringify({
+      key: databaseName,
+      transactionType,
+      databaseName,
+    })
+  );
 }
 
 export async function getTransaction(

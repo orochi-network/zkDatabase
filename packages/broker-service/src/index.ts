@@ -1,14 +1,13 @@
-import express from "express";
 import { DatabaseEngine } from "@zkdb/storage";
+import { ApolloServer } from "apollo-server-express";
+import express from "express";
+import http from "http";
+import { ResolversApp, TypedefsApp } from "./apollo/index.js";
 import { config } from "./helper/config.js";
 import logger from "./helper/logger.js";
-import http from "http";
-import { ApolloServer } from "apollo-server-express";
-import { TypedefsApp, ResolversApp } from "./apollo/index.js";
 
 (async () => {
   const app = express();
-  console.log("🚀 ~ config.PROOF_MONGODB_URL:", config.PROOF_MONGODB_URL);
 
   // DB service
   const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);

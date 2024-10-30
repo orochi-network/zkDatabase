@@ -1,11 +1,10 @@
-import { ClientSession } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 
 export type PrivateKey = {
   privateKey: string;
-  databaseName: string
+  databaseName: string;
 };
 
 export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
@@ -15,7 +14,7 @@ export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
     super(
       zkDatabaseConstants.globalProofDatabase,
       DB.proof,
-      zkDatabaseConstants.globalCollections.proof
+      zkDatabaseConstants.globalCollections.secure
     );
   }
 

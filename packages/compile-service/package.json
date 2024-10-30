@@ -5,6 +5,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
+    "@orochi-network/vault": "^1.4.15",
     "@zkdb/smart-contract": "^1.1.6",
     "redis": "^4.7.0"
   },
