@@ -32,13 +32,6 @@ async function run() {
 
   const proof = await zkdb.database(DB_NAME).getProof();
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .rollUpZKDatabaseSmartContract(18, ZKDB_PRIVATE_KEY, proof);
-
-  console.log('deployment hash', tx.hash);
-  await tx.wait();
-
   await zkdb.authenticator.signOut();
 }
 
