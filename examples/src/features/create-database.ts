@@ -31,12 +31,6 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
-
-  await tx.wait();
-
   await zkdb
     .fromGlobal()
     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));

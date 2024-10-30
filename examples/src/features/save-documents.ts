@@ -45,13 +45,6 @@ async function run() {
 
   const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
 
-  const tx = await zkdb
-    .fromBlockchain()
-    .deployZKDatabaseSmartContract(18, zkDbPrivateKey);
-
-  console.log('deployment hash', tx.hash);
-  await tx.wait();
-
   await zkdb
     .fromGlobal()
     .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));

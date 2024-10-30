@@ -1,9 +1,19 @@
 import { logger } from "@helper";
-import { ZkCompileService } from "@service";
-import { DatabaseEngine, ModelDbDeployTx } from "@zkdb/storage";
+import { ZkCompileService, UnsignedTransaction } from "@service";
+import {
+  DatabaseEngine,
+  ModelDbDeployTx,
+  ModelProof,
+  ModelSecureStorage,
+} from "@zkdb/storage";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
+import { PrivateKey } from "o1js";
+
+export type TransactionType = "deploy" | "rollup";
+
 export type DbDeployQueue = {
+  transactionType: TransactionType;
   payerAddress: string;
   merkleHeight: number;
   databaseName: string;
@@ -32,14 +42,61 @@ export type DbDeployQueue = {
     if (request) {
       logger.info(`Received ${request.databaseName} to queue`);
       try {
-        const response = await zkAppCompiler.compileAndCreateUnsignTx(request);
+        const secureStorage = ModelSecureStorage.getInstance();
+
+        let transaction: UnsignedTransaction;
+
+        if (request.transactionType === "deploy") {
+          const zkAppPrivateKey = PrivateKey.random();
+
+          transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            request.merkleHeight
+          );
+
+          await secureStorage.insertOne({
+            privateKey: zkAppPrivateKey.toBase58(),
+            databaseName: request.databaseName,
+          });
+        } else if (request.transactionType === "rollup") {
+          const privateKey = await secureStorage.findOne({
+            databaseName: request.databaseName,
+          });
+
+          if (!privateKey) {
+            throw Error("Private key has not been found");
+          }
+
+          const zkAppPrivateKey = PrivateKey.fromBase58(privateKey.privateKey);
+
+          const proof = await ModelProof.getInstance().getProof(
+            request.databaseName
+          );
+          
+          if (!proof) {
+            throw Error("Proof has not been found");
+          }
+          transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            request.merkleHeight,
+            proof
+          );
+        } else {
+          throw Error(
+            `Transaction type ${request.transactionType} is not supported`
+          );
+        }
+
         await ModelDbDeployTx.getInstance().create({
-          merkleHeight: response.merkleHeight,
-          appPublicKey: response.zkAppAddress,
-          tx: response.tx,
+          transactionType: request.transactionType,
+          tx: JSON.stringify(transaction),
           databaseName: request.databaseName,
         });
-        logger.info(`Compile successfully: ${response.zkAppAddress}`);
+        logger.info(
+          `Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`
+        );
       } catch (error) {
         logger.error("Error processing deployment request: ", error);
       }

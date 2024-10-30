@@ -4,7 +4,6 @@ import Joi from 'joi';
 import {
   changeDatabaseOwner,
   createDatabase,
-  deployDatabase,
   getDatabases,
   updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
@@ -14,8 +13,6 @@ import { databaseName, pagination, publicKey, userName } from './common.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
-  userPublicKey: string;
-  merkleHeight: string;
 };
 
 export type TDatabaseUpdateDeployedRequest = {
@@ -112,7 +109,6 @@ extend type Query {
 extend type Mutation {
   dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
-  dbDeploy(databaseName: String!, userPublicKey: String!, merkleHeight: Int!): DbDeploy!
   dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
 }
@@ -169,20 +165,6 @@ const dbSetting = publicWrapper(
     throw Error(`Settings for ${args.databaseName} does not exist`);
   }
 );
-// Mutation
-const dbDeploy = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    merkleHeight: Joi.number().integer().positive().min(8).max(256).required(),
-    userPublicKey: Joi.string()
-      .trim()
-      .length(55)
-      .required()
-      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
-  }),
-  async (_root: unknown, args: TDatabaseRequest, _) =>
-    deployDatabase(args.databaseName, args.userPublicKey, args.merkleHeight)
-);
 
 const dbDeployedUpdate = authorizeWrapper(
   DatabaseUpdateDeployedRequest,
@@ -217,7 +199,6 @@ type TDatabaseResolver = {
   Mutation: {
     dbCreate: typeof dbCreate;
     dbChangeOwner: typeof dbChangeOwner;
-    dbDeploy: typeof dbDeploy;
     dbDeployedUpdate: typeof dbDeployedUpdate;
   };
 };
@@ -230,9 +211,8 @@ export const resolversDatabase: TDatabaseResolver = {
     dbSetting,
   },
   Mutation: {
-    dbDeploy,
     dbCreate,
     dbChangeOwner,
-    dbDeployedUpdate,
+    dbDeployedUpdate
   },
 };

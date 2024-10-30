@@ -13,26 +13,33 @@ import {
   ZKDatabaseSmartContractClass,
 } from './zkdb-app';
 import { CacheManager } from '@cache';
+import { DEFAULT_FEE, TransactionDetails } from './transaction-details';
 
 export class ZKDatabaseSmartContractWrapper {
   private _smartContract: ZKDatabaseSmartContractClass;
   private rollUpProgram: DatabaseRollUp;
   private merkleHeight: number;
   private verificationKey: VerificationKey;
-  private publicKey: PublicKey;
 
-  constructor(merkleHeight: number, publicKey: PublicKey) {
+  constructor(merkleHeight: number) {
     this.rollUpProgram = RollUpProgram(merkleHeight);
     this._smartContract = getZkDbSmartContractClass(
       merkleHeight,
       this.rollUpProgram
     );
-    this.publicKey = publicKey;
     this.merkleHeight = merkleHeight;
   }
 
+  isCompiled(): boolean {
+    return this.verificationKey !== undefined;
+  }
+
+  private setVerificationKey(vk: VerificationKey) {
+    this.verificationKey = vk;
+  }
+
   async compile() {
-    if (!this.verificationKey) {
+    if (!this.isCompiled()) {
       try {
         const [rollUpCache, smartContractCache] = await Promise.all([
           CacheManager.provideCache('rollup-zkprogram', this.merkleHeight),
@@ -40,9 +47,11 @@ export class ZKDatabaseSmartContractWrapper {
         ]);
 
         await this.rollUpProgram.compile({ cache: rollUpCache });
-        this.verificationKey = (
+        const vk = (
           await this._smartContract.compile({ cache: smartContractCache })
         ).verificationKey;
+
+        this.setVerificationKey(vk);
       } catch (error) {
         console.error('Compilation error:', error);
         throw error;
@@ -51,17 +60,17 @@ export class ZKDatabaseSmartContractWrapper {
   }
 
   async createAndProveDeployTransaction(
-    callerPublicKey: PublicKey
+    transactionDetails: TransactionDetails
   ): Promise<MinaTransaction> {
-    const zkApp = new this._smartContract(this.publicKey);
+    const zkApp = new this._smartContract(transactionDetails.zkApp);
 
     const tx = await Mina.transaction(
       {
-        sender: callerPublicKey,
-        fee: 100_000_000,
+        sender: transactionDetails.sender,
+        fee: transactionDetails.fee ?? DEFAULT_FEE,
       },
       async () => {
-        AccountUpdate.fundNewAccount(callerPublicKey);
+        AccountUpdate.fundNewAccount(transactionDetails.sender);
         await zkApp.deploy();
       }
     );
@@ -71,17 +80,17 @@ export class ZKDatabaseSmartContractWrapper {
   }
 
   async createAndProveRollUpTransaction(
-    callerPublicKey: PublicKey,
+    transactionDetails: TransactionDetails,
     jsonProof: JsonProof
   ): Promise<MinaTransaction> {
-    const zkApp = new this._smartContract(this.publicKey);
+    const zkApp = new this._smartContract(transactionDetails.zkApp);
     class ZkDbProof extends ZkProgram.Proof(this.rollUpProgram) {}
 
     const proof = await ZkDbProof.fromJSON(jsonProof);
     const tx = await Mina.transaction(
       {
-        sender: callerPublicKey,
-        fee: 100_000_000,
+        sender: transactionDetails.sender,
+        fee: transactionDetails.fee ?? DEFAULT_FEE,
       },
       async () => {
         await zkApp.rollUp(proof);

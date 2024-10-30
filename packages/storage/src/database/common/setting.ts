@@ -23,7 +23,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     super(
       zkDatabaseConstants.globalDatabase,
       DB.service,
-      zkDatabaseConstants.databaseCollections.setting
+      zkDatabaseConstants.globalCollections.setting
     );
   }
 

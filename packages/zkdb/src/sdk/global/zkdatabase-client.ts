@@ -1,7 +1,7 @@
 import { ApiClient, IApiClient } from '@zkdb/api';
 import { Authenticator, ISecureStorage } from '../authentication';
-import { ZKDatabase, MinaBlockchain, GlobalContext } from '../interfaces';
-import { ZKDatabaseImpl, MinaBlockchainImpl, GlobalContextImpl } from '../impl';
+import { ZKDatabase, GlobalContext } from '../interfaces';
+import { ZKDatabaseImpl, GlobalContextImpl } from '../impl';
 
 import { Signer } from '../signer';
 
@@ -41,10 +41,6 @@ export class ZKDatabaseClient {
     throw new Error(
       'Database access failed: Server URL is not set. Please call connect() first.'
     );
-  }
-
-  fromBlockchain(): MinaBlockchain {
-    return new MinaBlockchainImpl(this);
   }
 
   fromGlobal(): GlobalContext {

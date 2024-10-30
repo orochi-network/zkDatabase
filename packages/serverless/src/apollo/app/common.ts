@@ -107,3 +107,6 @@ export const collectionIndex = Joi.object({
   name: indexName,
   sorting: sortingOrder,
 });
+
+export const transactionType = Joi.string()
+  .valid(...['deploy', 'rollup'])

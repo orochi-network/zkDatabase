@@ -79,6 +79,7 @@
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/queue": "^0.1.11",
     "@zkdb/storage": "^1.1.0",
+    "@zkdb/smart-contract": "^1.1.0",
     "axios": "^1.5.0",
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",

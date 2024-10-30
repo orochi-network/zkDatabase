@@ -1,7 +1,7 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine } from '@zkdb/storage';
+import { DatabaseEngine, ModelDbDeployTx } from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -20,6 +20,8 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
+import { Mina } from 'o1js';
+import { MinaNetwork, MinaTransaction } from '@zkdb/smart-contract';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -36,6 +38,13 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   if (!proofDb.isConnected()) {
     await proofDb.connect();
   }
+
+  await ModelDbDeployTx.init();
+
+  MinaNetwork.getInstance().connect(
+    'testnet',
+    'https://api.minascan.io/node/devnet/v1/graphql'
+  );
 
   RedisInstance.event.on('error', logger.error);
 
