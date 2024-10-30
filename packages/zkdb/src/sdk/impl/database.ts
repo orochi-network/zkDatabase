@@ -7,6 +7,7 @@ import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
 import { IndexField } from '../../types/collection-index';
 
+// TODO: Implement transactions endpoints
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
   private apiClient: IApiClient;
