@@ -26,7 +26,7 @@ type DbTransaction {
 }
 
 extend type Query {
-  getTransaction(databaseName: String!, transactionType: TransactionType!): DbTransaction
+  getTransaction(databaseName: String!, transactionType: TransactionType!): DbTransaction!
 }
 
 extend type Mutation {
