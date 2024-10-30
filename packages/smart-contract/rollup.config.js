@@ -21,6 +21,7 @@ export default [
           { find: '@contracts', replacement: 'src/contracts' },
           { find: '@proof', replacement: 'src/proof' },
           { find: '@types', replacement: 'src/types' },
+          { find: '@blockchain', replacement: 'src/blockchain' },
         ],
       }),
       typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
