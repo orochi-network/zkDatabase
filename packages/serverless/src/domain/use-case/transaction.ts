@@ -72,16 +72,16 @@ export async function getTransaction(
     );
 
     if (transaction) {
-      const account = await MinaNetwork.getInstance().getAccount(
+      const { account, error } = await MinaNetwork.getInstance().getAccount(
         PublicKey.fromBase58(user.publicKey)
       );
 
-      if (account.error) {
-        throw Error(`${account.error.statusCode}: ${account.error.statusText}`);
+      if (error) {
+        throw Error(`${error.statusCode}: ${error.statusText}`);
       }
 
-      if (account.account) {
-        const balance = account.account.balance.toBigInt();
+      if (account) {
+        const balance = account.balance.toBigInt();
 
         if (balance < MINA_DECIMAL * 1.1) {
           throw new Error(

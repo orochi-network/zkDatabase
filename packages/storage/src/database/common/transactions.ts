@@ -3,7 +3,7 @@ import {
   FindOptions,
   ReplaceOptions,
   UpdateResult,
-  Document
+  Document,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
@@ -19,7 +19,7 @@ export type DbTransaction = {
 };
 
 export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
-  private static INSTANCE: ModelDbDeployTx;
+  private static instance: ModelDbDeployTx;
 
   private constructor() {
     super(
@@ -30,30 +30,26 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
   }
 
   public static getInstance() {
-    if (!ModelDbDeployTx.INSTANCE) {
-      this.INSTANCE = new ModelDbDeployTx();
+    if (!ModelDbDeployTx.instance) {
+      this.instance = new ModelDbDeployTx();
     }
-    return this.INSTANCE;
+    return this.instance;
   }
 
   public async create(
     args: DbTransaction,
     options?: ReplaceOptions
   ): Promise<Document | UpdateResult<DbTransaction>> {
-    try {
-      const result = await this.collection.replaceOne(
-        {
-          transactionType: args.transactionType,
-          databaseName: args.databaseName,
-        },
-        args,
-        {...options, upsert: true}
-      );
+    const result = await this.collection.replaceOne(
+      {
+        transactionType: args.transactionType,
+        databaseName: args.databaseName,
+      },
+      args,
+      { ...options, upsert: true }
+    );
 
-      return result;
-    } catch (error) {
-      throw new Error(`Failed to create database setting: ${error}`);
-    }
+    return result;
   }
 
   public async getTx(
@@ -61,15 +57,11 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
     transactionType: TransactionType,
     options?: FindOptions
   ): Promise<DbTransaction | null> {
-    try {
-      const tx = await this.collection.findOne(
-        { databaseName, transactionType },
-        options
-      );
-      return tx;
-    } catch (error) {
-      throw new Error(`Failed to get deploy transaction: ${error}`);
-    }
+    const tx = await this.collection.findOne(
+      { databaseName, transactionType },
+      options
+    );
+    return tx;
   }
 
   public async remove(databaseName: string, transactionType: TransactionType) {

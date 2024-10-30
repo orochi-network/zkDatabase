@@ -18,7 +18,7 @@ import {
 import { typeCommonDefsCollection } from './app/types/collection.js';
 import { typeCommonDefsMetadata } from './app/types/metadata.js';
 import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
-import { resolversTransaction } from './app/transaction.js';
+import { resolversTransaction, typeDefsTransaction } from './app/transaction.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -31,6 +31,7 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
   typeDefsProof,
   typeDefsDocumentHistory,
+  typeDefsTransaction,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
   typeCommonDefsMetadata,

@@ -1,1 +1,1 @@
-export { MinaNetwork } from './mina-network';
+export * from './mina-network';

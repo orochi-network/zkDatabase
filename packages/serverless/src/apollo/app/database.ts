@@ -109,9 +109,7 @@ extend type Query {
 extend type Mutation {
   dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
-  dbDeploy(databaseName: String!, userPublicKey: String!, merkleHeight: Int!): DbDeploy!
   dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
-  dbRollUp(databaseName: String!)
   #dbDrop(databaseName: String!): Boolean
 }
 `;

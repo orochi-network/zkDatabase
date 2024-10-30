@@ -47,7 +47,7 @@ export type DbDeployQueue = {
             zkAppPrivateKey,
             request.merkleHeight
           );
-        } else {
+        } else if (request.transactionType === "rollup") {
           const proof = await ModelProof.getInstance().getProof(
             request.databaseName
           );
@@ -64,6 +64,10 @@ export type DbDeployQueue = {
           } else {
             throw Error();
           }
+        } else {
+          throw Error(
+            `Transaction type ${request.transactionType} is not supported`
+          );
         }
 
         await ModelDbDeployTx.getInstance().create({
@@ -71,7 +75,9 @@ export type DbDeployQueue = {
           tx: JSON.stringify(transaction),
           databaseName: request.databaseName,
         });
-        logger.info(`Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`);
+        logger.info(
+          `Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`
+        );
       } catch (error) {
         logger.error("Error processing deployment request: ", error);
       }

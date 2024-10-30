@@ -1,7 +1,7 @@
 import { fetchAccount, Mina, NetworkId, PublicKey } from 'o1js';
 
 export class MinaNetwork {
-  private static INSTANCE: MinaNetwork;
+  private static instance: MinaNetwork;
   private isConnected: boolean;
 
   private constructor() {}
@@ -11,11 +11,11 @@ export class MinaNetwork {
   }
 
   public static getInstance(): MinaNetwork {
-    if (!this.INSTANCE) {
-      this.INSTANCE = new MinaNetwork();
+    if (!this.instance) {
+      this.instance = new MinaNetwork();
     }
 
-    return this.INSTANCE;
+    return this.instance;
   }
 
   public connect(networkId: NetworkId, endpoint: string) {
@@ -29,17 +29,17 @@ export class MinaNetwork {
     this.isConnected = true;
   }
 
-  public async getAccount(pk: PublicKey) {
+  public async getAccount(publicKey: PublicKey) {
     this.ensureConnection();
 
     return fetchAccount({
-      publicKey: pk
+      publicKey,
     });
   }
 
   private ensureConnection() {
     if (!this.isConnected) {
-      throw Error('Please connect to mina network first')
+      throw Error('Please connect to mina network first');
     }
   }
 }
