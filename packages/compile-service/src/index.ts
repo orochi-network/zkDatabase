@@ -60,10 +60,6 @@ export type DbDeployQueue = {
             databaseName: request.databaseName,
           });
         } else if (request.transactionType === "rollup") {
-          const proof = await ModelProof.getInstance().getProof(
-            request.databaseName
-          );
-
           const privateKey = await secureStorage.findOne({
             databaseName: request.databaseName,
           });
@@ -74,16 +70,19 @@ export type DbDeployQueue = {
 
           const zkAppPrivateKey = PrivateKey.fromBase58(privateKey.privateKey);
 
-          if (proof) {
-            transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
-              request.payerAddress,
-              zkAppPrivateKey,
-              request.merkleHeight,
-              proof
-            );
-          } else {
-            throw Error('Proof has not been found');
+          const proof = await ModelProof.getInstance().getProof(
+            request.databaseName
+          );
+          
+          if (!proof) {
+            throw Error("Proof has not been found");
           }
+          transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            request.merkleHeight,
+            proof
+          );
         } else {
           throw Error(
             `Transaction type ${request.transactionType} is not supported`
