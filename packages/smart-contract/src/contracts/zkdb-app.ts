@@ -9,6 +9,8 @@ import {
   ZkProgram,
   method,
   state,
+  Permissions,
+  AccountUpdate
 } from 'o1js';
 
 export type ZKDatabaseSmartContractClass = ReturnType<
@@ -28,13 +30,27 @@ export function getZkDbSmartContractClass(
     @state(Field) prevState = State<Field>();
     @state(Field) actionState = State<Field>();
 
-    init() {
+    @method async init() {
+      this.account.provedState.getAndRequireEquals();
+      this.account.provedState.get().assertFalse();
+
       super.init();
+
+      this.account.permissions.set({
+        ...Permissions.default(),
+        setDelegate: Permissions.impossible(),
+        setTokenSymbol: Permissions.impossible(),
+        setVotingFor: Permissions.impossible(),
+        setTiming: Permissions.impossible(),
+      });
+
       this.currentState.set(dummyMerkleTree.getRoot());
       this.prevState.set(Field(0));
     }
 
     @method async rollUp(proof: ZkDbProof) {
+      this.account.provedState.getAndRequireEquals();
+      this.account.provedState.get().assertTrue();
       proof.verify();
 
       const currentState = this.currentState.getAndRequireEquals();
@@ -60,6 +76,8 @@ export function getZkDbSmartContractClass(
 
       this.prevState.set(currentState);
       this.currentState.set(proof.publicOutput.newOffChainState);
+      
+      AccountUpdate.createSigned(this.address);
     }
   }
 
