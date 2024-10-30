@@ -30,7 +30,7 @@ export function getZkDbSmartContractClass(
     @state(Field) prevState = State<Field>();
     @state(Field) actionState = State<Field>();
 
-    @method async init() {
+    init() {
       this.account.provedState.getAndRequireEquals();
       this.account.provedState.get().assertFalse();
 
