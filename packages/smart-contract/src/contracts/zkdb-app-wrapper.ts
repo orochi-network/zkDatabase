@@ -31,7 +31,7 @@ export class ZKDatabaseSmartContractWrapper {
   }
 
   isCompiled(): boolean {
-    return this.verificationKey !== null;
+    return this.verificationKey !== undefined;
   }
 
   private setVerificationKey(vk: VerificationKey) {
