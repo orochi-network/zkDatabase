@@ -11,6 +11,7 @@ import { ModelDbDeployTx } from './common/transactions.js';
 
 import { ModelSequencer, SequencedItem } from './common/sequencer.js';
 import withTransaction from './transaction/transaction-manager.js';
+import { ModelSecureStorage, PrivateKey } from './global/secure-storage.js';
 
 export {
   DatabaseEngine,
@@ -30,4 +31,6 @@ export {
   ModelSequencer,
   SequencedItem,
   withTransaction,
+  ModelSecureStorage,
+  PrivateKey
 };

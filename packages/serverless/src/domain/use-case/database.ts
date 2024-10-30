@@ -18,33 +18,40 @@ import ModelUser from '../../model/global/user.js';
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
-  actor: string,
-  userPublicKey: string
+  actor: string
 ) {
-  // Case database already exist
-  if (await DB.service.isDatabase(databaseName)) {
-    // Ensure database existing
-    throw new Error(`Database name ${databaseName} already taken`);
-  }
-  await ModelDocumentMetadata.init(databaseName);
-  await ModelCollectionMetadata.init(databaseName);
-  await ModelGroup.init(databaseName);
-  await ModelUserGroup.init(databaseName);
-  await ModelDbSetting.getInstance().createSetting({
-    databaseName,
-    merkleHeight,
-    databaseOwner: actor,
-  });
+  const user = await new ModelUser().findOne({ userName: actor });
 
-  await redisQueue.enqueue(
-    JSON.stringify({
-      key: databaseName,
-      payerAddress: userPublicKey,
-      merkleHeight,
+  if (user) {
+    // Case database already exist
+    if (await DB.service.isDatabase(databaseName)) {
+      // Ensure database existing
+      throw new Error(`Database name ${databaseName} already taken`);
+    }
+    await ModelDocumentMetadata.init(databaseName);
+    await ModelCollectionMetadata.init(databaseName);
+    await ModelGroup.init(databaseName);
+    await ModelUserGroup.init(databaseName);
+    await ModelDbSetting.getInstance().createSetting({
       databaseName,
-    })
-  );
-  return true;
+      merkleHeight,
+      databaseOwner: actor,
+    });
+
+    await redisQueue.enqueue(
+      JSON.stringify({
+        transactionType: 'deploy',
+        key: databaseName,
+        payerAddress: user?.publicKey,
+        merkleHeight,
+        databaseName,
+      })
+    );
+
+    return true;
+  }
+
+  throw Error(`User ${actor} has not been found`)
 }
 
 export async function updateDeployedDatabase(

@@ -1,6 +1,11 @@
 import { logger } from "@helper";
 import { ZkCompileService, UnsignedTransaction } from "@service";
-import { DatabaseEngine, ModelDbDeployTx, ModelProof } from "@zkdb/storage";
+import {
+  DatabaseEngine,
+  ModelDbDeployTx,
+  ModelProof,
+  ModelSecureStorage,
+} from "@zkdb/storage";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
 import { PrivateKey } from "o1js";
@@ -37,6 +42,8 @@ export type DbDeployQueue = {
     if (request) {
       logger.info(`Received ${request.databaseName} to queue`);
       try {
+        const secureStorage = ModelSecureStorage.getInstance();
+
         let transaction: UnsignedTransaction;
 
         if (request.transactionType === "deploy") {
@@ -47,12 +54,25 @@ export type DbDeployQueue = {
             zkAppPrivateKey,
             request.merkleHeight
           );
+
+          await secureStorage.insertOne({
+            privateKey: zkAppPrivateKey.toBase58(),
+            databaseName: request.databaseName,
+          });
         } else if (request.transactionType === "rollup") {
           const proof = await ModelProof.getInstance().getProof(
             request.databaseName
           );
 
-          const zkAppPrivateKey = PrivateKey.random();
+          const privateKey = await secureStorage.findOne({
+            databaseName: request.databaseName,
+          });
+
+          if (!privateKey) {
+            throw Error("Private key has not been found");
+          }
+
+          const zkAppPrivateKey = PrivateKey.fromBase58(privateKey.privateKey);
 
           if (proof) {
             transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
@@ -62,7 +82,7 @@ export type DbDeployQueue = {
               proof
             );
           } else {
-            throw Error();
+            throw Error('Proof has not been found');
           }
         } else {
           throw Error(

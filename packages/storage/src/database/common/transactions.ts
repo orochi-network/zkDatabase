@@ -25,7 +25,7 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
     super(
       zkDatabaseConstants.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.deploy
+      zkDatabaseConstants.globalCollections.transaction
     );
   }
 
@@ -79,7 +79,7 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
-      zkDatabaseConstants.globalCollections.deploy
+      zkDatabaseConstants.globalCollections.transaction
     );
     if (!(await collection.isExist())) {
       await collection.index(
