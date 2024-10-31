@@ -90,7 +90,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
               'merkleHeight',
               'appPublicKey',
               'databaseOwner',
-              'status',
+              'deployStatus',
             ].includes(k)
           )
         ),

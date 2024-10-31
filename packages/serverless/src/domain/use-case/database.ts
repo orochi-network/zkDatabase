@@ -42,7 +42,7 @@ export async function createDatabase(
       JSON.stringify({
         transactionType: 'deploy',
         key: databaseName,
-        payerAddress: user?.publicKey,
+        payerAddress: user.publicKey,
         merkleHeight,
         databaseName,
       })
