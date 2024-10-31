@@ -89,6 +89,7 @@ type DbDescription {
   databaseSize: String!,
   databaseOwner: String!,
   appPublicKey: String,
+  status: String!,
   merkleHeight: Int!,
   collections: [CollectionDescriptionOutput]!
 }

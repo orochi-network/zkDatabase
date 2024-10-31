@@ -14,10 +14,11 @@ export type DbSetting = {
   merkleHeight: number;
   appPublicKey?: string;
   databaseOwner: string;
+  status?: string; //TODO: should be define
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
-  private static INSTANCE: ModelDbSetting;
+  private static instance: ModelDbSetting;
 
   private constructor() {
     super(
@@ -28,10 +29,10 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   }
 
   public static getInstance() {
-    if (!ModelDbSetting.INSTANCE) {
-      this.INSTANCE = new ModelDbSetting();
+    if (!ModelDbSetting.instance) {
+      this.instance = new ModelDbSetting();
     }
-    return this.INSTANCE;
+    return this.instance;
   }
 
   public async createSetting(
@@ -85,7 +86,12 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
       {
         $set: Object.fromEntries(
           Object.entries(setting).filter(([k]) =>
-            ['merkleHeight', 'appPublicKey', 'databaseOwner'].includes(k)
+            [
+              'merkleHeight',
+              'appPublicKey',
+              'databaseOwner',
+              'status',
+            ].includes(k)
           )
         ),
       },

@@ -21,6 +21,7 @@
       "@service": ["./src/service"]
     },
   },
+  // "references": [{ "path": "../smart-contract" }, { "path": "../storage" }],
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules"]
 }

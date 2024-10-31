@@ -1,18 +1,17 @@
 import { Fill } from '@orochi-network/queue';
 import { DB, DbSetting, ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { fetchAccount, Mina, PublicKey, UInt64 } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
+import ModelUser from '../../model/global/user.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
-import ModelUser from '../../model/global/user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -36,6 +35,7 @@ export async function createDatabase(
       databaseName,
       merkleHeight,
       databaseOwner: actor,
+      status: 'compiling',
     });
 
     await redisQueue.enqueue(
@@ -62,6 +62,7 @@ export async function updateDeployedDatabase(
     // Add appPublicKey for database that deployed
     await ModelDbSetting.getInstance().updateSetting(databaseName, {
       appPublicKey,
+      status: 'deploying',
     });
     // Remove data from deploy transaction
     await ModelDbDeployTx.getInstance().remove(databaseName, 'deploy');
@@ -114,8 +115,13 @@ export async function getDatabases(
   const databases: Database[] = (
     await Fill(
       settings.map((setting: DbSetting) => async () => {
-        const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
-          setting;
+        const {
+          databaseName,
+          merkleHeight,
+          databaseOwner,
+          appPublicKey,
+          status,
+        } = setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
@@ -128,6 +134,7 @@ export async function getDatabases(
           databaseSize,
           collections,
           appPublicKey,
+          status,
         } as Database;
       })
     )

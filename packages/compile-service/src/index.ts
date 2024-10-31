@@ -65,7 +65,8 @@ export type DbDeployQueue = {
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
-            request.merkleHeight
+            request.merkleHeight,
+            request.databaseName
           );
 
           await secureStorage.insertOne({
@@ -109,12 +110,20 @@ export type DbDeployQueue = {
           );
         }
 
-        await ModelDbDeployTx.getInstance().create({
+        const deployTx = await ModelDbDeployTx.getInstance().create({
           transactionType: request.transactionType,
-          tx: JSON.stringify(transaction),
+          tx: transaction,
           databaseName: request.databaseName,
           zkAppPublicKey,
         });
+        console.log("🚀 ~ deployTx ~ deployTx:", deployTx);
+
+        if (!deployTx) {
+          throw new Error(
+            `Error cannot add ${request.databaseName} to database`
+          );
+        }
+
         logger.info(
           `Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`
         );

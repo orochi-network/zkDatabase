@@ -58,6 +58,7 @@ const DATABASE_LIST = gql`
         databaseSize
         merkleHeight
         appPublicKey
+        status
         collections {
           name
           indexes
