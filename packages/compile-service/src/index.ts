@@ -47,7 +47,6 @@ export type DbDeployQueue = {
     const request = await redisQueue.dequeue();
     if (request) {
       logger.info(`Received ${request.databaseName} to queue`);
-      console.log("🚀 ~ request:", request);
 
       try {
         const secureStorage = ModelSecureStorage.getInstance();
