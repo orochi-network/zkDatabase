@@ -31,9 +31,6 @@ export function getZkDbSmartContractClass(
     @state(Field) actionState = State<Field>();
 
     init() {
-      this.account.provedState.getAndRequireEquals();
-      this.account.provedState.get().assertFalse();
-
       super.init();
 
       this.account.permissions.set({
@@ -49,8 +46,6 @@ export function getZkDbSmartContractClass(
     }
 
     @method async rollUp(proof: ZkDbProof) {
-      this.account.provedState.getAndRequireEquals();
-      this.account.provedState.get().assertTrue();
       proof.verify();
 
       const currentState = this.currentState.getAndRequireEquals();
