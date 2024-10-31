@@ -35,7 +35,7 @@ export async function createDatabase(
       databaseName,
       merkleHeight,
       databaseOwner: actor,
-      status: 'compiling',
+      deployStatus: 'compiling',
     });
 
     await redisQueue.enqueue(
@@ -62,7 +62,7 @@ export async function updateDeployedDatabase(
     // Add appPublicKey for database that deployed
     await ModelDbSetting.getInstance().updateSetting(databaseName, {
       appPublicKey,
-      status: 'deploying',
+      deployStatus: 'deploying',
     });
     // Remove data from deploy transaction
     await ModelDbDeployTx.getInstance().remove(databaseName, 'deploy');
@@ -120,7 +120,7 @@ export async function getDatabases(
           merkleHeight,
           databaseOwner,
           appPublicKey,
-          status,
+          deployStatus,
         } = setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
@@ -134,7 +134,7 @@ export async function getDatabases(
           databaseSize,
           collections,
           appPublicKey,
-          status,
+          deployStatus,
         } as Database;
       })
     )

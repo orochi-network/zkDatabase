@@ -26,7 +26,8 @@ export async function enqueueTransaction(
       throw Error('Smart contract is already bound to database');
     }
   }
-
+  const settings = await ModelDbSetting.getInstance().getSetting(databaseName);
+  const payer = await new ModelUser().findOne({ userName: actor });
   const tx = await ModelDbDeployTx.getInstance().getTx(
     databaseName,
     transactionType
@@ -39,8 +40,10 @@ export async function enqueueTransaction(
   await redisQueue.enqueue(
     JSON.stringify({
       key: databaseName,
+      payerAddress: payer?.publicKey,
       transactionType,
       databaseName,
+      merkleHeight: settings?.merkleHeight,
     })
   );
 }

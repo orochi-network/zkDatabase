@@ -14,7 +14,7 @@ export type DbSetting = {
   merkleHeight: number;
   appPublicKey?: string;
   databaseOwner: string;
-  status?: string; //TODO: should be define
+  deployStatus?: string; //TODO: should be define
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {

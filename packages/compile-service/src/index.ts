@@ -61,14 +61,12 @@ export type DbDeployQueue = {
             Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
             Buffer.from(config.SERVICE_SECRET, "base64")
           ).toString("base64");
-
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
             request.merkleHeight,
             request.databaseName
           );
-
           await secureStorage.insertOne({
             privateKey: encryptedZkAppPrivateKey,
             databaseName: request.databaseName,
@@ -116,7 +114,6 @@ export type DbDeployQueue = {
           databaseName: request.databaseName,
           zkAppPublicKey,
         });
-        console.log("🚀 ~ deployTx ~ deployTx:", deployTx);
 
         if (!deployTx) {
           throw new Error(

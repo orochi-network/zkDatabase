@@ -10,7 +10,7 @@ import {
   method,
   state,
   Permissions,
-  AccountUpdate
+  AccountUpdate,
 } from 'o1js';
 
 export type ZKDatabaseSmartContractClass = ReturnType<
@@ -49,8 +49,7 @@ export function getZkDbSmartContractClass(
     }
 
     @method async rollUp(proof: ZkDbProof) {
-      this.account.provedState.getAndRequireEquals();
-      this.account.provedState.get().assertTrue();
+      this.account.provedState.requireEquals(Bool(true));
       proof.verify();
 
       const currentState = this.currentState.getAndRequireEquals();
@@ -76,7 +75,7 @@ export function getZkDbSmartContractClass(
 
       this.prevState.set(currentState);
       this.currentState.set(proof.publicOutput.newOffChainState);
-      
+
       AccountUpdate.createSigned(this.address);
     }
   }

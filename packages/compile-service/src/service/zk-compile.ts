@@ -36,31 +36,39 @@ export class ZkCompileService {
     merkleHeight: number,
     databaseName: string
   ): Promise<UnsignedTransaction> {
-    const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+    try {
+      const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
 
-    const start = performance.now();
+      const start = performance.now();
 
-    const zkWrapper = await this.getSmartContract(merkleHeight);
+      const zkWrapper = await this.getSmartContract(merkleHeight);
 
-    let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
-      sender: PublicKey.fromBase58(payerAddress),
-      zkApp: zkDbPublicKey,
-    });
+      let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+        sender: PublicKey.fromBase58(payerAddress),
+        zkApp: zkDbPublicKey,
+      });
 
-    unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+      unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
-    const x = await ModelDbSetting.getInstance().updateSetting(databaseName, {
-      appPublicKey: zkDbPublicKey.toBase58(),
-      status: "ready",
-    });
-    console.log("🚀 ~ ZkCompileService ~ x ~ x:", x);
+      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+        appPublicKey: zkDbPublicKey.toBase58(),
+        deployStatus: "ready",
+      });
 
-    const end = performance.now();
-    logger.info(
-      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
-    );
+      const end = performance.now();
+      logger.info(
+        `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+      );
 
-    return unsignedTx.toJSON();
+      return unsignedTx.toJSON();
+    } catch (error) {
+      logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
+      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+        appPublicKey: undefined,
+        deployStatus: "failed",
+      });
+      throw error;
+    }
   }
 
   async compileAndCreateRollUpUnsignTx(
