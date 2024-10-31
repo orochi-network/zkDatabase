@@ -14,7 +14,14 @@ export type DbSetting = {
   merkleHeight: number;
   appPublicKey?: string;
   databaseOwner: string;
-  deployStatus: 'compiling' | 'ready' | 'deploying' | 'deployed';
+  deployStatus:
+    | 'compiling'
+    | 'ready'
+    | 'deploying'
+    | 'deployed'
+    | 'not_deployed'
+    | 'failed';
+  errorMessage?: string;
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {

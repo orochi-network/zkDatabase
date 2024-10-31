@@ -65,7 +65,11 @@ export class ZkCompileService {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: undefined,
-        deployStatus: "failed",
+        deployStatus: "not_deployed",
+        errorMessage:
+          error instanceof Error
+            ? error.message
+            : `Unknown Error: Cannot compile & deploy: ${databaseName}`,
       });
       throw error;
     }
