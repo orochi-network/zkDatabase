@@ -43,7 +43,8 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   MinaNetwork.getInstance().connect(
     'testnet',
-    'https://api.minascan.io/node/devnet/v1/graphql'
+    'https://api.minascan.io/node/devnet/v1/graphql',
+    config.BLOCKBERRY_API_KEY
   );
 
   RedisInstance.event.on('error', logger.error);

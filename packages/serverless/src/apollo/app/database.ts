@@ -178,8 +178,7 @@ const dbCreate = authorizeWrapper(
     createDatabase(
       args.databaseName,
       args.merkleHeight,
-      ctx.userName,
-      args.publicKey
+      ctx.userName
     )
 );
 

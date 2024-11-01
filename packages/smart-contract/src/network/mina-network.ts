@@ -1,8 +1,10 @@
 import { fetchAccount, Mina, NetworkId, PublicKey } from 'o1js';
+import { BlockberryApi, TBlockConfirmationTransaction } from './api';
 
 export class MinaNetwork {
   private static instance: MinaNetwork;
   private isConnected: boolean;
+  #api: BlockberryApi;
 
   private constructor() {}
 
@@ -18,12 +20,17 @@ export class MinaNetwork {
     return this.instance;
   }
 
-  public connect(networkId: NetworkId, endpoint: string) {
+  public connect(networkId: NetworkId, endpoint: string, apiKey: string) {
     Mina.setActiveInstance(
       Mina.Network({
         networkId,
         mina: endpoint,
       })
+    );
+
+    this.#api = new BlockberryApi(
+      apiKey,
+      networkId === 'mainnet' ? 'mainnet' : 'devnet'
     );
 
     this.isConnected = true;
@@ -35,6 +42,12 @@ export class MinaNetwork {
     return fetchAccount({
       publicKey,
     });
+  }
+
+  public async getTransactionStatusByHash(
+    txHash: string
+  ): Promise<TBlockConfirmationTransaction | undefined> {
+    return this.#api.getBlockConfirmationByTransactionHash(txHash);
   }
 
   private ensureConnection() {

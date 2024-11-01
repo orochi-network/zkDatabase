@@ -15,6 +15,7 @@ export type TApplicationConfig = {
   OROCHI_LOG: TLogLevel;
   PROOF_MONGODB_URL: string;
   NETWORK_ID: 'mainnet' | 'testnet';
+  BLOCKBERRY_API_KEY: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -58,6 +59,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     // URL separated by ;
     SERVICE_ALLOW_ORIGIN: Joi.string().trim().default('http://localhost:4000/'),
     OROCHI_LOG: Joi.string().trim().default('debug'),
+    BLOCKBERRY_API_KEY: Joi.string().trim().required(),
   }
 );
 
