@@ -1,18 +1,17 @@
 import { Fill } from '@orochi-network/queue';
 import { DB, DbSetting, ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { fetchAccount, Mina, PublicKey, UInt64 } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
+import ModelUser from '../../model/global/user.js';
 import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
-import ModelUser from '../../model/global/user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -42,7 +41,7 @@ export async function createDatabase(
       JSON.stringify({
         transactionType: 'deploy',
         key: databaseName,
-        payerAddress: user?.publicKey,
+        payerAddress: user.publicKey,
         merkleHeight,
         databaseName,
       })
@@ -51,7 +50,7 @@ export async function createDatabase(
     return true;
   }
 
-  throw Error(`User ${actor} has not been found`)
+  throw Error(`User ${actor} has not been found`);
 }
 
 export async function updateDeployedDatabase(

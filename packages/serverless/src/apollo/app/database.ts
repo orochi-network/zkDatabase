@@ -212,6 +212,6 @@ export const resolversDatabase: TDatabaseResolver = {
   Mutation: {
     dbCreate,
     dbChangeOwner,
-    dbDeployedUpdate
+    dbDeployedUpdate,
   },
 };

@@ -18,8 +18,15 @@ enum TransactionType {
   rollup
 }
 
+type DbTransaction {
+  databaseName: String!
+  transactionType: TransactionType!
+  zkAppPublicKey: String!
+  tx: String!
+}
+
 extend type Query {
-  getTransaction(databaseName: String!, transactionType: TransactionType!): JSON
+  getTransaction(databaseName: String!, transactionType: TransactionType!): DbTransaction!
 }
 
 extend type Mutation {

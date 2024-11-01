@@ -29,7 +29,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstants.globalProofDatabase,
       DB.proof,
       zkDatabaseConstants.globalCollections.queue
     );

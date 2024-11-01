@@ -1,10 +1,11 @@
 import { logger } from "@helper";
 import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import { ModelDbSetting } from "@zkdb/storage";
 import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
 const MAX_MERKLE_TREE_HEIGHT = 128;
 
-export type UnsignedTransaction = JSON;
+export type UnsignedTransaction = string;
 
 export class ZkCompileService {
   private compiledSmartContracts: Array<ZKDatabaseSmartContractWrapper>;
@@ -32,26 +33,40 @@ export class ZkCompileService {
   async compileAndCreateDeployUnsignTx(
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
-    merkleHeight: number
+    merkleHeight: number,
+    databaseName: string
   ): Promise<UnsignedTransaction> {
-    const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+    try {
+      const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
 
-    const start = performance.now();
+      const start = performance.now();
 
-    const zkWrapper = await this.getSmartContract(merkleHeight);
+      const zkWrapper = await this.getSmartContract(merkleHeight);
 
-    let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
-      sender: PublicKey.fromBase58(payerAddress),
-      zkApp: zkDbPublicKey,
-    });
+      let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+        sender: PublicKey.fromBase58(payerAddress),
+        zkApp: zkDbPublicKey,
+      });
 
-    unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
-    const end = performance.now();
-    logger.info(
-      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
-    );
+      unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
-    return unsignedTx.toJSON();
+      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+        appPublicKey: zkDbPublicKey.toBase58(),
+      });
+
+      const end = performance.now();
+      logger.info(
+        `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+      );
+
+      return unsignedTx.toJSON();
+    } catch (error) {
+      logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
+      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+        appPublicKey: undefined,
+      });
+      throw error;
+    }
   }
 
   async compileAndCreateRollUpUnsignTx(
