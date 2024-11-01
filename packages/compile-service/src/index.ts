@@ -111,7 +111,6 @@ export type DbDeployQueue = {
           transactionType: request.transactionType,
           tx: transaction,
           databaseName: request.databaseName,
-          zkAppPublicKey,
         });
 
         if (!deployTx) {
