@@ -52,7 +52,6 @@ export class ZkCompileService {
 
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: zkDbPublicKey.toBase58(),
-        deployStatus: "ready",
       });
 
       const end = performance.now();
@@ -65,11 +64,6 @@ export class ZkCompileService {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: undefined,
-        deployStatus: "not_deployed",
-        errorMessage:
-          error instanceof Error
-            ? error.message
-            : `Unknown Error: Cannot compile & deploy: ${databaseName}`,
       });
       throw error;
     }

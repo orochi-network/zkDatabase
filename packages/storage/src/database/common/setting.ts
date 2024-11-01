@@ -14,14 +14,6 @@ export type DbSetting = {
   merkleHeight: number;
   appPublicKey?: string;
   databaseOwner: string;
-  deployStatus:
-    | 'compiling'
-    | 'ready'
-    | 'deploying'
-    | 'deployed'
-    | 'not_deployed'
-    | 'failed';
-  errorMessage?: string;
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
@@ -93,12 +85,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
       {
         $set: Object.fromEntries(
           Object.entries(setting).filter(([k]) =>
-            [
-              'merkleHeight',
-              'appPublicKey',
-              'databaseOwner',
-              'deployStatus',
-            ].includes(k)
+            ['merkleHeight', 'appPublicKey', 'databaseOwner'].includes(k)
           )
         ),
       },
