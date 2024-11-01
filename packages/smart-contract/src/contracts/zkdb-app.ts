@@ -10,7 +10,7 @@ import {
   method,
   state,
   Permissions,
-  AccountUpdate
+  AccountUpdate,
 } from 'o1js';
 
 export type ZKDatabaseSmartContractClass = ReturnType<
@@ -71,7 +71,7 @@ export function getZkDbSmartContractClass(
 
       this.prevState.set(currentState);
       this.currentState.set(proof.publicOutput.newOffChainState);
-      
+
       AccountUpdate.createSigned(this.address);
     }
   }

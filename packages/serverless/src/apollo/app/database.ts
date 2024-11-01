@@ -175,12 +175,7 @@ const dbDeployedUpdate = authorizeWrapper(
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    createDatabase(
-      args.databaseName,
-      args.merkleHeight,
-      ctx.userName,
-      args.publicKey
-    )
+    createDatabase(args.databaseName, args.merkleHeight, ctx.userName)
 );
 
 const dbChangeOwner = authorizeWrapper(
@@ -213,6 +208,6 @@ export const resolversDatabase: TDatabaseResolver = {
   Mutation: {
     dbCreate,
     dbChangeOwner,
-    dbDeployedUpdate
+    dbDeployedUpdate,
   },
 };

@@ -2090,6 +2090,16 @@
     axios "1.7.4"
     ethers "6.13.2"
 
+"@orochi-network/vault@^1.4.15":
+  version "1.4.15"
+  resolved "https://registry.yarnpkg.com/@orochi-network/vault/-/vault-1.4.15.tgz#bf6879bec69fb844f0c4ecd4860b2f2d672b1bc9"
+  integrity sha512-NWPJgZ8M4pTvMW2Rip+EKVMCO6addiYnpx8lEQ9+AK9H+5unrxUWH5CWHknzHqQW5C94H0J+Wv/9i0G+IaneSQ==
+  dependencies:
+    "@orochi-network/queue" "^0.1.9"
+    "@orochi-network/utilities" "^0.2.40"
+    axios "1.7.4"
+    ethers "6.13.2"
+
 "@parcel/watcher-android-arm64@2.4.1":
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/@parcel/watcher-android-arm64/-/watcher-android-arm64-2.4.1.tgz#c2c19a3c442313ff007d2d7a9c2c1dd3e1c9ca84"

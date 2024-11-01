@@ -26,7 +26,7 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public static getInstance(): ModelProof {
     if (!this.instance) {
       this.instance = new ModelProof(
-        zkDatabaseConstants.globalDatabase,
+        zkDatabaseConstants.globalProofDatabase,
         DB.proof,
         zkDatabaseConstants.globalCollections.proof
       );

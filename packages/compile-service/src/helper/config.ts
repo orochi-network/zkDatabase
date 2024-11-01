@@ -15,6 +15,7 @@ type TApplicationConfig = {
   LOG_LEVEL: TLogLevel;
   REDIS_URL: string;
   PROOF_MONGODB_URL: string;
+  SERVICE_SECRET: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -45,6 +46,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .trim()
       .required()
       .regex(/^redis([+a-z]+|):\/\//),
+    SERVICE_SECRET: Joi.string().base64().trim().required(),
   }
 );
 

@@ -17,7 +17,7 @@ export type DbSetting = {
 };
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
-  private static INSTANCE: ModelDbSetting;
+  private static instance: ModelDbSetting;
 
   private constructor() {
     super(
@@ -28,10 +28,10 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   }
 
   public static getInstance() {
-    if (!ModelDbSetting.INSTANCE) {
-      this.INSTANCE = new ModelDbSetting();
+    if (!ModelDbSetting.instance) {
+      this.instance = new ModelDbSetting();
     }
-    return this.INSTANCE;
+    return this.instance;
   }
 
   public async createSetting(
