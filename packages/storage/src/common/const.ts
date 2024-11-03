@@ -25,7 +25,9 @@ export const zkDatabaseConstants = {
     // Deployed transaction
     transaction: 'transaction',
 
-    secure: 'secure_storage'
+    secure: 'secure_storage',
+    // Rollup history
+    rollup: 'rollup',
   },
 
   // Collections that are common across different databases
