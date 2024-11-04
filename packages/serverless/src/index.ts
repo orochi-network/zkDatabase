@@ -20,7 +20,7 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
-import { Mina } from 'o1js';
+import { Mina, NetworkId } from 'o1js';
 import { MinaNetwork, MinaTransaction } from '@zkdb/smart-contract';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
@@ -42,8 +42,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   await ModelDbDeployTx.init();
 
   MinaNetwork.getInstance().connect(
-    'testnet',
-    'https://api.minascan.io/node/devnet/v1/graphql'
+    config.MINA_NETWORK_ID as NetworkId,
+    config.MINA_ENDPOINT,
+    config.BLOCKBERRY_API_KEY
   );
 
   RedisInstance.event.on('error', logger.error);
