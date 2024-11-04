@@ -24,8 +24,10 @@ RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfil
 USER appuser
 
 # Build the necessary workspaces
-RUN yarn workspace @zkdb/storage build && \
+RUN yarn workspace @zkdb/smart-contract build && \
+    yarn workspace @zkdb/storage build && \
     yarn workspace @zkdb/serverless build
+
 
 # Use our customized image based on Node.js 20 slim image as a runner
 FROM orochinetwork/node:20-alpine AS runner
