@@ -1,7 +1,7 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine, ModelDbDeployTx } from '@zkdb/storage';
+import { DatabaseEngine, ModelDbTransaction } from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -39,7 +39,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await proofDb.connect();
   }
 
-  await ModelDbDeployTx.init();
+  await ModelDbTransaction.init();
 
   MinaNetwork.getInstance().connect(
     config.MINA_NETWORK_ID as NetworkId,

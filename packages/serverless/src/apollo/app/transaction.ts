@@ -31,6 +31,7 @@ extend type Query {
 
 extend type Mutation {
   enqueueTransaction(databaseName: String!, transactionType: TransactionType!): Boolean
+  confirmTransaction(txHash: String!): Boolean
 }
 `;
 
@@ -48,6 +49,19 @@ const getTransaction = authorizeWrapper(
 );
 
 const enqueueTransaction = authorizeWrapper(
+  Joi.object({
+    databaseName,
+    transactionType,
+  }),
+  async (_root: unknown, args: TTransactionRequest, ctx) =>
+    enqueueTransactionDomain(
+      args.databaseName,
+      ctx.userName,
+      args.transactionType
+    )
+);
+
+const confirmTransaction = authorizeWrapper(
   Joi.object({
     databaseName,
     transactionType,

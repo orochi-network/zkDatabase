@@ -2,11 +2,14 @@ import logger from "src/helper/logger";
 
 export type TChain = 'mainnet' | 'devnet';
 
+export type TStatus = 'applied' | 'failed' | 'pending';
+
 export type TBlockConfirmationTransaction = {
   blockConfirmationsCount: number;
   blockHeight: number;
   stateHash: string;
   txHashNext: string;
+  txStatus: TStatus;
   txHashPrevious: string;
   isCanonical: boolean;
   failureReason: string;

@@ -1,9 +1,10 @@
 import { isDatabaseOwner } from './database.js';
 import { redisQueue } from '../../helper/mq.js';
-import { ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
+import { ModelDbTransaction, ModelDbSetting } from '@zkdb/storage';
 import ModelUser from '../../model/global/user.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { PublicKey } from 'o1js';
+import { ClientSession, ObjectId } from 'mongodb';
 
 const MINA_DECIMAL = 1e9;
 
@@ -12,8 +13,9 @@ export type TransactionType = 'deploy' | 'rollup';
 export async function enqueueTransaction(
   databaseName: string,
   actor: string,
-  transactionType: TransactionType
-) {
+  transactionType: TransactionType,
+  session?: ClientSession
+): Promise<ObjectId> {
   if (!(await isDatabaseOwner(databaseName, actor))) {
     throw Error('Only database owner can roll up the transaction');
   }
@@ -28,14 +30,22 @@ export async function enqueueTransaction(
   }
   const settings = await ModelDbSetting.getInstance().getSetting(databaseName);
   const payer = await new ModelUser().findOne({ userName: actor });
-  const tx = await ModelDbDeployTx.getInstance().getTx(
-    databaseName,
-    transactionType
-  );
+  const modelTransaction = ModelDbTransaction.getInstance();
+  const tx = await modelTransaction.getTx(databaseName, transactionType);
 
   if (tx) {
     throw Error('You have already unprocessed transaction');
   }
+
+  const { insertedId } = await modelTransaction.create(
+    {
+      transactionType,
+      databaseName,
+      status: 'start',
+      createdAt: new Date(),
+    },
+    { session }
+  );
 
   await redisQueue.enqueue(
     JSON.stringify({
@@ -46,6 +56,8 @@ export async function enqueueTransaction(
       merkleHeight: settings?.merkleHeight,
     })
   );
+
+  return insertedId;
 }
 
 export async function getTransaction(
@@ -69,7 +81,7 @@ export async function getTransaction(
       throw Error(`Database ${databaseName} does not exist`);
     }
 
-    const transaction = await ModelDbDeployTx.getInstance().getTx(
+    const transaction = await ModelDbTransaction.getInstance().getTx(
       databaseName,
       transactionType
     );
@@ -102,4 +114,20 @@ export async function getTransaction(
   }
 
   throw new Error('Only database owner can deploy database');
+}
+
+export async function confirmTransaction(
+  databaseName: string,
+  actor: string,
+  id: string,
+  txHash: string
+) {
+  if (await isDatabaseOwner(databaseName, actor)) {
+    await ModelDbTransaction.getInstance().updateById(id, {
+      txHash,
+      status: 'pending',
+    });
+  } else {
+    throw Error('Only database owner can confirm transactions');
+  }
 }

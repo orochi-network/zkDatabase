@@ -1,5 +1,5 @@
 import { logger } from "@helper";
-import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import { MinaTransaction, ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
 import { ModelDbSetting } from "@zkdb/storage";
 import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
@@ -43,12 +43,12 @@ export class ZkCompileService {
 
       const zkWrapper = await this.getSmartContract(merkleHeight);
 
-      let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+      const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
         sender: PublicKey.fromBase58(payerAddress),
         zkApp: zkDbPublicKey,
       });
 
-      unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+      const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: zkDbPublicKey.toBase58(),
@@ -59,7 +59,7 @@ export class ZkCompileService {
         `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
       );
 
-      return unsignedTx.toJSON();
+      return partialSignedTx.toJSON();
     } catch (error) {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
@@ -81,7 +81,7 @@ export class ZkCompileService {
 
     const zkWrapper = await this.getSmartContract(merkleHeight);
 
-    let unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
+    const unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
       {
         sender: PublicKey.fromBase58(payerAddress),
         zkApp: zkDbPublicKey,
@@ -89,12 +89,12 @@ export class ZkCompileService {
       proof
     );
 
-    unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
     const end = performance.now();
     logger.info(
       `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
-    return unsignedTx.toJSON();
+    return partialSignedTx.toJSON();
   }
 }

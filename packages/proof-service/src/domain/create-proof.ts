@@ -93,7 +93,7 @@ export async function createProof(taskId: string) {
         ) {}
         const zkDbApp = new ZkDbApp(publicKey);
 
-        prevOnChainRootState = zkDbApp.prevState.get();
+        onChainRootState = zkDbApp.currentState.get();
         prevOnChainRootState = zkDbApp.prevState.get();
       }
     }
@@ -155,6 +155,7 @@ export async function createProof(taskId: string) {
           ...proof.toJSON(),
           database: task.database,
           collection: task.collection,
+          prevMerkleRoot: onChainRootState.toString(),
           merkleRoot: proof.publicOutput.newOffChainState.toString(),
         },
         { session }

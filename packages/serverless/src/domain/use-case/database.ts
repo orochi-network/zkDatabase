@@ -1,5 +1,5 @@
 import { Fill } from '@orochi-network/queue';
-import { DB, DbSetting, ModelDbDeployTx, ModelDbSetting } from '@zkdb/storage';
+import { DB, DbSetting, ModelDbTransaction, ModelDbSetting } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -63,7 +63,7 @@ export async function updateDeployedDatabase(
       appPublicKey,
     });
     // Remove data from deploy transaction
-    await ModelDbDeployTx.getInstance().remove(databaseName, 'deploy');
+    await ModelDbTransaction.getInstance().remove(databaseName, 'deploy');
     return true;
   } catch (err) {
     throw new Error(`Cannot update deployed database ${err}`);
