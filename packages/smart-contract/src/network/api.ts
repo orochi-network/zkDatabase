@@ -1,3 +1,5 @@
+import logger from "src/helper/logger";
+
 export type TChain = 'mainnet' | 'devnet';
 
 export type TBlockConfirmationTransaction = {
@@ -36,13 +38,13 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        console.error('response:', response);
+        logger.error('response:', response);
         return undefined;
       }
       const result = await response.json();
-      return result as unknown as TBlockConfirmationTransaction;
+      return result as TBlockConfirmationTransaction;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return undefined;
     }
   }
