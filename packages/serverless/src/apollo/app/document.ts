@@ -238,15 +238,12 @@ const documentUpdate = authorizeWrapper(
         );
     }
 
-    return withTransaction((session) =>
-      updateDocument(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.documentQuery,
-        args.documentRecord as any,
-        session
-      )
+    return updateDocument(
+      args.databaseName,
+      args.collectionName,
+      ctx.userName,
+      args.documentQuery,
+      args.documentRecord as any
     );
   }
 );
@@ -254,14 +251,11 @@ const documentUpdate = authorizeWrapper(
 const documentDrop = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return withTransaction((session) =>
-      deleteDocument(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.documentQuery,
-        session
-      )
+    return deleteDocument(
+      args.databaseName,
+      args.collectionName,
+      ctx.userName,
+      args.documentQuery
     );
   }
 );
