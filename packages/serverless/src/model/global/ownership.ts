@@ -27,6 +27,7 @@ export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       ModelOwnership.collectionName
     );
     if (!(await collection.isExist())) {

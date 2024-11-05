@@ -1,7 +1,9 @@
 import {
   DbTransaction,
+  ModelDbSetting,
   ModelDbTransaction,
   ModelProof,
+  ModelQueueTask,
   ModelRollup,
   RollupHistory as RollupHistoryModel,
   TransactionStatus,
@@ -9,8 +11,9 @@ import {
 import { ClientSession } from 'mongodb';
 import { enqueueTransaction } from './transaction.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpHistory } from '../types/rollup.js';
+import { RollUpData, RollUpHistory, RollUpState } from '../types/rollup.js';
 import logger from '../../helper/logger.js';
+import { PublicKey } from 'o1js';
 
 export async function createRollUp(
   databaseName: string,
@@ -42,10 +45,59 @@ export async function createRollUp(
 export async function getRollUpHistory(
   databaseName: string,
   session?: ClientSession
-): Promise<Array<RollUpHistory>> {
+): Promise<RollUpData> {
   const modelRollUp = ModelRollup.getInstance();
   const modelTransaction = ModelDbTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
+  const queue = ModelQueueTask.getInstance();
+  const dbSetting = await ModelDbSetting.getInstance().getSetting(
+    databaseName,
+    { session }
+  );
+
+  if (!dbSetting?.appPublicKey) {
+    throw Error('Database is not bound to zk app');
+  }
+
+  const account = await minaNetwork.getAccount(
+    PublicKey.fromBase58(dbSetting.appPublicKey)
+  );
+
+  if (!account.account) {
+    throw Error(
+      `zk app with ${dbSetting.appPublicKey} is not exist in mina network. Error: ${account.error}`
+    );
+  }
+
+  const zkApp = account.account.zkapp;
+
+  if (!zkApp) {
+    throw Error('The account in not zk app');
+  }
+
+  const merkleRoot = zkApp.appState[0].toString();
+
+  const task = await queue.collection.findOne({
+    database: databaseName,
+    merkleRoot,
+  });
+
+  if (!task) {
+    return {
+      history: [],
+      state: 'updated',
+      extraData: 0,
+    };
+  }
+
+  const latestTask = await queue.collection.findOne(
+    {
+      database: databaseName,
+    },
+    { sort: { createdAt: -1 } }
+  );
+
+  const diff = latestTask!.operationNumber - task.operationNumber;
 
   const rollUpList = await modelRollUp.collection
     .find({ databaseName })
@@ -66,68 +118,86 @@ export async function getRollUpHistory(
     error,
   });
 
-  const result = await Promise.all(
-    rollUpList.map(async (history) => {
-      const transaction = await modelTransaction.findById(
-        history.txId.toString()
-      );
+  const history = (
+    await Promise.all(
+      rollUpList.map(async (history) => {
+        const transaction = await modelTransaction.findById(
+          history.txId.toString()
+        );
 
-      if (!transaction) {
-        logger.error('Transaction for history not found. It is impossible');
-        return null;
-      }
-
-      if (transaction.status === 'pending') {
-        if (!transaction.txHash) {
-          logger.error('Transaction hash not found for pending transaction');
+        if (!transaction) {
+          logger.error('Transaction for history not found. It is impossible');
           return null;
         }
 
-        const tx = await minaNetwork.getTransactionStatusByHash(
-          transaction.txHash
-        );
-
-        if (tx) {
-          if (tx.txStatus === 'applied') {
-            await modelTransaction.updateById(
-              history.txId.toString(),
-              {
-                status: 'success',
-                error: undefined,
-              },
-              { session }
-            );
-            return buildRollUpHistory(history, transaction, 'success');
-          } else if (tx.txStatus === 'failed') {
-            await modelTransaction.updateById(
-              history.txId.toString(),
-              {
-                status: 'failed',
-                error: tx.failureReason,
-              },
-              { session }
-            );
-            return buildRollUpHistory(
-              history,
-              transaction,
-              'failed',
-              tx.failureReason
-            );
+        if (transaction.status === 'pending') {
+          if (!transaction.txHash) {
+            logger.error('Transaction hash not found for pending transaction');
+            return null;
           }
+
+          const tx = await minaNetwork.getTransactionStatusByHash(
+            transaction.txHash
+          );
+
+          if (tx) {
+            if (tx.txStatus === 'applied') {
+              await modelTransaction.updateById(
+                history.txId.toString(),
+                {
+                  status: 'success',
+                  error: undefined,
+                },
+                { session }
+              );
+              return buildRollUpHistory(history, transaction, 'success');
+            } else if (tx.txStatus === 'failed') {
+              await modelTransaction.updateById(
+                history.txId.toString(),
+                {
+                  status: 'failed',
+                  error: tx.failureReason,
+                },
+                { session }
+              );
+              return buildRollUpHistory(
+                history,
+                transaction,
+                'failed',
+                tx.failureReason
+              );
+            }
+          }
+        } else {
+          return buildRollUpHistory(
+            history,
+            transaction,
+            transaction.status,
+            transaction.error
+          );
         }
-      } else {
-        return buildRollUpHistory(
-          history,
-          transaction,
-          transaction.status,
-          transaction.error
-        );
-      }
 
-      logger.error('Transaction status could not be verified');
-      return null;
-    })
-  );
+        logger.error('Transaction status could not be verified');
+        return null;
+      })
+    )
+  )
+    .filter((item) => item !== null)
+    .sort((a, b) => {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    });
 
-  return result.filter((item) => item !== null);
+  let rollUpState: RollUpState = 'updated';
+
+  if (diff > 0) {
+    rollUpState = 'outdated';
+  } else if (history[0].status === 'failed') {
+    rollUpState = 'failed';
+  }
+
+  return {
+    history,
+    state: rollUpState,
+    extraData: diff,
+  };
 }

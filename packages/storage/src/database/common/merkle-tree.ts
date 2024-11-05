@@ -1,5 +1,11 @@
 import crypto from 'crypto';
-import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
+import {
+  BulkWriteOptions,
+  ClientSession,
+  Document,
+  FindOptions,
+  ObjectId,
+} from 'mongodb';
 import { Field, Poseidon } from 'o1js';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
@@ -101,8 +107,11 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     return this.zeroes;
   }
 
-  public async getRoot(timestamp: Date): Promise<Field> {
-    const root = await this.getNode(this._height - 1, 0n, timestamp);
+  public async getRoot(
+    timestamp: Date,
+    options?: FindOptions
+  ): Promise<Field> {
+    const root = await this.getNode(this._height - 1, 0n, timestamp, options);
     return Field(root);
   }
 

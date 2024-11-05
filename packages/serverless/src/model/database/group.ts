@@ -52,6 +52,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
+      DB.service,
       ModelGroup.collectionName
     );
     if (!(await collection.isExist())) {

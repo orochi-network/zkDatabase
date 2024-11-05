@@ -1,5 +1,6 @@
 import {
   ClientSession,
+  Db,
   Filter,
   FindOptions,
   InsertOneOptions,
@@ -10,10 +11,12 @@ import {
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
+import ModelCollection from '../general/collection.js';
 
 export type Status = 'queued' | 'proving' | 'proved' | 'failed';
 
 export type TaskEntity = {
+  operationNumber: number;
   merkleIndex: bigint;
   hash: string;
   status: Status;
@@ -21,6 +24,7 @@ export type TaskEntity = {
   database: string;
   collection: string;
   docId: string;
+  merkleRoot: string;
   error?: string;
 };
 
@@ -38,7 +42,6 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   public static getInstance(): ModelQueueTask {
     if (!ModelQueueTask.instance) {
       ModelQueueTask.instance = new ModelQueueTask();
-      ModelQueueTask.instance.collection.createIndex({ merkleIndex: 1 });
     }
     return ModelQueueTask.instance;
   }
@@ -206,5 +209,18 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       { $set: { status: 'failed', error: errorMessage } },
       options
     );
+  }
+
+  public static async init() {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstants.globalProofDatabase,
+      DB.proof,
+      zkDatabaseConstants.globalCollections.queue
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ database: 1, operationNumber: 1 }, { unique: true });
+      collection.index({ merkleRoot: 1 }, { unique: false });
+      collection.index({ merkleIndex: 1 }, { unique: false });
+    }
   }
 }

@@ -1,5 +1,7 @@
 import { TransactionStatus } from './transaction';
 
+export type RollUpState = 'updated' | 'outdated' | 'failed';
+
 export type RollUpHistory = {
   databaseName: string;
   currentMerkleTreeRoot: string;
@@ -8,4 +10,10 @@ export type RollUpHistory = {
   transactionHash?: string;
   status: TransactionStatus;
   error?: string;
+};
+
+export type RollUpData = {
+  history: RollUpHistory[];
+  state: RollUpState;
+  extraData: number;
 };

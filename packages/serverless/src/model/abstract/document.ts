@@ -47,6 +47,7 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
   get modelCollection() {
     return ModelCollection.getInstance(
       this.databaseName!,
+      DB.service,
       this.collectionName!
     );
   }

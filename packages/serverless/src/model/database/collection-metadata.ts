@@ -111,6 +111,7 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
+      DB.service,
       ModelCollectionMetadata.collectionName
     );
     if (!(await collection.isExist())) {

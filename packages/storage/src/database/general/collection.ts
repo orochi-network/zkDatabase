@@ -9,6 +9,7 @@ import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import ModelDatabase from './database.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -23,13 +24,14 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
 
   public static getInstance<T extends Document>(
     databaseName: string,
+    databaseEngine: DatabaseEngine,
     collectionName: string
   ): ModelCollection<T> {
     const key = `${databaseName}.${collectionName}`;
     if (!ModelCollection.instances.has(key)) {
       ModelCollection.instances.set(
         key,
-        new ModelCollection<T>(databaseName, DB.service, collectionName)
+        new ModelCollection<T>(databaseName, databaseEngine, collectionName)
       );
     }
     return ModelCollection.instances.get(key) as ModelCollection<T>;

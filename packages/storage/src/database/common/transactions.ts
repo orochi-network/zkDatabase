@@ -107,6 +107,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       zkDatabaseConstants.globalCollections.transaction
     );
     if (!(await collection.isExist())) {
