@@ -1,5 +1,10 @@
 import { Fill } from '@orochi-network/queue';
-import { DB, DbSetting, ModelDbTransaction, ModelDbSetting } from '@zkdb/storage';
+import {
+  DB,
+  DbSetting,
+  ModelDbTransaction,
+  ModelDbSetting,
+} from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -12,6 +17,7 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
+import { enqueueTransaction } from './transaction.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -37,15 +43,7 @@ export async function createDatabase(
       databaseOwner: actor,
     });
 
-    await redisQueue.enqueue(
-      JSON.stringify({
-        transactionType: 'deploy',
-        key: databaseName,
-        payerAddress: user.publicKey,
-        merkleHeight,
-        databaseName,
-      })
-    );
+    await enqueueTransaction(databaseName, actor, 'deploy');
 
     return true;
   }
