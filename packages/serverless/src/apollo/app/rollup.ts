@@ -48,14 +48,14 @@ const getRollUpHistory = authorizeWrapper(
 
 type TRollUpResolver = {
   JSON: typeof GraphQLJSON;
-  Query: {
+  Mutation: {
     getRollUpHistory: typeof getRollUpHistory;
   };
 };
 
 export const resolversRollUp: TRollUpResolver = {
   JSON: GraphQLJSON,
-  Query: {
+  Mutation: {
     getRollUpHistory,
   },
 };

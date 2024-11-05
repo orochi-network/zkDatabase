@@ -7,10 +7,10 @@ import {
   TransactionStatus,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { enqueueTransaction } from './transaction';
+import { enqueueTransaction } from './transaction.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpHistory } from '../types/rollup';
-import logger from '../../helper/logger';
+import { RollUpHistory } from '../types/rollup.js';
+import logger from '../../helper/logger.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -26,7 +26,7 @@ export async function createRollUp(
 
   const modelRollUp = ModelRollup.getInstance();
 
-  const txId = await enqueueTransaction(databaseName, actor, 'rollup');
+  const txId = await enqueueTransaction(databaseName, actor, 'rollup', session);
 
   await modelRollUp.create(
     {
@@ -89,16 +89,24 @@ export async function getRollUpHistory(
 
         if (tx) {
           if (tx.txStatus === 'applied') {
-            await modelTransaction.updateById(history.txId.toString(), {
-              status: 'success',
-              error: undefined,
-            });
+            await modelTransaction.updateById(
+              history.txId.toString(),
+              {
+                status: 'success',
+                error: undefined,
+              },
+              { session }
+            );
             return buildRollUpHistory(history, transaction, 'success');
           } else if (tx.txStatus === 'failed') {
-            await modelTransaction.updateById(history.txId.toString(), {
-              status: 'failed',
-              error: tx.failureReason,
-            });
+            await modelTransaction.updateById(
+              history.txId.toString(),
+              {
+                status: 'failed',
+                error: tx.failureReason,
+              },
+              { session }
+            );
             return buildRollUpHistory(
               history,
               transaction,

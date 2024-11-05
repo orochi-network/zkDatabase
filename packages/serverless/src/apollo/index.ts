@@ -20,7 +20,7 @@ import { typeCommonDefsMetadata } from './app/types/metadata.js';
 import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
 import { resolversTransaction, typeDefsTransaction } from './app/transaction.js';
 import { typeCommonDefsTransaction } from './app/types/transaction.js';
-import { resolversRollUp } from './app/rollup.js';
+import { resolversRollUp, typeDefsRollUp } from './app/rollup.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -34,6 +34,7 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsDocumentHistory,
   typeDefsTransaction,
+  typeDefsRollUp,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
   typeCommonDefsMetadata,

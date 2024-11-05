@@ -1,7 +1,7 @@
 import { ObjectId, ReplaceOptions, UpdateResult } from 'mongodb';
-import { zkDatabaseConstants } from '../../common';
-import { DB } from '../../helper';
-import logger from '../../helper/logger';
+import { zkDatabaseConstants } from '../../common/index.js';
+import { DB } from '../../helper/db-instance.js';
+import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 
 export type RollupHistory = {
