@@ -17,13 +17,16 @@ export type TApplicationConfig = {
   NETWORK_ID: 'mainnet' | 'testnet';
   BLOCKBERRY_API_KEY: string;
   MINA_ENDPOINT: string;
-  MINA_NETWORK_ID: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
     const result: any = { ...raw };
     result.NETWORK_ID = raw.NODE_ENV === 'production' ? 'mainnet' : 'testnet';
+    result.MINA_URL =
+      raw.NODE_ENV === 'production'
+        ? 'https://api.minascan.io/node/mainnet/v1/graphql'
+        : 'https://api.minascan.io/node/devnet/v1/graphql';
     result.EXPRESS_SESSION_SECRET = createHash('sha256')
       .update('express-session')
       .update(raw.SERVICE_SECRET)
@@ -62,8 +65,6 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     SERVICE_ALLOW_ORIGIN: Joi.string().trim().default('http://localhost:4000/'),
     OROCHI_LOG: Joi.string().trim().default('debug'),
     BLOCKBERRY_API_KEY: Joi.string().trim().required(),
-    MINA_NETWORK_ID: Joi.string().trim().required(),
-    MINA_ENDPOINT: Joi.string().trim().required(),
   }
 );
 
