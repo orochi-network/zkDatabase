@@ -4,7 +4,7 @@ import { databaseName, transactionType } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import {
   enqueueTransaction as enqueueTransactionDomain,
-  getTransaction as getTransactionDomain,
+  getTransactionForSigning,
   confirmTransaction as confirmTransactionDomain,
 } from '../../domain/use-case/transaction.js';
 import GraphQLJSON from 'graphql-type-json';
@@ -50,7 +50,7 @@ const getTransaction = authorizeWrapper(
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) =>
-    getTransactionDomain(args.databaseName, ctx.userName, args.transactionType)
+    getTransactionForSigning(args.databaseName, ctx.userName, args.transactionType)
 );
 
 const enqueueTransaction = authorizeWrapper(

@@ -6,6 +6,7 @@ import {
   Document,
   InsertOneResult,
   ObjectId,
+  WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
@@ -65,23 +66,21 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
   ): Promise<Document | UpdateResult<DbTransaction>> {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(id) },
-      args,
+      { $set: { ...args } },
       { ...options }
     );
 
     return result;
   }
 
-  public async getTx(
+  public async getTxs(
     databaseName: string,
     transactionType: TransactionType,
     options?: FindOptions
-  ): Promise<DbTransaction | null> {
-    const tx = await this.collection.findOne(
-      { databaseName, transactionType },
-      options
-    );
-    return tx;
+  ): Promise<Array<WithId<DbTransaction>>> {
+    return this.collection
+      .find({ databaseName, transactionType }, options)
+      .toArray();
   }
 
   public async findById(id: string, options?: FindOptions) {
@@ -113,7 +112,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
     if (!(await collection.isExist())) {
       await collection.index(
         { databaseName: 1, transactionType: 1 },
-        { unique: true }
+        { unique: false }
       );
     }
   }

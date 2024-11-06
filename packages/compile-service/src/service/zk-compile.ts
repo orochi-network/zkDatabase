@@ -1,5 +1,9 @@
 import { logger } from "@helper";
-import { MinaTransaction, ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import {
+  MinaTransaction,
+  serializeTransaction,
+  ZKDatabaseSmartContractWrapper,
+} from "@zkdb/smart-contract";
 import { ModelDbSetting } from "@zkdb/storage";
 import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
@@ -59,7 +63,7 @@ export class ZkCompileService {
         `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
       );
 
-      return partialSignedTx.toJSON();
+      return serializeTransaction(partialSignedTx as any);
     } catch (error) {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
@@ -95,6 +99,6 @@ export class ZkCompileService {
       `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
-    return partialSignedTx.toJSON();
+    return serializeTransaction(partialSignedTx as any);
   }
 }

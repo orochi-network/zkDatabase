@@ -191,7 +191,7 @@ export async function getRollUpHistory(
 
   if (diff > 0) {
     rollUpState = 'outdated';
-  } else if (history[0].status === 'failed') {
+  } else if (history[0] && history[0].status === 'failed') {
     rollUpState = 'failed';
   }
 
