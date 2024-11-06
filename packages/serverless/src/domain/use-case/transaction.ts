@@ -136,9 +136,7 @@ export async function getTransactionForSigning(
       transactionType
     );
 
-    const readyTransaction = transactions.find(
-      (tx) => tx.status === 'ready'
-    );
+    const readyTransaction = transactions.find((tx) => tx.status === 'ready');
 
     if (readyTransaction) {
       const { account, error } = await MinaNetwork.getInstance().getAccount(
@@ -158,7 +156,7 @@ export async function getTransactionForSigning(
           );
         }
 
-        return readyTransaction;
+        return { ...readyTransaction, zkAppPublicKey: dbSettings.appPublicKey };
       } else {
         throw Error('Account has not been found in Mina Network');
       }
@@ -176,12 +174,11 @@ export async function confirmTransaction(
   id: string,
   txHash: string
 ) {
-  if (await isDatabaseOwner(databaseName, actor)) {
-    await ModelDbTransaction.getInstance().updateById(id, {
-      txHash,
-      status: 'pending',
-    });
-  } else {
+  if (!(await isDatabaseOwner(databaseName, actor))) {
     throw Error('Only database owner can confirm transactions');
   }
+  await ModelDbTransaction.getInstance().updateById(id, {
+    txHash,
+    status: 'pending',
+  });
 }

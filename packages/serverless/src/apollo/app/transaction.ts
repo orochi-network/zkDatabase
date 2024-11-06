@@ -49,8 +49,21 @@ const getTransaction = authorizeWrapper(
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionRequest, ctx) =>
-    getTransactionForSigning(args.databaseName, ctx.userName, args.transactionType)
+  async (_root: unknown, args: TTransactionRequest, ctx) => {
+    const transaction = await getTransactionForSigning(
+      args.databaseName,
+      ctx.userName,
+      args.transactionType
+    );
+
+    return {
+      databaseName: transaction.databaseName,
+      transactionType: transaction.transactionType,
+      zkAppPublicKey: transaction.zkAppPublicKey,
+      id: (transaction as any)._id,
+      tx: transaction.tx,
+    };
+  }
 );
 
 const enqueueTransaction = authorizeWrapper(

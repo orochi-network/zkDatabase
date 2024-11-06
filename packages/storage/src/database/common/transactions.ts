@@ -66,7 +66,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
   ): Promise<Document | UpdateResult<DbTransaction>> {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { ...args } },
+      { $set: args },
       { ...options }
     );
 
