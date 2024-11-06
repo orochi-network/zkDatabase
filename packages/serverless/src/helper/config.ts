@@ -17,7 +17,6 @@ export type TApplicationConfig = {
   NETWORK_ID: 'mainnet' | 'testnet';
   BLOCKBERRY_API_KEY: string;
   MINA_ENDPOINT: string;
-  MINA_NETWORK_ID: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
