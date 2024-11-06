@@ -42,7 +42,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   await ModelDbDeployTx.init();
 
   MinaNetwork.getInstance().connect(
-    config.MINA_NETWORK_ID as NetworkId,
+    config.NETWORK_ID as NetworkId,
     config.MINA_ENDPOINT,
     config.BLOCKBERRY_API_KEY
   );
