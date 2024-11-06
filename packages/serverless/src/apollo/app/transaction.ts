@@ -5,6 +5,7 @@ import { TDatabaseRequest } from './database.js';
 import {
   enqueueTransaction as enqueueTransactionDomain,
   getTransaction as getTransactionDomain,
+  confirmTransaction as confirmTransactionDomain,
 } from '../../domain/use-case/transaction.js';
 import GraphQLJSON from 'graphql-type-json';
 
@@ -31,12 +32,16 @@ extend type Query {
 
 extend type Mutation {
   enqueueTransaction(databaseName: String!, transactionType: TransactionType!): Boolean
-  confirmTransaction(txHash: String!): Boolean
+  confirmTransaction(databaseName: String!, transactionType: TransactionType!, txHash: String!): Boolean
 }
 `;
 
 export type TTransactionRequest = TDatabaseRequest & {
   transactionType: 'deploy' | 'rollup';
+};
+
+export type TTransactionConfirmRequest = TTransactionRequest & {
+  txHash: string;
 };
 
 const getTransaction = authorizeWrapper(
@@ -66,11 +71,12 @@ const confirmTransaction = authorizeWrapper(
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionRequest, ctx) =>
-    enqueueTransactionDomain(
+  async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
+    confirmTransactionDomain(
       args.databaseName,
       ctx.userName,
-      args.transactionType
+      args.transactionType,
+      args.txHash
     )
 );
 
@@ -81,6 +87,7 @@ type TTransactionResolver = {
   };
   Mutation: {
     enqueueTransaction: typeof enqueueTransaction;
+    confirmTransaction: typeof confirmTransaction;
   };
 };
 
@@ -91,5 +98,6 @@ export const resolversTransaction: TTransactionResolver = {
   },
   Mutation: {
     enqueueTransaction,
+    confirmTransaction,
   },
 };

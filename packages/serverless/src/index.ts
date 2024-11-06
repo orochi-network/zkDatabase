@@ -44,7 +44,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,
-    config.MINA_ENDPOINT,
+    config.MINA_URL,
     config.BLOCKBERRY_API_KEY
   );
 

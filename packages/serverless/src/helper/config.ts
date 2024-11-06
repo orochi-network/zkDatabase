@@ -16,7 +16,7 @@ export type TApplicationConfig = {
   PROOF_MONGODB_URL: string;
   NETWORK_ID: 'mainnet' | 'testnet';
   BLOCKBERRY_API_KEY: string;
-  MINA_ENDPOINT: string;
+  MINA_URL: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(

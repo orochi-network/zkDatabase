@@ -145,7 +145,7 @@ export type DbTransactionQueue = {
         // TODO: Error message ???
         await modelTransaction.updateById(request.id, {
           status: "failed",
-          error: (error as any).toString(),
+          error: (error as Error).message,
         });
         logger.error("Error processing deployment request: ", error);
       }

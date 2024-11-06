@@ -37,7 +37,7 @@ export async function enqueueTransaction(
     throw Error('You have already unprocessed transaction');
   }
 
-  const { insertedId } = await modelTransaction.create(
+  const insertResult = await modelTransaction.create(
     {
       transactionType,
       databaseName,
@@ -49,15 +49,12 @@ export async function enqueueTransaction(
 
   await redisQueue.enqueue(
     JSON.stringify({
-      key: databaseName,
+      id: insertResult.insertedId.toString(),
       payerAddress: payer?.publicKey,
-      transactionType,
-      databaseName,
-      merkleHeight: settings?.merkleHeight,
     })
   );
 
-  return insertedId;
+  return insertResult.insertedId;
 }
 
 export async function getTransaction(
