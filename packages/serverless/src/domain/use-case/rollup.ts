@@ -84,7 +84,7 @@ export async function getRollUpHistory(
 
   const task = await queue.collection.findOne({
     database: databaseName,
-    merkleRoot,
+    merkleRoot: merkleRoot.toString()
   });
 
   if (
