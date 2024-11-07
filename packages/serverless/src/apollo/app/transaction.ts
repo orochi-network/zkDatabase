@@ -32,7 +32,7 @@ extend type Query {
 
 extend type Mutation {
   enqueueTransaction(databaseName: String!, transactionType: TransactionType!): String!
-  confirmTransaction(databaseName: String!, transactionType: TransactionType!, txHash: String!): Boolean
+  confirmTransaction(databaseName: String!, id: String!, txHash: String!): Boolean
 }
 `;
 

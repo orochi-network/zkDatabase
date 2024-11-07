@@ -181,4 +181,5 @@ export async function confirmTransaction(
     txHash,
     status: 'pending',
   });
+  return true;
 }
