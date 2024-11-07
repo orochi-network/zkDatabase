@@ -31,7 +31,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  enqueueTransaction(databaseName: String!, transactionType: TransactionType!): Boolean
+  enqueueTransaction(databaseName: String!, transactionType: TransactionType!): String!
   confirmTransaction(databaseName: String!, transactionType: TransactionType!, txHash: String!): Boolean
 }
 `;
@@ -41,7 +41,7 @@ export type TTransactionRequest = TDatabaseRequest & {
 };
 
 export type TTransactionIdRequest = TDatabaseRequest & {
-  id: string
+  id: string;
 };
 
 export type TTransactionConfirmRequest = TTransactionIdRequest & {
@@ -76,18 +76,20 @@ const enqueueTransaction = authorizeWrapper(
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) =>
-    enqueueTransactionDomain(
-      args.databaseName,
-      ctx.userName,
-      args.transactionType
-    )
+    (
+      await enqueueTransactionDomain(
+        args.databaseName,
+        ctx.userName,
+        args.transactionType
+      )
+    ).toString()
 );
 
 const confirmTransaction = authorizeWrapper(
   Joi.object({
     databaseName,
     id: Joi.string().required(),
-    txHash: Joi.string().required()
+    txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
     confirmTransactionDomain(
