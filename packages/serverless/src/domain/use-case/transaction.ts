@@ -168,6 +168,20 @@ export async function getTransactionForSigning(
   throw new Error('Only database owner can deploy database');
 }
 
+export async function getLatestTransaction(
+  databaseName: string,
+  transactionType: TransactionType
+) {
+  const modelTransaction = ModelDbTransaction.getInstance();
+
+  const txs = await modelTransaction.getTxs(databaseName, transactionType, {
+    sort: {
+      createdAt: -1,
+    },
+  });
+
+  return txs.length === 0 ? null : txs[0];
+}
 export async function confirmTransaction(
   databaseName: string,
   actor: string,

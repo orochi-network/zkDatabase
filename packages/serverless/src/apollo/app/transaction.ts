@@ -23,6 +23,7 @@ type DbTransaction {
   databaseName: String!
   transactionType: TransactionType!
   zkAppPublicKey: String!
+  status: TransactionStatus!
   tx: String!
   id: String!
 }
@@ -61,10 +62,12 @@ const getTransaction = authorizeWrapper(
       args.transactionType
     );
 
+    transaction.status
     return {
       databaseName: transaction.databaseName,
       transactionType: transaction.transactionType,
       zkAppPublicKey: transaction.zkAppPublicKey,
+      status: transaction.status,
       id: (transaction as any)._id,
       tx: transaction.tx,
     };

@@ -17,7 +17,7 @@ import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
-import { enqueueTransaction } from './transaction.js';
+import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -118,6 +118,8 @@ export async function getDatabases(
 
         const collections = await listCollections(databaseName, actor);
 
+        const deployStatus = (await getLatestTransaction(databaseName, 'deploy'))?.status ?? null;
+
         return {
           databaseName,
           databaseOwner,
@@ -125,6 +127,7 @@ export async function getDatabases(
           databaseSize,
           collections,
           appPublicKey,
+          deployStatus
         } as Database;
       })
     )
