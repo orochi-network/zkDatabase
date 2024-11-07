@@ -49,7 +49,7 @@ export async function proveCreateDocument(
 
   const hash = schema.hash();
   await merkleTree.setLeaf(BigInt(index), hash, currDate, { session });
-  const newRoot = await merkleTree.getRoot(currDate, { session });
+  const newRoot = await merkleTree.getRoot(new Date(currDate.getTime() - 1), { session });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
   const operationNumber = await sequencer.getNextValue('operation', session);
@@ -117,7 +117,7 @@ export async function proveUpdateDocument(
     { session }
   );
 
-  const newRoot = await merkleTree.getRoot(currDate, { session });
+  const newRoot = await merkleTree.getRoot(new Date(currDate.getTime() - 1), { session });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
   const operationNumber = await sequencer.getNextValue('operation', session);
@@ -178,7 +178,7 @@ export async function proveDeleteDocument(
     { session }
   );
 
-  const newRoot = await merkleTree.getRoot(currDate, { session });
+  const newRoot = await merkleTree.getRoot(new Date(currDate.getTime() - 1), { session });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
   const operationNumber = await sequencer.getNextValue('operation', session);
