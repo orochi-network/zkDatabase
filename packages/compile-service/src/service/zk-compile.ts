@@ -63,7 +63,7 @@ export class ZkCompileService {
         `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
       );
 
-      return serializeTransaction(partialSignedTx as any);
+      return partialSignedTx.toJSON();
     } catch (error) {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
@@ -99,6 +99,6 @@ export class ZkCompileService {
       `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
-    return serializeTransaction(partialSignedTx as any);
+    return partialSignedTx.toJSON();
   }
 }
