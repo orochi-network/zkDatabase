@@ -40,7 +40,11 @@ export type TTransactionRequest = TDatabaseRequest & {
   transactionType: 'deploy' | 'rollup';
 };
 
-export type TTransactionConfirmRequest = TTransactionRequest & {
+export type TTransactionIdRequest = TDatabaseRequest & {
+  id: string
+};
+
+export type TTransactionConfirmRequest = TTransactionIdRequest & {
   txHash: string;
 };
 
@@ -82,13 +86,14 @@ const enqueueTransaction = authorizeWrapper(
 const confirmTransaction = authorizeWrapper(
   Joi.object({
     databaseName,
-    transactionType,
+    id: Joi.string().required(),
+    txHash: Joi.string().required()
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
     confirmTransactionDomain(
       args.databaseName,
       ctx.userName,
-      args.transactionType,
+      args.id,
       args.txHash
     )
 );

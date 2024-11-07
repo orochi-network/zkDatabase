@@ -2,6 +2,7 @@ import {
   DbTransaction,
   ModelDbSetting,
   ModelDbTransaction,
+  ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
   ModelRollup,
@@ -55,6 +56,8 @@ export async function getRollUpHistory(
     { session }
   );
 
+  ModelMerkleTree;
+
   if (!dbSetting?.appPublicKey) {
     throw Error('Database is not bound to zk app');
   }
@@ -75,19 +78,21 @@ export async function getRollUpHistory(
     throw Error('The account in not zk app');
   }
 
-  const merkleRoot = zkApp.appState[0].toString();
+  const merkleRoot = zkApp.appState[0];
+
+  let rolledUpTaskNumber: number;
 
   const task = await queue.collection.findOne({
     database: databaseName,
     merkleRoot,
   });
 
-  if (!task) {
-    return {
-      history: [],
-      state: 'updated',
-      extraData: 0,
-    };
+  if (merkleRoot.equals(ModelMerkleTree.getEmptyRoot(dbSetting.merkleHeight)).toBoolean()) {
+    rolledUpTaskNumber = 0;
+  } else if (task) {
+    rolledUpTaskNumber = task.operationNumber
+  } else {
+    throw Error('Wrong zkapp state')
   }
 
   const latestTask = await queue.collection.findOne(
@@ -97,7 +102,7 @@ export async function getRollUpHistory(
     { sort: { createdAt: -1 } }
   );
 
-  const diff = latestTask!.operationNumber - task.operationNumber;
+  const diff = latestTask!.operationNumber - rolledUpTaskNumber;
 
   const rollUpList = await modelRollUp.collection
     .find({ databaseName })

@@ -11,9 +11,11 @@ export function serializeTransaction(tx: MinaTransaction): string {
       la !== undefined &&
       (la as any).blindingValue !== undefined &&
       (la as any).kind === 'lazy-proof'
-    )
+    ) {
       blindingValues.push(((la as any).blindingValue as Field).toJSON());
-    else blindingValues.push('');
+    } else {
+      blindingValues.push('');
+    }
   }
 
   const serializedTransaction: string = JSON.stringify(
@@ -34,8 +36,8 @@ export function serializeTransaction(tx: MinaTransaction): string {
 export function deserializeTransaction(
   serializedTransaction: string
 ): MinaTransaction {
-  const { tx, blindingValues, length } = JSON.parse(serializedTransaction)
-  
+  const { tx, blindingValues, length } = JSON.parse(serializedTransaction);
+
   const transaction = Mina.Transaction.fromJSON(
     JSON.parse(tx)
   ) as MinaTransaction;
@@ -43,10 +45,11 @@ export function deserializeTransaction(
     throw new Error('Serialized Transaction length mismatch');
   }
   for (let i = 0; i < length; i++) {
-    if (blindingValues[i] !== '')
+    if (blindingValues[i] !== '') {
       (
         transaction.transaction.accountUpdates[i].lazyAuthorization as any
       ).blindingValue = Field.fromJSON(blindingValues[i]);
+    }
   }
   return transaction;
 }

@@ -9,8 +9,8 @@ export const typeDefsRollUp = `#graphql
 scalar Date
 type Mutation
 
-enum RollUpStatus {
-  update
+enum RollUpState {
+  updated
   outdated
   failed
 }
@@ -27,8 +27,8 @@ type RollUpHistoryItem {
 }
 
 type RollUpHistory {
-  status: RollUpStatus!,
-  statusData: Int,
+  state: RollUpState,
+  extraData: Int,
   history: [RollUpHistoryItem]
 }
 

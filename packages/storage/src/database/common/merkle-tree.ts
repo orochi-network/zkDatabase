@@ -6,7 +6,7 @@ import {
   FindOptions,
   ObjectId,
 } from 'mongodb';
-import { Field, Poseidon } from 'o1js';
+import { Field, MerkleTree, Poseidon } from 'o1js';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
@@ -84,6 +84,10 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     }
 
     throw Error(`${databaseName} setting has not been found.`);
+  }
+
+  public static getEmptyRoot(height: number): Field {
+    return new MerkleTree(height).getRoot();
   }
 
   private setHeight(newHeight: number): void {
