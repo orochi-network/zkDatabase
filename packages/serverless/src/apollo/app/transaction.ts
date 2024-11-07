@@ -24,6 +24,7 @@ type DbTransaction {
   transactionType: TransactionType!
   zkAppPublicKey: String!
   tx: String!
+  id: String!
 }
 
 extend type Query {
