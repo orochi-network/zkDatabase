@@ -62,17 +62,17 @@ export async function getRollUpHistory(
     throw Error('Database is not bound to zk app');
   }
 
-  const account = await minaNetwork.getAccount(
+  const { account, error } = await minaNetwork.getAccount(
     PublicKey.fromBase58(dbSetting.appPublicKey)
   );
 
-  if (!account.account) {
+  if (!account) {
     throw Error(
-      `zk app with ${dbSetting.appPublicKey} is not exist in mina network. Error: ${account.error}`
+      `zk app with ${dbSetting.appPublicKey} is not exist in mina network. Error: ${error}`
     );
   }
 
-  const zkApp = account.account.zkapp;
+  const zkApp = account.zkapp;
 
   if (!zkApp) {
     throw Error('The account in not zk app');
@@ -87,12 +87,16 @@ export async function getRollUpHistory(
     merkleRoot,
   });
 
-  if (merkleRoot.equals(ModelMerkleTree.getEmptyRoot(dbSetting.merkleHeight)).toBoolean()) {
+  if (
+    merkleRoot
+      .equals(ModelMerkleTree.getEmptyRoot(dbSetting.merkleHeight))
+      .toBoolean()
+  ) {
     rolledUpTaskNumber = 0;
   } else if (task) {
-    rolledUpTaskNumber = task.operationNumber
+    rolledUpTaskNumber = task.operationNumber;
   } else {
-    throw Error('Wrong zkapp state')
+    throw Error('Wrong zkapp state');
   }
 
   const latestTask = await queue.collection.findOne(
