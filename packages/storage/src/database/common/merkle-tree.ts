@@ -111,10 +111,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     return this.zeroes;
   }
 
-  public async getRoot(
-    timestamp: Date,
-    options?: FindOptions
-  ): Promise<Field> {
+  public async getRoot(timestamp: Date, options?: FindOptions): Promise<Field> {
     const root = await this.getNode(this._height - 1, 0n, timestamp, options);
     return Field(root);
   }
@@ -124,7 +121,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     leaf: Field,
     timestamp: Date,
     options?: FindOptions
-  ): Promise<void> {
+  ): Promise<Field> {
     const witnesses = await this.getWitness(index, timestamp, options);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this._height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
@@ -150,6 +147,8 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
       inserts,
       typeof options !== 'undefined' ? { session: options.session } : undefined
     );
+
+    return path[this.height - 1];
   }
 
   public async insertManyLeaves(
