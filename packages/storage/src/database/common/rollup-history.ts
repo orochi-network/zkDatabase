@@ -52,8 +52,12 @@ export class ModelRollup extends ModelBasic<RollupHistory> {
     databaseName: string,
     updateRollup: Partial<RollupHistory>
   ): Promise<UpdateResult<RollupHistory>> {
-    return this.collection.updateOne({ databaseName }, updateRollup, {
-      upsert: true,
-    });
+    return this.collection.updateOne(
+      { databaseName },
+      { $set: updateRollup },
+      {
+        upsert: true,
+      }
+    );
   }
 }
