@@ -27,9 +27,9 @@ type RollUpHistoryItem {
 }
 
 type RollUpHistory {
-  state: RollUpState,
+  state: RollUpState!,
   extraData: Int,
-  history: [RollUpHistoryItem]
+  history: [RollUpHistoryItem]!
 }
 
 extend type Mutation {
