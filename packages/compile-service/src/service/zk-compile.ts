@@ -5,7 +5,7 @@ import {
   ZKDatabaseSmartContractWrapper,
 } from "@zkdb/smart-contract";
 import { ModelDbSetting } from "@zkdb/storage";
-import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
+import { fetchAccount, JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
 const MAX_MERKLE_TREE_HEIGHT = 128;
 
@@ -42,13 +42,20 @@ export class ZkCompileService {
   ): Promise<UnsignedTransaction> {
     try {
       const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+      const senderPublicKey = PublicKey.fromBase58(payerAddress);
+
+      await Promise.all([
+        await fetchAccount({
+          publicKey: senderPublicKey,
+        }),
+      ]);
 
       const start = performance.now();
 
       const zkWrapper = await this.getSmartContract(merkleHeight);
 
       const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
-        sender: PublicKey.fromBase58(payerAddress),
+        sender: senderPublicKey,
         zkApp: zkDbPublicKey,
       });
 
@@ -80,6 +87,16 @@ export class ZkCompileService {
     proof: JsonProof
   ): Promise<UnsignedTransaction> {
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+    const senderPublicKey = PublicKey.fromBase58(payerAddress);
+
+    await Promise.all([
+      await fetchAccount({
+        publicKey: zkDbPublicKey,
+      }),
+      await fetchAccount({
+        publicKey: senderPublicKey,
+      }),
+    ]);
 
     const start = performance.now();
 
@@ -87,7 +104,7 @@ export class ZkCompileService {
 
     const unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
       {
-        sender: PublicKey.fromBase58(payerAddress),
+        sender: senderPublicKey,
         zkApp: zkDbPublicKey,
       },
       proof
