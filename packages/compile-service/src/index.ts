@@ -83,10 +83,16 @@ export type DbTransactionQueue = {
             dbSettings.merkleHeight,
             dbSettings.databaseName
           );
-          await secureStorage.insertOne({
-            privateKey: encryptedZkAppPrivateKey,
-            databaseName: dbSettings.databaseName,
-          });
+          await secureStorage.replaceOne(
+            {
+              databaseName: dbSettings.databaseName,
+            },
+            {
+              privateKey: encryptedZkAppPrivateKey,
+              databaseName: dbSettings.databaseName,
+            },
+            { upsert: true }
+          );
         } else if (tx.transactionType === "rollup") {
           const privateKey = await secureStorage.findOne({
             databaseName: dbSettings.databaseName,
