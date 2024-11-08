@@ -62,7 +62,7 @@ export async function enqueueTransaction(
     if (pendingTx) {
       if (pendingTx.txHash) {
         const onchainTx =
-          await MinaNetwork.getInstance().getTransactionStatusByHash(
+          await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
             pendingTx.txHash
           );
 
@@ -78,7 +78,7 @@ export async function enqueueTransaction(
         } else if (onchainTx.txStatus === 'failed') {
           await modelTransaction.updateById(pendingTx._id.toString(), {
             status: 'failed',
-            error: onchainTx.failureReason,
+            error: onchainTx.failures.join(" "),
           });
           // Proceed and create new transaction
         }

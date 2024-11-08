@@ -15,6 +15,11 @@ export type TBlockConfirmationTransaction = {
   failureReason: string;
 };
 
+export type TZkAppTransaction = {
+  txStatus: TStatus;
+  failures: string[];
+};
+
 export class BlockberryApi {
   private chain: TChain;
   #apiKey: string;
@@ -46,6 +51,34 @@ export class BlockberryApi {
       }
       const result = await response.json();
       return result as TBlockConfirmationTransaction;
+    } catch (err) {
+      logger.error(err);
+      return undefined;
+    }
+  }
+
+  public async getZkAppTransactionByTxHash(
+    txHash: string
+  ): Promise<TZkAppTransaction | undefined> {
+    const options = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        'x-api-key': this.#apiKey,
+      },
+    };
+
+    try {
+      const response = await fetch(
+        `https://api.blockberry.one/mina-${this.chain}/v1/zkapps/txs/${txHash}`,
+        options
+      );
+      if (!response.ok) {
+        logger.error('response:', response);
+        return undefined;
+      }
+      const result = await response.json();
+      return result as TZkAppTransaction;
     } catch (err) {
       logger.error(err);
       return undefined;

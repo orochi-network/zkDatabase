@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, transactionType } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import GraphQLJSON from 'graphql-type-json';
@@ -18,7 +18,7 @@ enum RollUpState {
 type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
-  txHash: String!,
+  txHash: String,
   status: TransactionStatus!,
   currentMerkleTreeRoot: String!,
   previousMerkleTreeRoot: String!,

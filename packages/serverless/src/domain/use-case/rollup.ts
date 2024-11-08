@@ -56,8 +56,6 @@ export async function getRollUpHistory(
     { session }
   );
 
-  ModelMerkleTree;
-
   if (!dbSetting?.appPublicKey) {
     throw Error('Database is not bound to zk app');
   }
@@ -84,7 +82,7 @@ export async function getRollUpHistory(
 
   const task = await queue.collection.findOne({
     database: databaseName,
-    merkleRoot: merkleRoot.toString()
+    merkleRoot: merkleRoot.toString(),
   });
 
   if (
@@ -123,6 +121,7 @@ export async function getRollUpHistory(
     previousMerkleTreeRoot: history.newMerkleRoot,
     createdAt: transaction.createdAt,
     transactionHash: transaction?.txHash,
+    transactionType: 'rollup',
     status,
     error,
   });
@@ -145,7 +144,7 @@ export async function getRollUpHistory(
             return null;
           }
 
-          const tx = await minaNetwork.getTransactionStatusByHash(
+          const tx = await minaNetwork.getZkAppTransactionByTxHash(
             transaction.txHash
           );
 
@@ -165,7 +164,7 @@ export async function getRollUpHistory(
                 history.txId.toString(),
                 {
                   status: 'failed',
-                  error: tx.failureReason,
+                  error: tx.failures.join(' '),
                 },
                 { session }
               );
@@ -173,7 +172,7 @@ export async function getRollUpHistory(
                 history,
                 transaction,
                 'failed',
-                tx.failureReason
+                tx.failures.join(' ')
               );
             }
           }
