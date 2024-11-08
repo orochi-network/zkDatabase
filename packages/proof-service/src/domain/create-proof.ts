@@ -119,6 +119,7 @@ export async function createProof(taskId: string) {
       } else {
         const rollupProof = await modelProof.findOne({
           merkleRoot: onChainRootState.toString(),
+          database: task.database
         });
         if (rollupProof) {
           proof = await circuit.updateTransition(
