@@ -7372,9 +7372,9 @@ mimic-function@^5.0.0:
   resolved "https://registry.npmjs.org/mimic-function/-/mimic-function-5.0.1.tgz"
   integrity sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==
 
-mina-signer@^3.0.4:
+mina-signer@^3.0.7:
   version "3.0.7"
-  resolved "https://registry.npmjs.org/mina-signer/-/mina-signer-3.0.7.tgz"
+  resolved "https://registry.yarnpkg.com/mina-signer/-/mina-signer-3.0.7.tgz#9b926464db5ccf78ae7648a35f0b679fbdb111a4"
   integrity sha512-7eYp/6WWj2VzJjvfC8dNeGMud/brdBrzkUsCdysFFXnfV2/FVpVhAGCMfaS6hs0HJtS4+eplmiD2hXfshQS8CQ==
   dependencies:
     blakejs "^1.2.1"
@@ -7675,7 +7675,7 @@ nth-check@^2.0.1:
   dependencies:
     boolbase "^1.0.0"
 
-o1js@1.9.1, o1js@^1.8.0:
+o1js@^1.8.0, o1js@^1.9.0:
   version "1.9.1"
   resolved "https://registry.npmjs.org/o1js/-/o1js-1.9.1.tgz"
   integrity sha512-QbeFb2WU4YpCRIz/2hu3lhwioDntpmn8M7Zl6LrIh3fIPoHMQcN9OIqE8whN83ttcioV3HsJwszKtfkBC5vEYQ==

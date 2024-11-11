@@ -16,6 +16,7 @@ export type ProofMetadata = {
   database: string;
   collection: string;
   merkleRoot: string;
+  prevMerkleRoot: string;
 };
 
 export type ProofDetails = ZKProof & ProofMetadata;
@@ -56,7 +57,7 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public async getProof(
     database: string,
     options?: FindOptions
-  ): Promise<ZKProof | null> {
+  ): Promise<ProofDetails | null> {
     const proof = await this.collection.findOne(
       { database },
       { ...options, sort: { createdAt: -1 } }

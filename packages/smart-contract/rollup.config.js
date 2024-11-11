@@ -22,6 +22,7 @@ export default [
           { find: '@proof', replacement: 'src/proof' },
           { find: '@types', replacement: 'src/types' },
           { find: '@network', replacement: 'src/network' },
+          { find: '@utils', replacement: 'src/utils' },
         ],
       }),
       typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),

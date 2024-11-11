@@ -41,6 +41,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

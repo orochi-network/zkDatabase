@@ -1,7 +1,11 @@
 import { logger } from "@helper";
-import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import {
+  MinaTransaction,
+  serializeTransaction,
+  ZKDatabaseSmartContractWrapper,
+} from "@zkdb/smart-contract";
 import { ModelDbSetting } from "@zkdb/storage";
-import { JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
+import { fetchAccount, JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
 const MAX_MERKLE_TREE_HEIGHT = 128;
 
@@ -38,17 +42,24 @@ export class ZkCompileService {
   ): Promise<UnsignedTransaction> {
     try {
       const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+      const senderPublicKey = PublicKey.fromBase58(payerAddress);
+
+      await Promise.all([
+        await fetchAccount({
+          publicKey: senderPublicKey,
+        }),
+      ]);
 
       const start = performance.now();
 
       const zkWrapper = await this.getSmartContract(merkleHeight);
 
-      let unsignedTx = await zkWrapper.createAndProveDeployTransaction({
-        sender: PublicKey.fromBase58(payerAddress),
+      const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+        sender: senderPublicKey,
         zkApp: zkDbPublicKey,
       });
 
-      unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+      const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: zkDbPublicKey.toBase58(),
@@ -59,7 +70,7 @@ export class ZkCompileService {
         `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
       );
 
-      return unsignedTx.toJSON();
+      return partialSignedTx.toJSON();
     } catch (error) {
       logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
@@ -76,25 +87,35 @@ export class ZkCompileService {
     proof: JsonProof
   ): Promise<UnsignedTransaction> {
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+    const senderPublicKey = PublicKey.fromBase58(payerAddress);
+
+    await Promise.all([
+      await fetchAccount({
+        publicKey: zkDbPublicKey,
+      }),
+      await fetchAccount({
+        publicKey: senderPublicKey,
+      }),
+    ]);
 
     const start = performance.now();
 
     const zkWrapper = await this.getSmartContract(merkleHeight);
 
-    let unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
+    const unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
       {
-        sender: PublicKey.fromBase58(payerAddress),
+        sender: senderPublicKey,
         zkApp: zkDbPublicKey,
       },
       proof
     );
 
-    unsignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
     const end = performance.now();
     logger.info(
       `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
     );
 
-    return unsignedTx.toJSON();
+    return partialSignedTx.toJSON();
   }
 }

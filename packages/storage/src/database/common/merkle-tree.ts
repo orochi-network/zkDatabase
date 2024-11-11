@@ -1,6 +1,12 @@
 import crypto from 'crypto';
-import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
-import { Field, Poseidon } from 'o1js';
+import {
+  BulkWriteOptions,
+  ClientSession,
+  Document,
+  FindOptions,
+  ObjectId,
+} from 'mongodb';
+import { Field, MerkleTree, Poseidon } from 'o1js';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
@@ -80,6 +86,10 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     throw Error(`${databaseName} setting has not been found.`);
   }
 
+  public static getEmptyRoot(height: number): Field {
+    return new MerkleTree(height).getRoot();
+  }
+
   private setHeight(newHeight: number): void {
     if (this._height) {
       return;
@@ -101,8 +111,8 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     return this.zeroes;
   }
 
-  public async getRoot(timestamp: Date): Promise<Field> {
-    const root = await this.getNode(this._height - 1, 0n, timestamp);
+  public async getRoot(timestamp: Date, options?: FindOptions): Promise<Field> {
+    const root = await this.getNode(this._height - 1, 0n, timestamp, options);
     return Field(root);
   }
 
@@ -111,7 +121,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     leaf: Field,
     timestamp: Date,
     options?: FindOptions
-  ): Promise<void> {
+  ): Promise<Field> {
     const witnesses = await this.getWitness(index, timestamp, options);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this._height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
@@ -137,6 +147,8 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
       inserts,
       typeof options !== 'undefined' ? { session: options.session } : undefined
     );
+
+    return path[this.height - 1];
   }
 
   public async insertManyLeaves(

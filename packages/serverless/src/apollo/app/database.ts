@@ -90,6 +90,7 @@ type DbDescription {
   databaseOwner: String!,
   appPublicKey: String,
   merkleHeight: Int!,
+  deployStatus: TransactionStatus,
   collections: [CollectionDescriptionOutput]!
 }
 

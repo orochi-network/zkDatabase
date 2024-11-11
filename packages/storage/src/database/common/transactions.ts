@@ -4,6 +4,9 @@ import {
   ReplaceOptions,
   UpdateResult,
   Document,
+  InsertOneResult,
+  ObjectId,
+  WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
@@ -12,14 +15,25 @@ import ModelCollection from '../general/collection.js';
 
 export type TransactionType = 'deploy' | 'rollup';
 
+export type TransactionStatus =
+  | 'start'
+  | 'ready'
+  | 'pending'
+  | 'failed'
+  | 'success';
+
 export type DbTransaction = {
   transactionType: TransactionType;
   databaseName: string;
-  tx: string;
+  tx?: string;
+  status: TransactionStatus;
+  txHash?: string;
+  error?: string;
+  createdAt: Date;
 };
 
-export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
-  private static instance: ModelDbDeployTx;
+export class ModelDbTransaction extends ModelBasic<DbTransaction> {
+  private static instance: ModelDbTransaction;
 
   private constructor() {
     super(
@@ -30,8 +44,8 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
   }
 
   public static getInstance() {
-    if (!ModelDbDeployTx.instance) {
-      this.instance = new ModelDbDeployTx();
+    if (!ModelDbTransaction.instance) {
+      this.instance = new ModelDbTransaction();
     }
     return this.instance;
   }
@@ -39,26 +53,39 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
   public async create(
     args: DbTransaction,
     options?: ReplaceOptions
+  ): Promise<Document | InsertOneResult<DbTransaction>> {
+    const result = await this.collection.insertOne(args, { ...options });
+
+    return result;
+  }
+
+  public async updateById(
+    id: string,
+    args: Partial<DbTransaction>,
+    options?: ReplaceOptions
   ): Promise<Document | UpdateResult<DbTransaction>> {
-    const result = await this.collection.replaceOne(
-      {
-        transactionType: args.transactionType,
-        databaseName: args.databaseName,
-      },
-      args,
-      { ...options, upsert: true }
+    const result = await this.collection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: args },
+      { ...options }
     );
 
     return result;
   }
 
-  public async getTx(
+  public async getTxs(
     databaseName: string,
     transactionType: TransactionType,
     options?: FindOptions
-  ): Promise<DbTransaction | null> {
+  ): Promise<Array<WithId<DbTransaction>>> {
+    return this.collection
+      .find({ databaseName, transactionType }, options)
+      .toArray();
+  }
+
+  public async findById(id: string, options?: FindOptions) {
     const tx = await this.collection.findOne(
-      { databaseName, transactionType },
+      { _id: new ObjectId(id) },
       options
     );
     return tx;
@@ -79,12 +106,13 @@ export class ModelDbDeployTx extends ModelBasic<DbTransaction> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
+      DB.service,
       zkDatabaseConstants.globalCollections.transaction
     );
     if (!(await collection.isExist())) {
       await collection.index(
         { databaseName: 1, transactionType: 1 },
-        { unique: true }
+        { unique: false }
       );
     }
   }

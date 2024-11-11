@@ -3,7 +3,8 @@ import { EncryptionKey } from "@orochi-network/vault";
 import { UnsignedTransaction, ZkCompileService } from "@service";
 import {
   DatabaseEngine,
-  ModelDbDeployTx,
+  ModelDbSetting,
+  ModelDbTransaction,
   ModelProof,
   ModelSecureStorage,
 } from "@zkdb/storage";
@@ -13,11 +14,9 @@ import { RedisQueueService } from "./message-queue";
 
 export type TransactionType = "deploy" | "rollup";
 
-export type DbDeployQueue = {
-  transactionType: TransactionType;
+export type DbTransactionQueue = {
+  id: string;
   payerAddress: string;
-  merkleHeight: number;
-  databaseName: string;
 };
 
 (async () => {
@@ -27,7 +26,7 @@ export type DbDeployQueue = {
     mina: config.MINA_URL,
   });
   // Init redis queue service
-  const redisQueue = new RedisQueueService<DbDeployQueue>(
+  const redisQueue = new RedisQueueService<DbTransactionQueue>(
     "zkAppDeploymentQueue",
     { url: config.REDIS_URL }
   );
@@ -43,17 +42,35 @@ export type DbDeployQueue = {
     await proofDb.connect();
   }
 
+  const modelTransaction = ModelDbTransaction.getInstance();
+  const modelDbSettings = ModelDbSetting.getInstance();
+
   while (true) {
     const request = await redisQueue.dequeue();
     if (request) {
-      logger.info(`Received ${request.databaseName} to queue`);
+      const tx = await modelTransaction.findById(request.id);
+
+      if (!tx) {
+        logger.error(`Transaction ${request.id} has not been found`);
+        continue;
+      }
+
+      const dbSettings = await modelDbSettings.getSetting(tx.databaseName);
+
+      // Impossible case
+      if (!dbSettings) {
+        logger.error(`Settings for ${tx.databaseName} has not been found`);
+        continue;
+      }
+
+      logger.info(`Received ${tx.databaseName} to queue`);
 
       try {
         const secureStorage = ModelSecureStorage.getInstance();
 
         let transaction: UnsignedTransaction;
         let zkAppPublicKey: string;
-        if (request.transactionType === "deploy") {
+        if (tx.transactionType === "deploy") {
           const zkAppPrivateKey = PrivateKey.random();
           zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
           const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
@@ -63,16 +80,22 @@ export type DbDeployQueue = {
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
-            request.merkleHeight,
-            request.databaseName
+            dbSettings.merkleHeight,
+            dbSettings.databaseName
           );
-          await secureStorage.insertOne({
-            privateKey: encryptedZkAppPrivateKey,
-            databaseName: request.databaseName,
-          });
-        } else if (request.transactionType === "rollup") {
+          await secureStorage.replaceOne(
+            {
+              databaseName: dbSettings.databaseName,
+            },
+            {
+              privateKey: encryptedZkAppPrivateKey,
+              databaseName: dbSettings.databaseName,
+            },
+            { upsert: true }
+          );
+        } else if (tx.transactionType === "rollup") {
           const privateKey = await secureStorage.findOne({
-            databaseName: request.databaseName,
+            databaseName: dbSettings.databaseName,
           });
 
           if (!privateKey) {
@@ -89,7 +112,7 @@ export type DbDeployQueue = {
           zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
 
           const proof = await ModelProof.getInstance().getProof(
-            request.databaseName
+            dbSettings.databaseName
           );
 
           if (!proof) {
@@ -98,32 +121,38 @@ export type DbDeployQueue = {
           transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
-            request.merkleHeight,
+            dbSettings.merkleHeight,
             proof
           );
         } else {
           throw Error(
-            `Transaction type ${request.transactionType} is not supported`
+            `Transaction type ${tx.transactionType} is not supported`
           );
         }
 
-        const deployTx = await ModelDbDeployTx.getInstance().create({
-          transactionType: request.transactionType,
-          tx: transaction,
-          databaseName: request.databaseName,
-          zkAppPublicKey,
-        });
+        const deployTx = await ModelDbTransaction.getInstance().updateById(
+          request.id,
+          {
+            status: "ready",
+            tx: transaction,
+          }
+        );
 
         if (!deployTx) {
           throw new Error(
-            `Error cannot add ${request.databaseName} to database`
+            `Error cannot add ${dbSettings.databaseName} to database`
           );
         }
 
         logger.info(
-          `Compile successfully: Database: ${request.databaseName}, transaction type: ${request.transactionType}`
+          `Compile successfully: Database: ${dbSettings.databaseName}, transaction type: ${tx.transactionType}`
         );
       } catch (error) {
+        // TODO: Error message ???
+        await modelTransaction.updateById(request.id, {
+          status: "failed",
+          error: (error as Error).message,
+        });
         logger.error("Error processing deployment request: ", error);
       }
     }

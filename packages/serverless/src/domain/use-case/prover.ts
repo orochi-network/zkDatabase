@@ -1,7 +1,12 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
-import { TMerkleProof, ModelMerkleTree, ModelQueueTask } from '@zkdb/storage';
+import {
+  TMerkleProof,
+  ModelMerkleTree,
+  ModelQueueTask,
+  ModelSequencer,
+} from '@zkdb/storage';
 
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';
@@ -43,7 +48,10 @@ export async function proveCreateDocument(
   const currDate = new Date();
 
   const hash = schema.hash();
-  await merkleTree.setLeaf(BigInt(index), hash, currDate, { session });
+  const newRoot = await merkleTree.setLeaf(BigInt(index), hash, currDate, { session });
+
+  const sequencer = ModelSequencer.getInstance(databaseName);
+  const operationNumber = await sequencer.getNextValue('operation', session);
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -54,6 +62,8 @@ export async function proveCreateDocument(
       database: databaseName,
       collection: collectionName,
       docId,
+      operationNumber,
+      merkleRoot: newRoot.toString(),
     },
     { session }
   );
@@ -99,12 +109,15 @@ export async function proveUpdateDocument(
   const currDate = new Date();
   const hash = schema.hash();
 
-  await merkleTree.setLeaf(
+  const newRoot = await merkleTree.setLeaf(
     BigInt(documentMetadata.merkleIndex),
     hash,
     currDate,
     { session }
   );
+
+  const sequencer = ModelSequencer.getInstance(databaseName);
+  const operationNumber = await sequencer.getNextValue('operation', session);
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -115,6 +128,8 @@ export async function proveUpdateDocument(
       database: databaseName,
       collection: collectionName,
       docId,
+      operationNumber,
+      merkleRoot: newRoot.toString(),
     },
     { session }
   );
@@ -153,12 +168,15 @@ export async function proveDeleteDocument(
   }
 
   const currDate = new Date();
-  await merkleTree.setLeaf(
+  const newRoot = await merkleTree.setLeaf(
     BigInt(documentMetadata.merkleIndex),
     Field(0),
     currDate,
     { session }
   );
+
+  const sequencer = ModelSequencer.getInstance(databaseName);
+  const operationNumber = await sequencer.getNextValue('operation', session);
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -169,6 +187,8 @@ export async function proveDeleteDocument(
       database: databaseName,
       collection: collectionName,
       docId,
+      operationNumber,
+      merkleRoot: newRoot.toString(),
     },
     { session }
   );

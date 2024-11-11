@@ -129,6 +129,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
+      DB.service,
       ModelUserGroup.collectionName
     );
     if (!(await collection.isExist())) {

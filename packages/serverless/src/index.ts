@@ -1,7 +1,7 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine, ModelDbDeployTx } from '@zkdb/storage';
+import { DatabaseEngine, ModelDbTransaction, ModelQueueTask, ModelSecureStorage } from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -20,8 +20,8 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
-import { Mina, NetworkId } from 'o1js';
-import { MinaNetwork, MinaTransaction } from '@zkdb/smart-contract';
+import { NetworkId } from 'o1js';
+import { MinaNetwork } from '@zkdb/smart-contract';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -39,11 +39,13 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await proofDb.connect();
   }
 
-  await ModelDbDeployTx.init();
+  await ModelDbTransaction.init();
+  await ModelQueueTask.init();
+  await ModelSecureStorage.init()
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,
-    config.MINA_ENDPOINT,
+    config.MINA_URL,
     config.BLOCKBERRY_API_KEY
   );
 

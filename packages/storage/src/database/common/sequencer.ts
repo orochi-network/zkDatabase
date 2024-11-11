@@ -3,6 +3,8 @@ import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
+export type Sequence = "merkle-index" | "operation";
+
 export type SequencedItem = {
   _id: string;
   seq: number;
@@ -28,7 +30,7 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
   }
 
   async getNextValue(
-    sequenceName: string,
+    sequenceName: Sequence,
     session?: ClientSession
   ): Promise<number> {
     const updateResult = await this.collection.findOneAndUpdate(

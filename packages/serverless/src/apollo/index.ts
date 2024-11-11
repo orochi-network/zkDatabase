@@ -19,6 +19,8 @@ import { typeCommonDefsCollection } from './app/types/collection.js';
 import { typeCommonDefsMetadata } from './app/types/metadata.js';
 import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
 import { resolversTransaction, typeDefsTransaction } from './app/transaction.js';
+import { typeCommonDefsTransaction } from './app/types/transaction.js';
+import { resolversRollUp, typeDefsRollUp } from './app/rollup.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -32,10 +34,12 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsDocumentHistory,
   typeDefsTransaction,
+  typeDefsRollUp,
   typeCommonDefsDocument,
   typeCommonDefsCollection,
   typeCommonDefsMetadata,
-  typeCommonDefsCollectionIndex
+  typeCommonDefsCollectionIndex,
+  typeCommonDefsTransaction
 ];
 
 type Resolver =
@@ -50,6 +54,7 @@ type Resolver =
   | typeof resolversProof
   | typeof resolversDocumentHistory
   | typeof resolversTransaction
+  | typeof resolversRollUp
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -62,5 +67,6 @@ export const ResolversApp: Resolver[] = [
   resolversMerkleTree,
   resolversProof,
   resolversDocumentHistory,
-  resolversTransaction
+  resolversTransaction,
+  resolversRollUp
 ];

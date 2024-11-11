@@ -14,6 +14,8 @@ import {
   DeleteResult,
   FindOptions,
   CountDocumentsOptions,
+  WithoutId,
+  ReplaceOptions,
 } from 'mongodb';
 import ModelBasic from './basic.js';
 import logger from '../../helper/logger.js';
@@ -47,6 +49,15 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
   ): Promise<InsertOneResult<T>> {
     logger.debug(`ModelGeneral::insertOne()`, doc);
     return this.collection.insertOne(doc, options);
+  }
+
+  public async replaceOne(
+    filter: Filter<T>,
+    replacement: WithoutId<T>,
+    options?: ReplaceOptions
+  ): Promise<UpdateResult<T> | Document> {
+    logger.debug(`ModelGeneral::replaceOne()`, filter, replacement);
+    return this.collection.replaceOne(filter, replacement, options);
   }
 
   public async insertMany(

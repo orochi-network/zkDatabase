@@ -15,7 +15,8 @@
       "@proof": ["./src/proof"],
       "@types": ["./src/types"],
       "@cache": ["./src/cache"],
-      "@network": ["./src/network"]
+      "@network": ["./src/network"],
+      "@utils": ["./src/utils"]
     },
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "forceConsistentCasingInFileNames": true,

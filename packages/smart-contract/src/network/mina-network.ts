@@ -1,5 +1,5 @@
 import { fetchAccount, Mina, NetworkId, PublicKey } from 'o1js';
-import { BlockberryApi, TBlockConfirmationTransaction } from './api';
+import { BlockberryApi, TBlockConfirmationTransaction, TZkAppTransaction } from './api';
 
 export class MinaNetwork {
   private static instance: MinaNetwork;
@@ -44,11 +44,18 @@ export class MinaNetwork {
     });
   }
 
-  public async getTransactionStatusByHash(
+  public async getBlockConfirmationByTransactionHash(
     txHash: string
   ): Promise<TBlockConfirmationTransaction | undefined> {
     return this.#api.getBlockConfirmationByTransactionHash(txHash);
   }
+
+  public async getZkAppTransactionByTxHash(
+    txHash: string
+  ): Promise<TZkAppTransaction | undefined> {
+    return this.#api.getZkAppTransactionByTxHash(txHash);
+  }
+
 
   private ensureConnection() {
     if (!this.isConnected) {
