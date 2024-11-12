@@ -186,7 +186,12 @@ export async function getRollUpHistory(
         }
 
         logger.error('Transaction status could not be verified');
-        return null;
+        return buildRollUpHistory(
+          history,
+          transaction,
+          'unknown',
+          transaction.error
+        );
       })
     )
   )
