@@ -104,7 +104,7 @@ export function RollUpProgram(merkleTreeHeight: number) {
           return new ProofStateOutput({
             newOffChainState,
             // update off-chain on-chain state
-            onChainState: state.currentOnChainState,
+            onChainState: prevProof.publicOutput.onChainState,
             isTransition: Bool(true),
           });
         },
@@ -148,7 +148,7 @@ export function RollUpProgram(merkleTreeHeight: number) {
 
           return new ProofStateOutput({
             newOffChainState,
-            onChainState: state.currentOnChainState,
+            onChainState: prevProof.publicOutput.onChainState,
             isTransition: Bool(false),
           });
         },

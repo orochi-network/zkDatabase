@@ -57,8 +57,8 @@ export function getZkDbSmartContractClass(
         proof.publicInput.currentOnChainState
           .equals(proof.publicOutput.onChainState)
           .not()
-          .and(proof.publicInput.currentOnChainState.equals(prevState))
-          .and(proof.publicOutput.onChainState.equals(currentState)),
+          .and(proof.publicInput.currentOnChainState.equals(currentState))
+          .and(proof.publicOutput.onChainState.equals(prevState)),
         proof.publicInput.previousOnChainState
           .equals(prevState)
           .and(proof.publicInput.currentOnChainState.equals(currentState))
