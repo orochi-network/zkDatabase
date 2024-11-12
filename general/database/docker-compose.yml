@@ -19,7 +19,7 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=password
     volumes:
-      - ./data/mongo-keyfile/rs_keyfile:/etc/mongodb/pki/keyfile
+      - ./mongo-keyfile/rs_keyfile:/etc/mongodb/pki/keyfile
       - ./data/mongo-data:/data/db
       - ./data/mongo-config:/data/configdb
     networks:

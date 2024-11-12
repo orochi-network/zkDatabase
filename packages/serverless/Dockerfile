@@ -39,6 +39,7 @@ RUN addgroup -S appuser && adduser -S -G appuser -h /usr/src/app appuser
 WORKDIR /usr/src/app
 
 # Copy the application code and node_modules from the builder stage
+COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/storage /usr/src/app/packages/storage
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/serverless /usr/src/app/packages/serverless
 COPY --from=builder --chown=appuser:appuser /usr/src/app/node_modules /usr/src/app/node_modules
