@@ -3,4 +3,5 @@ export type TransactionStatus =
   | 'ready'
   | 'pending'
   | 'failed'
-  | 'success';
+  | 'success'
+  | 'unknown'

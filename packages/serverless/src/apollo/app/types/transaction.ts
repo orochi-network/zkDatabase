@@ -7,5 +7,6 @@ enum TransactionStatus {
   pending
   failed
   success
+  unknown
 }
 `;
