@@ -1,11 +1,11 @@
 import { DatabaseEngine, ModelCollection } from '../../src';
-import config from '../../src/helper/config';
+import { config } from '../../src/helper/config.js';
 
 describe('ModelCollection', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
@@ -50,6 +50,7 @@ describe('ModelCollection', () => {
 
       const modelCollection = ModelCollection.getInstance(
         DB_NAME,
+        dbEngine,
         COLLECTION_NAME
       );
 
