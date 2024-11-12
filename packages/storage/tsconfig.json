@@ -3,8 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "target": "ESNext",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "ESNext",
+    "moduleResolution": "Node",
     "esModuleInterop": true,
     "outDir": "./build/",
     "rootDir": ".",

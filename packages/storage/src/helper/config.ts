@@ -17,17 +17,19 @@ type TApplicationConfig = {
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>((raw: any) => raw, {
-  NODE_ENV: Joi.string().optional().trim().default('production'),
-  // .valid(...NODE_ENV_VALUES),
+  NODE_ENV: Joi.string()
+    .optional()
+    .trim()
+    .default('production')
+    .valid(...NODE_ENV_VALUES),
   MONGODB_URL: Joi.string()
     .trim()
-    .optional()
+    .required()
     .regex(/^mongodb([+a-z]+|):\/\//),
   PROOF_MONGODB_URL: Joi.string()
     .trim()
-    .optional()
+    .required()
     .regex(/^mongodb([+a-z]+|):\/\//),
 });
 
-console.log(configLoader.config);
 export const { config } = configLoader;
