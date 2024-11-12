@@ -107,7 +107,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     this.zeroes = zeroes;
   }
 
-  public getZeroNodes() {
+  public getZeroNodes(): any {
     return this.zeroes;
   }
 

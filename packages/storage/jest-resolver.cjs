@@ -1,5 +1,5 @@
-module.exports = (request, options) => {
-  return options.defaultResolver(request, {
+module.exports = (request, options) =>
+  options.defaultResolver(request, {
     ...options,
     packageFilter: (pkg) => {
       // When importing o1js, we specify the Node ESM import as Jest by default imports the web version
@@ -18,4 +18,3 @@ module.exports = (request, options) => {
       };
     },
   });
-};

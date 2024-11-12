@@ -9,7 +9,7 @@ describe('ModelMerkleTree', () => {
   let dbEngine: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.mongodbUrl);
+    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
     if (!dbEngine.isConnected()) {
       await dbEngine.connect();
     }
@@ -48,8 +48,7 @@ describe('ModelMerkleTree', () => {
   });
 
   test('should correctly set leaf nodes and match root with in-memory MerkleTree', async () => {
-    const modelMerkleTree = ModelMerkleTree.getInstance(DB_NAME);
-    modelMerkleTree.setHeight(MERKLE_HEIGHT);
+    const modelMerkleTree = await ModelMerkleTree.load(DB_NAME);
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -66,8 +65,7 @@ describe('ModelMerkleTree', () => {
   });
 
   test('should correctly retrieve Merkle witnesses for leaf nodes', async () => {
-    const modelMerkleTree = ModelMerkleTree.getInstance(DB_NAME);
-    modelMerkleTree.setHeight(MERKLE_HEIGHT);
+    const modelMerkleTree = await ModelMerkleTree.load(DB_NAME);
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 

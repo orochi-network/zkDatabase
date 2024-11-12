@@ -7,6 +7,7 @@ export class DatabaseEngine {
   private connection: MongoClient | null = null;
 
   private constructor(uri: string) {
+    console.log(`uri: ${uri}`);
     this.mongoClient = new MongoClient(uri, {
       serverApi: {
         version: ServerApiVersion.v1,
@@ -17,6 +18,7 @@ export class DatabaseEngine {
   }
 
   public static getInstance(uri: string): DatabaseEngine {
+    console.log(`getInstance uri: ${uri}`);
     if (!DatabaseEngine.instances[uri]) {
       DatabaseEngine.instances[uri] = new DatabaseEngine(uri);
     }
