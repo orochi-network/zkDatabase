@@ -77,7 +77,7 @@ async function findTransactionWithRetry(
   while (true) {
     const request = await redisQueue.dequeue();
     if (request) {
-      const tx = await modelTransaction.findById(request.id);
+      const tx = await findTransactionWithRetry(modelTransaction, request.id);
 
       if (!tx) {
         logger.error(`Transaction ${request.id} has not been found`);
