@@ -6,6 +6,7 @@ import {
   ModelMerkleTree,
   ModelQueueTask,
   ModelSequencer,
+  CompoundSession,
 } from '@zkdb/storage';
 
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
@@ -20,7 +21,7 @@ export async function proveCreateDocument(
   collectionName: string,
   docId: string,
   document: DocumentFields,
-  session?: ClientSession
+  compoundSession?: CompoundSession
 ): Promise<TMerkleProof[]> {
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
@@ -28,7 +29,7 @@ export async function proveCreateDocument(
     databaseName,
     collectionName,
     document,
-    session
+    compoundSession?.sessionService
   );
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
 
@@ -36,7 +37,7 @@ export async function proveCreateDocument(
     {
       docId,
     },
-    { session }
+    { session: compoundSession?.sessionService }
   );
 
   if (!documentMetadata) {
@@ -48,10 +49,15 @@ export async function proveCreateDocument(
   const currDate = new Date();
 
   const hash = schema.hash();
-  const newRoot = await merkleTree.setLeaf(BigInt(index), hash, currDate, { session });
+  const newRoot = await merkleTree.setLeaf(BigInt(index), hash, currDate, {
+    session: compoundSession?.sessionService,
+  });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.getNextValue(
+    'operation',
+    compoundSession?.sessionService
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -65,10 +71,12 @@ export async function proveCreateDocument(
       operationNumber,
       merkleRoot: newRoot.toString(),
     },
-    { session }
+    { session: compoundSession?.sessionProof }
   );
 
-  return merkleTree.getWitness(BigInt(index), currDate, { session });
+  return merkleTree.getWitness(BigInt(index), currDate, {
+    session: compoundSession?.sessionService,
+  });
 }
 
 // Prove the update of a document

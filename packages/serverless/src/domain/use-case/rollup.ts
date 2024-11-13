@@ -1,4 +1,5 @@
 import {
+  CompoundSession,
   DbTransaction,
   ModelDbSetting,
   ModelDbTransaction,
@@ -12,17 +13,19 @@ import {
 import { ClientSession } from 'mongodb';
 import { enqueueTransaction } from './transaction.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpData, RollUpHistory, RollUpState } from '../types/rollup.js';
+import { RollUpData, RollUpState } from '../types/rollup.js';
 import logger from '../../helper/logger.js';
 import { PublicKey } from 'o1js';
 
 export async function createRollUp(
   databaseName: string,
   actor: string,
-  session?: ClientSession
+  compoundSession?: CompoundSession
 ) {
   const modelProof = ModelProof.getInstance();
-  const latestProofForDb = await modelProof.getProof(databaseName, { session });
+  const latestProofForDb = await modelProof.getProof(databaseName, {
+    session: compoundSession?.sessionProof,
+  });
 
   if (!latestProofForDb) {
     throw Error('No proof has been generated yet');
@@ -30,7 +33,12 @@ export async function createRollUp(
 
   const modelRollUp = ModelRollup.getInstance();
 
-  const txId = await enqueueTransaction(databaseName, actor, 'rollup', session);
+  const txId = await enqueueTransaction(
+    databaseName,
+    actor,
+    'rollup',
+    compoundSession?.sessionService
+  );
 
   await modelRollUp.create(
     {
@@ -39,7 +47,7 @@ export async function createRollUp(
       databaseName: databaseName,
       txId,
     },
-    { session }
+    { session: compoundSession?.sessionService }
   );
 }
 
