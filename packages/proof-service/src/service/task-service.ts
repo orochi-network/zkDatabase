@@ -19,7 +19,7 @@ class TaskService {
     let retries = 0;
     let delay = this.initialDelay;
 
-    while (true) {
+    while (retries < this.maxRetries) {
       const result = await getNextTaskId();
 
       if (result.type === 'success') {
