@@ -53,12 +53,10 @@ const getRollUpHistory = authorizeWrapper(
 
 const createRollUp = authorizeWrapper(
   Joi.object({
-    databaseName
+    databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    withTransaction((session) =>
-      createRollUpDomain(args.databaseName, ctx.userName, session)
-    )
+    createRollUpDomain(args.databaseName, ctx.userName)
 );
 
 type TRollUpResolver = {
