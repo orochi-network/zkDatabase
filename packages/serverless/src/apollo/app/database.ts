@@ -108,7 +108,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
+  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
   dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
@@ -176,11 +176,7 @@ const dbDeployedUpdate = authorizeWrapper(
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    createDatabase(
-      args.databaseName,
-      args.merkleHeight,
-      ctx.userName
-    )
+    createDatabase(args.databaseName, args.merkleHeight, ctx.userName)
 );
 
 const dbChangeOwner = authorizeWrapper(
