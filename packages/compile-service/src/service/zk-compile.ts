@@ -72,7 +72,7 @@ export class ZkCompileService {
 
       return partialSignedTx.toJSON();
     } catch (error) {
-      logger.error(`Cannot compile & deploy: ${databaseName}`, logger);
+      logger.error(`Cannot compile & deploy: ${databaseName}`);
       await ModelDbSetting.getInstance().updateSetting(databaseName, {
         appPublicKey: undefined,
       });
