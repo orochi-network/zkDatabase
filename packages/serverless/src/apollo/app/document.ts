@@ -1,4 +1,4 @@
-import { withTransaction } from '@zkdb/storage';
+import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -15,7 +15,7 @@ import mapPagination from '../mapper/pagination.js';
 import { TDocumentFields } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
 import { PermissionsData } from '../types/permission.js';
-import { authorizeWrapper } from '../validation.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import {
   collectionName,
@@ -216,15 +216,17 @@ const documentsWithMetadataFind = authorizeWrapper(
 // Mutation
 const documentCreate = authorizeWrapper(
   DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest, ctx) => {
-    return createDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentRecord as any,
-      args.documentPermission
-    );
-  }
+  async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
+    withCompoundTransaction((compoundSession) =>
+      createDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentRecord as any,
+        args.documentPermission,
+        compoundSession
+      )
+    )
 );
 
 const documentUpdate = authorizeWrapper(
