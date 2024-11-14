@@ -1,5 +1,5 @@
 import type { Client } from 'basic-ftp';
-import { getNodeDependencies } from 'src/helper/environment';
+import { getNodeDependencies } from '../helper/environment';
 
 export const downloadFile = async (
   client: Client,

@@ -104,7 +104,7 @@ export function RollUpProgram(merkleTreeHeight: number) {
           return new ProofStateOutput({
             newOffChainState,
             // update off-chain on-chain state
-            onChainState: prevProof.publicOutput.onChainState,
+            onChainState: rollupProof.publicOutput.newOffChainState,
             isTransition: Bool(true),
           });
         },

@@ -26,7 +26,8 @@ export class ZkCompileService {
     merkleHeight: number
   ): Promise<ZKDatabaseSmartContractWrapper> {
     if (!this.compiledSmartContracts[merkleHeight - 1]) {
-      const zkWrapper = new ZKDatabaseSmartContractWrapper(merkleHeight);
+      const zkWrapper =
+        ZKDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
       await zkWrapper.compile();
       this.compiledSmartContracts[merkleHeight - 1] = zkWrapper;
     }
