@@ -1,7 +1,13 @@
 import { JsonProof, PublicKey } from 'o1js';
 import { IApiClient } from '@zkdb/api';
 import { ZKCollection, ZKDatabase, ZKGroup } from '../interfaces';
-import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
+import {
+  DatabaseSettings,
+  Permissions,
+  GroupDescription,
+  TDbTransaction,
+  TTransactionType,
+} from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
@@ -114,6 +120,16 @@ export class ZKDatabaseImpl implements ZKDatabase {
       newOwner,
     });
 
+    return result.unwrap();
+  }
+
+  async getTransaction(
+    transactionType: TTransactionType
+  ): Promise<TDbTransaction> {
+    const result = await this.apiClient.transaction.getTransaction({
+      databaseName: this.databaseName,
+      transactionType,
+    });
     return result.unwrap();
   }
 }

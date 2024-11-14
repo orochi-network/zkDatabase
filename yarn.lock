@@ -2482,12 +2482,13 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/api@file:../api", "@zkdb/api@file:/home/transang/Desktop/work/orochi/zkDatabase/packages/api":
+"@zkdb/api@file:", "@zkdb/api@file:../api", "@zkdb/api@file:/home/transang/Desktop/work/orochi/zkDatabase/packages/api":
   version "1.1.6"
   resolved "file:packages/api"
   dependencies:
     "@apollo/client" "^3.10.6"
     "@types/node" "^22.6.1"
+    "@zkdb/api" "file:"
     graphql "^16.9.0"
     react "^18.3.1"
     react-dom "^18.3.1"
