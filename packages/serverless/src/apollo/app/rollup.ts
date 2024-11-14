@@ -56,13 +56,9 @@ const createRollUp = authorizeWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-<<<<<<< HEAD
-    createRollUpDomain(args.databaseName, ctx.userName)
-=======
     withCompoundTransaction((compoundSession) =>
       createRollUpDomain(args.databaseName, ctx.userName, compoundSession)
     )
->>>>>>> e5cef30535be9679e6ce52964ec0e73523f61fef
 );
 
 type TRollUpResolver = {
