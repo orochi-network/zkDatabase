@@ -1,5 +1,5 @@
 import Joi from 'joi';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { databaseName, transactionType } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import GraphQLJSON from 'graphql-type-json';
@@ -7,7 +7,7 @@ import {
   getRollUpHistory as getRollUpHistoryDomain,
   createRollUp as createRollUpDomain,
 } from '../../domain/use-case/rollup.js';
-import { withTransaction } from '@zkdb/storage';
+import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 
 export const typeDefsRollUp = `#graphql
 scalar Date
@@ -22,7 +22,7 @@ enum RollUpState {
 type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
-  txHash: String,
+  transactionHash: String,
   status: TransactionStatus!,
   currentMerkleTreeRoot: String!,
   previousMerkleTreeRoot: String!,
@@ -56,7 +56,13 @@ const createRollUp = authorizeWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
+<<<<<<< HEAD
     createRollUpDomain(args.databaseName, ctx.userName)
+=======
+    withCompoundTransaction((compoundSession) =>
+      createRollUpDomain(args.databaseName, ctx.userName, compoundSession)
+    )
+>>>>>>> e5cef30535be9679e6ce52964ec0e73523f61fef
 );
 
 type TRollUpResolver = {
