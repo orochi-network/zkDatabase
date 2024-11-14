@@ -26,7 +26,6 @@ export type TDatabaseSearchRequest = {
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
-  publicKey: string;
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -40,7 +39,6 @@ export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(256).required(),
-  publicKey,
 });
 
 const DatabaseUpdateDeployedRequest =
