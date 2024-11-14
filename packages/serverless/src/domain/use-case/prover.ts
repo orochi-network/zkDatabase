@@ -85,10 +85,13 @@ export async function proveUpdateDocument(
   collectionName: string,
   docId: string,
   newDocument: DocumentFields,
-  session?: ClientSession
+  session?: CompoundSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const oldDocument = await modelDocument.findOne({ docId }, session);
+  const oldDocument = await modelDocument.findOne(
+    { docId },
+    session?.sessionService
+  );
 
   if (!oldDocument) {
     throw new Error('Document does not exist');
@@ -101,7 +104,7 @@ export async function proveUpdateDocument(
     {
       docId,
     },
-    { session }
+    { session: session?.sessionService }
   );
 
   if (!documentMetadata) {
@@ -112,7 +115,7 @@ export async function proveUpdateDocument(
     databaseName,
     collectionName,
     newDocument,
-    session
+    session?.sessionService
   );
   const currDate = new Date();
   const hash = schema.hash();
@@ -121,11 +124,14 @@ export async function proveUpdateDocument(
     BigInt(documentMetadata.merkleIndex),
     hash,
     currDate,
-    { session }
+    { session: session?.sessionService }
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.getNextValue(
+    'operation',
+    session?.sessionService
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -139,11 +145,11 @@ export async function proveUpdateDocument(
       operationNumber,
       merkleRoot: newRoot.toString(),
     },
-    { session }
+    { session: session?.sessionProof }
   );
 
   return merkleTree.getWitness(BigInt(documentMetadata.merkleIndex), currDate, {
-    session,
+    session: session?.sessionService,
   });
 }
 
@@ -152,10 +158,13 @@ export async function proveDeleteDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  session?: ClientSession
+  session?: CompoundSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const document = await modelDocument.findOne({ docId }, session);
+  const document = await modelDocument.findOne(
+    { docId },
+    session?.sessionService
+  );
 
   if (!document) {
     throw new Error('Document does not exist to be proved');
@@ -168,7 +177,7 @@ export async function proveDeleteDocument(
     {
       docId,
     },
-    { session }
+    { session: session?.sessionService }
   );
 
   if (!documentMetadata) {
@@ -180,11 +189,14 @@ export async function proveDeleteDocument(
     BigInt(documentMetadata.merkleIndex),
     Field(0),
     currDate,
-    { session }
+    { session: session?.sessionService }
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.getNextValue(
+    'operation',
+    session?.sessionService
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -198,10 +210,10 @@ export async function proveDeleteDocument(
       operationNumber,
       merkleRoot: newRoot.toString(),
     },
-    { session }
+    { session: session?.sessionProof }
   );
 
   return merkleTree.getWitness(BigInt(documentMetadata.merkleIndex), currDate, {
-    session,
+    session: session?.sessionService,
   });
 }

@@ -180,11 +180,17 @@ async function createDocument(
     documentFieldsToDocumentRecord(document);
 
   // Save the document to the database
-  const insertResult = await modelDocument.insertOne(documentRecord, compoundSession?.sessionService);
+  const insertResult = await modelDocument.insertOne(
+    documentRecord,
+    compoundSession?.sessionService
+  );
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const merkleIndex = await sequencer.getNextValue('merkle-index', compoundSession?.sessionService);
+  const merkleIndex = await sequencer.getNextValue(
+    'merkle-index',
+    compoundSession?.sessionService
+  );
 
   // 3. Create Metadata
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
@@ -267,14 +273,16 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  update: DocumentFields
+  update: DocumentFields,
+  session: CompoundSession
 ) {
   if (
     !(await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      'write'
+      'write',
+      session.sessionService
     ))
   ) {
     throw new Error(
@@ -283,54 +291,51 @@ async function updateDocument(
   }
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const documentRecord = await withTransaction(async (session) => {
-    const oldDocumentRecord = await modelDocument.findOne(
-      parseQuery(filter),
-      session
-    );
+  const oldDocumentRecord = await modelDocument.findOne(
+    parseQuery(filter),
+    session?.sessionService
+  );
 
-    if (oldDocumentRecord) {
-      if (
-        !(await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          oldDocumentRecord.docId,
-          'write',
-          session
-        ))
-      ) {
-        throw new Error(
-          `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
-        );
-      }
-
-      if (update.length === 0) {
-        throw new Error(
-          'Document array is empty. At least one field is required.'
-        );
-      }
-
-      const documentRecord: DocumentRecord =
-        documentFieldsToDocumentRecord(update);
-
-      await modelDocument.updateOne(
+  if (oldDocumentRecord) {
+    if (
+      !(await hasDocumentPermission(
+        databaseName,
+        collectionName,
+        actor,
         oldDocumentRecord.docId,
-        documentRecord,
-        session
+        'write',
+        session.sessionService
+      ))
+    ) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
       );
-      return oldDocumentRecord;
     }
-  });
 
-  if (documentRecord) {
-    const witness = await proveUpdateDocument(
-      databaseName,
-      collectionName,
-      documentRecord.docId,
-      update
+    if (update.length === 0) {
+      throw new Error(
+        'Document array is empty. At least one field is required.'
+      );
+    }
+
+    const documentRecord: DocumentRecord =
+      documentFieldsToDocumentRecord(update);
+
+    await modelDocument.updateOne(
+      oldDocumentRecord.docId,
+      documentRecord,
+      session?.sessionService
     );
-    return witness;
+
+    if (documentRecord) {
+      const witness = await proveUpdateDocument(
+        databaseName,
+        collectionName,
+        documentRecord.docId,
+        update
+      );
+      return witness;
+    }
   }
 
   throw Error(
@@ -342,65 +347,63 @@ async function deleteDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  filter: FilterCriteria
+  filter: FilterCriteria,
+  session?: CompoundSession
 ) {
-  const result = await withTransaction(async (session) => {
+  if (
+    !(await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'delete',
+      session?.sessionService
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'delete' permission for collection '${collectionName}'.`
+    );
+  }
+
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+  const findResult = await modelDocument.findOne(
+    parseQuery(filter),
+    session?.sessionService
+  );
+
+  if (findResult) {
     if (
-      !(await hasCollectionPermission(
+      !(await hasDocumentPermission(
         databaseName,
         collectionName,
         actor,
+        findResult.docId,
         'delete',
-        session
+        session?.sessionService
       ))
     ) {
       throw new Error(
-        `Access denied: Actor '${actor}' does not have 'delete' permission for collection '${collectionName}'.`
+        `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
       );
     }
-
-    const modelDocument = ModelDocument.getInstance(
-      databaseName,
-      collectionName
-    );
-
-    const findResult = await modelDocument.findOne(parseQuery(filter), session);
-
-    if (findResult) {
-      if (
-        !(await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          findResult.docId,
-          'delete',
-          session
-        ))
-      ) {
-        throw new Error(
-          `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
-        );
-      }
-      await modelDocument.dropOne(findResult.docId);
-    }
-
-    return findResult;
-  });
-  if (result) {
     const witness = await proveDeleteDocument(
       databaseName,
       collectionName,
-      result.docId
+      findResult.docId,
+      session
     );
-    return witness;
 
-    // TODO: Should we remove document metadata ???????
-    // const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-    // await modelDocumentMetadata.deleteOne(
-    //   { docId: findResult[0].docId },
-    //   { session }
-    // );
+    await modelDocument.dropOne(findResult.docId);
+
+    return witness;
   }
+
+  // TODO: Should we remove document metadata ???????
+  // const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  // await modelDocumentMetadata.deleteOne(
+  //   { docId: findResult[0].docId },
+  //   { session }
+  // );
 
   throw Error('Document not found');
 }

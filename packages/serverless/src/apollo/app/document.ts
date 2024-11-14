@@ -240,26 +240,31 @@ const documentUpdate = authorizeWrapper(
         );
     }
 
-    return updateDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentQuery,
-      args.documentRecord as any
+    withCompoundTransaction((compoundSession) =>
+      updateDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        args.documentRecord as any,
+        compoundSession
+      )
     );
   }
 );
 
 const documentDrop = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return deleteDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.documentQuery
-    );
-  }
+  async (_root: unknown, args: TDocumentFindRequest, ctx) =>
+    withCompoundTransaction((session) =>
+      deleteDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.documentQuery,
+        session
+      )
+    )
 );
 
 type TDocumentResolver = {
