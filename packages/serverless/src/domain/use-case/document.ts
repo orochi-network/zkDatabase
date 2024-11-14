@@ -1,4 +1,5 @@
 import {
+  CompoundSession,
   DB,
   ModelQueueTask,
   ModelSequencer,
@@ -152,121 +153,113 @@ async function createDocument(
   collectionName: string,
   actor: string,
   document: DocumentFields,
-  permissions: Permissions
+  permissions: Permissions,
+  compoundSession?: CompoundSession
 ) {
-  const newDocument = await withTransaction<DocumentRecord>(async (session) => {
-    if (
-      !(await hasCollectionPermission(
-        databaseName,
-        collectionName,
-        actor,
-        'create',
-        session
-      ))
-    ) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'create' permission for collection '${collectionName}'.`
-      );
-    }
-
-    const modelDocument = ModelDocument.getInstance(
-      databaseName,
-      collectionName
-    );
-
-    if (document.length === 0) {
-      throw new Error(
-        'Document array is empty. At least one field is required.'
-      );
-    }
-
-    const documentRecord: DocumentRecord =
-      documentFieldsToDocumentRecord(document);
-
-    // Save the document to the database
-    const insertResult = await modelDocument.insertOne(documentRecord, session);
-
-    // 2. Create new sequence value
-    const sequencer = ModelSequencer.getInstance(databaseName);
-    const merkleIndex = await sequencer.getNextValue('merkle-index', session);
-
-    // 3. Create Metadata
-    const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-
-    const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
-
-    const documentSchema = await modelSchema.getMetadata(collectionName, {
-      session,
-    });
-
-    if (!documentSchema) {
-      throw new Error('Cannot get documentSchema');
-    }
-
-    const {
-      permissionOwner: collectionPermissionOwner,
-      permissionGroup: collectionPermissionGroup,
-      permissionOther: collectionPermissionOther,
-    } = documentSchema;
-
-    // TODO: Can we simplify the code by applying binary operations ?
-    const permissionOwner = PermissionBinary.toBinaryPermission(
-      setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(collectionPermissionOwner),
-        permissions.permissionOwner
-      )
-    );
-
-    const permissionGroup = PermissionBinary.toBinaryPermission(
-      setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(collectionPermissionGroup),
-        permissions.permissionGroup
-      )
-    );
-
-    const permissionOther = PermissionBinary.toBinaryPermission(
-      setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(collectionPermissionOther),
-        permissions.permissionOther
-      )
-    );
-
-    await modelDocumentMetadata.insertOne(
-      {
-        collection: collectionName,
-        docId: insertResult.docId,
-        merkleIndex,
-        ...{
-          // I'm set these to system user and group as default
-          // In case this permission don't override by the user
-          // this will prevent the user from accessing the data
-          group: ZKDATABASE_GROUP_SYSTEM,
-          owner: ZKDATABASE_USER_SYSTEM,
-        },
-        // Overwrite inherited permission with the new one
-        permissionOwner,
-        permissionGroup,
-        permissionOther,
-        owner: actor,
-        group: documentSchema.group,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      { session }
-    );
-    return insertResult;
-  });
-
-  if (newDocument) {
-    // 4. Prove document creation
-    const witness = await proveCreateDocument(
+  if (
+    !(await hasCollectionPermission(
       databaseName,
       collectionName,
-      newDocument.docId,
-      document
+      actor,
+      'create',
+      compoundSession?.sessionService
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'create' permission for collection '${collectionName}'.`
     );
-    return witness;
   }
+
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+  if (document.length === 0) {
+    throw new Error('Document array is empty. At least one field is required.');
+  }
+
+  const documentRecord: DocumentRecord =
+    documentFieldsToDocumentRecord(document);
+
+  // Save the document to the database
+  const insertResult = await modelDocument.insertOne(documentRecord, compoundSession?.sessionService);
+
+  // 2. Create new sequence value
+  const sequencer = ModelSequencer.getInstance(databaseName);
+  const merkleIndex = await sequencer.getNextValue('merkle-index', compoundSession?.sessionService);
+
+  // 3. Create Metadata
+  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+
+  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+
+  const documentSchema = await modelSchema.getMetadata(collectionName, {
+    session: compoundSession?.sessionService,
+  });
+
+  if (!documentSchema) {
+    throw new Error('Cannot get documentSchema');
+  }
+
+  const {
+    permissionOwner: collectionPermissionOwner,
+    permissionGroup: collectionPermissionGroup,
+    permissionOther: collectionPermissionOther,
+  } = documentSchema;
+
+  // TODO: Can we simplify the code by applying binary operations ?
+  const permissionOwner = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOwner),
+      permissions.permissionOwner
+    )
+  );
+
+  const permissionGroup = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionGroup),
+      permissions.permissionGroup
+    )
+  );
+
+  const permissionOther = PermissionBinary.toBinaryPermission(
+    setPartialIntoPermission(
+      PermissionBinary.fromBinaryPermission(collectionPermissionOther),
+      permissions.permissionOther
+    )
+  );
+
+  await modelDocumentMetadata.insertOne(
+    {
+      collection: collectionName,
+      docId: insertResult.docId,
+      merkleIndex,
+      ...{
+        // I'm set these to system user and group as default
+        // In case this permission don't override by the user
+        // this will prevent the user from accessing the data
+        group: ZKDATABASE_GROUP_SYSTEM,
+        owner: ZKDATABASE_USER_SYSTEM,
+      },
+      // Overwrite inherited permission with the new one
+      permissionOwner,
+      permissionGroup,
+      permissionOther,
+      owner: actor,
+      group: documentSchema.group,
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
+    },
+    { session: compoundSession?.sessionService }
+  );
+
+  const witness = await proveCreateDocument(
+    databaseName,
+    collectionName,
+    insertResult.docId,
+    document,
+    compoundSession
+  );
+
+  return witness;
 }
 
 async function updateDocument(

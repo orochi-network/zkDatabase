@@ -11,6 +11,7 @@ import {
 import { PrivateKey, PublicKey } from "o1js";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
+import { setTimeout } from 'timers/promises';
 
 export type TransactionType = "deploy" | "rollup";
 
@@ -18,6 +19,34 @@ export type DbTransactionQueue = {
   id: string;
   payerAddress: string;
 };
+
+async function findTransactionWithRetry(
+  modelTransaction: ModelDbTransaction,
+  id: string,
+  maxWaitTimeMs = 3000,
+  intervalMs = 500
+) {
+  const startTime = Date.now();
+  let tx = null;
+
+  while (Date.now() - startTime < maxWaitTimeMs) {
+    tx = await modelTransaction.findById(id);
+
+    if (tx) {
+      break;
+    }
+
+    await setTimeout(intervalMs);
+  }
+
+  if (!tx) {
+    logger.error(
+      `Transaction ${id} has not been found after ${maxWaitTimeMs} ms`
+    );
+  }
+
+  return tx;
+}
 
 (async () => {
   // Init zkAppCompiler
@@ -48,7 +77,7 @@ export type DbTransactionQueue = {
   while (true) {
     const request = await redisQueue.dequeue();
     if (request) {
-      const tx = await modelTransaction.findById(request.id);
+      const tx = await findTransactionWithRetry(modelTransaction, request.id);
 
       if (!tx) {
         logger.error(`Transaction ${request.id} has not been found`);

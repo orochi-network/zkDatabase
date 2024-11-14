@@ -13,6 +13,7 @@ import { ModelSequencer, SequencedItem } from './common/sequencer.js';
 import withTransaction from './transaction/transaction-manager.js';
 import { ModelSecureStorage, PrivateKey } from './global/secure-storage.js';
 import { ModelRollup, RollupHistory } from './common/rollup-history.js';
+import {withCompoundTransaction, CompoundSession} from './transaction/compound-transaction-manager.js';
 
 export {
   DatabaseEngine,
@@ -37,5 +38,7 @@ export {
   ModelRollup,
   RollupHistory,
   TransactionStatus,
-  DbTransaction
+  DbTransaction,
+  withCompoundTransaction,
+  CompoundSession
 };
