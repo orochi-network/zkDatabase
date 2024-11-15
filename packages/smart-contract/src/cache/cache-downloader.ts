@@ -1,5 +1,5 @@
-import { getNodeDependencies } from 'src/helper/environment.js';
-import { downloadDirectory } from './ftp-downloader.js';
+import { getNodeDependencies } from '../helper/environment';
+import { downloadDirectory } from './ftp-downloader';
 
 export async function downloadCache(
   baseDestinationPath: string,

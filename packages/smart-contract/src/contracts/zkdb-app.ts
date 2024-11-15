@@ -51,23 +51,13 @@ export function getZkDbSmartContractClass(
       const currentState = this.currentState.getAndRequireEquals();
       const prevState = this.prevState.getAndRequireEquals();
 
-      Provable.if(
-        proof.publicOutput.isTransition,
-        Bool,
-        proof.publicInput.currentOnChainState
-          .equals(proof.publicOutput.onChainState)
-          .not()
-          .and(proof.publicInput.currentOnChainState.equals(currentState))
-          .and(proof.publicOutput.onChainState.equals(prevState)),
-        proof.publicInput.previousOnChainState
-          .equals(prevState)
-          .and(proof.publicInput.currentOnChainState.equals(currentState))
-          .and(
-            proof.publicInput.currentOnChainState.equals(
-              proof.publicOutput.onChainState
-            )
-          )
-      ).assertTrue();
+      proof.publicInput.previousOnChainState.assertEquals(prevState);
+
+      proof.publicInput.currentOnChainState.assertEquals(currentState);
+
+      proof.publicInput.currentOnChainState.assertEquals(
+        proof.publicOutput.onChainState
+      );
 
       this.prevState.set(currentState);
       this.currentState.set(proof.publicOutput.newOffChainState);

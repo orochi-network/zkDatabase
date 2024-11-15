@@ -6,13 +6,13 @@ import {
   VerificationKey,
   ZkProgram,
 } from 'o1js';
-import { DatabaseRollUp, RollUpProgram } from '@proof';
+import { DatabaseRollUp, RollUpProgram } from '../proof/index';
 import { MinaTransaction } from '@types';
 import {
   getZkDbSmartContractClass,
   ZKDatabaseSmartContractClass,
 } from './zkdb-app';
-import { CacheManager } from '@cache';
+import { CacheManager } from '../cache/cache-manager';
 import { DEFAULT_FEE, TransactionDetails } from './transaction-details';
 
 export class ZKDatabaseSmartContractWrapper {
@@ -21,13 +21,21 @@ export class ZKDatabaseSmartContractWrapper {
   private merkleHeight: number;
   private verificationKey: VerificationKey;
 
-  constructor(merkleHeight: number) {
-    this.rollUpProgram = RollUpProgram(merkleHeight);
+  private constructor(merkleHeight: number, rollUpProgram: DatabaseRollUp) {
+    this.rollUpProgram = rollUpProgram;
     this._smartContract = getZkDbSmartContractClass(
       merkleHeight,
       this.rollUpProgram
     );
     this.merkleHeight = merkleHeight;
+  }
+
+  public static testConstructor(merkleHeight: number, rollUpProgram: DatabaseRollUp) {
+    return new ZKDatabaseSmartContractWrapper(merkleHeight, rollUpProgram)
+  }
+
+  public static mainConstructor(merkleHeight: number) {
+    return new ZKDatabaseSmartContractWrapper(merkleHeight, RollUpProgram(merkleHeight))
   }
 
   isCompiled(): boolean {
