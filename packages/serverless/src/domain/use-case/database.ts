@@ -128,21 +128,29 @@ export async function getDatabases(
         let deployStatus = latestTransaction?.status ?? null;
 
         if (latestTransaction && deployStatus === 'pending') {
-          const zkAppTransaction =
-            await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
-              latestTransaction.txHash!
-            );
+          if (latestTransaction.txHash) {
+            const zkAppTransaction =
+              await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
+                latestTransaction.txHash
+              );
 
-          if (zkAppTransaction?.txStatus === 'failed') {
+            if (zkAppTransaction?.txStatus === 'failed') {
+              deployStatus = 'failed';
+              await modelTx.updateById(latestTransaction._id.toString(), {
+                status: 'failed',
+                error: zkAppTransaction.failures.join(' '),
+              });
+            } else if (zkAppTransaction?.txStatus === 'applied') {
+              deployStatus = 'success';
+              await modelTx.updateById(latestTransaction._id.toString(), {
+                status: 'success',
+              });
+            }
+          } else {
             deployStatus = 'failed';
             await modelTx.updateById(latestTransaction._id.toString(), {
               status: 'failed',
-              error: zkAppTransaction.failures.join(' '),
-            });
-          } else if (zkAppTransaction?.txStatus === 'applied') {
-            deployStatus = 'success';
-            await modelTx.updateById(latestTransaction._id.toString(), {
-              status: 'success',
+              error: 'Transaction hash is missed',
             });
           }
         }
