@@ -130,7 +130,7 @@ export async function getDatabases(
         if (latestTransaction && deployStatus === 'pending') {
           const zkAppTransaction =
             await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
-              latestTransaction!.txHash!
+              latestTransaction.txHash!
             );
 
           if (zkAppTransaction?.txStatus === 'failed') {
