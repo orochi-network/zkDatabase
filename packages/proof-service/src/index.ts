@@ -3,6 +3,7 @@ import TaskService from './service/task-service.js';
 import logger from './helper/logger.js';
 import { config } from './helper/config.js';
 import { Mina } from 'o1js';
+import { initModelLoader } from 'helper/model-loader.js';
 
 (async () => {
   const network = Mina.Network({
@@ -12,20 +13,9 @@ import { Mina } from 'o1js';
 
   Mina.setActiveInstance(network);
 
-  // db service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-  // db proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
-  }
-
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
-  }
+  await initModelLoader();
 
   const taskService = new TaskService();
-
   await taskService.fetchAndProcessTasks();
 
   logger.info('Proof service stopped.');

@@ -1,7 +1,7 @@
-import { ModelQueueTask, withTransaction } from "@zkdb/storage";
+import { TransactionManager, ModelQueueTask } from "@zkdb/storage";
 
 export async function getNextTaskId(): Promise<string | null> {
-  return withTransaction(async (session) => {
+  return TransactionManager.withSingleTransaction("proof", async (session) => {
     const modelQueueTask = ModelQueueTask.getInstance();
     const task = await modelQueueTask.getLatestQueuedTaskByDatabase(session);
 
@@ -11,5 +11,5 @@ export async function getNextTaskId(): Promise<string | null> {
     }
 
     return null;
-  }, "proof");
+  });
 }

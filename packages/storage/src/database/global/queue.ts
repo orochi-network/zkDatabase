@@ -7,10 +7,11 @@ import {
   UpdateOptions,
   WithId,
 } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
-import ModelGeneral from '../base/general.js';
-import { DatabaseEngine } from '../database-engine.js';
-import ModelCollection from '../general/collection.js';
+import { ModelGeneral } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { ModelCollection } from '../general';
+
 
 export type Status = 'queued' | 'proving' | 'proved' | 'failed';
 

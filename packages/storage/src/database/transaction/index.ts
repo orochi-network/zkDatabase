@@ -1,28 +1,30 @@
 import { MongoError, ClientSession } from 'mongodb';
 
-interface DatabaseSession {
+type DatabaseSession = {
   name: string; // Identifier for the session
   session: ClientSession;
-}
+};
 
 export class TransactionManager {
   private static sessions: DatabaseSession[] = [];
 
   // Add a database session to the manager
-  public static addSession(name: string, session: ClientSession): void {
-    this.sessions.push({ name, session });
+  public static addSession(...args: DatabaseSession[]): void {
+    for (let { name, session } of args) {
+      TransactionManager.sessions.push({ name, session });
+    }
   }
 
   // Start transactions for all sessions
   public static async startTransactions(): Promise<void> {
-    for (const { session } of this.sessions) {
+    for (const { session } of TransactionManager.sessions) {
       session.startTransaction();
     }
   }
 
   // Abort all transactions
   public static async abortTransactions(): Promise<void> {
-    for (const { name, session } of this.sessions) {
+    for (const { name, session } of TransactionManager.sessions) {
       if (session.inTransaction()) {
         try {
           await session.abortTransaction();
@@ -42,10 +44,10 @@ export class TransactionManager {
 
   // End all sessions
   public static async endSessions(): Promise<void> {
-    for (const { session } of this.sessions) {
+    for (const { session } of TransactionManager.sessions) {
       await session.endSession();
     }
-    this.sessions = []; // Clear sessions after ending
+    TransactionManager.sessions = []; // Clear sessions after ending
   }
 
   // Execute a compound transaction (multiple sessions)
@@ -54,9 +56,9 @@ export class TransactionManager {
   ): Promise<T> {
     let result: T;
     try {
-      await this.startTransactions();
+      await TransactionManager.startTransactions();
       result = await operation();
-      for (const { session } of this.sessions) {
+      for (const { session } of TransactionManager.sessions) {
         await session.commitTransaction();
       }
     } catch (error) {
@@ -68,10 +70,10 @@ export class TransactionManager {
           stack: (error as Error).stack,
         }
       );
-      await this.abortTransactions();
+      await TransactionManager.abortTransactions();
       throw error;
     } finally {
-      await this.endSessions();
+      await TransactionManager.endSessions();
     }
     return result;
   }
@@ -81,7 +83,9 @@ export class TransactionManager {
     sessionName: string,
     operation: (session: ClientSession) => Promise<T>
   ): Promise<T> {
-    const sessionData = this.sessions.find((s) => s.name === sessionName);
+    const sessionData = TransactionManager.sessions.find(
+      (s) => s.name === sessionName
+    );
     if (!sessionData) {
       throw new Error(`Session with name "${sessionName}" not found.`);
     }
@@ -110,7 +114,9 @@ export class TransactionManager {
       throw error;
     } finally {
       await session.endSession();
-      this.sessions = this.sessions.filter((s) => s.name !== sessionName); // Remove session after use
+      TransactionManager.sessions = TransactionManager.sessions.filter(
+        (s) => s.name !== sessionName
+      ); // Remove session after use
     }
 
     return result;

@@ -2,16 +2,16 @@ import { logger } from "@helper";
 import { EncryptionKey } from "@orochi-network/vault";
 import { UnsignedTransaction, ZkCompileService } from "@service";
 import {
-  DatabaseEngine,
   ModelDbSetting,
   ModelDbTransaction,
   ModelProof,
   ModelSecureStorage,
 } from "@zkdb/storage";
 import { PrivateKey, PublicKey } from "o1js";
+import { setTimeout } from "timers/promises";
 import { config } from "./helper/config";
+import { initModelLoader } from "./helper/model-loader";
 import { RedisQueueService } from "./message-queue";
-import { setTimeout } from 'timers/promises';
 
 export type TransactionType = "deploy" | "rollup";
 
@@ -60,16 +60,7 @@ async function findTransactionWithRetry(
     { url: config.REDIS_URL }
   );
   // Connect to db
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
-  }
-
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
-  }
+  await initModelLoader();
 
   const modelTransaction = ModelDbTransaction.getInstance();
   const modelDbSettings = ModelDbSetting.getInstance();
