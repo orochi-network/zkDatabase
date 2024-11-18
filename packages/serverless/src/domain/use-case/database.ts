@@ -18,6 +18,7 @@ import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { isUserExist } from './user.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
+import { MinaNetwork } from '@zkdb/smart-contract';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -93,6 +94,7 @@ export async function getDatabases(
     );
 
   const modelSetting = ModelDbSetting.getInstance();
+  const modelTx = ModelDbTransaction.getInstance();
 
   const settings = await modelSetting.findSettingsByFields(filter, {
     skip: pagination?.offset,
@@ -118,7 +120,40 @@ export async function getDatabases(
 
         const collections = await listCollections(databaseName, actor);
 
-        const deployStatus = (await getLatestTransaction(databaseName, 'deploy'))?.status ?? null;
+        const latestTransaction = await getLatestTransaction(
+          databaseName,
+          'deploy'
+        );
+
+        let deployStatus = latestTransaction?.status ?? null;
+
+        if (latestTransaction && deployStatus === 'pending') {
+          if (latestTransaction.txHash) {
+            const zkAppTransaction =
+              await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
+                latestTransaction.txHash
+              );
+
+            if (zkAppTransaction?.txStatus === 'failed') {
+              deployStatus = 'failed';
+              await modelTx.updateById(latestTransaction._id.toString(), {
+                status: 'failed',
+                error: zkAppTransaction.failures.join(' '),
+              });
+            } else if (zkAppTransaction?.txStatus === 'applied') {
+              deployStatus = 'success';
+              await modelTx.updateById(latestTransaction._id.toString(), {
+                status: 'success',
+              });
+            }
+          } else {
+            deployStatus = 'failed';
+            await modelTx.updateById(latestTransaction._id.toString(), {
+              status: 'failed',
+              error: 'Transaction hash is missed',
+            });
+          }
+        }
 
         return {
           databaseName,
@@ -127,7 +162,7 @@ export async function getDatabases(
           databaseSize,
           collections,
           appPublicKey,
-          deployStatus
+          deployStatus,
         } as Database;
       })
     )
