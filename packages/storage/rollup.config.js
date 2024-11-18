@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 
 export default {
   input: 'src/index.ts',
@@ -10,6 +11,7 @@ export default {
     preserveModules: false, // If will build to a single index.js file if it 'false'
     sourcemap: true,
   },
+  external: ['@orochi-network/framework', 'o1js', 'mongodb', 'crypto'],
   plugins: [
     alias({
       entries: [
@@ -19,6 +21,7 @@ export default {
         { find: '@helper', replacement: 'src/helper' },
       ],
     }),
+    resolve(),
     commonjs(),
     typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
   ],

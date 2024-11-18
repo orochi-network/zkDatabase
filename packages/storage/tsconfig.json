@@ -9,6 +9,7 @@
     "outDir": "./build/",
     "rootDir": ".",
     "types": ["node", "jest"],
+    "baseUrl": ".",
     "paths": {
       "@common": ["./src/common"],
       "@database": ["./src/database"],

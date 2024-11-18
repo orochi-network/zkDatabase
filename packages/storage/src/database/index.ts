@@ -1,5 +1,5 @@
 export * from './base';
-export * from './common';
+export * from './common-model';
 export * from './general';
 export * from './transaction';
 export * from './database-engine';
