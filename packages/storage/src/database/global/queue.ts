@@ -1,6 +1,5 @@
 import {
   ClientSession,
-  Db,
   Filter,
   FindOptions,
   InsertOneOptions,
@@ -9,8 +8,8 @@ import {
   WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
+import { DatabaseEngine } from '../database-engine.js';
 import ModelCollection from '../general/collection.js';
 
 export type Status = 'queued' | 'proving' | 'proved' | 'failed';
@@ -31,14 +30,18 @@ export type TaskEntity = {
 export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   private static instance: ModelQueueTask | null = null;
 
+  private static dbEngine: DatabaseEngine;
+
   private constructor() {
     super(
       zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
+      ModelQueueTask.dbEngine,
       zkDatabaseConstants.globalCollections.queue
     );
   }
-
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelQueueTask.dbEngine = dbEngine;
+  }
   public static getInstance(): ModelQueueTask {
     if (!ModelQueueTask.instance) {
       ModelQueueTask.instance = new ModelQueueTask();
@@ -211,10 +214,11 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     );
   }
 
-  public static async init() {
+  public static async init(dbEngine: DatabaseEngine) {
+    ModelQueueTask.createModel(dbEngine);
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
+      dbEngine,
       zkDatabaseConstants.globalCollections.queue
     );
     if (!(await collection.isExist())) {

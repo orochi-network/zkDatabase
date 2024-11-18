@@ -6,8 +6,8 @@ import {
   UpdateResult,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
+import { DatabaseEngine } from '../database-engine.js';
 
 export type DbSetting = {
   databaseName: string;
@@ -18,13 +18,17 @@ export type DbSetting = {
 
 export class ModelDbSetting extends ModelBasic<DbSetting> {
   private static instance: ModelDbSetting;
+  private static dbEngine: DatabaseEngine;
 
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      ModelDbSetting.dbEngine,
       zkDatabaseConstants.globalCollections.setting
     );
+  }
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelDbSetting.dbEngine = dbEngine;
   }
 
   public static getInstance() {

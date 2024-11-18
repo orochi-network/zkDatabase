@@ -1,16 +1,16 @@
 import {
+  Document,
   Filter,
   FindOptions,
-  ReplaceOptions,
-  UpdateResult,
-  Document,
   InsertOneResult,
   ObjectId,
+  ReplaceOptions,
+  UpdateResult,
   WithId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
+import { DatabaseEngine } from '../database-engine.js';
 import ModelCollection from '../general/collection.js';
 
 export type TransactionType = 'deploy' | 'rollup';
@@ -21,7 +21,7 @@ export type TransactionStatus =
   | 'pending'
   | 'failed'
   | 'success'
-  | 'unknown'
+  | 'unknown';
 
 export type DbTransaction = {
   transactionType: TransactionType;
@@ -35,13 +35,17 @@ export type DbTransaction = {
 
 export class ModelDbTransaction extends ModelBasic<DbTransaction> {
   private static instance: ModelDbTransaction;
+  private static dbEngine: DatabaseEngine;
 
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      ModelDbTransaction.dbEngine,
       zkDatabaseConstants.globalCollections.transaction
     );
+  }
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelDbTransaction.dbEngine = dbEngine;
   }
 
   public static getInstance() {
@@ -104,10 +108,11 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
     return await this.collection.countDocuments(filter);
   }
 
-  public static async init() {
+  public static async init(dbEngine: DatabaseEngine) {
+    ModelDbTransaction.createModel(dbEngine);
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      dbEngine,
       zkDatabaseConstants.globalCollections.transaction
     );
     if (!(await collection.isExist())) {
