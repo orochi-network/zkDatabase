@@ -1,8 +1,8 @@
 import { FindOptions, InsertOneOptions } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
-import { DatabaseEngine } from '../database-engine.js';
+import { ModelGeneral } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { logger } from '@helper';
 
 export type ZKProof = {
   publicInput: string[];

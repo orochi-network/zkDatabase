@@ -1,6 +1,6 @@
 import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { DatabaseEngine } from '../database-engine.js';
+import { DatabaseEngine } from '../database-engine';
+import { logger } from '@helper';
 
 /**
  * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine

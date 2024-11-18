@@ -4,12 +4,9 @@ import {
   ListDatabasesResult,
   ObjectId,
 } from 'mongodb';
-import {
-  zkDatabaseConstants,
-  zkDatabaseMetadataCollections,
-} from '../../common/index.js';
-import ModelBasic from '../base/basic.js';
-import { DatabaseEngine } from '../database-engine.js';
+import ModelBasic from '../base/basic';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants, zkDatabaseMetadataCollections } from '@common';
 
 export type DocumentMetaIndex = {
   collection: string;

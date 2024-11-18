@@ -4,12 +4,10 @@ import {
   DropIndexesOptions,
   IndexSpecification,
 } from 'mongodb';
-import { isOk } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
-import ModelDatabase from './database.js';
-import { DatabaseEngine } from '../database-engine.js';
+import ModelBasic from '../base/basic';
+import ModelDatabase from './database';
+import { DatabaseEngine } from '../database-engine';
+import { isOk, logger } from '@helper';
 
 /**
  * Handles collection operations. Extends ModelBasic.

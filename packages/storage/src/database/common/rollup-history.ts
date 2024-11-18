@@ -1,8 +1,8 @@
 import { ObjectId, ReplaceOptions, UpdateResult } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/index.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
-import { DatabaseEngine } from '../database-engine.js';
+import ModelBasic from '../base/basic';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { logger } from '@helper';
 
 export type RollupHistory = {
   merkleRoot: string;

@@ -17,8 +17,8 @@ import {
   WithoutId,
   ReplaceOptions,
 } from 'mongodb';
-import ModelBasic from './basic.js';
-import logger from '../../helper/logger.js';
+import ModelBasic from './basic';
+import { logger } from '@helper';
 
 /**
  * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing

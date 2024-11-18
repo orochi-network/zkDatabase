@@ -8,10 +8,10 @@ import {
   UpdateResult,
   WithId,
 } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
-import ModelBasic from '../base/basic.js';
-import { DatabaseEngine } from '../database-engine.js';
-import ModelCollection from '../general/collection.js';
+import ModelBasic from '../base/basic';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { ModelCollection } from '../general';
 
 export type TransactionType = 'deploy' | 'rollup';
 

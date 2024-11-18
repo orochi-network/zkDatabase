@@ -1,7 +1,7 @@
 import { ClientSession } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/index.js';
-import ModelBasic from '../base/basic.js';
-import { DatabaseEngine } from '../database-engine.js';
+import ModelBasic from '../base/basic';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
 
 export type Sequence = 'merkle-index' | 'operation';
 

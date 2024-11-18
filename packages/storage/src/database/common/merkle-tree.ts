@@ -1,12 +1,11 @@
 import crypto from 'crypto';
 import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
-import { zkDatabaseConstants } from '../../common/const.js';
-import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
-import { DatabaseEngine } from '../database-engine.js';
-import { ModelDbSetting } from './setting.js';
+import { logger, createExtendedMerkleWitness } from '@helper';
+import { zkDatabaseConstants } from '@common';
+import { ModelGeneral } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { ModelDbSetting } from './setting';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
