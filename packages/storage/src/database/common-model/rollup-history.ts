@@ -1,5 +1,5 @@
 import { ObjectId, ReplaceOptions, UpdateResult } from 'mongodb';
-import ModelBasic from '../base/basic';
+import { ModelBasic } from '../base';
 import { DatabaseEngine } from '../database-engine';
 import { zkDatabaseConstants } from '@common';
 import { logger } from '@helper';

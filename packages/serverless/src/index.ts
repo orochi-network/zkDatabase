@@ -45,9 +45,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   }
 
   // TODO: Fix the init first
-  await ModelDbTransaction.init(serviceDb);
-  await ModelQueueTask.init();
-  await ModelSecureStorage.init();
+  // await ModelDbTransaction.init(serviceDb);
+  // await ModelQueueTask.init();
+  // await ModelSecureStorage.init();
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,

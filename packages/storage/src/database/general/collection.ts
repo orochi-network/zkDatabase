@@ -4,7 +4,7 @@ import {
   DropIndexesOptions,
   IndexSpecification,
 } from 'mongodb';
-import ModelBasic from '../base/basic';
+import { ModelBasic } from '../base';
 import ModelDatabase from './database';
 import { DatabaseEngine } from '../database-engine';
 import { isOk, logger } from '@helper';

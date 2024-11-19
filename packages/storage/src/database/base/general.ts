@@ -17,7 +17,7 @@ import {
   WithoutId,
   ReplaceOptions,
 } from 'mongodb';
-import ModelBasic from './basic';
+import { ModelBasic } from './basic';
 import { logger } from '@helper';
 
 /**

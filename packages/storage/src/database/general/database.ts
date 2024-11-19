@@ -4,7 +4,7 @@ import {
   ListDatabasesResult,
   ObjectId,
 } from 'mongodb';
-import ModelBasic from '../base/basic';
+import { ModelBasic } from '../base';
 import { DatabaseEngine } from '../database-engine';
 import { zkDatabaseConstants, zkDatabaseMetadataCollections } from '@common';
 
