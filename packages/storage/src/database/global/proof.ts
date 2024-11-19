@@ -1,4 +1,4 @@
-import { FindOptions, InsertOneOptions } from 'mongodb';
+import { FindOptions, InsertOneOptions, WithId } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
@@ -57,11 +57,11 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public async getProof(
     database: string,
     options?: FindOptions
-  ): Promise<ProofDetails | null> {
+  ): Promise<WithId<ProofDetails> | null> {
     const proof = await this.collection.findOne(
       { database },
       { ...options, sort: { createdAt: -1 } }
     );
-    return proof as ProofDetails | null;
+    return proof as WithId<ProofDetails> | null;
   }
 }

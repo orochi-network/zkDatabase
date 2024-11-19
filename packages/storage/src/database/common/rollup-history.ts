@@ -1,4 +1,4 @@
-import { ObjectId, ReplaceOptions, UpdateResult } from 'mongodb';
+import { ObjectId, ReplaceOptions, UpdateResult, WithId } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
@@ -9,6 +9,7 @@ export type RollupHistory = {
   newMerkleRoot: string;
   databaseName: string;
   txId: ObjectId;
+  proofId: ObjectId;
 };
 
 export class ModelRollup extends ModelBasic<RollupHistory> {
