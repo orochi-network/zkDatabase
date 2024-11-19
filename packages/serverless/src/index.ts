@@ -1,7 +1,12 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine, ModelDbTransaction, ModelQueueTask, ModelSecureStorage } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelDbTransaction,
+  ModelQueueTask,
+  ModelSecureStorage,
+} from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -39,9 +44,10 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await proofDb.connect();
   }
 
-  await ModelDbTransaction.init();
-  await ModelQueueTask.init();
-  await ModelSecureStorage.init()
+  // TODO: Fix the init first
+  // await ModelDbTransaction.init(serviceDb);
+  // await ModelQueueTask.init();
+  // await ModelSecureStorage.init();
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,

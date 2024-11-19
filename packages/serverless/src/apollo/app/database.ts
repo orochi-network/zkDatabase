@@ -26,7 +26,6 @@ export type TDatabaseSearchRequest = {
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
-  publicKey: string;
 };
 
 export type TFindIndexRequest = TDatabaseRequest & {
@@ -40,7 +39,6 @@ export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(256).required(),
-  publicKey,
 });
 
 const DatabaseUpdateDeployedRequest =
@@ -108,7 +106,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!, publicKey: String!): Boolean
+  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
   dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
   dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
   #dbDrop(databaseName: String!): Boolean
@@ -176,11 +174,7 @@ const dbDeployedUpdate = authorizeWrapper(
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    createDatabase(
-      args.databaseName,
-      args.merkleHeight,
-      ctx.userName
-    )
+    createDatabase(args.databaseName, args.merkleHeight, ctx.userName)
 );
 
 const dbChangeOwner = authorizeWrapper(

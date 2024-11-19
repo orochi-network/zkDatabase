@@ -1,12 +1,12 @@
 import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { DatabaseEngine } from '../database-engine.js';
+import { DatabaseEngine } from '../database-engine';
+import { logger } from '@helper';
 
 /**
  * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine
  * and provides .db and .collection to allow other models to interact with the database/collection.
  */
-export default abstract class ModelBasic<T extends Document> {
+export abstract class ModelBasic<T extends Document> {
   protected dbEngine: DatabaseEngine;
 
   protected databaseName: string;

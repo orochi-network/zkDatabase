@@ -1,10 +1,16 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
 import { ZKCollection } from './collection';
-import { DatabaseSettings, GroupDescription, Permissions } from '../../types';
+import {
+  DatabaseSettings,
+  GroupDescription,
+  Permissions,
+  TTransactionType,
+  IndexField,
+  TDbTransaction,
+} from '../../types';
 import { SchemaDefinition } from '../schema';
 import { ZKGroup } from './group';
-import { IndexField } from '../../types/collection-index';
 
 export interface ZKDatabase {
   from(name: string): ZKCollection;
@@ -31,4 +37,6 @@ export interface ZKDatabase {
   changeOwner(newOwner: string): Promise<boolean>;
   // Proof
   getProof(): Promise<JsonProof>;
+  // Transaction
+  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
 }

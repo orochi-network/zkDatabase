@@ -1,4 +1,8 @@
-import { DatabaseEngine } from "@zkdb/storage";
+import {
+  DatabaseEngine,
+  ModelQueueTask,
+  TransactionManager,
+} from "@zkdb/storage";
 import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import http from "http";
@@ -9,17 +13,18 @@ import logger from "./helper/logger.js";
 (async () => {
   const app = express();
 
-  // DB service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
   // DB proof
   const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
-  }
 
   if (!proofDb.isConnected()) {
     await proofDb.connect();
   }
+
+  TransactionManager.addSession({
+    name: "proof",
+    session: proofDb.client.startSession(),
+  });
+  ModelQueueTask.createModel(proofDb);
 
   app.use(express.json());
 

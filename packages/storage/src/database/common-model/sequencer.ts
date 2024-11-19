@@ -1,9 +1,9 @@
 import { ClientSession } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
+import { ModelBasic } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
 
-export type Sequence = "merkle-index" | "operation";
+export type Sequence = 'merkle-index' | 'operation';
 
 export type SequencedItem = {
   _id: string;
@@ -12,15 +12,18 @@ export type SequencedItem = {
 
 export class ModelSequencer extends ModelBasic<SequencedItem> {
   private static instances = new Map<string, ModelSequencer>();
+  private static dbEngine: DatabaseEngine;
 
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DB.service,
+      ModelSequencer.dbEngine,
       zkDatabaseConstants.databaseCollections.sequencer
     );
   }
-
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelSequencer.dbEngine = dbEngine;
+  }
   public static getInstance(databaseName: string) {
     const key = databaseName;
     if (!ModelSequencer.instances.has(key)) {

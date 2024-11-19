@@ -1,1 +1,4 @@
-export { DB } from './db-instance.js';
+export * from './common';
+export * from './extended-merkle-witness';
+export * from './logger';
+export * from './model-registry';

@@ -1,18 +1,11 @@
 import crypto from 'crypto';
-import {
-  BulkWriteOptions,
-  ClientSession,
-  Document,
-  FindOptions,
-  ObjectId,
-} from 'mongodb';
+import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
-import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
-import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
-import { ModelDbSetting } from './setting.js';
+import { logger, createExtendedMerkleWitness } from '@helper';
+import { zkDatabaseConstants } from '@common';
+import { ModelGeneral } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { ModelDbSetting } from './setting';
 
 // Data type for merkle tree to be able to store in database
 export interface MerkleProof extends Document {
@@ -44,6 +37,7 @@ export type TMerkleWitnessNode = {
 export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private static instances = new Map<string, ModelMerkleTree>();
 
+  private static dbEngine: DatabaseEngine;
   private zeroes: Field[] = [];
 
   private _height: number = 0;
@@ -51,7 +45,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DB.service,
+      ModelMerkleTree.dbEngine,
       zkDatabaseConstants.databaseCollections.merkleTree,
       {
         timeseries: {
@@ -61,7 +55,9 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
       }
     );
   }
-
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelMerkleTree.dbEngine = dbEngine;
+  }
   private static getInstance(databaseName: string): ModelMerkleTree {
     if (!ModelMerkleTree.instances.has(databaseName)) {
       ModelMerkleTree.instances.set(

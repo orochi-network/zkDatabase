@@ -4,12 +4,9 @@ import {
   ListDatabasesResult,
   ObjectId,
 } from 'mongodb';
-import {
-  zkDatabaseConstants,
-  zkDatabaseMetadataCollections,
-} from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
+import { ModelBasic } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants, zkDatabaseMetadataCollections } from '@common';
 
 export type DocumentMetaIndex = {
   collection: string;
@@ -23,11 +20,18 @@ export type DocumentMetaIndex = {
  */
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
+  private static dbEngine: DatabaseEngine;
 
   constructor(databaseName?: string) {
-    super(databaseName || zkDatabaseConstants.globalDatabase, DB.service);
+    super(
+      databaseName || zkDatabaseConstants.globalDatabase,
+      ModelDatabase.dbEngine
+    );
   }
 
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelDatabase.dbEngine = dbEngine;
+  }
   public static getInstance<T extends Document>(
     databaseName: string
   ): ModelDatabase<T> {

@@ -1,8 +1,8 @@
 import { FindOptions, InsertOneOptions } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
+import { ModelGeneral } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { logger } from '@helper';
 
 export type ZKProof = {
   publicInput: string[];
@@ -23,12 +23,16 @@ export type ProofDetails = ZKProof & ProofMetadata;
 
 export class ModelProof extends ModelGeneral<ProofDetails> {
   public static instance: ModelProof;
+  private static dbEngine: DatabaseEngine;
 
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelProof.dbEngine = dbEngine;
+  }
   public static getInstance(): ModelProof {
     if (!this.instance) {
       this.instance = new ModelProof(
         zkDatabaseConstants.globalProofDatabase,
-        DB.proof,
+        ModelProof.dbEngine,
         zkDatabaseConstants.globalCollections.proof
       );
     }

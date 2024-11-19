@@ -8,7 +8,7 @@ import {
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
-  withTransaction,
+  TransactionManager,
 } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
 import {
@@ -119,7 +119,7 @@ export async function createProof(taskId: string) {
       } else {
         const rollupProof = await modelProof.findOne({
           merkleRoot: onChainRootState.toString(),
-          database: task.database
+          database: task.database,
         });
         if (rollupProof) {
           proof = await circuit.updateTransition(
@@ -150,7 +150,7 @@ export async function createProof(taskId: string) {
 
     // TODO: Should we consider both on-chain action and off-chain leaf. Off-chain leaf = On-chain action
 
-    await withTransaction(async (session) => {
+    await TransactionManager.withSingleTransaction('proof', async (session) => {
       await modelProof.saveProof(
         {
           ...proof.toJSON(),
@@ -162,7 +162,7 @@ export async function createProof(taskId: string) {
         { session }
       );
       await queue.markTaskProcessed(task._id, { session });
-    }, 'proof');
+    });
 
     logger.debug('Task processed successfully.');
   } catch (error) {

@@ -1,8 +1,8 @@
 import { ObjectId, ReplaceOptions, UpdateResult } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
+import { ModelBasic } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { zkDatabaseConstants } from '@common';
+import { logger } from '@helper';
 
 export type RollupHistory = {
   merkleRoot: string;
@@ -13,12 +13,18 @@ export type RollupHistory = {
 
 export class ModelRollup extends ModelBasic<RollupHistory> {
   private static instance: ModelRollup;
+  private static dbEngine: DatabaseEngine;
+
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      ModelRollup.dbEngine,
       zkDatabaseConstants.globalCollections.rollup
     );
+  }
+
+  public static createModel(dbEngine: DatabaseEngine) {
+    ModelRollup.dbEngine = dbEngine;
   }
 
   public static getInstance() {

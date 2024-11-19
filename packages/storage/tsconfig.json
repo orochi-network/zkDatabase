@@ -8,7 +8,13 @@
     "esModuleInterop": true,
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "baseUrl": ".",
+    "paths": {
+      "@common": ["./src/common"],
+      "@database": ["./src/database"],
+      "@helper": ["./src/helper"],
+    }
   },
   "include": ["**/*.ts"],
   "exclude": [
