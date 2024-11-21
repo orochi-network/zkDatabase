@@ -1,9 +1,9 @@
 import {
-  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { DB_INSTANCE } from 'helper/model-loader';
 import { Document } from 'mongodb';
 
 export interface DocumentOwnership extends Document {
@@ -19,7 +19,7 @@ export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
   constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      DB_INSTANCE.service,
       ModelOwnership.collectionName
     );
   }
@@ -27,7 +27,7 @@ export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      DB_INSTANCE.service,
       ModelOwnership.collectionName
     );
     if (!(await collection.isExist())) {

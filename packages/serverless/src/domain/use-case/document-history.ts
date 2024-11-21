@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
-import { DB, zkDatabaseConstants } from '@zkdb/storage';
+import { zkDatabaseConstants } from '@zkdb/storage';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 import { ClientSession } from 'mongodb';
 import { PermissionBinary } from '../../common/permission.js';
 import ModelDocument from '../../model/abstract/document.js';
@@ -101,7 +102,7 @@ async function listHistoryDocuments(
       session
     )
   ) {
-    const { client } = DB.service;
+    const { client } = DB_INSTANCE.service;
 
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);

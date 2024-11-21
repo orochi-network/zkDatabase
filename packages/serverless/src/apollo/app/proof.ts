@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
+import { ModelProof, ModelQueueTask, TransactionManager } from '@zkdb/storage';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
@@ -50,45 +50,48 @@ const getProofStatus = authorizeWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TProofRequest, ctx) => {
-    return withTransaction(async (session) => {
-      const modelProof = ModelQueueTask.getInstance();
+    return TransactionManager.withSingleTransaction(
+      'service',
+      async (session) => {
+        const modelProof = ModelQueueTask.getInstance();
 
-      if (
-        await hasDocumentPermission(
-          args.databaseName,
-          args.collectionName,
-          ctx.userName,
-          args.docId,
-          'read',
-          session
-        )
-      ) {
-        const proof = await modelProof.findOne({
-          database: args.databaseName,
-          docId: args.docId,
-        });
+        if (
+          await hasDocumentPermission(
+            args.databaseName,
+            args.collectionName,
+            ctx.userName,
+            args.docId,
+            'read',
+            session
+          )
+        ) {
+          const proof = await modelProof.findOne({
+            database: args.databaseName,
+            docId: args.docId,
+          });
 
-        if (proof) {
-          switch (proof.status) {
-            case 'queued':
-              return 'QUEUED';
-            case 'proving':
-              return 'PROVING';
-            case 'proved':
-              return 'PROVED';
-            case 'failed':
-              return 'FAILED';
-            default:
-              throw new Error(`Unknown proof status: ${proof.status}`);
+          if (proof) {
+            switch (proof.status) {
+              case 'queued':
+                return 'QUEUED';
+              case 'proving':
+                return 'PROVING';
+              case 'proved':
+                return 'PROVED';
+              case 'failed':
+                return 'FAILED';
+              default:
+                throw new Error(`Unknown proof status: ${proof.status}`);
+            }
           }
+          throw Error('Proof has not been found');
         }
-        throw Error('Proof has not been found');
-      }
 
-      throw new Error(
-        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
-      );
-    });
+        throw new Error(
+          `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
+        );
+      }
+    );
   }
 );
 

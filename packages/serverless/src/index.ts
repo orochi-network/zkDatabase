@@ -27,27 +27,14 @@ import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
 import { NetworkId } from 'o1js';
 import { MinaNetwork } from '@zkdb/smart-contract';
+import { initModelLoader } from 'helper/model-loader.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
 (async () => {
   const app = express();
-  // DB service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-  // DB proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
-  }
 
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
-  }
-
-  // TODO: Fix the init first
-  // await ModelDbTransaction.init(serviceDb);
-  // await ModelQueueTask.init();
-  // await ModelSecureStorage.init();
+  await initModelLoader();
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,

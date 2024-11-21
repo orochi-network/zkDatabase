@@ -1,4 +1,4 @@
-import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
+import { ModelMerkleTree, TransactionManager } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -117,7 +117,7 @@ const getWitness = publicWrapper(
 const getWitnessByDocument = publicWrapper(
   MerkleTreeWitnessByDocumentRequest,
   async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) => {
-    return withTransaction((session) =>
+    return TransactionManager.withSingleTransaction('service', (session) =>
       getWitnessByDocumentId(args.databaseName, args.docId, session)
     );
   }
@@ -127,7 +127,7 @@ const getNode = publicWrapper(
   MerkleTreeGetNodeRequest,
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
     const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
-    return withTransaction((session) =>
+    return TransactionManager.withSingleTransaction('service', (session) =>
       merkleTreeService.getNode(args.level, args.index, new Date(), { session })
     );
   }

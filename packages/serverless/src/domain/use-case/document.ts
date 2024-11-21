@@ -1,10 +1,7 @@
 import {
-  CompoundSession,
-  DB,
   ModelQueueTask,
   ModelSequencer,
   TaskEntity,
-  withTransaction,
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { ClientSession, WithId } from 'mongodb';
@@ -39,6 +36,7 @@ import {
   proveDeleteDocument,
   proveUpdateDocument,
 } from './prover.js';
+import { CompoundSession, DB_INSTANCE } from 'helper/model-loader.js';
 
 export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
@@ -274,7 +272,7 @@ async function updateDocument(
   actor: string,
   filter: FilterCriteria,
   update: DocumentFields,
-  session: CompoundSession
+  session?: CompoundSession
 ) {
   if (
     !(await hasCollectionPermission(
@@ -282,7 +280,7 @@ async function updateDocument(
       collectionName,
       actor,
       'write',
-      session.sessionService
+      session?.sessionService
     ))
   ) {
     throw new Error(
@@ -304,7 +302,7 @@ async function updateDocument(
         actor,
         oldDocumentRecord.docId,
         'write',
-        session.sessionService
+        session?.sessionService
       ))
     ) {
       throw new Error(
@@ -324,7 +322,7 @@ async function updateDocument(
     await modelDocument.updateOne(
       oldDocumentRecord.docId,
       documentRecord,
-      session?.sessionService
+      session?.sessionService!
     );
 
     if (documentRecord) {
@@ -485,7 +483,7 @@ async function findDocumentsWithMetadata(
       session
     )
   ) {
-    const { client } = DB.service;
+    const { client } = DB_INSTANCE.service;
 
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
@@ -578,7 +576,7 @@ async function searchDocuments(
       session
     )
   ) {
-    const { client } = DB.service;
+    const { client } = DB_INSTANCE.service;
 
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);

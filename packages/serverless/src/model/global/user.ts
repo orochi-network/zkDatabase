@@ -1,5 +1,4 @@
 import {
-  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
@@ -10,6 +9,7 @@ import {
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 
 export interface DocumentUser extends Document {
   userName: string;
@@ -33,7 +33,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      DB_INSTANCE.service,
       ModelUser.collectionName
     );
   }
@@ -41,7 +41,7 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstants.globalDatabase,
-      DB.service,
+      DB_INSTANCE.service,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

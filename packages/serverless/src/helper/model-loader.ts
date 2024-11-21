@@ -9,10 +9,16 @@ import {
   TransactionManager,
 } from '@zkdb/storage';
 import config from './config.js';
+import { ClientSession } from 'mongodb';
 
 export const DB_INSTANCE = {
   proof: DatabaseEngine.getInstance(config.PROOF_MONGODB_URL),
   service: DatabaseEngine.getInstance(config.MONGODB_URL),
+};
+
+export type CompoundSession = {
+  sessionProof: ClientSession;
+  sessionService: ClientSession;
 };
 
 export async function initModelLoader() {

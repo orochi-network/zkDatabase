@@ -1,4 +1,4 @@
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
+import { TransactionManager } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -15,7 +15,7 @@ import mapPagination from '../mapper/pagination.js';
 import { TDocumentFields } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
 import { PermissionsData } from '../types/permission.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import {
   collectionName,
@@ -155,14 +155,16 @@ export const typeDefsDocument = gql`
 const documentFind = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    const document = await withTransaction((session) =>
-      readDocument(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.documentQuery,
-        session
-      )
+    const document = await TransactionManager.withSingleTransaction(
+      'service',
+      (session) =>
+        readDocument(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.documentQuery,
+          session
+        )
     );
 
     if (!document) {
@@ -180,36 +182,42 @@ const documentFind = authorizeWrapper(
 const documentsFind = authorizeWrapper(
   DOCUMENTS_FIND_REQUEST,
   async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
-    return withTransaction(async (session) => {
-      const documents = await searchDocuments(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.documentQuery,
-        mapPagination(args.pagination),
-        session
-      );
+    return TransactionManager.withSingleTransaction(
+      'service',
+      async (session) => {
+        const documents = await searchDocuments(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.documentQuery,
+          mapPagination(args.pagination),
+          session
+        );
 
-      return documents;
-    });
+        return documents;
+      }
+    );
   }
 );
 
 const documentsWithMetadataFind = authorizeWrapper(
   Joi.object().optional(),
   async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
-    return withTransaction(async (session) => {
-      const documents = await findDocumentsWithMetadata(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.documentQuery,
-        mapPagination(args.pagination),
-        session
-      );
+    return TransactionManager.withSingleTransaction(
+      'service',
+      async (session) => {
+        const documents = await findDocumentsWithMetadata(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.documentQuery,
+          mapPagination(args.pagination),
+          session
+        );
 
-      return documents;
-    });
+        return documents;
+      }
+    );
   }
 );
 
@@ -217,16 +225,17 @@ const documentsWithMetadataFind = authorizeWrapper(
 const documentCreate = authorizeWrapper(
   DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
-    withCompoundTransaction((compoundSession) =>
-      createDocument(
+    TransactionManager.withCompoundTransaction((compoundSession) => {
+      console.log('🚀 ~ compoundSession:', compoundSession);
+      return createDocument(
         args.databaseName,
         args.collectionName,
         ctx.userName,
         args.documentRecord as any,
         args.documentPermission,
-        compoundSession
-      )
-    )
+        undefined
+      );
+    })
 );
 
 const documentUpdate = authorizeWrapper(
@@ -240,29 +249,30 @@ const documentUpdate = authorizeWrapper(
         );
     }
 
-    withCompoundTransaction((compoundSession) =>
-      updateDocument(
+    TransactionManager.withCompoundTransaction((compoundSession) => {
+      console.log('🚀 ~ compoundSession:', compoundSession);
+      return updateDocument(
         args.databaseName,
         args.collectionName,
         ctx.userName,
         args.documentQuery,
         args.documentRecord as any,
-        compoundSession
-      )
-    );
+        undefined
+      );
+    });
   }
 );
 
 const documentDrop = authorizeWrapper(
   DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) =>
-    withCompoundTransaction((session) =>
+    TransactionManager.withCompoundTransaction((session) =>
       deleteDocument(
         args.databaseName,
         args.collectionName,
         ctx.userName,
         args.documentQuery,
-        session
+        undefined
       )
     )
 );

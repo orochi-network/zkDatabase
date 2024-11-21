@@ -1,4 +1,4 @@
-import { withTransaction } from '@zkdb/storage';
+import { TransactionManager } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation.js';
@@ -50,14 +50,16 @@ extend type Query {
 const historyDocumentGet = authorizeWrapper(
   DOCUMENT_HISTORY_GET_REQUEST,
   async (_root: unknown, args: TDocumentHistoryGetRequest, ctx) => {
-    const document = await withTransaction((session) =>
-      readHistoryDocument(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.docId,
-        session
-      )
+    const document = await TransactionManager.withSingleTransaction(
+      'service',
+      (session) =>
+        readHistoryDocument(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.docId,
+          session
+        )
     );
 
     if (!document) {
@@ -76,17 +78,20 @@ const historyDocumentGet = authorizeWrapper(
 const documentsHistoryList = authorizeWrapper(
   Joi.object().optional(),
   async (_root: unknown, args: TDocumentHistoryListRequest, ctx) => {
-    return withTransaction(async (session) => {
-      const documents = await listHistoryDocuments(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        mapPagination(args.pagination),
-        session
-      );
+    return TransactionManager.withSingleTransaction(
+      'service',
+      async (session) => {
+        const documents = await listHistoryDocuments(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          mapPagination(args.pagination),
+          session
+        );
 
-      return documents;
-    });
+        return documents;
+      }
+    );
   }
 );
 

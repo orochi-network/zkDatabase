@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
 import { PermissionBasic } from '../../common/permission.js';

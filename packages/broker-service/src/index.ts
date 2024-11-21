@@ -7,23 +7,16 @@ import { ApolloServer } from "apollo-server-express";
 import express from "express";
 import http from "http";
 import { ResolversApp, TypedefsApp } from "./apollo/index.js";
-import { config } from "./helper/config.js";
+import { config, proofDb } from "./helper/config.js";
 import logger from "./helper/logger.js";
 
 (async () => {
   const app = express();
 
-  // DB proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-
   if (!proofDb.isConnected()) {
     await proofDb.connect();
   }
 
-  TransactionManager.addSession({
-    name: "proof",
-    session: proofDb.client.startSession(),
-  });
   ModelQueueTask.createModel(proofDb);
 
   app.use(express.json());

@@ -1,5 +1,4 @@
 import {
-  CompoundSession,
   DbTransaction,
   ModelDbSetting,
   ModelDbTransaction,
@@ -20,7 +19,7 @@ import { PublicKey } from 'o1js';
 export async function createRollUp(
   databaseName: string,
   actor: string,
-  compoundSession?: CompoundSession
+  compoundSession?: Record<string, ClientSession>
 ) {
   const modelProof = ModelProof.getInstance();
   const latestProofForDb = await modelProof.getProof(databaseName, {

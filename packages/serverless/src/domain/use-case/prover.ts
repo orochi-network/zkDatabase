@@ -6,7 +6,6 @@ import {
   ModelMerkleTree,
   ModelQueueTask,
   ModelSequencer,
-  CompoundSession,
 } from '@zkdb/storage';
 
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
@@ -21,7 +20,7 @@ export async function proveCreateDocument(
   collectionName: string,
   docId: string,
   document: DocumentFields,
-  compoundSession?: CompoundSession
+  compoundSession?: Record<string, ClientSession>
 ): Promise<TMerkleProof[]> {
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
@@ -85,7 +84,7 @@ export async function proveUpdateDocument(
   collectionName: string,
   docId: string,
   newDocument: DocumentFields,
-  session?: CompoundSession
+  session?: Record<string, ClientSession>
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
   const oldDocument = await modelDocument.findOne(
@@ -158,7 +157,7 @@ export async function proveDeleteDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  session?: CompoundSession
+  session?: Record<string, ClientSession>
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
   const document = await modelDocument.findOne(

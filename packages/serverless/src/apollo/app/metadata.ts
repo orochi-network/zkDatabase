@@ -1,25 +1,25 @@
-import Joi from 'joi';
+import { TransactionManager } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
-import { withTransaction } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  databaseName,
-  userName,
-  collectionName,
-  objectId,
-  permissionDetail,
-} from './common.js';
-import { TCollectionRequest } from './collection.js';
+import Joi from 'joi';
 import { PermissionRecord } from '../../common/permission.js';
-import { FullPermissionsData, TPermissionGroup } from '../types/permission.js';
-import { setPermissions } from '../../domain/use-case/permission.js';
+import { readMetadata } from '../../domain/use-case/metadata.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
-import { TOwnershipGroup } from '../types/ownership.js';
-import { readMetadata } from '../../domain/use-case/metadata.js';
+import { setPermissions } from '../../domain/use-case/permission.js';
 import { getSchemaDefinition } from '../../domain/use-case/schema.js';
+import { TOwnershipGroup } from '../types/ownership.js';
+import { FullPermissionsData, TPermissionGroup } from '../types/permission.js';
+import { authorizeWrapper } from '../validation.js';
+import { TCollectionRequest } from './collection.js';
+import {
+  collectionName,
+  databaseName,
+  objectId,
+  permissionDetail,
+  userName,
+} from './common.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -98,7 +98,7 @@ const permissionList = authorizeWrapper(
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionRequest, ctx) => {
-    return withTransaction((session) =>
+    return TransactionManager.withSingleTransaction('service', (session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -129,7 +129,7 @@ const permissionSet = authorizeWrapper(
     permission: permissionDetail.required(),
   }),
   async (_root: unknown, args: TPermissionUpdateRequest, context) => {
-    await withTransaction((session) =>
+    await TransactionManager.withSingleTransaction('service', (session) =>
       setPermissions(
         args.databaseName,
         args.collectionName,
@@ -140,7 +140,7 @@ const permissionSet = authorizeWrapper(
       )
     );
 
-    return withTransaction((session) =>
+    return TransactionManager.withSingleTransaction('service', (session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,
@@ -163,7 +163,7 @@ const permissionOwn = authorizeWrapper(
   }),
   async (_root: unknown, args: TPermissionOwnRequest, context) => {
     if (args.docId) {
-      await withTransaction((session) =>
+      await TransactionManager.withSingleTransaction('service', (session) =>
         changeDocumentOwnership(
           args.databaseName,
           args.collectionName,
@@ -175,7 +175,7 @@ const permissionOwn = authorizeWrapper(
         )
       );
     } else {
-      await withTransaction((session) =>
+      await TransactionManager.withSingleTransaction('service', (session) =>
         changeCollectionOwnership(
           args.databaseName,
           args.collectionName,
@@ -187,7 +187,7 @@ const permissionOwn = authorizeWrapper(
       );
     }
 
-    return withTransaction((session) =>
+    return TransactionManager.withSingleTransaction('service', (session) =>
       readMetadata(
         args.databaseName,
         args.collectionName,

@@ -1,12 +1,7 @@
 import { Fill } from '@orochi-network/queue';
-import {
-  DB,
-  DbSetting,
-  ModelDbTransaction,
-  ModelDbSetting,
-} from '@zkdb/storage';
+import { DbSetting, ModelDbSetting, ModelDbTransaction } from '@zkdb/storage';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 import { ClientSession } from 'mongodb';
-import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
@@ -16,8 +11,8 @@ import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
-import { isUserExist } from './user.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
+import { isUserExist } from './user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -29,7 +24,7 @@ export async function createDatabase(
 
   if (user) {
     // Case database already exist
-    if (await DB.service.isDatabase(databaseName)) {
+    if (await DB_INSTANCE.service.isDatabase(databaseName)) {
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
@@ -73,7 +68,10 @@ export async function getDatabases(
   filter: FilterCriteria,
   pagination?: Pagination
 ): Promise<PaginationReturn<Database[]>> {
-  const databasesInfo = await DB.service.client.db().admin().listDatabases();
+  const databasesInfo = await DB_INSTANCE.service.client
+    .db()
+    .admin()
+    .listDatabases();
 
   if (!databasesInfo?.databases?.length) {
     return {
@@ -118,7 +116,8 @@ export async function getDatabases(
 
         const collections = await listCollections(databaseName, actor);
 
-        const deployStatus = (await getLatestTransaction(databaseName, 'deploy'))?.status ?? null;
+        const deployStatus =
+          (await getLatestTransaction(databaseName, 'deploy'))?.status ?? null;
 
         return {
           databaseName,
@@ -127,7 +126,7 @@ export async function getDatabases(
           databaseSize,
           collections,
           appPublicKey,
-          deployStatus
+          deployStatus,
         } as Database;
       })
     )

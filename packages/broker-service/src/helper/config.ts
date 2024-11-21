@@ -1,4 +1,5 @@
 import { ConfigLoader, Joi } from "@orochi-network/framework";
+import { DatabaseEngine } from "@zkdb/storage";
 export const NODE_ENV_VALUES = [
   "development",
   "production",
@@ -45,3 +46,4 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
 );
 
 export const { config } = configLoader;
+export const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);

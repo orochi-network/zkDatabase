@@ -15,6 +15,7 @@ export async function initModelLoader() {
   const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
   // db proof
   const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+  console.log('🚀 ~ initModelLoader ~ L:', config.PROOF_MONGODB_URL);
   if (!serviceDb.isConnected()) {
     await serviceDb.connect();
   }
@@ -27,6 +28,7 @@ export async function initModelLoader() {
     name: 'proof',
     session: proofDb.client.startSession(),
   });
+  console.log('🚀 ~ initModelLoader ~ TransactionManager:', TransactionManager);
 
   ModelDbSetting.createModel(serviceDb);
   ModelMerkleTree.createModel(serviceDb);

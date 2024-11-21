@@ -1,5 +1,4 @@
 import {
-  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
@@ -7,6 +6,7 @@ import {
 import { Document, FindOptions } from 'mongodb';
 import { PermissionBasic } from '../../common/permission.js';
 import { ProvableTypeString } from '../../domain/common/schema.js';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 
 // Every data type will be treaded as string when store/transfer
 /*
@@ -83,7 +83,11 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   }
 
   private constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelCollectionMetadata.collectionName);
+    super(
+      databaseName,
+      DB_INSTANCE.service,
+      ModelCollectionMetadata.collectionName
+    );
   }
 
   public static getInstance(databaseName: string): ModelCollectionMetadata {
@@ -111,7 +115,7 @@ export class ModelCollectionMetadata extends ModelGeneral<SchemaDefinition> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DB_INSTANCE.service,
       ModelCollectionMetadata.collectionName
     );
     if (!(await collection.isExist())) {

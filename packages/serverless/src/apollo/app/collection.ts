@@ -1,6 +1,7 @@
+import { TransactionManager } from '@zkdb/storage';
 import Joi from 'joi';
 import GraphQLJSON from 'graphql-type-json';
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
+import { ModelDatabase } from '@zkdb/storage';
 import {
   databaseName,
   collectionName,
@@ -103,17 +104,18 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    const createCollectionResult = await withTransaction((session) =>
-      createCollection(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.groupName,
-        args.schema,
-        args.permissions,
-        session
-      )
-    );
+    const createCollectionResult =
+      await TransactionManager.withSingleTransaction('service', (session) =>
+        createCollection(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.groupName,
+          args.schema,
+          args.permissions,
+          session
+        )
+      );
 
     if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(

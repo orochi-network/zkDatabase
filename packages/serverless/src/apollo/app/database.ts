@@ -1,5 +1,6 @@
-import { DB, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
+import { ModelDatabase, ModelDbSetting } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 import Joi from 'joi';
 import {
   changeDatabaseOwner,
@@ -9,7 +10,7 @@ import {
 } from '../../domain/use-case/database.js';
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, publicKey, userName } from './common.js';
+import { databaseName, pagination, userName } from './common.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -140,7 +141,10 @@ const dbSetting = publicWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, _ctx) => {
-    const { databases } = await DB.service.client.db().admin().listDatabases();
+    const { databases } = await DB_INSTANCE.service.client
+      .db()
+      .admin()
+      .listDatabases();
 
     const isDatabaseExist = databases.some(
       (db) => db.name === args.databaseName

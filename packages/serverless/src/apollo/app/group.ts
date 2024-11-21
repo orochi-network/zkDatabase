@@ -1,4 +1,3 @@
-import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -20,6 +19,7 @@ import {
   userName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
+import { TransactionManager } from '@zkdb/storage';
 
 export type TGroupRequest = TDatabaseRequest & {
   groupName: string;
@@ -164,7 +164,7 @@ const groupRename = authorizeWrapper(
     newGroupName: groupName,
   }),
   async (_root: unknown, args: TGroupRenameRequest, ctx) =>
-    withTransaction(async (session) =>
+    TransactionManager.withSingleTransaction('service', async (session) =>
       renameGroup(
         args.databaseName,
         ctx.userName,
@@ -178,7 +178,7 @@ const groupRename = authorizeWrapper(
 const groupCreate = authorizeWrapper(
   GroupCreateRequest,
   async (_root: unknown, args: TGroupCreateRequest, ctx) =>
-    withTransaction(async (session) =>
+    TransactionManager.withSingleTransaction('service', async (session) =>
       createGroup(
         args.databaseName,
         ctx.userName,
@@ -196,7 +196,7 @@ const groupAddUsers = authorizeWrapper(
     userNames: Joi.array().items(Joi.string().required()).required(),
   }),
   async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    withTransaction(async (session) =>
+    TransactionManager.withSingleTransaction('service', async (session) =>
       addUsersToGroup(
         args.databaseName,
         ctx.userName,
@@ -214,7 +214,7 @@ const groupRemoveUsers = authorizeWrapper(
     userNames: Joi.array().items(Joi.string().required()).required(),
   }),
   async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    withTransaction(async (session) =>
+    TransactionManager.withSingleTransaction('service', async (session) =>
       excludeUsersToGroup(
         args.databaseName,
         ctx.userName,
@@ -228,7 +228,7 @@ const groupRemoveUsers = authorizeWrapper(
 const groupChangeDescription = authorizeWrapper(
   GroupDescriptionChangeRequest,
   async (_root: unknown, args: TGroupCreateRequest, ctx) =>
-    withTransaction(async (session) =>
+    TransactionManager.withSingleTransaction('service', async (session) =>
       changeGroupDescription(
         args.databaseName,
         ctx.userName,

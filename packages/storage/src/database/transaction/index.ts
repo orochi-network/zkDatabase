@@ -13,6 +13,10 @@ export class TransactionManager {
     for (let { name, session } of args) {
       TransactionManager.sessions.push({ name, session });
     }
+    console.log(
+      '🚀 ~ TransactionManager ~ addSession ~ args:',
+      TransactionManager.sessions
+    );
   }
 
   // Start transactions for all sessions
@@ -52,12 +56,15 @@ export class TransactionManager {
 
   // Execute a compound transaction (multiple sessions)
   public static async withCompoundTransaction<T>(
-    operation: () => Promise<T>
+    operation: (sessions: Record<string, ClientSession>) => Promise<T>
   ): Promise<T> {
     let result: T;
     try {
       await TransactionManager.startTransactions();
-      result = await operation();
+      const sessionMap = Object.fromEntries(
+        TransactionManager.sessions.map(({ name, session }) => [name, session])
+      );
+      result = await operation(sessionMap);
       for (const { session } of TransactionManager.sessions) {
         await session.commitTransaction();
       }
@@ -85,6 +92,10 @@ export class TransactionManager {
   ): Promise<T> {
     const sessionData = TransactionManager.sessions.find(
       (s) => s.name === sessionName
+    );
+    console.log(
+      '🚀 ~ TransactionManager ~ TransactionManager.sessions:',
+      TransactionManager.sessions
     );
     if (!sessionData) {
       throw new Error(`Session with name "${sessionName}" not found.`);

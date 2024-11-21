@@ -1,4 +1,3 @@
-import { withTransaction } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -24,6 +23,7 @@ import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { pagination } from './common.js';
 import config from '../../helper/config.js';
+import { TransactionManager } from '@zkdb/storage';
 
 // We extend express session to define session expiration time
 declare module 'express-session' {
@@ -228,8 +228,10 @@ const searchUser = publicWrapper(
 const findUser = publicWrapper(
   USER_FIND_REQUEST,
   async (_root: unknown, args: TUserFindRequest) => {
-    return withTransaction(async (session) =>
-      findUserDomain(args.query, mapPagination(args.pagination), session)
+    return TransactionManager.withSingleTransaction(
+      'service',
+      async (session) =>
+        findUserDomain(args.query, mapPagination(args.pagination), session)
     );
   }
 );

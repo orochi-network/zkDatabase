@@ -1,5 +1,4 @@
 import {
-  DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
@@ -7,6 +6,7 @@ import {
 import { ClientSession, Document, InsertOneOptions } from 'mongodb';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 
 export interface GroupSchema extends Document {
   groupName: string;
@@ -21,7 +21,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
     zkDatabaseConstants.databaseCollections.group;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelGroup.collectionName);
+    super(databaseName, DB_INSTANCE.service, ModelGroup.collectionName);
   }
 
   public async createGroup(
@@ -52,7 +52,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DB_INSTANCE.service,
       ModelGroup.collectionName
     );
     if (!(await collection.isExist())) {

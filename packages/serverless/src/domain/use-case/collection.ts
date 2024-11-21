@@ -1,5 +1,5 @@
 import { Fill } from '@orochi-network/queue';
-import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PermissionBinary } from '../../common/permission.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -18,6 +18,7 @@ import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
+import { DB_INSTANCE } from 'helper/model-loader.js';
 
 function mapSorting(sorting: Sorting): 1 | -1 {
   return sorting === 'ASC' ? 1 : -1;
@@ -53,7 +54,11 @@ async function createIndex(
       );
     }
 
-    return ModelCollection.getInstance(databaseName, DB.service, collectionName).index(
+    return ModelCollection.getInstance(
+      databaseName,
+      DB_INSTANCE.service,
+      collectionName
+    ).index(
       indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
     );
   }
@@ -112,7 +117,7 @@ async function readCollectionInfo(
   ) {
     const modelCollection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DB_INSTANCE.service,
       collectionName
     );
     const indexes = await modelCollection.listIndexes();
@@ -132,7 +137,11 @@ async function readCollectionInfo(
       actor
     );
 
-    await ModelCollection.getInstance(databaseName, DB.service, collectionName).size();
+    await ModelCollection.getInstance(
+      databaseName,
+      DB_INSTANCE.service,
+      collectionName
+    ).size();
 
     return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
   }
@@ -209,7 +218,7 @@ async function listIndexes(
     // TODO: Should we check if index fields exist for a collection
     return ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DB_INSTANCE.service,
       collectionName
     ).listIndexes();
   }
@@ -229,7 +238,7 @@ export async function listIndexesInfo(
   ) {
     const modelCollection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DB_INSTANCE.service,
       collectionName
     );
 
@@ -296,9 +305,11 @@ async function doesIndexExist(
       session
     )
   ) {
-    return ModelCollection.getInstance(databaseName, DB.service, collectionName).isIndexed(
-      indexName
-    );
+    return ModelCollection.getInstance(
+      databaseName,
+      DB_INSTANCE.service,
+      collectionName
+    ).isIndexed(indexName);
   }
 
   throw Error(
@@ -319,7 +330,7 @@ async function dropIndex(
     if (await doesIndexExist(databaseName, actor, collectionName, indexName)) {
       return ModelCollection.getInstance(
         databaseName,
-        DB.service,
+        DB_INSTANCE.service,
         collectionName
       ).dropIndex(indexName);
     }
