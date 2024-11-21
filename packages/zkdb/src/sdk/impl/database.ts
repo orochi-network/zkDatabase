@@ -1,7 +1,13 @@
 import { JsonProof, PublicKey } from 'o1js';
 import { IApiClient } from '@zkdb/api';
 import { ZKCollection, ZKDatabase, ZKGroup } from '../interfaces';
-import { DatabaseSettings, Permissions, GroupDescription } from '../../types';
+import {
+  DatabaseSettings,
+  Permissions,
+  GroupDescription,
+  TDbTransaction,
+  TTransactionType,
+} from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
 import { ZKGroupImpl } from './group';
@@ -15,6 +21,9 @@ export class ZKDatabaseImpl implements ZKDatabase {
   constructor(databaseName: string, apiClient: IApiClient) {
     this.databaseName = databaseName;
     this.apiClient = apiClient;
+  }
+  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction> {
+    throw new Error('Method not implemented.');
   }
 
   async getProof(): Promise<JsonProof> {

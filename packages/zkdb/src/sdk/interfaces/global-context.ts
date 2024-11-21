@@ -3,11 +3,7 @@ import { Database, User, FilterCriteria, Pagination } from '../../types';
 
 /* eslint-disable no-unused-vars */
 export interface GlobalContext {
-  createDatabase(
-    databaseName: string,
-    merkleHeight: number,
-    publicKey: PublicKey
-  ): Promise<boolean>;
+  createDatabase(databaseName: string, merkleHeight: number): Promise<boolean>;
   databases(
     filter?: FilterCriteria,
     pagination?: Pagination
