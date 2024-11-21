@@ -48,13 +48,11 @@ export class GlobalContextImpl implements GlobalContext {
 
   async createDatabase(
     databaseName: string,
-    merkleHeight: number,
-    publicKey: PublicKey
+    merkleHeight: number
   ): Promise<boolean> {
     const result = await this.apiClient.db.create({
       databaseName,
       merkleHeight,
-      publicKey: publicKey.toBase58(),
     });
 
     return result.unwrap();

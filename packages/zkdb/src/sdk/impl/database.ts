@@ -92,11 +92,10 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap().map((collection) => collection.name);
   }
 
-  async create(merkleHeight: number, publicKey: PublicKey): Promise<boolean> {
+  async create(merkleHeight: number): Promise<boolean> {
     const result = await this.apiClient.db.create({
       databaseName: this.databaseName,
       merkleHeight,
-      publicKey: publicKey.toBase58(),
     });
 
     return result.unwrap();

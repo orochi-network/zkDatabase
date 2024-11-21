@@ -10,7 +10,7 @@ export class NodeSigner implements Signer {
 
   constructor(privateKey: PrivateKey) {
     this.privateKey = privateKey;
-    this.client = new Client({ network: 'mainnet' });
+    this.client = new Client({ network: 'testnet' });
   }
 
   async signTransaction(
