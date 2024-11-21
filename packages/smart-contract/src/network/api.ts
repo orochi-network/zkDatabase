@@ -1,5 +1,3 @@
-import logger from "src/helper/logger";
-
 export type TChain = 'mainnet' | 'devnet';
 
 export type TStatus = 'applied' | 'failed' | 'pending';
@@ -46,13 +44,13 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        logger.error('response:', response);
+        console.error('response:', response);
         return undefined;
       }
       const result = await response.json();
       return result as TBlockConfirmationTransaction;
     } catch (err) {
-      logger.error(err);
+      console.error(err);
       return undefined;
     }
   }
@@ -74,13 +72,13 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        logger.error('response:', response);
+        console.error('response:', response);
         return undefined;
       }
       const result = await response.json();
       return result as TZkAppTransaction;
     } catch (err) {
-      logger.error(err);
+      console.error(err);
       return undefined;
     }
   }

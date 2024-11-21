@@ -1,12 +1,14 @@
 import axios from 'axios';
-import logger from '../helper/logger';
 
 export type TSendTransaction = {
-  hash: string,
-  id: string
-}
+  hash: string;
+  id: string;
+};
 
-export async function sendTransaction(json: any, url: string): Promise<TSendTransaction> {
+export async function sendTransaction(
+  json: any,
+  url: string
+): Promise<TSendTransaction> {
   const query = `
     mutation sendZkapp($input: SendZkappInput!) {
       sendZkapp(input: $input) {
@@ -42,11 +44,11 @@ export async function sendTransaction(json: any, url: string): Promise<TSendTran
     const { data, errors } = response.data;
 
     if (errors) {
-      throw Error(errors)
+      throw errors;
     }
 
-    return data;
+    return data.sendZkapp.zkapp;
   } catch (error) {
-    throw Error(error as any)
+    throw Error(error as any);
   }
 }

@@ -1,10 +1,10 @@
-import { fetchAccount, Mina, PrivateKey } from 'o1js';
-import Client from 'mina-signer';
 import { SignedData } from '@types';
+import { sendTransaction } from '@zkdb/smart-contract';
+import Client from 'mina-signer';
+import { fetchAccount, PrivateKey } from 'o1js';
+import { TransactionParams } from '../../types/transaction-params';
 import { MinaTransaction } from '../types/o1js';
 import { Signer } from './interface/signer';
-import { MinaNetwork, sendTransaction } from '@zkdb/smart-contract';
-import { TransactionParams } from '../../types/transaction-params';
 
 export class NodeSigner implements Signer {
   private privateKey: PrivateKey;
@@ -13,7 +13,7 @@ export class NodeSigner implements Signer {
 
   constructor(privateKey: PrivateKey, endpoint: string) {
     this.privateKey = privateKey;
-    this.client = new Client({ network: 'mainnet' });
+    this.client = new Client({ network: 'testnet' });
     this.endpoint = endpoint;
   }
 
@@ -24,6 +24,8 @@ export class NodeSigner implements Signer {
     const userPublicKey = this.privateKey.toPublicKey();
 
     const { account, error } = await fetchAccount({ publicKey: userPublicKey });
+
+    console.log('🚀 ~ NodeSigner ~ error:', error);
 
     if (error) {
       throw Error(error.statusText);

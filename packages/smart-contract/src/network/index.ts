@@ -1,2 +1,2 @@
 export * from './mina-network';
-export * from './native_api'
+export * from './native-api';
