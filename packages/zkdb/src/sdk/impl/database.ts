@@ -22,9 +22,6 @@ export class ZKDatabaseImpl implements ZKDatabase {
     this.databaseName = databaseName;
     this.apiClient = apiClient;
   }
-  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction> {
-    throw new Error('Method not implemented.');
-  }
 
   async getProof(): Promise<JsonProof> {
     const result = await this.apiClient.proof.get({
@@ -123,6 +120,16 @@ export class ZKDatabaseImpl implements ZKDatabase {
       newOwner,
     });
 
+    return result.unwrap();
+  }
+
+  async getTransaction(
+    transactionType: TTransactionType
+  ): Promise<TDbTransaction> {
+    const result = await this.apiClient.transaction.getTransaction({
+      databaseName: this.databaseName,
+      transactionType,
+    });
     return result.unwrap();
   }
 }
