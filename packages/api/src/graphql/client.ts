@@ -18,6 +18,7 @@ import { permission } from "./permission";
 import { proof } from "./proof";
 import { user } from "./user";
 import { transaction } from "./transaction";
+import { rollup } from "./rollup";
 
 export interface IApiClient<T = any> {
   api: ApiClient<T>;
@@ -32,6 +33,8 @@ export interface IApiClient<T = any> {
   merkle: ReturnType<typeof merkle>;
   proof: ReturnType<typeof proof>;
   transaction: ReturnType<typeof transaction>;
+
+  rollup: ReturnType<typeof rollup>;
 }
 
 export class ApiClient<T = any> {
@@ -110,6 +113,7 @@ export class ApiClient<T = any> {
       merkle: merkle(api.apollo),
       proof: proof(api.apollo),
       transaction: transaction(api.apollo),
+      rollup: rollup(api.apollo),
     };
   }
 }

@@ -10,6 +10,7 @@ import {
   TTransactionType,
   IndexField,
   TDbTransaction,
+  TGetRollUpHistory,
 } from '../../types';
 export interface ZKDatabase {
   from(name: string): ZKCollection;
@@ -38,4 +39,13 @@ export interface ZKDatabase {
   getProof(): Promise<JsonProof>;
   // Transaction
   getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
+  confirmTransaction(
+    databaseName: string,
+    id: string,
+    txHash: string
+  ): Promise<boolean>;
+
+  // Rollup
+  createRollup(databaseName: string): Promise<boolean>;
+  getRollUpHistory(databaseName: string): Promise<TGetRollUpHistory>;
 }

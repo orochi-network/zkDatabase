@@ -1,6 +1,14 @@
 import { gql } from "@apollo/client";
-import { createQueryFunction, TApolloClient } from "./common.js";
-import { TDbTransaction, TTransactionRequest } from "./types/transaction.js";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common.js";
+import {
+  TDbTransaction,
+  TTransactionConfirmRequest,
+  TTransactionRequest,
+} from "./types/transaction.js";
 
 const TRANSACTION_GET = gql`
   query GetTransaction(
@@ -13,9 +21,25 @@ const TRANSACTION_GET = gql`
     ) {
       databaseName
       transactionType
+      status
+      id
       tx
       zkAppPublicKey
     }
+  }
+`;
+
+const TRANSACTION_CONFIRM = gql`
+  mutation ConfirmTransaction(
+    $databaseName: String!
+    $confirmTransactionId: String!
+    $txHash: String!
+  ) {
+    confirmTransaction(
+      databaseName: $databaseName
+      id: $confirmTransactionId
+      txHash: $txHash
+    )
   }
 `;
 
@@ -25,4 +49,9 @@ export const transaction = <T>(client: TApolloClient<T>) => ({
     TTransactionRequest,
     { getTransaction: TDbTransaction }
   >(client, TRANSACTION_GET, (data) => data.getTransaction),
+  confirmTransaction: createMutateFunction<
+    boolean,
+    TTransactionConfirmRequest,
+    { confirmTransaction: boolean }
+  >(client, TRANSACTION_CONFIRM, (data) => data.confirmTransaction),
 });

@@ -7,6 +7,7 @@ import {
   GroupDescription,
   TDbTransaction,
   TTransactionType,
+  TGetRollUpHistory,
 } from '../../types';
 import { SchemaDefinition } from '../schema';
 import { CollectionQueryImpl } from './collection';
@@ -129,6 +130,31 @@ export class ZKDatabaseImpl implements ZKDatabase {
     const result = await this.apiClient.transaction.getTransaction({
       databaseName: this.databaseName,
       transactionType,
+    });
+    return result.unwrap();
+  }
+
+  async confirmTransaction(
+    databaseName: string,
+    id: string,
+    txHash: string
+  ): Promise<boolean> {
+    const result = await this.apiClient.transaction.confirmTransaction({
+      databaseName,
+      confirmTransactionId: id,
+      txHash,
+    });
+    return result.unwrap();
+  }
+
+  async createRollup(databaseName: string): Promise<boolean> {
+    const result = await this.apiClient.rollup.createRollUp({ databaseName });
+    return result.unwrap();
+  }
+
+  async getRollUpHistory(databaseName: string): Promise<TGetRollUpHistory> {
+    const result = await this.apiClient.rollup.getRollUpHistory({
+      databaseName,
     });
     return result.unwrap();
   }

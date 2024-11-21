@@ -13,3 +13,4 @@ export * from "./session";
 export * from "./signature";
 export * from "./user";
 export * from "./collection";
+export * from "./rollup";
