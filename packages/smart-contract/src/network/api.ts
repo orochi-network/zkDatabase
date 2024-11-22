@@ -1,3 +1,5 @@
+import { logger } from '../utils';
+
 export type TChain = 'mainnet' | 'devnet';
 
 export type TStatus = 'applied' | 'failed' | 'pending';
@@ -44,13 +46,13 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        console.error('response:', response);
+        logger.error('Error response from blockberry:', response);
         return undefined;
       }
       const result = await response.json();
       return result as TBlockConfirmationTransaction;
     } catch (err) {
-      console.error(err);
+      logger.error('Cannot getBlockConfirmationByTransactionHash ', err);
       return undefined;
     }
   }
