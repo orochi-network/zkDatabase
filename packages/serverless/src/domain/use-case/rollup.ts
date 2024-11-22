@@ -32,6 +32,28 @@ export async function createRollUp(
   }
 
   const modelRollUp = ModelRollup.getInstance();
+  const modelTransaction = ModelDbTransaction.getInstance();
+
+  const rollUp = await modelRollUp.collection.findOne({
+    proofId: latestProofForDb._id,
+  });
+
+  if (rollUp) {
+    logger.debug('Identified repeated proof');
+
+    const transaction = await modelTransaction.findById(rollUp.txId.toString());
+    if (transaction) {
+      if (transaction.status === 'success') {
+        throw Error('You cannot roll-up the same proof');
+      }
+
+      if (transaction.status === 'pending') {
+        throw Error(
+          'You already have uncompleted transaction with the same proof'
+        );
+      }
+    }
+  }
 
   const txId = await enqueueTransaction(
     databaseName,
@@ -46,6 +68,7 @@ export async function createRollUp(
       newMerkleRoot: latestProofForDb.merkleRoot,
       databaseName: databaseName,
       txId,
+      proofId: latestProofForDb._id,
     },
     { session: compoundSession?.sessionService }
   );
@@ -212,7 +235,10 @@ export async function getRollUpHistory(
 
   if (diff > 0) {
     rollUpState = 'outdated';
-  } else if (history[0] && history[0].status === 'failed') {
+  } else if (
+    history[history.length - 1] &&
+    history[history.length - 1].status === 'failed'
+  ) {
     rollUpState = 'failed';
   }
 
