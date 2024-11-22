@@ -7593,7 +7593,7 @@ nth-check@^2.0.1:
   dependencies:
     boolbase "^1.0.0"
 
-o1js@^1.8.0, o1js@^1.9.0:
+o1js@1.9.*, o1js@^1.8.0, o1js@^1.9.0:
   version "1.9.1"
   resolved "https://registry.npmjs.org/o1js/-/o1js-1.9.1.tgz"
   integrity sha512-QbeFb2WU4YpCRIz/2hu3lhwioDntpmn8M7Zl6LrIh3fIPoHMQcN9OIqE8whN83ttcioV3HsJwszKtfkBC5vEYQ==
