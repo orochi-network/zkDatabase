@@ -23,8 +23,8 @@ class TShirt extends Schema.create({
 }) {}
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-const NETWORK: NetworkId = 'testnet'
-const MINA_ENDPOINT = "https://api.minascan.io/node/devnet/v1/graphql"
+const NETWORK: NetworkId = 'testnet';
+const MINA_ENDPOINT = 'https://api.minascan.io/node/devnet/v1/graphql';
 
 async function run() {
   const Network = Mina.Network({
@@ -44,15 +44,13 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  await zkdb
-    .fromGlobal()
-    .createDatabase(DB_NAME, 18);
+  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 
   await zkdb
     .database(DB_NAME)
-    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, [],{
+    .createCollection(COLLECTION_NAME, GROUP_NAME, TShirt, [], {
       permissionOwner: AccessPermissions.fullAdminPermissions,
       permissionGroup: AccessPermissions.fullAccessPermissions,
       permissionOther: AccessPermissions.noPermissions,

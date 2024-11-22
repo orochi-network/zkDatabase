@@ -1,13 +1,9 @@
 import { Mina, NetworkId } from 'o1js';
-import {
-    AuroWalletSigner,
-    NodeSigner,
-    ZKDatabaseClient
-} from 'zkdb';
+import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
 
-const network: NetworkId = 'testnet'
+const network: NetworkId = 'testnet';
 const MINA_DECIMAL = 1e9;
 const DB_NAME = 'shop';
 
@@ -30,17 +26,14 @@ async function run() {
   await zkdb.authenticator.signIn();
   // The transaction will be created in background after database created
   // Get unsigned transaction
-  const {tx, id} = await zkdb.database(DB_NAME).getTransaction('deploy')
+  const { tx, id } = await zkdb.database(DB_NAME).getTransaction('deploy');
   // Signed the transaction
   const txHash = await signer.signAndSendTransaction(tx, {
     fee: MINA_DECIMAL,
-    memo: ''
-  })
-  // Confirm the transaction 
-  await zkdb.database(DB_NAME).confirmTransaction(
-        id,
-        txHash
-      )
+    memo: '',
+  });
+  // Confirm the transaction
+  await zkdb.database(DB_NAME).confirmTransaction(id, txHash);
 
   await zkdb.authenticator.signOut();
 }

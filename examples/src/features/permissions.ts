@@ -16,7 +16,7 @@ const MY_PRIVATE_KEY = PrivateKey.fromBase58(
 const DB_NAME = 'my-db';
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'buyers';
-const NETWORK: NetworkId = 'testnet'
+const NETWORK: NetworkId = 'testnet';
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
@@ -35,10 +35,7 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-
-  await zkdb
-    .fromGlobal()
-    .createDatabase(DB_NAME, 18);
+  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 

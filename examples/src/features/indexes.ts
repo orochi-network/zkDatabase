@@ -9,7 +9,7 @@ import {
 
 const isBrowser = false;
 
-const NETWORK: NetworkId = 'testnet'
+const NETWORK: NetworkId = 'testnet';
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
@@ -37,9 +37,7 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  await zkdb
-    .fromGlobal()
-    .createDatabase(DB_NAME, 18);
+  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
   await zkdb

@@ -2,7 +2,7 @@ import { NetworkId, PrivateKey } from 'o1js';
 import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
-const NETWORK: NetworkId = 'testnet'
+const NETWORK: NetworkId = 'testnet';
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
 async function run() {

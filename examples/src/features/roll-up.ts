@@ -7,16 +7,17 @@ const MY_PRIVATE_KEY = PrivateKey.fromBase58(
   'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
 );
 
-const MINA_ENDPOINT = "https://api.minascan.io/node/devnet/v1/graphql"
+const MINA_ENDPOINT = 'https://api.minascan.io/node/devnet/v1/graphql';
+const MINA_DECIMAL = 1e9;
 
 const DB_NAME = 'my-collection';
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-const NETWORK: NetworkId = 'testnet'
+const NETWORK: NetworkId = 'testnet';
 
 async function run() {
   const Network = Mina.Network({
-     networkId: NETWORK,
+    networkId: NETWORK,
     mina: MINA_ENDPOINT,
   });
 
@@ -30,7 +31,22 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  const proof = await zkdb.database(DB_NAME).getProof();
+  const history = await zkdb.database(DB_NAME).getRollUpHistory();
+
+  if (history.state === 'outdated') {
+    // Create a rollup, this time will take time in background so need to write a polling function
+    await zkdb.database(DB_NAME).createRollup();
+  }
+
+  const { tx, id } = await zkdb.database(DB_NAME).getTransaction('rollup');
+
+  // Signed the transaction
+  const txHash = await signer.signAndSendTransaction(tx, {
+    fee: MINA_DECIMAL,
+    memo: '',
+  });
+  // Confirm the transaction
+  await zkdb.database(DB_NAME).confirmTransaction(id, txHash);
 
   await zkdb.authenticator.signOut();
 }

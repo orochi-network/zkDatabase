@@ -9,8 +9,8 @@ const MY_PRIVATE_KEY = PrivateKey.fromBase58(
 
 const DB_NAME = 'shop';
 const COLLECTION_NAME = 'clothes';
-const NETWORK: NetworkId = 'testnet'
-const MINA_ENDPOINT = "https://api.minascan.io/node/devnet/v1/graphql"
+const NETWORK: NetworkId = 'testnet';
+const MINA_ENDPOINT = 'https://api.minascan.io/node/devnet/v1/graphql';
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
@@ -27,7 +27,7 @@ async function run() {
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(MY_PRIVATE_KEY, NET);
+    : new NodeSigner(MY_PRIVATE_KEY, NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
