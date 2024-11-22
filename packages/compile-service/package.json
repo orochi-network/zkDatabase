@@ -17,7 +17,7 @@
     "start:prod": "yarn build && yarn start"
   },
   "peerDependencies": {
-    "o1js": "1.9.*"
+    "o1js": "^1.9.*"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",
