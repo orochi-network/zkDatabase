@@ -11,16 +11,19 @@ export class NodeSigner implements Signer {
   private client: Client;
   private endpoint: string;
 
-  private network: NetworkId
+  private network: NetworkId;
   constructor(privateKey: PrivateKey, network: NetworkId) {
     this.privateKey = privateKey;
-    this.network = network
+    this.network = network;
     if (network === 'testnet') {
-      this.client = new Client({network: 'testnet'})
-      this.endpoint = 'https://api.minascan.io/node/devnet/v1/graphql'
+      this.client = new Client({ network: 'testnet' });
+      this.endpoint = 'https://api.minascan.io/node/devnet/v1/graphql';
+    } else if (network === 'mainnet') {
+      this.client = new Client({ network: 'mainnet' });
+      this.endpoint = 'https://api.minascan.io/node/mainnet/v1/graphql';
+    } else {
+      throw Error('Invalid network');
     }
-    this.client = new Client({ network: 'mainnet' });
-    this.endpoint = 'https://api.minascan.io/node/mainnet/v1/graphql';
   }
 
   async signAndSendTransaction(
