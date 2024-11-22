@@ -7605,6 +7605,18 @@ o1js@1.9.*, o1js@^1.8.0, o1js@^1.9.0:
     reflect-metadata "^0.1.13"
     tslib "^2.3.0"
 
+o1js@1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/o1js/-/o1js-1.9.0.tgz#9c2925e4b21e6fface4c073b61812ce50906f43a"
+  integrity sha512-EbwrBtG9rZZ4hlg/qEB6bNQOE98WkpZ5hVxWvafbzZscDLE4CzY+F5KKF1+Ka8jhEJj6WDeEqT12acyvlYSa1w==
+  dependencies:
+    blakejs "1.2.1"
+    cachedir "^2.4.0"
+    isomorphic-fetch "^3.0.0"
+    js-sha256 "^0.9.0"
+    reflect-metadata "^0.1.13"
+    tslib "^2.3.0"
+
 object-assign@^4, object-assign@^4.1.0, object-assign@^4.1.1:
   version "4.1.1"
   resolved "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz"
