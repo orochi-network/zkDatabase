@@ -1,9 +1,9 @@
-import { CircuitString, Mina, PrivateKey, PublicKey, UInt64 } from 'o1js';
+import { CircuitString, Mina, NetworkId, PrivateKey, UInt64 } from 'o1js';
 import {
-  NodeSigner,
-  AuroWalletSigner,
-  Schema,
   AccessPermissions,
+  AuroWalletSigner,
+  NodeSigner,
+  Schema,
   ZKDatabaseClient,
 } from 'zkdb';
 
@@ -12,7 +12,6 @@ const isBrowser = false;
 const MY_PRIVATE_KEY = PrivateKey.fromBase58(
   'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
 );
-const ZKDB_PRIVATE_KEY = 'EKF62NTG7antqq6wDxFKt17q3EthV7AUmFmYL9rLLf72TtQx82jg';
 
 const DB_NAME = 'my-db';
 const COLLECTION_NAME = 'my-collection';
@@ -24,18 +23,20 @@ class TShirt extends Schema.create({
 }) {}
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
+const NETWORK: NetworkId = 'testnet'
+const MINA_ENDPOINT = "https://api.minascan.io/node/devnet/v1/graphql"
 
 async function run() {
   const Network = Mina.Network({
-    mina: 'https://api.minascan.io/node/devnet/v1/graphql',
-    archive: 'https://api.minascan.io/archive/devnet/v1/graphql',
+    networkId: NETWORK,
+    mina: MINA_ENDPOINT,
   });
 
   Mina.setActiveInstance(Network);
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(MY_PRIVATE_KEY);
+    : new NodeSigner(MY_PRIVATE_KEY, NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
@@ -43,11 +44,9 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
-  const zkDbPrivateKey = PrivateKey.fromBase58(ZKDB_PRIVATE_KEY);
-
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+    .createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 
@@ -95,13 +94,6 @@ async function run() {
   const database = zkdb.database(DB_NAME);
 
   const collection = database.from(COLLECTION_NAME);
-
-  const witness1 = await collection.insert(
-    new TShirt({
-      name: CircuitString.fromString('Guchi'),
-      price: UInt64.from(12),
-    })
-  );
 
   const document = await collection.fetchOne({ name: 'Guchi' });
 

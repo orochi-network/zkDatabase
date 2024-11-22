@@ -1,14 +1,14 @@
-import { PrivateKey } from 'o1js';
-import { NodeSigner, AuroWalletSigner, ZKDatabaseClient } from 'zkdb';
+import { NetworkId, PrivateKey } from 'o1js';
+import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
 
 const isBrowser = false;
-
+const NETWORK: NetworkId = 'testnet'
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
 async function run() {
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(PrivateKey.random());
+    : new NodeSigner(PrivateKey.random(), NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 

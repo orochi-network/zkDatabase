@@ -1,31 +1,34 @@
-import { assert, Mina, PrivateKey, PublicKey } from 'o1js';
+import { assert, Mina, NetworkId, PrivateKey } from 'o1js';
 import {
   AuroWalletSigner,
-  DatabaseSearch,
   NodeSigner,
-  QueryBuilder,
-  ZKDatabaseClient,
+  ZKDatabaseClient
 } from 'zkdb';
 
 const isBrowser = false;
 
+const NETWORK: NetworkId = 'testnet'
+const MINA_ENDPOINT = "https://api.minascan.io/node/devnet/v1/graphql"
 const DB_NAME = 'shop';
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
 async function run() {
-  const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
-  Mina.setActiveInstance(Local);
 
-  const { key: deployerPrivate } = Local.testAccounts[0];
+  const Network = Mina.Network({
+    networkId: NETWORK,
+    mina: MINA_ENDPOINT,
+  });
+
+Mina.setActiveInstance(Network)
+
+const deployerPrivateKey = PrivateKey.fromBase58("Deployer private key here")
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(deployerPrivate);
+    : new NodeSigner(deployerPrivateKey, NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
-
-  const zkDbPrivateKey = PrivateKey.random();
 
   await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
@@ -33,12 +36,12 @@ async function run() {
 
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
+    .createDatabase(DB_NAME, 18);
 
   const databases = await zkdb
     .fromGlobal()
     .databases(
-      new QueryBuilder<DatabaseSearch>().where('name', 'eq', DB_NAME).build()
+   {databaseName: DB_NAME}
     );
 
   assert(databases[0].databaseName === DB_NAME);
