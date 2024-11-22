@@ -1,12 +1,15 @@
 import axios from 'axios';
 
-export type TSendTransaction = {
+type TSendTransaction = {
   hash: string;
   id: string;
+  zkappCommand: {
+    memo: string;
+  };
 };
 
 export async function sendTransaction(
-  json: any,
+  json: unknown,
   url: string
 ): Promise<TSendTransaction> {
   const query = `
@@ -23,32 +26,25 @@ export async function sendTransaction(
     }
   `;
 
-  const variables = {
-    input: json,
-  };
+  const variables = { input: json };
 
-  try {
-    const response = await axios.post(
-      url,
-      {
-        query,
-        variables,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    const { data, errors } = response.data;
-
-    if (errors) {
-      throw errors;
+  const response = await axios.post(
+    url,
+    { query, variables },
+    {
+      headers: { 'Content-Type': 'application/json' },
     }
+  );
 
-    return data.sendZkapp.zkapp;
-  } catch (error) {
-    throw Error(error as any);
+  const { data, errors } = response.data;
+
+  if (errors) {
+    throw new Error(`GraphQL errors: ${JSON.stringify(errors)}`);
   }
+
+  if (!data?.sendZkapp?.zkapp) {
+    throw new Error('Error: zkapp data is missing.');
+  }
+
+  return data.sendZkapp.zkapp;
 }
