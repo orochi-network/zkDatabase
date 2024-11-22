@@ -1,17 +1,17 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
-import { ZKCollection } from './collection';
-import { SchemaDefinition } from '../schema';
-import { ZKGroup } from './group';
 import {
   DatabaseSettings,
   GroupDescription,
-  Permissions,
-  TTransactionType,
   IndexField,
+  Permissions,
   TDbTransaction,
   TGetRollUpHistory,
+  TTransactionType,
 } from '../../types';
+import { SchemaDefinition } from '../schema';
+import { ZKCollection } from './collection';
+import { ZKGroup } from './group';
 export interface ZKDatabase {
   from(name: string): ZKCollection;
   // Group
@@ -39,13 +39,9 @@ export interface ZKDatabase {
   getProof(): Promise<JsonProof>;
   // Transaction
   getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
-  confirmTransaction(
-    databaseName: string,
-    id: string,
-    txHash: string
-  ): Promise<boolean>;
+  confirmTransaction(id: string, txHash: string): Promise<boolean>;
 
   // Rollup
-  createRollup(databaseName: string): Promise<boolean>;
-  getRollUpHistory(databaseName: string): Promise<TGetRollUpHistory>;
+  createRollup(): Promise<boolean>;
+  getRollUpHistory(): Promise<TGetRollUpHistory>;
 }

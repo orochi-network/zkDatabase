@@ -95,7 +95,7 @@ export class ApiClient<T = any> {
 
     this.#client = new ApolloClient({
       link: ApolloLink.from([removeTypenameLink, authLink, httpLink]),
-      cache: new InMemoryCache({ addTypename: false }),
+      cache: new InMemoryCache(),
     });
   }
   public static newInstance<T = any>(url: string): IApiClient<T> {

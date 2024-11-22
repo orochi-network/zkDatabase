@@ -134,27 +134,25 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async confirmTransaction(
-    databaseName: string,
-    id: string,
-    txHash: string
-  ): Promise<boolean> {
+  async confirmTransaction(id: string, txHash: string): Promise<boolean> {
     const result = await this.apiClient.transaction.confirmTransaction({
-      databaseName,
+      databaseName: this.databaseName,
       confirmTransactionId: id,
       txHash,
     });
     return result.unwrap();
   }
 
-  async createRollup(databaseName: string): Promise<boolean> {
-    const result = await this.apiClient.rollup.createRollUp({ databaseName });
+  async createRollup(): Promise<boolean> {
+    const result = await this.apiClient.rollup.createRollUp({
+      databaseName: this.databaseName,
+    });
     return result.unwrap();
   }
 
-  async getRollUpHistory(databaseName: string): Promise<TGetRollUpHistory> {
+  async getRollUpHistory(): Promise<TGetRollUpHistory> {
     const result = await this.apiClient.rollup.getRollUpHistory({
-      databaseName,
+      databaseName: this.databaseName,
     });
     return result.unwrap();
   }

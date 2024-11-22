@@ -34,8 +34,6 @@ export class NodeSigner implements Signer {
 
     const { account, error } = await fetchAccount({ publicKey: userPublicKey });
 
-    console.log('🚀 ~ NodeSigner ~ error:', error);
-
     if (error) {
       throw Error(error.statusText);
     }

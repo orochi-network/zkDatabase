@@ -46,7 +46,10 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        logger.error('Error response from blockberry:', response);
+        logger.error(
+          'Error response from blockberry getBlockConfirmationByTransactionHash:',
+          response
+        );
         return undefined;
       }
       const result = await response.json();
@@ -74,13 +77,16 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        console.error('response:', response);
+        logger.error(
+          'Error response from blockberry getZkAppTransactionByTxHash:',
+          response
+        );
         return undefined;
       }
       const result = await response.json();
       return result as TZkAppTransaction;
     } catch (err) {
-      console.error(err);
+      logger.error('Cannot getZkAppTransactionByTxHash ', err);
       return undefined;
     }
   }
