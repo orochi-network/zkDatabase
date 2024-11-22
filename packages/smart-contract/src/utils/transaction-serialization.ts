@@ -1,5 +1,5 @@
 import { MinaTransaction } from '@types';
-import { Field, Mina, Transaction } from 'o1js';
+import { Field, Mina } from 'o1js';
 
 export function serializeTransaction(tx: MinaTransaction): string {
   const length = tx.transaction.accountUpdates.length;

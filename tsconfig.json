@@ -17,24 +17,46 @@
     "preserveSymlinks": true
   },
   "references": [
-    { "path": "./packages/smart-contract" },
-    { "path": "./packages/storage" },
-    { "path": "./packages/kubo" },
-    { "path": "./packages/proof-service" },
-    { "path": "./packages/api" },
-    { "path": "./packages/zkdb" },
-    { "path": "./packages/compile-service"},
-    { "path": "./packages/serverless" },
-    { "path": "./packages/broker-service" },
-    { "path": "./packages/ftp" },
-    { "path": "./examples" }
+    {
+      "path": "./packages/smart-contract"
+    },
+    {
+      "path": "./packages/storage"
+    },
+    {
+      "path": "./packages/kubo"
+    },
+    {
+      "path": "./packages/proof-service"
+    },
+    {
+      "path": "./packages/api"
+    },
+    {
+      "path": "./packages/zkdb"
+    },
+    {
+      "path": "./packages/compile-service"
+    },
+    {
+      "path": "./packages/serverless"
+    },
+    {
+      "path": "./packages/broker-service"
+    },
+    {
+      "path": "./packages/ftp"
+    }
   ],
-  "include": ["./src/"],
+  "include": [
+    "./src/"
+  ],
   "exclude": [
     "**/build",
     "**/node_modules",
     "**/*.spec.ts",
     "**/*.test.ts",
-    "**/*.js"
+    "**/*.js",
+    "**/examples"
   ]
 }

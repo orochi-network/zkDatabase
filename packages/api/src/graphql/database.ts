@@ -19,16 +19,8 @@ const DATABASE_CHANGE_OWNER = gql`
 `;
 
 const DATABASE_CREATE = gql`
-  mutation DbCreate(
-    $databaseName: String!
-    $merkleHeight: Int!
-    $publicKey: String!
-  ) {
-    dbCreate(
-      databaseName: $databaseName
-      merkleHeight: $merkleHeight
-      publicKey: $publicKey
-    )
+  mutation DbCreate($databaseName: String!, $merkleHeight: Int!) {
+    dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
   }
 `;
 
@@ -106,7 +98,7 @@ export const database = <T>(client: TApolloClient<T>) => ({
   >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
   create: createMutateFunction<
     boolean,
-    { databaseName: string; merkleHeight: number; publicKey: string },
+    { databaseName: string; merkleHeight: number },
     { dbCreate: boolean }
   >(client, DATABASE_CREATE, (data) => data.dbCreate),
   setting: createQueryFunction<

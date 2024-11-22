@@ -11,3 +11,6 @@ export * from './signing';
 export * from './user';
 export * from './pagination';
 export * from './group';
+export * from './transaction';
+export * from './collection-index';
+export * from './rollup';

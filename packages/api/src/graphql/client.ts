@@ -17,6 +17,8 @@ import { ownership } from "./ownership";
 import { permission } from "./permission";
 import { proof } from "./proof";
 import { user } from "./user";
+import { transaction } from "./transaction";
+import { rollup } from "./rollup";
 
 export interface IApiClient<T = any> {
   api: ApiClient<T>;
@@ -30,6 +32,9 @@ export interface IApiClient<T = any> {
   permission: ReturnType<typeof permission>;
   merkle: ReturnType<typeof merkle>;
   proof: ReturnType<typeof proof>;
+  transaction: ReturnType<typeof transaction>;
+
+  rollup: ReturnType<typeof rollup>;
 }
 
 export class ApiClient<T = any> {
@@ -87,11 +92,10 @@ export class ApiClient<T = any> {
         },
       };
     });
-    
 
     this.#client = new ApolloClient({
       link: ApolloLink.from([removeTypenameLink, authLink, httpLink]),
-      cache: new InMemoryCache({ addTypename: false }),
+      cache: new InMemoryCache(),
     });
   }
   public static newInstance<T = any>(url: string): IApiClient<T> {
@@ -108,6 +112,8 @@ export class ApiClient<T = any> {
       permission: permission(api.apollo),
       merkle: merkle(api.apollo),
       proof: proof(api.apollo),
+      transaction: transaction(api.apollo),
+      rollup: rollup(api.apollo),
     };
   }
 }

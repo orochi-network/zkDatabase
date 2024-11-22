@@ -1,4 +1,4 @@
-import logger from "src/helper/logger";
+import { logger } from '../utils';
 
 export type TChain = 'mainnet' | 'devnet';
 
@@ -46,13 +46,16 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        logger.error('response:', response);
+        logger.error(
+          'Error response from blockberry getBlockConfirmationByTransactionHash:',
+          response
+        );
         return undefined;
       }
       const result = await response.json();
       return result as TBlockConfirmationTransaction;
     } catch (err) {
-      logger.error(err);
+      logger.error('Cannot getBlockConfirmationByTransactionHash ', err);
       return undefined;
     }
   }
@@ -74,13 +77,16 @@ export class BlockberryApi {
         options
       );
       if (!response.ok) {
-        logger.error('response:', response);
+        logger.error(
+          'Error response from blockberry getZkAppTransactionByTxHash:',
+          response
+        );
         return undefined;
       }
       const result = await response.json();
       return result as TZkAppTransaction;
     } catch (err) {
-      logger.error(err);
+      logger.error('Cannot getZkAppTransactionByTxHash ', err);
       return undefined;
     }
   }

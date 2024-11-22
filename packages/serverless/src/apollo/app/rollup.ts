@@ -53,7 +53,7 @@ const getRollUpHistory = authorizeWrapper(
 
 const createRollUp = authorizeWrapper(
   Joi.object({
-    databaseName
+    databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     withCompoundTransaction((compoundSession) =>
