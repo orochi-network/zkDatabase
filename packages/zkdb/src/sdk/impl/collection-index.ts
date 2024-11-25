@@ -50,14 +50,4 @@ export class CollectionIndexImpl implements ZKCollectionIndex {
 
     return result.unwrap();
   }
-
-  async dropIndex(indexName: string): Promise<boolean> {
-    const result = await this.apiClient.index.delete({
-      databaseName: this.databaseName,
-      collectionName: this.collectionName,
-      indexName,
-    });
-
-    return result.unwrap();
-  }
 }
