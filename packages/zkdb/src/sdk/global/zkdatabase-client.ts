@@ -1,25 +1,33 @@
+import { isNetwork } from '@utils';
 import { ApiClient, IApiClient } from '@zkdb/api';
-import { PrivateKey } from 'o1js';
+import { NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
 import { GlobalContextImpl, ZKDatabaseImpl } from '../impl';
 import { GlobalContext, ZKDatabase } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 
+type MinaConfig = {
+  networkUrl: string;
+  networkId: NetworkId;
+};
 export class ZKDatabaseClient {
   public apiClient: IApiClient;
 
   public authenticator: Authenticator;
 
-  public minaRPC: string;
+  public minaConfig: MinaConfig;
 
   private constructor(
     apiClient: IApiClient,
     authenticator: Authenticator,
-    minaRPC: string
+    minaConfig: MinaConfig
   ) {
     this.apiClient = apiClient;
     this.authenticator = authenticator;
-    this.minaRPC = minaRPC;
+    this.minaConfig = minaConfig;
+    apiClient.api.setContext(() =>
+      authenticator.isLoggedIn() ? authenticator.getAccessToken() : undefined
+    );
   }
 
   /**
@@ -37,13 +45,21 @@ export class ZKDatabaseClient {
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
+<<<<<<< HEAD
     const { password, protocol, hostname, pathname, searchParams } =
       urlInstance;
+=======
+    const { password, protocol, host, pathname, searchParams } = urlInstance;
+>>>>>>> main
     const [base, abstract] = protocol.replace(':', '').split('+');
     if (base != 'zkdb') {
       throw new Error('Invalid protocol');
     }
+<<<<<<< HEAD
     const apiURL = `${abstract}://${hostname}${pathname}`;
+=======
+    const apiURL = `${abstract}://${host}${pathname}`;
+>>>>>>> main
     const db = searchParams.get('db');
     if (!db) {
       throw new Error('Database name is required');
@@ -54,7 +70,7 @@ export class ZKDatabaseClient {
     const { networkId, networkUrl } = envResult.isOne()
       ? envResult.unwrap()
       : {};
-    if (typeof networkId === 'string' && typeof networkUrl === 'string') {
+    if (isNetwork(networkId) && typeof networkUrl === 'string') {
       if (password === '' || password === 'auro-wallet') {
         const signer = new AuroWalletSigner();
         const authenticator = new Authenticator(
@@ -62,7 +78,10 @@ export class ZKDatabaseClient {
           apiClient,
           global.localStorage
         );
-        return new ZKDatabaseClient(apiClient, authenticator, networkUrl);
+        return new ZKDatabaseClient(apiClient, authenticator, {
+          networkId,
+          networkUrl,
+        });
       } else {
         const signer = new NodeSigner(
           PrivateKey.fromBase58(password),
@@ -71,7 +90,10 @@ export class ZKDatabaseClient {
         return new ZKDatabaseClient(
           apiClient,
           new Authenticator(signer, apiClient),
-          networkUrl
+          {
+            networkId,
+            networkUrl,
+          }
         );
       }
     }

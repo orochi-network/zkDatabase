@@ -11,15 +11,15 @@ import { collection } from "./collection";
 import { collectionIndex } from "./collection-index";
 import { database } from "./database";
 import { document } from "./document";
+import { environment } from "./environment";
 import { group } from "./group";
 import { merkle } from "./merkle";
 import { ownership } from "./ownership";
 import { permission } from "./permission";
 import { proof } from "./proof";
-import { user } from "./user";
-import { transaction } from "./transaction";
 import { rollup } from "./rollup";
-import { environment } from "./environment";
+import { transaction } from "./transaction";
+import { user } from "./user";
 
 export interface IApiClient<T = any> {
   api: ApiClient<T>;
@@ -42,7 +42,6 @@ export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   context: Context<T> = new Context<T>();
-  cookies: Context<string> = new Context<string>();
   public setContext(fn: () => T | null) {
     this.context.setContextCallback(fn);
   }
@@ -71,24 +70,15 @@ export class ApiClient<T = any> {
         return fetch(uri, {
           ...options,
           credentials: "include", // This ensures cookies are sent with the request
-        }).then((response: Response) => {
-          const cookies = response.headers.get("set-cookie");
-          if (cookies) {
-            // Set cookies to store connect.sid
-            this.cookies.setContextCallback(() => cookies);
-          }
-          return response;
         });
       },
     });
 
     const authLink = setContext(async (_, { headers }) => {
       const token = context.getContext();
-      const cookie = this.cookies.getContext();
       return {
         headers: {
           ...headers,
-          ...(cookie ? { cookie } : {}),
           ...(token ? { authorization: `Bearer ${token}` } : {}),
         },
       };
