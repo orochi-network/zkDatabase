@@ -85,11 +85,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   }
 
   public async listIndexes(): Promise<string[]> {
-    const keySet = new Set<string>();
-    (await this.collection.listIndexes().toArray()).forEach((index) => {
-      Object.keys(index.key).forEach((key) => keySet.add(key));
-    });
-    return Array.from(keySet);
+    return (await this.collection.listIndexes().toArray()).map((i) => i.name);
   }
 
   public async size(): Promise<number> {
