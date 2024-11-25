@@ -1,6 +1,6 @@
 import { IApiClient } from '@zkdb/api';
 import { GroupDescription } from '../../types';
-import { ZKGroup } from '../interfaces';
+import { GroupConfig, ZKGroup } from '../interfaces';
 
 export class ZKGroupImpl implements ZKGroup {
   private databaseName: string;
@@ -13,7 +13,17 @@ export class ZKGroupImpl implements ZKGroup {
     this.apiClient = apiClient;
   }
 
-  async addUsers(userNames: string[]): Promise<boolean> {
+  async create(groupConfig: GroupConfig): Promise<boolean> {
+    const result = await this.apiClient.group.create({
+      databaseName: this.databaseName,
+      groupName: this.groupName,
+      groupDescription: groupConfig.description,
+    });
+
+    return result.unwrap();
+  }
+
+  async userAdd(userNames: string[]): Promise<boolean> {
     const result = await this.apiClient.group.addUser({
       databaseName: this.databaseName,
       groupName: this.groupName,
@@ -23,7 +33,7 @@ export class ZKGroupImpl implements ZKGroup {
     return result.unwrap();
   }
 
-  async removeUsers(userNames: string[]): Promise<boolean> {
+  async userRemove(userNames: string[]): Promise<boolean> {
     const result = await this.apiClient.group.removeUser({
       databaseName: this.databaseName,
       groupName: this.groupName,
@@ -33,17 +43,17 @@ export class ZKGroupImpl implements ZKGroup {
     return result.unwrap();
   }
 
-  async changeDescription(description: string): Promise<boolean> {
+  async update(groupConfig: GroupConfig): Promise<boolean> {
     const result = await this.apiClient.group.updateDescription({
       databaseName: this.databaseName,
       groupName: this.groupName,
-      groupDescription: description,
+      groupDescription: groupConfig.description,
     });
 
     return result.unwrap();
   }
 
-  async getDescription(): Promise<GroupDescription> {
+  async info(): Promise<GroupDescription> {
     const result = await this.apiClient.group.info({
       databaseName: this.databaseName,
       groupName: this.groupName,

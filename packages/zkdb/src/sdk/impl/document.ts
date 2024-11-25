@@ -1,54 +1,31 @@
 import { IApiClient, TProofStatus } from '@zkdb/api';
 import { Field } from 'o1js';
-import { DocumentEncoded, ProvableTypeString } from '../schema';
 import {
+  Document,
   MerkleWitness,
   Ownership,
   Permissions,
-  Document,
   ProofStatus,
 } from '../../types';
-import { ZKDocument } from '../interfaces';
+import { Ownable, ZKDocument } from '../interfaces';
+import { DocumentEncoded, ProvableTypeString } from '../schema';
 
-export class ZKDocumentImpl implements ZKDocument {
+class DocumentOwnerShip implements Ownable {
   private databaseName: string;
   private collectionName: string;
-  private _documentEncoded: DocumentEncoded;
   private _id: string;
-  private createdAt: Date;
   private apiClient: IApiClient;
 
   constructor(
     databaseName: string,
     collectionName: string,
-    document: Document,
+    document: ZKDocument,
     apiClient: IApiClient
   ) {
     this.databaseName = databaseName;
     this.collectionName = collectionName;
-    this._documentEncoded = document.documentEncoded;
     this._id = document.id;
-    this.createdAt = document.createdAt;
     this.apiClient = apiClient;
-  }
-
-  async getProofStatus(): Promise<ProofStatus> {
-    const result = await this.apiClient.proof.status({
-      databaseName: this.databaseName,
-      collectionName: this.collectionName,
-      docId: this._id,
-    });
-
-    switch (result.unwrap()) {
-      case TProofStatus.QUEUED:
-        return 'queue';
-      case TProofStatus.PROVING:
-        return 'proving';
-      case TProofStatus.PROVED:
-        return 'proved';
-      case TProofStatus.FAILED:
-        return 'failed';
-    }
   }
 
   async changeGroup(groupName: string): Promise<void> {
@@ -110,6 +87,68 @@ export class ZKDocumentImpl implements ZKDocument {
 
     return result.unwrap();
   }
+}
+
+export class ZKDocumentImpl implements ZKDocument {
+  private databaseName: string;
+  private collectionName: string;
+  private _documentEncoded: DocumentEncoded;
+  private _id: string;
+  private _createdAt: Date;
+  private apiClient: IApiClient;
+
+  get id(): string {
+    return this._id;
+  }
+
+  get encoded(): DocumentEncoded {
+    return this._documentEncoded;
+  }
+
+  get createdAt(): Date {
+    return this._createdAt;
+  }
+
+  get ownership(): Ownable {
+    return new DocumentOwnerShip(
+      this.databaseName,
+      this.collectionName,
+      this,
+      this.apiClient
+    );
+  }
+
+  constructor(
+    databaseName: string,
+    collectionName: string,
+    document: Document,
+    apiClient: IApiClient
+  ) {
+    this.databaseName = databaseName;
+    this.collectionName = collectionName;
+    this._documentEncoded = document.documentEncoded;
+    this._id = document.id;
+    this._createdAt = document.createdAt;
+    this.apiClient = apiClient;
+  }
+
+  async getProofStatus(): Promise<ProofStatus> {
+    const result = await this.apiClient.proof.status({
+      databaseName: this.databaseName,
+      collectionName: this.collectionName,
+      docId: this._id,
+    });
+    switch (result.unwrap()) {
+      case TProofStatus.QUEUED:
+        return 'queue';
+      case TProofStatus.PROVING:
+        return 'proving';
+      case TProofStatus.PROVED:
+        return 'proved';
+      case TProofStatus.FAILED:
+        return 'failed';
+    }
+  }
 
   async getWitness(): Promise<MerkleWitness> {
     const result = await this.apiClient.merkle.witness({
@@ -135,15 +174,7 @@ export class ZKDocumentImpl implements ZKDocument {
     throw Error();
   }
 
-  public getId(): string {
-    return this._id;
-  }
-
-  public getDocumentEncoded(): DocumentEncoded {
-    return this._documentEncoded;
-  }
-
-  async delete(): Promise<MerkleWitness> {
+  async drop(): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.delete({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
@@ -182,9 +213,5 @@ export class ZKDocumentImpl implements ZKDocument {
           this.apiClient
         )
     );
-  }
-
-  getCreatedAt(): Date {
-    return this.createdAt;
   }
 }

@@ -2,8 +2,8 @@ import { isNetwork } from '@utils';
 import { ApiClient, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
-import { GlobalContextImpl, ZKDatabaseImpl } from '../impl';
-import { GlobalContext, ZKDatabase } from '../interfaces';
+import { ZKSystemImpl, ZKDatabaseImpl } from '../impl';
+import { ZKSystem, ZKDatabase } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 
 type MinaConfig = {
@@ -99,7 +99,7 @@ export class ZKDatabaseClient {
     this.authenticator.connect(signer);
   }
 
-  database(name: string): ZKDatabase {
+  db(name: string): ZKDatabase {
     if (this.apiClient) {
       return new ZKDatabaseImpl(name, this.apiClient);
     }
@@ -108,9 +108,9 @@ export class ZKDatabaseClient {
     );
   }
 
-  fromGlobal(): GlobalContext {
+  get system(): ZKSystem {
     if (this.apiClient) {
-      return new GlobalContextImpl(this.apiClient);
+      return new ZKSystemImpl(this.apiClient);
     }
 
     throw new Error(

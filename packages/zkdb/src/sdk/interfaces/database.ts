@@ -1,42 +1,50 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
 import {
+  Database,
   DatabaseSettings,
+  FilterCriteria,
   GroupDescription,
-  IndexField,
-  Permissions,
+  Pagination,
   TDbTransaction,
   TGetRollUpHistory,
   TTransactionType,
+  User,
 } from '../../types';
-import { SchemaDefinition } from '../schema';
 import { ZKCollection } from './collection';
 import { ZKGroup } from './group';
+import { ZKSystem } from './system';
+
+export interface ZKDatabaseConfig {
+  merkleHeight: number;
+}
+
 export interface ZKDatabase {
-  from(name: string): ZKCollection;
-  // Group
-  createGroup(groupName: string, description: string): Promise<boolean>;
-  fromGroup(groupName: string): ZKGroup;
-  getGroups(): Promise<GroupDescription[]>;
-  // Settings
-  getSettings(): Promise<DatabaseSettings>;
+  get system(): ZKSystem;
+
+  // Database
+  create(config: ZKDatabaseConfig): Promise<boolean>;
+
+  // TODO: Implement exists endpoint
+  // exists(): Promise<boolean>;
+
   // Collection
-  getCollections(): Promise<string[]>;
-  createCollection<
-    T extends {
-      getSchema: () => SchemaDefinition;
-    },
-  >(
-    collectionName: string,
-    groupName: string,
-    type: T,
-    indexes: IndexField[],
-    permissions: Permissions
-  ): Promise<boolean>;
+  collection(name: string): ZKCollection;
+  listCollection(): Promise<string[]>;
+
+  // Group
+  group(groupName: string): ZKGroup;
+  listGroup(): Promise<GroupDescription[]>;
+
+  // Settings
+  setting(): Promise<DatabaseSettings>;
+
   // Ownership
   changeOwner(newOwner: string): Promise<boolean>;
+
   // Proof
   getProof(): Promise<JsonProof>;
+
   // Transaction
   getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
   confirmTransaction(id: string, txHash: string): Promise<boolean>;
