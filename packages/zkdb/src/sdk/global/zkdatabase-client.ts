@@ -26,24 +26,24 @@ export class ZKDatabaseClient {
    * Create new instance of ZKDatabaseClient by url
    * Connect from NodeJS using a private key
    * ```ts
-   * const client = await ZKDatabaseClient.connect('zzkdb+https://username@EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU:test-serverless.zkdatabase.org/graphql?db=my-db');
+   * const client = await ZKDatabaseClient.connect('zkdb+https://username:EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU@test-serverless.zkdatabase.org/graphql?db=my-db');
    * ```
    * Connect from browser using Auro Wallet
    * ```ts
-   * const client = await ZKDatabaseClient.connect('zzkdb+https://username@test-serverless.zkdatabase.org/graphql?db=my-db');
+   * const client = await ZKDatabaseClient.connect('zkdb+https://username@test-serverless.zkdatabase.org/graphql?db=my-db');
    * ```
    * @param url
    * @returns
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
-    const { username, password, protocol, hostname, pathname, searchParams } =
+    const { password, protocol, hostname, pathname, searchParams } =
       urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
     if (base != 'zkdb') {
       throw new Error('Invalid protocol');
     }
-    const apiURL = `${abstract}://${hostname}/${pathname}`;
+    const apiURL = `${abstract}://${hostname}${pathname}`;
     const db = searchParams.get('db');
     if (!db) {
       throw new Error('Database name is required');
