@@ -1,6 +1,6 @@
-import publicWrapper from 'apollo/validation';
+import publicWrapper from '../validation.js';
 import GraphQLJSON from 'graphql-type-json';
-import config from '../../helper/config';
+import config from '../../helper/config.js';
 import Joi from 'joi';
 import { gql } from '../../helper/common.js';
 
