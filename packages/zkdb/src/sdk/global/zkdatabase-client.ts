@@ -20,6 +20,9 @@ export class ZKDatabaseClient {
     this.apiClient = apiClient;
     this.authenticator = authenticator;
     this.minaRPC = minaRPC;
+    apiClient.api.setContext(() =>
+      authenticator.isLoggedIn() ? authenticator.getAccessToken() : undefined
+    );
   }
 
   /**
@@ -37,13 +40,13 @@ export class ZKDatabaseClient {
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
-    const { password, protocol, hostname, pathname, searchParams } =
+    const { password, protocol, host, pathname, searchParams } =
       urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
     if (base != 'zkdb') {
       throw new Error('Invalid protocol');
     }
-    const apiURL = `${abstract}://${hostname}${pathname}`;
+    const apiURL = `${abstract}://${host}${pathname}`;
     const db = searchParams.get('db');
     if (!db) {
       throw new Error('Database name is required');
