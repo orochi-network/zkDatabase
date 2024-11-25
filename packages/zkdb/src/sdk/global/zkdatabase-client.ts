@@ -45,21 +45,12 @@ export class ZKDatabaseClient {
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
-<<<<<<< HEAD
-    const { password, protocol, hostname, pathname, searchParams } =
-      urlInstance;
-=======
     const { password, protocol, host, pathname, searchParams } = urlInstance;
->>>>>>> main
     const [base, abstract] = protocol.replace(':', '').split('+');
     if (base != 'zkdb') {
       throw new Error('Invalid protocol');
     }
-<<<<<<< HEAD
-    const apiURL = `${abstract}://${hostname}${pathname}`;
-=======
     const apiURL = `${abstract}://${host}${pathname}`;
->>>>>>> main
     const db = searchParams.get('db');
     if (!db) {
       throw new Error('Database name is required');
