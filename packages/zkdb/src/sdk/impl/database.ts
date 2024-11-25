@@ -12,11 +12,9 @@ import {
   ZKDatabase,
   ZKDatabaseConfig,
   ZKGroup,
-  ZKSystem,
 } from '../interfaces';
 import { CollectionImpl } from './collection';
 import { ZKGroupImpl } from './group';
-import { ZKSystemImpl } from './system';
 
 // TODO: Implement transactions endpoints
 export class ZKDatabaseImpl implements ZKDatabase {
@@ -26,10 +24,6 @@ export class ZKDatabaseImpl implements ZKDatabase {
   constructor(databaseName: string, apiClient: IApiClient) {
     this.databaseName = databaseName;
     this.apiClient = apiClient;
-  }
-
-  get system(): ZKSystem {
-    return new ZKSystemImpl(this.apiClient);
   }
 
   async create(config: ZKDatabaseConfig): Promise<boolean> {

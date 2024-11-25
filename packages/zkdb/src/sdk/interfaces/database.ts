@@ -1,27 +1,20 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
 import {
-  Database,
   DatabaseSettings,
-  FilterCriteria,
   GroupDescription,
-  Pagination,
   TDbTransaction,
   TGetRollUpHistory,
   TTransactionType,
-  User,
 } from '../../types';
 import { ZKCollection } from './collection';
 import { ZKGroup } from './group';
-import { ZKSystem } from './system';
 
 export interface ZKDatabaseConfig {
   merkleHeight: number;
 }
 
 export interface ZKDatabase {
-  get system(): ZKSystem;
-
   // Database
   create(config: ZKDatabaseConfig): Promise<boolean>;
 

@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
-import { PublicKey } from 'o1js';
 import { IApiClient } from '@zkdb/api';
+import { Database, FilterCriteria, Pagination, User } from '../../types';
 import { ZKSystem } from '../interfaces/system';
-import { User, Database, FilterCriteria, Pagination } from '../../types';
 
 export class ZKSystemImpl implements ZKSystem {
   private apiClient: IApiClient;

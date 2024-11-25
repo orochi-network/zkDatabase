@@ -1,4 +1,4 @@
-import { Permissions, Ownership } from '../../types';
+import { Ownership, Permissions } from '../../types';
 
 /* eslint-disable no-unused-vars */
 export interface Ownable {

@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 
-import { ProofStatus, MerkleWitness } from '../../types';
-import { DocumentEncoded } from '../schema.js';
+import { MerkleWitness, ProofStatus } from '../../types';
+import { DocumentEncoded } from '../schema';
 import { Ownable } from './ownable';
 
 export interface ZKDocument {

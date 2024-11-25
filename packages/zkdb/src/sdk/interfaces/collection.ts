@@ -2,8 +2,8 @@
 import { IndexField } from 'src/types/collection-index';
 import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
 import { ZKDocument } from '../interfaces';
-import { DocumentEncoded, SchemaDefinition } from '../schema.js';
-import { Ownable } from './ownable.js';
+import { DocumentEncoded, SchemaDefinition } from '../schema';
+import { Ownable } from './ownable';
 
 export interface ZKCollectionIndex {
   create(indexes: IndexField[]): Promise<boolean>;
@@ -16,7 +16,7 @@ export interface ZKCollection {
 
   get index(): ZKCollectionIndex;
 
-  exists(): Promise<boolean>;
+  exist(): Promise<boolean>;
 
   create<
     T extends {

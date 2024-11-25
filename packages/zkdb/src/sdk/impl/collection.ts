@@ -3,26 +3,26 @@
 import { IApiClient } from '@zkdb/api';
 import { Field } from 'o1js';
 import {
-  MerkleWitness,
   Filter,
-  Permissions,
+  IndexField,
+  MerkleWitness,
   Ownership,
   Pagination,
-  IndexField,
+  Permissions,
 } from '../../types';
-import { ZKDocumentImpl } from './document';
-import {
-  DocumentEncoded,
-  ProvableTypeString,
-  SchemaDefinition,
-} from '../schema';
 import {
   Ownable,
   ZKCollection,
   ZKCollectionIndex,
   ZKDocument,
 } from '../interfaces';
+import {
+  DocumentEncoded,
+  ProvableTypeString,
+  SchemaDefinition,
+} from '../schema';
 import { CollectionIndexImpl } from './collection-index';
+import { ZKDocumentImpl } from './document';
 
 class CollectionOwnership implements Ownable {
   private databaseName: string;
@@ -116,7 +116,7 @@ export class CollectionImpl implements ZKCollection {
     );
   }
 
-  async exists(): Promise<boolean> {
+  async exist(): Promise<boolean> {
     const result = await this.apiClient.collection.exist({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
