@@ -1,10 +1,9 @@
 import { ApiClient, IApiClient } from '@zkdb/api';
-import { Authenticator } from '../authentication';
-import { ZKDatabase, GlobalContext } from '../interfaces';
-import { ZKDatabaseImpl, GlobalContextImpl } from '../impl';
-
-import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 import { PrivateKey } from 'o1js';
+import { Authenticator } from '../authentication';
+import { GlobalContextImpl, ZKDatabaseImpl } from '../impl';
+import { GlobalContext, ZKDatabase } from '../interfaces';
+import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 
 export class ZKDatabaseClient {
   public apiClient: IApiClient;
@@ -36,7 +35,7 @@ export class ZKDatabaseClient {
    * @param url
    * @returns
    */
-  public static async connec(url: string): Promise<ZKDatabaseClient> {
+  public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
     const { username, password, protocol, hostname, pathname, searchParams } =
       urlInstance;
@@ -50,7 +49,7 @@ export class ZKDatabaseClient {
       throw new Error('Database name is required');
     }
     const apiClient = ApiClient.newInstance(apiURL);
-    // Get envrionment variable
+    // Get environment variables
     const envResult = await apiClient.environment.getEnvironment(undefined);
     const { networkId, networkUrl } = envResult.isOne()
       ? envResult.unwrap()

@@ -98,7 +98,7 @@
   },
   "dependencies": {
     "@zkdb/api": "1.1.9",
-    "@zkdb/smart-contract": "^1.1.7",
+    "@zkdb/smart-contract": "1.1.7",
     "graphql": "^16.9.0",
     "graphql-request": "^7.1.0",
     "jest-worker": "^29.7.0"
