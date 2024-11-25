@@ -1,6 +1,7 @@
 import { assert, Mina, NetworkId, PrivateKey } from 'o1js';
 import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
 import 'dotenv/config';
+import { faker } from '@faker-js/faker';
 
 const isBrowser = false;
 
@@ -10,36 +11,38 @@ const SERVER_URL = process.env.SERVERLESS_URL || '';
 const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
 const DB_NAME = 'shop';
-const zkdb =
-  'zkdb+https://username@EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU:test-serverless.zkdatabase.org/graphql?db=my-db';
+const zkdbUrl =
+  'zkdb+https://username:EKEQy5SKbQEdD95JhQsMYfnRAqndtT9u4jXC2RTGMFJ2LXqRxEpP@test-serverless.zkdatabase.org/graphql?db=my-db';
 async function run() {
-  ZKDatabaseClient;
-  const Network = Mina.Network({
-    networkId: NETWORK,
-    mina: MINA_ENDPOINT,
-  });
+  const zkdb = await ZKDatabaseClient.connect(zkdbUrl);
 
-  Mina.setActiveInstance(Network);
+  // const Network = Mina.Network({
+  //   networkId: NETWORK,
+  //   mina: MINA_ENDPOINT,
+  // });
 
-  const deployerPrivateKey = PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY);
+  // Mina.setActiveInstance(Network);
 
-  const signer = isBrowser
-    ? new AuroWalletSigner()
-    : new NodeSigner(deployerPrivateKey, NETWORK);
+  // const deployerPrivateKey = PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY);
 
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  // const signer = isBrowser
+  //   ? new AuroWalletSigner()
+  //   : new NodeSigner(deployerPrivateKey, NETWORK);
+
+  // const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+
+  const fakeUser = {
+    username: faker.internet.username().toLowerCase(),
+    email: faker.internet.email().toLowerCase(),
+  };
+
+  // await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
 
   await zkdb.authenticator.signIn();
 
-  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
+  console.log('Authorization getUser: ', zkdb.authenticator.getUser());
 
-  const databases = await zkdb
-    .fromGlobal()
-    .databases({ databaseName: DB_NAME });
-
-  assert(databases[0].databaseName === DB_NAME);
-
-  await zkdb.authenticator.signOut();
+  // await zkdb.authenticator.signOut();
 }
 
 await run();

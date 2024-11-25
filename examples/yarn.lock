@@ -1591,7 +1591,7 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/api@^1.1.9":
+"@zkdb/api@1.1.9":
   version "1.1.9"
   resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.9.tgz#b1dd92c28605a1fe3425c388e9635aec0bc9ef89"
   integrity sha512-yWBshx7+daolaKZrNaGxAf52Eyu6oTOTxtSM0gTYaj/bK6sfcPE48Wzzq6Izthq+QVyXcFk8I7kQYCnpDh8+SA==
@@ -1603,7 +1603,7 @@
     react-dom "^18.3.1"
     typescript "^5.6.2"
 
-"@zkdb/smart-contract@^1.1.7":
+"@zkdb/smart-contract@1.1.7":
   version "1.1.7"
   resolved "https://registry.yarnpkg.com/@zkdb/smart-contract/-/smart-contract-1.1.7.tgz#52273753a099ad458106bd02b5490e9a4348be1b"
   integrity sha512-BAoJf0yRBNWl4w6l1uo96iJfAE49rG+CkQseetPkEgMt/6ResrByXQetuPahXtdmifQjXL7qf62rmQ7xnecFJQ==
@@ -4591,8 +4591,8 @@ zen-observable@0.8.15:
 zkdb@../packages/zkdb:
   version "1.2.4"
   dependencies:
-    "@zkdb/api" "^1.1.9"
-    "@zkdb/smart-contract" "^1.1.7"
+    "@zkdb/api" "1.1.9"
+    "@zkdb/smart-contract" "1.1.7"
     graphql "^16.9.0"
     graphql-request "^7.1.0"
     jest-worker "^29.7.0"
