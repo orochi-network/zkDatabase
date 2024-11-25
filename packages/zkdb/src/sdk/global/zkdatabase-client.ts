@@ -10,6 +10,12 @@ type MinaConfig = {
   networkUrl: string;
   networkId: NetworkId;
 };
+
+/**
+ * The ZKDatabaseClient class provides methods to interact with the ZKDatabase.
+ * It allows connecting to the database using different authentication methods
+ * and provides access to database and system functionalities.
+ */
 export class ZKDatabaseClient {
   public apiClient: IApiClient;
 
@@ -91,14 +97,31 @@ export class ZKDatabaseClient {
     throw new Error('Invalid environment');
   }
 
+  /**
+   * Retrieves the current signer associated with the authenticator.
+   *
+   * @returns {Signer} The signer instance used for authentication.
+   */
   public getSigner(): Signer {
     return this.authenticator.signer;
   }
 
+  /**
+   * Sets the signer for the authenticator.
+   *
+   * @param signer - The signer to be connected to the authenticator.
+   */
   public setSigner(signer: Signer) {
     this.authenticator.connect(signer);
   }
 
+  /**
+   * Retrieves an instance of `ZKDatabase` with the specified name.
+   *
+   * @param name - The name of the database to access.
+   * @returns An instance of `ZKDatabase`.
+   * @throws Will throw an error if the server URL is not set and `connect()` has not been called.
+   */
   db(name: string): ZKDatabase {
     if (this.apiClient) {
       return new ZKDatabaseImpl(name, this.apiClient);
@@ -108,13 +131,19 @@ export class ZKDatabaseClient {
     );
   }
 
+  /**
+   * Provides access to the system instance.
+   *
+   * @throws {Error} Throws an error if the server URL is not set and `connect()` has not been called.
+   * @returns {ZKSystem} An instance of ZKSystemImpl if the apiClient is available.
+   */
   get system(): ZKSystem {
     if (this.apiClient) {
       return new ZKSystemImpl(this.apiClient);
     }
 
     throw new Error(
-      'Global access failed: Server URL is not set. Please call connect() first.'
+      'System access failed: Server URL is not set, please connect() first.'
     );
   }
 }
