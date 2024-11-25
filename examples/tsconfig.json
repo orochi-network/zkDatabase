@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
@@ -23,7 +22,6 @@
     "baseUrl": "./src",
     "paths": {}
   },
-  "references": [{ "path": "../packages/zkdb" }],
   "include": ["./src/"],
   "exclude": [
     "**/build",

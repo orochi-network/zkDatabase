@@ -7,8 +7,6 @@ const MINA_DECIMAL = 1e9;
 async function run() {
   const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
-  await zkdb.authenticator.signIn();
-
   const Network = Mina.Network({
     networkId: zkdb.minaConfig.networkId,
     mina: zkdb.minaConfig.networkUrl,
@@ -16,15 +14,10 @@ async function run() {
 
   Mina.setActiveInstance(Network);
 
-  const history = await zkdb.database(DB_NAME).getRollUpHistory();
-
-  if (history.state === 'outdated') {
-    // Create a rollup, this time will take time in background so need to write a polling function
-    await zkdb.database(DB_NAME).createRollup();
-  }
-
-  const { tx, id } = await zkdb.database(DB_NAME).getTransaction('rollup');
-
+  await zkdb.authenticator.signIn();
+  // The transaction will be created in background after database created
+  // Get unsigned transaction
+  const { tx, id } = await zkdb.database(DB_NAME).getTransaction('deploy');
   // Signed the transaction
   const txHash = await zkdb.getSigner().signAndSendTransaction(tx, {
     fee: MINA_DECIMAL,
