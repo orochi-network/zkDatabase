@@ -1,15 +1,13 @@
-import { CircuitString, NetworkId, PrivateKey, UInt64 } from 'o1js';
+import { CircuitString, PrivateKey, PublicKey, UInt64 } from 'o1js';
 import {
-  AccessPermissions,
-  AuroWalletSigner,
   NodeSigner,
-  Schema,
+  AuroWalletSigner,
   ZKDatabaseClient,
+  Schema,
+  AccessPermissions,
 } from 'zkdb';
 
 const isBrowser = false;
-
-const NETWORK: NetworkId = 'testnet'
 
 const SERVER_URL = 'http://0.0.0.0:4000/graphql';
 
@@ -29,7 +27,7 @@ class TShirt extends Schema.create({
 async function run() {
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(PRIVATE_KEY, NETWORK);
+    : new NodeSigner(PRIVATE_KEY);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
@@ -37,9 +35,11 @@ async function run() {
 
   await zkdb.authenticator.signIn();
 
+  const zkDbPrivateKey = PrivateKey.random();
+
   await zkdb
     .fromGlobal()
-    .createDatabase(DB_NAME, 18);
+    .createDatabase(DB_NAME, 18, PublicKey.fromPrivateKey(zkDbPrivateKey));
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
   await zkdb
