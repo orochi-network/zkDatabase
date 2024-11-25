@@ -2938,6 +2938,18 @@
   dependencies:
     tslib "^2.3.0"
 
+"@zkdb/api@1.1.9":
+  version "1.1.9"
+  resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.9.tgz#b1dd92c28605a1fe3425c388e9635aec0bc9ef89"
+  integrity sha512-yWBshx7+daolaKZrNaGxAf52Eyu6oTOTxtSM0gTYaj/bK6sfcPE48Wzzq6Izthq+QVyXcFk8I7kQYCnpDh8+SA==
+  dependencies:
+    "@apollo/client" "^3.10.6"
+    "@types/node" "^22.6.1"
+    graphql "^16.9.0"
+    react "^18.3.1"
+    react-dom "^18.3.1"
+    typescript "^5.6.2"
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
