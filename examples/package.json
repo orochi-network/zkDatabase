@@ -45,8 +45,9 @@
     "ts-jest": "^27.0.7",
     "typescript": "^5.6.2"
   },
-  "peerDependencies": {
-    "o1js": "1.1.*",
-    "zkdb": "^1.0.0"
+  "dependencies": {
+    "@faker-js/faker": "^9.2.0",
+    "o1js": "^2.1.0",
+    "zkdb": "../packages/zkdb"
   }
 }

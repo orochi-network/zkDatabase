@@ -6,32 +6,29 @@ import {
   Schema,
   ZKDatabaseClient,
 } from 'zkdb';
+import { faker } from '@faker-js/faker';
+import 'dotenv/config';
 
 const isBrowser = false;
 
-const MY_PRIVATE_KEY = PrivateKey.fromBase58(
-  'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
-);
+const NETWORK = process.env.NETWORK_ID as NetworkId;
+const SERVER_URL = process.env.SERVERLESS_URL || '';
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
-const DB_NAME = 'my-db';
+const DB_NAME = faker.lorem.word();
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'buyers';
-const NETWORK: NetworkId = 'testnet';
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-
 async function run() {
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(MY_PRIVATE_KEY, NETWORK);
+    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
-
-  await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
   await zkdb.authenticator.signIn();
 

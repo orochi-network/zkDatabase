@@ -1,26 +1,33 @@
-import { resolversDatabase, typeDefsDatabase } from './app/database.js';
-import { resolversCollection, typeDefsCollection } from './app/collection.js';
-import { resolversDocument, typeDefsDocument } from './app/document.js';
 import {
   resolversCollectionIndex,
   typeDefsCollectionIndex,
 } from './app/collection-index.js';
-import { resolversUser, typeDefsUser } from './app/user.js';
-import { resolversGroup, typeDefsGroup } from './app/group.js';
-import { resolversPermission, typeDefsPermission } from './app/metadata.js';
-import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
-import { resolversProof, typeDefsProof } from './app/proof.js';
-import { typeCommonDefsDocument } from './app/types/document.js';
+import { resolversCollection, typeDefsCollection } from './app/collection.js';
+import { resolversDatabase, typeDefsDatabase } from './app/database.js';
 import {
   resolversDocumentHistory,
   typeDefsDocumentHistory,
 } from './app/document-history.js';
-import { typeCommonDefsCollection } from './app/types/collection.js';
-import { typeCommonDefsMetadata } from './app/types/metadata.js';
-import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
-import { resolversTransaction, typeDefsTransaction } from './app/transaction.js';
-import { typeCommonDefsTransaction } from './app/types/transaction.js';
+import { resolversDocument, typeDefsDocument } from './app/document.js';
+import {
+  resolversEnvironment,
+  typeDefsEnvironment,
+} from './app/environment.js';
+import { resolversGroup, typeDefsGroup } from './app/group.js';
+import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
+import { resolversPermission, typeDefsPermission } from './app/metadata.js';
+import { resolversProof, typeDefsProof } from './app/proof.js';
 import { resolversRollUp, typeDefsRollUp } from './app/rollup.js';
+import {
+  resolversTransaction,
+  typeDefsTransaction,
+} from './app/transaction.js';
+import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
+import { typeCommonDefsCollection } from './app/types/collection.js';
+import { typeCommonDefsDocument } from './app/types/document.js';
+import { typeCommonDefsMetadata } from './app/types/metadata.js';
+import { typeCommonDefsTransaction } from './app/types/transaction.js';
+import { resolversUser, typeDefsUser } from './app/user.js';
 
 export const TypedefsApp = [
   typeDefsDatabase,
@@ -39,7 +46,8 @@ export const TypedefsApp = [
   typeCommonDefsCollection,
   typeCommonDefsMetadata,
   typeCommonDefsCollectionIndex,
-  typeCommonDefsTransaction
+  typeCommonDefsTransaction,
+  typeDefsEnvironment,
 ];
 
 type Resolver =
@@ -55,6 +63,7 @@ type Resolver =
   | typeof resolversDocumentHistory
   | typeof resolversTransaction
   | typeof resolversRollUp
+  | typeof resolversEnvironment;
 
 export const ResolversApp: Resolver[] = [
   resolversDatabase,
@@ -68,5 +77,6 @@ export const ResolversApp: Resolver[] = [
   resolversProof,
   resolversDocumentHistory,
   resolversTransaction,
-  resolversRollUp
+  resolversRollUp,
+  resolversEnvironment,
 ];

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { CircuitString, NetworkId, PrivateKey, UInt64 } from 'o1js';
 import {
   AccessPermissions,
@@ -6,18 +7,16 @@ import {
   Schema,
   ZKDatabaseClient,
 } from 'zkdb';
+import { faker } from '@faker-js/faker';
 
 const isBrowser = false;
 
-const NETWORK: NetworkId = 'testnet';
+const NETWORK = process.env.NETWORK_ID as NetworkId;
+const SERVER_URL = process.env.SERVERLESS_URL || '';
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-
-const PRIVATE_KEY = PrivateKey.fromBase58(
-  'EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU'
-);
-
-const DB_NAME = 'my-db';
+const DB_NAME = faker.lorem.word();
+console.log('🚀 ~ DB_NAME:', DB_NAME);
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'buyers';
 
@@ -29,11 +28,16 @@ class TShirt extends Schema.create({
 async function run() {
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(PRIVATE_KEY, NETWORK);
+    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
-  await zkdb.authenticator.signUp('test-name', 'robot@gmail.com');
+  const fakeUser = {
+    username: faker.internet.username().toLowerCase(),
+    email: faker.internet.email().toLowerCase(),
+  };
+
+  // await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
 
   await zkdb.authenticator.signIn();
 
@@ -54,25 +58,33 @@ async function run() {
       }
     );
 
-  let indexes = await zkdb
-    .database(DB_NAME)
-    .from(COLLECTION_NAME)
-    .listIndexes();
-  console.log(indexes);
+  // let indexes = await zkdb
+  //   .database(DB_NAME)
+  //   .from(COLLECTION_NAME)
+  //   .listIndexes();
+  // console.log(indexes);
+
+  console.log(
+    'Index: ',
+    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+  );
 
   await zkdb
     .database(DB_NAME)
     .from(COLLECTION_NAME)
     .createIndexes([{ name: 'price', sorting: 'asc' }]);
 
-  indexes = await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes();
-  console.log(indexes);
+  console.log(
+    'Index after insert "price": ',
+    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+  );
 
-  await zkdb.database(DB_NAME).from(COLLECTION_NAME).dropIndex('name');
+  await zkdb.database(DB_NAME).from(COLLECTION_NAME).dropIndex('name_-1');
 
-  indexes = await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes();
-
-  console.log(indexes);
+  console.log(
+    'Index after remove drop "name": ',
+    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+  );
 
   zkdb.authenticator.getUser();
 

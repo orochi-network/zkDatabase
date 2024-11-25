@@ -1,19 +1,17 @@
 import { Mina, NetworkId, PrivateKey } from 'o1js';
 import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
+import 'dotenv/config';
 
 const isBrowser = false;
 
-const MY_PRIVATE_KEY = PrivateKey.fromBase58(
-  'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
-);
+const MINA_ENDPOINT = process.env.NETWORK_URL || '';
+const NETWORK = process.env.NETWORK_ID as NetworkId;
+const SERVER_URL = process.env.SERVERLESS_URL || '';
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
-const MINA_ENDPOINT = 'https://api.minascan.io/node/devnet/v1/graphql';
 const MINA_DECIMAL = 1e9;
 
-const DB_NAME = 'my-collection';
-
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-const NETWORK: NetworkId = 'testnet';
+const DB_NAME = 'shop';
 
 async function run() {
   const Network = Mina.Network({
@@ -25,7 +23,7 @@ async function run() {
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(MY_PRIVATE_KEY, NETWORK);
+    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 

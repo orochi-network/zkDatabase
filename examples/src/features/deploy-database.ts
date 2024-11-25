@@ -1,27 +1,32 @@
-import { Mina, NetworkId } from 'o1js';
+import { Mina, NetworkId, PrivateKey } from 'o1js';
 import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
+import 'dotenv/config';
 
 const isBrowser = false;
 
-const network: NetworkId = 'testnet';
 const MINA_DECIMAL = 1e9;
 const DB_NAME = 'shop';
 
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
+const MINA_ENDPOINT = process.env.NETWORK_URL || '';
+const NETWORK = process.env.NETWORK_ID as NetworkId;
+const SERVER_URL = process.env.SERVERLESS_URL || '';
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
 async function run() {
-  const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
-  Mina.setActiveInstance(Local);
+  const Network = Mina.Network({
+    networkId: NETWORK,
+    mina: MINA_ENDPOINT,
+  });
 
-  const { key: deployerPrivate } = Local.testAccounts[0];
+  Mina.setActiveInstance(Network);
+
+  const deployerPrivateKey = PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY);
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(deployerPrivate, network);
+    : new NodeSigner(deployerPrivateKey, NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
-
-  await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
   await zkdb.authenticator.signIn();
   // The transaction will be created in background after database created

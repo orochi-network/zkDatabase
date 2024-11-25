@@ -6,14 +6,11 @@ import {
   Schema,
   ZKDatabaseClient,
 } from 'zkdb';
+import 'dotenv/config';
 
 const isBrowser = false;
 
-const MY_PRIVATE_KEY = PrivateKey.fromBase58(
-  'EKEuWDwmwry6Nh41qJibQ1fqYokHVmc3jAc3M1PvhNQQLFLbaWq3'
-);
-
-const DB_NAME = 'my-db';
+const DB_NAME = 'shop223';
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'buyers';
 
@@ -22,9 +19,10 @@ class TShirt extends Schema.create({
   price: UInt64,
 }) {}
 
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
-const NETWORK: NetworkId = 'testnet';
-const MINA_ENDPOINT = 'https://api.minascan.io/node/devnet/v1/graphql';
+const MINA_ENDPOINT = process.env.NETWORK_URL || '';
+const NETWORK = process.env.NETWORK_ID as NetworkId;
+const SERVER_URL = process.env.SERVERLESS_URL || '';
+const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
 async function run() {
   const Network = Mina.Network({
@@ -36,11 +34,9 @@ async function run() {
 
   const signer = isBrowser
     ? new AuroWalletSigner()
-    : new NodeSigner(MY_PRIVATE_KEY, NETWORK);
+    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
 
   const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
-
-  await zkdb.authenticator.signUp('user-name', 'robot@gmail.com');
 
   await zkdb.authenticator.signIn();
 
@@ -61,10 +57,9 @@ async function run() {
     price: UInt64.from(12),
   });
 
-  await zkdb.database('my-db').fromGroup('group-name');
   await zkdb
-    .database('my-db')
-    .from('my-collection')
+    .database(DB_NAME)
+    .from(COLLECTION_NAME)
     .insert(shirt, {
       permissionOwner: {
         read: true,
@@ -93,9 +88,9 @@ async function run() {
 
   const collection = database.from(COLLECTION_NAME);
 
-  const document = await collection.fetchOne({ name: 'Guchi' });
+  const document = await collection.fetchOne({ name: shirt.name.toString() });
 
-  console.log(await document?.getProofStatus());
+  console.log('Proof status: ', await document?.getProofStatus());
 
   await zkdb.authenticator.signOut();
 }
