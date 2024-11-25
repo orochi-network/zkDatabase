@@ -12,7 +12,7 @@ const ENVIRONMENT_GET = gql`
 `;
 
 export const environment = <T>(client: TApolloClient<T>) => ({
-  getTransaction: createQueryFunction<
+  getEnvironment: createQueryFunction<
     TEnvironment,
     undefined,
     { getEnvironment: TEnvironment }
