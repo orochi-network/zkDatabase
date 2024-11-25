@@ -1,24 +1,9 @@
-import 'dotenv/config';
-import { CircuitString, NetworkId, PrivateKey, UInt64 } from 'o1js';
-import {
-  AccessPermissions,
-  AuroWalletSigner,
-  NodeSigner,
-  Schema,
-  ZKDatabaseClient,
-} from 'zkdb';
-import { faker } from '@faker-js/faker';
+import { CircuitString, UInt64 } from 'o1js';
+import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
+import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
-const isBrowser = false;
-
-const NETWORK = process.env.NETWORK_ID as NetworkId;
-const SERVER_URL = process.env.SERVERLESS_URL || '';
-const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
-
-const DB_NAME = faker.lorem.word();
-console.log('🚀 ~ DB_NAME:', DB_NAME);
 const COLLECTION_NAME = 'my-collection';
-const GROUP_NAME = 'buyers';
+const GROUP_NAME = 'my-group';
 
 class TShirt extends Schema.create({
   name: CircuitString,
@@ -26,22 +11,9 @@ class TShirt extends Schema.create({
 }) {}
 
 async function run() {
-  const signer = isBrowser
-    ? new AuroWalletSigner()
-    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
-
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
-
-  const fakeUser = {
-    username: faker.internet.username().toLowerCase(),
-    email: faker.internet.email().toLowerCase(),
-  };
-
-  // await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
+  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
   await zkdb.authenticator.signIn();
-
-  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
   await zkdb
@@ -57,12 +29,6 @@ async function run() {
         permissionOther: AccessPermissions.noPermissions,
       }
     );
-
-  // let indexes = await zkdb
-  //   .database(DB_NAME)
-  //   .from(COLLECTION_NAME)
-  //   .listIndexes();
-  // console.log(indexes);
 
   console.log(
     'Index: ',

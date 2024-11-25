@@ -1,39 +1,25 @@
-import { Mina, NetworkId, PrivateKey } from 'o1js';
-import { AuroWalletSigner, NodeSigner, ZKDatabaseClient } from 'zkdb';
-import 'dotenv/config';
-
-const isBrowser = false;
+import { Mina } from 'o1js';
+import { ZKDatabaseClient } from 'zkdb';
+import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
 const MINA_DECIMAL = 1e9;
-const DB_NAME = 'shop';
-
-const MINA_ENDPOINT = process.env.NETWORK_URL || '';
-const NETWORK = process.env.NETWORK_ID as NetworkId;
-const SERVER_URL = process.env.SERVERLESS_URL || '';
-const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
 
 async function run() {
+  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+
   const Network = Mina.Network({
-    networkId: NETWORK,
-    mina: MINA_ENDPOINT,
+    networkId: zkdb.minaConfig.networkId,
+    mina: zkdb.minaConfig.networkUrl,
   });
 
   Mina.setActiveInstance(Network);
-
-  const deployerPrivateKey = PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY);
-
-  const signer = isBrowser
-    ? new AuroWalletSigner()
-    : new NodeSigner(deployerPrivateKey, NETWORK);
-
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
 
   await zkdb.authenticator.signIn();
   // The transaction will be created in background after database created
   // Get unsigned transaction
   const { tx, id } = await zkdb.database(DB_NAME).getTransaction('deploy');
   // Signed the transaction
-  const txHash = await signer.signAndSendTransaction(tx, {
+  const txHash = await zkdb.getSigner().signAndSendTransaction(tx, {
     fee: MINA_DECIMAL,
     memo: '',
   });

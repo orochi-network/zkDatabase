@@ -1,38 +1,18 @@
-import { CircuitString, NetworkId, PrivateKey, UInt64 } from 'o1js';
-import {
-  AccessPermissions,
-  AuroWalletSigner,
-  NodeSigner,
-  Schema,
-  ZKDatabaseClient,
-} from 'zkdb';
-import { faker } from '@faker-js/faker';
-import 'dotenv/config';
+import { CircuitString, UInt64 } from 'o1js';
+import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
+import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
-const isBrowser = false;
-
-const NETWORK = process.env.NETWORK_ID as NetworkId;
-const SERVER_URL = process.env.SERVERLESS_URL || '';
-const DEPLOYER_PRIVATE_KEY = process.env.DEPLOYER_PRIVATE_KEY || '';
-
-const DB_NAME = faker.lorem.word();
-const COLLECTION_NAME = 'my-collection';
-const GROUP_NAME = 'buyers';
+const COLLECTION_NAME = 'my-permission-collection';
+const GROUP_NAME = 'my-test-group-name';
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
 async function run() {
-  const signer = isBrowser
-    ? new AuroWalletSigner()
-    : new NodeSigner(PrivateKey.fromBase58(DEPLOYER_PRIVATE_KEY), NETWORK);
-
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
   await zkdb.authenticator.signIn();
-
-  await zkdb.fromGlobal().createDatabase(DB_NAME, 18);
 
   await zkdb.database(DB_NAME).createGroup(GROUP_NAME, 'default description');
 
