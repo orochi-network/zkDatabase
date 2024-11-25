@@ -53,7 +53,11 @@ async function createIndex(
       );
     }
 
-    return ModelCollection.getInstance(databaseName, DB.service, collectionName).index(
+    return ModelCollection.getInstance(
+      databaseName,
+      DB.service,
+      collectionName
+    ).index(
       indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
     );
   }
@@ -132,7 +136,11 @@ async function readCollectionInfo(
       actor
     );
 
-    await ModelCollection.getInstance(databaseName, DB.service, collectionName).size();
+    await ModelCollection.getInstance(
+      databaseName,
+      DB.service,
+      collectionName
+    ).size();
 
     return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
   }
@@ -296,9 +304,11 @@ async function doesIndexExist(
       session
     )
   ) {
-    return ModelCollection.getInstance(databaseName, DB.service, collectionName).isIndexed(
-      indexName
-    );
+    return ModelCollection.getInstance(
+      databaseName,
+      DB.service,
+      collectionName
+    ).isIndexed(indexName);
   }
 
   throw Error(
