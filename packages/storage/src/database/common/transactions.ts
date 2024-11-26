@@ -89,6 +89,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
       { _id: new ObjectId(id) },
       options
     );
+
     return tx;
   }
 

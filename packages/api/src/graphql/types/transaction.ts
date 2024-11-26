@@ -3,6 +3,11 @@ export type TTransactionRequest = {
   transactionType: "deploy" | "rollup";
 };
 
+export type TTransactionByIdRequest = {
+  id: string;
+};
+
+
 export type TTransactionConfirmRequest = {
   databaseName: string;
   confirmTransactionId: string;
@@ -23,4 +28,5 @@ export type TDbTransaction = {
   transactionType: TTransactionType;
   tx: string;
   zkAppPublicKey: string;
+  error: string;
 };

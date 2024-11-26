@@ -24,7 +24,8 @@ import { MinaNetwork } from '@zkdb/smart-contract';
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
-  actor: string
+  actor: string,
+  session?: ClientSession
 ) {
   const user = await new ModelUser().findOne({ userName: actor });
 
@@ -44,9 +45,16 @@ export async function createDatabase(
       databaseOwner: actor,
     });
 
-    await enqueueTransaction(databaseName, actor, 'deploy');
+    const id = await enqueueTransaction(databaseName, actor, 'deploy', session);
 
-    return true;
+    const modelTransaction = ModelDbTransaction.getInstance();
+
+    const tx = await modelTransaction.findById(id.toString(), { session });
+
+    return {
+      id: id.toString(),
+      ...tx,
+    };
   }
 
   throw Error(`User ${actor} has not been found`);

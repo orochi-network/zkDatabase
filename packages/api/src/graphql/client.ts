@@ -6,7 +6,7 @@ import {
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
-import { Context } from "@authentication";
+import { Context } from "../authentication";
 import { collection } from "./collection";
 import { collectionIndex } from "./collection-index";
 import { database } from "./database";

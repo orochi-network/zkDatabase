@@ -72,6 +72,15 @@ export async function createRollUp(
     },
     { session: compoundSession?.sessionService }
   );
+
+  const tx = await modelTransaction.findById(txId.toString(), {
+    session: compoundSession?.sessionService,
+  });
+
+  return {
+    id: txId.toString(),
+    ...tx,
+  };
 }
 
 export async function getRollUpHistory(

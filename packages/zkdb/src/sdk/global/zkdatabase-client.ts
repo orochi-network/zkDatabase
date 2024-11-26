@@ -18,9 +18,7 @@ type MinaConfig = {
  */
 export class ZKDatabaseClient {
   public apiClient: IApiClient;
-
   public authenticator: Authenticator;
-
   public minaConfig: MinaConfig;
 
   private constructor(

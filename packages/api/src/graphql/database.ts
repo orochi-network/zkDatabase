@@ -11,6 +11,7 @@ import {
   TPagination,
   TPaginationResponse,
 } from "./types";
+import { TDbTransaction } from "./types/transaction.js";
 
 const DATABASE_CHANGE_OWNER = gql`
   mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
@@ -20,7 +21,15 @@ const DATABASE_CHANGE_OWNER = gql`
 
 const DATABASE_CREATE = gql`
   mutation DbCreate($databaseName: String!, $merkleHeight: Int!) {
-    dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
+    dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight) {
+      databaseName
+      transactionType
+      status
+      id
+      tx
+      zkAppPublicKey
+      error
+    }
   }
 `;
 
@@ -102,9 +111,9 @@ export const database = <T>(client: TApolloClient<T>) => ({
     { dbChangeOwner: boolean }
   >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
   create: createMutateFunction<
-    boolean,
+    TDbTransaction,
     { databaseName: string; merkleHeight: number },
-    { dbCreate: boolean }
+    { dbCreate: TDbTransaction }
   >(client, DATABASE_CREATE, (data) => data.dbCreate),
   setting: createQueryFunction<
     TDatabaseSettings,

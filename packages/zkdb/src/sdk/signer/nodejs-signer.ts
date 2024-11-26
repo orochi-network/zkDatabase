@@ -1,5 +1,5 @@
 import { SignedData } from '@types';
-import { MinaNetwork, sendTransaction } from '@zkdb/smart-contract';
+import { sendTransaction } from '@zkdb/smart-contract';
 import Client from 'mina-signer';
 import { fetchAccount, NetworkId, PrivateKey } from 'o1js';
 import { TransactionParams } from '../../types/transaction-params';

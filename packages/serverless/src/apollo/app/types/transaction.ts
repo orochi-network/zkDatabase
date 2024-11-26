@@ -9,4 +9,20 @@ enum TransactionStatus {
   success
   unknown
 }
+
+enum TransactionType {
+  deploy
+  rollup
+}
+
+type DbTransaction {
+  databaseName: String!
+  transactionType: TransactionType!
+  zkAppPublicKey: String
+  status: TransactionStatus!
+  tx: String
+  id: String!
+  error: String
+}
+
 `;
