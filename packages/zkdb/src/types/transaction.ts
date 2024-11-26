@@ -29,5 +29,5 @@ export const transactionOrder: Map<TTransactionStatus, number> = new Map([
   ['pending', 2],
   ['success', 3],
   ['failed', -1],
-  ['failed', -2],
+  ['unknown', -2],
 ]);
