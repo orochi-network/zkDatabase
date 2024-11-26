@@ -2,11 +2,34 @@
 import { IndexField } from 'src/types/collection-index';
 import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
 import { ZKDocument } from '../interfaces';
-import { DocumentEncoded } from '../schema.js';
-import { Ownable } from './ownable.js';
+import { DocumentEncoded, SchemaDefinition } from '../schema';
+import { Ownable } from './ownable';
 
-export interface ZKCollection extends Ownable {
-  fetchOne<
+export interface ZKCollectionIndex {
+  create(indexes: IndexField[]): Promise<boolean>;
+
+  drop(indexName: string): Promise<boolean>;
+}
+
+export interface ZKCollection {
+  get ownership(): Ownable;
+
+  get index(): ZKCollectionIndex;
+
+  exist(): Promise<boolean>;
+
+  create<
+    T extends {
+      getSchema: () => SchemaDefinition;
+    },
+  >(
+    groupName: string,
+    type: T,
+    indexes: IndexField[],
+    permissions: Permissions
+  ): Promise<boolean>;
+
+  findOne<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
@@ -14,7 +37,7 @@ export interface ZKCollection extends Ownable {
     filter: Filter<T>
   ): Promise<ZKDocument | null>;
 
-  fetchMany<
+  findMany<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
@@ -52,15 +75,11 @@ export interface ZKCollection extends Ownable {
     model: InstanceType<T>
   ): Promise<MerkleWitness>;
 
-  delete<
+  drop<
     T extends {
       new (..._args: any): InstanceType<T>;
     },
   >(
     filter: Filter<T>
   ): Promise<MerkleWitness>;
-
-  listIndexes(): Promise<string[]>;
-  createIndexes(indexes: IndexField[]): Promise<boolean>;
-  dropIndex(indexName: string): Promise<boolean>;
 }

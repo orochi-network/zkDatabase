@@ -102,6 +102,7 @@ extend type Query {
   dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
   dbStats(databaseName: String!): JSON
   dbSetting(databaseName: String!): DbSetting!
+  dbExist(databaseName: String!): Boolean!
   #dbFindIndex(databaseName: String!, index: Int!): JSON
 }
 
@@ -183,12 +184,23 @@ const dbChangeOwner = authorizeWrapper(
     changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
 );
 
+const dbExist = publicWrapper(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
+    const { databases } = await DB.service.client.db().admin().listDatabases();
+    return databases.some((db) => db.name === args.databaseName);
+  }
+);
+
 type TDatabaseResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     dbStats: typeof dbStats;
     dbList: typeof dbList;
     dbSetting: typeof dbSetting;
+    dbExist: typeof dbExist;
   };
   Mutation: {
     dbCreate: typeof dbCreate;
@@ -203,6 +215,7 @@ export const resolversDatabase: TDatabaseResolver = {
     dbStats,
     dbList,
     dbSetting,
+    dbExist,
   },
   Mutation: {
     dbCreate,

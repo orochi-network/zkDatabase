@@ -1,18 +1,20 @@
-import { JsonProof, PublicKey } from 'o1js';
 import { IApiClient } from '@zkdb/api';
-import { ZKCollection, ZKDatabase, ZKGroup } from '../interfaces';
+import { JsonProof } from 'o1js';
 import {
   DatabaseSettings,
-  Permissions,
   GroupDescription,
   TDbTransaction,
-  TTransactionType,
   TGetRollUpHistory,
+  TTransactionType,
 } from '../../types';
-import { SchemaDefinition } from '../schema';
-import { CollectionQueryImpl } from './collection';
+import {
+  ZKCollection,
+  ZKDatabase,
+  ZKDatabaseConfig,
+  ZKGroup,
+} from '../interfaces';
+import { CollectionImpl } from './collection';
 import { ZKGroupImpl } from './group';
-import { IndexField } from '../../types/collection-index';
 
 // TODO: Implement transactions endpoints
 export class ZKDatabaseImpl implements ZKDatabase {
@@ -24,6 +26,23 @@ export class ZKDatabaseImpl implements ZKDatabase {
     this.apiClient = apiClient;
   }
 
+  async create(config: ZKDatabaseConfig): Promise<boolean> {
+    const result = await this.apiClient.db.create({
+      databaseName: this.databaseName,
+      merkleHeight: config.merkleHeight,
+    });
+
+    return result.unwrap();
+  }
+
+  async exist(): Promise<boolean> {
+    const result = await this.apiClient.db.exist({
+      databaseName: this.databaseName,
+    });
+
+    return result.unwrap();
+  }
+
   async getProof(): Promise<JsonProof> {
     const result = await this.apiClient.proof.get({
       databaseName: this.databaseName,
@@ -32,51 +51,19 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  from(collectionName: string): ZKCollection {
-    return new CollectionQueryImpl(
+  collection(collectionName: string): ZKCollection {
+    return new CollectionImpl(
       this.databaseName,
       collectionName,
       this.apiClient
     );
   }
 
-  async createCollection<T extends { getSchema: () => SchemaDefinition }>(
-    collectionName: string,
-    groupName: string,
-    type: T,
-    indexes: IndexField[],
-    permissions: Permissions
-  ): Promise<boolean> {
-    const result = await this.apiClient.collection.create({
-      databaseName: this.databaseName,
-      collectionName: collectionName,
-      groupName,
-      schema: type.getSchema(),
-      indexes: indexes.map(({ name, sorting }) => ({
-        name,
-        sorting: sorting === 'asc' ? 'ASC' : 'DESC',
-      })),
-      permissions,
-    });
-
-    return result.unwrap();
-  }
-
-  async createGroup(groupName: string, description: string): Promise<boolean> {
-    const result = await this.apiClient.group.create({
-      databaseName: this.databaseName,
-      groupName,
-      groupDescription: description,
-    });
-
-    return result.unwrap();
-  }
-
-  fromGroup(groupName: string): ZKGroup {
+  group(groupName: string): ZKGroup {
     return new ZKGroupImpl(this.databaseName, groupName, this.apiClient);
   }
 
-  async getGroups(): Promise<GroupDescription[]> {
+  async listGroup(): Promise<GroupDescription[]> {
     const result = await this.apiClient.group.list({
       databaseName: this.databaseName,
     });
@@ -91,7 +78,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
       }));
   }
 
-  async getCollections(): Promise<string[]> {
+  async listCollection(): Promise<string[]> {
     const result = await this.apiClient.collection.list({
       databaseName: this.databaseName,
     });
@@ -99,16 +86,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap().map((collection) => collection.name);
   }
 
-  async create(merkleHeight: number): Promise<boolean> {
-    const result = await this.apiClient.db.create({
-      databaseName: this.databaseName,
-      merkleHeight,
-    });
-
-    return result.unwrap();
-  }
-
-  async getSettings(): Promise<DatabaseSettings> {
+  async setting(): Promise<DatabaseSettings> {
     const result = await this.apiClient.db.setting({
       databaseName: this.databaseName,
     });
