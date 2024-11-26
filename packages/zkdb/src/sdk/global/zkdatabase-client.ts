@@ -70,7 +70,11 @@ export class ZKDatabaseClient {
     if (isNetwork(networkId) && typeof networkUrl === 'string') {
       if (password === '' || password === 'auro-wallet') {
         const signer = new AuroWalletSigner();
-        const authenticator = new Authenticator(signer, apiClient, storage);
+        const authenticator = new Authenticator(
+          signer,
+          apiClient,
+          window.localStorage
+        );
         return new ZKDatabaseClient(apiClient, authenticator, {
           networkId,
           networkUrl,

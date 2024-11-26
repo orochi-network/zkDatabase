@@ -74,12 +74,17 @@ export class ApiClient<T = any> {
     const authLink = setContext(async (_, { headers }) => {
       const accessToken = this.storage.getItem(ACCESS_TOKEN);
       const cookie = this.storage.getItem(COOKIE);
+
+      if (cookie) {
+        headers["cookie"] = cookie;
+      }
+
+      if (accessToken) {
+        headers["authorization"] = `Bearer ${accessToken}`;
+      }
+
       return {
-        headers: {
-          ...headers,
-          ...(cookie ? { cookie } : {}),
-          ...(accessToken ? { authorization: `Bearer ${accessToken}` } : {}),
-        },
+        headers,
       };
     });
 
