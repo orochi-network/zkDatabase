@@ -31,11 +31,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies & build root
+      - name: Install dependencies
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
           yarn install
-          yarn build
       - name: Install compare-versions package
         run: yarn add -W -D compare-versions@6.1.0
       - name: Loop through all packages and publish them if necessary
@@ -46,6 +45,9 @@ jobs:
 
           PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb")
           packages_dir="packages"
+
+          # Build storage package
+          yarn workspace @zkdb/storage build
 
           # Loop through all packages
           for package_dir in $(find "$packages_dir" -mindepth 1 -maxdepth 1 -type d);
