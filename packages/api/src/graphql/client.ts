@@ -64,7 +64,7 @@ export class ApiClient<T = any> {
           const cookie = response.headers.get("set-cookie");
           if (cookie) {
             // Set cookies to store connect.sid
-            storage.setItem("cookie", cookie);
+            storage.setItem(COOKIE, cookie);
           }
           return response;
         });
