@@ -35,6 +35,14 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
+  async exist(): Promise<boolean> {
+    const result = await this.apiClient.db.exist({
+      databaseName: this.databaseName,
+    });
+
+    return result.unwrap();
+  }
+
   async getProof(): Promise<JsonProof> {
     const result = await this.apiClient.proof.get({
       databaseName: this.databaseName,

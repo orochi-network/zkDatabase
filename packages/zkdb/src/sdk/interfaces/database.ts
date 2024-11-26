@@ -18,8 +18,7 @@ export interface ZKDatabase {
   // Database
   create(config: ZKDatabaseConfig): Promise<boolean>;
 
-  // TODO: Implement exists endpoint
-  // exists(): Promise<boolean>;
+  exist(): Promise<boolean>;
 
   // Collection
   collection(name: string): ZKCollection;
