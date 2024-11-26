@@ -1,6 +1,10 @@
 /* eslint-disable no-unused-vars */
 import { IApiClient, TSignInInfo } from '@zkdb/api';
-import { Signer } from '../signer';
+import { AuroWalletSigner, NodeSigner } from '../signer';
+import { PrivateKey } from 'o1js';
+import { SignedData } from '../../types/signing';
+import { Environment } from '../global/environment';
+import { isBrowser } from '../../utils/environment';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 
@@ -15,19 +19,19 @@ export interface ISecureStorage {
 }
 
 export class Authenticator {
-  #signer: Signer | undefined;
-
   #storage: ISecureStorage;
 
   private apiClient: IApiClient;
 
+  private environment: Environment;
+
   constructor(
-    signer: Signer,
     apiClient: IApiClient,
+    environment: Environment,
     storage: ISecureStorage = new Map<string, string>()
   ) {
-    this.#signer = signer;
     this.apiClient = apiClient;
+    this.environment = environment;
     this.#storage = storage;
   }
 
@@ -39,24 +43,27 @@ export class Authenticator {
     return Math.floor(Date.now() / 1000);
   }
 
-  public get signer(): Signer {
-    if (this.#signer) {
-      return this.#signer;
-    }
-    throw new Error('Signer is not initialized');
-  }
-
-  public connect(signer: Signer) {
-    this.#signer = signer;
-  }
-
   isLoggedIn(): boolean {
     return typeof this.#storage.get(ZKDB_KEY_ACCESS_TOKEN) === 'string';
   }
 
-  public async signIn() {
+  public async signIn(privateKey?: PrivateKey) {
     const ecdsa = (await this.user.ecdsa(undefined)).unwrap();
-    const proof = await this.signer.signMessage(ecdsa);
+
+    let proof: SignedData;
+
+    if (privateKey) {
+      const { networkId } = this.environment.getEnv();
+      proof = await NodeSigner.getInstance(networkId).signMessage(
+        ecdsa,
+        privateKey
+      );
+    } else if (isBrowser()) {
+      proof = await AuroWalletSigner.getInstance().signMessage(ecdsa);
+    } else {
+      throw Error('Missed private key');
+    }
+
     const userData = (await this.user.signIn({ proof })).unwrap();
     this.#storage.set(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
 
@@ -72,13 +79,32 @@ export class Authenticator {
     return userData;
   }
 
-  public async signUp(userName: string, email: string) {
-    const proof = await this.signer.signMessage(
-      JSON.stringify({
-        userName,
-        email,
-      })
-    );
+  public async signUp(
+    userName: string,
+    email: string,
+    privateKey?: PrivateKey
+  ) {
+    let proof: SignedData;
+
+    if (privateKey) {
+      const { networkId } = this.environment.getEnv();
+      proof = await NodeSigner.getInstance(networkId).signMessage(
+        JSON.stringify({
+          userName,
+          email,
+        }),
+        privateKey
+      );
+    } else if (isBrowser()) {
+      proof = await AuroWalletSigner.getInstance().signMessage(
+        JSON.stringify({
+          userName,
+          email,
+        })
+      );
+    } else {
+      throw Error('Missed private key');
+    }
 
     return (
       await this.user.signUp({

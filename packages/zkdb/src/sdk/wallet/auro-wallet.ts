@@ -1,13 +1,9 @@
 import { Mina } from 'o1js';
 import { SignedData } from '../../types';
-import { isBrowser } from '@utils';
+import { isBrowser } from '../../utils';
+import { TransactionParams } from '../../types/transaction-params';
 
 type Transaction = Awaited<ReturnType<typeof Mina.transaction>>;
-
-export type TransactionMetadata = {
-  fee: number;
-  memo: string;
-};
 
 export class AuroWallet {
   private constructor() {}
@@ -23,8 +19,8 @@ export class AuroWallet {
   }
 
   static async signAndSendTransaction(
-    transaction: Transaction,
-    transactionMetadata: TransactionMetadata = {
+    transaction: string,
+    transactionMetadata: TransactionParams = {
       fee: 0.1,
       memo: '',
     }
@@ -32,7 +28,7 @@ export class AuroWallet {
     this.ensureWalletSupport();
 
     const { hash } = await (window as any).mina.sendTransaction({
-      transaction: transaction.toJSON(),
+      transaction: transaction,
       feePayer: {
         fee: transactionMetadata.fee,
         memo: transactionMetadata.memo,
@@ -44,7 +40,7 @@ export class AuroWallet {
 
   static async signTransaction(
     transaction: Transaction,
-    transactionMetadata: TransactionMetadata = {
+    transactionMetadata: TransactionParams = {
       fee: 0.1,
       memo: '',
     }

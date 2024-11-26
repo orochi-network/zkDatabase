@@ -4,34 +4,38 @@ import { ZKDatabase, GlobalContext } from '../interfaces';
 import { ZKDatabaseImpl, GlobalContextImpl } from '../impl';
 
 import { Signer } from '../signer';
+import { NetworkId } from 'o1js';
+import { Environment } from './environment';
 
 export class ZKDatabaseClient {
   public apiClient: IApiClient;
-
   public authenticator: Authenticator;
+  private environment: Environment;
 
-  private constructor(apiClient: IApiClient, authenticator: Authenticator) {
+  private constructor(
+    apiClient: IApiClient,
+    authenticator: Authenticator,
+    environment: Environment
+  ) {
     this.apiClient = apiClient;
     this.authenticator = authenticator;
+    this.environment = environment;
   }
 
   public static newInstance(
     url: string,
-    signer: Signer,
+    networkId: NetworkId,
     storage: ISecureStorage
   ) {
     const apiClient = ApiClient.newInstance(url);
-    const authenticator = new Authenticator(signer, apiClient, storage);
+    const environment = Environment.getInstance();
+    environment.setEnv({
+      networkId,
+    });
+    const authenticator = new Authenticator(apiClient, environment, storage);
+
     apiClient.api.setContext(() => authenticator.getAccessToken());
-    return new ZKDatabaseClient(apiClient, authenticator);
-  }
-
-  public getSigner(): Signer {
-    return this.authenticator.signer;
-  }
-
-  public setSigner(signer: Signer) {
-    this.authenticator.connect(signer);
+    return new ZKDatabaseClient(apiClient, authenticator, environment);
   }
 
   database(name: string): ZKDatabase {

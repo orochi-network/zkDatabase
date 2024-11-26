@@ -5,10 +5,19 @@ import { SignedData } from '@types';
 import { AuroWallet } from '../wallet/auro-wallet';
 import { TransactionParams } from '../../types/transaction-params';
 
-export class AuroWalletSigner implements Signer {
+export class AuroWalletSigner {
+  private static INSTANCE: AuroWalletSigner;
+
+  public static getInstance() {
+    if (!AuroWalletSigner.INSTANCE) {
+      AuroWalletSigner.INSTANCE = new AuroWalletSigner();
+    }
+
+    return AuroWalletSigner.INSTANCE;
+  }
 
   async signAndSendTransaction(transaction: string, params: TransactionParams): Promise<string> {
-    throw new Error('Method not implemented.');
+   return AuroWallet.signAndSendTransaction(transaction, params)
   }
   async signTransaction(
     transaction: MinaTransaction,
