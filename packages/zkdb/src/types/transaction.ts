@@ -20,6 +20,7 @@ export type TDbTransaction = {
   transactionType: TTransactionType;
   tx: string;
   zkAppPublicKey: string;
+  error: string
 };
 
 export const transactionOrder: Map<TTransactionStatus, number> = new Map([

@@ -15,24 +15,30 @@ import {
 } from '../interfaces';
 import { CollectionImpl } from './collection';
 import { ZKGroupImpl } from './group';
+import { ZkDbTransaction } from '../transaction/zkdb-transaction';
+import { Signer } from '../signer';
 
 // TODO: Implement transactions endpoints
 export class ZKDatabaseImpl implements ZKDatabase {
   private databaseName: string;
   private apiClient: IApiClient;
+  private signer: Signer;
 
-  constructor(databaseName: string, apiClient: IApiClient) {
+  constructor(databaseName: string, apiClient: IApiClient, signer: Signer) {
     this.databaseName = databaseName;
     this.apiClient = apiClient;
+    this.signer = signer;
   }
 
-  async create(config: ZKDatabaseConfig): Promise<boolean> {
+  async create(config: ZKDatabaseConfig): Promise<ZkDbTransaction> {
     const result = await this.apiClient.db.create({
       databaseName: this.databaseName,
       merkleHeight: config.merkleHeight,
     });
 
-    return result.unwrap();
+    const dbTransaction = result.unwrap();
+
+    return new ZkDbTransaction(dbTransaction, this.apiClient, this.signer);
   }
 
   async exist(): Promise<boolean> {
@@ -104,28 +110,24 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
   async getTransaction(
     transactionType: TTransactionType
-  ): Promise<TDbTransaction> {
+  ): Promise<ZkDbTransaction> {
     const result = await this.apiClient.transaction.getTransaction({
       databaseName: this.databaseName,
       transactionType,
     });
-    return result.unwrap();
+    const dbTransaction = result.unwrap();
+
+    return new ZkDbTransaction(dbTransaction, this.apiClient, this.signer);
   }
 
-  async confirmTransaction(id: string, txHash: string): Promise<boolean> {
-    const result = await this.apiClient.transaction.confirmTransaction({
-      databaseName: this.databaseName,
-      confirmTransactionId: id,
-      txHash,
-    });
-    return result.unwrap();
-  }
-
-  async createRollup(): Promise<boolean> {
+  async createRollup(): Promise<ZkDbTransaction> {
     const result = await this.apiClient.rollup.createRollUp({
       databaseName: this.databaseName,
     });
-    return result.unwrap();
+    
+    const dbTransaction = result.unwrap();
+
+    return new ZkDbTransaction(dbTransaction, this.apiClient, this.signer);
   }
 
   async getRollUpHistory(): Promise<TGetRollUpHistory> {

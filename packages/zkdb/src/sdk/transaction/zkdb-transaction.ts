@@ -6,24 +6,25 @@ import {
 } from '../../types/transaction';
 import { isBrowser } from '@utils';
 import { PrivateKey } from 'o1js';
-import { AuroWalletSigner, NodeSigner } from '../signer';
+import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 import { TransactionParams } from '../../types/transaction-params';
-import { Environment } from '../global/environment';
+
+const DEFAULT_FEE = 100_000_000;
 
 export class ZkDbTransaction {
   private transaction: TDbTransaction;
   private apiClient: IApiClient;
-  private environment: Environment;
+  private signer: Signer;
   private txHash: string;
 
   constructor(
     transaction: TDbTransaction,
     apiClient: IApiClient,
-    environment: Environment
+    signer: Signer
   ) {
     this.transaction = transaction;
     this.apiClient = apiClient;
-    this.environment = environment;
+    this.signer = signer;
   }
 
   public async update() {
@@ -36,9 +37,8 @@ export class ZkDbTransaction {
       );
     }
 
-    const result = await this.apiClient.transaction.getTransaction({
-      databaseName: this.transaction.databaseName,
-      transactionType: this.transaction.transactionType,
+    const result = await this.apiClient.transaction.getTransactionById({
+      id: this.transaction.id,
     });
 
     this.transaction = result.unwrap();
@@ -60,6 +60,8 @@ export class ZkDbTransaction {
 
             if (this.transaction.status === status) {
               resolve();
+            } else if (this.transaction.status === 'failed') {
+              throw Error(this.transaction.error);
             } else {
               setTimeout(checkStatus, 3000);
             }
@@ -76,9 +78,8 @@ export class ZkDbTransaction {
   }
 
   public async signAndSend(
-    privateKey?: PrivateKey,
     transactionParams: TransactionParams = {
-      fee: 0.1,
+      fee: DEFAULT_FEE,
       memo: '',
     }
   ): Promise<string> {
@@ -86,24 +87,10 @@ export class ZkDbTransaction {
       throw Error('To sign transaction its status must be ready');
     }
 
-    if (privateKey) {
-      const { networkId } = this.environment.getEnv();
-
-      this.txHash = await NodeSigner.getInstance(
-        networkId
-      ).signAndSendTransaction(
-        this.transaction.tx,
-        transactionParams,
-        privateKey
-      );
-    } else if (isBrowser()) {
-      this.txHash = await AuroWalletSigner.getInstance().signAndSendTransaction(
-        this.transaction.tx,
-        transactionParams
-      );
-    } else {
-      throw Error('You should pass the private key to sign the transaction');
-    }
+    this.txHash = await this.signer.signAndSendTransaction(
+      this.transaction.tx,
+      transactionParams
+    );
 
     if (!this.txHash) {
       throw Error('Failed to acquire transaction hash');
@@ -140,11 +127,11 @@ export class ZkDbTransaction {
     }
   }
 
-  public getStatus() {
+  public get status() {
     return this.transaction.status;
   }
 
-  public getTxHash() {
+  public get transactionHash() {
     return this.txHash;
   }
 }

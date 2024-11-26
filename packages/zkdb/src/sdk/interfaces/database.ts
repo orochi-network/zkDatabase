@@ -9,6 +9,7 @@ import {
 } from '../../types';
 import { ZKCollection } from './collection';
 import { ZKGroup } from './group';
+import { ZkDbTransaction } from '../transaction/zkdb-transaction';
 
 export interface ZKDatabaseConfig {
   merkleHeight: number;
@@ -16,7 +17,7 @@ export interface ZKDatabaseConfig {
 
 export interface ZKDatabase {
   // Database
-  create(config: ZKDatabaseConfig): Promise<boolean>;
+  create(config: ZKDatabaseConfig): Promise<ZkDbTransaction>;
 
   exist(): Promise<boolean>;
 
@@ -38,10 +39,9 @@ export interface ZKDatabase {
   getProof(): Promise<JsonProof>;
 
   // Transaction
-  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
-  confirmTransaction(id: string, txHash: string): Promise<boolean>;
+  getTransaction(transactionType: TTransactionType): Promise<ZkDbTransaction>;
 
   // Rollup
-  createRollup(): Promise<boolean>;
+  createRollup(): Promise<ZkDbTransaction>;
   getRollUpHistory(): Promise<TGetRollUpHistory>;
 }

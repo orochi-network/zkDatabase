@@ -18,10 +18,11 @@ enum TransactionType {
 type DbTransaction {
   databaseName: String!
   transactionType: TransactionType!
-  zkAppPublicKey: String!
+  zkAppPublicKey: String
   status: TransactionStatus!
-  tx: String!
+  tx: String
   id: String!
+  error: String
 }
 
 `;

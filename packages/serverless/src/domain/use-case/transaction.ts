@@ -78,7 +78,7 @@ export async function enqueueTransaction(
         } else if (onchainTx.txStatus === 'failed') {
           await modelTransaction.updateById(pendingTx._id.toString(), {
             status: 'failed',
-            error: onchainTx.failures.join(" "),
+            error: onchainTx.failures.join(' '),
           });
           // Proceed and create new transaction
         }
@@ -182,6 +182,72 @@ export async function getLatestTransaction(
 
   return txs.length === 0 ? null : txs[0];
 }
+
+export async function getTransactionById(id: string, session?: ClientSession) {
+  const modelTransaction = ModelDbTransaction.getInstance();
+  const transaction = await modelTransaction.findById(id);
+
+  if (!transaction) {
+    throw Error('Transaction has not been found');
+  }
+
+  let status = transaction.status;
+
+  if (transaction.status === 'pending') {
+    if (transaction.txHash) {
+      const zkAppTransaction =
+        await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
+          transaction.txHash
+        );
+
+      if (zkAppTransaction?.txStatus === 'failed') {
+        status = 'failed';
+        await modelTransaction.updateById(
+          id.toString(),
+          {
+            status: 'failed',
+            error: zkAppTransaction.failures.join(' '),
+          },
+          { session }
+        );
+      } else if (zkAppTransaction?.txStatus === 'applied') {
+        status = 'success';
+        await modelTransaction.updateById(
+          id.toString(),
+          {
+            status: 'success',
+          },
+          { session }
+        );
+      }
+    } else {
+      status = 'failed';
+      await modelTransaction.updateById(
+        id.toString(),
+        {
+          status: 'failed',
+          error: 'Transaction hash is missed',
+        },
+        { session }
+      );
+    }
+  }
+
+  if (status !== transaction.status) {
+    const newTransaction = await modelTransaction.findById(id);
+
+    return {
+      id: (newTransaction as any)._id,
+      ...newTransaction,
+    };
+  }
+
+  return {
+    id: (transaction as any)._id,
+    ...transaction,
+  };
+}
+
 export async function confirmTransaction(
   databaseName: string,
   actor: string,

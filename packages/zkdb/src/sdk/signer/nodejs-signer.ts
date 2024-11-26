@@ -4,21 +4,17 @@ import Client from 'mina-signer';
 import { fetchAccount, NetworkId, PrivateKey } from 'o1js';
 import { TransactionParams } from '../../types/transaction-params';
 import { MinaTransaction } from '../types/o1js';
+import { Signer } from './interface/signer';
 
-export class NodeSigner {
-  private static instance: NodeSigner;
+export class NodeSigner implements Signer {
+  private privateKey: PrivateKey;
   private client: Client;
   private endpoint: string;
 
-  public static getInstance(networkId: NetworkId) {
-    if (!NodeSigner.instance) {
-      NodeSigner.instance = new NodeSigner(networkId);
-    }
-
-    return NodeSigner.instance;
-  }
-
-  constructor(network: NetworkId) {
+  private network: NetworkId;
+  constructor(privateKey: PrivateKey, network: NetworkId) {
+    this.privateKey = privateKey;
+    this.network = network;
     if (network === 'testnet') {
       this.client = new Client({ network: 'testnet' });
       this.endpoint = 'https://api.minascan.io/node/devnet/v1/graphql';
@@ -32,12 +28,11 @@ export class NodeSigner {
 
   async signAndSendTransaction(
     transaction: string,
-    params: TransactionParams,
-    privateKey: PrivateKey
+    params: TransactionParams
   ): Promise<string> {
-    const publicKey = privateKey.toPublicKey();
+    const userPublicKey = this.privateKey.toPublicKey();
 
-    const { account, error } = await fetchAccount({ publicKey });
+    const { account, error } = await fetchAccount({ publicKey: userPublicKey });
 
     if (error) {
       throw Error(error.statusText);
@@ -51,7 +46,7 @@ export class NodeSigner {
     const signBody = {
       zkappCommand: JSON.parse(transaction),
       feePayer: {
-        feePayer: publicKey.toBase58(),
+        feePayer: userPublicKey.toBase58(),
         fee: params.fee,
         nonce: nextNonce,
         memo: params.memo ?? '',
@@ -60,7 +55,7 @@ export class NodeSigner {
 
     const signedLegacy = this.client.signTransaction(
       signBody,
-      privateKey.toBase58()
+      this.privateKey.toBase58()
     );
 
     const result = await sendTransaction(
@@ -76,16 +71,13 @@ export class NodeSigner {
 
   async signTransaction(
     transaction: MinaTransaction,
-    privateKey: PrivateKey
+    otherKeys: PrivateKey[]
   ): Promise<MinaTransaction> {
-    transaction.sign([privateKey]);
+    transaction.sign(otherKeys.concat(this.privateKey));
     return transaction;
   }
 
-  async signMessage(
-    message: string,
-    privateKey: PrivateKey
-  ): Promise<SignedData> {
-    return this.client.signMessage(message, privateKey.toBase58());
+  async signMessage(message: string): Promise<SignedData> {
+    return this.client.signMessage(message, this.privateKey.toBase58());
   }
 }

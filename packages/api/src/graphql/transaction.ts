@@ -6,6 +6,7 @@ import {
 } from "./common.js";
 import {
   TDbTransaction,
+  TTransactionByIdRequest,
   TTransactionConfirmRequest,
   TTransactionRequest,
 } from "./types/transaction.js";
@@ -25,6 +26,25 @@ const TRANSACTION_GET = gql`
       id
       tx
       zkAppPublicKey
+      error
+    }
+  }
+`;
+
+const TRANSACTION_BY_ID_GET = gql`
+  query GetTransactionById(
+    $id: String!
+  ) {
+    getTransactionById(
+      id: $id
+    ) {
+      databaseName
+      transactionType
+      status
+      id
+      tx
+      zkAppPublicKey
+      error
     }
   }
 `;
@@ -49,6 +69,11 @@ export const transaction = <T>(client: TApolloClient<T>) => ({
     TTransactionRequest,
     { getTransaction: TDbTransaction }
   >(client, TRANSACTION_GET, (data) => data.getTransaction),
+  getTransactionById: createQueryFunction<
+    TDbTransaction,
+    TTransactionByIdRequest,
+    { getTransactionById: TDbTransaction }
+  >(client, TRANSACTION_BY_ID_GET, (data) => data.getTransactionById),
   confirmTransaction: createMutateFunction<
     boolean,
     TTransactionConfirmRequest,

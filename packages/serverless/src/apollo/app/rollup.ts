@@ -38,7 +38,7 @@ type RollUpHistory {
 
 extend type Mutation {
   getRollUpHistory(databaseName: String!): RollUpHistory!
-  createRollUp(databaseName: String!): Boolean
+  createRollUp(databaseName: String!): DbTransaction
 }
 `;
 
