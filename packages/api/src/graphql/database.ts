@@ -90,6 +90,11 @@ const DATABASE_LIST = gql`
   }
 `;
 
+const DATABASE_EXIST = gql`
+  query GetDbExisted($databaseName: String!) {
+    dbExist(databaseName: $databaseName)
+  }
+`;
 export const database = <T>(client: TApolloClient<T>) => ({
   transferOwnership: createMutateFunction<
     boolean,
@@ -116,4 +121,9 @@ export const database = <T>(client: TApolloClient<T>) => ({
     { query: any; pagination: TPagination },
     { dbList: TPaginationResponse<TDatabase[]> }
   >(client, DATABASE_LIST, (data) => data.dbList.data),
+  exist: createQueryFunction<
+    boolean,
+    { databaseName: string },
+    { dbExist: boolean }
+  >(client, DATABASE_EXIST, (data) => data.dbExist),
 });

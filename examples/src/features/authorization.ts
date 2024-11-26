@@ -1,22 +1,20 @@
-import { PrivateKey } from 'o1js';
-import { NodeSigner, AuroWalletSigner, ZKDatabaseClient } from 'zkdb';
-
-const isBrowser = false;
-
-const SERVER_URL = 'http://0.0.0.0:4000/graphql';
+import { faker } from '@faker-js/faker';
+import { ZKDatabaseClient } from 'zkdb';
+import { ZKDB_URL } from '../utils/config.js';
 
 async function run() {
-  const signer = isBrowser
-    ? new AuroWalletSigner()
-    : new NodeSigner(PrivateKey.random());
+  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
-  const zkdb = ZKDatabaseClient.newInstance(SERVER_URL, signer, new Map());
+  const fakeUser = {
+    username: faker.internet.username().toLowerCase(),
+    email: faker.internet.email().toLowerCase(),
+  };
 
-  await zkdb.authenticator.signUp('test-name1234', 'robot1234@gmail.com');
+  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
 
   await zkdb.authenticator.signIn();
 
-  zkdb.authenticator.getUser();
+  console.log('Authorization getUser: ', zkdb.authenticator.getUser());
 
   await zkdb.authenticator.signOut();
 }
