@@ -5,6 +5,7 @@ import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 const MINA_DECIMAL = 1e9;
 
 async function run() {
+  // This is On-chain action. Need to set Mina network
   const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
   const Network = Mina.Network({

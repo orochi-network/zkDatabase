@@ -38,7 +38,8 @@ async function run() {
 
   console.log(
     'Index: ',
-    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index
+    // @ts-expect-error lorem
+    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
   await zkdb
@@ -48,13 +49,15 @@ async function run() {
 
   console.log(
     'Index after insert "price": ',
-    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index
+    // @ts-expect-error lorem
+    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
   await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.drop('name_-1');
 
   console.log(
     'Index after remove drop "name": ',
+    // @ts-expect-error lorem
     await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
