@@ -2,9 +2,10 @@ import { isNetwork } from '@utils';
 import { ApiClient, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
-import { ZKSystemImpl, ZKDatabaseImpl } from '../impl';
-import { ZKSystem, ZKDatabase } from '../interfaces';
+import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
+import { ZKDatabase, ZKSystem } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
+import InMemoryStorage from '../storage/memory';
 
 type MinaConfig = {
   networkUrl: string;
@@ -31,9 +32,6 @@ export class ZKDatabaseClient {
     this.apiClient = apiClient;
     this.authenticator = authenticator;
     this.minaConfig = minaConfig;
-    apiClient.api.setContext(() =>
-      authenticator.isLoggedIn() ? authenticator.getAccessToken() : undefined
-    );
   }
 
   /**
@@ -50,6 +48,7 @@ export class ZKDatabaseClient {
    * @returns
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
+    const storage = new InMemoryStorage();
     const urlInstance = new URL(url);
     const { password, protocol, host, pathname, searchParams } = urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
@@ -61,7 +60,8 @@ export class ZKDatabaseClient {
     if (!db) {
       throw new Error('Database name is required');
     }
-    const apiClient = ApiClient.newInstance(apiURL);
+
+    const apiClient = ApiClient.newInstance(apiURL, storage);
     // Get environment variables
     const envResult = await apiClient.environment.getEnvironment(undefined);
     const { networkId, networkUrl } = envResult.isOne()
@@ -70,11 +70,7 @@ export class ZKDatabaseClient {
     if (isNetwork(networkId) && typeof networkUrl === 'string') {
       if (password === '' || password === 'auro-wallet') {
         const signer = new AuroWalletSigner();
-        const authenticator = new Authenticator(
-          signer,
-          apiClient,
-          global.localStorage
-        );
+        const authenticator = new Authenticator(signer, apiClient, storage);
         return new ZKDatabaseClient(apiClient, authenticator, {
           networkId,
           networkUrl,
@@ -86,7 +82,7 @@ export class ZKDatabaseClient {
         );
         return new ZKDatabaseClient(
           apiClient,
-          new Authenticator(signer, apiClient),
+          new Authenticator(signer, apiClient, storage),
           {
             networkId,
             networkUrl,
