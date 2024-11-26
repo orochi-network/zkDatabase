@@ -17,14 +17,14 @@ async function run() {
   await zkdb.authenticator.signIn();
   // The transaction will be created in background after database created
   // Get unsigned transaction
-  const { tx, id } = await zkdb.database(DB_NAME).getTransaction('deploy');
+  const { tx, id } = await zkdb.db(DB_NAME).getTransaction('deploy');
   // Signed the transaction
   const txHash = await zkdb.getSigner().signAndSendTransaction(tx, {
     fee: MINA_DECIMAL,
     memo: '',
   });
   // Confirm the transaction
-  await zkdb.database(DB_NAME).confirmTransaction(id, txHash);
+  await zkdb.db(DB_NAME).confirmTransaction(id, txHash);
 
   await zkdb.authenticator.signOut();
 }

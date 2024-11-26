@@ -1,6 +1,7 @@
 import { CircuitString, UInt64 } from 'o1js';
 import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { faker } from '@faker-js/faker';
 
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'my-group';
@@ -13,43 +14,48 @@ class TShirt extends Schema.create({
 async function run() {
   const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
 
+  const fakeUser = {
+    username: faker.internet.username().toLowerCase(),
+    email: faker.internet.email().toLowerCase(),
+  };
+
+  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
+
   await zkdb.authenticator.signIn();
 
-  await zkdb.database(DB_NAME).createGroup(GROUP_NAME, '');
+  await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
+
+  await zkdb.db(DB_NAME).group(GROUP_NAME).create({ description: '' });
+
   await zkdb
-    .database(DB_NAME)
-    .createCollection(
-      COLLECTION_NAME,
-      GROUP_NAME,
-      TShirt,
-      [{ name: 'name', sorting: 'desc' }],
-      {
-        permissionOwner: AccessPermissions.fullAdminPermissions,
-        permissionGroup: AccessPermissions.fullAccessPermissions,
-        permissionOther: AccessPermissions.noPermissions,
-      }
-    );
+    .db(DB_NAME)
+    .collection(COLLECTION_NAME)
+    .create(GROUP_NAME, TShirt, [{ name: 'name', sorting: 'desc' }], {
+      permissionOwner: AccessPermissions.fullAdminPermissions,
+      permissionGroup: AccessPermissions.fullAccessPermissions,
+      permissionOther: AccessPermissions.noPermissions,
+    });
 
   console.log(
     'Index: ',
-    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index
   );
 
   await zkdb
-    .database(DB_NAME)
-    .from(COLLECTION_NAME)
-    .createIndexes([{ name: 'price', sorting: 'asc' }]);
+    .db(DB_NAME)
+    .collection(COLLECTION_NAME)
+    .index.create([{ name: 'price', sorting: 'asc' }]);
 
   console.log(
     'Index after insert "price": ',
-    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index
   );
 
-  await zkdb.database(DB_NAME).from(COLLECTION_NAME).dropIndex('name_-1');
+  await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.drop('name_-1');
 
   console.log(
     'Index after remove drop "name": ',
-    await zkdb.database(DB_NAME).from(COLLECTION_NAME).listIndexes()
+    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
   zkdb.authenticator.getUser();
