@@ -11,6 +11,8 @@ name: Publish packages in zkDatabase Repository
 on:
   push:
     branches: ['main']
+  pull_request:
+    branches: ['main']
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
@@ -45,6 +47,11 @@ jobs:
 
           PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb")
           packages_dir="packages"
+
+          # Build storage package
+          yarn workspace @zkdb/storage build
+
+          cd $package_dir
 
           # Loop through all packages
           for package_dir in $(find "$packages_dir" -mindepth 1 -maxdepth 1 -type d);
