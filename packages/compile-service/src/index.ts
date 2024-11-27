@@ -46,29 +46,36 @@ async function findTransactionWithRetry(
 }
 
 async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
+  // Init zkAppCompiler
   const zkAppCompiler = new ZkCompileService({
     networkId: config.NETWORK_ID,
     mina: config.MINA_URL,
   });
 
+  // Connect to db
   const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
   const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
 
-  if (!serviceDb.isConnected()) await serviceDb.connect();
-  if (!proofDb.isConnected()) await proofDb.connect();
+  if (!serviceDb.isConnected()) {
+    await serviceDb.connect();
+  }
+
+  if (!proofDb.isConnected()) {
+    await proofDb.connect();
+  }
 
   const modelTransaction = ModelDbTransaction.getInstance();
   const modelDbSettings = ModelDbSetting.getInstance();
 
   while (true) {
-    try {
-      const request = await redisQueue.dequeue();
+    const request = await redisQueue.dequeue();
+    if (request) {
+      const tx = await findTransactionWithRetry(modelTransaction, request.id);
+
       if (!request) {
         await setTimeout(1000); // Prevent busy looping when the queue is empty
         continue;
       }
-
-      const tx = await findTransactionWithRetry(modelTransaction, request.id);
 
       if (!tx) {
         logger.error(`Transaction ${request.id} has not been found`);
@@ -76,90 +83,107 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
       }
 
       const dbSettings = await modelDbSettings.getSetting(tx.databaseName);
+
+      // Impossible case
       if (!dbSettings) {
-        logger.error(`Settings for ${tx.databaseName} have not been found`);
+        logger.error(`Settings for ${tx.databaseName} has not been found`);
         continue;
       }
 
       logger.info(`Received ${tx.databaseName} to queue`);
 
-      const secureStorage = ModelSecureStorage.getInstance();
-      let transaction: UnsignedTransaction;
-      let zkAppPublicKey: string;
+      try {
+        const secureStorage = ModelSecureStorage.getInstance();
 
-      if (tx.transactionType === "deploy") {
-        const zkAppPrivateKey = PrivateKey.random();
-        zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
+        let transaction: UnsignedTransaction;
+        let zkAppPublicKey: string;
+        if (tx.transactionType === "deploy") {
+          const zkAppPrivateKey = PrivateKey.random();
 
-        const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
-          Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
-          Buffer.from(config.SERVICE_SECRET, "base64")
-        ).toString("base64");
+          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
 
-        transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
-          request.payerAddress,
-          zkAppPrivateKey,
-          dbSettings.merkleHeight,
-          dbSettings.databaseName
-        );
+          const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
+            Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
+            Buffer.from(config.SERVICE_SECRET, "base64")
+          ).toString("base64");
 
-        await secureStorage.replaceOne(
-          { databaseName: dbSettings.databaseName },
-          {
-            privateKey: encryptedZkAppPrivateKey,
+          transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            dbSettings.merkleHeight,
+            dbSettings.databaseName
+          );
+          await secureStorage.replaceOne(
+            {
+              databaseName: dbSettings.databaseName,
+            },
+            {
+              privateKey: encryptedZkAppPrivateKey,
+              databaseName: dbSettings.databaseName,
+            },
+            { upsert: true }
+          );
+        } else if (tx.transactionType === "rollup") {
+          const privateKey = await secureStorage.findOne({
             databaseName: dbSettings.databaseName,
-          },
-          { upsert: true }
-        );
-      } else if (tx.transactionType === "rollup") {
-        const privateKey = await secureStorage.findOne({
-          databaseName: dbSettings.databaseName,
-        });
+          });
 
-        if (!privateKey) {
+          if (!privateKey) {
+            throw Error("Private key has not been found");
+          }
+          // storing encryptedData:
+          const decryptedPrivateKey = EncryptionKey.decrypt(
+            Buffer.from(privateKey.privateKey, "base64"),
+            Buffer.from(config.SERVICE_SECRET, "base64")
+          ).toString();
+
+          const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
+
+          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
+
+          const proof = await ModelProof.getInstance().getProof(
+            dbSettings.databaseName
+          );
+
+          if (!proof) {
+            throw new Error(`Proof for ${dbSettings.databaseName} not found`);
+          }
+
+          transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+            request.payerAddress,
+            zkAppPrivateKey,
+            dbSettings.merkleHeight,
+            proof
+          );
+        } else {
           throw new Error(
-            `Private key for ${dbSettings.databaseName} not found`
+            `Unsupported transaction type: ${tx.transactionType}`
           );
         }
 
-        const decryptedPrivateKey = EncryptionKey.decrypt(
-          Buffer.from(privateKey.privateKey, "base64"),
-          Buffer.from(config.SERVICE_SECRET, "base64")
-        ).toString();
+        await modelTransaction.updateById(request.id, {
+          status: "ready",
+          tx: transaction,
+        });
 
-        const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
-        zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
-
-        const proof = await ModelProof.getInstance().getProof(
-          dbSettings.databaseName
+        logger.info(
+          `Successfully compiled: Database: ${dbSettings.databaseName}, Transaction Type: ${tx.transactionType}`
         );
-        if (!proof) {
-          throw new Error(`Proof for ${dbSettings.databaseName} not found`);
+      } catch (error) {
+        let errorMessage: string;
+
+        if (error instanceof Error) {
+          errorMessage = `Error processing queue: ${error.message}`;
+        } else {
+          errorMessage = `Unknown error occurred: ${error}`;
         }
 
-        transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
-          request.payerAddress,
-          zkAppPrivateKey,
-          dbSettings.merkleHeight,
-          proof
-        );
-      } else {
-        throw new Error(`Unsupported transaction type: ${tx.transactionType}`);
-      }
+        logger.error(errorMessage);
 
-      await modelTransaction.updateById(request.id, {
-        status: "ready",
-        tx: transaction,
-      });
-
-      logger.info(
-        `Successfully compiled: Database: ${dbSettings.databaseName}, Transaction Type: ${tx.transactionType}`
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error(`Error processing queue: ${error.message}`);
-      } else {
-        logger.error("Unknown error occurred:", error);
+        await modelTransaction.updateById(request.id, {
+          status: "failed",
+          error: (error as Error).message,
+        });
       }
     }
   }
