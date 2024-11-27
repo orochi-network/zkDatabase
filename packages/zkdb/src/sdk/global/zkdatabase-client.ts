@@ -81,23 +81,24 @@ export class ZKDatabaseClient {
           networkId,
           networkUrl,
         });
-      } else {
-        // Nodejs environment
-        const storage = new InMemoryStorage();
-        const apiClient = ApiClient.newInstance(apiURL, storage);
-        const signer = new NodeSigner(
-          PrivateKey.fromBase58(password),
-          networkId
-        );
-        return new ZKDatabaseClient(
-          apiClient,
-          new Authenticator(signer, apiClient, storage),
-          {
-            networkId,
-            networkUrl,
-          }
-        );
-      }
+      } 
+    }
+    else {
+      // Nodejs environment
+      const storage = new InMemoryStorage();
+      const apiClient = ApiClient.newInstance(apiURL, storage);
+      const signer = new NodeSigner(
+        PrivateKey.fromBase58(password),
+        networkId
+      );
+      return new ZKDatabaseClient(
+        apiClient,
+        new Authenticator(signer, apiClient, storage),
+        {
+          networkId,
+          networkUrl,
+        }
+      );
     }
     throw new Error('Invalid environment');
   }
