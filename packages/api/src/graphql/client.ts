@@ -6,7 +6,7 @@ import {
 } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context/index.js";
 import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
-import { Context } from "@authentication";
+import { ACCESS_TOKEN, COOKIE } from "@utils";
 import { collection } from "./collection";
 import { collectionIndex } from "./collection-index";
 import { database } from "./database";
@@ -41,25 +41,15 @@ export interface IApiClient<T = any> {
 export class ApiClient<T = any> {
   #client: InstanceType<typeof ApolloClient<any>>;
 
-  context: Context<T> = new Context<T>();
-  public setContext(fn: () => T | null) {
-    this.context.setContextCallback(fn);
-  }
-
-  public getContext() {
-    return this.context.getContext();
-  }
-
   public get apollo() {
     return this.#client;
   }
 
-  constructor(uri: string) {
-    const context = new Context<T>();
-
+  constructor(
+    uri: string,
+    private readonly storage: Storage
+  ) {
     const removeTypenameLink = removeTypenameFromVariables();
-    this.context = context;
-
     const httpLink = new HttpLink({
       uri,
       credentials: "include",
@@ -70,17 +60,30 @@ export class ApiClient<T = any> {
         return fetch(uri, {
           ...options,
           credentials: "include", // This ensures cookies are sent with the request
+        }).then((response: Response) => {
+          const cookie = response.headers.get("set-cookie");
+          if (cookie) {
+            // Set cookies to store connect.sid
+            storage.setItem(COOKIE, cookie);
+          }
+          return response;
         });
       },
     });
 
     const authLink = setContext(async (_, { headers }) => {
-      const token = context.getContext();
+      const accessToken = this.storage.getItem(ACCESS_TOKEN);
+      const cookie = this.storage.getItem(COOKIE);
+      const authHeader = headers || {};
+      if (cookie) {
+        authHeader["cookie"] = cookie;
+      }
+
+      if (accessToken) {
+        authHeader["authorization"] = `Bearer ${accessToken}`;
+      }
       return {
-        headers: {
-          ...headers,
-          ...(token ? { authorization: `Bearer ${token}` } : {}),
-        },
+        headers: authHeader,
       };
     });
 
@@ -100,8 +103,11 @@ export class ApiClient<T = any> {
       },
     });
   }
-  public static newInstance<T = any>(url: string): IApiClient<T> {
-    const api = new ApiClient<T>(url);
+  public static newInstance<T = any>(
+    url: string,
+    storage: Storage
+  ): IApiClient<T> {
+    const api = new ApiClient<T>(url, storage);
     return {
       api,
       db: database(api.apollo),

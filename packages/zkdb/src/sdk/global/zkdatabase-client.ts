@@ -1,10 +1,11 @@
-import { isNetwork } from '@utils';
-import { ApiClient, IApiClient } from '@zkdb/api';
+import { ApiClient, getNetworkEnvironment, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
+import { isBrowser, isNetwork } from '@utils';
 import { Authenticator } from '../authentication';
-import { ZKSystemImpl, ZKDatabaseImpl } from '../impl';
-import { ZKSystem, ZKDatabase } from '../interfaces';
+import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
+import { ZKDatabase, ZKSystem } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
+import InMemoryStorage from '../storage/memory';
 
 type MinaConfig = {
   networkUrl: string;
@@ -31,9 +32,6 @@ export class ZKDatabaseClient {
     this.apiClient = apiClient;
     this.authenticator = authenticator;
     this.minaConfig = minaConfig;
-    apiClient.api.setContext(() =>
-      authenticator.isLoggedIn() ? authenticator.getAccessToken() : undefined
-    );
   }
 
   /**
@@ -61,32 +59,39 @@ export class ZKDatabaseClient {
     if (!db) {
       throw new Error('Database name is required');
     }
-    const apiClient = ApiClient.newInstance(apiURL);
+
     // Get environment variables
-    const envResult = await apiClient.environment.getEnvironment(undefined);
-    const { networkId, networkUrl } = envResult.isOne()
-      ? envResult.unwrap()
-      : {};
-    if (isNetwork(networkId) && typeof networkUrl === 'string') {
+
+    const { networkId, networkUrl } = await getNetworkEnvironment(apiURL);
+
+    if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
+      // Browser environment
       if (password === '' || password === 'auro-wallet') {
+        const apiClient = ApiClient.newInstance(
+          apiURL,
+          globalThis.localStorage
+        );
         const signer = new AuroWalletSigner();
         const authenticator = new Authenticator(
           signer,
           apiClient,
-          global.localStorage
+          globalThis.localStorage
         );
         return new ZKDatabaseClient(apiClient, authenticator, {
           networkId,
           networkUrl,
         });
       } else {
+        // Nodejs environment
+        const storage = new InMemoryStorage();
+        const apiClient = ApiClient.newInstance(apiURL, storage);
         const signer = new NodeSigner(
           PrivateKey.fromBase58(password),
           networkId
         );
         return new ZKDatabaseClient(
           apiClient,
-          new Authenticator(signer, apiClient),
+          new Authenticator(signer, apiClient, storage),
           {
             networkId,
             networkUrl,
