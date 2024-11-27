@@ -61,7 +61,7 @@ export class ZKDatabaseClient {
     }
 
     // Using public api client without storage to get environment
-    const publicApiClient = ApiClient.newInstance(apiURL, undefined);
+    const publicApiClient = ApiClient.newInstance(apiURL);
     // Get environment variables
     const envResult =
       await publicApiClient.environment.getEnvironment(undefined);
