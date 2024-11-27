@@ -1,4 +1,4 @@
-import { ApiClient, IApiClient } from '@zkdb/api';
+import { ApiClient, getNetworkEnvironment, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
 import { isBrowser, isNetwork } from '@utils';
 import { Authenticator } from '../authentication';
@@ -60,14 +60,10 @@ export class ZKDatabaseClient {
       throw new Error('Database name is required');
     }
 
-    // Using public api client without storage to get environment
-    const publicApiClient = ApiClient.newInstance(apiURL);
     // Get environment variables
-    const envResult =
-      await publicApiClient.environment.getEnvironment(undefined);
-    const { networkId, networkUrl } = envResult.isOne()
-      ? envResult.unwrap()
-      : {};
+
+    const { networkId, networkUrl } = await getNetworkEnvironment(apiURL);
+
     if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
       // Browser environment
       if (password === '' || password === 'auro-wallet') {
