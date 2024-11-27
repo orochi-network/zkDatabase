@@ -1,6 +1,6 @@
-import { isNetwork } from '@utils';
 import { ApiClient, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
+import { isBrowser, isNetwork } from '@utils';
 import { Authenticator } from '../authentication';
 import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
 import { ZKDatabase, ZKSystem } from '../interfaces';
@@ -68,7 +68,7 @@ export class ZKDatabaseClient {
     const { networkId, networkUrl } = envResult.isOne()
       ? envResult.unwrap()
       : {};
-    if (isNetwork(networkId) && typeof networkUrl === 'string') {
+    if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
       // Browser environment
       if (password === '' || password === 'auro-wallet') {
         const apiClient = ApiClient.newInstance(
