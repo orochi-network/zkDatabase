@@ -38,7 +38,6 @@ async function run() {
 
   console.log(
     'Index: ',
-    // @ts-expect-error lorem
     await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
@@ -49,7 +48,6 @@ async function run() {
 
   console.log(
     'Index after insert "price": ',
-    // @ts-expect-error lorem
     await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 
@@ -57,7 +55,6 @@ async function run() {
 
   console.log(
     'Index after remove drop "name": ',
-    // @ts-expect-error lorem
     await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
 

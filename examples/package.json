@@ -48,6 +48,6 @@
   "dependencies": {
     "@faker-js/faker": "^9.2.0",
     "o1js": "^2.1.0",
-    "zkdb": "../packages/zkdb"
+    "zkdb": "^1.2.10"
   }
 }
