@@ -10,3 +10,10 @@ export type DatabaseSettings = {
   merkleHeight: number;
   databaseOwner: string;
 };
+
+export type DatabaseRecord = {
+  databaseName: string;
+  merkleHeight: number;
+  appPublicKey?: string;
+  databaseOwner: string;
+};

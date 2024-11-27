@@ -1,12 +1,12 @@
 import { Fill } from '@orochi-network/queue';
+import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DB,
   DbSetting,
-  ModelDbTransaction,
   ModelDbSetting,
+  ModelDbTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { redisQueue } from '../../helper/mq.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
@@ -16,9 +16,8 @@ import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
-import { isUserExist } from './user.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
-import { MinaNetwork } from '@zkdb/smart-contract';
+import { isUserExist } from './user.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
