@@ -48,7 +48,6 @@ export class ZKDatabaseClient {
    * @returns
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
-    const storage = new InMemoryStorage();
     const urlInstance = new URL(url);
     const { password, protocol, host, pathname, searchParams } = urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
@@ -61,25 +60,35 @@ export class ZKDatabaseClient {
       throw new Error('Database name is required');
     }
 
-    const apiClient = ApiClient.newInstance(apiURL, storage);
+    // Using public api client without storage to get environment
+    const publicApiClient = ApiClient.newInstance(apiURL, undefined);
     // Get environment variables
-    const envResult = await apiClient.environment.getEnvironment(undefined);
+    const envResult =
+      await publicApiClient.environment.getEnvironment(undefined);
     const { networkId, networkUrl } = envResult.isOne()
       ? envResult.unwrap()
       : {};
     if (isNetwork(networkId) && typeof networkUrl === 'string') {
+      // Browser environment
       if (password === '' || password === 'auro-wallet') {
+        const apiClient = ApiClient.newInstance(
+          apiURL,
+          globalThis.localStorage
+        );
         const signer = new AuroWalletSigner();
         const authenticator = new Authenticator(
           signer,
           apiClient,
-          window.localStorage
+          globalThis.localStorage
         );
         return new ZKDatabaseClient(apiClient, authenticator, {
           networkId,
           networkUrl,
         });
       } else {
+        // Nodejs environment
+        const storage = new InMemoryStorage();
+        const apiClient = ApiClient.newInstance(apiURL, storage);
         const signer = new NodeSigner(
           PrivateKey.fromBase58(password),
           networkId

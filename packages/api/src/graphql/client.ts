@@ -47,7 +47,7 @@ export class ApiClient<T = any> {
 
   constructor(
     uri: string,
-    private readonly storage: Storage
+    private readonly storage?: Storage
   ) {
     const removeTypenameLink = removeTypenameFromVariables();
     const httpLink = new HttpLink({
@@ -64,7 +64,7 @@ export class ApiClient<T = any> {
           const cookie = response.headers.get("set-cookie");
           if (cookie) {
             // Set cookies to store connect.sid
-            storage.setItem(COOKIE, cookie);
+            storage?.setItem(COOKIE, cookie);
           }
           return response;
         });
@@ -72,9 +72,9 @@ export class ApiClient<T = any> {
     });
 
     const authLink = setContext(async (_, { headers }) => {
-      const accessToken = this.storage.getItem(ACCESS_TOKEN);
-      const cookie = this.storage.getItem(COOKIE);
-      const authHeader = headers || {}
+      const accessToken = this.storage?.getItem(ACCESS_TOKEN);
+      const cookie = this.storage?.getItem(COOKIE);
+      const authHeader = headers || {};
       if (cookie) {
         authHeader["cookie"] = cookie;
       }
@@ -83,7 +83,7 @@ export class ApiClient<T = any> {
         authHeader["authorization"] = `Bearer ${accessToken}`;
       }
       return {
-        headers: authHeader
+        headers: authHeader,
       };
     });
 
@@ -105,7 +105,7 @@ export class ApiClient<T = any> {
   }
   public static newInstance<T = any>(
     url: string,
-    storage: Storage
+    storage?: Storage
   ): IApiClient<T> {
     const api = new ApiClient<T>(url, storage);
     return {
