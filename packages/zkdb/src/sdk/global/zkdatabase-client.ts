@@ -1,6 +1,6 @@
-import { isNetwork } from '@utils';
-import { ApiClient, IApiClient } from '@zkdb/api';
+import { ApiClient, getNetworkEnvironment, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
+import { isBrowser, isNetwork } from '@utils';
 import { Authenticator } from '../authentication';
 import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
 import { ZKDatabase, ZKSystem } from '../interfaces';
@@ -48,7 +48,6 @@ export class ZKDatabaseClient {
    * @returns
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
-    const storage = new InMemoryStorage();
     const urlInstance = new URL(url);
     const { password, protocol, host, pathname, searchParams } = urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
@@ -61,25 +60,31 @@ export class ZKDatabaseClient {
       throw new Error('Database name is required');
     }
 
-    const apiClient = ApiClient.newInstance(apiURL, storage);
     // Get environment variables
-    const envResult = await apiClient.environment.getEnvironment(undefined);
-    const { networkId, networkUrl } = envResult.isOne()
-      ? envResult.unwrap()
-      : {};
-    if (isNetwork(networkId) && typeof networkUrl === 'string') {
+
+    const { networkId, networkUrl } = await getNetworkEnvironment(apiURL);
+
+    if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
+      // Browser environment
       if (password === '' || password === 'auro-wallet') {
+        const apiClient = ApiClient.newInstance(
+          apiURL,
+          globalThis.localStorage
+        );
         const signer = new AuroWalletSigner();
         const authenticator = new Authenticator(
           signer,
           apiClient,
-          window.localStorage
+          globalThis.localStorage
         );
         return new ZKDatabaseClient(apiClient, authenticator, {
           networkId,
           networkUrl,
         });
       } else {
+        // Nodejs environment
+        const storage = new InMemoryStorage();
+        const apiClient = ApiClient.newInstance(apiURL, storage);
         const signer = new NodeSigner(
           PrivateKey.fromBase58(password),
           networkId

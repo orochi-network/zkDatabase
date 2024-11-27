@@ -6,8 +6,8 @@ import { DocumentEncoded, SchemaDefinition } from '../schema';
 import { Ownable } from './ownable';
 
 export interface ZKCollectionIndex {
+  list(): Promise<string[]>;
   create(indexes: IndexField[]): Promise<boolean>;
-
   drop(indexName: string): Promise<boolean>;
 }
 
