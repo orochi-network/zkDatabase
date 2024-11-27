@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
-import { IApiClient } from '@zkdb/api';
+import { IApiClient, TUser } from '@zkdb/api';
 import { Database, FilterCriteria, Pagination, User } from '../../types';
 import { ZKSystem } from '../interfaces/system';
 
@@ -31,7 +31,7 @@ export class ZKSystemImpl implements ZKSystem {
   }
 
   async listUser(
-    filter?: FilterCriteria,
+    filter?: Partial<TUser>,
     pagination?: Pagination
   ): Promise<User[]> {
     const result = await this.apiClient.user.findMany({
@@ -43,5 +43,24 @@ export class ZKSystemImpl implements ZKSystem {
     });
 
     return result.unwrap();
+  }
+
+  async getUser(filter: Partial<TUser>): Promise<User | undefined> {
+    if (Object.keys(filter).length < 1) {
+      throw new Error('Required at least one field for user');
+    }
+    const result = await this.apiClient.user.findMany({
+      query: filter,
+    });
+
+    if (result.isMany()) {
+      throw new Error('User cant be duplicated');
+    }
+
+    return result.unwrap()[0];
+  }
+  async userExist(filter: Partial<TUser>): Promise<boolean> {
+    const result = await this.getUser(filter);
+    return result != undefined;
   }
 }

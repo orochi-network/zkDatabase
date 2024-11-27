@@ -8,4 +8,5 @@ export type Database = {
 export type DatabaseSettings = {
   publicKey: string;
   merkleHeight: number;
+  databaseOwner: string;
 };

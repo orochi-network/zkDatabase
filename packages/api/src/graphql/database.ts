@@ -25,10 +25,11 @@ const DATABASE_CREATE = gql`
 `;
 
 const DATABASE_SETTING = gql`
-  query GetDbSettings($databaseName: String!) {
+  query GetDbSetting($databaseName: String!) {
     dbSetting(databaseName: $databaseName) {
       merkleHeight
       publicKey
+      databaseOwner
     }
   }
 `;
@@ -49,7 +50,7 @@ const DATABASE_LIST = gql`
         databaseOwner
         databaseSize
         merkleHeight
-        appPublicKey
+        publicKey: appPublicKey
         collections {
           name
           indexes
