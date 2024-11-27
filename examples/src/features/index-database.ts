@@ -1,7 +1,7 @@
 import { CircuitString, UInt64 } from 'o1js';
 import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
-import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { faker } from '@faker-js/faker';
+import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'my-group';

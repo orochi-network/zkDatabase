@@ -1,6 +1,6 @@
 import { ZKDatabaseClient } from 'zkdb';
-import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { faker } from '@faker-js/faker';
+import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
 async function run() {
   const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);

@@ -4543,10 +4543,10 @@ zen-observable@0.8.15:
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.15.tgz#96415c512d8e3ffd920afd3889604e30b9eaac15"
   integrity sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==
 
-zkdb@^1.2.10:
-  version "1.2.10"
-  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.2.10.tgz#c843f4ee727fba4cb7d4d8903321d5927c2b7ea8"
-  integrity sha512-QOOOAVC/lEqkkYgAlVGgyFcz7GDA4WnIwjzOfbX61D+f/ZpnOsqs8KUFLdONMQ1OBWcTwjwkWGeoMW/bbQ/qqA==
+zkdb@^1.2.11:
+  version "1.2.11"
+  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.2.11.tgz#dcde196aa2848815ed1c3c797fa45c297e0c540a"
+  integrity sha512-do+2//WD+xW2VOcPdiRaeO5cfnZcItB0UNfLCCQzHu52IfB/oH+xpnFer2f4aodxvKLdYzuPtzA52mjUro0bPw==
   dependencies:
     "@zkdb/api" "1.1.13"
     "@zkdb/smart-contract" "1.1.7"
