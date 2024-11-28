@@ -30,7 +30,7 @@
     "format": "prettier --write --ignore-unknown **/*",
     "test": "echo 'hello world'",
     "testw": "node ../../node_modules/jest/bin/jest.js --watch",
-    "lint": "eslint ./src/**/*.ts --fix && prettier . --write",
+    "lint": "prettier . --write",
     "lint-check": "eslint ./src/**/*.ts --debug"
   },
   "typesVersions": {
