@@ -44,7 +44,7 @@ jobs:
           packages_dir="packages"
 
           # Build at root
-          yran install
+          yarn install
           yarn run build
 
           # Loop through all packages
