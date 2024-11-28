@@ -19,7 +19,6 @@
     "piglet-bank": "npm run build && node --experimental-vm-modules --experimental-wasm-threads build/src/piglet-bank.js",
     "coverage": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
-    "prepare": "cd .. && husky install contracts/.husky",
     "test": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js",
     "testw": "node --experimental-vm-modules --experimental-wasm-threads node_modules/jest/bin/jest.js --watch",
     "lint": "npx eslint src/* --fix"
@@ -38,7 +37,6 @@
     "@typescript-eslint/parser": "^5.5.0",
     "eslint": "^8.7.0",
     "eslint-plugin-snarkyjs": "^0.1.0",
-    "husky": "^7.0.1",
     "jest": "^27.3.1",
     "lint-staged": "^11.0.1",
     "prettier": "^2.3.2",
