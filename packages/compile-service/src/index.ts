@@ -13,6 +13,8 @@ import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
 import { setTimeout } from "timers/promises";
 
+const TIMEOUT = 1000;
+
 export type TransactionType = "deploy" | "rollup";
 
 export type DbTransactionQueue = {
@@ -73,7 +75,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
       const tx = await findTransactionWithRetry(modelTransaction, request.id);
 
       if (!request) {
-        await setTimeout(1000); // Prevent busy looping when the queue is empty
+        await setTimeout(TIMEOUT); // Prevent busy looping when the queue is empty
         continue;
       }
 
