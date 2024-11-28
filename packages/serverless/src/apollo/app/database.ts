@@ -63,7 +63,8 @@ type Mutation
 
 type DbSetting {
   merkleHeight: Int!
-  publicKey: String!
+  publicKey: String
+  databaseOwner: String!,
 }
 
 input PaginationInput {
@@ -159,6 +160,7 @@ const dbSetting = publicWrapper(
       return {
         merkleHeight: setting.merkleHeight,
         publicKey: setting.appPublicKey,
+        databaseOwner: setting.databaseOwner,
       };
     }
 
