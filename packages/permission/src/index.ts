@@ -5,6 +5,7 @@ export {
   PermissionType,
   PermissionRecordKey,
   PermissionRecord,
+  PermissionDetailPartial,
 } from './common';
 export { PermissionBase } from './permission-base';
 export { Permission } from './permission';
