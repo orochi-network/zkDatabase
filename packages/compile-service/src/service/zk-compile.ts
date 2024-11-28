@@ -42,6 +42,8 @@ export class ZkCompileService {
     databaseName: string
   ): Promise<UnsignedTransaction> {
     try {
+      this.ensureTransaction();
+
       const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
       const senderPublicKey = PublicKey.fromBase58(payerAddress);
 
@@ -87,6 +89,8 @@ export class ZkCompileService {
     merkleHeight: number,
     proof: JsonProof
   ): Promise<UnsignedTransaction> {
+    this.ensureTransaction();
+
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
     const senderPublicKey = PublicKey.fromBase58(payerAddress);
 
@@ -118,5 +122,12 @@ export class ZkCompileService {
     );
 
     return partialSignedTx.toJSON();
+  }
+
+  private ensureTransaction() {
+    if (Mina.currentTransaction.has()) {
+      logger.debug(`${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`)
+      throw Error('Transaction within transaction identified');
+    }
   }
 }

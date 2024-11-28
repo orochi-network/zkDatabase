@@ -8,10 +8,12 @@ import {
   ModelProof,
   ModelSecureStorage,
 } from "@zkdb/storage";
-import { PrivateKey, PublicKey } from "o1js";
+import { Mina, PrivateKey, PublicKey } from "o1js";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
-import { setTimeout } from 'timers/promises';
+import { setTimeout } from "timers/promises";
+
+const TIMEOUT = 1000;
 
 export type TransactionType = "deploy" | "rollup";
 
@@ -33,32 +35,25 @@ async function findTransactionWithRetry(
     tx = await modelTransaction.findById(id);
 
     if (tx) {
-      break;
+      return tx;
     }
 
     await setTimeout(intervalMs);
   }
 
-  if (!tx) {
-    logger.error(
-      `Transaction ${id} has not been found after ${maxWaitTimeMs} ms`
-    );
-  }
-
-  return tx;
+  logger.error(
+    `Transaction ${id} has not been found after ${maxWaitTimeMs} ms`
+  );
+  return null;
 }
 
-(async () => {
+async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
   // Init zkAppCompiler
   const zkAppCompiler = new ZkCompileService({
     networkId: config.NETWORK_ID,
     mina: config.MINA_URL,
   });
-  // Init redis queue service
-  const redisQueue = new RedisQueueService<DbTransactionQueue>(
-    "zkAppDeploymentQueue",
-    { url: config.REDIS_URL }
-  );
+
   // Connect to db
   const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
   const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
@@ -78,6 +73,11 @@ async function findTransactionWithRetry(
     const request = await redisQueue.dequeue();
     if (request) {
       const tx = await findTransactionWithRetry(modelTransaction, request.id);
+
+      if (!request) {
+        await setTimeout(TIMEOUT); // Prevent busy looping when the queue is empty
+        continue;
+      }
 
       if (!tx) {
         logger.error(`Transaction ${request.id} has not been found`);
@@ -101,11 +101,14 @@ async function findTransactionWithRetry(
         let zkAppPublicKey: string;
         if (tx.transactionType === "deploy") {
           const zkAppPrivateKey = PrivateKey.random();
+
           zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
+
           const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
             Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
             Buffer.from(config.SERVICE_SECRET, "base64")
           ).toString("base64");
+
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
@@ -145,8 +148,9 @@ async function findTransactionWithRetry(
           );
 
           if (!proof) {
-            throw Error("Proof has not been found");
+            throw new Error(`Proof for ${dbSettings.databaseName} not found`);
           }
+
           transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
@@ -154,36 +158,44 @@ async function findTransactionWithRetry(
             proof
           );
         } else {
-          throw Error(
-            `Transaction type ${tx.transactionType} is not supported`
-          );
-        }
-
-        const deployTx = await ModelDbTransaction.getInstance().updateById(
-          request.id,
-          {
-            status: "ready",
-            tx: transaction,
-          }
-        );
-
-        if (!deployTx) {
           throw new Error(
-            `Error cannot add ${dbSettings.databaseName} to database`
+            `Unsupported transaction type: ${tx.transactionType}`
           );
         }
+
+        await modelTransaction.updateById(request.id, {
+          status: "ready",
+          tx: transaction,
+        });
 
         logger.info(
-          `Compile successfully: Database: ${dbSettings.databaseName}, transaction type: ${tx.transactionType}`
+          `Successfully compiled: Database: ${dbSettings.databaseName}, Transaction Type: ${tx.transactionType}`
         );
       } catch (error) {
-        // TODO: Error message ???
+        let errorMessage: string;
+
+        if (error instanceof Error) {
+          errorMessage = `Error processing queue: ${error.message}`;
+        } else {
+          errorMessage = `Unknown error occurred: ${error}`;
+        }
+
+        logger.error(errorMessage);
+
         await modelTransaction.updateById(request.id, {
           status: "failed",
           error: (error as Error).message,
         });
-        logger.error("Error processing deployment request: ", error);
       }
     }
   }
+}
+
+(async () => {
+  const redisQueue = new RedisQueueService<DbTransactionQueue>(
+    "zkAppDeploymentQueue",
+    { url: config.REDIS_URL }
+  );
+
+  await processQueue(redisQueue);
 })();
