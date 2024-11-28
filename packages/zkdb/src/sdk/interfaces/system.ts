@@ -9,6 +9,8 @@ export interface ZKSystem {
   ): Promise<Database[]>;
 
   listUser(filter?: Partial<TUser>, pagination?: Pagination): Promise<User[]>;
+
   getUser(filter: Partial<TUser>): Promise<User | undefined>;
+
   userExist(filter: Partial<TUser>): Promise<boolean>;
 }

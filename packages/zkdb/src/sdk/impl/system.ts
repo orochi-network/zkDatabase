@@ -66,11 +66,19 @@ export class ZKSystemImpl implements ZKSystem {
 
     return result.unwrap()[0];
   }
+
   async userExist(filter: Partial<TUser>): Promise<boolean> {
     if (Object.keys(filter).length < 1) {
       throw new Error('Required at least one field for user');
     }
-    const result = await this.listUser(filter);
-    return result && result.length > 0;
+    const result = await this.apiClient.user.findMany({
+      query: filter ?? {},
+    });
+
+    if (result.isValid() && result.length > 0) {
+      return true;
+    }
+
+    throw new Error('User response is not valid');
   }
 }
