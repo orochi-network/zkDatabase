@@ -71,6 +71,6 @@ export class ZKSystemImpl implements ZKSystem {
       throw new Error('Required at least one field for user');
     }
     const result = await this.listUser(filter);
-    return result != undefined && result.length > 0;
+    return result && result.length > 0;
   }
 }
