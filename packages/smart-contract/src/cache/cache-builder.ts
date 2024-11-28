@@ -1,7 +1,7 @@
 import { Cache } from 'o1js';
 import { getZkDbSmartContractClass } from '@contracts';
 import { RollUpProgram } from '@proof';
-import { getNodeDependencies } from 'src/helper/environment';
+import { getNodeDependencies } from '../helper/environment';
 
 export async function buildCircuitCache(
   merkleHeight: number,

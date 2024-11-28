@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import { IndexField } from 'src/types/collection-index';
+import { IndexField } from '../../types/collection-index';
 import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
 import { ZKDocument } from '../interfaces';
 import { DocumentEncoded, SchemaDefinition } from '../schema';
