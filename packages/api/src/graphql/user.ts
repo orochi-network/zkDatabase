@@ -70,7 +70,7 @@ const USER_SIGN_UP = gql`
   }
 `;
 
-const USER_FIND_ONE = gql`
+const USER_FIND = gql`
   query FindUser($query: JSON, $pagination: PaginationInput) {
     findUser(query: $query, pagination: $pagination) {
       totalSize
@@ -124,9 +124,9 @@ export const user = <T>(client: TApolloClient<T>) => ({
   >(client, ECDSA, (data) => data.userGetEcdsaChallenge),
   findMany: createQueryFunction<
     TUser[],
-    { query: any; pagination: TPagination },
-    { searchUser: TPaginationResponse<TUser[]> }
-  >(client, USER_FIND_ONE, (data) => data.searchUser.data),
+    { query: Partial<TUser>; pagination?: TPagination },
+    { findUser: TPaginationResponse<TUser[]> }
+  >(client, USER_FIND, (data) => data.findUser.data),
   userInfo: createQueryFunction<
     TUserSignInRecord,
     undefined,
