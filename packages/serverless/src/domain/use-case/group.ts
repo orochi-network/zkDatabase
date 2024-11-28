@@ -23,7 +23,7 @@ async function createGroup(
   groupDescription?: string,
   session?: ClientSession
 ): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor)) {
+  if (await isDatabaseOwner(databaseName, actor, session)) {
     if (await isGroupExist(databaseName, groupName, session)) {
       throw Error(
         `Group ${groupName} is already exist for database ${databaseName}`

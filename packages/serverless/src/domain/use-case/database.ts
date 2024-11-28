@@ -7,6 +7,7 @@ import {
   ModelDbTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
@@ -16,6 +17,7 @@ import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
+import { addUsersToGroup, createGroup } from './group.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 import { isUserExist } from './user.js';
 
@@ -23,13 +25,15 @@ import { isUserExist } from './user.js';
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
-  actor: string
+  actor: string,
+  session?: ClientSession
 ) {
-  const user = await new ModelUser().findOne({ userName: actor });
+  const user = await new ModelUser().findOne({ userName: actor }, { session });
+  const modelSetting = ModelDbSetting.getInstance();
 
   if (user) {
     // Case database already exist
-    if (await DB.service.isDatabase(databaseName)) {
+    if (await modelSetting.getSetting(databaseName, { session })) {
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
@@ -37,17 +41,39 @@ export async function createDatabase(
     await ModelCollectionMetadata.init(databaseName);
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
-    await ModelDbSetting.getInstance().createSetting({
-      databaseName,
-      merkleHeight,
-      databaseOwner: actor,
-    });
 
-    await enqueueTransaction(databaseName, actor, 'deploy');
+    const dbSetting = await modelSetting.createSetting(
+      {
+        databaseName,
+        merkleHeight,
+        databaseOwner: actor,
+      },
+      { session }
+    );
+    if (dbSetting) {
+      // enqueue transaction
+      await enqueueTransaction(databaseName, actor, 'deploy', session);
 
-    return true;
+      // Create default group
+      await createGroup(
+        databaseName,
+        actor,
+        DEFAULT_GROUP_ADMIN,
+        'Default group for owner',
+        session
+      );
+
+      await addUsersToGroup(
+        databaseName,
+        actor,
+        DEFAULT_GROUP_ADMIN,
+        [actor],
+        session
+      );
+      return true;
+    }
+    return false;
   }
-
   throw Error(`User ${actor} has not been found`);
 }
 
@@ -177,9 +203,12 @@ export async function getDatabases(
 }
 
 export async function getDatabaseSetting(
-  databaseName: string
+  databaseName: string,
+  session?: ClientSession
 ): Promise<DbSetting> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName);
+  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
+    session,
+  });
 
   if (setting) {
     return setting;
