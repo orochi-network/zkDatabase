@@ -19,26 +19,31 @@ export type Permissions = {
   permissionOther?: Partial<PermissionRecord>;
 };
 
-
 // Implement builder pattern for pipeline chain style
 class PermissionBuilder {
   constructor(private permission: Permissions) {}
 
   group(permissionGroup: Partial<TPermissionOption>): PermissionBuilder {
-    this.permission = {...this.permission, ...permissionGroup}
-    return this
+    this.permission = { ...this.permission, ...permissionGroup };
+    return this;
   }
 
   owner(ownerPermissions: Partial<TPermissionOption>) {
     this.permission = { ...this.permission, ...ownerPermissions };
-    return this; 
+    return this;
   }
 
   other(otherPermissions: Partial<TPermissionOption>) {
-    this.permission = { ...this.permission, ...otherPermissions };
-    return this; 
+    this.permission = {
+      ...this.permission,
+      ...otherPermissions,
+    };
+    return this;
   }
 
+  get permissions(): Permissions {
+    return this.permission;
+  }
 }
 
 export class AccessPermission {
@@ -78,7 +83,7 @@ export class AccessPermission {
   /**
    * Public permissions allow full access to all entities.
    */
-  static readonly policyPublic = new PermissionBuilder ({
+  static readonly policyPublic = new PermissionBuilder({
     permissionOwner: AccessPermission.permissionFullSystem,
     permissionGroup: AccessPermission.permissionFull,
     permissionOther: AccessPermission.permissionFull,
@@ -87,12 +92,11 @@ export class AccessPermission {
   /**
    * Private permissions restrict access for others, but allow full control to the owner and group.
    */
-  static readonly policyPrivate = new PermissionBuilder( {
+  static readonly policyPrivate = new PermissionBuilder({
     permissionOwner: AccessPermission.permissionFullSystem,
     permissionGroup: AccessPermission.permissionFull,
     permissionOther: AccessPermission.permissionNone,
-  })
-
+  });
 
   /**
    * Strict permissions limit access to the owner only, with no permissions for others or groups.
@@ -104,7 +108,11 @@ export class AccessPermission {
   });
 }
 
+const zkdb = await ZKDatabaseClient.connect('url');
+class Student extends Schema.create({}) {}
 
-const zkdb = await ZKDatabaseClient.connect('url')
-class Student extends Schema.create({})
-await zkdb.db('DB').collection('students').create('group', Student, [], AccessPermission.policyPrivate.group({create: true}))
+const { permissions } = AccessPermission.policyPrivate
+  .group({ create: true })
+  .other({ read: false });
+
+zkdb.db('DB').collection('students').create('group', Student, [], permissions);
