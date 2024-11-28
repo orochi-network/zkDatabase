@@ -37,10 +37,10 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  groupName: string;
+  groupName?: string;
   schema: SchemaData;
   indexes?: TCollectionIndex[];
-  permissions: PermissionsData;
+  permission?: PermissionsData;
 };
 
 export const CollectionRequest = Joi.object<TCollectionRequest>({
@@ -54,7 +54,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   groupName,
   indexes: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  permissions: permissionDetail,
+  permission: permissionDetail,
 });
 
 export const typeDefsCollection = `#graphql
@@ -71,10 +71,10 @@ extend type Mutation {
   collectionCreate(
     databaseName: String!, 
     collectionName: String!,
-    groupName: String!,
+    groupName: String,
     schema: [SchemaFieldInput!]!, 
     indexes: [IndexInput],
-    permissions: PermissionDetailInput
+    permission: PermissionDetailInput
   ): Boolean
 }
 `;

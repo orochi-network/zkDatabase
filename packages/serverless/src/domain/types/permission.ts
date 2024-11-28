@@ -11,13 +11,13 @@ export type PermissionSet = {
   delete: boolean;
 };
 
-export type Permissions = {
+export type Permission = {
   permissionOwner?: Partial<PermissionSet>;
   permissionGroup?: Partial<PermissionSet>;
   permissionOther?: Partial<PermissionSet>;
 };
 
-export type FullPermissions = {
+export type FullPermission = {
   permissionOwner: PermissionSet;
   permissionGroup: PermissionSet;
   permissionOther: PermissionSet;

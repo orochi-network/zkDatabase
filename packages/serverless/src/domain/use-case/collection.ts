@@ -71,9 +71,9 @@ async function createCollection(
   databaseName: string,
   collectionName: string,
   actor: string,
-  groupName: string,
   schema: DocumentSchemaInput,
-  permissions: Permissions,
+  permission: Permissions,
+  groupName?: string,
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
