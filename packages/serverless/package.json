@@ -75,11 +75,12 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
-    "@apollo/server": "^4.11.0",
+    "@apollo/server": "^4.11.2",
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/queue": "^0.1.11",
-    "@zkdb/storage": "^1.1.0",
     "@zkdb/smart-contract": "^1.1.0",
+    "@zkdb/storage": "^1.1.0",
+    "apollo-server-express": "^3.13.0",
     "axios": "^1.5.0",
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",
