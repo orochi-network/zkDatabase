@@ -1,14 +1,13 @@
 import { Fill } from '@orochi-network/queue';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
-  CompoundSession,
   DB,
   DbSetting,
   ModelDbSetting,
   ModelDbTransaction,
-  withTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
@@ -18,9 +17,9 @@ import { Database } from '../types/database.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
+import { addUsersToGroup, createGroup } from './group.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 import { isUserExist } from './user.js';
-import { addUsersToGroup, createGroup } from './group.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
@@ -55,12 +54,11 @@ export async function createDatabase(
       // enqueue transaction
       await enqueueTransaction(databaseName, actor, 'deploy', session);
 
-      const DEFAULT_GROUP_NAME = 'admin';
       // Create default group
       await createGroup(
         databaseName,
         actor,
-        DEFAULT_GROUP_NAME,
+        DEFAULT_GROUP_ADMIN,
         'Default group for owner',
         session
       );
@@ -68,7 +66,7 @@ export async function createDatabase(
       await addUsersToGroup(
         databaseName,
         actor,
-        DEFAULT_GROUP_NAME,
+        DEFAULT_GROUP_ADMIN,
         [actor],
         session
       );
