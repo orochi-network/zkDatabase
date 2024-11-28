@@ -32,10 +32,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
-        run: |
-          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
-          yarn install
       - name: Install compare-versions package
         run: yarn add -W -D compare-versions@6.1.0
       - name: Loop through all packages and publish them if necessary
@@ -48,6 +44,7 @@ jobs:
           packages_dir="packages"
 
           # Build at root
+          yran install
           yarn run build
 
           # Loop through all packages
