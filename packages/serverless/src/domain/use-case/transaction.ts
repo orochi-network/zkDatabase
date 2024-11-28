@@ -20,13 +20,15 @@ export async function enqueueTransaction(
   transactionType: TransactionType,
   session?: ClientSession
 ): Promise<ObjectId> {
-  if (!(await isDatabaseOwner(databaseName, actor))) {
+  if (!(await isDatabaseOwner(databaseName, actor, session))) {
     throw Error('Only database owner can roll up the transaction');
   }
 
   if (transactionType === 'deploy') {
-    const settings =
-      await ModelDbSetting.getInstance().getSetting(databaseName);
+    const settings = await ModelDbSetting.getInstance().getSetting(
+      databaseName,
+      { session }
+    );
 
     if (settings?.appPublicKey) {
       throw Error('Smart contract is already bound to database');
@@ -35,7 +37,9 @@ export async function enqueueTransaction(
 
   const modelTransaction = ModelDbTransaction.getInstance();
 
-  const txs = await modelTransaction.getTxs(databaseName, transactionType);
+  const txs = await modelTransaction.getTxs(databaseName, transactionType, {
+    session,
+  });
 
   // Validate transactions
   if (txs.length > 0) {
@@ -71,15 +75,23 @@ export async function enqueueTransaction(
         }
 
         if (onchainTx.txStatus === 'applied') {
-          await modelTransaction.updateById(pendingTx._id.toString(), {
-            status: 'success',
-          });
+          await modelTransaction.updateById(
+            pendingTx._id.toString(),
+            {
+              status: 'success',
+            },
+            { session }
+          );
           throw Error('You deploy transaction is already succeeded');
         } else if (onchainTx.txStatus === 'failed') {
-          await modelTransaction.updateById(pendingTx._id.toString(), {
-            status: 'failed',
-            error: onchainTx.failures.join(" "),
-          });
+          await modelTransaction.updateById(
+            pendingTx._id.toString(),
+            {
+              status: 'failed',
+              error: onchainTx.failures.join(' '),
+            },
+            { session }
+          );
           // Proceed and create new transaction
         }
       } else {
@@ -88,7 +100,7 @@ export async function enqueueTransaction(
     }
   }
 
-  const payer = await new ModelUser().findOne({ userName: actor });
+  const payer = await new ModelUser().findOne({ userName: actor }, { session });
 
   const insertResult = await modelTransaction.create(
     {

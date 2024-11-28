@@ -1,10 +1,12 @@
 import { Fill } from '@orochi-network/queue';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
+  CompoundSession,
   DB,
   DbSetting,
   ModelDbSetting,
   ModelDbTransaction,
+  withTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
@@ -18,18 +20,21 @@ import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 import { isUserExist } from './user.js';
+import { addUsersToGroup, createGroup } from './group.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createDatabase(
   databaseName: string,
   merkleHeight: number,
-  actor: string
+  actor: string,
+  session?: ClientSession
 ) {
-  const user = await new ModelUser().findOne({ userName: actor });
+  const user = await new ModelUser().findOne({ userName: actor }, { session });
+  const modelSetting = ModelDbSetting.getInstance();
 
   if (user) {
     // Case database already exist
-    if (await DB.service.isDatabase(databaseName)) {
+    if (await modelSetting.getSetting(databaseName, { session })) {
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
@@ -37,17 +42,40 @@ export async function createDatabase(
     await ModelCollectionMetadata.init(databaseName);
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
-    await ModelDbSetting.getInstance().createSetting({
-      databaseName,
-      merkleHeight,
-      databaseOwner: actor,
-    });
 
-    await enqueueTransaction(databaseName, actor, 'deploy');
+    const dbSetting = await modelSetting.createSetting(
+      {
+        databaseName,
+        merkleHeight,
+        databaseOwner: actor,
+      },
+      { session }
+    );
+    if (dbSetting) {
+      // enqueue transaction
+      await enqueueTransaction(databaseName, actor, 'deploy', session);
 
-    return true;
+      const DEFAULT_GROUP_NAME = 'admin';
+      // Create default group
+      await createGroup(
+        databaseName,
+        actor,
+        DEFAULT_GROUP_NAME,
+        'Default group for owner',
+        session
+      );
+
+      await addUsersToGroup(
+        databaseName,
+        actor,
+        DEFAULT_GROUP_NAME,
+        [actor],
+        session
+      );
+      return true;
+    }
+    return false;
   }
-
   throw Error(`User ${actor} has not been found`);
 }
 
@@ -177,9 +205,12 @@ export async function getDatabases(
 }
 
 export async function getDatabaseSetting(
-  databaseName: string
+  databaseName: string,
+  session?: ClientSession
 ): Promise<DbSetting> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName);
+  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
+    session,
+  });
 
   if (setting) {
     return setting;

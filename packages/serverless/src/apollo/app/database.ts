@@ -1,4 +1,9 @@
-import { DB, ModelDatabase, ModelDbSetting } from '@zkdb/storage';
+import {
+  DB,
+  ModelDatabase,
+  ModelDbSetting,
+  withTransaction,
+} from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -177,7 +182,14 @@ const dbDeployedUpdate = authorizeWrapper(
 const dbCreate = authorizeWrapper(
   DatabaseCreateRequest,
   async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    createDatabase(args.databaseName, args.merkleHeight, ctx.userName)
+    withTransaction((session) =>
+      createDatabase(
+        args.databaseName,
+        args.merkleHeight,
+        ctx.userName,
+        session
+      )
+    )
 );
 
 const dbChangeOwner = authorizeWrapper(
