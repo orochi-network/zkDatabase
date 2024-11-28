@@ -5,6 +5,7 @@
 # @zkdb/api
 # @zkdb/smart-contract
 # zkdb
+# @zkdb/permission
 
 name: Publish packages in zkDatabase Repository
 
@@ -43,7 +44,7 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true" > ~/.npmrc
 
-          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb")
+          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb" "@zkdb/permission")
           packages_dir="packages"
 
           # Build storage package
