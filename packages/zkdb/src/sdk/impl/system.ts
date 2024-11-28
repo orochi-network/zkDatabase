@@ -72,7 +72,7 @@ export class ZKSystemImpl implements ZKSystem {
       throw new Error('Required at least one field for user');
     }
     const result = await this.apiClient.user.findMany({
-      query: filter ?? {},
+      query: filter,
     });
 
     if (result.isValid() && result.length > 0) {
