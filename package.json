@@ -2,11 +2,20 @@
   "name": "zkdb-monorepo",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/storage",
+    "packages/smart-contract",
+    "packages/kubo",
+    "packages/proof-service",
+    "packages/api",
+    "packages/zkdb",
+    "packages/compile-service",
+    "packages/serverless",
+    "packages/broker-service",
+    "packages/ftp"
   ],
   "scripts": {
     "clean": "find $(pwd) -name 'node_modules' -type d -exec rm -rf {} \\; || true && find $(pwd) -name 'build' -type d -exec rm -rf {} \\; || true",
-    "build": "tsc --build tsconfig.json",
+    "build": "yarn workspaces run build",
     "clean-build": "yarn clean && yarn && yarn build",
     "generate-docs": "spectaql spectaql-config.yml"
   },
