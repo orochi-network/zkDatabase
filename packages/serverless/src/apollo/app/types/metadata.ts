@@ -8,12 +8,12 @@ type DocumentMetadataOutput {
   merkleIndex: Int!,
   owner: String!
   group: String!
-  permission: Number!
+  permission: Int!
 }
 
 type CollectionMetadataOutput {
   owner: String!
   group: String!
-  permission: Number!
+  permission: Int!
 }
 `;

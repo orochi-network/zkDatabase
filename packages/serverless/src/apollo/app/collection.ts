@@ -15,7 +15,6 @@ import {
   collectionName,
   databaseName,
   groupName,
-  permissionDetail,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
@@ -37,7 +36,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 
 export type TCollectionCreateRequest = TCollectionRequest & {
   schema: SchemaData;
-  indexes?: TCollectionIndex[];
+  index?: TCollectionIndex[];
   permission?: number;
   groupName?: string;
 };
@@ -51,9 +50,9 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
-  indexes: Joi.array().items(collectionIndex.optional()),
+  index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  permission: Joi.number().min(0).required(),
+  permission: Joi.number().min(0).optional(),
 });
 
 export const typeDefsCollection = `#graphql
@@ -72,8 +71,8 @@ extend type Mutation {
     collectionName: String!,
     groupName: String,
     schema: [SchemaFieldInput!]!, 
-    indexes: [IndexInput],
-    permission: Number
+    index: [IndexInput],
+    permission: Int
   ): Boolean
 }
 `;
@@ -114,12 +113,12 @@ const collectionCreate = authorizeWrapper(
       )
     );
 
-    if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
+    if (args.index && args.index.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,
         args.collectionName,
-        args.indexes
+        args.index
       );
 
       if (!indexResult) {

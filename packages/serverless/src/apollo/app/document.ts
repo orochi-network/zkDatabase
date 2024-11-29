@@ -117,7 +117,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       documentRecord: [DocumentRecordInput!]!
-      documentPermission: Number
+      documentPermission: Int
     ): [MerkleWitness!]!
 
     documentUpdate(

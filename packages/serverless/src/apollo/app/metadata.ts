@@ -63,7 +63,7 @@ extend type Mutation {
     databaseName: String!
     collectionName: String!
     docId: String
-    permission: Number!
+    permission: Int!
   ): CollectionMetadataOutput!
 
   permissionOwn(
