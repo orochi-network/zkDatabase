@@ -1,0 +1,19 @@
+# NodeJS
+node_modules
+build
+coverage
+
+# Editor
+.vscode
+.husky
+*.tgz
+
+# System
+.DS_Store
+
+# Never commit keys to Git!
+keys
+docs/
+
+# Rollup
+.rollup.cache
