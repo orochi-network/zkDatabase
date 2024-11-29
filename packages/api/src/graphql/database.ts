@@ -63,27 +63,7 @@ const DATABASE_LIST = gql`
           ownership {
             userName
             groupName
-            permissionOwner {
-              read
-              write
-              delete
-              create
-              system
-            }
-            permissionGroup {
-              read
-              write
-              delete
-              create
-              system
-            }
-            permissionOther {
-              read
-              write
-              delete
-              create
-              system
-            }
+            permission
           }
         }
       }

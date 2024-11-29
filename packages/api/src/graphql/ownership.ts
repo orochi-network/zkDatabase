@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 import { createMutateFunction, TApolloClient } from "./common";
-import { TOwnership, TOwnershipRequest, TUser } from "./types";
+import { TOwnership, TOwnershipAndPermissionRequest, TUser } from "./types";
 
 export type TUserSignUpRecord = TUser;
 
 export const ownership = <T>(client: TApolloClient<T>) => ({
   setOwnership: createMutateFunction<
-    Pick<TOwnership, "userName" | "groupName">,
-    TOwnershipRequest & { grouping: string; newOwner: string },
-    { permissionOwn: Pick<TOwnership, "userName" | "groupName"> }
+    TOwnership,
+    TOwnershipAndPermissionRequest & { grouping: string; newOwner: string },
+    { permissionOwn: TOwnership }
   >(
     client,
     gql`
