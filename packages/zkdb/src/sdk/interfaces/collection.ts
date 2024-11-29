@@ -8,7 +8,7 @@ import { Ownable } from './ownable';
 
 export interface ZKCollectionIndex {
   list(): Promise<string[]>;
-  create(indexes: IndexField[]): Promise<boolean>;
+  create(index: IndexField[]): Promise<boolean>;
   drop(indexName: string): Promise<boolean>;
 }
 
@@ -21,7 +21,7 @@ export interface ZKCollection {
 
   create<T extends SchemaInterface>(
     type: T,
-    indexes: string[] | IndexField[],
+    index?: string[] | IndexField[],
     permission?: Permission,
     groupName?: string
   ): Promise<boolean>;

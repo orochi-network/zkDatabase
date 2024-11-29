@@ -31,6 +31,12 @@ const DOCUMENT_DELETE = gql`
 `;
 
 const DOCUMENT_CREATE = gql`
+  input DocumentRecordInput {
+    name: String!
+    kind: String!
+    value: String!
+  }
+
   mutation DocumentCreate(
     $databaseName: String!
     $collectionName: String!
@@ -80,7 +86,7 @@ const DOCUMENT_FIND_ONE = gql`
       documentQuery: $documentQuery
     ) {
       docId
-      fields {
+      field {
         name
         kind
         value
@@ -107,7 +113,7 @@ const DOCUMENT_FIND_MANY = gql`
       offset
       data {
         docId
-        fields {
+        field {
           name
           kind
           value

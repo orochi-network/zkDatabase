@@ -206,11 +206,7 @@ export class ZKDocumentImpl implements ZKDocument {
           this.collectionName,
           {
             id: document.docId,
-            documentEncoded: document.fields.map((field) => ({
-              name: field.name,
-              kind: field.kind as ProvableTypeString,
-              value: field.value,
-            })),
+            documentEncoded: document.field as DocumentEncoded,
             createdAt: document.createdAt,
           },
           this.apiClient

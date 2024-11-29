@@ -12,3 +12,5 @@ export type TOwnershipAndPermissionRequest = {
 export type TOwnershipAndPermissionResponse = TOwnership & {
   permission: number;
 };
+
+export type TOwnershipAndPermission = TOwnershipAndPermissionResponse;

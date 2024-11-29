@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
 import {
-  DatabaseSettings,
+  DatabaseSetting,
   GroupDescription,
   TDbTransaction,
   TGetRollUpHistory,
@@ -29,7 +29,7 @@ export interface ZKDatabase {
   listGroup(): Promise<GroupDescription[]>;
 
   // Settings
-  setting(): Promise<DatabaseSettings>;
+  setting(): Promise<DatabaseSetting>;
 
   // Ownership
   changeOwner(newOwner: string): Promise<boolean>;
