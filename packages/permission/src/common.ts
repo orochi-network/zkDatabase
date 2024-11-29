@@ -43,7 +43,5 @@ export type OwnershipAndPermission = Ownership & {
 };
 
 export type OwnershipAndPermissionDetail = Ownership & {
-  owner: string;
-  group: string;
   permission: PermissionDetail;
 };
