@@ -1,6 +1,10 @@
-import { Permission, PermissionBase } from '@zkdb/permission';
+import {
+  Permission,
+  PermissionBase,
+  PermissionRecordKey,
+} from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import { PermissionBasic, PermissionType } from '../../common/permission.js';
+import { PermissionBasic } from '../../common/types.js';
 import logger from '../../helper/logger.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
@@ -56,7 +60,7 @@ async function checkPermission(
   collectionName: string,
   actor: string,
   docId: string | null,
-  type: PermissionType,
+  type: PermissionRecordKey,
   isDocument: boolean,
   session?: ClientSession
 ): Promise<boolean> {
@@ -80,7 +84,7 @@ export async function hasDocumentPermission(
   collectionName: string,
   actor: string,
   docId: string,
-  type: PermissionType,
+  type: PermissionRecordKey,
   session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(
@@ -98,7 +102,7 @@ export async function hasCollectionPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
-  type: PermissionType,
+  type: PermissionRecordKey,
   session?: ClientSession
 ): Promise<boolean> {
   return checkPermission(

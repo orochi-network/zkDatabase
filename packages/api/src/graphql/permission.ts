@@ -28,7 +28,7 @@ export const permission = <T>(client: TApolloClient<T>) => ({
         $databaseName: String!
         $collectionName: String!
         $docId: String
-        $permission: PermissionDetailInput!
+        $permission: Number!
       ) {
         permissionSet(
           databaseName: $databaseName

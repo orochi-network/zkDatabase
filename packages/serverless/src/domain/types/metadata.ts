@@ -1,6 +1,6 @@
 export type CollectionMetadata = {
-  userName: string;
-  groupName: string;
+  owner: string;
+  group: string;
   permission: number;
 };
 

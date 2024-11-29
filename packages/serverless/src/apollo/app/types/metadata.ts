@@ -6,14 +6,14 @@ scalar Date
 
 type DocumentMetadataOutput {
   merkleIndex: Int!,
-  userName: String!
-  groupName: String!
+  owner: String!
+  group: String!
   permission: Number!
 }
 
 type CollectionMetadataOutput {
-  userName: String!
-  groupName: String!
+  owner: String!
+  group: String!
   permission: Number!
 }
 `;

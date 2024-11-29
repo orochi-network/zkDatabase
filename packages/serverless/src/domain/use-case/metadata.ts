@@ -1,12 +1,11 @@
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { CollectionMetadata } from '../types/metadata.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
-import { PermissionBinary } from '../../common/permission.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function readMetadata(
@@ -58,8 +57,8 @@ export async function readMetadata(
   }
 
   return {
-    userName: metadata.owner,
-    groupName: metadata.group,
+    owner: metadata.owner,
+    group: metadata.group,
     permission: metadata.permission,
   };
 }

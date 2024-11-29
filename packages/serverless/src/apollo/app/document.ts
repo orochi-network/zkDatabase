@@ -21,7 +21,6 @@ import {
   databaseName,
   documentField,
   pagination,
-  permissionDetail,
 } from './common.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
@@ -59,7 +58,7 @@ export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: permissionDetail.required(),
+  documentPermission: Joi.number().min(0).required(),
   documentRecord: Joi.required(),
 });
 

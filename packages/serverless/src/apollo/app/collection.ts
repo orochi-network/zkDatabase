@@ -1,24 +1,23 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { ModelDatabase, withTransaction } from '@zkdb/storage';
-import {
-  databaseName,
-  collectionName,
-  permissionDetail,
-  groupName,
-  collectionIndex,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { PermissionData } from '../types/permission.js';
-import { SchemaData } from '../types/schema.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
   createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { TCollectionIndex } from '../types/collection-index.js';
+import { SchemaData } from '../types/schema.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import {
+  collectionIndex,
+  collectionName,
+  databaseName,
+  groupName,
+  permissionDetail,
+} from './common.js';
+import { TDatabaseRequest } from './database.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -54,7 +53,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   groupName,
   indexes: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  permission: permissionDetail,
+  permission: Joi.number().min(0).required(),
 });
 
 export const typeDefsCollection = `#graphql

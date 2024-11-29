@@ -1,6 +1,6 @@
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
-import Joi, { number } from 'joi';
+import Joi from 'joi';
 import { readMetadata } from '../../domain/use-case/metadata.js';
 import {
   changeCollectionOwnership,
@@ -63,7 +63,7 @@ extend type Mutation {
     databaseName: String!
     collectionName: String!
     docId: String
-    permission: PermissionDetailInput!
+    permission: Number!
   ): CollectionMetadataOutput!
 
   permissionOwn(
@@ -112,7 +112,7 @@ const permissionSet = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
-    permission: number().min(0).required(),
+    permission: Joi.number().min(0).required(),
     docId: objectId.optional(),
   }),
   async (_root: unknown, args: TPermissionUpdateRequest, context) => {

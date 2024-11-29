@@ -508,8 +508,8 @@ async function findDocumentsWithMetadata(
 
       const metadata: DocumentMetadata = {
         merkleIndex: documentRecord.metadata.merkleIndex,
-        groupName: documentRecord.metadata.group,
-        userName: documentRecord.metadata.owner,
+        group: documentRecord.metadata.group,
+        owner: documentRecord.metadata.owner,
         permission: documentRecord.metadata.permission,
       };
 
