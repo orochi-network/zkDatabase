@@ -51,9 +51,9 @@ const DATABASE_LIST = gql`
         databaseSize
         merkleHeight
         appPublicKey
-        collections {
+        collection {
           name
-          indexes
+          index
           schema {
             order
             name
@@ -63,27 +63,7 @@ const DATABASE_LIST = gql`
           ownership {
             userName
             groupName
-            permissionOwner {
-              read
-              write
-              delete
-              create
-              system
-            }
-            permissionGroup {
-              read
-              write
-              delete
-              create
-              system
-            }
-            permissionOther {
-              read
-              write
-              delete
-              create
-              system
-            }
+            permission
           }
         }
       }

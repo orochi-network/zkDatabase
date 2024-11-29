@@ -5,11 +5,10 @@ import {
   TApolloClient,
 } from "./common";
 import {
-  TDocumentHistoryPayload,
   TDocumentEncoded,
+  TDocumentHistoryPayload,
   TDocumentPayload,
   TMerkleWitness,
-  TPermissions,
   TPagination,
   TPaginationResponse,
 } from "./types";
@@ -32,6 +31,12 @@ const DOCUMENT_DELETE = gql`
 `;
 
 const DOCUMENT_CREATE = gql`
+  input DocumentRecordInput {
+    name: String!
+    kind: String!
+    value: String!
+  }
+
   mutation DocumentCreate(
     $databaseName: String!
     $collectionName: String!
@@ -81,7 +86,7 @@ const DOCUMENT_FIND_ONE = gql`
       documentQuery: $documentQuery
     ) {
       docId
-      fields {
+      field {
         name
         kind
         value
@@ -108,7 +113,7 @@ const DOCUMENT_FIND_MANY = gql`
       offset
       data {
         docId
-        fields {
+        field {
           name
           kind
           value
@@ -156,7 +161,7 @@ export const document = <T>(client: TApolloClient<T>) => ({
       databaseName: string;
       collectionName: string;
       documentRecord: TDocumentEncoded;
-      documentPermission: TPermissions;
+      documentPermission?: number;
     },
     { documentCreate: TMerkleWitness }
   >(client, DOCUMENT_CREATE, (data) => data.documentCreate),

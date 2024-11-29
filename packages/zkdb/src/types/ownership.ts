@@ -1,5 +1,8 @@
+import { PermissionDetail } from '@zkdb/permission';
+
 export type Ownership = {
   userName: string;
   groupName: string;
-  permission: number;
 };
+
+export type OwnershipAndPermission = Ownership & PermissionDetail;

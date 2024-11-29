@@ -1,11 +1,11 @@
 export type Database = {
   databaseName: string;
   merkleHeight: number;
-  collections: string[];
+  collection: string[];
   databaseSize: number;
 };
 
-export type DatabaseSettings = {
+export type DatabaseSetting = {
   publicKey: string;
   merkleHeight: number;
   databaseOwner: string;

@@ -5,6 +5,7 @@
 # @zkdb/api
 # @zkdb/smart-contract
 # zkdb
+# @zkdb/permission
 
 name: Publish packages in zkDatabase Repository
 
@@ -14,6 +15,7 @@ on:
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+  NPM_INSTALL_TOKEN: ${{ secrets.NPM_INSTALL_TOKEN }}
 
 jobs:
   build:
@@ -31,10 +33,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install dependencies
+      - name: Install package & build at root
         run: |
-          echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" > ~/.npmrc
-          yarn install
+          echo "//registry.npmjs.org/:_authToken=\${NPM_INSTALL_TOKEN} \n always-auth=true" > ~/.npmrc
+          yarn install && yarn build
+        env:
+          NPM_INSTALL_TOKEN: ${{ env.NPM_INSTALL_TOKEN }}
       - name: Install compare-versions package
         run: yarn add -W -D compare-versions@6.1.0
       - name: Loop through all packages and publish them if necessary
@@ -43,11 +47,8 @@ jobs:
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true" > ~/.npmrc
 
-          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "zkdb")
+          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "@zkdb/permission" "zkdb")
           packages_dir="packages"
-
-          # Build storage package
-          yarn workspace @zkdb/storage build
 
           # Loop through all packages
           for package_dir in $(find "$packages_dir" -mindepth 1 -maxdepth 1 -type d);
@@ -60,7 +61,6 @@ jobs:
                 echo "Running lint script for $PACKAGE_NAME"
                 yarn run lint
             fi
-            yarn build
 
             if [[ " ${PUBLISH_LIST[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"

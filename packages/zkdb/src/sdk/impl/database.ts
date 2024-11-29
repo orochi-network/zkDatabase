@@ -1,7 +1,7 @@
 import { IApiClient } from '@zkdb/api';
 import { JsonProof } from 'o1js';
 import {
-  DatabaseSettings,
+  DatabaseSetting,
   GroupDescription,
   TDbTransaction,
   TGetRollUpHistory,
@@ -86,7 +86,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap().map((collection) => collection.name);
   }
 
-  async setting(): Promise<DatabaseSettings> {
+  async setting(): Promise<DatabaseSetting> {
     const result = await this.apiClient.db.setting({
       databaseName: this.databaseName,
     });

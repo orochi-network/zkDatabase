@@ -5,10 +5,8 @@ import {
   TApolloClient,
 } from "./common";
 import {
-  TOwnership,
-  TOwnershipRequest,
-  TOwnershipResponse,
-  TPermissions,
+  TOwnershipAndPermissionRequest,
+  TOwnershipAndPermissionResponse,
   TUser,
 } from "./types";
 
@@ -16,11 +14,11 @@ export type TUserSignUpRecord = TUser;
 
 export const permission = <T>(client: TApolloClient<T>) => ({
   set: createMutateFunction<
-    TOwnership,
-    TOwnershipRequest & {
-      permission: TPermissions;
+    TOwnershipAndPermissionResponse,
+    TOwnershipAndPermissionRequest & {
+      permission: number;
     },
-    { permissionSet: TOwnershipResponse }
+    { permissionSet: TOwnershipAndPermissionResponse }
   >(
     client,
     gql`
@@ -38,44 +36,16 @@ export const permission = <T>(client: TApolloClient<T>) => ({
         ) {
           userName
           groupName
-          permissionOwner {
-            read
-            write
-            delete
-            create
-            system
-          }
-          permissionGroup {
-            read
-            write
-            delete
-            create
-            system
-          }
-          permissionOther {
-            read
-            write
-            delete
-            create
-            system
-          }
+          permission
         }
       }
     `,
-    (data) => ({
-      userName: data.permissionSet.userName,
-      groupName: data.permissionSet.groupName,
-      permissions: {
-        permissionOwner: data.permissionSet.permissionOwner,
-        permissionGroup: data.permissionSet.permissionGroup,
-        permissionOther: data.permissionSet.permissionOther,
-      },
-    })
+    (data) => data.permissionSet
   ),
   get: createQueryFunction<
-    TOwnership,
-    TOwnershipRequest,
-    { permissionList: TOwnershipResponse }
+    TOwnershipAndPermissionResponse,
+    TOwnershipAndPermissionRequest,
+    { permissionList: TOwnershipAndPermissionResponse }
   >(
     client,
     gql`
@@ -91,38 +61,10 @@ export const permission = <T>(client: TApolloClient<T>) => ({
         ) {
           userName
           groupName
-          permissionOwner {
-            read
-            write
-            delete
-            create
-            system
-          }
-          permissionGroup {
-            read
-            write
-            delete
-            create
-            system
-          }
-          permissionOther {
-            read
-            write
-            delete
-            create
-            system
-          }
+          permission
         }
       }
     `,
-    (data) => ({
-      userName: data.permissionList.userName,
-      groupName: data.permissionList.groupName,
-      permissions: {
-        permissionOwner: data.permissionList.permissionOwner,
-        permissionGroup: data.permissionList.permissionGroup,
-        permissionOther: data.permissionList.permissionOther,
-      },
-    })
+    (data) => data.permissionList
   ),
 });

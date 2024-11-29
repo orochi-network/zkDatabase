@@ -1,9 +1,9 @@
-import { TOwnership } from "./ownership"
-import { TSchema } from "./schema"
+import { TOwnershipAndPermission } from "./ownership";
+import { TSchema } from "./schema";
 
-export type Collection = {
-  name: string,
-  indexes: string[],
-  schema: TSchema,
-  ownership: TOwnership
-}
+export type TCollection = {
+  name: string;
+  index: string[];
+  schema: TSchema;
+  ownership: TOwnershipAndPermission;
+};

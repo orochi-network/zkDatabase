@@ -110,16 +110,16 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     options?: FindOptions
   ): Promise<DbSetting[]> {
     try {
-      const settings = (
+      const setting = (
         await this.collection.find(filter, options).toArray()
       ).filter(
         (db) =>
           !['admin', 'local', '_zkdatabase_metadata'].includes(db.databaseName)
       );
 
-      return settings;
+      return setting;
     } catch (error) {
-      throw new Error(`Failed to find settings: ${error}`);
+      throw new Error(`Failed to find setting: ${error}`);
     }
   }
 

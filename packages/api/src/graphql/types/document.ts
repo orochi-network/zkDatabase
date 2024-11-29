@@ -6,6 +6,6 @@ export type TDocumentEncoded = {
 
 export type TDocumentPayload = {
   docId: string;
-  fields: TDocumentEncoded;
+  field: TDocumentEncoded;
   createdAt: Date;
 };
