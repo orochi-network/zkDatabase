@@ -20,8 +20,8 @@
   },
   "homepage": "https://github.com/orochi-network/zkDatabase#readme",
   "type": "module",
-  "main": "build/src/index.js",
-  "types": "build/src/index.d.ts",
+  "main": "./build/src/index.js",
+  "types": "./build/src/index.d.ts",
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "rm -rf ./build && rollup -c",
