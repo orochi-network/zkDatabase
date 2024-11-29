@@ -78,7 +78,7 @@
     "@apollo/server": "^4.11.0",
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/queue": "^0.1.11",
-    "@zkdb/permission": "^0.1.4",
+    "@zkdb/permission": "^0.1.5",
     "@zkdb/smart-contract": "^1.1.0",
     "@zkdb/storage": "^1.1.0",
     "axios": "^1.5.0",
