@@ -1,7 +1,8 @@
 import { Fill } from '@orochi-network/queue';
+import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { PermissionBinary } from '../../common/permission.js';
+import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import {
@@ -9,7 +10,6 @@ import {
   CollectionIndexInfo,
 } from '../types/collection-index.js';
 import { Collection } from '../types/collection.js';
-import { Permissions } from '../types/permission.js';
 import { DocumentSchemaInput } from '../types/schema.js';
 import { Sorting } from '../types/sorting.js';
 import { createCollectionMetadata } from './collection-metadata.js';
@@ -18,6 +18,7 @@ import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
+import { PERMISSION_DEFAULT_VALUE } from '../../common/const.js';
 
 function mapSorting(sorting: Sorting): 1 | -1 {
   return sorting === 'ASC' ? 1 : -1;
@@ -71,9 +72,9 @@ async function createCollection(
   databaseName: string,
   collectionName: string,
   actor: string,
-  groupName: string,
   schema: DocumentSchemaInput,
-  permissions: Permissions,
+  groupName = DEFAULT_GROUP_ADMIN,
+  permission = PERMISSION_DEFAULT_VALUE,
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
@@ -96,7 +97,7 @@ async function createCollection(
     databaseName,
     collectionName,
     schema,
-    permissions,
+    permission,
     actor,
     groupName,
     session
@@ -169,16 +170,11 @@ async function listCollections(
     const actorGroups = await modelUserGroup.listGroupByUserName(actor);
 
     for (const metadata of collectionsMetadata) {
+      const permission = Permission.from(metadata.permission);
       if (
-        (metadata.owner === actor &&
-          PermissionBinary.fromBinaryPermission(metadata.permissionOwner)[
-            'read'
-          ]) ||
-        (actorGroups.includes(metadata.group) &&
-          PermissionBinary.fromBinaryPermission(metadata.permissionGroup)[
-            'read'
-          ]) ||
-        PermissionBinary.fromBinary(metadata.permissionOther)['read']
+        (metadata.owner === actor && permission.owner.read) ||
+        (actorGroups.includes(metadata.group) && permission.group.read) ||
+        permission.other.read
       ) {
         availableCollections.push(metadata.collection);
       }

@@ -1,24 +1,22 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { ModelDatabase, withTransaction } from '@zkdb/storage';
-import {
-  databaseName,
-  collectionName,
-  permissionDetail,
-  groupName,
-  collectionIndex,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { PermissionsData } from '../types/permission.js';
-import { SchemaData } from '../types/schema.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
   createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { TCollectionIndex } from '../types/collection-index.js';
+import { SchemaData } from '../types/schema.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import {
+  collectionIndex,
+  collectionName,
+  databaseName,
+  groupName,
+} from './common.js';
+import { TDatabaseRequest } from './database.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -37,10 +35,10 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  groupName: string;
   schema: SchemaData;
-  indexes?: TCollectionIndex[];
-  permissions: PermissionsData;
+  index?: TCollectionIndex[];
+  permission?: number;
+  groupName?: string;
 };
 
 export const CollectionRequest = Joi.object<TCollectionRequest>({
@@ -52,9 +50,9 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName,
-  indexes: Joi.array().items(collectionIndex.optional()),
+  index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  permissions: permissionDetail,
+  permission: Joi.number().min(0).optional(),
 });
 
 export const typeDefsCollection = `#graphql
@@ -71,10 +69,10 @@ extend type Mutation {
   collectionCreate(
     databaseName: String!, 
     collectionName: String!,
-    groupName: String!,
+    groupName: String,
     schema: [SchemaFieldInput!]!, 
-    indexes: [IndexInput],
-    permissions: PermissionDetailInput
+    index: [IndexInput],
+    permission: Int
   ): Boolean
 }
 `;
@@ -108,19 +106,19 @@ const collectionCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.groupName,
         args.schema,
-        args.permissions,
+        args.groupName,
+        args.permission,
         session
       )
     );
 
-    if (args.indexes && args.indexes.length > 0 && createCollectionResult) {
+    if (args.index && args.index.length > 0 && createCollectionResult) {
       const indexResult = await createIndex(
         args.databaseName,
         ctx.userName,
         args.collectionName,
-        args.indexes
+        args.index
       );
 
       if (!indexResult) {

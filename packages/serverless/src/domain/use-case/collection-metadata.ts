@@ -1,40 +1,23 @@
 import { ClientSession } from 'mongodb';
-import { DocumentSchemaInput } from '../types/schema.js';
 import { getCurrentTime } from '../../helper/common.js';
-import { Permissions } from '../types/permission.js';
-import {
-  PermissionBinary,
-  partialToPermission,
-} from '../../common/permission.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { DocumentSchemaInput } from '../types/schema.js';
 
 // eslint-disable-next-line import/prefer-default-export
 export async function createCollectionMetadata(
   databaseName: string,
   collectionName: string,
   schema: DocumentSchemaInput,
-  permissions: Permissions,
+  permission: number,
   owner: string,
   group: string,
   session?: ClientSession
 ) {
-  const permissionOwner = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOwner)
-  );
-  const permissionGroup = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionGroup)
-  );
-  const permissionOther = PermissionBinary.toBinaryPermission(
-    partialToPermission(permissions.permissionOther)
-  );
-
   const schemaDef: any = {
     owner,
     group,
     collection: collectionName,
-    permissionOwner,
-    permissionGroup,
-    permissionOther,
+    permission,
     fields: [],
     createdAt: getCurrentTime(),
     updatedAt: getCurrentTime(),

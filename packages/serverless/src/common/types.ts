@@ -1,8 +1,8 @@
 import { Request } from 'express';
 import Joi from 'joi';
 import { userName } from '../apollo/app/common.js';
-import { ZKDATABASE_USER_NOBODY } from './const.js';
 import { TJWTAuthenticationPayload } from '../helper/jwt.js';
+import { ZKDATABASE_USER_NOBODY } from './const.js';
 
 export type TPublicContext = {
   req: Request;
@@ -12,6 +12,12 @@ export type TPublicContext = {
 export type TAuthorizedContext = TPublicContext & {
   userName: string;
   email: string;
+};
+
+export type PermissionBasic = {
+  owner: string;
+  group: string;
+  permission: number;
 };
 
 export type TApplicationContext = TPublicContext | TAuthorizedContext;

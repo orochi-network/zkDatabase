@@ -14,15 +14,13 @@ import { DocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { TDocumentFields } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
-import { PermissionsData } from '../types/permission.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import {
   collectionName,
   databaseName,
   documentField,
   pagination,
-  permissionDetail,
 } from './common.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
@@ -36,7 +34,7 @@ export type TDocumentsFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: DocumentRecord;
-  documentPermission: PermissionsData;
+  documentPermission: number;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
@@ -60,7 +58,7 @@ export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: permissionDetail.required(),
+  documentPermission: Joi.number().min(0).required(),
   documentRecord: Joi.required(),
 });
 
@@ -80,20 +78,6 @@ export const typeDefsDocument = gql`
   type MerkleWitness {
     isLeft: Boolean!
     sibling: String!
-  }
-
-  input PermissionRecordInput {
-    system: Boolean
-    create: Boolean
-    read: Boolean
-    write: Boolean
-    delete: Boolean
-  }
-
-  input PermissionDetailInput {
-    permissionOwner: PermissionRecordInput
-    permissionGroup: PermissionRecordInput
-    permissionOther: PermissionRecordInput
   }
 
   type DocumentsWithMetadataOutput {
@@ -133,7 +117,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       documentRecord: [DocumentRecordInput!]!
-      documentPermission: PermissionDetailInput
+      documentPermission: Int
     ): [MerkleWitness!]!
 
     documentUpdate(

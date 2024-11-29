@@ -5,8 +5,8 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document, FindOptions } from 'mongodb';
-import { PermissionBasic } from '../../common/permission.js';
 import { ProvableTypeString } from '../../domain/common/schema.js';
+import { PermissionBasic } from '../../common/types.js';
 
 // Every data type will be treaded as string when store/transfer
 /*

@@ -1,13 +1,15 @@
 /* eslint-disable import/prefer-default-export */
 import { DB, zkDatabaseConstants } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { PermissionBinary } from '../../common/permission.js';
 import ModelDocument from '../../model/abstract/document.js';
 import { HistoryDocument } from '../types/document-history.js';
 import { Document } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
 import { isDatabaseOwner } from './database.js';
-import { buildDocumentFields } from './document.js';
+import {
+  buildDocumentFields,
+  filterDocumentsByPermission,
+} from './document.js';
 import { getUsersGroup } from './group.js';
 import {
   hasCollectionPermission,
@@ -48,9 +50,7 @@ function buildHistoryPipeline(pagination: Pagination): Array<any> {
           },
           {
             $project: {
-              permissionOwner: true,
-              permissionGroup: true,
-              permissionOther: true,
+              permission: true,
               merkleIndex: true,
               group: true,
               owner: true,
@@ -64,25 +64,6 @@ function buildHistoryPipeline(pagination: Pagination): Array<any> {
       $unwind: '$metadata',
     },
   ];
-}
-
-function filterDocumentsByPermissions(
-  documents: Array<any>,
-  actor: string,
-  userGroups: Array<string>
-): Array<any> {
-  return documents.filter(({ metadata }) => {
-    if (!metadata) return false;
-    if (metadata.owner === actor) {
-      return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
-        .read;
-    }
-    if (userGroups.includes(metadata.group)) {
-      return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-        .read;
-    }
-    return PermissionBinary.fromBinaryPermission(metadata.permissionOther).read;
-  });
 }
 
 async function listHistoryDocuments(
@@ -117,7 +98,7 @@ async function listHistoryDocuments(
     let filteredDocuments: any[];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermissions(
+      filteredDocuments = filterDocumentsByPermission(
         documentsWithMetadata,
         actor,
         userGroups

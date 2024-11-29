@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import { PermissionRecord } from '../../common/permission.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { TDocumentField } from '../types/document.js';
 
@@ -65,20 +64,6 @@ export const indexNumber = Joi.string()
   .required();
 
 export const index = Joi.array().items(Joi.string().required());
-
-export const permissionRecord = Joi.object<PermissionRecord>({
-  system: Joi.boolean(),
-  create: Joi.boolean(),
-  read: Joi.boolean(),
-  write: Joi.boolean(),
-  delete: Joi.boolean(),
-});
-
-export const permissionDetail = Joi.object({
-  permissionOwner: permissionRecord,
-  permissionGroup: permissionRecord,
-  permissionOther: permissionRecord,
-});
 
 export const documentField = Joi.object<TDocumentField>({
   name: Joi.string()
