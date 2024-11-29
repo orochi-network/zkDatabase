@@ -35,7 +35,7 @@ const DOCUMENT_CREATE = gql`
     $databaseName: String!
     $collectionName: String!
     $documentRecord: [DocumentRecordInput!]!
-    $documentPermission: number
+    $documentPermission: Number
   ) {
     documentCreate(
       databaseName: $databaseName
