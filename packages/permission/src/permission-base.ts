@@ -21,7 +21,7 @@ export class PermissionBase {
   }
 
   private bitTurnOff(bit: number) {
-    this.#permission &= ~bit;
+    this.#permission &= ~(1 << bit);
   }
 
   private getBit(bit: number): boolean {
