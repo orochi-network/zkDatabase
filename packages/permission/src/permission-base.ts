@@ -107,7 +107,7 @@ export class PermissionBase {
     }
     const permission = new PermissionBase(0);
 
-    for (const key in PERMISSION_FIELD) {
+    for (const key of PERMISSION_FIELD) {
       if (typeof param[key] === 'boolean') {
         permission[key as PermissionRecordKey] = param[key];
       }

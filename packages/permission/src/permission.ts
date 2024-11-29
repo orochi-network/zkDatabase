@@ -20,8 +20,9 @@ export class Permission {
       this.#owner = PermissionBase.from(owner);
       this.#group = PermissionBase.from(group);
       this.#other = PermissionBase.from(other);
+    } else {
+      throw new Error('Invalid arguments');
     }
-    throw new Error('Invalid arguments');
   }
 
   get owner() {
