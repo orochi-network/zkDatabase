@@ -28,14 +28,20 @@ export class CollectionIndexImpl implements ZKCollectionIndex {
     return result.unwrap();
   }
 
-  async create(indexes: IndexField[]): Promise<boolean> {
+  async create(index: string[] | IndexField[]): Promise<boolean> {
+    let indexField: IndexField[] = [];
+    if (index.every((field) => typeof field === 'string')) {
+      indexField = (index as string[]).map((field) => ({
+        name: field,
+        sorting: 'ASC',
+      }));
+    } else {
+      indexField = index;
+    }
     const result = await this.apiClient.index.create({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      indexes: indexes.map(({ name, sorting }) => ({
-        name,
-        sorting: sorting === 'asc' ? 'ASC' : 'DESC',
-      })),
+      indexes: indexField,
     });
 
     return result.unwrap();

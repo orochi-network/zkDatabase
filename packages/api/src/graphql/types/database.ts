@@ -1,9 +1,9 @@
-import { Collection } from "./collection";
+import { TCollection } from "./collection";
 
 export type TDatabase = {
   databaseName: string;
   merkleHeight: number;
-  collections: Collection[];
+  collection: TCollection[];
   databaseSize: number;
   publicKey: string;
   databaseOwner: string;

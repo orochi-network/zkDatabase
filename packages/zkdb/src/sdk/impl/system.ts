@@ -28,10 +28,10 @@ export class ZKSystemImpl implements ZKSystem {
 
     return result
       .unwrap()
-      .map(({ databaseName, merkleHeight, collections, databaseSize }) => ({
+      .map(({ databaseName, merkleHeight, collection, databaseSize }) => ({
         databaseName,
         merkleHeight,
-        collections: collections.map(({ name }) => name),
+        collection: collection.map(({ name }) => name),
         databaseSize,
       }));
   }

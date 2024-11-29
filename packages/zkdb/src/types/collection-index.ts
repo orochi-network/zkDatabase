@@ -1,4 +1,4 @@
-export type Sorting = 'asc' | 'desc';
+export type Sorting = 'ASC' | 'DESC';
 
 export type IndexField = {
   name: string;

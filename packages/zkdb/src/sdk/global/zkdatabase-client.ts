@@ -49,16 +49,12 @@ export class ZKDatabaseClient {
    */
   public static async connect(url: string): Promise<ZKDatabaseClient> {
     const urlInstance = new URL(url);
-    const { password, protocol, host, pathname, searchParams } = urlInstance;
+    const { password, protocol, host, pathname } = urlInstance;
     const [base, abstract] = protocol.replace(':', '').split('+');
     if (base != 'zkdb') {
       throw new Error('Invalid protocol');
     }
     const apiURL = `${abstract}://${host}${pathname}`;
-    const db = searchParams.get('db');
-    if (!db) {
-      throw new Error('Database name is required');
-    }
 
     // Get environment variables
 
@@ -81,16 +77,12 @@ export class ZKDatabaseClient {
           networkId,
           networkUrl,
         });
-      } 
-    }
-    else {
+      }
+    } else {
       // Nodejs environment
       const storage = new InMemoryStorage();
       const apiClient = ApiClient.newInstance(apiURL, storage);
-      const signer = new NodeSigner(
-        PrivateKey.fromBase58(password),
-        networkId
-      );
+      const signer = new NodeSigner(PrivateKey.fromBase58(password), networkId);
       return new ZKDatabaseClient(
         apiClient,
         new Authenticator(signer, apiClient, storage),

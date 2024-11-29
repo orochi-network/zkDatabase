@@ -146,19 +146,27 @@ export class CollectionImpl implements ZKCollection {
 
   async create<T extends SchemaInterface>(
     type: T,
-    indexes: IndexField[],
+    index?: IndexField[],
     permission?: Permission,
     groupName?: string
   ): Promise<boolean> {
+    let indexField: IndexField[] | undefined = undefined;
+    if (typeof index != 'undefined') {
+      if (index.every((field) => typeof field === 'string')) {
+        indexField = (index as string[]).map((field) => ({
+          name: field,
+          sorting: 'ASC',
+        }));
+      } else {
+        indexField = index;
+      }
+    }
     const result = await this.apiClient.collection.create({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       groupName,
       schema: type.getSchema(),
-      indexes: indexes.map(({ name, sorting }) => ({
-        name,
-        sorting: sorting === 'asc' ? 'ASC' : 'DESC',
-      })),
+      index: indexField,
       permission: permission
         ? permission.value
         : Permission.policyPrivate().value,
@@ -186,11 +194,7 @@ export class CollectionImpl implements ZKCollection {
         this.collectionName,
         {
           id: document.docId,
-          documentEncoded: document.fields.map((field) => ({
-            name: field.name,
-            kind: field.kind as ProvableTypeString,
-            value: field.value,
-          })),
+          documentEncoded: document.field as DocumentEncoded,
           createdAt: document.createdAt,
         },
         this.apiClient
@@ -214,11 +218,7 @@ export class CollectionImpl implements ZKCollection {
       this.collectionName,
       {
         id: document.docId,
-        documentEncoded: document.fields.map((field) => ({
-          name: field.name,
-          kind: field.kind as ProvableTypeString,
-          value: field.value,
-        })),
+        documentEncoded: document.field as DocumentEncoded,
         createdAt: document.createdAt,
       },
       this.apiClient

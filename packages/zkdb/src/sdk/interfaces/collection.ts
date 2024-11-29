@@ -21,7 +21,7 @@ export interface ZKCollection {
 
   create<T extends SchemaInterface>(
     type: T,
-    indexes: string[] | IndexField[],
+    index?: string[] | IndexField[],
     permission?: Permission,
     groupName?: string
   ): Promise<boolean>;
