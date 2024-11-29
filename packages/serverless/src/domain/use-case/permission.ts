@@ -1,16 +1,9 @@
+import { Permission, PermissionBase } from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import {
-  PermissionBasic,
-  PermissionBinary,
-  PermissionRecord,
-  PermissionType,
-  setPartialIntoPermission,
-  ZKDATABASE_NO_PERMISSION_RECORD,
-} from '../../common/permission.js';
+import { PermissionBasic, PermissionType } from '../../common/permission.js';
 import logger from '../../helper/logger.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { FullPermissions, PermissionGroup } from '../types/permission.js';
 import { isDatabaseOwner } from './database.js';
 import { checkUserGroupMembership } from './group.js';
 
@@ -19,22 +12,24 @@ async function fetchPermissionDetails(
   actor: string,
   metadata: PermissionBasic | null,
   session?: ClientSession
-): Promise<PermissionRecord> {
+): Promise<number> {
   if (!metadata) {
-    return ZKDATABASE_NO_PERMISSION_RECORD;
+    return 0;
   }
 
+  const permission = Permission.from(metadata.permission);
+
   if (metadata.owner === actor) {
-    return PermissionBinary.fromBinaryPermission(metadata.permissionOwner);
+    return permission.owner.value;
   }
 
   if (
     await checkUserGroupMembership(databaseName, actor, metadata.group, session)
   ) {
-    return PermissionBinary.fromBinaryPermission(metadata.permissionGroup);
+    return permission.group.value;
   }
 
-  return PermissionBinary.fromBinary(metadata.permissionOther);
+  return permission.other.value;
 }
 
 export async function readPermission(
@@ -43,7 +38,7 @@ export async function readPermission(
   actor: string,
   docId: string | null,
   session?: ClientSession
-): Promise<PermissionRecord> {
+): Promise<number> {
   const modelMetadata = docId
     ? new ModelDocumentMetadata(databaseName)
     : ModelCollectionMetadata.getInstance(databaseName);
@@ -76,7 +71,8 @@ async function checkPermission(
     isDocument ? docId : null,
     session
   );
-  return permission[type];
+  // Using PermissionBase to get a single group etc: owner, group, other
+  return PermissionBase.from(permission)[type];
 }
 
 export async function hasDocumentPermission(
@@ -116,84 +112,12 @@ export async function hasCollectionPermission(
   );
 }
 
-export async function changePermissions(
+export async function setPermission(
   databaseName: string,
   collectionName: string,
   actor: string,
   docId: string | null,
-  group: PermissionGroup,
-  permissions: PermissionRecord,
-  session?: ClientSession
-) {
-  const hasSystemPermission = docId
-    ? await hasDocumentPermission(
-        databaseName,
-        collectionName,
-        actor,
-        docId!,
-        'system',
-        session
-      )
-    : await hasCollectionPermission(
-        databaseName,
-        collectionName,
-        actor,
-        'system',
-        session
-      );
-
-  if (!hasSystemPermission) {
-    const targetDescription = docId ? 'document' : 'collection';
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'system' permission for the specified ${targetDescription}.`
-    );
-  }
-
-  const modelPermission = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
-
-  let update: any;
-
-  if (group === 'User') {
-    update = {
-      permissionOwner: PermissionBinary.toBinaryPermission({
-        ...permissions,
-      }),
-    };
-  } else if (group === 'Group') {
-    update = {
-      permissionGroup: PermissionBinary.toBinaryPermission(permissions),
-    };
-  } else {
-    update = {
-      permissionOther: PermissionBinary.toBinaryPermission({
-        ...permissions,
-        system: false,
-      }),
-    };
-  }
-
-  const updateQuery = { collection: collectionName, ...(docId && { docId }) };
-
-  try {
-    await modelPermission.updateMany(
-      updateQuery,
-      { $set: update },
-      { session }
-    );
-  } catch (error) {
-    logger.error('Failed to update permissions:', error);
-    throw new Error('Error updating permissions.');
-  }
-}
-
-export async function setPermissions(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
-  docId: string | null,
-  permissions: FullPermissions,
+  permission: number,
   session?: ClientSession
 ): Promise<boolean> {
   const hasSystemPermission = docId
@@ -201,7 +125,7 @@ export async function setPermissions(
         databaseName,
         collectionName,
         actor,
-        docId!,
+        docId,
         'system',
         session
       )
@@ -223,52 +147,24 @@ export async function setPermissions(
       ...(docId && { docId }),
     };
 
-    const currentPermissions = await modelPermission.findOne(locationQuery);
+    const currentPermission = await modelPermission.findOne(locationQuery);
 
-    if (!currentPermissions) {
+    if (!currentPermission) {
       throw Error('Metadata is empty');
     }
-
-    const permissionOwner = PermissionBinary.toBinaryPermission(
-      setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(
-          currentPermissions.permissionOwner
-        ),
-        permissions.permissionOwner
-      )
-    );
-
-    const permissionGroup = PermissionBinary.toBinaryPermission(
-      setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(
-          currentPermissions.permissionGroup
-        ),
-        permissions.permissionGroup
-      )
-    );
-
-    const permissionOther = PermissionBinary.toBinaryPermission({
-      ...setPartialIntoPermission(
-        PermissionBinary.fromBinaryPermission(
-          currentPermissions.permissionOther
-        ),
-        permissions.permissionOther
-      ),
-      system: false,
-    });
-
-    PermissionBinary.fromBinary(permissionGroup);
-
-    const update = {
-      permissionOwner,
-      permissionGroup,
-      permissionOther,
-    };
+    // Force setting system set to false prevent API inject
+    const permissionUpdate = Permission.from(permission);
+    permissionUpdate.group.system = false;
+    permissionUpdate.other.system = false;
 
     try {
       const result = await modelPermission.updateMany(
         locationQuery,
-        { $set: update },
+        {
+          $set: {
+            permission: permissionUpdate.value,
+          },
+        },
         { session }
       );
 

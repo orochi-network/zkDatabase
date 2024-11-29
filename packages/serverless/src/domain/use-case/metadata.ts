@@ -15,10 +15,10 @@ export async function readMetadata(
   docId: string | null,
   actor: string,
   // eslint-disable-next-line default-param-last
-  checkPermissions: boolean = false,
+  checkPermission: boolean = false,
   session?: ClientSession
 ): Promise<CollectionMetadata> {
-  if (checkPermissions) {
+  if (checkPermission) {
     const hasReadPermission = docId
       ? await hasDocumentPermission(
           databaseName,
@@ -60,14 +60,6 @@ export async function readMetadata(
   return {
     userName: metadata.owner,
     groupName: metadata.group,
-    permissionOwner: PermissionBinary.fromBinaryPermission(
-      metadata.permissionOwner
-    ),
-    permissionGroup: PermissionBinary.fromBinaryPermission(
-      metadata.permissionGroup
-    ),
-    permissionOther: PermissionBinary.fromBinaryPermission(
-      metadata.permissionOther
-    ),
+    permission: metadata.permission,
   };
 }

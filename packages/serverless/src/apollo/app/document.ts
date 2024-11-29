@@ -14,8 +14,7 @@ import { DocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { TDocumentFields } from '../types/document.js';
 import { Pagination } from '../types/pagination.js';
-import { PermissionsData } from '../types/permission.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import {
   collectionName,
@@ -36,7 +35,7 @@ export type TDocumentsFindRequest = TCollectionRequest & {
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   documentRecord: DocumentRecord;
-  documentPermission: PermissionsData;
+  documentPermission: number;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
@@ -82,20 +81,6 @@ export const typeDefsDocument = gql`
     sibling: String!
   }
 
-  input PermissionRecordInput {
-    system: Boolean
-    create: Boolean
-    read: Boolean
-    write: Boolean
-    delete: Boolean
-  }
-
-  input PermissionDetailInput {
-    permissionOwner: PermissionRecordInput
-    permissionGroup: PermissionRecordInput
-    permissionOther: PermissionRecordInput
-  }
-
   type DocumentsWithMetadataOutput {
     document: DocumentOutput!
     metadata: DocumentMetadataOutput!
@@ -133,7 +118,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       documentRecord: [DocumentRecordInput!]!
-      documentPermission: PermissionDetailInput
+      documentPermission: Number
     ): [MerkleWitness!]!
 
     documentUpdate(

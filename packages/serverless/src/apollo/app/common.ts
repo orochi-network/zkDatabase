@@ -1,5 +1,4 @@
 import Joi from 'joi';
-import { PermissionRecord } from '../../common/permission.js';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { TDocumentField } from '../types/document.js';
 
@@ -64,21 +63,7 @@ export const indexNumber = Joi.string()
   .regex(/^[0-9]+$/)
   .required();
 
-export const indexes = Joi.array().items(Joi.string().required());
-
-export const permissionRecord = Joi.object<PermissionRecord>({
-  system: Joi.boolean(),
-  create: Joi.boolean(),
-  read: Joi.boolean(),
-  write: Joi.boolean(),
-  delete: Joi.boolean(),
-});
-
-export const permissionDetail = Joi.object({
-  permissionOwner: permissionRecord,
-  permissionGroup: permissionRecord,
-  permissionOther: permissionRecord,
-});
+export const index = Joi.array().items(Joi.string().required());
 
 export const documentField = Joi.object<TDocumentField>({
   name: Joi.string()
@@ -100,13 +85,11 @@ export const search = Joi.object({
   pagination,
 });
 
-export const sortingOrder = Joi.string()
-  .valid(...['ASC', 'DESC'])
+export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']);
 
 export const collectionIndex = Joi.object({
   name: indexName,
   sorting: sortingOrder,
 });
 
-export const transactionType = Joi.string()
-  .valid(...['deploy', 'rollup'])
+export const transactionType = Joi.string().valid(...['deploy', 'rollup']);

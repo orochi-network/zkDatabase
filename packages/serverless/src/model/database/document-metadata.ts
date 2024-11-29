@@ -5,7 +5,7 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document } from 'mongodb';
-import { PermissionBasic } from '../../common/permission.js';
+import { PermissionBasic } from '../../common/types.js';
 
 export interface DocumentMetadataSchema extends PermissionBasic, Document {
   collection: string;
@@ -14,15 +14,6 @@ export interface DocumentMetadataSchema extends PermissionBasic, Document {
   createdAt: Date;
   updatedAt: Date;
 }
-
-export const ZKDATABASE_DEFAULT_PERMISSION: Pick<
-  DocumentMetadataSchema,
-  'permissionOwner' | 'permissionGroup' | 'permissionOther'
-> = {
-  permissionOwner: 0,
-  permissionGroup: 0,
-  permissionOther: 0,
-};
 
 export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
   static collectionName: string =

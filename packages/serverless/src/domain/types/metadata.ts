@@ -1,11 +1,7 @@
-import { PermissionSet } from './permission.js';
-
 export type CollectionMetadata = {
   userName: string;
   groupName: string;
-  permissionOwner: PermissionSet;
-  permissionGroup: PermissionSet;
-  permissionOther: PermissionSet;
+  permission: number;
 };
 
 export type DocumentMetadata = CollectionMetadata & {

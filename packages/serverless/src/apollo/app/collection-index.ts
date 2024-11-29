@@ -7,6 +7,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
+import { TCollectionIndex } from '../types/collection-index.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
 import {
@@ -14,9 +15,7 @@ import {
   collectionName,
   databaseName,
   indexName,
-  indexes,
 } from './common.js';
-import { TCollectionIndex } from '../types/collection-index.js';
 
 // Index request
 export type TIndexNameRequest = {

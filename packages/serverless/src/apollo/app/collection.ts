@@ -10,7 +10,7 @@ import {
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { PermissionsData } from '../types/permission.js';
+import { PermissionData } from '../types/permission.js';
 import { SchemaData } from '../types/schema.js';
 import {
   createCollection,
@@ -37,10 +37,10 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  groupName?: string;
   schema: SchemaData;
   indexes?: TCollectionIndex[];
-  permission?: PermissionsData;
+  permission?: number;
+  groupName?: string;
 };
 
 export const CollectionRequest = Joi.object<TCollectionRequest>({
@@ -74,7 +74,7 @@ extend type Mutation {
     groupName: String,
     schema: [SchemaFieldInput!]!, 
     indexes: [IndexInput],
-    permission: PermissionDetailInput
+    permission: Number
   ): Boolean
 }
 `;
@@ -108,9 +108,9 @@ const collectionCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.groupName,
         args.schema,
-        args.permissions,
+        args.groupName,
+        args.permission,
         session
       )
     );

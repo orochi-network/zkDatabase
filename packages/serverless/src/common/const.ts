@@ -1,3 +1,5 @@
+import { Permission } from '@zkdb/permission';
+
 // System user
 export const ZKDATABASE_USER_NOBODY = 'nobody';
 export const ZKDATABASE_USER_SYSTEM = 'system';
@@ -20,3 +22,5 @@ export const O1JS_VALID_TYPE = [
   'Signature',
   'MerkleMapWitness',
 ];
+
+export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict().value;

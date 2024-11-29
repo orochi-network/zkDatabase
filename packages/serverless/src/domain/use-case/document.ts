@@ -1,3 +1,4 @@
+import { Permission } from '@zkdb/permission';
 import {
   CompoundSession,
   DB,
@@ -9,13 +10,10 @@ import {
 } from '@zkdb/storage';
 import { ClientSession, WithId } from 'mongodb';
 import {
+  PERMISSION_DEFAULT_VALUE,
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
-import {
-  PermissionBinary,
-  setPartialIntoPermission,
-} from '../../common/permission.js';
 import { getCurrentTime } from '../../helper/common.js';
 import ModelDocument, {
   DocumentRecord,
@@ -25,7 +23,6 @@ import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import { Document, DocumentFields } from '../types/document.js';
 import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
 import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { Permissions } from '../types/permission.js';
 import { WithProofStatus } from '../types/proof.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { isDatabaseOwner } from './database.js';
@@ -153,7 +150,7 @@ async function createDocument(
   collectionName: string,
   actor: string,
   document: DocumentFields,
-  permissions: Permissions,
+  permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
   if (
@@ -180,11 +177,17 @@ async function createDocument(
     documentFieldsToDocumentRecord(document);
 
   // Save the document to the database
-  const insertResult = await modelDocument.insertOne(documentRecord, compoundSession?.sessionService);
+  const insertResult = await modelDocument.insertOne(
+    documentRecord,
+    compoundSession?.sessionService
+  );
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const merkleIndex = await sequencer.getNextValue('merkle-index', compoundSession?.sessionService);
+  const merkleIndex = await sequencer.getNextValue(
+    'merkle-index',
+    compoundSession?.sessionService
+  );
 
   // 3. Create Metadata
   const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
@@ -199,32 +202,10 @@ async function createDocument(
     throw new Error('Cannot get documentSchema');
   }
 
-  const {
-    permissionOwner: collectionPermissionOwner,
-    permissionGroup: collectionPermissionGroup,
-    permissionOther: collectionPermissionOther,
-  } = documentSchema;
+  const { permission: collectionPermission } = documentSchema;
 
-  // TODO: Can we simplify the code by applying binary operations ?
-  const permissionOwner = PermissionBinary.toBinaryPermission(
-    setPartialIntoPermission(
-      PermissionBinary.fromBinaryPermission(collectionPermissionOwner),
-      permissions.permissionOwner
-    )
-  );
-
-  const permissionGroup = PermissionBinary.toBinaryPermission(
-    setPartialIntoPermission(
-      PermissionBinary.fromBinaryPermission(collectionPermissionGroup),
-      permissions.permissionGroup
-    )
-  );
-
-  const permissionOther = PermissionBinary.toBinaryPermission(
-    setPartialIntoPermission(
-      PermissionBinary.fromBinaryPermission(collectionPermissionOther),
-      permissions.permissionOther
-    )
+  const permissionCombine = Permission.from(permission).combine(
+    Permission.from(collectionPermission)
   );
 
   await modelDocumentMetadata.insertOne(
@@ -240,9 +221,7 @@ async function createDocument(
         owner: ZKDATABASE_USER_SYSTEM,
       },
       // Overwrite inherited permission with the new one
-      permissionOwner,
-      permissionGroup,
-      permissionOther,
+      permission: permissionCombine.value,
       owner: actor,
       group: documentSchema.group,
       createdAt: getCurrentTime(),
@@ -446,22 +425,23 @@ function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
   ];
 }
 
-function filterDocumentsByPermissions(
-  documents: Array<any>,
+export function filterDocumentsByPermission(
+  listDocument: Array<any>,
   actor: string,
   userGroups: Array<string>
 ): Array<any> {
-  return documents.filter(({ metadata }) => {
-    if (!metadata) return false;
+  return listDocument.filter(({ metadata }) => {
+    const permission = Permission.from(metadata.permission);
+    if (!metadata) {
+      return false;
+    }
     if (metadata.owner === actor) {
-      return PermissionBinary.fromBinaryPermission(metadata.permissionOwner)
-        .read;
+      return permission.owner.read;
     }
     if (userGroups.includes(metadata.group)) {
-      return PermissionBinary.fromBinaryPermission(metadata.permissionGroup)
-        .read;
+      return permission.group.read;
     }
-    return PermissionBinary.fromBinaryPermission(metadata.permissionOther).read;
+    return permission.other.read;
   });
 }
 
@@ -503,7 +483,7 @@ async function findDocumentsWithMetadata(
     let filteredDocuments: any[];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermissions(
+      filteredDocuments = filterDocumentsByPermission(
         documentsWithMetadata,
         actor,
         userGroups
@@ -517,7 +497,7 @@ async function findDocumentsWithMetadata(
 
       const task = tasks?.find(
         (taskEntity: TaskEntity) =>
-          taskEntity.docId === (documentRecord as any)._id.toString()
+          taskEntity.docId === documentRecord._id.toString()
       );
 
       const document: Document = {
@@ -530,15 +510,7 @@ async function findDocumentsWithMetadata(
         merkleIndex: documentRecord.metadata.merkleIndex,
         groupName: documentRecord.metadata.group,
         userName: documentRecord.metadata.owner,
-        permissionOwner: PermissionBinary.fromBinaryPermission(
-          documentRecord.metadata.permissionOwner
-        ),
-        permissionGroup: PermissionBinary.fromBinaryPermission(
-          documentRecord.metadata.permissionGroup
-        ),
-        permissionOther: PermissionBinary.fromBinaryPermission(
-          documentRecord.metadata.permissionOther
-        ),
+        permission: documentRecord.metadata.permission,
       };
 
       const object = {
@@ -582,8 +554,6 @@ async function searchDocuments(
 
     const userGroups = await getUsersGroup(databaseName, actor);
 
-    // const matchQuery = buildMongoQuery(query);
-
     const pipeline = buildPipeline(
       query ? { ...parseQuery(query), active: true } : null,
       pagination
@@ -596,7 +566,7 @@ async function searchDocuments(
     let filteredDocuments: any[];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermissions(
+      filteredDocuments = filterDocumentsByPermission(
         documentsWithMetadata,
         actor,
         userGroups

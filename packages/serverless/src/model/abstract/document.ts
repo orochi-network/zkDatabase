@@ -3,16 +3,12 @@
 import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
-import { PermissionBasic } from '../../common/permission.js';
 import logger from '../../helper/logger.js';
 import { SchemaField } from '../database/collection-metadata.js';
 
 export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
 
-export type DocumentPermission = Pick<
-  PermissionBasic,
-  'permissionOwner' | 'permissionGroup' | 'permissionOther'
->;
+export type DocumentPermission = number
 
 export type DocumentRecord = Document & {
   _id?: ObjectId;
