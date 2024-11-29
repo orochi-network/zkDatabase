@@ -1,10 +1,10 @@
 import { IApiClient, TProofStatus } from '@zkdb/api';
+import { Permission } from '@zkdb/permission';
 import { Field } from 'o1js';
 import {
   Document,
   MerkleWitness,
-  Ownership,
-  Permissions,
+  OwnershipAndPermission,
   ProofStatus,
 } from '../../types';
 import { Ownable, ZKDocument } from '../interfaces';
@@ -52,40 +52,43 @@ class DocumentOwnerShip implements Ownable {
     result.unwrap();
   }
 
-  async setPermissions(permissions: Permissions): Promise<Ownership> {
-    const remotePermissions = await this.getOwnership();
-
+  async setPermission(permission: Permission): Promise<OwnershipAndPermission> {
     const result = await this.apiClient.permission.set({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
-      permission: {
-        permissionOwner: {
-          ...remotePermissions.permissionOwner,
-          ...permissions.permissionOwner,
-        },
-        permissionGroup: {
-          ...remotePermissions.permissionGroup,
-          ...permissions.permissionGroup,
-        },
-        permissionOther: {
-          ...remotePermissions.permissionOther,
-          ...permissions.permissionOther,
-        },
-      },
+      permission: permission.value,
     });
 
-    return result.unwrap();
+    const {
+      groupName,
+      userName,
+      permission: permissionDetail,
+    } = result.unwrap();
+    return {
+      groupName,
+      userName,
+      ...Permission.from(permissionDetail).toJSON(),
+    };
   }
 
-  async getOwnership(): Promise<Ownership> {
+  async getPermission(): Promise<OwnershipAndPermission> {
     const result = await this.apiClient.permission.get({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: this._id,
     });
 
-    return result.unwrap();
+    const {
+      groupName,
+      userName,
+      permission: permissionDetail,
+    } = result.unwrap();
+    return {
+      groupName,
+      userName,
+      ...Permission.from(permissionDetail).toJSON(),
+    };
   }
 }
 

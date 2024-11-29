@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
 import { IApiClient } from '@zkdb/api';
+import { Permission } from '@zkdb/permission';
 import { Field } from 'o1js';
 import {
   Filter,
   IndexField,
   MerkleWitness,
-  Ownership,
+  OwnershipAndPermission,
   Pagination,
-  Permissions,
 } from '../../types';
 import {
   Ownable,
@@ -19,7 +19,8 @@ import {
 import {
   DocumentEncoded,
   ProvableTypeString,
-  SchemaDefinition,
+  SchemaExtend,
+  SchemaInterface,
 } from '../schema';
 import { CollectionIndexImpl } from './collection-index';
 import { ZKDocumentImpl } from './document';
@@ -63,25 +64,43 @@ class CollectionOwnership implements Ownable {
     result.unwrap();
   }
 
-  async setPermissions(permission: Permissions): Promise<Ownership> {
+  async setPermission(permission: Permission): Promise<OwnershipAndPermission> {
     const result = await this.apiClient.permission.set({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
-      permission,
+      permission: permission.value,
     });
 
-    return result.unwrap();
+    const {
+      groupName,
+      userName,
+      permission: permissionDetail,
+    } = result.unwrap();
+    return {
+      groupName,
+      userName,
+      ...Permission.from(permissionDetail).toJSON(),
+    };
   }
 
-  async getOwnership(): Promise<Ownership> {
+  async getPermission(): Promise<OwnershipAndPermission> {
     const result = await this.apiClient.permission.get({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
       docId: undefined,
     });
 
-    return result.unwrap();
+    const {
+      groupName,
+      userName,
+      permission: permissionDetail,
+    } = result.unwrap();
+    return {
+      groupName,
+      userName,
+      ...Permission.from(permissionDetail).toJSON(),
+    };
   }
 }
 
@@ -125,11 +144,11 @@ export class CollectionImpl implements ZKCollection {
     return result.unwrap();
   }
 
-  async create<T extends { getSchema: () => SchemaDefinition }>(
-    groupName: string,
+  async create<T extends SchemaInterface>(
     type: T,
     indexes: IndexField[],
-    permissions: Permissions
+    permission?: Permission,
+    groupName?: string
   ): Promise<boolean> {
     const result = await this.apiClient.collection.create({
       databaseName: this.databaseName,
@@ -140,7 +159,9 @@ export class CollectionImpl implements ZKCollection {
         name,
         sorting: sorting === 'asc' ? 'ASC' : 'DESC',
       })),
-      permissions,
+      permission: permission
+        ? permission.value
+        : Permission.policyPrivate().value,
     });
 
     return result.unwrap();
@@ -245,7 +266,7 @@ export class CollectionImpl implements ZKCollection {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
     },
-  >(model: InstanceType<T>, permissions: Permissions): Promise<MerkleWitness>;
+  >(model: InstanceType<T>, permission: Permission): Promise<MerkleWitness>;
 
   insert<
     T extends {
@@ -259,22 +280,15 @@ export class CollectionImpl implements ZKCollection {
       new (..._args: any): InstanceType<T>;
       serialize: () => DocumentEncoded;
     },
-  >(model: InstanceType<T>, permissions?: Permissions): Promise<MerkleWitness> {
-    const isPermissionPassed =
-      permissions && Object.keys(permissions).length > 0;
-    const documentPermission = isPermissionPassed
-      ? permissions
-      : await this.ownership.getOwnership();
-
+  >(
+    model: InstanceType<T> & SchemaExtend,
+    permission?: Permission
+  ): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.create({
       databaseName: this.databaseName,
       collectionName: this.collectionName,
-      documentRecord: (model as any).serialize(),
-      documentPermission: {
-        permissionOwner: documentPermission.permissionOwner,
-        permissionOther: documentPermission.permissionOther,
-        permissionGroup: documentPermission.permissionGroup,
-      },
+      documentRecord: model.serialize(),
+      documentPermission: permission ? permission.value : undefined,
     });
 
     const merkleWitness = result.unwrap();
