@@ -5,8 +5,8 @@ import {
   TApolloClient,
 } from "./common";
 import {
-  TDocumentHistoryPayload,
   TDocumentEncoded,
+  TDocumentHistoryPayload,
   TDocumentPayload,
   TMerkleWitness,
   TPagination,
@@ -35,7 +35,7 @@ const DOCUMENT_CREATE = gql`
     $databaseName: String!
     $collectionName: String!
     $documentRecord: [DocumentRecordInput!]!
-    $documentPermission: PermissionDetailInput
+    $documentPermission: number
   ) {
     documentCreate(
       databaseName: $databaseName
@@ -155,7 +155,7 @@ export const document = <T>(client: TApolloClient<T>) => ({
       databaseName: string;
       collectionName: string;
       documentRecord: TDocumentEncoded;
-      documentPermission: number;
+      documentPermission?: number;
     },
     { documentCreate: TMerkleWitness }
   >(client, DOCUMENT_CREATE, (data) => data.documentCreate),

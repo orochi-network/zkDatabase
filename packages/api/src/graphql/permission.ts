@@ -5,7 +5,6 @@ import {
   TApolloClient,
 } from "./common";
 import {
-  TOwnership,
   TOwnershipAndPermissionRequest,
   TOwnershipAndPermissionResponse,
   TUser,
@@ -15,7 +14,7 @@ export type TUserSignUpRecord = TUser;
 
 export const permission = <T>(client: TApolloClient<T>) => ({
   set: createMutateFunction<
-    TOwnership,
+    TOwnershipAndPermissionResponse,
     TOwnershipAndPermissionRequest & {
       permission: number;
     },
@@ -44,7 +43,7 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     (data) => data.permissionSet
   ),
   get: createQueryFunction<
-    TOwnership,
+    TOwnershipAndPermissionResponse,
     TOwnershipAndPermissionRequest,
     { permissionList: TOwnershipAndPermissionResponse }
   >(
