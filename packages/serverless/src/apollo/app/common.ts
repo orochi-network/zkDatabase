@@ -64,7 +64,7 @@ export const indexNumber = Joi.string()
   .regex(/^[0-9]+$/)
   .required();
 
-export const indexes = Joi.array().items(Joi.string().required());
+export const index = Joi.array().items(Joi.string().required());
 
 export const permissionRecord = Joi.object<PermissionRecord>({
   system: Joi.boolean(),
@@ -100,13 +100,11 @@ export const search = Joi.object({
   pagination,
 });
 
-export const sortingOrder = Joi.string()
-  .valid(...['ASC', 'DESC'])
+export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']);
 
 export const collectionIndex = Joi.object({
   name: indexName,
   sorting: sortingOrder,
 });
 
-export const transactionType = Joi.string()
-  .valid(...['deploy', 'rollup'])
+export const transactionType = Joi.string().valid(...['deploy', 'rollup']);

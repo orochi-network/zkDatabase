@@ -14,7 +14,6 @@ import {
   collectionName,
   databaseName,
   indexName,
-  indexes,
 } from './common.js';
 import { TCollectionIndex } from '../types/collection-index.js';
 
@@ -30,7 +29,7 @@ export const IndexListRequest = CollectionRequest;
 export type TIndexRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  indexes: TCollectionIndex[];
+  index: TCollectionIndex[];
 };
 
 export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
@@ -44,7 +43,7 @@ export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
 export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   collectionName,
   databaseName,
-  indexes: Joi.array().items(collectionIndex),
+  index: Joi.array().items(collectionIndex),
 });
 
 export type CollectionIndex = {
@@ -125,7 +124,7 @@ const indexCreate = authorizeWrapper(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.indexes
+      args.index
     )
 );
 

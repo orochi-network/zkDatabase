@@ -22,7 +22,7 @@ const COLLECTION_CREATE = gql`
       collectionName: $collectionName
       groupName: $groupName
       schema: $schema
-      index: $indexes
+      index: $index
       permission: $permission
     )
   }
