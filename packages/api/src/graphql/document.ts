@@ -9,7 +9,6 @@ import {
   TDocumentEncoded,
   TDocumentPayload,
   TMerkleWitness,
-  TPermissions,
   TPagination,
   TPaginationResponse,
 } from "./types";
@@ -156,7 +155,7 @@ export const document = <T>(client: TApolloClient<T>) => ({
       databaseName: string;
       collectionName: string;
       documentRecord: TDocumentEncoded;
-      documentPermission: TPermissions;
+      documentPermission: number;
     },
     { documentCreate: TMerkleWitness }
   >(client, DOCUMENT_CREATE, (data) => data.documentCreate),

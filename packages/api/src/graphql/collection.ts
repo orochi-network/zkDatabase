@@ -4,7 +4,7 @@ import {
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TPermissions, TSchema } from "./types";
+import { TSchema } from "./types";
 import { Collection } from "./types/collection";
 import { TCollectionIndex } from "./types/collection-index";
 
@@ -12,10 +12,10 @@ const COLLECTION_CREATE = gql`
   mutation CollectionCreate(
     $databaseName: String!
     $collectionName: String!
-    $groupName: String!
+    $groupName: String
     $schema: [SchemaFieldInput!]!
     $indexes: [IndexInput]
-    $permissions: PermissionDetailInput
+    $permission: PermissionDetailInput
   ) {
     collectionCreate(
       databaseName: $databaseName
@@ -23,7 +23,7 @@ const COLLECTION_CREATE = gql`
       groupName: $groupName
       schema: $schema
       indexes: $indexes
-      permissions: $permissions
+      permission: $permission
     )
   }
 `;
@@ -51,27 +51,7 @@ const COLLECTION_LIST = gql`
       ownership {
         userName
         groupName
-        permissionOwner {
-          read
-          write
-          delete
-          create
-          system
-        }
-        permissionGroup {
-          read
-          write
-          delete
-          create
-          system
-        }
-        permissionOther {
-          read
-          write
-          delete
-          create
-          system
-        }
+        permission
       }
     }
   }
@@ -90,10 +70,10 @@ export type TCollectionExistRequest = TCollectionListRequest & {
 export type TCollectionExistResponse = { collectionExist: boolean };
 
 export type TCollectionCreateRequest = TCollectionExistRequest & {
-  groupName: string;
+  groupName?: string;
   schema: TSchema;
   indexes: TCollectionIndex[];
-  permissions: TPermissions;
+  permission: number;
 };
 
 export type TCollectionCreateResponse = { collectionCreate: boolean };
