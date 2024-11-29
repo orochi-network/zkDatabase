@@ -1,43 +1,9 @@
-import { PermissionRecord } from '../common/permission';
+import { PermissionDetailPartial } from '@zkdb/permission';
 
 export type PermissionGroup = 'User' | 'Group' | 'Other';
 
-export type Permissions = {
-  permissionOwner?: Partial<PermissionRecord>;
-  permissionGroup?: Partial<PermissionRecord>;
-  permissionOther?: Partial<PermissionRecord>;
+type MapPermission<T extends Record<string, any>> = {
+  [Prop in keyof T as `permission${Capitalize<string & Prop>}`]: T[Prop];
 };
 
-export class AccessPermissions {
-  static readonly readOnlyPermissions: PermissionRecord = {
-    write: false,
-    read: true,
-    create: false,
-    delete: false,
-    system: false,
-  };
-
-  static readonly fullAdminPermissions: PermissionRecord = {
-    write: true,
-    read: true,
-    create: true,
-    delete: true,
-    system: true,
-  };
-
-  static readonly noPermissions: PermissionRecord = {
-    write: false,
-    read: false,
-    create: false,
-    delete: false,
-    system: false,
-  };
-
-  static readonly fullAccessPermissions: PermissionRecord = {
-    write: true,
-    read: true,
-    create: true,
-    delete: true,
-    system: false,
-  };
-}
+export type Permission = MapPermission<PermissionDetailPartial>;

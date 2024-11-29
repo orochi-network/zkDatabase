@@ -1,8 +1,9 @@
 /* eslint-disable no-unused-vars */
+import { Permission } from '@zkdb/permission';
+import { Filter, MerkleWitness, Pagination } from '../../types';
 import { IndexField } from '../../types/collection-index';
-import { Filter, MerkleWitness, Pagination, Permissions } from '../../types';
 import { ZKDocument } from '../interfaces';
-import { DocumentEncoded, SchemaDefinition } from '../schema';
+import { DocumentEncoded, SchemaInterface } from '../schema';
 import { Ownable } from './ownable';
 
 export interface ZKCollectionIndex {
@@ -18,15 +19,11 @@ export interface ZKCollection {
 
   exist(): Promise<boolean>;
 
-  create<
-    T extends {
-      getSchema: () => SchemaDefinition;
-    },
-  >(
-    groupName: string,
+  create<T extends SchemaInterface>(
     type: T,
-    indexes: IndexField[],
-    permissions: Permissions
+    indexes: string[] | IndexField[],
+    permission?: Permission,
+    groupName?: string
   ): Promise<boolean>;
 
   findOne<
@@ -53,7 +50,7 @@ export interface ZKCollection {
     },
   >(
     model: InstanceType<T>,
-    permissions: Permissions
+    permission: Permission
   ): Promise<MerkleWitness>;
 
   insert<

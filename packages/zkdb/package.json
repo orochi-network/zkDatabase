@@ -97,6 +97,7 @@
   },
   "dependencies": {
     "@zkdb/api": "^1.1.14",
+    "@zkdb/permission": "0.1.2",
     "@zkdb/smart-contract": "1.1.7",
     "graphql": "16.9.0",
     "graphql-request": "7.1.2",

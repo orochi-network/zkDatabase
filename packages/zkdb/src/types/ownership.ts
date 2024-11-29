@@ -1,9 +1,8 @@
-import { PermissionRecord } from '../common/permission.js';
+import { PermissionDetail } from '@zkdb/permission';
 
 export type Ownership = {
   userName: string;
   groupName: string;
-  permissionOwner?: Partial<PermissionRecord>;
-  permissionGroup?: Partial<PermissionRecord>;
-  permissionOther?: Partial<PermissionRecord>;
 };
+
+export type OwnershipAndPermission = Ownership & PermissionDetail;

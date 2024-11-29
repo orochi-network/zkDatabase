@@ -1,4 +1,5 @@
-import { Ownership, Permissions } from '../../types';
+import { Permission } from '@zkdb/permission';
+import { OwnershipAndPermission } from '../../types';
 
 /* eslint-disable no-unused-vars */
 export interface Ownable {
@@ -6,7 +7,7 @@ export interface Ownable {
 
   changeOwner(userName: string): Promise<void>;
 
-  setPermissions(permissions: Permissions): Promise<Ownership>;
+  setPermission(permission: Permission): Promise<OwnershipAndPermission>;
 
-  getOwnership(): Promise<Ownership>;
+  getPermission(): Promise<OwnershipAndPermission>;
 }

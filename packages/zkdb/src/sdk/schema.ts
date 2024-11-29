@@ -1,20 +1,20 @@
 /* eslint-disable max-classes-per-file */
 import {
-  Poseidon,
-  InferProvable,
+  Bool,
+  Character,
   CircuitString,
+  Field,
+  InferProvable,
+  Int64,
+  MerkleMapWitness,
+  Poseidon,
+  PrivateKey,
+  PublicKey,
+  Sign,
+  Signature,
+  Struct,
   UInt32,
   UInt64,
-  Character,
-  Int64,
-  Sign,
-  PublicKey,
-  PrivateKey,
-  Signature,
-  MerkleMapWitness,
-  Struct,
-  Field,
-  Bool,
 } from 'o1js';
 
 /**
@@ -23,6 +23,10 @@ import {
  * It maps field names to provable types, enabling the creation of documents
  * with cryptographic proof capabilities.
  */
+
+export interface SchemaInterface {
+  getSchema: () => SchemaDefinition;
+}
 
 export interface SchemaExtend {
   serialize(): DocumentEncoded;

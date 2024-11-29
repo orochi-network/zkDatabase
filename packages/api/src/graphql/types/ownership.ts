@@ -9,8 +9,6 @@ export type TOwnershipAndPermissionRequest = {
   docId?: string;
 };
 
-export type TOwnershipAndPermissionResponse = {
-  userName: string;
-  groupName: string;
+export type TOwnershipAndPermissionResponse = TOwnership & {
   permission: number;
 };
