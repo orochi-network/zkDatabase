@@ -1,8 +1,11 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { TSchemaField } from './schema.js';
+import { TMetadataDetailCollection } from './metadata.js';
 
 export enum ESorting {
+  // -1
   Asc,
+  // 1
   Desc,
 }
 
@@ -10,14 +13,6 @@ export enum EProperty {
   Compound,
   Unique,
 }
-
-export type TCollection = {
-  name: string;
-  index: string[];
-  schema: TSchemaField[];
-  ownership: OwnershipAndPermission;
-  sizeOnDisk: number;
-};
 
 export type TCollectionIndex = {
   name: string;
@@ -31,3 +26,8 @@ export type TCollectionIndexInfo = {
   since: Date;
   property: EProperty;
 };
+
+export type TCollectionDetail = TMetadataDetailCollection<{
+  index: TCollectionIndex[];
+  sizeOnDisk: number;
+}>;

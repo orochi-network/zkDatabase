@@ -11,3 +11,22 @@ export type TSchemaField = {
 export type TSchemaFieldInput = Omit<TSchemaField, 'order'> & {
   sorting?: ESorting;
 };
+
+/** Mapping type of schema to index
+ * Example:
+ * ```ts
+ * const field = {
+ *     name: 'user',
+ *     kind: 'CircuitString',
+ *     indexed: true,
+ *     sorting: 'Asc',
+ * }
+ * // Will be converted to:
+ * {
+ *     'user.name': 'Asc',
+ * }
+ * ```
+ */
+export type TSchemaIndex<T> = {
+  [Property in keyof T as `${string & Property}.name`]: ESorting;
+};

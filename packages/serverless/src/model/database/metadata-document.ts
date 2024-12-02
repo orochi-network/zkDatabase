@@ -5,29 +5,23 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document } from 'mongodb';
-import { PermissionBasic } from '../../common/types.js';
+import { TMetadataDocument } from 'types';
 
-export interface DocumentMetadataSchema extends PermissionBasic, Document {
-  collection: string;
-  docId: string;
-  merkleIndex: number;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export interface IMetadataDocument extends Document, TMetadataDocument {}
 
-export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> {
+export class ModelMetadataDocument extends ModelGeneral<IMetadataDocument> {
   static collectionName: string =
-    zkDatabaseConstants.databaseCollections.permission;
+    zkDatabaseConstants.databaseCollections.metadataDocument;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelDocumentMetadata.collectionName);
+    super(databaseName, DB.service, ModelMetadataDocument.collectionName);
   }
 
   public static async init(databaseName: string) {
     const collection = new ModelCollection(
       databaseName,
       DB.service,
-      ModelDocumentMetadata.collectionName
+      ModelMetadataDocument.collectionName
     );
     if (!(await collection.isExist())) {
       await collection.index({ collection: 1, docId: 1 }, { unique: true });
@@ -36,4 +30,4 @@ export class ModelDocumentMetadata extends ModelGeneral<DocumentMetadataSchema> 
   }
 }
 
-export default ModelDocumentMetadata;
+export default ModelMetadataDocument;

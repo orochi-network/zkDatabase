@@ -1,24 +1,24 @@
-import { OwnershipAndPermission } from '@zkdb/permission';
+import { ObjectId } from 'mongodb';
 import { SchemaField } from '../domain/common/schema.js';
-import { TSchemaField } from './schema.js';
 
 export type TDocumentField = SchemaField;
 
-export type TDocument = {
+export type TDocumentBasic = {
+  _id: ObjectId;
   docId: string;
-  field: TDocumentField[];
-  createdAt: Date;
-};
-
-export type THistoryDocument = {
-  docId: string;
-  docList: TDocument[];
   active: boolean;
+  previousId: ObjectId;
+  nextId: ObjectId;
+  updatedAt: Date;
+  createdAt: Date;
 };
 
-export type TDocumentMetadata = OwnershipAndPermission & {
-  collection: string;
-  field: TSchemaField[];
-  createdAt: Date;
-  updatedAt: Date;
+export type TDocumentDetail = TDocumentBasic & {
+  document: Record<string, TDocumentField>;
+};
+
+export type TDocumentHistory = {
+  docId: string;
+  docList: TDocumentDetail[];
+  active: boolean;
 };
