@@ -10,3 +10,4 @@ export * from './user.js';
 export * from './pagination.js';
 export * from './rollup.js';
 export * from './transaction.js';
+export * from './schema.js';

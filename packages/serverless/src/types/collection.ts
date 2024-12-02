@@ -1,12 +1,12 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
-import { TDocumentSchema } from './document.js';
+import { TSchemaField } from './schema.js';
 
 export type TSorting = 'ASC' | 'DESC';
 
 export type TCollection = {
   name: string;
   index: string[];
-  schema: TDocumentSchema;
+  schema: TSchemaField[];
   ownership: OwnershipAndPermission;
   sizeOnDisk: number;
 };

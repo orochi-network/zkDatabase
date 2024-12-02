@@ -1,10 +1,12 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { SchemaField } from '../domain/common/schema.js';
-import { ProvableTypeString } from '../domain/common/schema.js';
+import { TSchemaField } from './schema.js';
+
+export type TDocumentField = SchemaField;
 
 export type TDocument = {
   docId: string;
-  field: SchemaField[];
+  field: TDocumentField[];
   createdAt: Date;
 };
 
@@ -14,22 +16,9 @@ export type THistoryDocument = {
   active: boolean;
 };
 
-export type TDocumentSchemaField = {
-  order: number;
-  name: string;
-  kind: ProvableTypeString;
-  indexed: boolean;
-};
-
-export type TDocumentSchema = TDocumentSchemaField[];
-
-export type TDocumentSchemaFieldInput = Omit<TDocumentSchemaField, 'order'>;
-
-export type TDocumentSchemaInput = TDocumentSchemaFieldInput[];
-
 export type TDocumentMetadata = OwnershipAndPermission & {
   collection: string;
-  field: SchemaField[];
+  field: TSchemaField[];
   createdAt: Date;
   updatedAt: Date;
 };
