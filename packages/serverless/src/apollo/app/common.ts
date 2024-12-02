@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
-import { TDocumentField } from '../types/document.js';
+import { gql } from '../../helper/common.js';
+import { TDocumentField } from '../../types/index.js';
 
 export const objectId = Joi.string()
   .trim()
@@ -93,3 +94,21 @@ export const collectionIndex = Joi.object({
 });
 
 export const transactionType = Joi.string().valid(...['deploy', 'rollup']);
+
+export const typeDefsCommon = gql`
+  enum ESorting {
+    ASC
+    DESC
+  }
+
+  type IndexInput {
+    name: String!
+    sorting: ESorting!
+  }
+
+  type SchemaFieldInput {
+    name: String!
+    kind: String!
+    indexed: Boolean
+  }
+`;

@@ -1,5 +1,4 @@
 import GraphQLJSON from 'graphql-type-json';
-import { gql } from 'helper/common.js';
 import Joi from 'joi';
 import {
   createIndex,
@@ -8,6 +7,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
+import { gql } from '../../helper/common.js';
 import { TCollectionIndex } from '../../types/index';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
@@ -53,22 +53,12 @@ export const typeDefsCollectionIndex = gql`
   type Query
   type Mutation
 
-  enum ESorting {
-    ASC
-    DESC
-  }
-
   type CollectionIndex {
     name: String!
     size: Int!
     access: Int!
     since: Date!
     property: String!
-  }
-
-  type IndexInput {
-    name: String!
-    sorting: ESorting!
   }
 
   extend type Query {

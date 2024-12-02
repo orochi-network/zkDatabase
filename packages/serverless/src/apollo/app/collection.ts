@@ -7,8 +7,7 @@ import {
   createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { TCollectionIndex } from '../types/collection-index.js';
-import { SchemaData } from '../types/schema.js';
+import { TCollection, TCollectionIndex } from '../../types/index.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   collectionIndex,
@@ -17,6 +16,7 @@ import {
   groupName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
+import { gql } from '../../helper/common.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -35,7 +35,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: SchemaData;
+  schema: TCollection;
   index?: TCollectionIndex[];
   permission?: number;
   groupName?: string;
@@ -55,26 +55,27 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   permission: Joi.number().min(0).max(0xffffff).optional(),
 });
 
-export const typeDefsCollection = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsCollection = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-extend type Query {
-  collectionList(databaseName: String!): [CollectionDescriptionOutput]!
-  collectionExist(databaseName: String!, collectionName: String!): Boolean
-}
+  extend type Query {
+    collectionList(databaseName: String!): [CollectionDescriptionOutput]!
+    collectionExist(databaseName: String!, collectionName: String!): Boolean
+  }
 
-extend type Mutation {
-  collectionCreate(
-    databaseName: String!, 
-    collectionName: String!,
-    groupName: String,
-    schema: [SchemaFieldInput!]!, 
-    index: [IndexInput],
-    permission: Int
-  ): Boolean
-}
+  extend type Mutation {
+    collectionCreate(
+      databaseName: String!
+      collectionName: String!
+      groupName: String
+      schema: [SchemaFieldInput!]!
+      index: [IndexInput]
+      permission: Int
+    ): Boolean
+  }
 `;
 
 // Query

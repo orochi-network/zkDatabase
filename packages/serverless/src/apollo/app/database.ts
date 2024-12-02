@@ -15,6 +15,7 @@ import {
 import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, pagination, publicKey, userName } from './common.js';
+import { gql } from '../../helper/common.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -60,63 +61,64 @@ const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
   newOwner: userName,
 });
 
-export const typeDefsDatabase = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsDatabase = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-type DbSetting {
-  merkleHeight: Int!
-  publicKey: String
-  databaseOwner: String!,
-}
+  type DbSetting {
+    merkleHeight: Int!
+    publicKey: String
+    databaseOwner: String!
+  }
 
-input PaginationInput {
-  limit: Int,
-  offset: Int
-}
+  input PaginationInput {
+    limit: Int
+    offset: Int
+  }
 
-type Collection {
-  name: String!
-}
+  type Collection {
+    name: String!
+  }
 
-type DbDeploy {
-  databaseName: String!
-  merkleHeight: Int!
-  appPublicKey: String!
-  tx: String!
-}
+  type DbDeploy {
+    databaseName: String!
+    merkleHeight: Int!
+    appPublicKey: String!
+    tx: String!
+  }
 
-type DbDescription {
-  databaseName: String!,
-  databaseSize: String!,
-  databaseOwner: String!,
-  appPublicKey: String,
-  merkleHeight: Int!,
-  deployStatus: TransactionStatus,
-  collections: [CollectionDescriptionOutput]!
-}
+  type DbDescription {
+    databaseName: String!
+    databaseSize: String!
+    databaseOwner: String!
+    appPublicKey: String
+    merkleHeight: Int!
+    deployStatus: TransactionStatus
+    collections: [CollectionDescriptionOutput]!
+  }
 
-type DatabasePaginationOutput {
-  data: [DbDescription]!
-  totalSize: Int!
-  offset: Int!
-}
+  type DatabasePaginationOutput {
+    data: [DbDescription]!
+    totalSize: Int!
+    offset: Int!
+  }
 
-extend type Query {
-  dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
-  dbStats(databaseName: String!): JSON
-  dbSetting(databaseName: String!): DbSetting!
-  dbExist(databaseName: String!): Boolean!
-  #dbFindIndex(databaseName: String!, index: Int!): JSON
-}
+  extend type Query {
+    dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
+    dbStats(databaseName: String!): JSON
+    dbSetting(databaseName: String!): DbSetting!
+    dbExist(databaseName: String!): Boolean!
+    #dbFindIndex(databaseName: String!, index: Int!): JSON
+  }
 
-extend type Mutation {
-  dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
-  dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
-  dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
-  #dbDrop(databaseName: String!): Boolean
-}
+  extend type Mutation {
+    dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
+    dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
+    dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
+    #dbDrop(databaseName: String!): Boolean
+  }
 `;
 
 export const merkleHeight = Joi.number().integer().positive().required();

@@ -12,8 +12,6 @@ import {
 import { gql } from '../../helper/common.js';
 import { DocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
-import { TDocumentFields } from '../types/document.js';
-import { Pagination } from '../types/pagination.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import {
@@ -23,14 +21,13 @@ import {
   pagination,
 } from './common.js';
 import { SchemaField } from '../../domain/common/schema.js';
+import { TPagination } from '../../types/pagination.js';
 
-export type TDocumentFindRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-};
+export type TDocumentField = SchemaField;
 
 export type TDocumentsFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
-  pagination: Pagination;
+  pagination: TPagination;
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {

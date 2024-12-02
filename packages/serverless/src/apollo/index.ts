@@ -3,6 +3,7 @@ import {
   typeDefsCollectionIndex,
 } from './app/collection-index.js';
 import { resolversCollection, typeDefsCollection } from './app/collection.js';
+import { typeDefsCommon } from './app/common.js';
 import { resolversDatabase, typeDefsDatabase } from './app/database.js';
 import {
   resolversDocumentHistory,
@@ -22,14 +23,10 @@ import {
   resolversTransaction,
   typeDefsTransaction,
 } from './app/transaction.js';
-import { typeCommonDefsCollectionIndex } from './app/types/collection-index.js';
-import { typeCommonDefsCollection } from './app/types/collection.js';
-import { typeCommonDefsDocument } from './app/types/document.js';
-import { typeCommonDefsMetadata } from './app/types/metadata.js';
-import { typeCommonDefsTransaction } from './app/types/transaction.js';
 import { resolversUser, typeDefsUser } from './app/user.js';
 
 export const TypedefsApp = [
+  typeDefsCommon,
   typeDefsDatabase,
   typeDefsCollection,
   typeDefsDocument,
@@ -42,11 +39,6 @@ export const TypedefsApp = [
   typeDefsDocumentHistory,
   typeDefsTransaction,
   typeDefsRollUp,
-  typeCommonDefsDocument,
-  typeCommonDefsCollection,
-  typeCommonDefsMetadata,
-  typeCommonDefsCollectionIndex,
-  typeCommonDefsTransaction,
   typeDefsEnvironment,
 ];
 
