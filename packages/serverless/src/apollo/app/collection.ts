@@ -49,7 +49,7 @@ export const CollectionRequest = Joi.object<TCollectionRequest>({
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
-  groupName,
+  groupName: groupName.optional(),
   index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
   permission: Joi.number().min(0).optional(),
