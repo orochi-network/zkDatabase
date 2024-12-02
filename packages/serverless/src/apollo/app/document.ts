@@ -22,51 +22,52 @@ import {
   documentField,
   pagination,
 } from './common.js';
+import { SchemaField } from '../../domain/common/schema.js';
 
 export type TDocumentFindRequest = TCollectionRequest & {
-  documentQuery: { [key: string]: string };
+  query: { [key: string]: string };
 };
 
 export type TDocumentsFindRequest = TCollectionRequest & {
-  documentQuery: { [key: string]: string };
+  query: { [key: string]: string };
   pagination: Pagination;
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  documentRecord: DocumentRecord;
+  document: DocumentRecord;
   documentPermission: number;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
-  documentQuery: { [key: string]: string };
-  documentRecord: TDocumentFields;
+  query: { [key: string]: string };
+  document: TDocumentFields;
 };
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
-  documentQuery: Joi.object(),
+  query: Joi.object(),
 });
 
 export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
   databaseName,
   collectionName,
-  documentQuery: Joi.object(),
+  query: Joi.object(),
   pagination,
 });
 
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: Joi.number().min(0).optional(),
-  documentRecord: Joi.required(),
+  documentPermission: Joi.number().min(0).max(0xffffff).required(),
+  document: Joi.required(),
 });
 
 export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
-  documentQuery: Joi.object(),
-  documentRecord: Joi.required(),
+  query: Joi.object(),
+  document: Joi.required(),
 });
 
 export const typeDefsDocument = gql`
@@ -96,12 +97,12 @@ export const typeDefsDocument = gql`
     documentFind(
       databaseName: String!
       collectionName: String!
-      documentQuery: JSON!
+      query: JSON!
     ): DocumentOutput
     documentsFind(
       databaseName: String!
       collectionName: String!
-      documentQuery: JSON!
+      query: JSON!
       pagination: PaginationInput
     ): DocumentPaginationOutput!
     documentsWithMetadataFind(
@@ -116,21 +117,21 @@ export const typeDefsDocument = gql`
     documentCreate(
       databaseName: String!
       collectionName: String!
-      documentRecord: [DocumentRecordInput!]!
+      document: [DocumentRecordInput!]!
       documentPermission: Int
     ): [MerkleWitness!]!
 
     documentUpdate(
       databaseName: String!
       collectionName: String!
-      documentQuery: JSON!
-      documentRecord: [DocumentRecordInput!]!
+      query: JSON!
+      document: [DocumentRecordInput!]!
     ): [MerkleWitness!]!
 
     documentDrop(
       databaseName: String!
       collectionName: String!
-      documentQuery: JSON!
+      query: JSON!
     ): [MerkleWitness!]!
   }
 `;
@@ -144,7 +145,7 @@ const documentFind = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.documentQuery,
+        args.query,
         session
       )
     );
@@ -155,7 +156,7 @@ const documentFind = authorizeWrapper(
 
     return {
       docId: document.docId,
-      fields: document.fields,
+      field: document.field,
       createdAt: document.createdAt,
     };
   }
@@ -169,7 +170,7 @@ const documentsFind = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.documentQuery,
+        args.query,
         mapPagination(args.pagination),
         session
       );
@@ -187,7 +188,7 @@ const documentsWithMetadataFind = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.documentQuery,
+        args.query,
         mapPagination(args.pagination),
         session
       );
@@ -206,7 +207,7 @@ const documentCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.documentRecord as any,
+        args.document as DocumentField[],
         args.documentPermission,
         compoundSession
       )
@@ -216,11 +217,11 @@ const documentCreate = authorizeWrapper(
 const documentUpdate = authorizeWrapper(
   DOCUMENT_UPDATE_REQUEST,
   async (_root: unknown, args: TDocumentUpdateRequest, ctx) => {
-    for (let i = 0; i < args.documentRecord.length; i += 1) {
-      const { error } = documentField.validate(args.documentRecord[i]);
+    for (let i = 0; i < args.document.length; i += 1) {
+      const { error } = documentField.validate(args.document[i]);
       if (error)
         throw new Error(
-          `DocumentRecord ${args.documentRecord[i].name} is not valid ${error.message}`
+          `DocumentRecord ${args.document[i].name} is not valid ${error.message}`
         );
     }
 
@@ -228,8 +229,8 @@ const documentUpdate = authorizeWrapper(
       args.databaseName,
       args.collectionName,
       ctx.userName,
-      args.documentQuery,
-      args.documentRecord as any
+      args.query,
+      args.document as any
     );
   }
 );
@@ -241,7 +242,7 @@ const documentDrop = authorizeWrapper(
       args.databaseName,
       args.collectionName,
       ctx.userName,
-      args.documentQuery
+      args.query
     );
   }
 );

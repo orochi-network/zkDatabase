@@ -12,7 +12,7 @@ import {
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';
 
-import { DocumentFields } from '../types/document.js';
+import { DocumentFields } from '../../types/document.js';
 import { buildSchema } from './schema.js';
 
 // Prove the creation of a document

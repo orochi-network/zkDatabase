@@ -34,11 +34,13 @@ export const ProvableTypeMap = {
 
 export type ProvableTypeString = keyof typeof ProvableTypeMap;
 
-export type SchemaEncoded = {
+export type SchemaField = {
   name: string;
   kind: ProvableTypeString;
   value: string;
-}[];
+};
+
+export type SchemaEncoded = SchemaField[];
 
 export type SchemaFieldDefinition = {
   name: string;
@@ -167,7 +169,7 @@ export class Schema {
     return this.fromSchema(
       record.map(([name, kind]) => ({
         name,
-        kind: kind as ProvableTypeString
+        kind: kind as ProvableTypeString,
       }))
     );
   }

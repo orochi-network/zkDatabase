@@ -7,7 +7,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
-import { TCollectionIndex } from '../types/collection-index.js';
+import { TCollectionIndex } from '../../types/index';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest, TCollectionRequest } from './collection.js';
 import {

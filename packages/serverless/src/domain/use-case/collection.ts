@@ -8,10 +8,10 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import {
   CollectionIndex,
   CollectionIndexInfo,
-} from '../types/collection-index.js';
-import { Collection } from '../types/collection.js';
-import { DocumentSchemaInput } from '../types/schema.js';
-import { Sorting } from '../types/sorting.js';
+} from '../../types/collection-index.js';
+import { Collection } from '../../types/collection.js';
+import { DocumentSchemaInput } from '../../types/schema.js';
+import { Sorting } from '../../types/sorting.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';

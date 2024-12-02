@@ -1,4 +1,4 @@
-import { Pagination } from '../../domain/types/pagination.js';
+import { Pagination } from '../../types/pagination.js';
 import { Pagination as PaginationPayload } from '../types/pagination.js';
 
 const DEFAULT_OFFSET = 0;

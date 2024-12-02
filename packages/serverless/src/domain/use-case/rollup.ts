@@ -13,7 +13,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { enqueueTransaction } from './transaction.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpData, RollUpState } from '../types/rollup.js';
+import { RollUpData, RollUpState } from '../../types/rollup.js';
 import logger from '../../helper/logger.js';
 import { PublicKey } from 'o1js';
 

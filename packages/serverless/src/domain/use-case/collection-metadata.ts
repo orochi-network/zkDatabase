@@ -1,39 +1,41 @@
 import { ClientSession } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { DocumentSchemaInput } from '../types/schema.js';
+import { TDocumentSchemaInput, TDocumentMetadata } from '../../types/index.js';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function createCollectionMetadata(
   databaseName: string,
   collectionName: string,
-  schema: DocumentSchemaInput,
+  schema: TDocumentSchemaInput,
   permission: number,
   owner: string,
   group: string,
   session?: ClientSession
 ) {
-  const schemaDef: any = {
+  const schemaMetadata: TDocumentMetadata = {
     owner,
     group,
     collection: collectionName,
     permission,
-    fields: [],
+    field: [],
     createdAt: getCurrentTime(),
     updatedAt: getCurrentTime(),
   };
 
   for (let i = 0; i < schema.length; i += 1) {
     const { name, kind } = schema[i];
-    schemaDef.fields.push(name);
-    schemaDef[name] = {
+    schemaMetadata.field.push(name);
+    schemaMetadata[name] = {
       order: i,
       name,
       kind,
     };
   }
 
-  await ModelCollectionMetadata.getInstance(databaseName).insertOne(schemaDef, {
-    session,
-  });
+  await ModelCollectionMetadata.getInstance(databaseName).insertOne(
+    schemaMetadata,
+    {
+      session,
+    }
+  );
 }

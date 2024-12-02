@@ -5,7 +5,7 @@ import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import { TCollectionRequest } from './collection.js';
-import { EDatabaseProofStatus } from '../../domain/types/proof-status.js';
+import { EDatabaseProofStatus } from '../../types/proof-status.js';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql

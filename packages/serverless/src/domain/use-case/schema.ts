@@ -8,8 +8,8 @@ import {
   Schema,
   SchemaEncoded,
 } from '../common/schema.js';
-import { DocumentFields } from '../types/document.js';
-import { DocumentSchema } from '../types/schema.js';
+import { DocumentFields } from '../../types/document.js';
+import { DocumentSchema } from '../../types/schema.js';
 import { listIndexes } from './collection.js';
 import { hasCollectionPermission } from './permission.js';
 

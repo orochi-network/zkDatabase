@@ -20,8 +20,7 @@ export type TDatabaseRequest = {
   databaseName: string;
 };
 
-export type TDatabaseUpdateDeployedRequest = {
-  databaseName: string;
+export type TDatabaseUpdateDeployedRequest = TDatabaseRequest & {
   appPublicKey: string;
 };
 export type TDatabaseSearchRequest = {

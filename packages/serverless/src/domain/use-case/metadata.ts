@@ -1,7 +1,7 @@
 import { ClientSession } from 'mongodb';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { CollectionMetadata } from '../types/metadata.js';
+import { CollectionMetadata } from '../../types/metadata.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,

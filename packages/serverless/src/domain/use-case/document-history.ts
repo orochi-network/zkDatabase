@@ -2,9 +2,9 @@
 import { DB, zkDatabaseConstants } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import ModelDocument from '../../model/abstract/document.js';
-import { HistoryDocument } from '../types/document-history.js';
-import { Document } from '../types/document.js';
-import { Pagination } from '../types/pagination.js';
+import { HistoryDocument } from '../../types/document-history.js';
+import { Document } from '../../types/document.js';
+import { Pagination } from '../../types/pagination.js';
 import { isDatabaseOwner } from './database.js';
 import {
   buildDocumentFields,

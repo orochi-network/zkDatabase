@@ -1,7 +1,7 @@
-export type TransactionStatus =
+export type TTransactionStatus =
   | 'start'
   | 'ready'
   | 'pending'
   | 'failed'
   | 'success'
-  | 'unknown'
+  | 'unknown';

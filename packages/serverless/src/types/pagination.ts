@@ -1,9 +1,9 @@
-export type Pagination = {
+export type TPagination = {
   limit: number;
   offset: number;
 };
 
-export type PaginationReturn<T> = {
+export type TPaginationReturn<T> = {
   data: T;
   totalSize: number;
   offset: number;

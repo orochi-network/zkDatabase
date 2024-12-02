@@ -20,10 +20,10 @@ import ModelDocument, {
 } from '../../model/abstract/document.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { Document, DocumentFields } from '../types/document.js';
-import { DocumentMetadata, WithMetadata } from '../types/metadata.js';
-import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { WithProofStatus } from '../types/proof.js';
+import { Document, DocumentFields } from '../../types/document.js';
+import { DocumentMetadata, WithMetadata } from '../../types/metadata.js';
+import { Pagination, PaginationReturn } from '../../types/pagination.js';
+import { WithProofStatus } from '../../types/proof.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { isDatabaseOwner } from './database.js';
 import { getUsersGroup } from './group.js';

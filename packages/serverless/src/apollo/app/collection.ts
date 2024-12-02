@@ -52,7 +52,7 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   groupName: groupName.optional(),
   index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
-  permission: Joi.number().min(0).optional(),
+  permission: Joi.number().min(0).max(0xffffff).optional(),
 });
 
 export const typeDefsCollection = `#graphql

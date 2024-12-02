@@ -1,8 +1,8 @@
 import { ModelMerkleTree, TMerkleProof } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { MerkleNode, MerkleTreeInfo } from '../types/merkle-tree.js';
+import { Pagination, PaginationReturn } from '../../types/pagination.js';
+import { MerkleNode, MerkleTreeInfo } from '../../types/merkle-tree.js';
 import { Field } from 'o1js';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -46,7 +46,7 @@ export async function getMerkleNodesByLevel(
       level,
       index,
       hash,
-      empty: zeroNodes[level].equals(Field(hash)).toBoolean()
+      empty: zeroNodes[level].equals(Field(hash)).toBoolean(),
     }));
 
     return {
