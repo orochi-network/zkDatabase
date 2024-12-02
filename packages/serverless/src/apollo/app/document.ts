@@ -58,7 +58,7 @@ export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
 export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: Joi.number().min(0).required(),
+  documentPermission: Joi.number().min(0).optional(),
   documentRecord: Joi.required(),
 });
 
