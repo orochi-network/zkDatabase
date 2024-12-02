@@ -1,7 +1,15 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { TSchemaField } from './schema.js';
 
-export type TSorting = 'ASC' | 'DESC';
+export enum ESorting {
+  Asc,
+  Desc,
+}
+
+export enum EProperty {
+  Compound,
+  Unique,
+}
 
 export type TCollection = {
   name: string;
@@ -13,7 +21,7 @@ export type TCollection = {
 
 export type TCollectionIndex = {
   name: string;
-  sorting: TSorting;
+  sorting: ESorting;
 };
 
 export type TCollectionIndexInfo = {
@@ -21,5 +29,5 @@ export type TCollectionIndexInfo = {
   size: number;
   access: number;
   since: Date;
-  property: 'compound' | 'unique';
+  property: EProperty;
 };

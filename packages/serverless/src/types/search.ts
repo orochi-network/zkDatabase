@@ -1,7 +1,17 @@
+export enum ESearchOperator {
+  Eq,
+  Ne,
+  Gt,
+  Lt,
+  Gte,
+  Lte,
+  Contain,
+}
+
 export type TCondition<T> = {
   field: keyof T;
   value: any;
-  operator: 'eq' | 'ne' | 'gt' | 'lt' | 'gte' | 'lte' | 'contain';
+  operator: ESearchOperator;
 };
 
 export type SearchInput<T> = {

@@ -1,1 +1,4 @@
-export type TOwnershipType = 'User' | 'Group';
+export enum EOwnershipType {
+  User,
+  Group,
+}

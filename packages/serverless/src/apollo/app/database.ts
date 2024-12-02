@@ -12,10 +12,10 @@ import {
   getDatabases,
   updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
-import { Pagination } from '../types/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, pagination, publicKey, userName } from './common.js';
 import { gql } from '../../helper/common.js';
+import { TPagination } from '../../types/index.js';
 
 export type TDatabaseRequest = {
   databaseName: string;
@@ -26,7 +26,7 @@ export type TDatabaseUpdateDeployedRequest = TDatabaseRequest & {
 };
 export type TDatabaseSearchRequest = {
   query: { [key: string]: string };
-  pagination: Pagination;
+  pagination: TPagination;
 };
 
 export type TDatabaseCreateRequest = TDatabaseRequest & {

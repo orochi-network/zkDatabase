@@ -1,5 +1,5 @@
 import { TCollection } from './collection.js';
-import { TTransactionStatus } from './transaction.js';
+import { ETransactionStatus } from './transaction.js';
 
 export type Database = {
   databaseName: string;
@@ -8,5 +8,5 @@ export type Database = {
   collection: TCollection[];
   databaseSize: number;
   appPublicKey?: string;
-  deployStatus?: TTransactionStatus;
+  deployStatus?: ETransactionStatus;
 };
