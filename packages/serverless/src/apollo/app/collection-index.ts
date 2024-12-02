@@ -1,4 +1,5 @@
 import GraphQLJSON from 'graphql-type-json';
+import { gql } from 'helper/common.js';
 import Joi from 'joi';
 import {
   createIndex,
@@ -46,31 +47,35 @@ export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
   index: Joi.array().items(collectionIndex),
 });
 
-export type CollectionIndex = {
-  name: string;
-  size: number;
-  accesses: number;
-  since: Date;
-  properties: 'compound' | 'unique';
-};
-
-export const typeDefsCollectionIndex = `#graphql
+export const typeDefsCollectionIndex = gql`
   scalar JSON
   scalar Date
   type Query
   type Mutation
 
+  enum ESorting {
+    ASC
+    DESC
+  }
+
   type CollectionIndex {
     name: String!
     size: Int!
-    accesses: Int!
+    access: Int!
     since: Date!
-    properties: String!
+    property: String!
+  }
+
+  type IndexInput {
+    name: String!
+    sorting: ESorting!
   }
 
   extend type Query {
-    indexList(databaseName: String!, collectionName: String!): [String]!
-    indexListInfo(databaseName: String!, collectionName: String!): [CollectionIndex]!
+    indexList(
+      databaseName: String!
+      collectionName: String!
+    ): [CollectionIndex]!
     indexExist(
       databaseName: String!
       collectionName: String!
@@ -82,7 +87,7 @@ export const typeDefsCollectionIndex = `#graphql
     indexCreate(
       databaseName: String!
       collectionName: String!
-      indexes: [IndexInput!]!
+      index: [IndexInput!]!
     ): Boolean
     indexDrop(
       databaseName: String!
