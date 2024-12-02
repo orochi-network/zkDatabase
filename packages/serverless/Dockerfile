@@ -24,7 +24,8 @@ RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfil
 USER appuser
 
 # Build the necessary workspaces
-RUN yarn workspace @zkdb/smart-contract build && \
+RUN yarn workspace @zkdb/permission build && \
+    yarn workspace @zkdb/smart-contract build && \
     yarn workspace @zkdb/storage build && \
     yarn workspace @zkdb/serverless build
 
@@ -39,6 +40,7 @@ RUN addgroup -S appuser && adduser -S -G appuser -h /usr/src/app appuser
 WORKDIR /usr/src/app
 
 # Copy the application code and node_modules from the builder stage
+COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/permission /usr/src/app/packages/permission
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/storage /usr/src/app/packages/storage
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/serverless /usr/src/app/packages/serverless
