@@ -1,4 +1,4 @@
-import { TCollectionRequest } from './collection';
+import { TCollectionRequest } from './collection.js';
 
 export enum EDatabaseProofStatus {
   None,

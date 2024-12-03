@@ -1,4 +1,4 @@
-import { ETransactionStatus } from './transaction';
+import { ETransactionStatus } from './transaction.js';
 
 export enum ERollUpState {
   // Rollup is up to date

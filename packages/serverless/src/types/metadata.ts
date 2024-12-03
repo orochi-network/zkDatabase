@@ -1,5 +1,5 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
-import { TSchemaField } from './schema';
+import { TSchemaField } from './schema.js';
 
 export type TMetadataBasic = OwnershipAndPermission & {
   collection: string;
