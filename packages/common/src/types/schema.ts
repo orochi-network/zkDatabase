@@ -1,4 +1,4 @@
-import { TProvableTypeString, TSchemaField } from '../schema.js';
+import { TSchemaField } from '../schema.js';
 import { ESorting } from './collection.js';
 
 export type TSchemaFieldWithOrder = TSchemaField & {
@@ -6,7 +6,7 @@ export type TSchemaFieldWithOrder = TSchemaField & {
   name: string;
 };
 
-export type TSchemaFieldInput = TSchemaField & {
+export type TSchemaFieldDefinition = TSchemaField & {
   sorting?: ESorting;
 };
 

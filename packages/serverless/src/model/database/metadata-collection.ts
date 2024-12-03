@@ -1,3 +1,4 @@
+import { TMetadataCollection } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
@@ -5,8 +6,6 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document, FindOptions } from 'mongodb';
-import { TMetadataCollection } from '../../types/index.js';
-
 export interface IMetadataCollection extends Document, TMetadataCollection {}
 
 export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {

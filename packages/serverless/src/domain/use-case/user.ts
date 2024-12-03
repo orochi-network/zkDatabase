@@ -1,14 +1,14 @@
-import Client from 'mina-signer';
-import { ClientSession, FindOptions } from 'mongodb';
-import config from '../../helper/config.js';
-import logger from '../../helper/logger.js';
-import ModelUser from '../../model/global/user.js';
 import {
   TMinaSignature,
   TPagination,
   TPaginationReturn,
   TUser,
-} from '../../types/index.js';
+} from '@zkdb/common';
+import Client from 'mina-signer';
+import { ClientSession, FindOptions } from 'mongodb';
+import config from '../../helper/config.js';
+import logger from '../../helper/logger.js';
+import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
 
 export async function findUser(

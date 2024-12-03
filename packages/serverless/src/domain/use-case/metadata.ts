@@ -1,64 +1,75 @@
 import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { CollectionMetadata } from '../../types/metadata.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
+
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
+import { TMetadataCollection, TMetadataDocument } from '@zkdb/common';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function readMetadata(
-  databaseName: string,
-  collectionName: string,
-  docId: string | null,
+export async function readCollectionMetadata(
+  database: string,
+  collection: string,
   actor: string,
-  // eslint-disable-next-line default-param-last
-  checkPermission: boolean = false,
+  checkPermission = false,
   session?: ClientSession
-): Promise<CollectionMetadata> {
+): Promise<TMetadataCollection | null> {
   if (checkPermission) {
-    const hasReadPermission = docId
-      ? await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          docId,
-          'read',
-          session
-        )
-      : await hasCollectionPermission(
-          databaseName,
-          collectionName,
-          actor,
-          'read'
-        );
+    const hasReadPermission = await hasCollectionPermission(
+      database,
+      collection,
+      actor,
+      'read',
+      session
+    );
 
     if (!hasReadPermission) {
-      const targetDescription = docId ? 'document' : 'collection';
       throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified ${targetDescription}.`
+        `Access denied: Actor '${actor}' does not have 'read' permission for the specified collection`
       );
     }
   }
 
-  const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+  const modelMetadata = ModelMetadataCollection.getInstance(database);
 
-  const key = docId
-    ? { docId, collection: collectionName }
-    : { collection: collectionName };
+  const metadata = await modelMetadata.findOne({ collection }, { session });
 
-  const metadata = await modelMetadata.findOne(key);
+  return metadata;
+}
+
+export async function readDocumentMetadata(
+  database: string,
+  collection: string,
+  docId: string,
+  actor: string,
+  checkPermission = false,
+  session?: ClientSession
+): Promise<TMetadataDocument | null> {
+  if (checkPermission) {
+    const hasReadPermission = await hasDocumentPermission(
+      database,
+      collection,
+      actor,
+      docId,
+      'read',
+      session
+    );
+
+    if (!hasReadPermission) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
+      );
+    }
+  }
+
+  const modelMetadata = new ModelMetadataDocument(database);
+
+  const metadata = await modelMetadata.findOne({ docId, collection });
 
   if (!metadata) {
     throw Error('Metadata has not been found');
   }
 
-  return {
-    owner: metadata.owner,
-    group: metadata.group,
-    permission: metadata.permission,
-  };
+  return metadata;
 }
