@@ -1,11 +1,12 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
+import { TDbRecord } from './common.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
-export type TMetadataBasic = OwnershipAndPermission & {
-  collection: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type TMetadataBasic = TDbRecord<
+  OwnershipAndPermission & {
+    collection: string;
+  }
+>;
 
 // Document metadata
 export type TMetadataDocument = TMetadataBasic & {

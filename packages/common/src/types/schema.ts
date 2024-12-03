@@ -1,14 +1,12 @@
-import { ProvableTypeString } from '../domain/common/schema.js';
+import { TSchemaField } from '../schema.js';
 import { ESorting } from './collection.js';
 
-export type TSchemaField = {
+export type TSchemaFieldWithOrder = TSchemaField & {
   order: number;
   name: string;
-  kind: ProvableTypeString;
-  indexed: boolean;
 };
 
-export type TSchemaFieldDefinition = Omit<TSchemaField, 'order'> & {
+export type TSchemaFieldDefinition = TSchemaField & {
   sorting?: ESorting;
 };
 

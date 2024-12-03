@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
-import { SchemaField } from '../domain/common/schema.js';
+import { TSchemaField } from '../schema.js';
 
-export type TDocumentField = SchemaField;
+export type TDocumentField = TSchemaField;
 
 export type TDocumentBasic = {
   _id: ObjectId;

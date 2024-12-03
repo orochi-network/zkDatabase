@@ -5,11 +5,10 @@ import {
   IndexSpecification,
 } from 'mongodb';
 import { isOk } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
-import ModelDatabase from './database.js';
 import { DatabaseEngine } from '../database-engine.js';
+import ModelDatabase from './database.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.

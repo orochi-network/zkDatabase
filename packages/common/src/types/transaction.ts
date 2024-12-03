@@ -17,6 +17,15 @@ export enum ETransactionStatus {
   Unknown,
 }
 
+export type TTransaction = {
+  transactionType: ETransactionType;
+  databaseName: string;
+  status: ETransactionStatus;
+  txHash: string;
+  error: string;
+  createdAt: Date;
+};
+
 export enum ETransactionType {
   Deploy,
   Rollup,
