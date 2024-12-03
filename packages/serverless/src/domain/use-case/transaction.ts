@@ -9,6 +9,7 @@ import ModelUser from '../../model/global/user.js';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { PublicKey } from 'o1js';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
+import { ETransactionType } from '@zkdb/common';
 
 const MINA_DECIMAL = 1e9;
 
@@ -125,7 +126,7 @@ export async function enqueueTransaction(
 export async function getTransactionForSigning(
   databaseName: string,
   actor: string,
-  transactionType: TransactionType
+  transactionType: ETransactionType
 ) {
   const modelUser = new ModelUser();
 

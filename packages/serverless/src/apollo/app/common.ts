@@ -1,7 +1,7 @@
+import { ESorting, ETransactionType, TDocumentField } from '@zkdb/common';
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { gql } from '../../helper/common.js';
-import { ESorting, ETransactionType, TDocumentField } from '@zkdb/common';
 
 export const objectId = Joi.string()
   .trim()
@@ -145,6 +145,17 @@ export const typeDefsCommon = gql`
     group: String!
     permission: Int!
   }
+
+  type ACollectionMetadata {
+    permission: Int!;
+    collection: string!;
+    _id: ObjectId!;
+    createdAt: Date!;
+    updatedAt: Date!;
+    field: [String]!;
+    definition: [SchemaDefinition]!;
+
+}
 
   type CollectionDescriptionOutput {
     name: String!

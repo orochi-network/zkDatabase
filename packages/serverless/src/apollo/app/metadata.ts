@@ -50,12 +50,13 @@ extend type Query {
     databaseName: String!
     collectionName: String!
     docId: String!
-  ): DocumentMetadataOutput!
+  ): DocumentMetadataOutput
 
+ # TODO: keep JSON for now since we have to make sure what it will return
   getMetadataCollection(
     databaseName: String!
     collectionName: String!
-  ): DocumentMetadataOutput!
+  ): JSON 
 
   collectionSchema(
     databaseName: String!
@@ -129,7 +130,7 @@ const permissionSet = authorizeWrapper(
     permission: Joi.number().min(0).required(),
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TPermissionUpdateRequest, context) => {
+  async (_root: unknown, args: any, context) => {
     await withTransaction((session) =>
       setPermission(
         args.databaseName,
@@ -151,7 +152,7 @@ const permissionTransferOwnership = authorizeWrapper(
     grouping: ownershipGroup,
     newOwner: userName,
   }),
-  async (_root: unknown, args: TPermissionOwnRequest, context) => {
+  async (_root: unknown, args: any, context) => {
     return withTransaction((session) => {
       if (args.docId) {
         // Document case with docId

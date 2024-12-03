@@ -1,4 +1,4 @@
-import { SearchInput } from '../../types/search.js';
+import { ESearchOperator, SearchInput } from '@zkdb/common';
 
 export default function buildMongoQuery<T>(searchInput?: SearchInput<T>): any {
   if (!searchInput) {
@@ -11,25 +11,25 @@ export default function buildMongoQuery<T>(searchInput?: SearchInput<T>): any {
     const { field, value, operator } = searchInput.condition;
 
     switch (operator) {
-      case 'eq':
+      case ESearchOperator.Eq:
         mongoQuery[field as string] = value;
         break;
-      case 'ne':
+      case ESearchOperator.Ne:
         mongoQuery[field as string] = { $ne: value };
         break;
-      case 'gt':
+      case ESearchOperator.Gt:
         mongoQuery[field as string] = { $gt: value };
         break;
-      case 'lt':
+      case ESearchOperator.Lt:
         mongoQuery[field as string] = { $lt: value };
         break;
-      case 'gte':
+      case ESearchOperator.Gte:
         mongoQuery[field as string] = { $gte: value };
         break;
-      case 'lte':
+      case ESearchOperator.Lte:
         mongoQuery[field as string] = { $lte: value };
         break;
-      case 'contains':
+      case ESearchOperator.Contain:
         mongoQuery[field as string] = { $regex: value, $options: 'i' };
         break;
       default:

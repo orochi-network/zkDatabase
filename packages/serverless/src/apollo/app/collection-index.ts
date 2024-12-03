@@ -1,3 +1,8 @@
+import {
+  TCollectionRequest,
+  TIndexCreateRequest,
+  TIndexListRequest,
+} from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -9,26 +14,25 @@ import {
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
+import { CollectionRequest } from './collection.js';
 import {
   collectionIndex,
   collectionName,
   databaseName,
   indexName,
 } from './common.js';
-import {
-  TIndexCreateRequest,
-  TIndexDetailRequest,
-  TIndexListRequest,
-} from '@zkdb/common';
-import { CollectionRequest } from './collection.js';
 
-export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
+export const IndexDetailRequest = Joi.object<
+  TIndexCreateRequest & TCollectionRequest
+>({
   collectionName,
   databaseName,
   indexName,
 });
 
-export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
+export const IndexCreateRequest = Joi.object<
+  TIndexCreateRequest & TCollectionRequest
+>({
   collectionName,
   databaseName,
   index: Joi.array().items(collectionIndex),
@@ -89,7 +93,7 @@ const indexListInfo = authorizeWrapper(
 
 const indexExist = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     doesIndexExist(
       args.databaseName,
       ctx.userName,
@@ -101,7 +105,7 @@ const indexExist = authorizeWrapper(
 // Mutation
 const indexCreate = authorizeWrapper(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     createIndex(
       args.databaseName,
       ctx.userName,
@@ -112,7 +116,7 @@ const indexCreate = authorizeWrapper(
 
 const indexDrop = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     dropIndex(
       args.databaseName,
       ctx.userName,

@@ -1,3 +1,10 @@
+import {
+  TDatabaseRequest,
+  TMerkleTreeGetNodeRequest,
+  TMerkleTreeGetNodesByLevelRequest,
+  TMerkleTreeIndexRequest,
+  TMerkleTreeWitnessByDocumentRequest,
+} from '@zkdb/common';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -10,13 +17,6 @@ import {
 } from '../../domain/use-case/merkle-tree.js';
 import publicWrapper from '../validation.js';
 import { databaseName, indexNumber, objectId, pagination } from './common.js';
-import {
-  TDatabaseRequest,
-  TMerkleTreeGetNodeRequest,
-  TMerkleTreeGetNodesByLevelRequest,
-  TMerkleTreeIndexRequest,
-  TMerkleTreeWitnessByDocumentRequest,
-} from '@zkdb/common';
 
 export const MerkleTreeGetNodesByLevelRequest =
   Joi.object<TMerkleTreeGetNodesByLevelRequest>({

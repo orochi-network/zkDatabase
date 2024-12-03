@@ -1,18 +1,21 @@
+import { TSchemaField } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import { TDocumentSchemaInput, TDocumentMetadata } from '../../types/index.js';
+import {
+  IMetadataCollection,
+  ModelMetadataCollection,
+} from '../../model/database/metadata-collection.js';
 
 export async function createCollectionMetadata(
   databaseName: string,
   collectionName: string,
-  schema: TDocumentSchemaInput,
+  schema: TSchemaField[],
   permission: number,
   owner: string,
   group: string,
   session?: ClientSession
 ) {
-  const schemaMetadata: TDocumentMetadata = {
+  const schemaMetadata: IMetadataCollection = {
     owner,
     group,
     collection: collectionName,
@@ -20,6 +23,7 @@ export async function createCollectionMetadata(
     field: [],
     createdAt: getCurrentTime(),
     updatedAt: getCurrentTime(),
+    definition: [],
   };
 
   for (let i = 0; i < schema.length; i += 1) {
@@ -32,7 +36,7 @@ export async function createCollectionMetadata(
     };
   }
 
-  await ModelCollectionMetadata.getInstance(databaseName).insertOne(
+  await ModelMetadataCollection.getInstance(databaseName).insertOne(
     schemaMetadata,
     {
       session,
