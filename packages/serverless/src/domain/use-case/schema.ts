@@ -1,19 +1,19 @@
+import {
+  ProvableTypeMap,
+  Schema,
+  TDocumentField,
+  TProvableTypeString,
+  TSchemaEncoded,
+  TSchemaField,
+} from '@zkdb/common';
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
 import logger from '../../helper/logger.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import { TDocumentField } from '../../types/document.js';
-import { TSchemaField } from '../../types/schema.js';
-import {
-  ProvableTypeMap,
-  ProvableTypeString,
-  Schema,
-  SchemaEncoded,
-} from '../common/schema.js';
 import { listIndexes } from './collection.js';
 import { hasCollectionPermission } from './permission.js';
 
-const schemaVerification: Map<ProvableTypeString, Joi.Schema> = new Map();
+const schemaVerification: Map<TProvableTypeString, Joi.Schema> = new Map();
 
 // Every data type will be treaded as string when store/transfer
 if (schemaVerification.size === 0) {
@@ -135,7 +135,7 @@ export async function buildSchema(
     throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
-  const encodedDocument: SchemaEncoded = [];
+  const encodedDocument: TSchemaEncoded = [];
   const structType: { [key: string]: any } = {};
 
   if (!schema) {
@@ -150,7 +150,7 @@ export async function buildSchema(
     }
 
     const { name, kind, value } = documentField;
-    structType[name] = ProvableTypeMap[kind as ProvableTypeString];
+    structType[name] = ProvableTypeMap[kind as TProvableTypeString];
     encodedDocument.push({ name, kind, value });
   });
 
