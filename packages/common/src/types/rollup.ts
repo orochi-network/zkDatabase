@@ -2,15 +2,19 @@ import { ObjectId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { ETransactionStatus } from './transaction.js';
 
+/**
+ * Rollup state
+ * @enum
+ * @property {string} Updated - Rollup is up to date
+ * @property {string} Updating - Rollup is updating
+ * @property {string} Outdated - Rollup is outdated
+ * @property {string} Failed - Rollup is errored
+ */
 export enum ERollUpState {
-  // Rollup is up to date
-  Updated,
-  // Rollup is updating, check [[ETransactionStatus]] for more detail
-  Updating,
-  // Rollup is outdated
-  Outdated,
-  // Rollup is errored, may be due to failed transaction
-  Failed,
+  Updated = 'Updated',
+  Updating = 'Updating',
+  Outdated = 'Outdated',
+  Failed = 'Failed',
 }
 
 export type TRollUpHistory = TDbRecord<{
