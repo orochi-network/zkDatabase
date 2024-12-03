@@ -9,12 +9,15 @@ import {
   searchDocuments,
   updateDocument,
 } from '../../domain/use-case/document.js';
+import {
+  listHistoryDocuments,
+  readHistoryDocument,
+} from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
 import { IDocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
-import { TDocumentField, TPagination } from '../../types';
+import { TDocumentField, TPagination, TCollectionRequest } from '../../types';
 import {
   collectionName,
   databaseName,
@@ -28,7 +31,7 @@ export type TDocumentsFindRequest = TCollectionRequest & {
 };
 
 export type TDocumentFindRequest = TCollectionRequest & {
-  documentQuery: { [key: string]: string };
+  query: { [key: string]: string };
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
@@ -41,7 +44,15 @@ export type TDocumentUpdateRequest = TCollectionRequest & {
   document: TDocumentField[];
 };
 
-export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
+export type TDocumentHistoryGetRequest = TCollectionRequest & {
+  docId: string;
+};
+
+export type TDocumentHistoryListRequest = TCollectionRequest & {
+  pagination: TPagination;
+};
+
+export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -68,6 +79,20 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   document: Joi.required(),
 });
 
+export const DOCUMENT_HISTORY_GET_REQUEST =
+  Joi.object<TDocumentHistoryGetRequest>({
+    databaseName,
+    collectionName,
+    docId: Joi.string(),
+  });
+
+export const DOCUMENT_HISTORY_LIST_REQUEST =
+  Joi.object<TDocumentHistoryListRequest>({
+    databaseName,
+    collectionName,
+    pagination,
+  });
+
 export const typeDefsDocument = gql`
   #graphql
   scalar JSON
@@ -91,6 +116,23 @@ export const typeDefsDocument = gql`
     offset: Int!
   }
 
+  type DocumentHistoryOutput {
+    docId: String!
+    documents: [DocumentOutput!]!
+  }
+
+  type DocumentOutput {
+    docId: String!
+    fields: [DocumentRecordOutput!]!
+    createdAt: Date
+  }
+
+  type DocumentRecordOutput {
+    name: String!
+    kind: String!
+    value: String!
+  }
+
   extend type Query {
     documentFind(
       databaseName: String!
@@ -112,16 +154,13 @@ export const typeDefsDocument = gql`
       pagination: PaginationInput
     ): [DocumentsWithMetadataOutput]!
 
-    extend type Query {
     documentsHistoryList(
       databaseName: String!
       collectionName: String!
       docId: String
       pagination: PaginationInput
-     ): [DocumentHistoryOutput]!
-
+    ): [DocumentHistoryOutput]!
   }
-
 
   extend type Mutation {
     documentCreate(
@@ -217,7 +256,7 @@ const documentCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.document as TDocumentField[],
+        args.document,
         args.documentPermission,
         compoundSession
       )
@@ -257,12 +296,57 @@ const documentDrop = authorizeWrapper(
   }
 );
 
+const historyDocumentGet = authorizeWrapper(
+  DOCUMENT_HISTORY_GET_REQUEST,
+  async (_root: unknown, args: TDocumentHistoryGetRequest, ctx) => {
+    const document = await withTransaction((session) =>
+      readHistoryDocument(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        args.docId,
+        session
+      )
+    );
+
+    if (!document) {
+      return null;
+    }
+
+    const result = {
+      docId: document.docId,
+      documents: document.documents,
+    };
+
+    return result;
+  }
+);
+
+const documentsHistoryList = authorizeWrapper(
+  Joi.object().optional(),
+  async (_root: unknown, args: TDocumentHistoryListRequest, ctx) => {
+    return withTransaction(async (session) => {
+      const documents = await listHistoryDocuments(
+        args.databaseName,
+        args.collectionName,
+        ctx.userName,
+        mapPagination(args.pagination),
+        session
+      );
+
+      return documents;
+    });
+  }
+);
+
 type TDocumentResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     documentFind: typeof documentFind;
     documentsFind: typeof documentsFind;
     documentsWithMetadataFind: typeof documentsWithMetadataFind;
+    historyDocumentGet: typeof historyDocumentGet;
+    documentsHistoryList: typeof documentsHistoryList;
   };
   Mutation: {
     documentCreate: typeof documentCreate;
@@ -277,6 +361,8 @@ export const resolversDocument: TDocumentResolver = {
     documentFind,
     documentsFind,
     documentsWithMetadataFind,
+    historyDocumentGet,
+    documentsHistoryList,
   },
   Mutation: {
     documentCreate,
