@@ -1,4 +1,5 @@
-import { TPagination } from './pagination';
+import { TPagination } from './pagination.js';
+import { TMinaSignature } from './proof.js';
 
 export type TUser = {
   userName: string;
@@ -6,24 +7,23 @@ export type TUser = {
   publicKey: string;
 };
 
-export type TUserSignature = {
-  signature: {
-    field: string;
-    scalar: string;
-  };
-  publicKey: string;
-  data: string;
+export type TUserSignInRequest = {
+  proof: TMinaSignature;
 };
 
-export type TSignInRequest = {
-  proof: TUserSignature;
-};
-
-export type TSignUpRequest = {
+export type TUserInfo = {
   userName: string;
   email: string;
   userData: any;
+};
+
+export type TUserSignUpInfo = TUserInfo & {
   timestamp: number;
+};
+
+export type TUserSignUpRequest = {
+  signUp: TUserSignUpInfo;
+  proof: TMinaSignature;
 };
 
 export type TUserFindRequest = {

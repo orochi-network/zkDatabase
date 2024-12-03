@@ -1,40 +1,21 @@
 import Client from 'mina-signer';
 import { ClientSession, FindOptions } from 'mongodb';
+import config from '../../helper/config.js';
 import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
-import { Pagination, PaginationReturn } from '../../types/pagination.js';
-import { Signature } from '../../types/proof.js';
-import { User } from '../../types/user.js';
+import {
+  TMinaSignature,
+  TPagination,
+  TPaginationReturn,
+  TUser,
+} from '../../types/index.js';
 import { FilterCriteria } from '../utils/document.js';
-import { objectToLookupPattern } from '../../helper/common.js';
-import config from '../../helper/config.js';
-
-export async function searchUser(
-  query: { [key: string]: string },
-  pagination?: Pagination
-): Promise<PaginationReturn<User[]>> {
-  const modelUser = new ModelUser();
-
-  const filter = {
-    $or: objectToLookupPattern(query, { regexSearch: true }),
-  };
-
-  const findUsers = await modelUser.collection
-    .find(filter, pagination)
-    .toArray();
-
-  return {
-    data: findUsers,
-    offset: pagination?.offset ?? 0,
-    totalSize: await modelUser.count(filter),
-  };
-}
 
 export async function findUser(
   query?: FilterCriteria,
-  pagination?: Pagination,
+  pagination?: TPagination,
   session?: ClientSession
-): Promise<PaginationReturn<User[]>> {
+): Promise<TPaginationReturn<TUser[]>> {
   const modelUser = new ModelUser();
 
   const options: FindOptions = {};
@@ -51,7 +32,7 @@ export async function findUser(
       })
     ).toArray(),
     offset: pagination?.offset ?? 0,
-    totalSize: await modelUser.count(query),
+    totalSize: await modelUser.count(query, { session }),
   };
 }
 
@@ -60,16 +41,10 @@ export async function isUserExist(userName: string): Promise<boolean> {
   return (await modelUser.findOne({ userName })) !== null;
 }
 
-export async function areUsersExist(userNames: string[]) {
-  const modelUser = new ModelUser();
-
-  return modelUser.areUsersExist(userNames);
-}
-
 export async function signUpUser(
-  user: User,
+  user: TUser,
   userData: any,
-  signature: Signature
+  signature: TMinaSignature
 ) {
   const client = new Client({ network: config.NETWORK_ID });
   if (client.verifyMessage(signature)) {

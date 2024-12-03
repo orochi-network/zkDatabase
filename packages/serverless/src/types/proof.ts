@@ -9,7 +9,7 @@ export enum EDatabaseProofStatus {
 
 export type TWithProofStatus<T> = T & { proofStatus: EDatabaseProofStatus };
 
-export type TSignature = {
+export type TMinaSignature = {
   signature: {
     field: string;
     scalar: string;
