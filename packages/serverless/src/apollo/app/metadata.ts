@@ -13,7 +13,7 @@ import { collectionName, databaseName, objectId, userName } from './common.js';
 import {
   readCollectionMetadata,
   readDocumentMetadata,
-} from 'domain/use-case/metadata.js';
+} from '../../domain/use-case/metadata.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -143,7 +143,7 @@ const permissionSet = authorizeWrapper(
   }
 );
 
-const permissionOwn = authorizeWrapper(
+const permissionTransferOwnership = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
@@ -188,7 +188,7 @@ type TPermissionResolver = {
   };
   Mutation: {
     permissionSet: typeof permissionSet;
-    permissionOwn: typeof permissionOwn;
+    permissionTransferOwnership: typeof permissionTransferOwnership;
   };
 };
 
@@ -201,6 +201,6 @@ export const resolversPermission: TPermissionResolver = {
   },
   Mutation: {
     permissionSet,
-    permissionOwn,
+    permissionTransferOwnership,
   },
 };
