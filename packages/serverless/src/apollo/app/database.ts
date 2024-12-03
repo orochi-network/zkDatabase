@@ -17,30 +17,6 @@ import { databaseName, pagination, publicKey, userName } from './common.js';
 import { gql } from '../../helper/common.js';
 import { TPagination } from '../../types/index.js';
 
-export type TDatabaseRequest = {
-  databaseName: string;
-};
-
-export type TDatabaseUpdateDeployedRequest = TDatabaseRequest & {
-  appPublicKey: string;
-};
-export type TDatabaseSearchRequest = {
-  query: { [key: string]: string };
-  pagination: TPagination;
-};
-
-export type TDatabaseCreateRequest = TDatabaseRequest & {
-  merkleHeight: number;
-};
-
-export type TFindIndexRequest = TDatabaseRequest & {
-  index: number;
-};
-
-export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
-  newOwner: string;
-};
-
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight: Joi.number().integer().positive().min(8).max(256).required(),

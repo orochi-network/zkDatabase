@@ -7,7 +7,7 @@ import {
   createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { TCollection, TCollectionIndex } from '../../types/index.js';
+import { TCollectionDetail, TCollectionIndex } from '../../types/index.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   collectionIndex,
@@ -29,22 +29,6 @@ export const schemaField = Joi.object({
 });
 
 export const schemaFields = Joi.array().items(schemaField);
-
-export type TCollectionRequest = TDatabaseRequest & {
-  collectionName: string;
-};
-
-export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TCollection;
-  index?: TCollectionIndex[];
-  permission?: number;
-  groupName?: string;
-};
-
-export const CollectionRequest = Joi.object<TCollectionRequest>({
-  collectionName,
-  databaseName,
-});
 
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,

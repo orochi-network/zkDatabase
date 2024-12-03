@@ -18,23 +18,6 @@ import {
   indexName,
 } from './common.js';
 
-// Index request
-export type TIndexNameRequest = {
-  indexName: string;
-};
-
-export type TIndexListRequest = TCollectionRequest;
-
-export const IndexListRequest = CollectionRequest;
-
-export type TIndexRequest = TCollectionRequest;
-
-export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex[];
-};
-
-export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
-
 export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
   collectionName,
   databaseName,

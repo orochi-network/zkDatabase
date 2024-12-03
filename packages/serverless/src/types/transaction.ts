@@ -1,3 +1,5 @@
+import { TDatabaseRequest } from './database';
+
 export enum ETransactionStatus {
   // Transaction is prepared but not yet signed
   Unsigned,
@@ -14,3 +16,20 @@ export enum ETransactionStatus {
   // Transaction is unknown
   Unknown,
 }
+
+export enum EnumTransactionType {
+  Deploy,
+  Rollup,
+}
+
+export type TTransactionRequest = TDatabaseRequest & {
+  transactionType: EnumTransactionType;
+};
+
+export type TTransactionByIdRequest = TDatabaseRequest & {
+  id: string;
+};
+
+export type TTransactionConfirmRequest = TTransactionByIdRequest & {
+  txHash: string;
+};

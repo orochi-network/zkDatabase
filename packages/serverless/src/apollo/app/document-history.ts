@@ -9,14 +9,15 @@ import {
 import { collectionName, databaseName, pagination } from './common.js';
 import mapPagination from '../mapper/pagination.js';
 import { TCollectionRequest } from './collection.js';
-import { Pagination } from '../types/pagination.js';
+import { TPagination } from '../../types/index.js';
+import { gql } from '../../helper/common.js';
 
 export type TDocumentHistoryGetRequest = TCollectionRequest & {
   docId: string;
 };
 
 export type TDocumentHistoryListRequest = TCollectionRequest & {
-  pagination: Pagination;
+  pagination: TPagination;
 };
 
 export const DOCUMENT_HISTORY_GET_REQUEST =
@@ -33,18 +34,19 @@ export const DOCUMENT_HISTORY_LIST_REQUEST =
     pagination,
   });
 
-export const typeDefsDocumentHistory = `#graphql
-scalar JSON
-type Query
+export const typeDefsDocumentHistory = gql`
+  #graphql
+  scalar JSON
+  type Query
 
-extend type Query {
-  historyDocumentGet(databaseName: String!, collectionName: String!, docId: String!): DocumentHistoryOutput
-  documentsHistoryList(
-    databaseName: String!, 
-    collectionName: String!,
-    pagination: PaginationInput
-  ): [DocumentHistoryOutput]!
-}
+  extend type Query {
+    documentsHistoryList(
+      databaseName: String!
+      collectionName: String!
+      docId: String
+      pagination: PaginationInput
+    ): [DocumentHistoryOutput]!
+  }
 `;
 
 const historyDocumentGet = authorizeWrapper(

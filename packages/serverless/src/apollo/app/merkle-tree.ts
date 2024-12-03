@@ -13,23 +13,6 @@ import { databaseName, indexNumber, objectId, pagination } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { Pagination } from '../types/pagination.js';
 
-export type TMerkleTreeIndexRequest = TDatabaseRequest & {
-  index: bigint;
-};
-
-export type TMerkleTreeWitnessByDocumentRequest = TDatabaseRequest & {
-  docId: string;
-};
-
-export type TMerkleTreeGetNodeRequest = TMerkleTreeIndexRequest & {
-  level: number;
-};
-
-export type TMerkleTreeGetNodesByLevelRequest = TDatabaseRequest & {
-  level: number;
-  pagination: Pagination;
-};
-
 export const MerkleTreeGetNodesByLevelRequest =
   Joi.object<TMerkleTreeGetNodesByLevelRequest>({
     databaseName,

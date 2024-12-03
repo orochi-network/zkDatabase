@@ -37,10 +37,10 @@ export type TDocumentCreateRequest = TCollectionRequest & {
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
   query: { [key: string]: string };
-  document: TDocumentFields;
+  document: TDocumentField[];
 };
 
-export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -96,19 +96,31 @@ export const typeDefsDocument = gql`
       collectionName: String!
       query: JSON!
     ): DocumentOutput
+
     documentsFind(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
     ): DocumentPaginationOutput!
+
     documentsWithMetadataFind(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
     ): [DocumentsWithMetadataOutput]!
+
+    extend type Query {
+    documentsHistoryList(
+      databaseName: String!
+      collectionName: String!
+      docId: String
+      pagination: PaginationInput
+     ): [DocumentHistoryOutput]!
+  
   }
+  
 
   extend type Mutation {
     documentCreate(

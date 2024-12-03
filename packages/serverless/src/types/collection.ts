@@ -1,6 +1,6 @@
-import { OwnershipAndPermission } from '@zkdb/permission';
-import { TSchemaField } from './schema.js';
+import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
+import { TSchemaFieldInput } from './schema.js';
 
 export enum ESorting {
   // -1
@@ -31,3 +31,25 @@ export type TCollectionDetail = TMetadataDetailCollection<{
   index: TCollectionIndex[];
   sizeOnDisk: number;
 }>;
+
+export type TCollectionRequest = TDatabaseRequest & {
+  collectionName: string;
+};
+
+export type TCollectionCreateRequest = TCollectionRequest & {
+  schema: TSchemaFieldInput[];
+  permission?: number;
+  groupName?: string;
+};
+
+export type TIndexRequest = {
+  indexName: string;
+};
+
+export type TIndexListRequest = TCollectionRequest;
+
+export type TIndexCreateRequest = TIndexRequest & {
+  index: TCollectionIndex[];
+};
+
+export type TIndexDetailRequest = TIndexRequest & TIndexRequest;

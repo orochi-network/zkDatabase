@@ -15,19 +15,6 @@ import { collectionName, databaseName, objectId, userName } from './common.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
-export type TPermissionRequest = TCollectionRequest & {
-  docId: string;
-};
-
-export type TPermissionUpdateRequest = TPermissionRequest & {
-  permission: number;
-};
-
-export type TPermissionOwnRequest = TPermissionRequest & {
-  grouping: TOwnershipGroup;
-  newOwner: string;
-};
-
 export const typeDefsPermission = `#graphql
 scalar JSON
 type Query

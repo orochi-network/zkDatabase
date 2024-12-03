@@ -1,3 +1,5 @@
+import { TCollectionRequest } from './collection';
+
 export enum EDatabaseProofStatus {
   None,
   Proving,
@@ -33,3 +35,7 @@ export enum EDocumentProofStatus {
   // The proof has failed to be proved
   Failed,
 }
+
+export type TDocumentProofRequest = TCollectionRequest & {
+  docId: string;
+};

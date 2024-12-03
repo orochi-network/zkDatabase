@@ -38,18 +38,6 @@ extend type Mutation {
 }
 `;
 
-export type TTransactionRequest = TDatabaseRequest & {
-  transactionType: 'deploy' | 'rollup';
-};
-
-export type TTransactionIdRequest = TDatabaseRequest & {
-  id: string;
-};
-
-export type TTransactionConfirmRequest = TTransactionIdRequest & {
-  txHash: string;
-};
-
 const getTransaction = authorizeWrapper(
   Joi.object({
     databaseName,
@@ -62,7 +50,7 @@ const getTransaction = authorizeWrapper(
       args.transactionType
     );
 
-    transaction.status
+    transaction.status;
     return {
       databaseName: transaction.databaseName,
       transactionType: transaction.transactionType,
@@ -80,11 +68,7 @@ const enqueueDeployTransaction = authorizeWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     (
-      await enqueueTransactionDomain(
-        args.databaseName,
-        ctx.userName,
-        'deploy'
-      )
+      await enqueueTransactionDomain(args.databaseName, ctx.userName, 'deploy')
     ).toString()
 );
 

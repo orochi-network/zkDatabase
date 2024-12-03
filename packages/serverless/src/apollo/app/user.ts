@@ -43,15 +43,6 @@ const timestamp = Joi.number()
   })
   .required();
 
-export type TSignatureProof = {
-  signature: {
-    field: string;
-    scalar: string;
-  };
-  publicKey: string;
-  data: string;
-};
-
 export const SignatureProof = Joi.object<TSignatureProof>({
   signature: Joi.object({
     field: Joi.string()
@@ -68,36 +59,9 @@ export const SignatureProof = Joi.object<TSignatureProof>({
   data: Joi.string().required(),
 });
 
-export type TSignInRequest = {
-  proof: TSignatureProof;
-};
-
 export const SignInRequest = Joi.object<TSignInRequest>({
   proof: SignatureProof.required(),
 });
-
-export type TSignUpRequest = {
-  userName: string;
-  email: string;
-  userData: any;
-  timestamp: number;
-};
-
-export type TUserFindRequest = {
-  query: { [key: string]: string };
-  pagination: Pagination;
-};
-
-type TUserSearchRequest = {
-  query: { [key: string]: string };
-  pagination: Pagination;
-};
-
-type TUserInfo = {
-  userName: string;
-  email: string;
-  publicKey: string;
-};
 
 export const SignUpRequest = Joi.object<TSignUpRequest>({
   userName: Joi.string().required(),

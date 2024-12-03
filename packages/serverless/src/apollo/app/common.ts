@@ -1,7 +1,11 @@
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { gql } from '../../helper/common.js';
-import { TDocumentField } from '../../types/index.js';
+import {
+  EnumTransactionType,
+  ESorting,
+  TDocumentField,
+} from '../../types/index.js';
 
 export const objectId = Joi.string()
   .trim()
@@ -86,14 +90,16 @@ export const search = Joi.object({
   pagination,
 });
 
-export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']);
+export const sortingOrder = Joi.string().valid(...Object.values(ESorting));
 
 export const collectionIndex = Joi.object({
   name: indexName,
   sorting: sortingOrder,
 });
 
-export const transactionType = Joi.string().valid(...['deploy', 'rollup']);
+export const transactionType = Joi.string().valid(
+  ...Object.values(EnumTransactionType)
+);
 
 export const typeDefsCommon = gql`
   enum Sorting {
