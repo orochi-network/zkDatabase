@@ -1,5 +1,17 @@
+import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
+/**
+ * Transaction status
+ * @param {Unsigned} Unsigned - Transaction is prepared but not yet signed
+ * @param {Signed} Signed - Transaction is signed but not yet broadcasted
+ * @param {Unconfirmed} Unconfirmed - Transaction is broadcasted but not yet confirmed
+ * @param {Confirming} Confirming - Transaction is confirming in one or more blocks
+ * @param {Failed} Failed - Transaction is errored
+ * @param {Confirmed} Confirmed - Transaction is confirmed
+ * @param {Unknown} Unknown - Transaction is unknown
+ * @typedef ETransactionStatus
+ */
 export enum ETransactionStatus {
   // Transaction is prepared but not yet signed
   Unsigned,
@@ -23,8 +35,9 @@ export type TTransaction = {
   status: ETransactionStatus;
   txHash: string;
   error: string;
-  createdAt: Date;
 };
+
+export type TTransactionRecord = TDbRecord<TTransaction>;
 
 export enum ETransactionType {
   Deploy,

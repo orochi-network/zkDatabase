@@ -1,4 +1,5 @@
 import { TCollectionDetail } from './collection.js';
+import { TDbRecord } from './common.js';
 import { TPagination } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
@@ -12,15 +13,15 @@ export type TDatabase = {
   deployStatus: ETransactionStatus;
 };
 
-export type TDatabaseRequest = {
-  databaseName: string;
-};
+export type TDatabaseRecord = TDbRecord<TDatabase>;
 
-export type TDatabaseUpdateDeployedRequest = TDatabaseRequest & {
-  appPublicKey: string;
-};
+export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
+
+export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
+  Pick<TDatabase, 'appPublicKey'>;
+
 export type TDatabaseSearchRequest = {
-  query: { [key: string]: string };
+  query: { [K in keyof TDatabaseRecord]: TDatabaseRecord[K] };
   pagination: TPagination;
 };
 
