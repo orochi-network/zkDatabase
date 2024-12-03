@@ -1,3 +1,4 @@
+import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
 import { TSchemaFieldInput } from './schema.js';
@@ -14,6 +15,14 @@ export enum EProperty {
   Unique,
 }
 
+export type TCollection = {
+  collectionName: string;
+  index: TCollectionIndex[];
+  sizeOnDisk: number;
+};
+
+export type TCollectionRecord = TDbRecord<TCollection>;
+
 export type TCollectionIndex = {
   name: string;
   sorting: ESorting;
@@ -27,19 +36,15 @@ export type TCollectionIndexInfo = {
   property: EProperty;
 };
 
-export type TCollectionDetail = TMetadataDetailCollection<{
-  index: TCollectionIndex[];
-  sizeOnDisk: number;
-}>;
+export type TCollectionDetail = TMetadataDetailCollection<TCollection>;
 
-export type TCollectionRequest = TDatabaseRequest & {
-  collectionName: string;
-};
+export type TCollectionRequest = TDatabaseRequest &
+  Pick<TCollection, 'collectionName'>;
 
 export type TCollectionCreateRequest = TCollectionRequest & {
   schema: TSchemaFieldInput[];
-  permission?: number;
-  groupName?: string;
+  permission: number;
+  groupName: string;
 };
 
 export type TIndexRequest = {
@@ -48,8 +53,6 @@ export type TIndexRequest = {
 
 export type TIndexListRequest = TCollectionRequest;
 
-export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex[];
-};
+export type TIndexCreateRequest = TIndexRequest & Pick<TCollection, 'index'>;
 
-export type TIndexDetailRequest = TIndexRequest & TIndexRequest;
+export type TIndexDetailRequest = TIndexRequest;
