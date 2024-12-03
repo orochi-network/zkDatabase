@@ -4,10 +4,10 @@ import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
-  createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { TCollection, TCollectionIndex } from '../../types/index.js';
+import { gql } from '../../helper/common.js';
+import { TCollectionIndex, TSchemaFieldDefinition } from '../../types/index.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import {
   collectionIndex,
@@ -16,7 +16,6 @@ import {
   groupName,
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { gql } from '../../helper/common.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -35,7 +34,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TCollection;
+  schema: TSchemaFieldDefinition;
   index?: TCollectionIndex[];
   permission?: number;
   groupName?: string;
@@ -101,7 +100,7 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    const createCollectionResult = await withTransaction((session) =>
+    return withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -112,21 +111,6 @@ const collectionCreate = authorizeWrapper(
         session
       )
     );
-
-    if (args.index && args.index.length > 0 && createCollectionResult) {
-      const indexResult = await createIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.index
-      );
-
-      if (!indexResult) {
-        throw Error('Failed to create index');
-      }
-    }
-
-    return createCollectionResult;
   }
 );
 

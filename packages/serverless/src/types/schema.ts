@@ -8,7 +8,7 @@ export type TSchemaField = {
   indexed: boolean;
 };
 
-export type TSchemaFieldInput = Omit<TSchemaField, 'order'> & {
+export type TSchemaFieldDefinition = Omit<TSchemaField, 'order'> & {
   sorting?: ESorting;
 };
 

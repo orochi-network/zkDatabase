@@ -1,36 +1,34 @@
 import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
 import { ClientSession } from 'mongodb';
 import {
   DEFAULT_GROUP_ADMIN,
   PERMISSION_DEFAULT_VALUE,
 } from '../../common/const.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { getIndexCollectionBySchemaDefinition } from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import {
-  CollectionIndex,
-  CollectionIndexInfo,
-} from '../../types/collection-index.js';
-import { TCollectionIndex } from '../../types/collection.js';
-import { DocumentSchemaInput } from '../../types/schema.js';
-import { Sorting } from '../../types/sorting.js';
+  EProperty,
+  ESorting,
+  TCollectionDetail,
+  TCollectionIndex,
+  TCollectionIndexInfo,
+} from '../../types/collection.js';
+import { TSchemaFieldDefinition } from '../../types/schema.js';
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
-import { readMetadata } from './metadata.js';
+import { readCollectionMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
-
-function mapSorting(sorting: Sorting): 1 | -1 {
-  return sorting === 'ASC' ? 1 : -1;
-}
 
 async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  index: CollectionIndex[]
+  index: TCollectionIndex[]
 ): Promise<boolean> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
@@ -60,7 +58,11 @@ async function createIndex(
       databaseName,
       DB.service,
       collectionName
-    ).index(index.map((i) => ({ [`${i.name}.name`]: mapSorting(i.sorting) })));
+    ).index(
+      index.map((i) => ({
+        [`${i.name}.name`]: i.sorting === ESorting.Asc ? 1 : -1,
+      }))
+    );
   }
 
   throw Error(
@@ -72,10 +74,9 @@ async function createCollection(
   databaseName: string,
   collectionName: string,
   actor: string,
-  schema: DocumentSchemaInput,
+  schema: TSchemaFieldDefinition[],
   groupName = DEFAULT_GROUP_ADMIN,
   permission = PERMISSION_DEFAULT_VALUE,
-  index?: TCollectionIndex[],
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
@@ -104,8 +105,11 @@ async function createCollection(
     session
   );
 
-  if (index) {
-    await createIndex(databaseName, actor, collectionName, index);
+  // Create index by schema definition
+  const collectionIndex = getIndexCollectionBySchemaDefinition(schema);
+
+  if (collectionIndex.length > 0) {
+    await createIndex(databaseName, actor, collectionName, collectionIndex);
   }
 
   return true;
@@ -116,7 +120,7 @@ async function readCollectionInfo(
   collectionName: string,
   actor: string,
   skipPermissionCheck: boolean = false
-): Promise<Collection> {
+): Promise<TCollectionDetail> {
   if (
     skipPermissionCheck ||
     (await hasCollectionPermission(databaseName, collectionName, actor, 'read'))
@@ -126,7 +130,7 @@ async function readCollectionInfo(
       DB.service,
       collectionName
     );
-    const indexes = await modelCollection.listIndexes();
+
     const sizeOnDisk = await modelCollection.size();
 
     const schema = await getSchemaDefinition(
@@ -136,12 +140,18 @@ async function readCollectionInfo(
       true
     );
 
-    const ownership = await readMetadata(
+    const metadata = await readCollectionMetadata(
       databaseName,
       collectionName,
-      null,
       actor
     );
+
+    if (!metadata) {
+      throw new Error(
+        `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
+      );
+    }
+    const index = getIndexCollectionBySchemaDefinition(metadata.definition);
 
     await ModelCollection.getInstance(
       databaseName,
@@ -149,7 +159,12 @@ async function readCollectionInfo(
       collectionName
     ).size();
 
-    return { name: collectionName, indexes, schema, ownership, sizeOnDisk };
+    return {
+      name: collectionName,
+      index,
+      metadata,
+      sizeOnDisk,
+    };
   }
 
   throw new Error(
@@ -160,7 +175,7 @@ async function readCollectionInfo(
 async function listCollections(
   databaseName: string,
   actor: string
-): Promise<Collection[]> {
+): Promise<TCollectionDetail[]> {
   let availableCollections: string[] = [];
 
   if (await isDatabaseOwner(databaseName, actor)) {
@@ -168,7 +183,7 @@ async function listCollections(
       await ModelDatabase.getInstance(databaseName).listCollections();
   } else {
     const collectionsMetadata = await (
-      await ModelCollectionMetadata.getInstance(databaseName).find()
+      await ModelMetadataCollection.getInstance(databaseName).find()
     ).toArray();
 
     const modelUserGroup = new ModelUserGroup(databaseName);
@@ -233,7 +248,7 @@ export async function listIndexesInfo(
   databaseName: string,
   collectionName: string,
   actor: string
-): Promise<CollectionIndexInfo[]> {
+): Promise<TCollectionIndexInfo[]> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'read')
   ) {
@@ -264,21 +279,22 @@ export async function listIndexesInfo(
         indexDef.name !== undefined
     );
 
-    const indexList: CollectionIndexInfo[] = validIndexes.map((indexDef) => {
+    const indexList: TCollectionIndexInfo[] = validIndexes.map((indexDef) => {
       const { name, key } = indexDef;
       const size = indexSizes[name] || 0;
       const usageStats = indexUsageMap[name] || {};
-      const accesses = usageStats.accesses?.ops || 0;
+      const access = usageStats.accesses?.ops || 0;
       const since = usageStats.accesses?.since
         ? new Date(usageStats.accesses.since)
         : new Date(0);
-      const properties = Object.keys(key).length > 1 ? 'compound' : 'unique';
+      const property =
+        Object.keys(key).length > 1 ? EProperty.Compound : EProperty.Unique;
       return {
         name,
         size,
-        accesses,
+        access,
         since,
-        properties,
+        property,
       };
     });
 
