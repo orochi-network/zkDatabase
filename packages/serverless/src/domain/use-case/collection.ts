@@ -2,14 +2,17 @@ import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
+import {
+  DEFAULT_GROUP_ADMIN,
+  PERMISSION_DEFAULT_VALUE,
+} from '../../common/const.js';
 import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import {
   CollectionIndex,
   CollectionIndexInfo,
 } from '../../types/collection-index.js';
-import { Collection } from '../../types/collection.js';
+import { TCollectionIndex } from '../../types/collection.js';
 import { DocumentSchemaInput } from '../../types/schema.js';
 import { Sorting } from '../../types/sorting.js';
 import { createCollectionMetadata } from './collection-metadata.js';
@@ -18,7 +21,6 @@ import { isGroupExist } from './group.js';
 import { readMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
-import { PERMISSION_DEFAULT_VALUE } from '../../common/const.js';
 
 function mapSorting(sorting: Sorting): 1 | -1 {
   return sorting === 'ASC' ? 1 : -1;
@@ -28,7 +30,7 @@ async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  indexes: CollectionIndex[]
+  index: CollectionIndex[]
 ): Promise<boolean> {
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
@@ -41,7 +43,7 @@ async function createIndex(
     );
 
     // Collect all invalid index names
-    const invalidIndexes = indexes
+    const invalidIndexes = index
       .map(({ name }) => name)
       .filter(
         (name) => !schema.some(({ name: fieldName }) => fieldName === name)
@@ -58,9 +60,7 @@ async function createIndex(
       databaseName,
       DB.service,
       collectionName
-    ).index(
-      indexes.map((index) => ({ [index.name]: mapSorting(index.sorting) }))
-    );
+    ).index(index.map((i) => ({ [`${i.name}.name`]: mapSorting(i.sorting) })));
   }
 
   throw Error(
@@ -75,6 +75,7 @@ async function createCollection(
   schema: DocumentSchemaInput,
   groupName = DEFAULT_GROUP_ADMIN,
   permission = PERMISSION_DEFAULT_VALUE,
+  index?: TCollectionIndex[],
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);
@@ -102,6 +103,11 @@ async function createCollection(
     groupName,
     session
   );
+
+  if (index) {
+    await createIndex(databaseName, actor, collectionName, index);
+  }
+
   return true;
 }
 

@@ -1,15 +1,15 @@
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
 import logger from '../../helper/logger.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import { TDocumentField } from '../../types/document.js';
+import { TSchemaField } from '../../types/schema.js';
 import {
   ProvableTypeMap,
   ProvableTypeString,
   Schema,
   SchemaEncoded,
 } from '../common/schema.js';
-import { DocumentFields } from '../../types/document.js';
-import { DocumentSchema } from '../../types/schema.js';
 import { listIndexes } from './collection.js';
 import { hasCollectionPermission } from './permission.js';
 
@@ -41,10 +41,10 @@ if (schemaVerification.size === 0) {
 export async function validateDocumentSchema(
   databaseName: string,
   collectionName: string,
-  document: DocumentFields,
+  document: TDocumentField[],
   session?: ClientSession
 ): Promise<boolean> {
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
@@ -52,7 +52,7 @@ export async function validateDocumentSchema(
   }
 
   const schemaFieldNames = new Set(
-    schema.fields.filter((name) => name !== '_id')
+    schema.field.filter((name) => name !== '_id')
   );
 
   const allFieldsDefined = document.every((docField) =>
@@ -69,16 +69,16 @@ export async function validateDocumentSchema(
     return false;
   }
 
-  const isValid = schema.fields.every((field) => {
+  const isValid = schema.field.every((fieldName) => {
     // Skip validation for the _id field
-    if (field === '_id') {
+    if (fieldName === '_id') {
       return true;
     }
 
-    const schemaField = schema[field];
+    const schemaField = schema[fieldName];
 
     if (!schemaField) {
-      logger.error(`Field '${field}' is not defined in the schema.`);
+      logger.error(`Field '${fieldName}' is not defined in the schema.`);
       return false;
     }
 
@@ -90,16 +90,16 @@ export async function validateDocumentSchema(
       return false;
     }
 
-    const documentField = document.find((f) => f.name === field);
+    const documentField = document.find((f) => f.name === fieldName);
 
     if (typeof documentField === 'undefined') {
-      logger.error(`Document is missing field '${field}'.`);
+      logger.error(`Document is missing field '${fieldName}'.`);
       return false;
     }
 
     if (documentField.kind !== schemaField.kind) {
       logger.error(
-        `Field '${field}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`
+        `Field '${fieldName}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`
       );
       return false;
     }
@@ -107,7 +107,7 @@ export async function validateDocumentSchema(
     const { error } = validationSchema.validate(documentField.value);
     if (error) {
       logger.error(
-        `Schema validation error for field '${field}': ${error.message}`
+        `Schema validation error for field '${fieldName}': ${error.message}`
       );
       return false;
     }
@@ -121,14 +121,14 @@ export async function validateDocumentSchema(
 export async function buildSchema(
   databaseName: string,
   collectionName: string,
-  document: DocumentFields,
+  document: TDocumentField[],
   session?: ClientSession
 ) {
   if (!(await validateDocumentSchema(databaseName, collectionName, document))) {
     throw new Error('Invalid schema');
   }
 
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
   const schema = await modelSchema.getMetadata(collectionName, { session });
 
   if (schema === null) {
@@ -142,7 +142,7 @@ export async function buildSchema(
     throw new Error(`Schema not found for collection ${collectionName}`);
   }
 
-  schema.fields.forEach((fieldName) => {
+  schema.field.forEach((fieldName) => {
     const documentField = document.find((f) => f.name === fieldName);
 
     if (!documentField) {
@@ -165,7 +165,7 @@ export async function getSchemaDefinition(
   actor: string,
   skipPermissionCheck: boolean = false,
   session?: ClientSession
-): Promise<DocumentSchema> {
+): Promise<TSchemaField[]> {
   if (
     skipPermissionCheck ||
     (await hasCollectionPermission(
@@ -176,7 +176,7 @@ export async function getSchemaDefinition(
       session
     ))
   ) {
-    const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+    const modelSchema = ModelMetadataCollection.getInstance(databaseName);
     const schema = await modelSchema.getMetadata(collectionName, { session });
 
     const indexes = await listIndexes(
@@ -190,7 +190,7 @@ export async function getSchemaDefinition(
       throw new Error(`Schema not found for collection ${collectionName}`);
     }
 
-    return schema.fields.map((f) => ({
+    return schema.field.map((f) => ({
       ...schema[f],
       indexed: indexes.some((index) => index === f),
     }));
