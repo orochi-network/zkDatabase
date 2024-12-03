@@ -1,7 +1,7 @@
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
-import { TSchemaFieldInput } from './schema.js';
+import { TSchemaFieldDefinition } from './schema.js';
 
 export enum ESorting {
   // -1
@@ -37,6 +37,7 @@ export type TCollectionIndexInfo = {
 };
 
 export type TCollectionDetail = TMetadataDetailCollection<TCollection>;
+
 
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;

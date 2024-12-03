@@ -2,7 +2,6 @@ import { Permission } from '@zkdb/permission';
 import { Request } from 'express';
 import { TJWTAuthenticationPayload } from 'helper/jwt';
 import Joi from 'joi';
-import { TFakeAuthorizedContext } from 'types/common.js';
 import { userName } from '../apollo/app/common.js';
 
 // System user
