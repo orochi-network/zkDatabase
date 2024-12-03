@@ -32,41 +32,41 @@ export const ProvableTypeMap = {
   MerkleMapWitness,
 } as const;
 
-export type ProvableTypeString = keyof typeof ProvableTypeMap;
+export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
-export type SchemaField = {
+export type TSchemaField = {
   name: string;
-  kind: ProvableTypeString;
+  kind: TProvableTypeString;
   value: string;
 };
 
-export type SchemaEncoded = SchemaField[];
+export type TSchemaEncoded = TSchemaField[];
 
 export type SchemaFieldDefinition = {
   name: string;
-  kind: ProvableTypeString;
+  kind: TProvableTypeString;
 };
 
-export type SchemaDefinition = SchemaFieldDefinition[];
+export type TSchemaDefinition = SchemaFieldDefinition[];
 
 export interface SchemaExtend {
-  serialize(): SchemaEncoded;
+  serialize(): TSchemaEncoded;
   hash(): Field;
 }
 export interface SchemaStaticExtend<A> {
   // eslint-disable-next-line no-use-before-define
-  deserialize(_doc: SchemaEncoded): InstanceType<SchemaExtendable<A>>;
-  getSchema(): SchemaDefinition;
+  deserialize(_doc: TSchemaEncoded): InstanceType<SchemaExtendable<A>>;
+  getSchema(): TSchemaDefinition;
 }
 
 export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
   SchemaStaticExtend<A>;
 
-export type ProvableMapped<T extends SchemaDefinition> = {
-  [Property in T[number]['name']]?: (typeof ProvableTypeMap)[ProvableTypeString];
+export type ProvableMapped<T extends TSchemaDefinition> = {
+  [Property in T[number]['name']]?: (typeof ProvableTypeMap)[TProvableTypeString];
 };
 
-export function toInnerStructure<T extends SchemaDefinition>(
+export function toInnerStructure<T extends TSchemaDefinition>(
   schema: T
 ): ProvableMapped<T> {
   const result: Partial<ProvableMapped<T>> = {};
@@ -91,7 +91,7 @@ export class Schema {
         };
       });
 
-      public static getSchema(): SchemaDefinition {
+      public static getSchema(): TSchemaDefinition {
         return Document.schemaEntries.map(({ name, kind }) => ({
           name,
           kind,
@@ -99,7 +99,7 @@ export class Schema {
       }
 
       // Serialize the document to a Uint8Array
-      serialize(): SchemaEncoded {
+      serialize(): TSchemaEncoded {
         const anyThis = <any>this;
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
@@ -124,7 +124,7 @@ export class Schema {
         return Poseidon.hash(Document.toFields(<any>this));
       }
 
-      static deserialize(doc: SchemaEncoded): Document {
+      static deserialize(doc: TSchemaEncoded): Document {
         const result: any = {};
 
         for (let i = 0; i < doc.length; i += 1) {
@@ -169,12 +169,12 @@ export class Schema {
     return this.fromSchema(
       record.map(([name, kind]) => ({
         name,
-        kind: kind as ProvableTypeString,
+        kind: kind as TProvableTypeString,
       }))
     );
   }
 
-  public static fromSchema(schema: SchemaDefinition) {
+  public static fromSchema(schema: TSchemaDefinition) {
     return Schema.create(toInnerStructure(schema));
   }
 }
