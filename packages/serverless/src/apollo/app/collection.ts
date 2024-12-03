@@ -1,22 +1,16 @@
+import { TDatabaseRequest, TSchemaFieldDefinition } from '@zkdb/common';
 import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
-  createIndex,
   listCollections,
 } from '../../domain/use-case/collection.js';
-import { TCollectionDetail, TCollectionIndex } from '../../types/index.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  collectionIndex,
-  collectionName,
-  databaseName,
-  groupName,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
 import { gql } from '../../helper/common.js';
+// import { TSchemaFieldDefinition } from '../../types/index.js';
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { collectionName, databaseName, groupName } from './common.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -30,11 +24,25 @@ export const schemaField = Joi.object({
 
 export const schemaFields = Joi.array().items(schemaField);
 
+export type TCollectionRequest = TDatabaseRequest & {
+  collectionName: string;
+};
+
+export type TCollectionCreateRequest = TCollectionRequest & {
+  schema: TSchemaFieldDefinition[];
+  permission?: number;
+  groupName?: string;
+};
+
+export const CollectionRequest = Joi.object<TCollectionRequest>({
+  collectionName,
+  databaseName,
+});
+
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName: groupName.optional(),
-  index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
   permission: Joi.number().min(0).max(0xffffff).optional(),
 });
@@ -85,7 +93,7 @@ const collectionExist = publicWrapper(
 const collectionCreate = authorizeWrapper(
   CollectionCreateRequest,
   async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    const createCollectionResult = await withTransaction((session) =>
+    return withTransaction((session) =>
       createCollection(
         args.databaseName,
         args.collectionName,
@@ -96,21 +104,6 @@ const collectionCreate = authorizeWrapper(
         session
       )
     );
-
-    if (args.index && args.index.length > 0 && createCollectionResult) {
-      const indexResult = await createIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.index
-      );
-
-      if (!indexResult) {
-        throw Error('Failed to create index');
-      }
-    }
-
-    return createCollectionResult;
   }
 );
 

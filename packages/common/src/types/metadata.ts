@@ -1,10 +1,12 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
-import { TSchemaField } from '../schema.js';
 import { TDbRecord } from './common.js';
+import { TSchemaFieldDefinition } from './schema.js';
 
-export type TMetadataBasic = TDbRecord<OwnershipAndPermission & {
-  collection: string;
-}>;
+export type TMetadataBasic = TDbRecord<
+  OwnershipAndPermission & {
+    collection: string;
+  }
+>;
 
 // Document metadata
 export type TMetadataDocument = TMetadataBasic & {
@@ -15,7 +17,7 @@ export type TMetadataDocument = TMetadataBasic & {
 // Collection metadata
 export type TMetadataCollection = TMetadataBasic & {
   field: string[];
-  definition: TSchemaField[];
+  definition: TSchemaFieldDefinition[];
 };
 
 /**
@@ -24,7 +26,7 @@ export type TMetadataCollection = TMetadataBasic & {
  * @param M Type of metadata
  *
  */
-export type TMetadataDetail<T, M> = T & { _metadata: M };
+export type TMetadataDetail<T, M> = T & { metadata: M };
 
 export type TMetadataDetailDocument<T> = TMetadataDetail<T, TMetadataDocument>;
 

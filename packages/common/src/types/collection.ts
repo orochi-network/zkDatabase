@@ -1,6 +1,6 @@
 import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
-import { TSchemaFieldInput } from './schema.js';
+import { TSchemaFieldDefinition } from './schema.js';
 
 export enum ESorting {
   // -1
@@ -28,6 +28,7 @@ export type TCollectionIndexInfo = {
 };
 
 export type TCollectionDetail = TMetadataDetailCollection<{
+  name: string;
   index: TCollectionIndex[];
   sizeOnDisk: number;
 }>;
@@ -37,7 +38,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TSchemaFieldInput[];
+  schema: TSchemaFieldDefinition[];
   permission?: number;
   groupName?: string;
 };
@@ -52,4 +53,4 @@ export type TIndexCreateRequest = TIndexRequest & {
   index: TCollectionIndex[];
 };
 
-export type TIndexDetailRequest = TIndexRequest & TIndexRequest;
+export type TIndexDetailRequest = TIndexRequest & TCollectionRequest;

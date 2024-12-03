@@ -8,15 +8,19 @@ import {
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
-import { TCollectionIndex } from '../../types/index';
 import { authorizeWrapper } from '../validation.js';
-import { CollectionRequest, TCollectionRequest } from './collection.js';
 import {
   collectionIndex,
   collectionName,
   databaseName,
   indexName,
 } from './common.js';
+import {
+  TIndexCreateRequest,
+  TIndexDetailRequest,
+  TIndexListRequest,
+} from '@zkdb/common';
+import { CollectionRequest } from './collection.js';
 
 export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
   collectionName,
@@ -72,13 +76,13 @@ export const typeDefsCollectionIndex = gql`
 
 // Query
 const indexList = authorizeWrapper(
-  IndexListRequest,
+  CollectionRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
     listIndexes(args.databaseName, ctx.userName, args.collectionName)
 );
 
 const indexListInfo = authorizeWrapper(
-  IndexListRequest,
+  CollectionRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
     listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
 );

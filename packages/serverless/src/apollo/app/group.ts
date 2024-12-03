@@ -19,7 +19,13 @@ import {
   groupOptionalDescription,
   userName,
 } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import {
+  TDatabaseRequest,
+  TGroupAddUsersRequest,
+  TGroupCreateRequest,
+  TGroupRenameRequest,
+  TGroupRequest,
+} from '@zkdb/common';
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
