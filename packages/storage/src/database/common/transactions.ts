@@ -8,33 +8,14 @@ import {
   ObjectId,
   WithId,
 } from 'mongodb';
+import { ETransactionType, TTransaction } from '@zkdb/common';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
 
-export type TransactionType = 'deploy' | 'rollup';
-
-export type TransactionStatus =
-  | 'start'
-  | 'ready'
-  | 'pending'
-  | 'failed'
-  | 'success'
-  | 'unknown'
-
-export type DbTransaction = {
-  transactionType: TransactionType;
-  databaseName: string;
-  tx?: string;
-  status: TransactionStatus;
-  txHash?: string;
-  error?: string;
-  createdAt: Date;
-};
-
-export class ModelDbTransaction extends ModelBasic<DbTransaction> {
-  private static instance: ModelDbTransaction;
+export class ModelTransaction extends ModelBasic<TTransaction> {
+  private static instance: ModelTransaction;
 
   private constructor() {
     super(
@@ -45,16 +26,16 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
   }
 
   public static getInstance() {
-    if (!ModelDbTransaction.instance) {
-      this.instance = new ModelDbTransaction();
+    if (!ModelTransaction.instance) {
+      this.instance = new ModelTransaction();
     }
     return this.instance;
   }
 
   public async create(
-    args: DbTransaction,
+    args: TTransaction,
     options?: ReplaceOptions
-  ): Promise<Document | InsertOneResult<DbTransaction>> {
+  ): Promise<Document | InsertOneResult<TTransaction>> {
     const result = await this.collection.insertOne(args, { ...options });
 
     return result;
@@ -62,9 +43,9 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
 
   public async updateById(
     id: string,
-    args: Partial<DbTransaction>,
+    args: Partial<TTransaction>,
     options?: ReplaceOptions
-  ): Promise<Document | UpdateResult<DbTransaction>> {
+  ): Promise<Document | UpdateResult<TTransaction>> {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(id) },
       { $set: args },
@@ -76,9 +57,9 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
 
   public async getTxs(
     databaseName: string,
-    transactionType: TransactionType,
+    transactionType: ETransactionType,
     options?: FindOptions
-  ): Promise<Array<WithId<DbTransaction>>> {
+  ): Promise<Array<WithId<TTransaction>>> {
     return this.collection
       .find({ databaseName, transactionType }, options)
       .toArray();
@@ -92,7 +73,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
     return tx;
   }
 
-  public async remove(databaseName: string, transactionType: TransactionType) {
+  public async remove(databaseName: string, transactionType: ETransactionType) {
     const res = await this.collection.deleteOne({
       databaseName,
       transactionType,
@@ -100,7 +81,7 @@ export class ModelDbTransaction extends ModelBasic<DbTransaction> {
     return res.deletedCount === 1;
   }
 
-  public async count(filter?: Filter<DbTransaction>) {
+  public async count(filter?: Filter<TTransaction>) {
     return await this.collection.countDocuments(filter);
   }
 
