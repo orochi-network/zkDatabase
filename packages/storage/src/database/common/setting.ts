@@ -1,3 +1,4 @@
+import { TDbSetting } from '@zkdb/common';
 import {
   Filter,
   FindOptions,
@@ -9,14 +10,7 @@ import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
-export type DbSetting = {
-  databaseName: string;
-  merkleHeight: number;
-  appPublicKey?: string;
-  databaseOwner: string;
-};
-
-export class ModelDbSetting extends ModelBasic<DbSetting> {
+export class ModelDbSetting extends ModelBasic<TDbSetting> {
   private static instance: ModelDbSetting;
 
   private constructor() {
@@ -35,9 +29,9 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   }
 
   public async createSetting(
-    setting: DbSetting,
+    setting: TDbSetting,
     options?: InsertOneOptions
-  ): Promise<InsertOneResult<DbSetting>> {
+  ): Promise<InsertOneResult<TDbSetting>> {
     try {
       const result = await this.collection.insertOne(setting, options);
       return result;
@@ -78,7 +72,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
 
   public async updateSetting(
     databaseName: string,
-    setting: Partial<DbSetting>
+    setting: Partial<TDbSetting>
   ) {
     return this.collection.updateOne(
       { databaseName },
@@ -96,7 +90,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   public async getSetting(
     databaseName: string,
     options?: FindOptions
-  ): Promise<DbSetting | null> {
+  ): Promise<TDbSetting | null> {
     try {
       const setting = await this.collection.findOne({ databaseName }, options);
       return setting;
@@ -106,9 +100,9 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
   }
 
   public async findSettingsByFields(
-    filter: Filter<DbSetting>,
+    filter: Filter<TDbSetting>,
     options?: FindOptions
-  ): Promise<DbSetting[]> {
+  ): Promise<TDbSetting[]> {
     try {
       const setting = (
         await this.collection.find(filter, options).toArray()
@@ -123,7 +117,7 @@ export class ModelDbSetting extends ModelBasic<DbSetting> {
     }
   }
 
-  public async count(filter?: Filter<DbSetting>) {
+  public async count(filter?: Filter<TDbSetting>) {
     return await this.collection.countDocuments(filter);
   }
 }

@@ -18,6 +18,12 @@
   },
   "references": [
     {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/permission"
+    },
+    {
       "path": "./packages/smart-contract"
     },
     {
@@ -46,7 +52,7 @@
     },
     {
       "path": "./packages/ftp"
-    }
+    },
   ],
   "include": [
     "./src/"

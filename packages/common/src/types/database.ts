@@ -2,14 +2,14 @@ import { TCollectionDetail } from './collection.js';
 import { TPagination } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
-export type Database = {
+export type TDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
   collection: TCollectionDetail[];
   databaseSize: number;
-  appPublicKey?: string;
-  deployStatus?: ETransactionStatus;
+  appPublicKey: string;
+  deployStatus: ETransactionStatus;
 };
 
 export type TDatabaseRequest = {
