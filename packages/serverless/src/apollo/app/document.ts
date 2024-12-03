@@ -299,7 +299,7 @@ const documentDrop = authorizeWrapper(
 const historyDocumentGet = authorizeWrapper(
   DOCUMENT_HISTORY_GET_REQUEST,
   async (_root: unknown, args: TDocumentHistoryGetRequest, ctx) => {
-    const document = await withTransaction((session) =>
+    const documentHistory = await withTransaction((session) =>
       readHistoryDocument(
         args.databaseName,
         args.collectionName,
