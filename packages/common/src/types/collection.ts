@@ -53,4 +53,4 @@ export type TIndexCreateRequest = TIndexRequest & {
   index: TCollectionIndex[];
 };
 
-export type TIndexDetailRequest = TIndexRequest & TIndexRequest;
+export type TIndexDetailRequest = TIndexRequest & TCollectionRequest;

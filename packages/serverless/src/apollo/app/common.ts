@@ -1,11 +1,7 @@
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { gql } from '../../helper/common.js';
-import {
-  EnumTransactionType,
-  ESorting,
-  TDocumentField,
-} from '../../types/index.js';
+import { ESorting, ETransactionType, TDocumentField } from '@zkdb/common';
 
 export const objectId = Joi.string()
   .trim()
@@ -98,7 +94,7 @@ export const collectionIndex = Joi.object({
 });
 
 export const transactionType = Joi.string().valid(
-  ...Object.values(EnumTransactionType)
+  ...Object.values(ETransactionType)
 );
 
 export const typeDefsCommon = gql`
