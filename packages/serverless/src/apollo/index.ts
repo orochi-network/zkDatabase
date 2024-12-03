@@ -5,10 +5,6 @@ import {
 import { resolversCollection, typeDefsCollection } from './app/collection.js';
 import { typeDefsCommon } from './app/common.js';
 import { resolversDatabase, typeDefsDatabase } from './app/database.js';
-import {
-  resolversDocumentHistory,
-  typeDefsDocumentHistory,
-} from './app/document-history.js';
 import { resolversDocument, typeDefsDocument } from './app/document.js';
 import {
   resolversEnvironment,
@@ -36,7 +32,6 @@ export const TypedefsApp = [
   typeDefsPermission,
   typeDefsMerkleTree,
   typeDefsProof,
-  typeDefsDocumentHistory,
   typeDefsTransaction,
   typeDefsRollUp,
   typeDefsEnvironment,
@@ -52,7 +47,6 @@ type Resolver =
   | typeof resolversPermission
   | typeof resolversMerkleTree
   | typeof resolversProof
-  | typeof resolversDocumentHistory
   | typeof resolversTransaction
   | typeof resolversRollUp
   | typeof resolversEnvironment;
@@ -67,7 +61,6 @@ export const ResolversApp: Resolver[] = [
   resolversPermission,
   resolversMerkleTree,
   resolversProof,
-  resolversDocumentHistory,
   resolversTransaction,
   resolversRollUp,
   resolversEnvironment,
