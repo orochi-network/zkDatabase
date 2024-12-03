@@ -10,28 +10,29 @@ import {
   updateDocument,
 } from '../../domain/use-case/document.js';
 import { gql } from '../../helper/common.js';
-import { DocumentRecord } from '../../model/abstract/document.js';
+import { IDocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
+import { TDocumentField, TPagination } from '../../types';
 import {
   collectionName,
   databaseName,
   documentField,
   pagination,
 } from './common.js';
-import { SchemaField } from '../../domain/common/schema.js';
-import { TPagination } from '../../types/pagination.js';
-
-export type TDocumentField = SchemaField;
 
 export type TDocumentsFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
 
+export type TDocumentFindRequest = TCollectionRequest & {
+  documentQuery: { [key: string]: string };
+};
+
 export type TDocumentCreateRequest = TCollectionRequest & {
-  document: DocumentRecord;
+  document: IDocumentRecord;
   documentPermission: number;
 };
 
@@ -118,9 +119,9 @@ export const typeDefsDocument = gql`
       docId: String
       pagination: PaginationInput
      ): [DocumentHistoryOutput]!
-  
+
   }
-  
+
 
   extend type Mutation {
     documentCreate(
@@ -216,7 +217,7 @@ const documentCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.document as DocumentField[],
+        args.document as TDocumentField[],
         args.documentPermission,
         compoundSession
       )
