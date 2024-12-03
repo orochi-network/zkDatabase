@@ -8,8 +8,7 @@ import {
 } from '../../domain/use-case/document-history.js';
 import { collectionName, databaseName, pagination } from './common.js';
 import mapPagination from '../mapper/pagination.js';
-import { TCollectionRequest } from './collection.js';
-import { TPagination } from '../../types/index.js';
+import { TPagination, TCollectionRequest } from '../../types/index.js';
 import { gql } from '../../helper/common.js';
 
 export type TDocumentHistoryGetRequest = TCollectionRequest & {
