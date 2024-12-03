@@ -1,4 +1,6 @@
+import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
+import { TSchemaFieldDefinition } from './schema.js';
 
 export enum ESorting {
   // -1
@@ -30,3 +32,25 @@ export type TCollectionDetail = TMetadataDetailCollection<{
   index: TCollectionIndex[];
   sizeOnDisk: number;
 }>;
+
+export type TCollectionRequest = TDatabaseRequest & {
+  collectionName: string;
+};
+
+export type TCollectionCreateRequest = TCollectionRequest & {
+  schema: TSchemaFieldDefinition[];
+  permission?: number;
+  groupName?: string;
+};
+
+export type TIndexRequest = {
+  indexName: string;
+};
+
+export type TIndexListRequest = TCollectionRequest;
+
+export type TIndexCreateRequest = TIndexRequest & {
+  index: TCollectionIndex[];
+};
+
+export type TIndexDetailRequest = TIndexRequest & TIndexRequest;

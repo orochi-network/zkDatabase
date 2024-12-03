@@ -77,6 +77,7 @@ async function createCollection(
   schema: TSchemaFieldDefinition[],
   groupName = DEFAULT_GROUP_ADMIN,
   permission = PERMISSION_DEFAULT_VALUE,
+  index?: TCollectionIndex[],
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);

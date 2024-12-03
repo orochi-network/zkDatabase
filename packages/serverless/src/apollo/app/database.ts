@@ -12,34 +12,9 @@ import {
   getDatabases,
   updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, publicKey, userName } from './common.js';
 import { gql } from '../../helper/common.js';
-import { TPagination } from '../../types/index.js';
-
-export type TDatabaseRequest = {
-  databaseName: string;
-};
-
-export type TDatabaseUpdateDeployedRequest = TDatabaseRequest & {
-  appPublicKey: string;
-};
-export type TDatabaseSearchRequest = {
-  query: { [key: string]: string };
-  pagination: TPagination;
-};
-
-export type TDatabaseCreateRequest = TDatabaseRequest & {
-  merkleHeight: number;
-};
-
-export type TFindIndexRequest = TDatabaseRequest & {
-  index: number;
-};
-
-export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
-  newOwner: string;
-};
+import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { databaseName, pagination, userName } from './common.js';
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,

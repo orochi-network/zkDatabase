@@ -39,10 +39,6 @@ extend type Query {
 }
 `;
 
-export type TProofRequest = TCollectionRequest & {
-  docId: string;
-};
-
 const getProofStatus = authorizeWrapper(
   Joi.object({
     databaseName,

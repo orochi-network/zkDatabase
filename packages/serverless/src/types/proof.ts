@@ -1,3 +1,5 @@
+import { TCollectionRequest } from './collection.js';
+
 export enum EDatabaseProofStatus {
   None,
   Proving,
@@ -7,7 +9,7 @@ export enum EDatabaseProofStatus {
 
 export type TWithProofStatus<T> = T & { proofStatus: EDatabaseProofStatus };
 
-export type TSignature = {
+export type TMinaSignature = {
   signature: {
     field: string;
     scalar: string;
@@ -33,3 +35,7 @@ export enum EDocumentProofStatus {
   // The proof has failed to be proved
   Failed,
 }
+
+export type TDocumentProofRequest = TCollectionRequest & {
+  docId: string;
+};

@@ -2,6 +2,7 @@ export * from './collection.js';
 export * from './common.js';
 export * from './database.js';
 export * from './document.js';
+export * from './group.js';
 export * from './merkle-tree.js';
 export * from './metadata.js';
 export * from './ownership.js';

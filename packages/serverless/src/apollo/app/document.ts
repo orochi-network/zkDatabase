@@ -10,11 +10,11 @@ import {
   updateDocument,
 } from '../../domain/use-case/document.js';
 import { gql } from '../../helper/common.js';
-import { DocumentRecord } from '../../model/abstract/document.js';
-import { TPagination } from '../../types/pagination.js';
+import { IDocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
+import { TDocumentField, TPagination } from '../../types';
 import {
   collectionName,
   databaseName,
@@ -27,17 +27,21 @@ export type TDocumentsFindRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
+export type TDocumentFindRequest = TCollectionRequest & {
+  documentQuery: { [key: string]: string };
+};
+
 export type TDocumentCreateRequest = TCollectionRequest & {
-  document: DocumentRecord;
+  document: IDocumentRecord;
   documentPermission: number;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
   query: { [key: string]: string };
-  document: TDocumentFields;
+  document: TDocumentField[];
 };
 
-export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -93,19 +97,31 @@ export const typeDefsDocument = gql`
       collectionName: String!
       query: JSON!
     ): DocumentOutput
+
     documentsFind(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
     ): DocumentPaginationOutput!
+
     documentsWithMetadataFind(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
     ): [DocumentsWithMetadataOutput]!
+
+    extend type Query {
+    documentsHistoryList(
+      databaseName: String!
+      collectionName: String!
+      docId: String
+      pagination: PaginationInput
+     ): [DocumentHistoryOutput]!
+
   }
+
 
   extend type Mutation {
     documentCreate(
@@ -201,7 +217,7 @@ const documentCreate = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        args.document as DocumentField[],
+        args.document as TDocumentField[],
         args.documentPermission,
         compoundSession
       )

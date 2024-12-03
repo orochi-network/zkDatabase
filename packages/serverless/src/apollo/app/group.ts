@@ -21,23 +21,6 @@ import {
 } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
-export type TGroupRequest = TDatabaseRequest & {
-  groupName: string;
-};
-
-export type TGroupRenameRequest = TGroupRequest & {
-  newGroupName: string;
-};
-
-export type TGroupCreateRequest = TGroupRequest & {
-  groupDescription: string;
-};
-
-export type TGroupAddUsersRequest = TGroupRequest & {
-  groupDescription: string;
-  userNames: string[];
-};
-
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
