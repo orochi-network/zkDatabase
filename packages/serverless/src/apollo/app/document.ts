@@ -17,7 +17,7 @@ import { gql } from '../../helper/common.js';
 import { IDocumentRecord } from '../../model/abstract/document.js';
 import mapPagination from '../mapper/pagination.js';
 import { authorizeWrapper } from '../validation.js';
-import { TDocumentField, TPagination, TCollectionRequest } from '../../types';
+import { TDocumentField, TPagination, TCollectionRequest } from '@zkdb/common';
 import {
   collectionName,
   databaseName,
