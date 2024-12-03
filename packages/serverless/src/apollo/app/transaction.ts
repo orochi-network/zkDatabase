@@ -1,4 +1,5 @@
 import {
+  ETransactionType,
   TDatabaseRequest,
   TTransactionConfirmRequest,
   TTransactionRequest,
@@ -54,7 +55,6 @@ const getTransaction = authorizeWrapper(
       args.transactionType
     );
 
-    transaction.status;
     return {
       databaseName: transaction.databaseName,
       transactionType: transaction.transactionType,
@@ -72,7 +72,11 @@ const enqueueDeployTransaction = authorizeWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     (
-      await enqueueTransactionDomain(args.databaseName, ctx.userName, 'deploy')
+      await enqueueTransactionDomain(
+        args.databaseName,
+        ctx.userName,
+        ETransactionType.Deploy
+      )
     ).toString()
 );
 

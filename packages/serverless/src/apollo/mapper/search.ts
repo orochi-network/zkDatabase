@@ -1,5 +1,5 @@
-import { Search } from '../types/search.js';
-import { Condition, SearchInput } from '../../types/search.js';
+import { SearchInput } from '@zkdb/common';
+import { Condition } from 'mongodb';
 
 export default function mapSearchToQueryOptions<T>(
   search: Search

@@ -1,21 +1,25 @@
 import {
+  ERollUpState,
+  ETransactionStatus,
+  ETransactionType,
+  RollUpData,
+  TRollUpHistory,
+  TTransaction,
+} from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
+import {
   CompoundSession,
-  DbTransaction,
   ModelDbSetting,
-  ModelDbTransaction,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
   ModelRollup,
-  RollupHistory as RollupHistoryModel,
-  TransactionStatus,
+  ModelTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { enqueueTransaction } from './transaction.js';
-import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpData, RollUpState } from '../../types/rollup.js';
-import logger from '../../helper/logger.js';
 import { PublicKey } from 'o1js';
+import logger from '../../helper/logger.js';
+import { enqueueTransaction } from './transaction.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -32,7 +36,7 @@ export async function createRollUp(
   }
 
   const modelRollUp = ModelRollup.getInstance();
-  const modelTransaction = ModelDbTransaction.getInstance();
+  const modelTransaction = ModelTransaction.getInstance();
 
   const rollUp = await modelRollUp.collection.findOne({
     proofId: latestProofForDb._id,
@@ -41,13 +45,15 @@ export async function createRollUp(
   if (rollUp) {
     logger.debug('Identified repeated proof');
 
-    const transaction = await modelTransaction.findById(rollUp.txId.toString());
+    const transaction = await modelTransaction.findById(
+      rollUp.transactionObjectId.toString()
+    );
     if (transaction) {
-      if (transaction.status === 'success') {
+      if (transaction.status === ETransactionStatus.Confirmed) {
         throw Error('You cannot roll-up the same proof');
       }
 
-      if (transaction.status === 'pending') {
+      if (transaction.status === ETransactionStatus.Unsigned) {
         throw Error(
           'You already have uncompleted transaction with the same proof'
         );
@@ -58,17 +64,19 @@ export async function createRollUp(
   const txId = await enqueueTransaction(
     databaseName,
     actor,
-    'rollup',
+    ETransactionType.Rollup,
     compoundSession?.sessionService
   );
 
   await modelRollUp.create(
     {
-      merkleRoot: latestProofForDb.prevMerkleRoot,
-      newMerkleRoot: latestProofForDb.merkleRoot,
+      previousMerkleTreeRoot: latestProofForDb.prevMerkleRoot,
+      currentMerkleTreeRoot: latestProofForDb.merkleRoot,
       databaseName: databaseName,
-      txId,
-      proofId: latestProofForDb._id,
+      transactionObjectId: txId,
+      proofObjectId: latestProofForDb._id,
+      status: ETransactionStatus.Unsigned,
+      transactionHash: '',
     },
     { session: compoundSession?.sessionService }
   );
@@ -79,7 +87,7 @@ export async function getRollUpHistory(
   session?: ClientSession
 ): Promise<RollUpData> {
   const modelRollUp = ModelRollup.getInstance();
-  const modelTransaction = ModelDbTransaction.getInstance();
+  const modelTransaction = ModelTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
   const queue = ModelQueueTask.getInstance();
   const dbSetting = await ModelDbSetting.getInstance().getSetting(
@@ -142,17 +150,16 @@ export async function getRollUpHistory(
     .toArray();
 
   const buildRollUpHistory = (
-    history: RollupHistoryModel,
-    transaction: DbTransaction,
-    status: TransactionStatus,
+    history: TRollUpHistory,
+    transaction: TTransaction,
+    status: ETransactionStatus,
     error?: string
   ) => ({
     databaseName: history.databaseName,
-    currentMerkleTreeRoot: history.merkleRoot,
-    previousMerkleTreeRoot: history.newMerkleRoot,
+    currentMerkleTreeRoot: history.currentMerkleTreeRoot,
+    previousMerkleTreeRoot: history.previousMerkleTreeRoot,
     createdAt: transaction.createdAt,
     transactionHash: transaction?.txHash,
-    transactionType: 'rollup',
     status,
     error,
   });
@@ -161,7 +168,7 @@ export async function getRollUpHistory(
     await Promise.all(
       rollUpList.map(async (history) => {
         const transaction = await modelTransaction.findById(
-          history.txId.toString()
+          history.transactionObjectId.toString()
         );
 
         if (!transaction) {
@@ -169,7 +176,7 @@ export async function getRollUpHistory(
           return null;
         }
 
-        if (transaction.status === 'pending') {
+        if (transaction.status === ETransactionStatus.Confirming) {
           if (!transaction.txHash) {
             logger.error('Transaction hash not found for pending transaction');
             return null;
@@ -182,19 +189,23 @@ export async function getRollUpHistory(
           if (tx) {
             if (tx.txStatus === 'applied') {
               await modelTransaction.updateById(
-                history.txId.toString(),
+                history.transactionObjectId.toString(),
                 {
-                  status: 'success',
+                  status: ETransactionStatus.Confirmed,
                   error: undefined,
                 },
                 { session }
               );
-              return buildRollUpHistory(history, transaction, 'success');
+              return buildRollUpHistory(
+                history,
+                transaction,
+                ETransactionStatus.Signed
+              );
             } else if (tx.txStatus === 'failed') {
               await modelTransaction.updateById(
-                history.txId.toString(),
+                history.transactionObjectId.toString(),
                 {
-                  status: 'failed',
+                  status: ETransactionStatus.Failed,
                   error: tx.failures.join(' '),
                 },
                 { session }
@@ -202,7 +213,7 @@ export async function getRollUpHistory(
               return buildRollUpHistory(
                 history,
                 transaction,
-                'failed',
+                ETransactionStatus.Failed,
                 tx.failures.join(' ')
               );
             }
@@ -220,7 +231,7 @@ export async function getRollUpHistory(
         return buildRollUpHistory(
           history,
           transaction,
-          'unknown',
+          ETransactionStatus.Unknown,
           transaction.error
         );
       })
@@ -231,15 +242,15 @@ export async function getRollUpHistory(
       return a.createdAt.getTime() - b.createdAt.getTime();
     });
 
-  let rollUpState: RollUpState = 'updated';
+  let rollUpState: ERollUpState = ERollUpState.Updated;
 
   if (diff > 0) {
-    rollUpState = 'outdated';
+    rollUpState = ERollUpState.Outdated;
   } else if (
     history[history.length - 1] &&
-    history[history.length - 1].status === 'failed'
+    history[history.length - 1].status === ETransactionStatus.Failed
   ) {
-    rollUpState = 'failed';
+    rollUpState = ERollUpState.Failed;
   }
 
   return {

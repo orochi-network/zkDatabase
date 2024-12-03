@@ -15,7 +15,7 @@ export async function createCollectionMetadata(
   group: string,
   session?: ClientSession
 ) {
-  const schemaMetadata: IMetadataCollection = {
+  const schemaMetadata: Omit<IMetadataCollection, '_id'> = {
     owner,
     group,
     collection: collectionName,

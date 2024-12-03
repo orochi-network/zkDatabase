@@ -2,7 +2,7 @@ import { ClientSession } from 'mongodb';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup, { TGroupInfo } from '../../model/database/user-group.js';
 import { isDatabaseOwner } from './database.js';
-import { areUsersExist } from './user.js';
+import ModelUser from '../../model/global/user.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -142,10 +142,11 @@ async function addUsersToGroup(
 ): Promise<boolean> {
   if (await isDatabaseOwner(databaseName, actor, session)) {
     const modelGroup = new ModelGroup(databaseName);
+    const modelUser = new ModelUser();
     const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
     if (groupExist) {
-      if (await areUsersExist(users)) {
+      if (await modelUser.areUsersExist(users)) {
         const modelUserGroup = new ModelUserGroup(databaseName);
         const result = await modelUserGroup.addUsersToGroup(users, group, {
           session,
@@ -172,10 +173,12 @@ async function excludeUsersToGroup(
 ): Promise<boolean> {
   if (await isDatabaseOwner(databaseName, actor, session)) {
     const modelGroup = new ModelGroup(databaseName);
+    const modelUser = new ModelUser();
+
     const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
     if (groupExist) {
-      if (await areUsersExist(users)) {
+      if (await modelUser.areUsersExist(users)) {
         const modelUserGroup = new ModelUserGroup(databaseName);
         const result = await modelUserGroup.removeUsersFromGroup(users, group, {
           session,

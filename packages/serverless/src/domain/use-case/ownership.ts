@@ -1,20 +1,20 @@
 import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelUser from '../../model/global/user.js';
-import { OwnershipGroup } from '../../types/ownership.js';
 import { isGroupExist } from './group.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
+import { EOwnershipType } from '@zkdb/common';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 
 export async function changeDocumentOwnership(
   databaseName: string,
   collectionName: string,
   docId: string,
   actor: string,
-  group: OwnershipGroup,
+  group: EOwnershipType,
   newOwner: string,
   session?: ClientSession
 ) {
@@ -33,9 +33,9 @@ export async function changeDocumentOwnership(
     );
   }
 
-  const modelMetadata = new ModelDocumentMetadata(databaseName);
+  const modelMetadata = new ModelMetadataDocument(databaseName);
 
-  if (group === 'User') {
+  if (group === EOwnershipType.User) {
     const modelUser = new ModelUser();
 
     if (
@@ -77,7 +77,7 @@ export async function changeCollectionOwnership(
   databaseName: string,
   collectionName: string,
   actor: string,
-  group: OwnershipGroup,
+  group: EOwnershipType,
   newOwner: string,
   session?: ClientSession
 ) {
@@ -95,9 +95,9 @@ export async function changeCollectionOwnership(
     );
   }
 
-  const modelMetadata = ModelCollectionMetadata.getInstance(databaseName);
+  const modelMetadata = ModelMetadataCollection.getInstance(databaseName);
 
-  if (group === 'User') {
+  if (group === EOwnershipType.User) {
     const modelUser = new ModelUser();
 
     if (
