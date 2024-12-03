@@ -15,6 +15,13 @@ import {
 import { gql } from '../../helper/common.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, pagination, userName } from './common.js';
+import {
+  TDatabaseChangeOwnerRequest,
+  TDatabaseCreateRequest,
+  TDatabaseRequest,
+  TDatabaseSearchRequest,
+  TDatabaseUpdateDeployedRequest,
+} from '@zkdb/common';
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,

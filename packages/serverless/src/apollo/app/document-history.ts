@@ -8,8 +8,8 @@ import {
 } from '../../domain/use-case/document-history.js';
 import { collectionName, databaseName, pagination } from './common.js';
 import mapPagination from '../mapper/pagination.js';
-import { TPagination, TCollectionRequest } from '../../types/index.js';
 import { gql } from '../../helper/common.js';
+import { TCollectionRequest, TPagination } from '@zkdb/common';
 
 export type TDocumentHistoryGetRequest = TCollectionRequest & {
   docId: string;
