@@ -1,4 +1,4 @@
-import { TDatabaseRequest } from './database';
+import { TDatabaseRequest } from './database.js';
 
 export enum ETransactionStatus {
   // Transaction is prepared but not yet signed
@@ -17,13 +17,13 @@ export enum ETransactionStatus {
   Unknown,
 }
 
-export enum EnumTransactionType {
+export enum ETransactionType {
   Deploy,
   Rollup,
 }
 
 export type TTransactionRequest = TDatabaseRequest & {
-  transactionType: EnumTransactionType;
+  transactionType: ETransactionType;
 };
 
 export type TTransactionByIdRequest = TDatabaseRequest & {
