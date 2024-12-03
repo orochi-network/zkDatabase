@@ -12,7 +12,8 @@
     "packages/compile-service",
     "packages/serverless",
     "packages/broker-service",
-    "packages/ftp"
+    "packages/ftp",
+    "packages/common"
   ],
   "scripts": {
     "clean": "find $(pwd) -name 'node_modules' -type d -exec rm -rf {} \\; || true && find $(pwd) -name 'build' -type d -exec rm -rf {} \\; || true",

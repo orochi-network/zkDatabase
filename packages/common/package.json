@@ -1,0 +1,68 @@
+{
+  "name": "@zkdb/common",
+  "version": "0.1.0",
+  "description": "zkDatabase for the future of Web3",
+  "license": "Apache-2.0",
+  "keywords": [
+    "zk",
+    "database",
+    "zk-database",
+    "zkdb",
+    "zkdatabase"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orochi-network/zkDatabase.git"
+  },
+  "bugs": {
+    "url": "https://github.com/orochi-network/zkDatabase/issues"
+  },
+  "homepage": "https://github.com/orochi-network/zkDatabase#readme",
+  "type": "module",
+  "main": "./build/src/index.js",
+  "types": "./build/src/index.d.ts",
+  "scripts": {
+    "release": "rm -rf ./build && npm run build && npm publish --access public",
+    "build": "rm -rf ./build && rollup -c",
+    "buildw": "tsc -p tsconfig.json --watch",
+    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "format": "prettier --write --ignore-unknown **/*",
+    "test": "echo 'hello world'",
+    "testw": "node ../../node_modules/jest/bin/jest.js --watch",
+    "lint": "prettier . --write",
+    "lint-check": "eslint ./src/**/*.ts --debug"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "*",
+        "build/src/*"
+      ]
+    }
+  },
+  "files": [
+    "build/src",
+    "!**/*.tsbuildinfo",
+    "!**/*.test.js",
+    "!**/*.test.js.map",
+    "!**/*.test.d.ts",
+    "!**/*.test.d.ts.map"
+  ],
+  "lint-staged": {
+    "**/*": [
+      "eslint ./src/**/*.ts --fix",
+      "prettier --write --ignore-unknown"
+    ]
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "28.0.0",
+    "@rollup/plugin-typescript": "12.1.0",
+    "@types/node": "^22.6.1",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.0.3",
+    "rollup": "4.24.0",
+    "typedoc": "^0.26.7",
+    "typescript": "^5.6.2"
+  }
+}
