@@ -1,14 +1,12 @@
 import { ClientSession } from 'mongodb';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import {
-  TMetadataCollection,
-  TMetadataDocument,
-} from '../../types/metadata.js';
+
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
+import { TMetadataCollection, TMetadataDocument } from '@zkdb/common';
 
 export async function readCollectionMetadata(
   database: string,

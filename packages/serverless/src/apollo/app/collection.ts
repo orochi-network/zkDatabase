@@ -1,3 +1,4 @@
+import { TDatabaseRequest, TSchemaFieldDefinition } from '@zkdb/common';
 import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -7,15 +8,9 @@ import {
   listCollections,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
-import { TCollectionIndex, TSchemaFieldDefinition } from '../../types/index.js';
+// import { TSchemaFieldDefinition } from '../../types/index.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  collectionIndex,
-  collectionName,
-  databaseName,
-  groupName,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { collectionName, databaseName, groupName } from './common.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -34,8 +29,7 @@ export type TCollectionRequest = TDatabaseRequest & {
 };
 
 export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TSchemaFieldDefinition;
-  index?: TCollectionIndex[];
+  schema: TSchemaFieldDefinition[];
   permission?: number;
   groupName?: string;
 };
@@ -49,7 +43,6 @@ export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
   groupName: groupName.optional(),
-  index: Joi.array().items(collectionIndex.optional()),
   schema: schemaFields,
   permission: Joi.number().min(0).max(0xffffff).optional(),
 });

@@ -1,3 +1,4 @@
+import { TMetadataDocument } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
@@ -5,7 +6,6 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document } from 'mongodb';
-import { TMetadataDocument } from 'types';
 
 export interface IMetadataDocument extends Document, TMetadataDocument {}
 

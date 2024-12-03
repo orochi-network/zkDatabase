@@ -9,20 +9,21 @@ import {
 } from '../../common/const.js';
 import { getIndexCollectionBySchemaDefinition } from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import {
-  EProperty,
-  ESorting,
-  TCollectionDetail,
-  TCollectionIndex,
-  TCollectionIndexInfo,
-} from '../../types/collection.js';
-import { TSchemaFieldDefinition } from '../../types/schema.js';
+
 import { createCollectionMetadata } from './collection-metadata.js';
 import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
 import { readCollectionMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
 import { getSchemaDefinition } from './schema.js';
+import {
+  EProperty,
+  ESorting,
+  TCollectionDetail,
+  TCollectionIndex,
+  TCollectionIndexInfo,
+  TSchemaFieldDefinition,
+} from '@zkdb/common';
 
 async function createIndex(
   databaseName: string,
@@ -77,7 +78,6 @@ async function createCollection(
   schema: TSchemaFieldDefinition[],
   groupName = DEFAULT_GROUP_ADMIN,
   permission = PERMISSION_DEFAULT_VALUE,
-  index?: TCollectionIndex[],
   session?: ClientSession
 ): Promise<boolean> {
   const modelDatabase = ModelDatabase.getInstance(databaseName);

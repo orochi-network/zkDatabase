@@ -32,8 +32,10 @@ export const zkDatabaseConstants = {
 
   // Collections that are common across different databases
   databaseCollections: {
-    // Collection schema
-    schema: '_zkdatabase_collection_schema',
+    // Metadata document
+    metadataDocument: '_zkdatabase_metadata_document',
+    // Metadata collection
+    metadataCollection: '_zkdatabase_metadata_collection',
 
     // Group
     group: '_zkdatabase_group',
