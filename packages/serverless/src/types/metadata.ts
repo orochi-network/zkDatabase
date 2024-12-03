@@ -25,7 +25,7 @@ export type TMetadataCollection = TMetadataBasic & {
  * @param M Type of metadata
  *
  */
-export type TMetadataDetail<T, M> = T & { _metadata: M };
+export type TMetadataDetail<T, M> = T & { metadata: M };
 
 export type TMetadataDetailDocument<T> = TMetadataDetail<T, TMetadataDocument>;
 
