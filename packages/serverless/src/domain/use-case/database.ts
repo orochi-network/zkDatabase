@@ -17,7 +17,7 @@ import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
-import { listCollections } from './collection.js';
+import { listCollection } from './collection.js';
 import { addUsersToGroup, createGroup } from './group.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 import { isUserExist } from './user.js';
@@ -153,7 +153,7 @@ export async function getListDatabaseDetail(
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-        const collections = await listCollections(databaseName, actor);
+        const collections = await listCollection(databaseName, actor);
 
         const latestTransaction = await getLatestTransaction(
           databaseName,

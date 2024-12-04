@@ -1,23 +1,24 @@
 import {
-  BulkWriteOptions,
-  CountDocumentsOptions,
-  DeleteOptions,
-  DeleteResult,
-  Document,
   Filter,
-  FindOptions,
+  OptionalUnlessRequiredId,
+  InsertOneResult,
+  BulkWriteOptions,
   InsertManyResult,
   InsertOneOptions,
-  InsertOneResult,
-  OptionalUnlessRequiredId,
-  ReplaceOptions,
+  Document,
   UpdateFilter,
   UpdateOptions,
+  WithId,
   UpdateResult,
+  DeleteOptions,
+  DeleteResult,
+  FindOptions,
+  CountDocumentsOptions,
   WithoutId,
+  ReplaceOptions,
 } from 'mongodb';
-import logger from '../../helper/logger.js';
 import ModelBasic from './basic.js';
+import logger from '../../helper/logger.js';
 
 /**
  * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing
@@ -67,7 +68,10 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
     return this.collection.insertMany(docs, options);
   }
 
-  public async findOne(filter?: Filter<T>, options?: FindOptions) {
+  public async findOne(
+    filter?: Filter<T>,
+    options?: FindOptions
+  ): Promise<WithId<T> | null> {
     logger.debug(`ModelGeneral::findOne()`, filter);
     return this.collection.findOne(filter || {}, options);
   }

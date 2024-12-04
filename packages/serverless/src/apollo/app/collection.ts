@@ -5,7 +5,7 @@ import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
-  listCollections,
+  listCollection,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
 // import { TSchemaFieldDefinition } from '../../types/index.js';
@@ -75,7 +75,7 @@ const collectionList = authorizeWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    listCollections(args.databaseName, ctx.userName)
+    listCollection(args.databaseName, ctx.userName)
 );
 
 const collectionExist = publicWrapper(

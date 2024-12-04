@@ -1,40 +1,26 @@
-import { TSchemaField } from '@zkdb/common';
+import { TSchemaFieldDefinition } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
-import {
-  IMetadataCollection,
-  ModelMetadataCollection,
-} from '../../model/database/metadata-collection.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 
 export async function createCollectionMetadata(
   databaseName: string,
   collectionName: string,
-  schema: TSchemaField[],
+  schema: TSchemaFieldDefinition[],
   permission: number,
   owner: string,
   group: string,
   session?: ClientSession
 ) {
-  const schemaMetadata: Omit<IMetadataCollection, '_id'> = {
+  const schemaMetadata = {
     owner,
     group,
-    collection: collectionName,
     permission,
-    field: [],
     createdAt: getCurrentTime(),
     updatedAt: getCurrentTime(),
-    definition: [],
+    collectionName,
+    schema,
   };
-
-  for (let i = 0; i < schema.length; i += 1) {
-    const { name, kind } = schema[i];
-    schemaMetadata.field.push(name);
-    schemaMetadata[name] = {
-      order: i,
-      name,
-      kind,
-    };
-  }
 
   await ModelMetadataCollection.getInstance(databaseName).insertOne(
     schemaMetadata,
