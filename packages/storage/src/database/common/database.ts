@@ -4,7 +4,6 @@ import {
   FindOptions,
   InsertOneOptions,
   InsertOneResult,
-  ObjectId,
   UpdateOptions,
   UpdateResult,
 } from 'mongodb';
@@ -12,7 +11,7 @@ import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
-const SYSTEM_DATABASE_LIST = ['admin', 'local', '_zkdatabase_metadata'];
+const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
 export class ModelDatabase extends ModelBasic<TDatabase> {
   private static instance: ModelDatabase;
 
@@ -82,7 +81,6 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   ): Promise<TDatabase[]> {
     try {
       // Prevent user getting system database
-      const SYSTEM_DATABASE_SET = new Set(SYSTEM_DATABASE_LIST);
       return (await this.collection.find(filter, options).toArray()).filter(
         (db) => !SYSTEM_DATABASE_SET.has(db.databaseName)
       );
