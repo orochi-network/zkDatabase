@@ -1,3 +1,6 @@
+// TODO: need end to end testing for every function in this file
+// TODO: debug types to annotate the actual correct types
+
 import {
   EDatabaseProofStatus,
   TDocumentField,
@@ -16,7 +19,7 @@ import {
   withTransaction,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ClientSession, WithId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import {
   PERMISSION_DEFAULT_VALUE,
   ZKDATABASE_GROUP_SYSTEM,
