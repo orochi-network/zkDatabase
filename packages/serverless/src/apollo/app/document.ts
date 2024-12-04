@@ -15,7 +15,6 @@ import {
 } from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
 import { IDocumentRecord } from '../../model/abstract/document.js';
-import mapPagination from '../mapper/pagination.js';
 import { authorizeWrapper } from '../validation.js';
 import { TDocumentField, TPagination, TCollectionRequest } from '@zkdb/common';
 import {
@@ -24,6 +23,7 @@ import {
   documentField,
   pagination,
 } from './common.js';
+import { DEFAULT_PAGINATION } from 'common/const.js';
 
 export type TDocumentsFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
@@ -220,7 +220,7 @@ const documentsFind = authorizeWrapper(
         args.collectionName,
         ctx.userName,
         args.query,
-        mapPagination(args.pagination),
+        args.pagination || DEFAULT_PAGINATION,
         session
       );
 
@@ -238,7 +238,7 @@ const documentsWithMetadataFind = authorizeWrapper(
         args.collectionName,
         ctx.userName,
         args.query,
-        mapPagination(args.pagination),
+        args.pagination || DEFAULT_PAGINATION,
         session
       );
 
@@ -319,7 +319,7 @@ const documentsHistoryList = authorizeWrapper(
         args.databaseName,
         args.collectionName,
         ctx.userName,
-        mapPagination(args.pagination),
+        args.pagination || DEFAULT_PAGINATION,
         session
       );
 
