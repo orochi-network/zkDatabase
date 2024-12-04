@@ -34,39 +34,32 @@ export const ProvableTypeMap = {
 
 export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
-export type TSchemaField = {
+export type TContractSchemaField = {
   name: string;
   kind: TProvableTypeString;
   value: string;
 };
 
-export type TSchemaEncoded = TSchemaField[];
-
-export type SchemaFieldDefinition = {
-  name: string;
-  kind: TProvableTypeString;
-};
-
-export type TSchemaDefinition = SchemaFieldDefinition[];
+export type TContractSchemaFieldDefinition = Omit<TContractSchemaField, 'value'>;
 
 export interface SchemaExtend {
-  serialize(): TSchemaEncoded;
+  serialize(): TContractSchemaField[];
   hash(): Field;
 }
 export interface SchemaStaticExtend<A> {
   // eslint-disable-next-line no-use-before-define
-  deserialize(_doc: TSchemaEncoded): InstanceType<SchemaExtendable<A>>;
-  getSchema(): TSchemaDefinition;
+  deserialize(_doc: TContractSchemaField[]): InstanceType<SchemaExtendable<A>>;
+  getSchema(): TContractSchemaFieldDefinition[];
 }
 
 export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
   SchemaStaticExtend<A>;
 
-export type ProvableMapped<T extends TSchemaDefinition> = {
+export type ProvableMapped<T extends TContractSchemaFieldDefinition[]> = {
   [Property in T[number]['name']]?: (typeof ProvableTypeMap)[TProvableTypeString];
 };
 
-export function toInnerStructure<T extends TSchemaDefinition>(
+export function toInnerStructure<T extends TContractSchemaFieldDefinition[]>(
   schema: T
 ): ProvableMapped<T> {
   const result: Partial<ProvableMapped<T>> = {};
@@ -82,16 +75,16 @@ export class Schema {
     type: A
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
     class Document extends Struct(type) {
-      private static schemaEntries: SchemaFieldDefinition[] = Object.entries(
+      private static schemaEntries: TContractSchemaFieldDefinition[] = Object.entries(
         type as any
-      ).map(([name, kind]): SchemaFieldDefinition => {
+      ).map(([name, kind]): TContractSchemaFieldDefinition => {
         return {
           name,
           kind: (kind as any).name.replace(/^_/, ''),
         };
       });
 
-      public static getSchema(): TSchemaDefinition {
+      public static getSchema(): TContractSchemaFieldDefinition[] {
         return Document.schemaEntries.map(({ name, kind }) => ({
           name,
           kind,
@@ -99,7 +92,7 @@ export class Schema {
       }
 
       // Serialize the document to a Uint8Array
-      serialize(): TSchemaEncoded {
+      serialize(): TContractSchemaField[] {
         const anyThis = <any>this;
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
@@ -124,7 +117,7 @@ export class Schema {
         return Poseidon.hash(Document.toFields(<any>this));
       }
 
-      static deserialize(doc: TSchemaEncoded): Document {
+      static deserialize(doc: TContractSchemaField[]): Document {
         const result: any = {};
 
         for (let i = 0; i < doc.length; i += 1) {
@@ -174,7 +167,7 @@ export class Schema {
     );
   }
 
-  public static fromSchema(schema: TSchemaDefinition) {
+  public static fromSchema(schema: TContractSchemaFieldDefinition[]) {
     return Schema.create(toInnerStructure(schema));
   }
 }
