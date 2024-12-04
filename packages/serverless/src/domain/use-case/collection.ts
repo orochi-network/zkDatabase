@@ -29,11 +29,18 @@ async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  index: TCollectionIndex[]
+  index: TCollectionIndex
 ): Promise<boolean> {
+  // Validate input parameters
+  if (!index || Object.keys(index).length === 0) {
+    throw new Error('Index is required and cannot be empty.');
+  }
+
+  // Check permissions
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
+    // Fetch schema definition
     const schema = await getSchemaDefinition(
       databaseName,
       collectionName,
@@ -41,12 +48,11 @@ async function createIndex(
       true
     );
 
-    // Collect all invalid index names
-    const invalidIndexes = index
-      .map(({ name }) => name)
-      .filter(
-        (name) => !schema.some(({ name: fieldName }) => fieldName === name)
-      );
+    // Validate that all keys in the index exist in the schema
+    const invalidIndexes = Object.keys(index).filter(
+      (fieldName) =>
+        !schema.some((schemaField) => schemaField.name === fieldName)
+    );
 
     if (invalidIndexes.length > 0) {
       const invalidList = invalidIndexes.join(', ');
@@ -55,18 +61,20 @@ async function createIndex(
       );
     }
 
+    // Map index fields to MongoDB format
+    const mongoIndex = Object.entries(index).map(([field, sorting]) => ({
+      [`document.${field}.name`]: sorting === ESorting.Asc ? 1 : -1,
+    }));
+
+    // Create the index using ModelCollection
     return ModelCollection.getInstance(
       databaseName,
       DB.service,
       collectionName
-    ).index(
-      index.map((i) => ({
-        [`document.${i.name}.name`]: i.sorting === ESorting.Asc ? 1 : -1,
-      }))
-    );
+    ).index(mongoIndex);
   }
 
-  throw Error(
+  throw new Error(
     `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
   );
 }
@@ -108,10 +116,10 @@ async function createCollection(
   );
 
   // Create index by schema definition
-  const collectionIndex: TCollectionIndex[] =
+  const collectionIndex: TCollectionIndex =
     getIndexCollectionBySchemaDefinition(schema);
 
-  if (collectionIndex.length > 0) {
+  if (Object.keys(collectionIndex).length > 0) {
     await createIndex(databaseName, actor, collectionName, collectionIndex);
   }
 

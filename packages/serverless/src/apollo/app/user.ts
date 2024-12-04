@@ -27,9 +27,9 @@ import {
 import RedisInstance from '../../helper/redis.js';
 import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
-import mapPagination from '../mapper/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { pagination } from './common.js';
+import { DEFAULT_PAGINATION } from 'common/const.js';
 
 const timestamp = Joi.number()
   .custom((value, helper) => {
@@ -167,9 +167,11 @@ const userSignInData = authorizeWrapper(
 const findUser = publicWrapper(
   UserFindRequest,
   async (_root: unknown, args: TUserFindRequest) => {
-    return withTransaction(async (session) =>
-      findUserDomain(args.query, mapPagination(args.pagination), session)
+    const result = await findUserDomain(
+      args.query,
+      args.pagination || DEFAULT_PAGINATION
     );
+    return result;
   }
 );
 

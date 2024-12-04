@@ -3,6 +3,12 @@ import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import { gql } from '../../helper/common.js';
 
+export const ESortingSchema = Joi.string().valid(ESorting.Asc, ESorting.Desc);
+
+export const IndexSchema = Joi.object()
+  .pattern(Joi.string(), ESortingSchema) // Keys are strings, values must be 'Asc' or 'Desc'
+  .required();
+
 export const objectId = Joi.string()
   .trim()
   .min(36)
