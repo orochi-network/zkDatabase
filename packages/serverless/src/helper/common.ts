@@ -70,10 +70,9 @@ export const gql = (...args: any[]): string => args.join('\n');
  * const result = getIndexCollectionBySchemaDefinition(schema);
  * console.log(result);
  * // Output:
- * // [
- * //   { field1: "Asc" },
- * //   { field3: "Desc" }
- * // ]
+ * //
+ * //   { field1: "Asc", field3: "Desc" },
+ * //
  * ```
  */
 export const getIndexCollectionBySchemaDefinition = (
