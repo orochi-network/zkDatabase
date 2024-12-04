@@ -3,7 +3,7 @@ import { ModelGeneral } from './base/general.js';
 import { ModelMerkleTree } from './common/merkle-tree.js';
 import { ModelRollup } from './common/rollup-history.js';
 import { ModelSequencer } from './common/sequencer.js';
-import { ModelDbSetting } from './common/setting.js';
+import { ModelDbSetting } from './common/database.js';
 import { ModelTransaction } from './common/transactions.js';
 import { DatabaseEngine } from './database-engine.js';
 import { ModelCollection } from './general/collection.js';
