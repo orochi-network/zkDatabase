@@ -12,6 +12,8 @@ import publicWrapper from '../validation.js';
 import { databaseName, indexNumber, objectId, pagination } from './common.js';
 import {
   TDatabaseRequest,
+  TMerkleJson,
+  TMerkleNode,
   TMerkleTreeGetNodeRequest,
   TMerkleTreeGetNodesByLevelRequest,
   TMerkleTreeIndexRequest,
