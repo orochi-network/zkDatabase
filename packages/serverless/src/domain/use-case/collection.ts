@@ -121,66 +121,10 @@ async function createCollection(
   return true;
 }
 
-async function readCollectionInfo(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
-  skipPermissionCheck: boolean = false
-): Promise<TCollectionAndMetadata> {
-  if (
-    skipPermissionCheck ||
-    (await hasCollectionPermission(databaseName, collectionName, actor, 'read'))
-  ) {
-    const modelCollection = ModelCollection.getInstance(
-      databaseName,
-      DB.service,
-      collectionName
-    );
-
-    const sizeOnDisk = await modelCollection.size();
-
-    const schema = await getSchemaDefinition(
-      databaseName,
-      collectionName,
-      actor,
-      true
-    );
-
-    const metadata = await readCollectionMetadata(
-      databaseName,
-      collectionName,
-      actor
-    );
-
-    if (!metadata) {
-      throw new Error(
-        `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
-      );
-    }
-    const index = getIndexCollectionBySchemaDefinition(metadata.schema);
-
-    await ModelCollection.getInstance(
-      databaseName,
-      DB.service,
-      collectionName
-    ).size();
-
-    return {
-      collectionName,
-      metadata,
-      schema
-    };
-  }
-
-  throw new Error(
-    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-  );
-}
-
 async function listCollections(
   databaseName: string,
   actor: string
-): Promise<TCollectionDetail[]> {
+): Promise<TMetadataCollection[]> {
   let availableCollections: string[] = [];
 
   if (await isDatabaseOwner(databaseName, actor)) {
@@ -211,7 +155,7 @@ async function listCollections(
     await Fill(
       availableCollections.map(
         (collectionName) => async () =>
-          readCollectionInfo(databaseName, collectionName, actor, true)
+          readCollectionMetadata(databaseName, collectionName, actor, true)
       )
     )
   )
@@ -383,6 +327,5 @@ export {
   dropIndex,
   listCollections,
   listIndexes,
-  readCollectionInfo
 };
 

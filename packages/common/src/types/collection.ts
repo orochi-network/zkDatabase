@@ -1,7 +1,6 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { TMetadataDetailCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
 /**
@@ -49,18 +48,6 @@ export type TCollectionIndexInfo = {
   access: number;
   since: Date;
   property: EProperty;
-};
-
-// Do we actually need this?
-export type TCollectionAndMetadata = TMetadataDetailCollection<TCollection>;
-const x: TCollectionAndMetadata = {
-  metadata: {
-    permission,
-    schema: '',
-    sizeOnDisk: '1',
-  },
-  collectionName: '',
-  schema: {} as any,
 };
 
 export type TCollectionRequest = TDatabaseRequest &
