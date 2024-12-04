@@ -1,11 +1,15 @@
 import { Request } from 'express';
 import { ObjectId } from 'mongodb';
 
-export type TDbRecord<T> = T & {
+type TDbRecordBasic = {
   _id: ObjectId;
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type TDbRecord<T> = T & TDbRecordBasic;
+
+export type TDbRecordOptionalM<T> = T & Partial<TDbRecordBasic>;
 
 // We extend express session to define session expiration time
 declare module 'express-session' {

@@ -1,8 +1,8 @@
 import { TCollectionRequest } from './collection.js';
 
 export enum EOwnershipType {
-  User,
-  Group,
+  User = 'User',
+  Group = 'Group',
 }
 
 export type TOwnershipDocumentRequest = TCollectionRequest & {
