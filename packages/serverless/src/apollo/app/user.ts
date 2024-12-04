@@ -167,14 +167,11 @@ const userSignInData = authorizeWrapper(
 const findUser = publicWrapper(
   UserFindRequest,
   async (_root: unknown, args: TUserFindRequest) => {
-    return withTransaction(
-      async (session) =>
-        await findUserDomain(
-          args.query,
-          args.pagination || DEFAULT_PAGINATION,
-          session
-        )
+    const result = await findUserDomain(
+      args.query,
+      args.pagination || DEFAULT_PAGINATION
     );
+    return result;
   }
 );
 
