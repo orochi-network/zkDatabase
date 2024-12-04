@@ -17,15 +17,6 @@ import {
 } from '../../domain/use-case/merkle-tree.js';
 import publicWrapper from '../validation.js';
 import { databaseName, indexNumber, objectId, pagination } from './common.js';
-import {
-  TDatabaseRequest,
-  TMerkleJson,
-  TMerkleNode,
-  TMerkleTreeGetNodeRequest,
-  TMerkleTreeGetNodesByLevelRequest,
-  TMerkleTreeIndexRequest,
-  TMerkleTreeWitnessByDocumentRequest,
-} from '@zkdb/common';
 
 export const MerkleTreeGetNodesByLevelRequest =
   Joi.object<TMerkleTreeGetNodesByLevelRequest>({

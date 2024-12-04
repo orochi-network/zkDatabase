@@ -1,6 +1,6 @@
 import { ModelMerkleTree } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/metadata-document.js';
+import ModelDocumentMetadata, { ModelMetadataDocument } from '../../model/database/metadata-document.js';
 import { Field } from 'o1js';
 import {
   TMerkleNode,
@@ -70,7 +70,6 @@ export async function getMerkleNodesByLevel(
 export async function getMerkleTreeInfo(
   databaseName: string
 ): Promise<TMerkleTreeInfo> {
-): Promise<TMerkleTreeInfo> {
   const modelMerkleTree = await ModelMerkleTree.load(databaseName);
 
   const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
@@ -133,13 +132,13 @@ export async function getChildrenNodes(
 
   return [
     {
-      hash: leftNodeField,
+      hash: leftNodeField.toString(),
       index: Number(leftChildIndex),
       level: childrenLevel,
       empty: zeroNodes[childrenLevel].equals(leftNodeField).toBoolean(),
     },
     {
-      hash: rightNodeField,
+      hash: rightNodeField.toString(),
       index: Number(rightChildIndex),
       level: childrenLevel,
       empty: zeroNodes[childrenLevel].equals(rightNodeField).toBoolean(),
