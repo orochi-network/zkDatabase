@@ -44,7 +44,7 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   }
 
   public async updateDatabase(
-    databaseObjectId: ObjectId,
+    databaseName: string,
     updateField: Partial<Pick<TDatabase, keyof TDatabase>>,
     options?: UpdateOptions
   ): Promise<UpdateResult> {
@@ -54,7 +54,7 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
     }
     try {
       const result = await this.collection.updateOne(
-        { _id: databaseObjectId },
+        { databaseName: databaseName },
         { $set: updateField },
         options
       );

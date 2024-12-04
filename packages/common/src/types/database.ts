@@ -3,17 +3,17 @@ import { TDbRecord } from './common.js';
 import { TPagination } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
-export type TDatabaseDetail = TDatabase & {
-  collection: TCollectionAndMetadata[];
-  databaseSize: number;
-  deployStatus: ETransactionStatus;
-};
-
 export type TDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
   appPublicKey: string;
+};
+
+export type TDatabaseDetail = TDatabase & {
+  collection: TCollectionAndMetadata[];
+  databaseSize: number;
+  deployStatus: ETransactionStatus;
 };
 
 export type TDatabaseRecord = TDbRecord<TDatabase>;
