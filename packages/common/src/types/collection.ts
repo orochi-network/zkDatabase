@@ -1,4 +1,5 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
+import { IndexDirection } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
@@ -31,9 +32,13 @@ export type TCollectionIndex<T = Record<string, any>> = Partial<
   Record<keyof T, ESorting>
 >;
 
+export type TCollectionIndexSpecification<T = Record<string, any>> = Partial<
+  Record<keyof T, IndexDirection>
+>;
+
 /** Mapping type of index on server side */
 export type TCollectionIndexMap<T> = {
-  [Property in keyof T as `document.${string & Property}.name`]?: ESorting;
+  [Property in keyof T as `document.${string & Property}.name`]?: IndexDirection;
 };
 
 export type TCollection = {
