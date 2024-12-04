@@ -25,12 +25,14 @@ export type TCondition<T> = {
   operator: ESearchOperator;
 };
 
-export type SearchInput<T> = {
-  and?: SearchInput<T>[];
-  or?: SearchInput<T>[];
-  condition?: TCondition<T>;
+export type TSearch<T = any> = {
+  and: TSearch<T>[];
+  or: TSearch<T>[];
+  condition: TCondition<T>;
 };
 
-export type QueryOption<T> = {
-  where?: SearchInput<T>;
+export type TSearchInput<T> = Partial<TSearch>;
+
+export type TQueryOption<T> = {
+  where?: TSearchInput<T>;
 };

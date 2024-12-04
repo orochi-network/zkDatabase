@@ -1,3 +1,4 @@
+import { TPagination } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import { Request } from 'express';
 import { TJWTAuthenticationPayload } from 'helper/jwt';
@@ -44,3 +45,8 @@ export const nobodyContext = (req: Request) => ({
   sessionId: req.sessionID,
   req,
 });
+
+export const DEFAULT_PAGINATION: TPagination = {
+  limit: 10,
+  offset: 0,
+};

@@ -33,8 +33,8 @@ export async function enqueueTransaction(
 
     // Make sure public is set and have value
     if (
-      typeof settings?.appPublicKey === 'string' &&
-      settings.appPublicKey.length > 0
+      typeof database?.appPublicKey === 'string' &&
+      database.appPublicKey.length > 0
     ) {
       throw Error('Smart contract is already bound to database');
     }
