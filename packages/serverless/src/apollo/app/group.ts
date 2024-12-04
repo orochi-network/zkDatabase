@@ -1,3 +1,10 @@
+import {
+  TDatabaseRequest,
+  TGroupAddUsersRequest,
+  TGroupCreateRequest,
+  TGroupRenameRequest,
+  TGroupRequest,
+} from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -19,13 +26,6 @@ import {
   groupOptionalDescription,
   userName,
 } from './common.js';
-import {
-  TDatabaseRequest,
-  TGroupAddUsersRequest,
-  TGroupCreateRequest,
-  TGroupRenameRequest,
-  TGroupRequest,
-} from '@zkdb/common';
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,

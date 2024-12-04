@@ -4,7 +4,7 @@ import {
   TTransaction,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { ModelDbSetting, ModelTransaction } from '@zkdb/storage';
+import { ModelDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
@@ -26,12 +26,12 @@ export async function enqueueTransaction(
   }
 
   if (transactionType === ETransactionType.Deploy) {
-    const settings = await ModelDbSetting.getInstance().getSetting(
+    const database = await ModelDatabase.getInstance().getDatabase(
       databaseName,
       { session }
     );
 
-    if (settings?.appPublicKey) {
+    if (database?.appPublicKey) {
       throw Error('Smart contract is already bound to database');
     }
   }
@@ -140,10 +140,10 @@ export async function getTransactionForSigning(
   }
 
   if (await isDatabaseOwner(databaseName, actor)) {
-    const dbSettings =
-      await ModelDbSetting.getInstance().getSetting(databaseName);
+    const database =
+      await ModelDatabase.getInstance().getDatabase(databaseName);
 
-    if (!dbSettings) {
+    if (!database) {
       throw Error(`Database ${databaseName} does not exist`);
     }
 
@@ -174,7 +174,7 @@ export async function getTransactionForSigning(
           );
         }
 
-        return { ...readyTransaction, zkAppPublicKey: dbSettings.appPublicKey };
+        return { ...readyTransaction, zkAppPublicKey: database.appPublicKey };
       } else {
         throw Error('Account has not been found in Mina Network');
       }

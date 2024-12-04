@@ -7,7 +7,7 @@ import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
-import { ModelDbSetting } from './setting.js';
+import { ModelDatabase } from './database.js';
 
 export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -42,16 +42,16 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public static async load(databaseName: string): Promise<ModelMerkleTree> {
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
-    const modelSetting = ModelDbSetting.getInstance();
+    const modelDatabase = ModelDatabase.getInstance();
 
-    const setting = await modelSetting.getSetting(databaseName);
+    const database = await modelDatabase.getDatabase(databaseName);
 
-    if (setting) {
-      modelMerkleTree.setHeight(setting.merkleHeight);
+    if (database) {
+      modelMerkleTree.setHeight(database.merkleHeight);
       return modelMerkleTree;
     }
 
-    throw Error(`${databaseName} setting has not been found.`);
+    throw Error(`Database: ${databaseName} has not been found.`);
   }
 
   public static getEmptyRoot(height: number): Field {
