@@ -121,8 +121,7 @@ export async function validateDocumentSchema(
 export async function buildSchema(
   databaseName: string,
   collectionName: string,
-  document: TDocumentField[],
-  session?: ClientSession
+  document: TDocumentField[]
 ) {
   if (!(await validateDocumentSchema(databaseName, collectionName, document))) {
     throw new Error('Invalid schema');
@@ -130,12 +129,8 @@ export async function buildSchema(
 
   const modelMetadataCollection =
     ModelMetadataCollection.getInstance(databaseName);
-  const metadataCollection = await modelMetadataCollection.getMetadata(
-    collectionName,
-    {
-      session,
-    }
-  );
+  const metadataCollection =
+    await modelMetadataCollection.getMetadata(collectionName);
 
   if (!metadataCollection) {
     throw new Error(`Metadata not found for collection ${collectionName}`);
