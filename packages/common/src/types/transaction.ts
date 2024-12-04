@@ -78,7 +78,7 @@ export type TTransactionRequest = TDatabaseRequest & {
  * Transaction by ID request
  * @typedef TTransactionByIdRequest
  * @param {string} TDatabaseRequest.databaseName - Database name
- * @param {string} id - Transaction object ID
+ * @param {string} objectId - Transaction object ID
  */
 export type TTransactionByIdRequest = TDatabaseRequest & {
   objectId: string;
