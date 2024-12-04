@@ -9,7 +9,7 @@ import {
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   CompoundSession,
-  ModelDbSetting,
+  ModelDatabase,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -90,22 +90,21 @@ export async function getRollUpHistory(
   const modelTransaction = ModelTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
   const queue = ModelQueueTask.getInstance();
-  const dbSetting = await ModelDbSetting.getInstance().getSetting(
-    databaseName,
-    { session }
-  );
+  const database = await ModelDatabase.getInstance().getDatabase(databaseName, {
+    session,
+  });
 
-  if (!dbSetting?.appPublicKey) {
+  if (!database?.appPublicKey) {
     throw Error('Database is not bound to zk app');
   }
 
   const { account, error } = await minaNetwork.getAccount(
-    PublicKey.fromBase58(dbSetting.appPublicKey)
+    PublicKey.fromBase58(database.appPublicKey)
   );
 
   if (!account) {
     throw Error(
-      `zk app with ${dbSetting.appPublicKey} is not exist in mina network. Error: ${error}`
+      `zk app with ${database.appPublicKey} is not exist in mina network. Error: ${error}`
     );
   }
 
@@ -126,7 +125,7 @@ export async function getRollUpHistory(
 
   if (
     merkleRoot
-      .equals(ModelMerkleTree.getEmptyRoot(dbSetting.merkleHeight))
+      .equals(ModelMerkleTree.getEmptyRoot(database.merkleHeight))
       .toBoolean()
   ) {
     rolledUpTaskNumber = 0;

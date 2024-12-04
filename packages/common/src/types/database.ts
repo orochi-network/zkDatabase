@@ -7,9 +7,12 @@ export type TDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
+  appPublicKey: string;
+};
+
+export type TDatabaseDetail = TDatabase & {
   collection: TCollectionAndMetadata[];
   databaseSize: number;
-  appPublicKey: string;
   deployStatus: ETransactionStatus;
 };
 

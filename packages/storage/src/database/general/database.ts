@@ -21,8 +21,8 @@ export type DocumentMetaIndex = {
  * Handles database operations. Extends ModelBasic.
  * This class should not be used directly.
  */
-export class ModelDatabase<T extends Document> extends ModelBasic<T> {
-  private static instances: Map<string, ModelDatabase<any>> = new Map();
+export class ModelSystemDatabase<T extends Document> extends ModelBasic<T> {
+  private static instances: Map<string, ModelSystemDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {
     super(databaseName || zkDatabaseConstants.globalDatabase, DB.service);
@@ -30,14 +30,16 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
 
   public static getInstance<T extends Document>(
     databaseName: string
-  ): ModelDatabase<T> {
-    if (!ModelDatabase.instances.has(databaseName)) {
-      ModelDatabase.instances.set(
+  ): ModelSystemDatabase<T> {
+    if (!ModelSystemDatabase.instances.has(databaseName)) {
+      ModelSystemDatabase.instances.set(
         databaseName,
-        new ModelDatabase<T>(databaseName)
+        new ModelSystemDatabase<T>(databaseName)
       );
     }
-    return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
+    return ModelSystemDatabase.instances.get(
+      databaseName
+    ) as ModelSystemDatabase<T>;
   }
 
   public async listCollections(): Promise<string[]> {
@@ -88,4 +90,4 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   }
 }
 
-export default ModelDatabase;
+export default ModelSystemDatabase;
