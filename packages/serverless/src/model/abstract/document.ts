@@ -2,27 +2,23 @@
 // eslint-disable-next-line max-classes-per-file
 import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
-import {
-  ClientSession,
-  Document,
-  Filter,
-  OptionalId,
-  WithoutId,
-} from 'mongodb';
+import { ClientSession, Filter, OptionalId } from 'mongodb';
 import logger from '../../helper/logger.js';
 import { getCurrentTime } from 'helper/common.js';
 import { TPickOptional } from '@orochi-network/framework';
-import { TDocumentDetail } from '@zkdb/common';
+import { TDocumentField, TDocumentRecord } from '@zkdb/common';
 
-export interface IDocumentRecord
-  extends Document,
-    TPickOptional<TDocumentDetail, 'previousId' | 'nextId'> {}
+// TODO: the naming maybe confusing with TDocumentRecord from common
+export type IDocumentRecord = TPickOptional<
+  TDocumentRecord,
+  'previousObjectId'
+>;
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
-export class ModelDocument extends ModelBasic<IDocumentRecord> {
+export class ModelDocument extends ModelBasic<OptionalId<IDocumentRecord>> {
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
@@ -35,7 +31,7 @@ export class ModelDocument extends ModelBasic<IDocumentRecord> {
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
+    return ModelDatabase.getInstance();
   }
 
   get modelCollection() {
@@ -57,31 +53,45 @@ export class ModelDocument extends ModelBasic<IDocumentRecord> {
     return ModelDocument.instances.get(key)!;
   }
 
-  public async insertOne(
-    doc: WithoutId<IDocumentRecord>,
+  /** Construct a document with fields and insert it to the collection. */
+  public async insertOneFromFields(
+    fields: Record<string, TDocumentField>,
     session?: ClientSession
   ) {
-    logger.debug(`ModelDocument::insertOne()`);
-    const documentRecord: OptionalId<IDocumentRecord> = {
-      document: doc.document,
-      docId: randomUUID(),
-      active: true,
-      createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
-    };
+    return this.insertOne(
+      {
+        document: fields,
+        docId: randomUUID(),
+        active: true,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+      session
+    );
+  }
 
-    const result = await this.collection.insertOne(documentRecord, { session });
+  public async insertOne(
+    doc: OptionalId<IDocumentRecord>,
+    session?: ClientSession
+  ): Promise<IDocumentRecord> {
+    logger.debug(`Inserting document to collection`, { doc });
+    const result = await this.collection.insertOne(doc, { session });
 
     if (result.acknowledged) {
-      return documentRecord;
+      return {
+        ...doc,
+        _id: doc._id || result.insertedId,
+      };
     }
 
     throw Error('Error occurred when inserting document');
   }
 
+  /** Update a document by creating a new revision and setting the old one to
+   * inactive. */
   public async updateOne(
     docId: string,
-    document: IDocumentRecord,
+    fields: Record<string, TDocumentField>,
     session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
@@ -89,11 +99,12 @@ export class ModelDocument extends ModelBasic<IDocumentRecord> {
 
     if (findDocument) {
       const documentRecord = {
-        timestamp: new Date(),
-        ...document,
         docId: findDocument.docId,
+        document: fields,
         active: true,
-      } as IDocumentRecord;
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      };
       // Insert new document
       const documentUpdated = await this.collection.insertOne(documentRecord, {
         session,
