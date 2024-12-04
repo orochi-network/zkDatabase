@@ -1,6 +1,6 @@
 import { ModelMerkleTree } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata, { ModelMetadataDocument } from '../../model/database/metadata-document.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { Field } from 'o1js';
 import {
   TMerkleNode,
