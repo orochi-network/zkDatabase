@@ -21,7 +21,7 @@ export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TDatabase, 'appPublicKey'>;
 
 export type TDatabaseSearchRequest = {
-  query: { [K in keyof TDatabaseRecord]: TDatabaseRecord[K] };
+  query: Partial<TDatabaseRecord>;
   pagination: TPagination;
 };
 

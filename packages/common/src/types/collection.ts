@@ -4,16 +4,27 @@ import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
+/**
+ * Sorting type
+ * @enum
+ * @property {string} Asc - Ascending -1
+ * @property {string} Desc - Descending 1
+ */
 export enum ESorting {
-  // -1
-  Asc,
-  // 1
-  Desc,
+  Asc = 'Asc',
+  Desc = 'Desc',
 }
 
+/**
+ * Property type
+ * @enum
+ * @readonly
+ * @property {string} Compound - Compound index
+ * @property {string} Unique - Unique index
+ */
 export enum EProperty {
-  Compound,
-  Unique,
+  Compound = 'Compound',
+  Unique = 'Unique',
 }
 
 export type TCollectionIndex<T = Record<string, any>> = Partial<
