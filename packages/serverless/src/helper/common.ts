@@ -78,8 +78,11 @@ export const gql = (...args: any[]): string => args.join('\n');
  */
 export const getIndexCollectionBySchemaDefinition = (
   schema: TSchemaFieldDefinition[]
-): Partial<Record<string, ESorting>>[] => {
+): Partial<Record<string, ESorting>> => {
   return schema
     .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
-    .map((field) => ({ [field.name]: field.sorting }));
+    .reduce<Partial<Record<string, ESorting>>>((acc, field) => {
+      acc[field.name] = field.sorting;
+      return acc;
+    }, {});
 };

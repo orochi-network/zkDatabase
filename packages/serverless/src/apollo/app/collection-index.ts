@@ -16,10 +16,10 @@ import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest } from './collection.js';
 import {
-  collectionIndex,
   collectionName,
   databaseName,
   indexName,
+  IndexSchema,
 } from './common.js';
 
 export const IndexDetailRequest = Joi.object<
@@ -35,7 +35,7 @@ export const IndexCreateRequest = Joi.object<
 >({
   collectionName,
   databaseName,
-  index: Joi.array().items(collectionIndex),
+  index: IndexSchema,
 });
 
 export const typeDefsCollectionIndex = gql`
