@@ -1,24 +1,25 @@
 import {
-  Filter,
-  OptionalUnlessRequiredId,
-  InsertOneResult,
   BulkWriteOptions,
-  InsertManyResult,
-  InsertOneOptions,
-  Document,
-  UpdateFilter,
-  UpdateOptions,
-  WithId,
-  UpdateResult,
+  CountDocumentsOptions,
   DeleteOptions,
   DeleteResult,
+  Document,
+  Filter,
+  FindCursor,
   FindOptions,
-  CountDocumentsOptions,
-  WithoutId,
+  InsertManyResult,
+  InsertOneOptions,
+  InsertOneResult,
+  OptionalUnlessRequiredId,
   ReplaceOptions,
+  UpdateFilter,
+  UpdateOptions,
+  UpdateResult,
+  WithId,
+  WithoutId,
 } from 'mongodb';
-import ModelBasic from './basic.js';
 import logger from '../../helper/logger.js';
+import ModelBasic from './basic.js';
 
 /**
  * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing
@@ -27,7 +28,7 @@ import logger from '../../helper/logger.js';
 export class ModelGeneral<T extends Document> extends ModelBasic<T> {
   public async updateOne(
     filter: Filter<T>,
-    update: UpdateFilter<T>,
+    update: UpdateFilter<T> | Document,
     options?: UpdateOptions
   ): Promise<UpdateResult<T>> {
     logger.debug(`ModelGeneral::updateOne()`, filter, update);
@@ -36,7 +37,7 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
 
   public async updateMany(
     filter: Filter<T>,
-    update: UpdateFilter<T>,
+    update: UpdateFilter<T> | Document[],
     options?: UpdateOptions
   ): Promise<UpdateResult<T>> {
     logger.debug(`ModelGeneral::updateOne()`, filter, update);
@@ -76,7 +77,10 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
     return this.collection.findOne(filter || {}, options);
   }
 
-  public async find(filter?: Filter<T>, options?: FindOptions) {
+  public find(
+    filter?: Filter<T>,
+    options?: FindOptions
+  ): FindCursor<WithId<T>> {
     logger.debug(`ModelGeneral::find()`, filter);
     return this.collection.find(filter || {}, options);
   }
