@@ -1,3 +1,10 @@
+import {
+  TDatabaseRequest,
+  TMerkleTreeGetNodeRequest,
+  TMerkleTreeGetNodesByLevelRequest,
+  TMerkleTreeIndexRequest,
+  TMerkleTreeWitnessByDocumentRequest,
+} from '@zkdb/common';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';

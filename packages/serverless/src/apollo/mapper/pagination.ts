@@ -1,12 +1,9 @@
-import { Pagination } from '../../types/pagination.js';
-import { Pagination as PaginationPayload } from '../types/pagination.js';
+import { TPagination } from '@zkdb/common';
 
 const DEFAULT_OFFSET = 0;
 const DEFAULT_LIMIT = 10;
 
-export default function mapPagination(
-  pagination: PaginationPayload
-): Pagination {
+export default function mapPagination(pagination: TPagination): TPagination {
   if (!pagination) {
     return {
       limit: DEFAULT_LIMIT,

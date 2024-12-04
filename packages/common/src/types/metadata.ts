@@ -1,12 +1,10 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
+import { TCollection } from './collection.js';
 import { TDbRecord } from './common.js';
-import { TSchemaFieldDefinition } from './schema.js';
 
-export type TMetadataBasic = TDbRecord<
-  OwnershipAndPermission & {
-    collection: string;
-  }
->;
+export type TMetadataBasic = OwnershipAndPermission & {
+    collectionName: string;
+  };
 
 // Document metadata
 export type TMetadataDocument = TMetadataBasic & {
@@ -14,13 +12,17 @@ export type TMetadataDocument = TMetadataBasic & {
   merkleIndex: string;
 };
 
+export type TMetadataDocumentRecord = TDbRecord<TMetadataDocument>;
+
 // Collection metadata
-export type TMetadataCollection = TMetadataBasic & {
-  field: string[];
-  definition: TSchemaFieldDefinition[];
-};
+export type TMetadataCollection = TMetadataBasic & TCollection & {
+  sizeOnDisk: number;
+}
+
+export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
 
 /**
+ * Not sure what this is for?
  * Metadata detail for any type
  * @param T Type of base to be extended
  * @param M Type of metadata

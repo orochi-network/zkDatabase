@@ -1,32 +1,47 @@
+import { OwnershipAndPermission } from '@zkdb/permission';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataDetailCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
+/**
+ * Sorting type
+ * @enum
+ * @property {string} Asc - Ascending -1
+ * @property {string} Desc - Descending 1
+ */
 export enum ESorting {
-  // -1
-  Asc,
-  // 1
-  Desc,
+  Asc = 'Asc',
+  Desc = 'Desc',
 }
 
+/**
+ * Property type
+ * @enum
+ * @readonly
+ * @property {string} Compound - Compound index
+ * @property {string} Unique - Unique index
+ */
 export enum EProperty {
-  Compound,
-  Unique,
+  Compound = 'Compound',
+  Unique = 'Unique',
 }
+
+export type TCollectionIndex<T = Record<string, any>> = Partial<
+  Record<keyof T, ESorting>
+>;
+
+/** Mapping type of index on server side */
+export type TCollectionIndexMap<T> = {
+  [Property in keyof T as `document.${string & Property}.name`]?: ESorting;
+};
 
 export type TCollection = {
   collectionName: string;
-  index: TCollectionIndex[];
-  sizeOnDisk: number;
+  schema: TSchemaFieldDefinition[];
 };
 
 export type TCollectionRecord = TDbRecord<TCollection>;
-
-export type TCollectionIndex = {
-  name: string;
-  sorting: ESorting;
-};
 
 export type TCollectionIndexInfo = {
   name: string;
@@ -36,17 +51,23 @@ export type TCollectionIndexInfo = {
   property: EProperty;
 };
 
-export type TCollectionDetail = TMetadataDetailCollection<TCollection>;
-
+// Do we actually need this?
+export type TCollectionAndMetadata = TMetadataDetailCollection<TCollection>;
 
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;
 
-export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TSchemaFieldInput[];
-  permission: number;
-  groupName: string;
-};
+/**
+ * Collection create request
+ * @typedef TCollectionCreateRequest
+ * @param {collectionName} collectionName - Collection name
+ * @param {TSchemaDefinition[]} schema - Collection schema
+ * @param {number} permission - Collection permission
+ * @param {string} group - Collection permission
+ */
+export type TCollectionCreateRequest = TCollectionRequest &
+  Pick<TCollection, 'schema'> &
+  Omit<OwnershipAndPermission, 'owner'>;
 
 export type TIndexRequest = {
   indexName: string;
@@ -54,6 +75,8 @@ export type TIndexRequest = {
 
 export type TIndexListRequest = TCollectionRequest;
 
-export type TIndexCreateRequest = TIndexRequest & Pick<TCollection, 'index'>;
+export type TIndexCreateRequest = TIndexRequest & {
+  index: TCollectionIndex;
+};
 
 export type TIndexDetailRequest = TIndexRequest;

@@ -1,24 +1,24 @@
-import { Condition, QueryOptions } from '../../types/search.js';
+import { ESearchOperator, QueryOption, TCondition } from '@zkdb/common';
 
 const MAX_RECURSION_DEPTH = 10;
 
-function applyCondition<T>(item: T, condition: Condition<T>): boolean {
+function applyCondition<T>(item: T, condition: TCondition<T>): boolean {
   const { field, value, operator } = condition;
 
   switch (operator) {
-    case 'eq':
+    case ESearchOperator.Eq:
       return item[field] === value;
-    case 'ne':
+    case ESearchOperator.Ne:
       return item[field] !== value;
-    case 'gt':
+    case ESearchOperator.Gt:
       return item[field] > value;
-    case 'lt':
+    case ESearchOperator.Lt:
       return item[field] < value;
-    case 'gte':
+    case ESearchOperator.Gte:
       return item[field] >= value;
-    case 'lte':
+    case ESearchOperator.Lte:
       return item[field] <= value;
-    case 'contains':
+    case ESearchOperator.Contain:
       return (
         typeof item[field] === 'string' &&
         (item[field] as unknown as string).includes(value as string)
@@ -30,7 +30,7 @@ function applyCondition<T>(item: T, condition: Condition<T>): boolean {
 
 export default function filterItems<T>(
   items: T[],
-  queryOptions?: QueryOptions<T>,
+  queryOptions?: QueryOption<T>,
   depth: number = 0
 ): T[] {
   if (!queryOptions || !queryOptions.where || depth > MAX_RECURSION_DEPTH) {

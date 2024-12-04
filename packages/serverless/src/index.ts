@@ -1,7 +1,12 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine, ModelDbTransaction, ModelQueueTask, ModelSecureStorage } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelTransaction,
+  ModelQueueTask,
+  ModelSecureStorage,
+} from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -11,7 +16,6 @@ import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
 import { ResolversApp, TypedefsApp } from './apollo/index.js';
-import { nobodyContext, TApplicationContext } from './common/types.js';
 import { config } from './helper/config.js';
 import {
   calculateAccessTokenDigest,
@@ -22,6 +26,8 @@ import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
 import { NetworkId } from 'o1js';
 import { MinaNetwork } from '@zkdb/smart-contract';
+import { TApplicationContext } from '@zkdb/common';
+import { nobodyContext } from './common/const.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -39,9 +45,9 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await proofDb.connect();
   }
 
-  await ModelDbTransaction.init();
+  await ModelTransaction.init();
   await ModelQueueTask.init();
-  await ModelSecureStorage.init()
+  await ModelSecureStorage.init();
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,

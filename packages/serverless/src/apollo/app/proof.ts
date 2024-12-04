@@ -1,11 +1,10 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { collectionName, databaseName, objectId } from './common.js';
-import { hasDocumentPermission } from '../../domain/use-case/permission.js';
-import { TCollectionRequest } from './collection.js';
-import { EDatabaseProofStatus } from '../../types/proof-status.js';
+import { EDatabaseProofStatus, TDocumentProofRequest } from '@zkdb/common';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -45,7 +44,7 @@ const getProofStatus = authorizeWrapper(
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TProofRequest, ctx) => {
+  async (_root: unknown, args: TDocumentProofRequest, ctx) => {
     return withTransaction(async (session) => {
       const modelProof = ModelQueueTask.getInstance();
 
@@ -92,7 +91,7 @@ const getProof = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TProofRequest) => {
+  async (_root: unknown, args: TDocumentProofRequest) => {
     const modelProof = ModelProof.getInstance();
 
     return modelProof.getProof(args.databaseName);
@@ -103,7 +102,7 @@ const getDatabaseProofStatus = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TProofRequest) => {
+  async (_root: unknown, args: TDocumentProofRequest) => {
     const modelTask = ModelQueueTask.getInstance();
 
     const task = await modelTask.findOne({
@@ -112,12 +111,12 @@ const getDatabaseProofStatus = publicWrapper(
     });
 
     if (task) {
-      return EDatabaseProofStatus.Pending;
+      return EDatabaseProofStatus.Proving;
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
 
-      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.Empty;
+      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.None;
     }
   }
 );

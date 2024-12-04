@@ -1,20 +1,21 @@
 import { Fill } from '@orochi-network/queue';
-import { MinaNetwork } from '@zkdb/smart-contract';
 import {
-  DB,
-  DbSetting,
-  ModelDbSetting,
-  ModelDbTransaction,
-} from '@zkdb/storage';
+  ETransactionStatus,
+  ETransactionType,
+  TDatabase,
+  TDbSetting,
+  TPagination,
+  TPaginationReturn,
+} from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
+import { DB, ModelDbSetting, ModelTransaction } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelGroup from '../../model/database/group.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
-import { Database } from '../../types/database.js';
-import { Pagination, PaginationReturn } from '../../types/pagination.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollections } from './collection.js';
 import { addUsersToGroup, createGroup } from './group.js';
@@ -37,8 +38,8 @@ export async function createDatabase(
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
-    await ModelDocumentMetadata.init(databaseName);
-    await ModelCollectionMetadata.init(databaseName);
+    await ModelMetadataDocument.init(databaseName);
+    await ModelMetadataCollection.init(databaseName);
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
 
@@ -47,12 +48,18 @@ export async function createDatabase(
         databaseName,
         merkleHeight,
         databaseOwner: actor,
+        appPublicKey: '',
       },
       { session }
     );
     if (dbSetting) {
       // enqueue transaction
-      await enqueueTransaction(databaseName, actor, 'deploy', session);
+      await enqueueTransaction(
+        databaseName,
+        actor,
+        ETransactionType.Deploy,
+        session
+      );
 
       // Create default group
       await createGroup(
@@ -87,7 +94,10 @@ export async function updateDeployedDatabase(
       appPublicKey,
     });
     // Remove data from deploy transaction
-    await ModelDbTransaction.getInstance().remove(databaseName, 'deploy');
+    await ModelTransaction.getInstance().remove(
+      databaseName,
+      ETransactionType.Deploy
+    );
     return true;
   } catch (err) {
     throw new Error(`Cannot update deployed database ${err}`);
@@ -97,8 +107,8 @@ export async function updateDeployedDatabase(
 export async function getDatabases(
   actor: string,
   filter: FilterCriteria,
-  pagination?: Pagination
-): Promise<PaginationReturn<Database[]>> {
+  pagination?: TPagination
+): Promise<TPaginationReturn<TDatabase[]>> {
   const databasesInfo = await DB.service.client.db().admin().listDatabases();
 
   if (!databasesInfo?.databases?.length) {
@@ -119,7 +129,7 @@ export async function getDatabases(
     );
 
   const modelSetting = ModelDbSetting.getInstance();
-  const modelTx = ModelDbTransaction.getInstance();
+  const modelTx = ModelTransaction.getInstance();
 
   const settings = await modelSetting.findSettingsByFields(filter, {
     skip: pagination?.offset,
@@ -135,9 +145,9 @@ export async function getDatabases(
     };
   }
 
-  const databases: Database[] = (
+  const databases: TDatabase[] = (
     await Fill(
-      settings.map((setting: DbSetting) => async () => {
+      settings.map((setting: TDbSetting) => async () => {
         const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
           setting;
         const dbInfo = databaseInfoMap[databaseName];
@@ -147,12 +157,15 @@ export async function getDatabases(
 
         const latestTransaction = await getLatestTransaction(
           databaseName,
-          'deploy'
+          ETransactionType.Deploy
         );
 
         let deployStatus = latestTransaction?.status ?? null;
 
-        if (latestTransaction && deployStatus === 'pending') {
+        if (
+          latestTransaction &&
+          deployStatus === ETransactionStatus.Confirming
+        ) {
           if (latestTransaction.txHash) {
             const zkAppTransaction =
               await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
@@ -160,21 +173,21 @@ export async function getDatabases(
               );
 
             if (zkAppTransaction?.txStatus === 'failed') {
-              deployStatus = 'failed';
+              deployStatus = ETransactionStatus.Failed;
               await modelTx.updateById(latestTransaction._id.toString(), {
-                status: 'failed',
+                status: deployStatus,
                 error: zkAppTransaction.failures.join(' '),
               });
             } else if (zkAppTransaction?.txStatus === 'applied') {
-              deployStatus = 'success';
+              deployStatus = ETransactionStatus.Confirmed;
               await modelTx.updateById(latestTransaction._id.toString(), {
-                status: 'success',
+                status: deployStatus,
               });
             }
           } else {
-            deployStatus = 'failed';
+            deployStatus = ETransactionStatus.Failed;
             await modelTx.updateById(latestTransaction._id.toString(), {
-              status: 'failed',
+              status: deployStatus,
               error: 'Transaction hash is missed',
             });
           }
@@ -188,7 +201,7 @@ export async function getDatabases(
           collections,
           appPublicKey,
           deployStatus,
-        } as Database;
+        };
       })
     )
   )
@@ -205,7 +218,7 @@ export async function getDatabases(
 export async function getDatabaseSetting(
   databaseName: string,
   session?: ClientSession
-): Promise<DbSetting> {
+): Promise<TDbSetting> {
   const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
     session,
   });

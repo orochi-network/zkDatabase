@@ -1,30 +1,11 @@
-import { TSchemaField } from '../schema.js';
+import { TContractSchemaField, TContractSchemaFieldDefinition } from '../schema.js';
 import { ESorting } from './collection.js';
 
-export type TSchemaFieldWithOrder = TSchemaField & {
+
+export type TSchemaFieldDefinition = TContractSchemaFieldDefinition & {
   order: number;
-  name: string;
+  index: boolean;
+  sorting: ESorting;
 };
 
-export type TSchemaFieldDefinition = TSchemaField & {
-  sorting?: ESorting;
-};
 
-/** Mapping type of schema to index
- * Example:
- * ```ts
- * const field = {
- *     name: 'user',
- *     kind: 'CircuitString',
- *     indexed: true,
- *     sorting: 'Asc',
- * }
- * // Will be converted to:
- * {
- *     'user.name': 'Asc',
- * }
- * ```
- */
-export type TSchemaIndex<T> = {
-  [Property in keyof T as `${string & Property}.name`]: ESorting;
-};

@@ -4,6 +4,7 @@ import { ModelMerkleTree } from './common/merkle-tree.js';
 import { ModelRollup } from './common/rollup-history.js';
 import { ModelSequencer } from './common/sequencer.js';
 import { ModelDbSetting } from './common/setting.js';
+import { ModelTransaction } from './common/transactions.js';
 import { DatabaseEngine } from './database-engine.js';
 import { ModelCollection } from './general/collection.js';
 import { DocumentMetaIndex, ModelDatabase } from './general/database.js';
@@ -24,6 +25,7 @@ export {
   ModelCollection,
   ModelDatabase,
   ModelDbSetting,
+  ModelTransaction,
   ModelGeneral,
   ModelMerkleTree,
   ModelProof,

@@ -1,3 +1,4 @@
+import { TDocumentField, TPagination, TPaginationReturn } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import {
   CompoundSession,
@@ -18,12 +19,9 @@ import { getCurrentTime } from '../../helper/common.js';
 import ModelDocument, {
   DocumentRecord,
 } from '../../model/abstract/document.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { Document, DocumentFields } from '../../types/document.js';
-import { DocumentMetadata, WithMetadata } from '../../types/metadata.js';
-import { Pagination, PaginationReturn } from '../../types/pagination.js';
-import { WithProofStatus } from '../../types/proof.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
+import { Document } from '../../types/document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { isDatabaseOwner } from './database.js';
 import { getUsersGroup } from './group.js';
@@ -39,7 +37,7 @@ import {
 
 export function buildDocumentFields(
   documentRecord: WithId<DocumentRecord>
-): DocumentFields {
+): TDocumentField[] {
   return Object.keys(documentRecord)
     .filter(
       (key) =>
@@ -57,7 +55,7 @@ export function buildDocumentFields(
 }
 
 function documentFieldsToDocumentRecord(
-  document: DocumentFields
+  document: TDocumentField[]
 ): DocumentRecord {
   return document.reduce((acc, field) => {
     let value: any = field.value as any;
@@ -149,7 +147,7 @@ async function createDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  document: DocumentFields,
+  document: TDocumentField[],
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
@@ -190,9 +188,9 @@ async function createDocument(
   );
 
   // 3. Create Metadata
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-  const modelSchema = ModelCollectionMetadata.getInstance(databaseName);
+  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
 
   const documentSchema = await modelSchema.getMetadata(collectionName, {
     session: compoundSession?.sessionService,
@@ -246,7 +244,7 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  update: DocumentFields
+  update: TDocumentField[]
 ) {
   if (
     !(await hasCollectionPermission(
@@ -384,7 +382,7 @@ async function deleteDocument(
   throw Error('Document not found');
 }
 
-function buildPipeline(matchQuery: any, pagination?: Pagination): Array<any> {
+function buildPipeline(matchQuery: any, pagination?: TPagination): Array<any> {
   return [
     {
       $lookup: {
@@ -450,7 +448,7 @@ async function findDocumentsWithMetadata(
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
-  pagination?: Pagination,
+  pagination?: TPagination,
   session?: ClientSession
 ): Promise<WithProofStatus<WithMetadata<Document>>[]> {
   if (
@@ -493,7 +491,7 @@ async function findDocumentsWithMetadata(
     }
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      const fields: DocumentFields = buildDocumentFields(documentRecord);
+      const fields: TDocumentField[] = buildDocumentFields(documentRecord);
 
       const task = tasks?.find(
         (taskEntity: TaskEntity) =>
@@ -535,9 +533,9 @@ async function searchDocuments(
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
-  pagination: Pagination = { offset: 0, limit: 100 },
+  pagination: TPagination = { offset: 0, limit: 100 },
   session: ClientSession | undefined = undefined
-): Promise<PaginationReturn<Array<Document>>> {
+): Promise<TPaginationReturn<Array<Document>>> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -577,7 +575,7 @@ async function searchDocuments(
 
     const transformedDocuments: Document[] = filteredDocuments.map(
       (documentRecord) => {
-        const fields: DocumentFields = buildDocumentFields(documentRecord);
+        const fields: TDocumentField[] = buildDocumentFields(documentRecord);
 
         return {
           docId: documentRecord.docId,

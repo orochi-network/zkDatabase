@@ -1,4 +1,4 @@
-import { TCollectionDetail } from './collection.js';
+import { TCollectionAndMetadata } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TPagination } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
@@ -7,7 +7,7 @@ export type TDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
-  collection: TCollectionDetail[];
+  collection: TCollectionAndMetadata[];
   databaseSize: number;
   appPublicKey: string;
   deployStatus: ETransactionStatus;
@@ -21,7 +21,7 @@ export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TDatabase, 'appPublicKey'>;
 
 export type TDatabaseSearchRequest = {
-  query: { [K in keyof TDatabaseRecord]: TDatabaseRecord[K] };
+  query: Partial<TDatabaseRecord>;
   pagination: TPagination;
 };
 

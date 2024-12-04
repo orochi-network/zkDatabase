@@ -2,25 +2,24 @@ import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
 import {
-  TMerkleProof,
   ModelMerkleTree,
   ModelQueueTask,
   ModelSequencer,
   CompoundSession,
 } from '@zkdb/storage';
 
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';
 
-import { DocumentFields } from '../../types/document.js';
 import { buildSchema } from './schema.js';
+import { TDocumentField, TMerkleProof } from '@zkdb/common';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
 // Prove the creation of a document
 export async function proveCreateDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  document: DocumentFields,
+  document: TDocumentField[],
   compoundSession?: CompoundSession
 ): Promise<TMerkleProof[]> {
   const merkleTree = await ModelMerkleTree.load(databaseName);
@@ -31,7 +30,7 @@ export async function proveCreateDocument(
     document,
     compoundSession?.sessionService
   );
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
@@ -84,7 +83,7 @@ export async function proveUpdateDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  newDocument: DocumentFields,
+  newDocument: TDocumentField[],
   session?: ClientSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
@@ -163,7 +162,7 @@ export async function proveDeleteDocument(
 
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,

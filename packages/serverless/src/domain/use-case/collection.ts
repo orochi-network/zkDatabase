@@ -161,7 +161,7 @@ async function readCollectionInfo(
     ).size();
 
     return {
-      name: collectionName,
+      collectionName,
       index,
       metadata,
       sizeOnDisk,

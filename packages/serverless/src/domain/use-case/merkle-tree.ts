@@ -16,7 +16,7 @@ export async function getWitnessByDocumentId(
   docId: string,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,
@@ -69,6 +69,7 @@ export async function getMerkleNodesByLevel(
 
 export async function getMerkleTreeInfo(
   databaseName: string
+): Promise<TMerkleTreeInfo> {
 ): Promise<TMerkleTreeInfo> {
   const modelMerkleTree = await ModelMerkleTree.load(databaseName);
 
@@ -132,13 +133,13 @@ export async function getChildrenNodes(
 
   return [
     {
-      hash: leftNodeField.toString(),
+      hash: leftNodeField,
       index: Number(leftChildIndex),
       level: childrenLevel,
       empty: zeroNodes[childrenLevel].equals(leftNodeField).toBoolean(),
     },
     {
-      hash: rightNodeField.toString(),
+      hash: rightNodeField,
       index: Number(rightChildIndex),
       level: childrenLevel,
       empty: zeroNodes[childrenLevel].equals(rightNodeField).toBoolean(),
@@ -150,7 +151,7 @@ export async function getMerkleWitnessPath(
   databaseName: string,
   docId: string
 ) {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,
