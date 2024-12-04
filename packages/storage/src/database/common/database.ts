@@ -82,11 +82,10 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   ): Promise<TDatabase[]> {
     try {
       // Prevent user getting system database
-      const listDatabase = (
-        await this.collection.find(filter, options).toArray()
-      ).filter((db) => !SYSTEM_DATABASE_LIST.includes(db.databaseName));
-
-      return listDatabase;
+      const SYSTEM_DATABASE_SET = new Set(SYSTEM_DATABASE_LIST);
+      return (await this.collection.find(filter, options).toArray()).filter(
+        (db) => !SYSTEM_DATABASE_SET.has(db.databaseName)
+      );
     } catch (error) {
       throw new Error(`Failed to find database: ${error}`);
     }
