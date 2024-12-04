@@ -1,4 +1,4 @@
-import { TCollectionIndex, TSchemaFieldDefinition } from '@zkdb/common';
+import { ESorting, TSchemaFieldDefinition } from '@zkdb/common';
 import logger from './logger.js';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
@@ -49,13 +49,37 @@ export function objectToLookupPattern(
 
 export const gql = (...args: any[]): string => args.join('\n');
 
+/**
+ * Generates an array of indexed field definitions based on a schema.
+ *
+ * @param schema - An array of schema field definitions, where each field includes
+ * properties such as `order`, `index`, `sorting`, and `name`.
+ *
+ * @returns An array of objects, where each object is of type `Partial<Record<string, ESorting>>`.
+ * Each object contains a single field name as the key and its sorting order (`ESorting`)
+ * as the value.
+ *
+ * @example
+ * ```typescript
+ * const schema: TSchemaFieldDefinition[] = [
+ *   { order: 1, index: true, sorting: ESorting.Asc, name: "field1", kind: "CircuitString" },
+ *   { order: 2, index: false, sorting: ESorting.Desc, name: "field2", kind: "CircuitString" },
+ *   { order: 3, index: true, sorting: ESorting.Desc, name: "field3", kind: "CircuitString" },
+ * ];
+ *
+ * const result = getIndexCollectionBySchemaDefinition(schema);
+ * console.log(result);
+ * // Output:
+ * // [
+ * //   { field1: "Asc" },
+ * //   { field3: "Desc" }
+ * // ]
+ * ```
+ */
 export const getIndexCollectionBySchemaDefinition = (
   schema: TSchemaFieldDefinition[]
-): TCollectionIndex[] => {
-  return schema.reduce<TCollectionIndex[]>((acc, current) => {
-    if (current.sorting) {
-      acc.push({ name: current.name, sorting: current.sorting });
-    }
-    return acc;
-  }, []);
+): Partial<Record<string, ESorting>>[] => {
+  return schema
+    .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
+    .map((field) => ({ [field.name]: field.sorting }));
 };

@@ -53,6 +53,15 @@ export type TCollectionIndexInfo = {
 
 // Do we actually need this?
 export type TCollectionAndMetadata = TMetadataDetailCollection<TCollection>;
+const x: TCollectionAndMetadata = {
+  metadata: {
+    permission,
+    schema: '',
+    sizeOnDisk: '1',
+  },
+  collectionName: '',
+  schema: {} as any,
+};
 
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;

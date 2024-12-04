@@ -1,3 +1,4 @@
+import { TDataRecord } from '@orochi-network/framework';
 import { TMetadataCollection } from '@zkdb/common';
 import {
   DB,
@@ -6,9 +7,13 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document, FindOptions } from 'mongodb';
-export interface IMetadataCollection extends Document, TMetadataCollection {}
 
-export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {
+export interface IMetadataCollection
+  extends Document,
+    Omit<TMetadataCollection, 'sizeOnDisk'> {}
+export class ModelMetadataCollection extends ModelGeneral<
+  TDataRecord<IMetadataCollection>
+> {
   private static collectionName: string =
     zkDatabaseConstants.databaseCollections.metadataCollection;
 
@@ -31,7 +36,7 @@ export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {
   public async getMetadata(
     collectionName: string,
     options?: FindOptions
-  ): Promise<IMetadataCollection | null> {
+  ): Promise<TDataRecord<IMetadataCollection> | null> {
     return this.findOne(
       {
         collection: collectionName,
