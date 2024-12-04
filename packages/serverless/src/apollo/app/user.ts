@@ -1,3 +1,12 @@
+import {
+  TMinaSignature,
+  TPublicContext,
+  TUser,
+  TUserFindRequest,
+  TUserSignInRequest,
+  TUserSignUpInfo,
+  TUserSignUpRequest,
+} from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
@@ -18,15 +27,6 @@ import {
 import RedisInstance from '../../helper/redis.js';
 import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
-import {
-  TMinaSignature,
-  TPublicContext,
-  TUser,
-  TUserFindRequest,
-  TUserSignInRequest,
-  TUserSignUpInfo,
-  TUserSignUpRequest,
-} from '../../types/index.js';
 import mapPagination from '../mapper/pagination.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { pagination } from './common.js';

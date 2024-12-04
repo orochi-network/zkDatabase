@@ -1,10 +1,8 @@
 /* eslint-disable import/prefer-default-export */
+import { TDocument, TDocumentHistory, TPagination } from '@zkdb/common';
 import { DB, zkDatabaseConstants } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import ModelDocument from '../../model/abstract/document.js';
-import { HistoryDocument } from '../../types/document-history.js';
-import { Document } from '../../types/document.js';
-import { Pagination } from '../../types/pagination.js';
 import { isDatabaseOwner } from './database.js';
 import {
   buildDocumentFields,
@@ -16,7 +14,7 @@ import {
   hasDocumentPermission,
 } from './permission.js';
 
-function buildHistoryPipeline(pagination: Pagination): Array<any> {
+function buildHistoryPipeline(pagination: TPagination): Array<any> {
   return [
     {
       $group: {
@@ -70,9 +68,9 @@ async function listHistoryDocuments(
   databaseName: string,
   collectionName: string,
   actor: string,
-  pagination: Pagination,
+  pagination: TPagination,
   session?: ClientSession
-): Promise<HistoryDocument[]> {
+): Promise<TDocumentHistory[]> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -179,15 +177,17 @@ async function readHistoryDocument(
     session
   );
 
-  const documents: Document[] = documentHistoryRecords.map((documentRecord) => {
-    const document = buildDocumentFields(documentRecord);
+  const documents: TDocument[] = documentHistoryRecords.map(
+    (documentRecord) => {
+      const document = buildDocumentFields(documentRecord);
 
-    return {
-      docId: documentRecord.docId,
-      fields: document,
-      createdAt: documentRecord.timestamp!,
-    };
-  });
+      return {
+        docId: documentRecord.docId,
+        fields: document,
+        createdAt: documentRecord.timestamp,
+      };
+    }
+  );
 
   return {
     docId,

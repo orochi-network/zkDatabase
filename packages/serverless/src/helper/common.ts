@@ -1,5 +1,4 @@
-import { TCollectionIndex } from '../types/collection.js';
-import { TSchemaFieldDefinition } from '../types/schema.js';
+import { TCollectionIndex, TSchemaFieldDefinition } from '@zkdb/common';
 import logger from './logger.js';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
@@ -54,7 +53,7 @@ export const getIndexCollectionBySchemaDefinition = (
   schema: TSchemaFieldDefinition[]
 ): TCollectionIndex[] => {
   return schema.reduce<TCollectionIndex[]>((acc, current) => {
-    if (current.indexed && current.sorting) {
+    if (current.sorting) {
       acc.push({ name: current.name, sorting: current.sorting });
     }
     return acc;

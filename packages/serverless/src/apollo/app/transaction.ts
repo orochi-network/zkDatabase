@@ -1,13 +1,18 @@
-import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
-import { TDatabaseRequest } from './database.js';
 import {
+  ETransactionType,
+  TDatabaseRequest,
+  TTransactionConfirmRequest,
+  TTransactionRequest,
+} from '@zkdb/common';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import {
+  confirmTransaction as confirmTransactionDomain,
   enqueueTransaction as enqueueTransactionDomain,
   getTransactionForSigning,
-  confirmTransaction as confirmTransactionDomain,
 } from '../../domain/use-case/transaction.js';
-import GraphQLJSON from 'graphql-type-json';
+import { authorizeWrapper } from '../validation.js';
+import { databaseName, transactionType } from './common.js';
 
 export const typeDefsTransaction = `#graphql
 scalar JSON
@@ -50,7 +55,6 @@ const getTransaction = authorizeWrapper(
       args.transactionType
     );
 
-    transaction.status;
     return {
       databaseName: transaction.databaseName,
       transactionType: transaction.transactionType,
@@ -68,7 +72,11 @@ const enqueueDeployTransaction = authorizeWrapper(
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     (
-      await enqueueTransactionDomain(args.databaseName, ctx.userName, 'deploy')
+      await enqueueTransactionDomain(
+        args.databaseName,
+        ctx.userName,
+        ETransactionType.Deploy
+      )
     ).toString()
 );
 

@@ -1,14 +1,15 @@
-import { isDatabaseOwner } from './database.js';
-import { redisQueue } from '../../helper/mq.js';
 import {
-  ModelDbTransaction,
-  ModelDbSetting,
-  DbTransaction,
-} from '@zkdb/storage';
-import ModelUser from '../../model/global/user.js';
+  ETransactionStatus,
+  ETransactionType,
+  TTransaction,
+} from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { PublicKey } from 'o1js';
+import { ModelDbSetting, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
+import { PublicKey } from 'o1js';
+import { redisQueue } from '../../helper/mq.js';
+import ModelUser from '../../model/global/user.js';
+import { isDatabaseOwner } from './database.js';
 
 const MINA_DECIMAL = 1e9;
 
@@ -17,14 +18,14 @@ export type TransactionType = 'deploy' | 'rollup';
 export async function enqueueTransaction(
   databaseName: string,
   actor: string,
-  transactionType: TransactionType,
+  transactionType: ETransactionType,
   session?: ClientSession
 ): Promise<ObjectId> {
   if (!(await isDatabaseOwner(databaseName, actor, session))) {
     throw Error('Only database owner can roll up the transaction');
   }
 
-  if (transactionType === 'deploy') {
+  if (transactionType === ETransactionType.Deploy) {
     const settings = await ModelDbSetting.getInstance().getSetting(
       databaseName,
       { session }
@@ -35,7 +36,7 @@ export async function enqueueTransaction(
     }
   }
 
-  const modelTransaction = ModelDbTransaction.getInstance();
+  const modelTransaction = ModelTransaction.getInstance();
 
   const txs = await modelTransaction.getTxs(databaseName, transactionType, {
     session,
@@ -44,23 +45,26 @@ export async function enqueueTransaction(
   // Validate transactions
   if (txs.length > 0) {
     if (
-      transactionType === 'deploy' &&
-      txs.some((tx: WithId<DbTransaction>) => tx.status === 'success')
+      transactionType === ETransactionType.Rollup &&
+      txs.some(
+        (tx: WithId<TTransaction>) => tx.status === ETransactionStatus.Confirmed
+      )
     ) {
-      throw Error('You deploy transaction is already succeeded');
+      throw Error('You deploy transaction is already confirmed');
     }
 
     if (
       txs.some(
-        (tx: WithId<DbTransaction>) =>
-          tx.status === 'start' || tx.status === 'ready'
+        (tx: WithId<TTransaction>) =>
+          tx.status === ETransactionStatus.Unsigned ||
+          tx.status === ETransactionStatus.Unconfirmed
       )
     ) {
       throw Error('You have uncompleted transaction');
     }
 
     const pendingTx = txs.find(
-      (tx: WithId<DbTransaction>) => tx.status === 'pending'
+      (tx: WithId<TTransaction>) => tx.status === ETransactionStatus.Confirming
     );
 
     if (pendingTx) {
@@ -125,7 +129,7 @@ export async function enqueueTransaction(
 export async function getTransactionForSigning(
   databaseName: string,
   actor: string,
-  transactionType: TransactionType
+  transactionType: ETransactionType
 ) {
   const modelUser = new ModelUser();
 
@@ -143,12 +147,14 @@ export async function getTransactionForSigning(
       throw Error(`Database ${databaseName} does not exist`);
     }
 
-    const transactions = await ModelDbTransaction.getInstance().getTxs(
+    const transactions = await ModelTransaction.getInstance().getTxs(
       databaseName,
       transactionType
     );
 
-    const readyTransaction = transactions.find((tx) => tx.status === 'ready');
+    const readyTransaction = transactions.find(
+      (tx) => tx.status === ETransactionStatus.Unsigned
+    );
 
     if (readyTransaction) {
       const { account, error } = await MinaNetwork.getInstance().getAccount(
@@ -182,9 +188,9 @@ export async function getTransactionForSigning(
 
 export async function getLatestTransaction(
   databaseName: string,
-  transactionType: TransactionType
+  transactionType: ETransactionType
 ) {
-  const modelTransaction = ModelDbTransaction.getInstance();
+  const modelTransaction = ModelTransaction.getInstance();
 
   const txs = await modelTransaction.getTxs(databaseName, transactionType, {
     sort: {
@@ -203,9 +209,9 @@ export async function confirmTransaction(
   if (!(await isDatabaseOwner(databaseName, actor))) {
     throw Error('Only database owner can confirm transactions');
   }
-  await ModelDbTransaction.getInstance().updateById(id, {
+  await ModelTransaction.getInstance().updateById(id, {
     txHash,
-    status: 'pending',
+    status: ETransactionStatus.Confirming,
   });
   return true;
 }

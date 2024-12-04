@@ -1,13 +1,13 @@
+import { TDatabaseRequest } from '@zkdb/common';
+import { withCompoundTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
+import {
+  createRollUp as createRollUpDomain,
+  getRollUpHistory as getRollUpHistoryDomain,
+} from '../../domain/use-case/rollup.js';
 import { authorizeWrapper } from '../validation.js';
 import { databaseName, transactionType } from './common.js';
-import { TDatabaseRequest } from './database.js';
-import GraphQLJSON from 'graphql-type-json';
-import {
-  getRollUpHistory as getRollUpHistoryDomain,
-  createRollUp as createRollUpDomain,
-} from '../../domain/use-case/rollup.js';
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 
 export const typeDefsRollUp = `#graphql
 scalar Date

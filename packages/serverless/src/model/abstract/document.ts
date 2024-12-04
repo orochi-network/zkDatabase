@@ -10,13 +10,13 @@ import {
   WithoutId,
 } from 'mongodb';
 import logger from '../../helper/logger.js';
-import { TDocumentDetail } from '../../types/index.js';
 import { getCurrentTime } from 'helper/common.js';
 import { TPickOptional } from '@orochi-network/framework';
+import { TDocumentDetail } from '@zkdb/common';
 
 export interface IDocumentRecord
   extends Document,
-    TPickOptional<TDocumentDetail, '_id' | 'previousId' | 'nextId'> {}
+    TPickOptional<TDocumentDetail, 'previousId' | 'nextId'> {}
 
 /**
  * ModelDocument is a class that extends ModelBasic.
