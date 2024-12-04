@@ -174,19 +174,19 @@ export async function getListDatabaseDetail(
 
             if (zkAppTransaction?.txStatus === 'failed') {
               deployStatus = ETransactionStatus.Failed;
-              await modelTx.updateById(latestTransaction._id.toString(), {
+              await modelTx.updateById(latestTransaction._id, {
                 status: deployStatus,
                 error: zkAppTransaction.failures.join(' '),
               });
             } else if (zkAppTransaction?.txStatus === 'applied') {
               deployStatus = ETransactionStatus.Confirmed;
-              await modelTx.updateById(latestTransaction._id.toString(), {
+              await modelTx.updateById(latestTransaction._id, {
                 status: deployStatus,
               });
             }
           } else {
             deployStatus = ETransactionStatus.Failed;
-            await modelTx.updateById(latestTransaction._id.toString(), {
+            await modelTx.updateById(latestTransaction._id, {
               status: deployStatus,
               error: 'Transaction hash is missed',
             });
