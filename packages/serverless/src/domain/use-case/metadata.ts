@@ -2,11 +2,12 @@ import { ClientSession } from 'mongodb';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
+import { TMetadataCollection, TMetadataDocument } from '@zkdb/common';
+import { DB, ModelCollection } from '@zkdb/storage';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
-import { TMetadataCollection, TMetadataDocument } from '@zkdb/common';
 
 export async function readCollectionMetadata(
   database: string,
@@ -14,7 +15,7 @@ export async function readCollectionMetadata(
   actor: string,
   checkPermission = false,
   session?: ClientSession
-): Promise<TMetadataCollection | null> {
+): Promise<TMetadataCollection> {
   if (checkPermission) {
     const hasReadPermission = await hasCollectionPermission(
       database,
@@ -31,11 +32,29 @@ export async function readCollectionMetadata(
     }
   }
 
-  const modelMetadata = ModelMetadataCollection.getInstance(database);
+  const modelCollectionMetadata = ModelMetadataCollection.getInstance(database);
 
-  const metadata = await modelMetadata.findOne({ collection }, { session });
+  const metadata = await modelCollectionMetadata.findOne(
+    { collection },
+    { session }
+  );
 
-  return metadata;
+  if (!metadata) {
+    throw new Error(
+      `Cannot find metadata collection of ${collection} in database ${database}`
+    );
+  }
+  const modelCollection = ModelCollection.getInstance(
+    database,
+    DB.service,
+    collection
+  );
+
+  const sizeOnDisk = await modelCollection.size();
+  return {
+    ...metadata,
+    sizeOnDisk,
+  };
 }
 
 export async function readDocumentMetadata(

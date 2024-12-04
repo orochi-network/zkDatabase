@@ -6,8 +6,10 @@ import {
   zkDatabaseConstants,
 } from '@zkdb/storage';
 import { Document, FindOptions } from 'mongodb';
-export interface IMetadataCollection extends Document, TMetadataCollection {}
 
+export interface IMetadataCollection
+  extends Document,
+    Omit<TMetadataCollection, 'sizeOnDisk'> {}
 export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {
   private static collectionName: string =
     zkDatabaseConstants.databaseCollections.metadataCollection;
