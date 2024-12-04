@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { ObjectId } from 'mongodb';
 
 type TDbRecordBasic = {
-  _id: ObjectId;
+  _id?: ObjectId;
   createdAt: Date;
   updatedAt: Date;
 };

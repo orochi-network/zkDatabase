@@ -17,7 +17,7 @@ export enum ERollUpState {
   Failed = 'Failed',
 }
 
-export type TRollUpHistory = TDbRecord<{
+export type TRollUpHistory = {
   databaseName: string;
   currentMerkleTreeRoot: string;
   previousMerkleTreeRoot: string;
@@ -25,10 +25,17 @@ export type TRollUpHistory = TDbRecord<{
   // txId is not a good name it's alias of tx hash
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
+};
+
+// Compound Type
+export type TRollUpTransactionHistory = TRollUpHistory & {
   transactionHash: string;
+  createdAt: Date;
   status: ETransactionStatus;
-  error: string;
-}>;
+  error?: string;
+};
+
+export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
 export type RollUpData = {
   history: TRollUpHistory[];

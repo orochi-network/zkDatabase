@@ -8,13 +8,13 @@ import {
   ObjectId,
   WithId,
 } from 'mongodb';
-import { ETransactionType, TTransaction } from '@zkdb/common';
+import { ETransactionType, TTransaction, TTransactionRecord } from '@zkdb/common';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
 
-export class ModelTransaction extends ModelBasic<TTransaction> {
+export class ModelTransaction extends ModelBasic<TTransactionRecord> {
   private static instance: ModelTransaction;
 
   private constructor() {
@@ -33,9 +33,9 @@ export class ModelTransaction extends ModelBasic<TTransaction> {
   }
 
   public async create(
-    args: TTransaction,
+    args: TTransactionRecord,
     options?: ReplaceOptions
-  ): Promise<Document | InsertOneResult<TTransaction>> {
+  ): Promise<Document | InsertOneResult<TTransactionRecord>> {
     const result = await this.collection.insertOne(args, { ...options });
 
     return result;
@@ -45,7 +45,7 @@ export class ModelTransaction extends ModelBasic<TTransaction> {
     id: string,
     args: Partial<TTransaction>,
     options?: ReplaceOptions
-  ): Promise<Document | UpdateResult<TTransaction>> {
+  ): Promise<Document | UpdateResult<TTransactionRecord>> {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(id) },
       { $set: args },
@@ -59,7 +59,7 @@ export class ModelTransaction extends ModelBasic<TTransaction> {
     databaseName: string,
     transactionType: ETransactionType,
     options?: FindOptions
-  ): Promise<Array<WithId<TTransaction>>> {
+  ): Promise<Array<TTransactionRecord>> {
     return this.collection
       .find({ databaseName, transactionType }, options)
       .toArray();

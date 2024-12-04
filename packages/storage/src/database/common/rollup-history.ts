@@ -1,11 +1,11 @@
-import { TRollUpHistory } from '@zkdb/common';
+import { TRollUpHistory, TRollUpHistoryRecord } from '@zkdb/common';
 import { ReplaceOptions, UpdateResult } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 
-export class ModelRollup extends ModelBasic<TRollUpHistory> {
+export class ModelRollup extends ModelBasic<TRollUpHistoryRecord> {
   private static instance: ModelRollup;
   private constructor() {
     super(
@@ -23,7 +23,7 @@ export class ModelRollup extends ModelBasic<TRollUpHistory> {
   }
 
   public async create(
-    args: TRollUpHistory,
+    args: TRollUpHistoryRecord,
     options?: ReplaceOptions
   ): Promise<boolean> {
     try {
@@ -45,7 +45,7 @@ export class ModelRollup extends ModelBasic<TRollUpHistory> {
   public async update(
     databaseName: string,
     updateRollup: Partial<TRollUpHistory>
-  ): Promise<UpdateResult<TRollUpHistory>> {
+  ): Promise<UpdateResult<TRollUpHistoryRecord>> {
     return this.collection.updateOne(
       { databaseName },
       { $set: updateRollup },

@@ -3,8 +3,9 @@ import {
   ETransactionStatus,
   ETransactionType,
   RollUpData,
-  TRollUpHistory,
-  TTransaction,
+  TRollUpHistoryRecord,
+  TRollUpTransactionHistory,
+  TTransactionRecord,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
@@ -61,7 +62,7 @@ export async function createRollUp(
     }
   }
 
-  const txId = await enqueueTransaction(
+  const transactionObjectId = await enqueueTransaction(
     databaseName,
     actor,
     ETransactionType.Rollup,
@@ -73,10 +74,10 @@ export async function createRollUp(
       previousMerkleTreeRoot: latestProofForDb.prevMerkleRoot,
       currentMerkleTreeRoot: latestProofForDb.merkleRoot,
       databaseName: databaseName,
-      transactionObjectId: txId,
+      transactionObjectId,
       proofObjectId: latestProofForDb._id,
-      status: ETransactionStatus.Unsigned,
-      transactionHash: '',
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     { session: compoundSession?.sessionService }
   );
@@ -150,18 +151,20 @@ export async function getRollUpHistory(
     .toArray();
 
   const buildRollUpHistory = (
-    history: TRollUpHistory,
-    transaction: TTransaction,
+    history: TRollUpHistoryRecord,
+    transaction: TTransactionRecord,
     status: ETransactionStatus,
     error?: string
-  ) => ({
+  ): TRollUpTransactionHistory => ({
     databaseName: history.databaseName,
     currentMerkleTreeRoot: history.currentMerkleTreeRoot,
     previousMerkleTreeRoot: history.previousMerkleTreeRoot,
-    createdAt: transaction.createdAt,
+    transactionObjectId: history.transactionObjectId,
+    proofObjectId: history.proofObjectId,
     transactionHash: transaction?.txHash,
+    createdAt: history.createdAt,
     status,
-    error,
+    error
   });
 
   const history = (
