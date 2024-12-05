@@ -26,6 +26,22 @@ export const typeDefsCommon = gql`
     sorting: Sorting!
   }
 
+  type PaginationInput {
+    offset: Int!
+    limit: Int!
+  }
+
+  input MinaSignatureInput {
+    field: String!
+    scalar: String!
+  }
+
+  input ProofInput {
+    signature: MinaSignatureInput!
+    publicKey: String!
+    data: String!
+  }
+
   type SchemaFieldInput {
     name: String!
     kind: SchemaType!

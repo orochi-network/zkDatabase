@@ -1,8 +1,14 @@
+// TODO: need end to end testing for every function in this file
+// TODO: debug types to annotate the actual correct types
+
 import {
+  EDatabaseProofStatus,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
+  TMetadataDocument,
   TPagination,
   TPaginationReturn,
+  TWithProofStatus,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import {
@@ -14,18 +20,17 @@ import {
   withTransaction,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ClientSession, WithId } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import {
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
 import ModelDocument, {
-  DocumentRecord,
+  IDocumentRecord,
 } from '../../model/abstract/document.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import { Document } from '../../types/document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { isDatabaseOwner } from './database.js';
 import { getUsersGroup } from './group.js';
@@ -39,58 +44,22 @@ import {
   proveUpdateDocument,
 } from './prover.js';
 
-export function buildDocumentFields(
-  documentRecord: WithId<DocumentRecord>
-): TDocumentField[] {
-  return Object.keys(documentRecord)
-    .filter(
-      (key) =>
-        key !== '_id' &&
-        key !== 'docId' &&
-        key !== 'active' &&
-        key !== 'timestamp' &&
-        key !== 'metadata'
-    )
-    .map((key) => ({
-      name: documentRecord[key].name,
-      kind: documentRecord[key].kind,
-      value: documentRecord[key].value,
-    }));
-}
+export type TReadDocumentResult = Pick<
+  IDocumentRecord,
+  'docId' | 'document' | 'createdAt'
+>;
 
-function documentFieldsToDocumentRecord(
-  document: TDocumentField[]
-): DocumentRecord {
-  return document.reduce((acc, field) => {
-    let value: any = field.value as any;
-
-    switch (field.kind) {
-      case 'CircuitString':
-        value = value.toString();
-        break;
-      case 'UInt32':
-        value = parseInt(field.value, 10);
-        break;
-      case 'UInt64':
-        value = parseInt(field.value, 10);
-        break;
-      case 'Bool':
-        value = field.value.toLowerCase() === 'true';
-        break;
-      case 'Int64':
-        value = parseInt(field.value, 10);
-        break;
-      default:
-        break;
-    }
-
-    acc[field.name] = {
-      name: field.name,
-      kind: field.kind,
-      value,
-    };
-    return acc;
-  }, {} as DocumentRecord);
+/** Transform an array of document fields to a document record. */
+export function fieldArrayToRecord(
+  fields: TDocumentField[]
+): Record<string, TDocumentField> {
+  return fields.reduce(
+    (acc, field) => {
+      acc[field.name] = field;
+      return acc;
+    },
+    {} as Record<string, TDocumentField>
+  );
 }
 
 async function readDocument(
@@ -99,7 +68,7 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<Document | null> {
+): Promise<TReadDocumentResult | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -142,8 +111,8 @@ async function readDocument(
 
   return {
     docId: documentRecord.docId,
-    fields: buildDocumentFields(documentRecord),
-    createdAt: documentRecord.timestamp!,
+    document: documentRecord.document,
+    createdAt: documentRecord.createdAt,
   };
 }
 
@@ -151,7 +120,7 @@ async function createDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  document: TDocumentField[],
+  fields: TDocumentField[],
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
@@ -171,16 +140,13 @@ async function createDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  if (document.length === 0) {
+  if (fields.length === 0) {
     throw new Error('Document array is empty. At least one field is required.');
   }
 
-  const documentRecord: DocumentRecord =
-    documentFieldsToDocumentRecord(document);
-
   // Save the document to the database
-  const insertResult = await modelDocument.insertOne(
-    documentRecord,
+  const insertResult = await modelDocument.insertOneFromFields(
+    fieldArrayToRecord(fields),
     compoundSession?.sessionService
   );
 
@@ -212,9 +178,9 @@ async function createDocument(
 
   await modelDocumentMetadata.insertOne(
     {
-      collection: collectionName,
+      collectionName,
       docId: insertResult.docId,
-      merkleIndex,
+      merkleIndex: merkleIndex.toString(),
       ...{
         // I'm set these to system user and group as default
         // In case this permission don't override by the user
@@ -236,7 +202,7 @@ async function createDocument(
     databaseName,
     collectionName,
     insertResult.docId,
-    document,
+    fields,
     compoundSession
   );
 
@@ -292,14 +258,12 @@ async function updateDocument(
         );
       }
 
-      const documentRecord: DocumentRecord =
-        documentFieldsToDocumentRecord(update);
-
       await modelDocument.updateOne(
         oldDocumentRecord.docId,
-        documentRecord,
+        fieldArrayToRecord(update),
         session
       );
+
       return oldDocumentRecord;
     }
   });
@@ -447,6 +411,14 @@ export function filterDocumentsByPermission(
   });
 }
 
+// TODO: might need to reconsider better type annotation
+type TDocumentResponse = Omit<IDocumentRecord, '_id' | 'active' | 'updatedAt'>;
+
+// TODO: might need to reconsider better type annotation
+type TDocumentWithMetadataResponse = TDocumentResponse & {
+  metadata: Omit<TMetadataDocument, 'collectionName' | 'docId'>;
+};
+
 async function findDocumentsWithMetadata(
   databaseName: string,
   collectionName: string,
@@ -454,7 +426,7 @@ async function findDocumentsWithMetadata(
   query?: FilterCriteria,
   pagination?: TPagination,
   session?: ClientSession
-): Promise<WithProofStatus<WithMetadata<Document>>[]> {
+): Promise<TWithProofStatus<TDocumentWithMetadataResponse>[]> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -482,6 +454,7 @@ async function findDocumentsWithMetadata(
       .aggregate(pipeline)
       .toArray();
 
+    // TODO: might need to reconsider proper type annotation
     let filteredDocuments: any[];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
@@ -495,30 +468,46 @@ async function findDocumentsWithMetadata(
     }
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      const fields: TDocumentField[] = buildDocumentFields(documentRecord);
-
       const task = tasks?.find(
         (taskEntity: TaskEntity) =>
           taskEntity.docId === documentRecord._id.toString()
       );
 
-      const document: Document = {
+      const document = {
         docId: documentRecord._id,
-        fields,
-        createdAt: documentRecord.timestamp,
+        document: fieldArrayToRecord(documentRecord.document),
+        createdAt: documentRecord.createdAt,
       };
 
-      const metadata: DocumentMetadata = {
+      const metadata = {
         merkleIndex: documentRecord.metadata.merkleIndex,
         group: documentRecord.metadata.group,
         owner: documentRecord.metadata.owner,
         permission: documentRecord.metadata.permission,
       };
 
+      // TODO: monkey patching for now because we might also need to refactor
+      // queue if we're to change status to enum
+      const mapStatusToProofStatus = (status: string): EDatabaseProofStatus => {
+        switch (status) {
+          case 'queued':
+            return EDatabaseProofStatus.None;
+          case 'proving':
+            return EDatabaseProofStatus.Proving;
+          case 'proved':
+            return EDatabaseProofStatus.Proved;
+          case 'failed':
+            return EDatabaseProofStatus.Failed;
+          default:
+            // TODO: is this variant correct in this case?
+            return EDatabaseProofStatus.None;
+        }
+      };
+
       const object = {
         ...document,
         metadata,
-        proofStatus: task ? task.status.toString() : '',
+        proofStatus: mapStatusToProofStatus(task ? task.status.toString() : ''),
       };
 
       return object;
@@ -539,7 +528,7 @@ async function searchDocuments(
   query?: FilterCriteria,
   pagination: TPagination = { offset: 0, limit: 100 },
   session: ClientSession | undefined = undefined
-): Promise<TPaginationReturn<Array<Document>>> {
+): Promise<TPaginationReturn<Array<TDocumentResponse>>> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -565,6 +554,7 @@ async function searchDocuments(
       .aggregate(pipeline)
       .toArray();
 
+    // TODO: might need to reconsider proper type annotation
     let filteredDocuments: any[];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
@@ -577,22 +567,18 @@ async function searchDocuments(
       filteredDocuments = documentsWithMetadata;
     }
 
-    const transformedDocuments: Document[] = filteredDocuments.map(
-      (documentRecord) => {
-        const fields: TDocumentField[] = buildDocumentFields(documentRecord);
-
-        return {
-          docId: documentRecord.docId,
-          fields,
-          createdAt: documentRecord.timestamp,
-        };
-      }
-    );
+    const transformedDocuments = filteredDocuments.map((documentRecord) => {
+      return {
+        docId: documentRecord.docId,
+        document: fieldArrayToRecord(documentRecord.document),
+        createdAt: documentRecord.timestamp,
+      };
+    });
 
     return {
       data: transformedDocuments,
       offset: pagination.offset,
-      totalSize: await ModelDocument.getInstance(
+      total: await ModelDocument.getInstance(
         databaseName,
         collectionName
       ).countActiveDocuments(),
@@ -611,4 +597,10 @@ export {
   readDocument,
   searchDocuments,
   updateDocument,
+};
+
+export type TDocument = {
+  docId: string;
+  active: boolean;
+  document: Record<string, TDocumentField>;
 };

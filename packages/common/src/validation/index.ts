@@ -60,14 +60,12 @@ export const groupName = Joi.string()
   .required()
   .pattern(/^[a-z]+[_a-z0-9]+/i);
 
-export const groupDescription = Joi.string().trim().min(10).max(256).required();
-
-export const groupOptionalDescription = Joi.string()
-  .allow('')
-  .optional()
-  .description(
-    'Optional description of the group, providing additional context.'
-  );
+export const groupDescription = (required: boolean = true) => {
+  const joiGroupDescription = Joi.string().max(512);
+  return required
+    ? joiGroupDescription.min(10).required()
+    : joiGroupDescription.min(0).optional();
+};
 
 export const publicKey = Joi.string()
   .trim()
