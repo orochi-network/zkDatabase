@@ -16,6 +16,7 @@ import {
   MerkleMapWitness,
   Struct,
 } from 'o1js';
+import { TMerkleWitnessNodeData } from './types/merkle-tree';
 
 export const ProvableTypeMap = {
   CircuitString,
@@ -35,8 +36,7 @@ export const ProvableTypeMap = {
 export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
 /** Map of Provable types to their corresponding serialization types (e.g.
- * database or JavaScript types). Variants with `any` are not supported or not
- * yet implemented. */
+ *  database or JavaScript types). */
 type TProvableSerializationMap = {
   CircuitString: string;
   UInt32: number;
@@ -48,8 +48,8 @@ type TProvableSerializationMap = {
   Signature: string;
   Character: string;
   Sign: boolean;
-  Field: any;
-  MerkleMapWitness: any;
+  Field: string;
+  MerkleMapWitness: TMerkleWitnessNodeData[];
 };
 
 /**
