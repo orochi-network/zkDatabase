@@ -14,7 +14,6 @@ import {
   listCollection,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
-// import { TSchemaFieldDefinition } from '../../types/index.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 export const schemaField = Joi.object({
