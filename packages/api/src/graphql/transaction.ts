@@ -22,7 +22,7 @@ const TRANSACTION_GET = gql`
       databaseName
       transactionType
       status
-      id
+      transactionObjectId
       tx
       zkAppPublicKey
     }
@@ -32,12 +32,12 @@ const TRANSACTION_GET = gql`
 const TRANSACTION_CONFIRM = gql`
   mutation ConfirmTransaction(
     $databaseName: String!
-    $confirmTransactionId: String!
+    $transactionObjectId: String!
     $txHash: String!
   ) {
     confirmTransaction(
       databaseName: $databaseName
-      id: $confirmTransactionId
+      transactionObjectId: $transactionObjectId
       txHash: $txHash
     )
   }

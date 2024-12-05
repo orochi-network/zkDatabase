@@ -5,7 +5,7 @@ export type TTransactionRequest = {
 
 export type TTransactionConfirmRequest = {
   databaseName: string;
-  confirmTransactionId: string;
+  transactionObjectId: string;
   txHash: string;
 };
 export type TTransactionType = "deploy" | "rollup";
