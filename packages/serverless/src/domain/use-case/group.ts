@@ -1,8 +1,8 @@
 import { ClientSession } from 'mongodb';
 import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup, { TGroupInfo } from '../../model/database/user-group.js';
-import { isDatabaseOwner } from './database.js';
+import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
+import { isDatabaseOwner } from './database.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -45,11 +45,11 @@ async function createGroup(
   throw Error('Only database owner allowed to create group');
 }
 
-async function getGroupInfo(
+async function getGroupInfoDetail(
   databaseName: string,
   groupName: string,
   session?: ClientSession
-): Promise<TGroupInfo> {
+) {
   if (!(await isGroupExist(databaseName, groupName, session))) {
     throw Error(
       `Group ${groupName} does not exist for database ${databaseName}`
@@ -63,7 +63,7 @@ async function getGroupInfo(
   }
   return {
     ...group,
-    members: await (
+    listUser: await (
       await modelUserGroup.find({ groupId: group._id })
     ).toArray(),
   };
@@ -207,12 +207,13 @@ async function renameGroup(
     const modelUserGroup = new ModelGroup(databaseName);
     const group = await modelUserGroup.findGroup(groupName);
     if (group) {
-      await modelUserGroup.collection.updateOne(
+      const result = await modelUserGroup.collection.updateOne(
         {
           groupName,
         },
         { $set: { groupName: newGroupName } }
       );
+      return result && result.modifiedCount === 1;
     }
     throw Error(`Group ${groupName} does not exist`);
   }
@@ -238,7 +239,7 @@ export {
   checkUserGroupMembership,
   createGroup,
   excludeUsersToGroup,
-  getGroupInfo,
+  getGroupInfoDetail,
   getUsersGroup,
   isGroupExist,
   renameGroup,
