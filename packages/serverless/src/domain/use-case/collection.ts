@@ -3,15 +3,13 @@ import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelSystemDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
 import { ClientSession, IndexSpecification } from 'mongodb';
-import {
-  DEFAULT_GROUP_ADMIN,
-  PERMISSION_DEFAULT_VALUE,
-} from '../../common/const.js';
+import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { getIndexCollectionBySchemaDefinition } from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 
 import {
   EProperty,
+  PERMISSION_DEFAULT_VALUE,
   TCollectionIndexInfo,
   TCollectionIndexSpecification,
   TMetadataCollection,

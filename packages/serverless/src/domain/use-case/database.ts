@@ -114,7 +114,7 @@ export async function getListDatabaseDetail(
   if (!databasesInfo?.databases?.length) {
     return {
       data: [],
-      totalSize: 0,
+      total: 0,
       offset: pagination?.offset ?? 0,
     };
   }
@@ -140,7 +140,7 @@ export async function getListDatabaseDetail(
     // When user don't have any DB
     return {
       data: [],
-      totalSize: 0,
+      total: 0,
       offset: pagination?.offset ?? 0,
     };
   }
@@ -211,7 +211,7 @@ export async function getListDatabaseDetail(
   return {
     data: databases.filter(Boolean),
     offset: pagination?.offset ?? 0,
-    totalSize: await modelDatabase.count(filter),
+    total: await modelDatabase.count(filter),
   };
 }
 

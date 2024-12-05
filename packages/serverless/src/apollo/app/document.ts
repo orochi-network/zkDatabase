@@ -16,13 +16,16 @@ import {
 import { gql } from '../../helper/common.js';
 import { IDocumentRecord } from '../../model/abstract/document.js';
 import { authorizeWrapper } from '../validation.js';
-import { TDocumentField, TPagination, TCollectionRequest } from '@zkdb/common';
 import {
+  TDocumentField,
+  TPagination,
+  TCollectionRequest,
   collectionName,
   databaseName,
   documentField,
   pagination,
-} from './common.js';
+} from '@zkdb/common';
+
 import { DEFAULT_PAGINATION } from 'common/const.js';
 
 export type TDocumentsFindRequest = TCollectionRequest & {

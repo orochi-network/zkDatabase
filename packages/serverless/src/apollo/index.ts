@@ -37,21 +37,7 @@ export const TypedefsApp = [
   typeDefsEnvironment,
 ];
 
-type Resolver =
-  | typeof resolversDatabase
-  | typeof resolversCollection
-  | typeof resolversDocument
-  | typeof resolversCollectionIndex
-  | typeof resolversUser
-  | typeof resolversGroup
-  | typeof resolversPermission
-  | typeof resolversMerkleTree
-  | typeof resolversProof
-  | typeof resolversTransaction
-  | typeof resolversRollUp
-  | typeof resolversEnvironment;
-
-export const ResolversApp: Resolver[] = [
+export const ResolversApp = [
   resolversDatabase,
   resolversCollection,
   resolversDocument,

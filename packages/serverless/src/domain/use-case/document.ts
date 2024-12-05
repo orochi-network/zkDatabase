@@ -3,6 +3,7 @@
 
 import {
   EDatabaseProofStatus,
+  PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TMetadataDocument,
   TPagination,
@@ -21,7 +22,6 @@ import {
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
-  PERMISSION_DEFAULT_VALUE,
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
@@ -578,7 +578,7 @@ async function searchDocuments(
     return {
       data: transformedDocuments,
       offset: pagination.offset,
-      totalSize: await ModelDocument.getInstance(
+      total: await ModelDocument.getInstance(
         databaseName,
         collectionName
       ).countActiveDocuments(),

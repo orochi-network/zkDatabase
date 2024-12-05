@@ -1,16 +1,15 @@
+import { TCollectionIndexSpecification } from '@zkdb/common';
 import {
   CreateIndexesOptions,
   Document,
   DropIndexesOptions,
-  IndexDirection,
   IndexSpecification,
 } from 'mongodb';
 import { isOk } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import { DatabaseEngine } from '../database-engine.js';
-import ModelDatabase from './database.js';
-import { TCollectionIndex, TCollectionIndexSpecification } from '@zkdb/common';
+import ModelDatabase from './system-database.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.

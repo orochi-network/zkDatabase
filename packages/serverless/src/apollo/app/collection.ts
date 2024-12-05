@@ -1,16 +1,21 @@
-import { TDatabaseRequest, TSchemaFieldDefinition } from '@zkdb/common';
+import {
+  collectionName,
+  databaseName,
+  groupName,
+  O1JS_VALID_TYPE,
+  TDatabaseRequest,
+  TSchemaFieldDefinition,
+} from '@zkdb/common';
 import { ModelSystemDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
   listCollection,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
 // import { TSchemaFieldDefinition } from '../../types/index.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, groupName } from './common.js';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()

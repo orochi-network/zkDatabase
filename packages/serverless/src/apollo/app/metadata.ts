@@ -1,3 +1,4 @@
+import { collectionName, databaseName, objectId, userName } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -13,7 +14,6 @@ import { setPermission } from '../../domain/use-case/permission.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, objectId, userName } from './common.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 

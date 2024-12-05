@@ -33,9 +33,7 @@ export function getCurrentTime(): Date {
 }
 
 export function objectToLookupPattern(
-  obj: {
-    [key: string]: any;
-  },
+  obj: Record<string, any>,
   options?: {
     regexSearch: boolean;
   }
