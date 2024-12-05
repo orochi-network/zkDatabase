@@ -2,17 +2,16 @@ import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelSystemDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
-import { ClientSession } from 'mongodb';
+import { ClientSession, IndexSpecification } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { getIndexCollectionBySchemaDefinition } from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 
 import {
   EProperty,
-  ESorting,
   PERMISSION_DEFAULT_VALUE,
-  TCollectionIndex,
   TCollectionIndexInfo,
+  TCollectionIndexSpecification,
   TMetadataCollection,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
@@ -21,13 +20,12 @@ import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
 import { readCollectionMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
-import { getSchemaDefinition } from './schema.js';
 
 async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  index: TCollectionIndex
+  index: TCollectionIndexSpecification
 ): Promise<boolean> {
   // Validate input parameters
   if (!index || Object.keys(index).length === 0) {
@@ -38,18 +36,19 @@ async function createIndex(
   if (
     await hasCollectionPermission(databaseName, collectionName, actor, 'system')
   ) {
-    // Fetch schema definition
-    const schema = await getSchemaDefinition(
-      databaseName,
-      collectionName,
-      actor,
-      true
-    );
+    const metadata =
+      await ModelMetadataCollection.getInstance(databaseName).getMetadata(
+        collectionName
+      );
+
+    if (!metadata) {
+      throw new Error(`Metadata not found for collection ${collectionName}`);
+    }
 
     // Validate that all keys in the index exist in the schema
     const invalidIndexes = Object.keys(index).filter(
       (fieldName) =>
-        !schema.some((schemaField) => schemaField.name === fieldName)
+        !metadata.schema.some((schemaField) => schemaField.name === fieldName)
     );
 
     if (invalidIndexes.length > 0) {
@@ -60,9 +59,12 @@ async function createIndex(
     }
 
     // Map index fields to MongoDB format
-    const mongoIndex = Object.entries(index).map(([field, sorting]) => ({
-      [`document.${field}.name`]: sorting === ESorting.Asc ? 1 : -1,
-    }));
+    const mongoIndex: IndexSpecification = {};
+    for (const i in index) {
+      if (index[i]) {
+        mongoIndex[`document.${i}.name`] = index[i];
+      }
+    }
 
     // Create the index using ModelCollection
     return ModelCollection.getInstance(
@@ -114,7 +116,7 @@ async function createCollection(
   );
 
   // Create index by schema definition
-  const collectionIndex: TCollectionIndex =
+  const collectionIndex: TCollectionIndexSpecification =
     getIndexCollectionBySchemaDefinition(schema);
 
   if (Object.keys(collectionIndex).length > 0) {
@@ -134,9 +136,11 @@ async function listCollection(
     availableCollections =
       await ModelSystemDatabase.getInstance(databaseName).listCollections();
   } else {
-    const collectionsMetadata = await (
-      await ModelMetadataCollection.getInstance(databaseName).find()
-    ).toArray();
+    const collectionsMetadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    )
+      .find()
+      .toArray();
 
     const modelUserGroup = new ModelUserGroup(databaseName);
 

@@ -16,7 +16,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
-import { gql } from '../../helper/common.js';
+import { convertIndexSpecification, gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest } from './collection.js';
 
@@ -108,7 +108,7 @@ const indexCreate = authorizeWrapper(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.index
+      convertIndexSpecification(args.index)
     )
 );
 
