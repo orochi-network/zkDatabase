@@ -115,7 +115,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
   async confirmTransaction(id: string, txHash: string): Promise<boolean> {
     const result = await this.apiClient.transaction.confirmTransaction({
       databaseName: this.databaseName,
-      confirmTransactionId: id,
+      transactionObjectId: id,
       txHash,
     });
     return result.unwrap();

@@ -9,7 +9,7 @@ import Joi from 'joi';
 import {
   confirmTransaction as confirmTransactionDomain,
   enqueueTransaction as enqueueTransactionDomain,
-  getTransactionForSigning,
+  getUnsignedTransaction as getUnsignedTransactionDomain,
 } from '../../domain/use-case/transaction.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
@@ -22,19 +22,22 @@ export const typeDefsTransaction = gql`
   type Mutation
 
   type Transaction {
+    _id: String!
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
     rawTransaction: String!
     txHash: String!
     error: String!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   extend type Query {
-    getTransaction(
+    getUnsignedTransaction(
       databaseName: String!
       transactionType: TransactionType!
-    ): DbTransaction!
+    ): Transaction!
   }
 
   extend type Mutation {
@@ -44,25 +47,21 @@ export const typeDefsTransaction = gql`
   }
 `;
 
-const getTransaction = authorizeWrapper(
+const getUnsignedTransaction = authorizeWrapper(
   Joi.object({
     databaseName,
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) => {
-    const transaction = await getTransactionForSigning(
+    const transaction = await getUnsignedTransactionDomain(
       args.databaseName,
       ctx.userName,
       args.transactionType
     );
 
     return {
-      transactionObjectId: transaction._id,
-      databaseName: transaction.databaseName,
-      zkAppPublickey: transaction.zkAppPublicKey,
-      transactionType: transaction.transactionType,
-      transactionStatus: transaction.status,
-      txHash: transaction.txHash,
+      ...transaction,
+      _id: transaction._id.toString(),
     };
   }
 );
@@ -94,7 +93,7 @@ const confirmTransaction = authorizeWrapper(
 type TTransactionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
-    getTransaction: typeof getTransaction;
+    getUnsignedTransaction: typeof getUnsignedTransaction;
   };
   Mutation: {
     enqueueDeployTransaction: typeof enqueueDeployTransaction;
@@ -105,7 +104,7 @@ type TTransactionResolver = {
 export const resolversTransaction: TTransactionResolver = {
   JSON: GraphQLJSON,
   Query: {
-    getTransaction,
+    getUnsignedTransaction,
   },
   Mutation: {
     enqueueDeployTransaction,

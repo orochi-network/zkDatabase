@@ -1,6 +1,7 @@
 import {
   ETransactionStatus,
   ETransactionType,
+  TDbRecord,
   TTransaction,
   TTransactionRecord,
 } from '@zkdb/common';
@@ -137,11 +138,11 @@ export async function enqueueTransaction(
   return insertResult.insertedId;
 }
 
-export async function getTransactionForSigning(
+export async function getUnsignedTransaction(
   databaseName: string,
   actor: string,
   transactionType: ETransactionType
-) {
+): Promise<TDbRecord<TTransaction>> {
   const modelUser = new ModelUser();
 
   const user = await modelUser.findOne({ userName: actor });
@@ -185,7 +186,7 @@ export async function getTransactionForSigning(
           );
         }
 
-        return { ...readyTransaction, zkAppPublicKey: database.appPublicKey };
+        return readyTransaction;
       } else {
         throw Error('Account has not been found in Mina Network');
       }
