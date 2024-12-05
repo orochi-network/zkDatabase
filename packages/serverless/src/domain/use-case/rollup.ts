@@ -78,7 +78,7 @@ export async function createRollUp(
       transactionObjectId,
       proofObjectId: latestProofForDb._id,
       createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime()
+      updatedAt: getCurrentTime(),
     },
     { session: compoundSession?.sessionService }
   );
@@ -161,12 +161,13 @@ export async function getRollUpHistory(
     previousMerkleTreeRoot: history.previousMerkleTreeRoot,
     transactionObjectId: history.transactionObjectId,
     proofObjectId: history.proofObjectId,
+    tx: transaction.tx,
     txHash: transaction?.txHash,
-    createdAt: history.createdAt,
-    updatedAt: history.updatedAt,
+    createdAt: transaction.createdAt,
+    updatedAt: transaction.updatedAt,
     transactionType: transaction.transactionType,
     status,
-    error
+    error,
   });
 
   const history = (
@@ -205,7 +206,7 @@ export async function getRollUpHistory(
                 history,
                 transaction,
                 ETransactionStatus.Signed,
-                ""
+                ''
               );
             } else if (tx.txStatus === 'failed') {
               await modelTransaction.updateById(

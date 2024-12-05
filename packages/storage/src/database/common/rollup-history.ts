@@ -24,7 +24,7 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
   }
 
   public async create(
-    args: TRollUpHistoryRecord,
+    args: WithoutId<TRollUpHistoryRecord>,
     options?: ReplaceOptions
   ): Promise<boolean> {
     try {
