@@ -4,8 +4,9 @@ import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
+import { WithoutId } from 'mongodb';
 
-export class ModelRollup extends ModelBasic<TRollUpHistoryRecord> {
+export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
   private static instance: ModelRollup;
   private constructor() {
     super(
