@@ -111,7 +111,7 @@ async function readDocument(
 
   return {
     docId: documentRecord.docId,
-    document: documentRecord.document,
+    document: ModelDocument.deserializeDocument(documentRecord.document),
     createdAt: documentRecord.createdAt,
   };
 }
@@ -146,7 +146,8 @@ async function createDocument(
 
   // Save the document to the database
   const insertResult = await modelDocument.insertOneFromFields(
-    fieldArrayToRecord(fields),
+    ModelDocument.serializeDocument(fieldArrayToRecord(fields)),
+    undefined,
     compoundSession?.sessionService
   );
 
@@ -260,7 +261,7 @@ async function updateDocument(
 
       await modelDocument.updateOne(
         oldDocumentRecord.docId,
-        fieldArrayToRecord(update),
+        ModelDocument.serializeDocument(fieldArrayToRecord(update)),
         session
       );
 

@@ -35,8 +35,7 @@ export const ProvableTypeMap = {
 
 export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
-/** Map of Provable types to their corresponding serialization types (e.g.
- *  database or JavaScript types). */
+/** Map of Provable types to their corresponding JavaScript types. */
 type TProvableSerializationMap = {
   CircuitString: string;
   UInt32: number;
@@ -149,9 +148,11 @@ export class Schema {
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
             case 'UInt64':
-              throw new Error('UInt64 is not yet supported');
+              value = (anyThis[name] as UInt64).toBigInt();
+              break;
             case 'Field':
-              throw new Error('Field is not yet supported');
+              value = anyThis[name].toString();
+              break;
             case 'UInt32':
               value = (anyThis[name] as UInt32).toBigint();
               break;
@@ -162,7 +163,7 @@ export class Schema {
               value = anyThis[name];
               break;
             case 'Sign':
-              value = anyThis[name] === Sign.minusOne;
+              value = (anyThis[name] as Sign).isPositive().toBoolean();
               break;
             default:
               value = anyThis[name].toString();
@@ -192,9 +193,11 @@ export class Schema {
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
             case 'UInt64':
-              throw new Error('UInt64 is not yet supported');
+              result[name] = ProvableTypeMap[kind].from(value);
+              break;
             case 'Field':
-              throw new Error('Field is not yet supported');
+              result[name] = ProvableTypeMap[kind].from(value);
+              break;
             case 'UInt32':
             case 'Int64':
               result[name] = ProvableTypeMap[kind].from(value);
@@ -203,7 +206,7 @@ export class Schema {
               result[name] = value;
               break;
             case 'Sign':
-              result[name] = value ? Sign.minusOne : Sign.one;
+              result[name] = value ? Sign.one : Sign.minusOne;
               break;
             default:
               result[name] = ProvableTypeMap[kind].fromString(value);
