@@ -52,7 +52,7 @@ export function objectToLookupPattern(
 
 export const gql = (...args: any[]): string => args.join('\n');
 
-export const formatIndexSpecification = (
+export const convertIndexSpecification = (
   index: TCollectionIndex
 ): TCollectionIndexSpecification => {
   const result: TCollectionIndexSpecification = {};
