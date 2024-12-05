@@ -191,7 +191,7 @@ export async function getRollUpHistory(
           if (tx) {
             if (tx.txStatus === 'applied') {
               await modelTransaction.updateById(
-                history.transactionObjectId.toString(),
+                history.transactionObjectId,
                 {
                   status: ETransactionStatus.Confirmed,
                   error: undefined,
@@ -205,7 +205,7 @@ export async function getRollUpHistory(
               );
             } else if (tx.txStatus === 'failed') {
               await modelTransaction.updateById(
-                history.transactionObjectId.toString(),
+                history.transactionObjectId,
                 {
                   status: ETransactionStatus.Failed,
                   error: tx.failures.join(' '),
