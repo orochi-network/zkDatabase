@@ -1,4 +1,4 @@
-import { TDatabase } from '@zkdb/common';
+import { TDatabase, TDatabaseRecord } from '@zkdb/common';
 import {
   Filter,
   FindOptions,
@@ -6,13 +6,14 @@ import {
   InsertOneResult,
   UpdateOptions,
   UpdateResult,
+  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
-export class ModelDatabase extends ModelBasic<TDatabase> {
+export class ModelDatabase extends ModelBasic<WithoutId<TDatabaseRecord>> {
   private static instance: ModelDatabase;
 
   private constructor() {
@@ -31,9 +32,9 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   }
 
   public async createDatabase(
-    setting: TDatabase,
+    setting: TDatabaseRecord,
     options?: InsertOneOptions
-  ): Promise<InsertOneResult<TDatabase>> {
+  ): Promise<InsertOneResult<TDatabaseRecord>> {
     try {
       const result = await this.collection.insertOne(setting, options);
       return result;
@@ -44,7 +45,7 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
 
   public async updateDatabase(
     databaseName: string,
-    updateField: Partial<Pick<TDatabase, keyof TDatabase>>,
+    updateField: Partial<Pick<TDatabaseRecord, keyof TDatabaseRecord>>,
     options?: UpdateOptions
   ): Promise<UpdateResult> {
     // Runtime validation ensure no empty update
