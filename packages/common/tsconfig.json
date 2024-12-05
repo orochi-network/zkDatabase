@@ -21,6 +21,14 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
+    "paths": {
+      "@types": [
+        "./src/types"
+      ],
+      "@validation": [
+        "./src/validation"
+      ]
+    }
   },
   "include": [
     "./src"

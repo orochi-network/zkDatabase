@@ -4,6 +4,10 @@ import {
   TGroupCreateRequest,
   TGroupRenameRequest,
   TGroupRequest,
+  databaseName,
+  groupDescription,
+  groupName,
+  userName,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -19,13 +23,7 @@ import {
 import { gql } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import { publicWrapper, authorizeWrapper } from '../validation.js';
-import {
-  databaseName,
-  groupDescription,
-  groupName,
-  userName,
-} from './common.js';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,

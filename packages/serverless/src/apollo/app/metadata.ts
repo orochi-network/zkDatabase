@@ -1,6 +1,11 @@
+import { collectionName, databaseName, objectId, userName } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
+import {
+  readCollectionMetadata,
+  readDocumentMetadata,
+} from '../../domain/use-case/metadata.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
@@ -9,11 +14,6 @@ import { setPermission } from '../../domain/use-case/permission.js';
 import { getSchemaDefinition } from '../../domain/use-case/schema.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, objectId, userName } from './common.js';
-import {
-  readCollectionMetadata,
-  readDocumentMetadata,
-} from '../../domain/use-case/metadata.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 

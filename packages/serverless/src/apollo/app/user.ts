@@ -1,4 +1,5 @@
 import {
+  pagination,
   TMinaSignature,
   TUser,
   TUserFindRequest,
@@ -30,7 +31,6 @@ import RedisInstance from '../../helper/redis.js';
 import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-import { pagination } from './common.js';
 
 const timestamp = Joi.number()
   .custom((value, helper) => {
