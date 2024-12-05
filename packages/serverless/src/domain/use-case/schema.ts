@@ -1,9 +1,9 @@
 import {
   ProvableTypeMap,
   Schema,
+  TContractSchemaField,
   TDocumentField,
   TProvableTypeString,
-  TSchemaEncoded,
   TSchemaField,
 } from '@zkdb/common';
 import Joi from 'joi';
@@ -128,22 +128,22 @@ export async function buildSchema(
     throw new Error('Invalid schema');
   }
 
-  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName, { session });
+  const modelMetadataCollection =
+    ModelMetadataCollection.getInstance(databaseName);
+  const metadataCollection = await modelMetadataCollection.getMetadata(
+    collectionName,
+    { session }
+  );
 
-  if (schema === null) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
+  if (!metadataCollection) {
+    throw new Error(`Metadata not found for collection ${collectionName}`);
   }
 
-  const encodedDocument: TSchemaEncoded = [];
+  const encodedDocument: TContractSchemaField[] = [];
   const structType: { [key: string]: any } = {};
 
-  if (!schema) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
-  }
-
-  schema.field.forEach((fieldName) => {
-    const documentField = document.find((f) => f.name === fieldName);
+  metadataCollection.schema.forEach((fieldName) => {
+    const documentField = document.find((f) => f.name === fieldName.name);
 
     if (!documentField) {
       throw new Error(`Field ${fieldName} not found in document`);

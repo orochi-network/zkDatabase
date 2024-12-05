@@ -2,6 +2,10 @@ import {
   TCollectionRequest,
   TIndexCreateRequest,
   TIndexListRequest,
+  collectionName,
+  databaseName,
+  indexName,
+  IndexSchema,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -15,12 +19,6 @@ import {
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest } from './collection.js';
-import {
-  collectionName,
-  databaseName,
-  indexName,
-  IndexSchema,
-} from './common.js';
 
 export const IndexDetailRequest = Joi.object<
   TIndexCreateRequest & TCollectionRequest

@@ -28,9 +28,7 @@ export function getCurrentTime(): Date {
 }
 
 export function objectToLookupPattern(
-  obj: {
-    [key: string]: any;
-  },
+  obj: Record<string, any>,
   options?: {
     regexSearch: boolean;
   }
@@ -78,6 +76,7 @@ export const gql = (...args: any[]): string => args.join('\n');
 export const getIndexCollectionBySchemaDefinition = (
   schema: TSchemaFieldDefinition[]
 ): Partial<Record<string, ESorting>> => {
+  // @TODO: Return TCollectionIndexSpecification
   return schema
     .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
     .reduce<Partial<Record<string, ESorting>>>((acc, field) => {
@@ -85,3 +84,4 @@ export const getIndexCollectionBySchemaDefinition = (
       return acc;
     }, {});
 };
+

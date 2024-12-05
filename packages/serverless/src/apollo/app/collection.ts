@@ -1,8 +1,14 @@
-import { TDatabaseRequest, TSchemaFieldDefinition } from '@zkdb/common';
+import {
+  TDatabaseRequest,
+  TSchemaFieldDefinition,
+  collectionName,
+  databaseName,
+  groupName,
+  O1JS_VALID_TYPE,
+} from '@zkdb/common';
 import { ModelSystemDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
   listCollection,
@@ -10,7 +16,6 @@ import {
 import { gql } from '../../helper/common.js';
 // import { TSchemaFieldDefinition } from '../../types/index.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, groupName } from './common.js';
 
 export const schemaField = Joi.object({
   name: Joi.string()

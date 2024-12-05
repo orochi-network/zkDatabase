@@ -7,7 +7,10 @@ import { ModelSequencer } from './common/sequencer.js';
 import { ModelTransaction } from './common/transactions.js';
 import { DatabaseEngine } from './database-engine.js';
 import { ModelCollection } from './general/collection.js';
-import { DocumentMetaIndex, ModelSystemDatabase } from './general/database.js';
+import {
+  DocumentMetaIndex,
+  ModelSystemDatabase,
+} from './general/system-database.js';
 import { ModelProof } from './global/proof.js';
 import { ModelQueueTask, TaskEntity } from './global/queue.js';
 import { ModelSecureStorage, PrivateKey } from './global/secure-storage.js';
