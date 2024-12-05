@@ -1,5 +1,5 @@
-import { TCollectionAndMetadata } from './collection.js';
 import { TDbRecord } from './common.js';
+import { TMetadataCollection } from './metadata.js';
 import { TPagination } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
@@ -11,7 +11,7 @@ export type TDatabase = {
 };
 
 export type TDatabaseDetail = TDatabase & {
-  collection: TCollectionAndMetadata[];
+  collection: TMetadataCollection[];
   databaseSize: number;
   deployStatus: ETransactionStatus;
 };

@@ -2,7 +2,6 @@ import { OwnershipAndPermission } from '@zkdb/permission';
 import { IndexDirection } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { TMetadataDetailCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
 /**
@@ -56,9 +55,6 @@ export type TCollectionIndexInfo = {
   property: EProperty;
 };
 
-// Do we actually need this?
-export type TCollectionAndMetadata = TMetadataDetailCollection<TCollection>;
-
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;
 
@@ -81,7 +77,7 @@ export type TIndexRequest = {
 export type TIndexListRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex;
+  index: TCollectionIndex[];
 };
 
 export type TIndexDetailRequest = TIndexRequest;
