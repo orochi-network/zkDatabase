@@ -153,14 +153,14 @@ export async function getRollUpHistory(
     history: TRollUpHistoryRecord,
     transaction: TTransactionRecord,
     status: ETransactionStatus,
-    error?: string
+    error: string
   ): TRollUpTransactionHistory => ({
     databaseName: history.databaseName,
     currentMerkleTreeRoot: history.currentMerkleTreeRoot,
     previousMerkleTreeRoot: history.previousMerkleTreeRoot,
     transactionObjectId: history.transactionObjectId,
     proofObjectId: history.proofObjectId,
-    transactionHash: transaction?.txHash,
+    txHash: transaction?.txHash,
     createdAt: history.createdAt,
     status,
     error
@@ -201,7 +201,8 @@ export async function getRollUpHistory(
               return buildRollUpHistory(
                 history,
                 transaction,
-                ETransactionStatus.Signed
+                ETransactionStatus.Signed,
+                ""
               );
             } else if (tx.txStatus === 'failed') {
               await modelTransaction.updateById(
