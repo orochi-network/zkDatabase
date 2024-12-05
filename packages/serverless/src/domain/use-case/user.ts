@@ -6,11 +6,11 @@ import {
 } from '@zkdb/common';
 import Client from 'mina-signer';
 import { ClientSession, FindOptions } from 'mongodb';
+import { DEFAULT_PAGINATION } from '../../common/const.js';
 import config from '../../helper/config.js';
 import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
-import { DEFAULT_PAGINATION } from 'common/const.js';
 
 export async function findUser(
   query?: FilterCriteria,

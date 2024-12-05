@@ -9,16 +9,16 @@ import {
   TUserSignUpRequest,
   TUserSignUpResponse,
 } from '@zkdb/common';
-import { DEFAULT_PAGINATION } from 'common/const.js';
 import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
+import { DEFAULT_PAGINATION } from '../../common/const.js';
 import {
   findUser as findUserDomain,
   signUpUser,
 } from '../../domain/use-case/user.js';
-import { getCurrentTime, gql } from '../../helper/common.js';
+import { gql } from '../../helper/common.js';
 import config from '../../helper/config.js';
 import {
   ACCESS_TOKEN_EXPIRE_TIME,
@@ -139,7 +139,7 @@ export const typeDefsUser = gql`
     userMe: SignInResponse
 
     userFind(
-      query: UserFindQuery
+      query: UserFindQueryInput
       pagination: PaginationInput
     ): UserFindResponse
   }

@@ -5,12 +5,12 @@ import {
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
+import { WithoutId } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
 import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
-import { WithoutId } from 'mongodb';
 
 export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   private static collectionName: string =
