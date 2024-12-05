@@ -1,4 +1,9 @@
-import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
+import {
+  ClientSession,
+  CreateCollectionOptions,
+  Document,
+  WithoutId,
+} from 'mongodb';
 import logger from '../../helper/logger.js';
 import { DatabaseEngine } from '../database-engine.js';
 

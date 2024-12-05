@@ -1,10 +1,6 @@
 import { logger } from "@helper";
-import {
-  MinaTransaction,
-  serializeTransaction,
-  ZKDatabaseSmartContractWrapper,
-} from "@zkdb/smart-contract";
-import { ModelDbSetting } from "@zkdb/storage";
+import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import { ModelDatabase } from "@zkdb/storage";
 import { fetchAccount, JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
 
 const MAX_MERKLE_TREE_HEIGHT = 128;
@@ -64,7 +60,7 @@ export class ZkCompileService {
 
       const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
-      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+      await ModelDatabase.getInstance().updateDatabase(databaseName, {
         appPublicKey: zkDbPublicKey.toBase58(),
       });
 
@@ -76,7 +72,7 @@ export class ZkCompileService {
       return partialSignedTx.toJSON();
     } catch (error) {
       logger.error(`Cannot compile & deploy: ${databaseName}`);
-      await ModelDbSetting.getInstance().updateSetting(databaseName, {
+      await ModelDatabase.getInstance().updateDatabase(databaseName, {
         appPublicKey: undefined,
       });
       throw error;
@@ -126,8 +122,10 @@ export class ZkCompileService {
 
   private ensureTransaction() {
     if (Mina.currentTransaction.has()) {
-      logger.debug(`${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`)
-      throw Error('Transaction within transaction identified');
+      logger.debug(
+        `${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`
+      );
+      throw Error("Transaction within transaction identified");
     }
   }
 }

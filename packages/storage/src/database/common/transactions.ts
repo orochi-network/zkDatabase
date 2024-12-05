@@ -1,14 +1,19 @@
 import {
+  ETransactionType,
+  TDbRecordOptional,
+  TTransaction,
+  TTransactionRecord,
+} from '@zkdb/common';
+import {
+  DeleteResult,
   Filter,
   FindOptions,
-  ReplaceOptions,
-  UpdateResult,
-  Document,
   InsertOneResult,
   ObjectId,
+  ReplaceOptions,
+  UpdateResult,
   WithId,
 } from 'mongodb';
-import { ETransactionType, TTransaction, TTransactionRecord } from '@zkdb/common';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
@@ -33,21 +38,35 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
   }
 
   public async create(
-    args: TTransactionRecord,
+    args: TDbRecordOptional<TTransactionRecord>,
     options?: ReplaceOptions
-  ): Promise<Document | InsertOneResult<TTransactionRecord>> {
+  ): Promise<InsertOneResult<TTransactionRecord>> {
     const result = await this.collection.insertOne(args, { ...options });
 
     return result;
   }
 
   public async updateById(
-    id: string,
+    id: ObjectId,
     args: Partial<TTransaction>,
     options?: ReplaceOptions
-  ): Promise<Document | UpdateResult<TTransactionRecord>> {
+  ): Promise<UpdateResult<TTransactionRecord>> {
     const result = await this.collection.updateOne(
       { _id: new ObjectId(id) },
+      { $set: args },
+      { ...options }
+    );
+
+    return result;
+  }
+
+  public async updateByTxHash(
+    txHash: string,
+    args: Partial<TTransaction>,
+    options?: ReplaceOptions
+  ): Promise<UpdateResult<TTransactionRecord>> {
+    const result = await this.collection.updateOne(
+      { txHash },
       { $set: args },
       { ...options }
     );
@@ -59,26 +78,33 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
     databaseName: string,
     transactionType: ETransactionType,
     options?: FindOptions
-  ): Promise<Array<TTransactionRecord>> {
+  ): Promise<WithId<TTransactionRecord>[]> {
     return this.collection
       .find({ databaseName, transactionType }, options)
       .toArray();
   }
 
-  public async findById(id: string, options?: FindOptions) {
+  public async findById(
+    id: string,
+    options?: FindOptions
+  ): Promise<WithId<TTransactionRecord> | null> {
     const tx = await this.collection.findOne(
       { _id: new ObjectId(id) },
       options
     );
+    // I must perform this type cast
     return tx;
   }
 
-  public async remove(databaseName: string, transactionType: ETransactionType) {
+  public async remove(
+    databaseName: string,
+    transactionType: ETransactionType
+  ): Promise<DeleteResult> {
     const res = await this.collection.deleteOne({
       databaseName,
       transactionType,
     });
-    return res.deletedCount === 1;
+    return res;
   }
 
   public async count(filter?: Filter<TTransaction>) {
@@ -86,14 +112,14 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
   }
 
   public static async init() {
-    const collection = ModelCollection.getInstance(
+    const collection = ModelCollection.getInstance<TTransactionRecord>(
       zkDatabaseConstants.globalDatabase,
       DB.service,
       zkDatabaseConstants.globalCollections.transaction
     );
     if (!(await collection.isExist())) {
       await collection.index(
-        { databaseName: 1, transactionType: 1 },
+        { databaseName: 1, transactionType: 1, txHash: 1 },
         { unique: false }
       );
     }

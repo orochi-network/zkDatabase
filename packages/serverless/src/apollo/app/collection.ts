@@ -1,11 +1,11 @@
 import { TDatabaseRequest, TSchemaFieldDefinition } from '@zkdb/common';
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
+import { ModelSystemDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { O1JS_VALID_TYPE } from '../../common/const.js';
 import {
   createCollection,
-  listCollections,
+  listCollection,
 } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
 // import { TSchemaFieldDefinition } from '../../types/index.js';
@@ -75,7 +75,7 @@ const collectionList = authorizeWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    listCollections(args.databaseName, ctx.userName)
+    listCollection(args.databaseName, ctx.userName)
 );
 
 const collectionExist = publicWrapper(
@@ -84,9 +84,9 @@ const collectionExist = publicWrapper(
     collectionName,
   }),
   async (_root: unknown, args: TCollectionRequest) =>
-    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
-      (collection) => collection === args.collectionName
-    )
+    (
+      await ModelSystemDatabase.getInstance(args.databaseName).listCollections()
+    ).some((collection) => collection === args.collectionName)
 );
 
 // Mutation

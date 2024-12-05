@@ -2,9 +2,10 @@ import {
   ETransactionStatus,
   ETransactionType,
   TTransaction,
+  TTransactionRecord,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { ModelDbSetting, ModelTransaction } from '@zkdb/storage';
+import { ModelDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
@@ -12,8 +13,6 @@ import ModelUser from '../../model/global/user.js';
 import { isDatabaseOwner } from './database.js';
 
 const MINA_DECIMAL = 1e9;
-
-export type TransactionType = 'deploy' | 'rollup';
 
 export async function enqueueTransaction(
   databaseName: string,
@@ -25,13 +24,18 @@ export async function enqueueTransaction(
     throw Error('Only database owner can roll up the transaction');
   }
 
+  // Check if smart contract is already bound to database
   if (transactionType === ETransactionType.Deploy) {
-    const settings = await ModelDbSetting.getInstance().getSetting(
+    const database = await ModelDatabase.getInstance().getDatabase(
       databaseName,
       { session }
     );
 
-    if (settings?.appPublicKey) {
+    // Make sure public is set and have value
+    if (
+      typeof database?.appPublicKey === 'string' &&
+      database.appPublicKey.length > 0
+    ) {
       throw Error('Smart contract is already bound to database');
     }
   }
@@ -45,19 +49,23 @@ export async function enqueueTransaction(
   // Validate transactions
   if (txs.length > 0) {
     if (
-      transactionType === ETransactionType.Rollup &&
+      transactionType === ETransactionType.Deploy &&
       txs.some(
         (tx: WithId<TTransaction>) => tx.status === ETransactionStatus.Confirmed
       )
     ) {
-      throw Error('You deploy transaction is already confirmed');
+      // @QUESTION: Do we need to update status of Transaction and also
+      // deployment status of database?
+      throw new Error('You deploy transaction is already confirmed');
     }
 
     if (
+      // If we have uncompleted transaction, we should not allow to deploy new one.
+      // Un-completed transaction is mean that transaction is unsigned or signed without broadcast.
       txs.some(
         (tx: WithId<TTransaction>) =>
           tx.status === ETransactionStatus.Unsigned ||
-          tx.status === ETransactionStatus.Unconfirmed
+          tx.status === ETransactionStatus.Signed
       )
     ) {
       throw Error('You have uncompleted transaction');
@@ -80,18 +88,18 @@ export async function enqueueTransaction(
 
         if (onchainTx.txStatus === 'applied') {
           await modelTransaction.updateById(
-            pendingTx._id.toString(),
+            pendingTx._id,
             {
-              status: 'success',
+              status: ETransactionStatus.Confirmed,
             },
             { session }
           );
           throw Error('You deploy transaction is already succeeded');
         } else if (onchainTx.txStatus === 'failed') {
           await modelTransaction.updateById(
-            pendingTx._id.toString(),
+            pendingTx._id,
             {
-              status: 'failed',
+              status: ETransactionStatus.Failed,
               error: onchainTx.failures.join(' '),
             },
             { session }
@@ -102,17 +110,20 @@ export async function enqueueTransaction(
         throw Error('Transaction hash has not been found');
       }
     }
+
+    // @TODO: Recheck the logic and make sure it is correct and cover all cases.
   }
 
   const payer = await new ModelUser().findOne({ userName: actor }, { session });
 
   const insertResult = await modelTransaction.create(
+    // Force type since txHash is null at this point.
+    // @TODO: Add default value for createdAt and updatedAt fields.
     {
       transactionType,
       databaseName,
-      status: 'start',
-      createdAt: new Date(),
-    },
+      status: ETransactionStatus.Unsigned,
+    } as TTransactionRecord,
     { session }
   );
 
@@ -140,10 +151,10 @@ export async function getTransactionForSigning(
   }
 
   if (await isDatabaseOwner(databaseName, actor)) {
-    const dbSettings =
-      await ModelDbSetting.getInstance().getSetting(databaseName);
+    const database =
+      await ModelDatabase.getInstance().getDatabase(databaseName);
 
-    if (!dbSettings) {
+    if (!database) {
       throw Error(`Database ${databaseName} does not exist`);
     }
 
@@ -174,7 +185,7 @@ export async function getTransactionForSigning(
           );
         }
 
-        return { ...readyTransaction, zkAppPublicKey: dbSettings.appPublicKey };
+        return { ...readyTransaction, zkAppPublicKey: database.appPublicKey };
       } else {
         throw Error('Account has not been found in Mina Network');
       }
@@ -200,16 +211,16 @@ export async function getLatestTransaction(
 
   return txs.length === 0 ? null : txs[0];
 }
+
 export async function confirmTransaction(
   databaseName: string,
   actor: string,
-  id: string,
   txHash: string
 ) {
   if (!(await isDatabaseOwner(databaseName, actor))) {
     throw Error('Only database owner can confirm transactions');
   }
-  await ModelTransaction.getInstance().updateById(id, {
+  await ModelTransaction.getInstance().updateByTxHash(txHash, {
     txHash,
     status: ETransactionStatus.Confirming,
   });

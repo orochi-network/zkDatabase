@@ -3,12 +3,12 @@ import {
   ETransactionStatus,
   ETransactionType,
   TDatabase,
-  TDbSetting,
+  TDatabaseDetail,
   TPagination,
   TPaginationReturn,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { DB, ModelDbSetting, ModelTransaction } from '@zkdb/storage';
+import { DB, ModelDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import ModelGroup from '../../model/database/group.js';
@@ -17,7 +17,7 @@ import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
-import { listCollections } from './collection.js';
+import { listCollection } from './collection.js';
 import { addUsersToGroup, createGroup } from './group.js';
 import { enqueueTransaction, getLatestTransaction } from './transaction.js';
 import { isUserExist } from './user.js';
@@ -30,11 +30,11 @@ export async function createDatabase(
   session?: ClientSession
 ) {
   const user = await new ModelUser().findOne({ userName: actor }, { session });
-  const modelSetting = ModelDbSetting.getInstance();
+  const modelDatabase = ModelDatabase.getInstance();
 
   if (user) {
     // Case database already exist
-    if (await modelSetting.getSetting(databaseName, { session })) {
+    if (await modelDatabase.getDatabase(databaseName, { session })) {
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
@@ -43,7 +43,7 @@ export async function createDatabase(
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
 
-    const dbSetting = await modelSetting.createSetting(
+    const dbSetting = await modelDatabase.createDatabase(
       {
         databaseName,
         merkleHeight,
@@ -90,7 +90,7 @@ export async function updateDeployedDatabase(
 ) {
   try {
     // Add appPublicKey for database that deployed
-    await ModelDbSetting.getInstance().updateSetting(databaseName, {
+    await ModelDatabase.getInstance().updateDatabase(databaseName, {
       appPublicKey,
     });
     // Remove data from deploy transaction
@@ -104,11 +104,11 @@ export async function updateDeployedDatabase(
   }
 }
 
-export async function getDatabases(
+export async function getListDatabaseDetail(
   actor: string,
   filter: FilterCriteria,
   pagination?: TPagination
-): Promise<TPaginationReturn<TDatabase[]>> {
+): Promise<TPaginationReturn<TDatabaseDetail[]>> {
   const databasesInfo = await DB.service.client.db().admin().listDatabases();
 
   if (!databasesInfo?.databases?.length) {
@@ -128,15 +128,15 @@ export async function getDatabases(
       {}
     );
 
-  const modelSetting = ModelDbSetting.getInstance();
+  const modelDatabase = ModelDatabase.getInstance();
   const modelTx = ModelTransaction.getInstance();
 
-  const settings = await modelSetting.findSettingsByFields(filter, {
+  const databaseList = await modelDatabase.getListDatabase(filter, {
     skip: pagination?.offset,
     limit: pagination?.limit,
   });
 
-  if (!settings?.length) {
+  if (!databaseList?.length) {
     // When user don't have any DB
     return {
       data: [],
@@ -145,15 +145,15 @@ export async function getDatabases(
     };
   }
 
-  const databases: TDatabase[] = (
+  const databases: TDatabaseDetail[] = (
     await Fill(
-      settings.map((setting: TDbSetting) => async () => {
+      databaseList.map((setting: TDatabase) => async () => {
         const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
           setting;
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-        const collections = await listCollections(databaseName, actor);
+        const collections = await listCollection(databaseName, actor);
 
         const latestTransaction = await getLatestTransaction(
           databaseName,
@@ -174,19 +174,19 @@ export async function getDatabases(
 
             if (zkAppTransaction?.txStatus === 'failed') {
               deployStatus = ETransactionStatus.Failed;
-              await modelTx.updateById(latestTransaction._id.toString(), {
+              await modelTx.updateById(latestTransaction._id, {
                 status: deployStatus,
                 error: zkAppTransaction.failures.join(' '),
               });
             } else if (zkAppTransaction?.txStatus === 'applied') {
               deployStatus = ETransactionStatus.Confirmed;
-              await modelTx.updateById(latestTransaction._id.toString(), {
+              await modelTx.updateById(latestTransaction._id, {
                 status: deployStatus,
               });
             }
           } else {
             deployStatus = ETransactionStatus.Failed;
-            await modelTx.updateById(latestTransaction._id.toString(), {
+            await modelTx.updateById(latestTransaction._id, {
               status: deployStatus,
               error: 'Transaction hash is missed',
             });
@@ -211,15 +211,15 @@ export async function getDatabases(
   return {
     data: databases.filter(Boolean),
     offset: pagination?.offset ?? 0,
-    totalSize: await modelSetting.count(filter),
+    totalSize: await modelDatabase.count(filter),
   };
 }
 
-export async function getDatabaseSetting(
+export async function getDatabase(
   databaseName: string,
   session?: ClientSession
-): Promise<TDbSetting> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
+): Promise<TDatabase> {
+  const setting = await ModelDatabase.getInstance().getDatabase(databaseName, {
     session,
   });
 
@@ -227,7 +227,7 @@ export async function getDatabaseSetting(
     return setting;
   }
 
-  throw Error('Setting has not been found');
+  throw Error('Database has not been found');
 }
 
 export async function isDatabaseOwner(
@@ -235,7 +235,7 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDbSetting.getInstance().getSetting(databaseName, {
+  const setting = await ModelDatabase.getInstance().getDatabase(databaseName, {
     session,
   });
 
@@ -251,16 +251,15 @@ export async function changeDatabaseOwner(
   actor: string,
   newOwner: string
 ): Promise<boolean> {
-  const dbSetting = await getDatabaseSetting(databaseName);
-  const dbOwner = dbSetting.databaseOwner;
+  const database = await getDatabase(databaseName);
+  const dbOwner = database.databaseOwner;
 
   if (actor === dbOwner) {
     if (await isUserExist(newOwner)) {
-      const result = await ModelDbSetting.getInstance().changeDatabaseOwner(
+      const result = await ModelDatabase.getInstance().updateDatabase(
         databaseName,
-        newOwner
+        { databaseOwner: newOwner }
       );
-
       return result.acknowledged;
     }
 

@@ -1,7 +1,14 @@
 import {
+  TDatabaseChangeOwnerRequest,
+  TDatabaseCreateRequest,
+  TDatabaseRequest,
+  TDatabaseSearchRequest,
+  TDatabaseUpdateDeployedRequest,
+} from '@zkdb/common';
+import {
   DB,
   ModelDatabase,
-  ModelDbSetting,
+  ModelSystemDatabase,
   withTransaction,
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -9,19 +16,12 @@ import Joi from 'joi';
 import {
   changeDatabaseOwner,
   createDatabase,
-  getDatabases,
+  getListDatabaseDetail,
   updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
 import { databaseName, pagination, userName } from './common.js';
-import {
-  TDatabaseChangeOwnerRequest,
-  TDatabaseCreateRequest,
-  TDatabaseRequest,
-  TDatabaseSearchRequest,
-  TDatabaseUpdateDeployedRequest,
-} from '@zkdb/common';
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
@@ -116,13 +116,14 @@ const dbStats = publicWrapper(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, _ctx) =>
-    ModelDatabase.getInstance(args.databaseName).stats()
+    // Using system database to get stats
+    ModelSystemDatabase.getInstance(args.databaseName).stats()
 );
 
 const dbList = authorizeWrapper(
   databaseSearch,
   async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
-    getDatabases(_ctx.userName, args.query, args.pagination)
+    getListDatabaseDetail(_ctx.userName, args.query, args.pagination)
 );
 
 const dbSetting = publicWrapper(
@@ -140,19 +141,15 @@ const dbSetting = publicWrapper(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const setting = await ModelDbSetting.getInstance().getSetting(
+    const database = await ModelDatabase.getInstance().getDatabase(
       args.databaseName
     );
 
-    if (setting) {
-      return {
-        merkleHeight: setting.merkleHeight,
-        publicKey: setting.appPublicKey,
-        databaseOwner: setting.databaseOwner,
-      };
+    if (database) {
+      return database;
     }
 
-    throw Error(`Settings for ${args.databaseName} does not exist`);
+    throw new Error(`Settings for ${args.databaseName} does not exist`);
   }
 );
 
