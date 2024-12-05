@@ -21,6 +21,7 @@ import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import logger from '../../helper/logger.js';
 import { enqueueTransaction } from './transaction.js';
+import { getCurrentTime } from '../../helper/common.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -76,8 +77,8 @@ export async function createRollUp(
       databaseName: databaseName,
       transactionObjectId,
       proofObjectId: latestProofForDb._id,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime()
     },
     { session: compoundSession?.sessionService }
   );
