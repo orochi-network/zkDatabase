@@ -15,7 +15,7 @@ export default {
       entries: [
         { find: '@', replacement: 'src' },
         { find: '@types', replacement: 'src/types' },
-        { find: '@valdiation', replacement: 'src/valdiation' },
+        { find: '@validation', replacement: 'src/validation' },
       ],
     }),
     commonjs(),
