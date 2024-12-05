@@ -30,8 +30,7 @@ export type TRollUpHistory = {
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
 // Compound Type
-export type TRollUpTransactionHistory = Omit<TRollUpHistoryRecord, '_id'> &
-  Omit<TTransaction, 'databaseName'>;
+export type TRollUpTransactionHistory = Omit<TRollUpHistoryRecord, '_id'> & TTransaction
 
 export type RollUpData = {
   history: TRollUpHistory[];
