@@ -5,6 +5,6 @@ export type TPagination = {
 
 export type TPaginationReturn<T> = {
   data: T;
-  totalSize: number;
+  total: number;
   offset: number;
 };

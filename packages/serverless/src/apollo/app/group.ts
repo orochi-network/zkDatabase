@@ -16,90 +16,92 @@ import {
   getGroupInfo,
   renameGroup,
 } from '../../domain/use-case/group.js';
+import { gql } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { publicWrapper, authorizeWrapper } from '../validation.js';
 import {
   databaseName,
   groupDescription,
   groupName,
-  groupOptionalDescription,
   userName,
 } from './common.js';
 
 export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
-  groupDescription: groupOptionalDescription,
+  groupDescription: groupDescription(false),
 });
 
 export const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
-  groupDescription,
+  groupDescription: groupDescription(false),
 });
 
-export const typeDefsGroup = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsGroup = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-type Member {
-  userName: String!
-  createdAt: String!,
-}
+  type Member {
+    userName: String!
+    updatedAt: String!
+    createdAt: String!
+  }
 
-type GroupInfoDetail {
-  groupName: String!,
-  description: String!,
-  createdAt: String!,
-  createBy: String!
-  members: [Member]
-}
-type GroupInfo {
-  groupName: String!
-  description: String!
-  createdAt: Int!
-  createBy: String!
-}
+  type GroupInfoDetail {
+    groupName: String!
+    description: String!
+    createBy: String!
+    updatedAt: String!
+    createdAt: String!
+    listMember: [Member]!
+  }
 
-extend type Query {
-  groupListAll(databaseName: String!): [GroupInfo]!
-  groupListByUser(databaseName: String!, userName: String!): [String]!
-  groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail!
-}
+  type GroupInfo {
+    groupName: String!
+    description: String!
+    createBy: String!
+    updatedAt: String!
+    createdAt: String!
+  }
 
-extend type Mutation {
-  groupCreate(
-    databaseName: String!,
-    groupName: String!,
-    groupDescription: String
-  ): Boolean
+  extend type Query {
+    groupListAll(databaseName: String!): [GroupInfo]
 
-  groupAddUsers(
-    databaseName: String!,
-    groupName: String!,
-    userNames: [String!]!
-  ): Boolean
+    groupListByUser(databaseName: String!, userName: String!): [String]
 
-  groupRemoveUsers(
-    databaseName: String!,
-    groupName: String!,
-    userNames: [String!]!
-  ): Boolean
+    groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail
+  }
 
-  groupChangeDescription(
-    databaseName: String!,
-    groupName: String!,
-    groupDescription: String!
-  ): Boolean
+  extend type Mutation {
+    groupCreate(
+      databaseName: String!
+      groupName: String!
+      groupDescription: String
+    ): Boolean
 
-  groupRename(
-    databaseName: String!,
-    groupName: String!,
-    newGroupName: String!
-  ): Boolean
-}
+    groupAddUser(
+      databaseName: String!
+      groupName: String!
+      listUser: [String!]!
+    ): Boolean
+
+    groupRemoveUser(
+      databaseName: String!
+      groupName: String!
+      listUser: [String!]!
+    ): Boolean
+
+    groupUpdate(
+      databaseName: String!
+      groupName: String!
+      newGroupName: String
+      newGroupDescription: String
+    ): Boolean
+  }
 `;
 
 // Query
