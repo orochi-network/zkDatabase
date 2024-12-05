@@ -1,34 +1,13 @@
-import { TPagination } from '@zkdb/common';
-import { Permission } from '@zkdb/permission';
+import { TPagination, userName } from '@zkdb/common';
 import { Request } from 'express';
 import { TJWTAuthenticationPayload } from 'helper/jwt';
 import Joi from 'joi';
-import { userName } from '../apollo/app/common.js';
 
-// System user
 export const ZKDATABASE_USER_NOBODY = 'nobody';
 export const ZKDATABASE_USER_SYSTEM = 'system';
 export const ZKDATABASE_GROUP_NOBODY = 'nobody';
 export const ZKDATABASE_GROUP_SYSTEM = 'system';
-
 export const DEFAULT_GROUP_ADMIN = 'admin';
-
-export const O1JS_VALID_TYPE = [
-  'CircuitString',
-  'UInt32',
-  'UInt64',
-  'Bool',
-  'Sign',
-  'Character',
-  'Int64',
-  'Field',
-  'PrivateKey',
-  'PublicKey',
-  'Signature',
-  'MerkleMapWitness',
-];
-
-export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict().value;
 
 // @todo Have better validation for JWT
 // temporary solution to add { iat?: number; exp?: number }

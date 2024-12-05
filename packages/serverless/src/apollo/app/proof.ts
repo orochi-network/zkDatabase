@@ -3,8 +3,13 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, objectId } from './common.js';
-import { EDatabaseProofStatus, TDocumentProofRequest } from '@zkdb/common';
+import {
+  EDatabaseProofStatus,
+  TDocumentProofRequest,
+  collectionName,
+  databaseName,
+  objectId,
+} from '@zkdb/common';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql

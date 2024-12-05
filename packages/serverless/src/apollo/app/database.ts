@@ -4,6 +4,9 @@ import {
   TDatabaseRequest,
   TDatabaseSearchRequest,
   TDatabaseUpdateDeployedRequest,
+  databaseName,
+  pagination,
+  userName,
 } from '@zkdb/common';
 import {
   DB,
@@ -21,7 +24,6 @@ import {
 } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
 import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { databaseName, pagination, userName } from './common.js';
 
 const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
   databaseName,
