@@ -34,13 +34,54 @@ export const ProvableTypeMap = {
 
 export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
-export type TContractSchemaField = {
-  name: string;
-  kind: TProvableTypeString;
-  value: string;
+/** Map of Provable types to their corresponding serialization types (e.g.
+ * database or JavaScript types). Variants with `any` are not supported or not
+ * yet implemented. */
+type TProvableSerializationMap = {
+  CircuitString: string;
+  UInt32: bigint;
+  Int64: bigint;
+  Bool: boolean;
+  PrivateKey: string;
+  PublicKey: string;
+  Signature: string;
+  Character: string;
+  Sign: boolean;
+  UInt64: any;
+  Field: any;
+  MerkleMapWitness: any;
 };
 
-export type TContractSchemaFieldDefinition = Omit<TContractSchemaField, 'value'>;
+/**
+ * Represents a field with a name, kind, and the actual value.
+ * Rendered as a union of all possible field types.
+ * ```ts
+ * type TContractSchemaField = {
+ *     name: string;
+ *     kind: "CircuitString";
+ *     value: string;
+ * } | {
+ *     name: string;
+ *     kind: "UInt32";
+ *     value: bigint;
+ * } | {
+ * } | ... 7 more ... | {
+ *     ...;
+ * }
+ * ```
+ */
+export type TContractSchemaField = {
+  [K in TProvableTypeString]: {
+    name: string;
+    kind: K;
+    value: TProvableSerializationMap[K];
+  };
+}[TProvableTypeString];
+
+export type TContractSchemaFieldDefinition = Omit<
+  TContractSchemaField,
+  'value'
+>;
 
 export interface SchemaExtend {
   serialize(): TContractSchemaField[];
@@ -75,14 +116,15 @@ export class Schema {
     type: A
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
     class Document extends Struct(type) {
-      private static schemaEntries: TContractSchemaFieldDefinition[] = Object.entries(
-        type as any
-      ).map(([name, kind]): TContractSchemaFieldDefinition => {
-        return {
-          name,
-          kind: (kind as any).name.replace(/^_/, ''),
-        };
-      });
+      private static schemaEntries: TContractSchemaFieldDefinition[] =
+        Object.entries(type as any).map(
+          ([name, kind]): TContractSchemaFieldDefinition => {
+            return {
+              name,
+              kind: (kind as any).name.replace(/^_/, ''),
+            };
+          }
+        );
 
       public static getSchema(): TContractSchemaFieldDefinition[] {
         return Document.schemaEntries.map(({ name, kind }) => ({
@@ -97,12 +139,30 @@ export class Schema {
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
           const { name, kind } = Document.schemaEntries[i];
-          let value = 'N/A';
+          let value: TProvableSerializationMap[keyof TProvableSerializationMap];
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
             case 'Signature':
               value = anyThis[name].toBase58();
+              break;
+            case 'MerkleMapWitness':
+              throw new Error('MerkleMapWitness is not supported');
+            case 'UInt64':
+              throw new Error('UInt64 is not yet supported');
+            case 'Field':
+              throw new Error('Field is not yet supported');
+            case 'UInt32':
+              value = (anyThis[name] as UInt32).toBigint();
+              break;
+            case 'Int64':
+              value = (anyThis[name] as Int64).toBigint();
+              break;
+            case 'Bool':
+              value = anyThis[name];
+              break;
+            case 'Sign':
+              value = anyThis[name] === Sign.minusOne;
               break;
             default:
               value = anyThis[name].toString();
@@ -131,21 +191,19 @@ export class Schema {
               break;
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
-            case 'UInt32':
             case 'UInt64':
-            case 'Int64':
+              throw new Error('UInt64 is not yet supported');
             case 'Field':
+              throw new Error('Field is not yet supported');
+            case 'UInt32':
+            case 'Int64':
               result[name] = ProvableTypeMap[kind].from(value);
               break;
             case 'Bool':
-              result[name] =
-                value.toLowerCase() === 'true'
-                  ? new Bool(true)
-                  : new Bool(false);
+              result[name] = value;
               break;
             case 'Sign':
-              result[name] =
-                value.toLowerCase() === 'true' ? Sign.minusOne : Sign.one;
+              result[name] = value ? Sign.minusOne : Sign.one;
               break;
             default:
               result[name] = ProvableTypeMap[kind].fromString(value);
