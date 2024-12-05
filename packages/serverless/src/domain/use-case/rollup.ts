@@ -163,6 +163,8 @@ export async function getRollUpHistory(
     proofObjectId: history.proofObjectId,
     txHash: transaction?.txHash,
     createdAt: history.createdAt,
+    updatedAt: history.updatedAt,
+    transactionType: transaction.transactionType,
     status,
     error
   });

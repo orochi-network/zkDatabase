@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb';
 import { TDbRecord } from './common.js';
-import { ETransactionStatus, TTransaction } from './transaction.js';
+import { TTransaction } from './transaction.js';
 
 /**
  * Rollup state
@@ -30,11 +30,8 @@ export type TRollUpHistory = {
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
 // Compound Type
-export type TRollUpTransactionHistory = Omit<
-  TRollUpHistoryRecord,
-  'updatedAt' | '_id'
-> &
-  Pick<TTransaction, 'txHash' | 'status' | 'error'>;
+export type TRollUpTransactionHistory = Omit<TRollUpHistoryRecord, '_id'> &
+  Omit<TTransaction, 'databaseName'>;
 
 export type RollUpData = {
   history: TRollUpHistory[];
