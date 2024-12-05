@@ -2,7 +2,7 @@ import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 import {
   EDatabaseProofStatus,
   TDocumentProofRequest,

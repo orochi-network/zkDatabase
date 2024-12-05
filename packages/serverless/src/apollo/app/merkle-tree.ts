@@ -19,7 +19,7 @@ import {
   getMerkleWitnessPath,
   getWitnessByDocumentId,
 } from '../../domain/use-case/merkle-tree.js';
-import publicWrapper from '../validation.js';
+import { publicWrapper } from '../validation.js';
 
 export const MerkleTreeGetNodesByLevelRequest =
   Joi.object<TMerkleTreeGetNodesByLevelRequest>({
