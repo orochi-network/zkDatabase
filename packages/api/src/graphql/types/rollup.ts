@@ -10,7 +10,7 @@ export type TGetRollUpHistoryResponse = {
     databaseName: string;
     previousMerkleTreeRoot: string;
     status: TRollUpStatus;
-    transactionHash: string;
+    txHash: string;
     transactionType: TTransactionType;
     error: string;
   };

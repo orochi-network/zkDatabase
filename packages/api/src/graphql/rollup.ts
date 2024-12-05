@@ -19,7 +19,7 @@ const ROLLUP_HISTORY_GET = gql`
       history {
         databaseName
         transactionType
-        transactionHash
+        txHash
         status
         currentMerkleTreeRoot
         previousMerkleTreeRoot
