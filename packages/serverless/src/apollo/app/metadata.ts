@@ -2,18 +2,18 @@ import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
+  readCollectionMetadata,
+  readDocumentMetadata,
+} from '../../domain/use-case/metadata.js';
+import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { setPermission } from '../../domain/use-case/permission.js';
-import { getSchemaDefinition } from '../../domain/use-case/schema.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import { authorizeWrapper } from '../validation.js';
 import { TCollectionRequest } from './collection.js';
 import { collectionName, databaseName, objectId, userName } from './common.js';
-import {
-  readCollectionMetadata,
-  readDocumentMetadata,
-} from '../../domain/use-case/metadata.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -113,13 +113,20 @@ const getMetadataCollection = authorizeWrapper(
     )
 );
 
-const collectionSchema = authorizeWrapper(
+const collectionMetadata = authorizeWrapper(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest, ctx) =>
-    getSchemaDefinition(args.databaseName, args.collectionName, ctx.userName)
+  async (_root: unknown, args: TCollectionRequest, ctx) => {
+    const metadata = await ModelMetadataCollection.getInstance(
+      args.databaseName
+    ).getMetadata(args.collectionName);
+    if (!metadata) {
+      throw new Error(`Metadata not found for collection ${collectionName}`);
+    }
+    return metadata;
+  }
 );
 
 // Mutation
@@ -185,7 +192,7 @@ type TPermissionResolver = {
   Query: {
     getMetadataDocument: typeof getMetadataDocument;
     getMetadataCollection: typeof getMetadataCollection;
-    collectionSchema: typeof collectionSchema;
+    collectionMetadata: typeof collectionMetadata;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
@@ -198,7 +205,7 @@ export const resolversPermission: TPermissionResolver = {
   Query: {
     getMetadataCollection,
     getMetadataDocument,
-    collectionSchema,
+    collectionMetadata,
   },
   Mutation: {
     permissionSet,

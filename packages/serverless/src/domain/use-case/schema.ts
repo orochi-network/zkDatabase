@@ -1,17 +1,14 @@
 import {
   ProvableTypeMap,
   Schema,
+  TContractSchemaField,
   TDocumentField,
   TProvableTypeString,
-  TSchemaEncoded,
-  TSchemaField,
 } from '@zkdb/common';
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
 import logger from '../../helper/logger.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import { listIndexes } from './collection.js';
-import { hasCollectionPermission } from './permission.js';
 
 const schemaVerification: Map<TProvableTypeString, Joi.Schema> = new Map();
 
@@ -44,23 +41,27 @@ export async function validateDocumentSchema(
   document: TDocumentField[],
   session?: ClientSession
 ): Promise<boolean> {
-  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName, { session });
+  const modelMetadataCollection =
+    ModelMetadataCollection.getInstance(databaseName);
+  const metadata = await modelMetadataCollection.getMetadata(collectionName, {
+    session,
+  });
 
-  if (schema === null) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
+  if (!metadata) {
+    throw new Error(`Metadata not found for collection ${collectionName}`);
   }
 
-  const schemaFieldNames = new Set(
-    schema.field.filter((name) => name !== '_id')
+  const schemaFieldSet = new Set(
+    metadata.schema.map((s) => s.name).filter((name) => name !== '_id')
   );
 
   const allFieldsDefined = document.every((docField) =>
-    schemaFieldNames.has(docField.name)
+    schemaFieldSet.has(docField.name)
   );
+
   if (!allFieldsDefined) {
     document.forEach((docField) => {
-      if (!schemaFieldNames.has(docField.name)) {
+      if (!schemaFieldSet.has(docField.name)) {
         logger.error(
           `Document contains an undefined field '${docField.name}'.`
         );
@@ -68,21 +69,14 @@ export async function validateDocumentSchema(
     });
     return false;
   }
-
-  const isValid = schema.field.every((fieldName) => {
+  // schema = metadata.field
+  const isValid = metadata.schema.every((sch) => {
     // Skip validation for the _id field
-    if (fieldName === '_id') {
+    if (sch.name === '_id') {
       return true;
     }
 
-    const schemaField = schema[fieldName];
-
-    if (!schemaField) {
-      logger.error(`Field '${fieldName}' is not defined in the schema.`);
-      return false;
-    }
-
-    const { kind } = schemaField;
+    const { kind } = sch;
     const validationSchema = schemaVerification.get(kind);
 
     if (!validationSchema) {
@@ -90,16 +84,16 @@ export async function validateDocumentSchema(
       return false;
     }
 
-    const documentField = document.find((f) => f.name === fieldName);
+    const documentField = document.find((f) => f.name === sch.name);
 
     if (typeof documentField === 'undefined') {
-      logger.error(`Document is missing field '${fieldName}'.`);
+      logger.error(`Document is missing field '${sch.name}'.`);
       return false;
     }
 
-    if (documentField.kind !== schemaField.kind) {
+    if (documentField.kind !== sch.kind) {
       logger.error(
-        `Field '${fieldName}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`
+        `Field '${sch.name}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`
       );
       return false;
     }
@@ -107,7 +101,7 @@ export async function validateDocumentSchema(
     const { error } = validationSchema.validate(documentField.value);
     if (error) {
       logger.error(
-        `Schema validation error for field '${fieldName}': ${error.message}`
+        `Schema validation error for field '${sch.name}': ${error.message}`
       );
       return false;
     }
@@ -128,25 +122,24 @@ export async function buildSchema(
     throw new Error('Invalid schema');
   }
 
-  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
-  const schema = await modelSchema.getMetadata(collectionName, { session });
+  const modelMetadataCollection =
+    ModelMetadataCollection.getInstance(databaseName);
+  const metadata = await modelMetadataCollection.getMetadata(collectionName, {
+    session,
+  });
 
-  if (schema === null) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
+  if (!metadata) {
+    throw new Error(`Metadata not found for collection ${collectionName}`);
   }
 
-  const encodedDocument: TSchemaEncoded = [];
+  const encodedDocument: TContractSchemaField[] = [];
   const structType: { [key: string]: any } = {};
 
-  if (!schema) {
-    throw new Error(`Schema not found for collection ${collectionName}`);
-  }
-
-  schema.field.forEach((fieldName) => {
-    const documentField = document.find((f) => f.name === fieldName);
+  metadata.schema.forEach((sch) => {
+    const documentField = document.find((f) => f.name === sch.name);
 
     if (!documentField) {
-      throw new Error(`Field ${fieldName} not found in document`);
+      throw new Error(`Field ${sch.name} not found in document`);
     }
 
     const { name, kind, value } = documentField;
@@ -157,46 +150,4 @@ export async function buildSchema(
   const structuredSchema = Schema.create(structType);
 
   return structuredSchema.deserialize(encodedDocument);
-}
-
-export async function getSchemaDefinition(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
-  skipPermissionCheck: boolean = false,
-  session?: ClientSession
-): Promise<TSchemaField[]> {
-  if (
-    skipPermissionCheck ||
-    (await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    ))
-  ) {
-    const modelSchema = ModelMetadataCollection.getInstance(databaseName);
-    const schema = await modelSchema.getMetadata(collectionName, { session });
-
-    const indexes = await listIndexes(
-      databaseName,
-      actor,
-      collectionName,
-      true
-    );
-
-    if (!schema) {
-      throw new Error(`Schema not found for collection ${collectionName}`);
-    }
-
-    return schema.field.map((f) => ({
-      ...schema[f],
-      indexed: indexes.some((index) => index === f),
-    }));
-  }
-
-  throw new Error(
-    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-  );
 }

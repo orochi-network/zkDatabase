@@ -1,4 +1,9 @@
-import { ESorting, TSchemaFieldDefinition } from '@zkdb/common';
+import {
+  ESorting,
+  TCollectionIndex,
+  TCollectionIndexSpecification,
+  TSchemaFieldDefinition,
+} from '@zkdb/common';
 import logger from './logger.js';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
@@ -49,6 +54,24 @@ export function objectToLookupPattern(
 
 export const gql = (...args: any[]): string => args.join('\n');
 
+export const formatIndexSpecification = (
+  index: TCollectionIndex
+): TCollectionIndexSpecification => {
+  const result: TCollectionIndexSpecification = {};
+  for (const key in index) {
+    if (index[key]) {
+      result[key] =
+        index[key] === ESorting.Asc
+          ? 1
+          : index[key] === ESorting.Desc
+            ? -1
+            : index[key] === 'text'
+              ? 'text'
+              : undefined;
+    }
+  }
+  return result;
+};
 /**
  * Generates an array of indexed field definitions based on a schema.
  *
@@ -71,17 +94,18 @@ export const gql = (...args: any[]): string => args.join('\n');
  * console.log(result);
  * // Output:
  * //
- * //   { field1: "Asc", field3: "Desc" },
+ * //   { field1: 1, field3: -1 },
  * //
  * ```
  */
-export const getIndexCollectionBySchemaDefinition = (
+
+export const getIndexCollectionBySchemaDefinition = <T = Record<string, any>>(
   schema: TSchemaFieldDefinition[]
-): Partial<Record<string, ESorting>> => {
+): TCollectionIndexSpecification<T> => {
   return schema
     .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
-    .reduce<Partial<Record<string, ESorting>>>((acc, field) => {
-      acc[field.name] = field.sorting;
+    .reduce<TCollectionIndexSpecification<T>>((acc, field) => {
+      acc[field.name as keyof T] = field.sorting === ESorting.Asc ? 1 : -1;
       return acc;
     }, {});
 };

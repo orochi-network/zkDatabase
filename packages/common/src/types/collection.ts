@@ -77,7 +77,7 @@ export type TIndexRequest = {
 export type TIndexListRequest = TCollectionRequest;
 
 export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex[];
+  index: TCollectionIndex;
 };
 
 export type TIndexDetailRequest = TIndexRequest;

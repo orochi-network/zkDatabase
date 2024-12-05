@@ -12,7 +12,7 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
-import { gql } from '../../helper/common.js';
+import { formatIndexSpecification, gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import { CollectionRequest } from './collection.js';
 import {
@@ -110,7 +110,7 @@ const indexCreate = authorizeWrapper(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.index
+      formatIndexSpecification(args.index)
     )
 );
 
