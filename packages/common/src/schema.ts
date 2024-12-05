@@ -39,15 +39,15 @@ export type TProvableTypeString = keyof typeof ProvableTypeMap;
  * yet implemented. */
 type TProvableSerializationMap = {
   CircuitString: string;
-  UInt32: bigint;
+  UInt32: number;
   Int64: bigint;
+  UInt64: bigint;
   Bool: boolean;
   PrivateKey: string;
   PublicKey: string;
   Signature: string;
   Character: string;
   Sign: boolean;
-  UInt64: any;
   Field: any;
   MerkleMapWitness: any;
 };
