@@ -102,10 +102,10 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async getTransaction(
+  async getTransactionDraft(
     transactionType: TTransactionType
   ): Promise<TDbTransaction> {
-    const result = await this.apiClient.transaction.getTransaction({
+    const result = await this.apiClient.transaction.transactionDraft({
       databaseName: this.databaseName,
       transactionType,
     });
@@ -113,23 +113,23 @@ export class ZKDatabaseImpl implements ZKDatabase {
   }
 
   async confirmTransaction(id: string, txHash: string): Promise<boolean> {
-    const result = await this.apiClient.transaction.confirmTransaction({
+    const result = await this.apiClient.transaction.transactionConfirm({
       databaseName: this.databaseName,
-      confirmTransactionId: id,
+      transactionObjectId: id,
       txHash,
     });
     return result.unwrap();
   }
 
   async createRollup(): Promise<boolean> {
-    const result = await this.apiClient.rollup.createRollUp({
+    const result = await this.apiClient.rollup.rollUpCreate({
       databaseName: this.databaseName,
     });
     return result.unwrap();
   }
 
   async getRollUpHistory(): Promise<TGetRollUpHistory> {
-    const result = await this.apiClient.rollup.getRollUpHistory({
+    const result = await this.apiClient.rollup.rollUpHistory({
       databaseName: this.databaseName,
     });
     return result.unwrap();

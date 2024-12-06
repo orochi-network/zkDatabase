@@ -5,7 +5,7 @@ export type TTransactionRequest = {
 
 export type TTransactionConfirmRequest = {
   databaseName: string;
-  confirmTransactionId: string;
+  transactionObjectId: string;
   txHash: string;
 };
 export type TTransactionType = "deploy" | "rollup";
@@ -21,6 +21,6 @@ export type TDbTransaction = {
   databaseName: string;
   status: TTransactionStatus;
   transactionType: TTransactionType;
-  tx: string;
+  rawTransaction: string;
   zkAppPublicKey: string;
 };

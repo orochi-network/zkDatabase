@@ -1,6 +1,7 @@
 import {
   ETransactionStatus,
   ETransactionType,
+  TDbRecord,
   TTransaction,
   TTransactionRecord,
 } from '@zkdb/common';
@@ -13,6 +14,11 @@ import ModelUser from '../../model/global/user.js';
 import { isDatabaseOwner } from './database.js';
 
 const MINA_DECIMAL = 1e9;
+
+const MAP_MINIMAL_BALANCE = new Map<ETransactionType, number>([
+  [ETransactionType.Deploy, MINA_DECIMAL * 1.1],
+  [ETransactionType.Rollup, MINA_DECIMAL * 0.1],
+]);
 
 export async function enqueueTransaction(
   databaseName: string,
@@ -137,11 +143,11 @@ export async function enqueueTransaction(
   return insertResult.insertedId;
 }
 
-export async function getTransactionForSigning(
+export async function getTransactionDraft(
   databaseName: string,
   actor: string,
   transactionType: ETransactionType
-) {
+): Promise<TDbRecord<TTransaction>> {
   const modelUser = new ModelUser();
 
   const user = await modelUser.findOne({ userName: actor });
@@ -179,19 +185,21 @@ export async function getTransactionForSigning(
       if (account) {
         const balance = account.balance.toBigInt();
 
-        if (balance < MINA_DECIMAL * 1.1) {
+        const minBalance = BigInt(MAP_MINIMAL_BALANCE.get(transactionType)!);
+
+        if (balance < minBalance) {
           throw new Error(
-            'Your account need at least 1.1 Mina to create database'
+            `Your account need at least ${minBalance} balance unit for ${transactionType}`
           );
         }
 
-        return { ...readyTransaction, zkAppPublicKey: database.appPublicKey };
+        return readyTransaction;
       } else {
         throw Error('Account has not been found in Mina Network');
       }
     }
 
-    throw new Error('There is not any transaction for signing');
+    throw new Error('There is not any unsigned transaction');
   }
 
   throw new Error('Only database owner can deploy database');
