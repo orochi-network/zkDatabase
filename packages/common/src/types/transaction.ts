@@ -46,7 +46,7 @@ export type TTransaction = {
   transactionType: ETransactionType;
   databaseName: string;
   status: ETransactionStatus;
-  tx: string,
+  transactionBody: string,
   txHash: string;
   error: string;
 };
