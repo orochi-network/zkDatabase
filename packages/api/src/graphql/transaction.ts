@@ -22,9 +22,9 @@ const TRANSACTION_GET = gql`
       databaseName
       transactionType
       status
-      id
-      tx
-      zkAppPublicKey
+      rawTransaction
+      txHash
+      error
     }
   }
 `;

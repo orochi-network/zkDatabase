@@ -25,6 +25,7 @@ export const typeDefsTransaction = gql`
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
+    rawTransaction: String!
     txHash: String!
     error: String!
   }
