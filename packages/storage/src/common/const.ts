@@ -27,13 +27,15 @@ export const zkDatabaseConstants = {
 
     secure: 'secure_storage',
 
-    rollup: 'rollup'
+    rollup: 'rollup',
   },
 
   // Collections that are common across different databases
   databaseCollections: {
-    // Schema metadata
-    schema: '_zkdatabase_management',
+    // Metadata document
+    metadataDocument: '_zkdatabase_metadata_document',
+    // Metadata collection
+    metadataCollection: '_zkdatabase_metadata_collection',
 
     // Group
     group: '_zkdatabase_group',

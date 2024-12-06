@@ -2,6 +2,7 @@
   "name": "zkdb-monorepo",
   "private": true,
   "workspaces": [
+    "packages/common",
     "packages/storage",
     "packages/smart-contract",
     "packages/kubo",

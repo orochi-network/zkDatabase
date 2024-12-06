@@ -1,3 +1,12 @@
+import {
+  TCollectionRequest,
+  TIndexCreateRequest,
+  TIndexListRequest,
+  collectionName,
+  databaseName,
+  indexName,
+  IndexSchema,
+} from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -7,54 +16,27 @@ import {
   listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
-import { TCollectionIndex } from '../types/collection-index.js';
+import { convertIndexSpecification, gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
-import { CollectionRequest, TCollectionRequest } from './collection.js';
-import {
-  collectionIndex,
-  collectionName,
-  databaseName,
-  indexName,
-} from './common.js';
+import { CollectionRequest } from './collection.js';
 
-// Index request
-export type TIndexNameRequest = {
-  indexName: string;
-};
-
-export type TIndexListRequest = TCollectionRequest;
-
-export const IndexListRequest = CollectionRequest;
-
-export type TIndexRequest = TCollectionRequest;
-
-export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex[];
-};
-
-export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
-
-export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
+export const IndexDetailRequest = Joi.object<
+  TIndexCreateRequest & TCollectionRequest
+>({
   collectionName,
   databaseName,
   indexName,
 });
 
-export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
+export const IndexCreateRequest = Joi.object<
+  TIndexCreateRequest & TCollectionRequest
+>({
   collectionName,
   databaseName,
-  index: Joi.array().items(collectionIndex),
+  index: IndexSchema,
 });
 
-export type CollectionIndex = {
-  name: string;
-  size: number;
-  accesses: number;
-  since: Date;
-  properties: 'compound' | 'unique';
-};
-
-export const typeDefsCollectionIndex = `#graphql
+export const typeDefsCollectionIndex = gql`
   scalar JSON
   scalar Date
   type Query
@@ -63,14 +45,16 @@ export const typeDefsCollectionIndex = `#graphql
   type CollectionIndex {
     name: String!
     size: Int!
-    accesses: Int!
+    access: Int!
     since: Date!
-    properties: String!
+    property: String!
   }
 
   extend type Query {
-    indexList(databaseName: String!, collectionName: String!): [String]!
-    indexListInfo(databaseName: String!, collectionName: String!): [CollectionIndex]!
+    indexList(
+      databaseName: String!
+      collectionName: String!
+    ): [CollectionIndex]!
     indexExist(
       databaseName: String!
       collectionName: String!
@@ -82,7 +66,7 @@ export const typeDefsCollectionIndex = `#graphql
     indexCreate(
       databaseName: String!
       collectionName: String!
-      indexes: [IndexInput!]!
+      index: [IndexInput!]!
     ): Boolean
     indexDrop(
       databaseName: String!
@@ -94,20 +78,20 @@ export const typeDefsCollectionIndex = `#graphql
 
 // Query
 const indexList = authorizeWrapper(
-  IndexListRequest,
+  CollectionRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
     listIndexes(args.databaseName, ctx.userName, args.collectionName)
 );
 
 const indexListInfo = authorizeWrapper(
-  IndexListRequest,
+  CollectionRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
     listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
 );
 
 const indexExist = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     doesIndexExist(
       args.databaseName,
       ctx.userName,
@@ -119,18 +103,18 @@ const indexExist = authorizeWrapper(
 // Mutation
 const indexCreate = authorizeWrapper(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     createIndex(
       args.databaseName,
       ctx.userName,
       args.collectionName,
-      args.index
+      convertIndexSpecification(args.index)
     )
 );
 
 const indexDrop = authorizeWrapper(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
+  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
     dropIndex(
       args.databaseName,
       ctx.userName,

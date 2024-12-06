@@ -1,54 +1,48 @@
-import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
-import { TDatabaseRequest } from './database.js';
 import {
+  ETransactionType,
+  TDatabaseRequest,
+  TTransactionRequest,
+  TTransactionConfirmRequest,
+  databaseName,
+  transactionType,
+} from '@zkdb/common';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import {
+  confirmTransaction as confirmTransactionDomain,
   enqueueTransaction as enqueueTransactionDomain,
   getTransactionForSigning,
-  confirmTransaction as confirmTransactionDomain,
 } from '../../domain/use-case/transaction.js';
-import GraphQLJSON from 'graphql-type-json';
+import { gql } from '../../helper/common.js';
+import { authorizeWrapper } from '../validation.js';
 
-export const typeDefsTransaction = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsTransaction = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-enum TransactionType {
-  deploy
-  rollup
-}
+  type Transaction {
+    databaseName: String!
+    transactionType: TransactionType!
+    status: TransactionStatus!
+    txHash: String!
+    error: String!
+  }
 
-type DbTransaction {
-  databaseName: String!
-  transactionType: TransactionType!
-  zkAppPublicKey: String!
-  status: TransactionStatus!
-  tx: String!
-  id: String!
-}
+  extend type Query {
+    getTransaction(
+      databaseName: String!
+      transactionType: TransactionType!
+    ): DbTransaction!
+  }
 
-extend type Query {
-  getTransaction(databaseName: String!, transactionType: TransactionType!): DbTransaction!
-}
+  extend type Mutation {
+    enqueueDeployTransaction(databaseName: String!): String!
 
-extend type Mutation {
-  enqueueDeployTransaction(databaseName: String!): String!
-  confirmTransaction(databaseName: String!, id: String!, txHash: String!): Boolean
-}
+    confirmTransaction(databaseName: String!, txHash: String!): Boolean
+  }
 `;
-
-export type TTransactionRequest = TDatabaseRequest & {
-  transactionType: 'deploy' | 'rollup';
-};
-
-export type TTransactionIdRequest = TDatabaseRequest & {
-  id: string;
-};
-
-export type TTransactionConfirmRequest = TTransactionIdRequest & {
-  txHash: string;
-};
 
 const getTransaction = authorizeWrapper(
   Joi.object({
@@ -62,14 +56,13 @@ const getTransaction = authorizeWrapper(
       args.transactionType
     );
 
-    transaction.status
     return {
+      transactionObjectId: transaction._id,
       databaseName: transaction.databaseName,
+      zkAppPublickey: transaction.zkAppPublicKey,
       transactionType: transaction.transactionType,
-      zkAppPublicKey: transaction.zkAppPublicKey,
-      status: transaction.status,
-      id: (transaction as any)._id,
-      tx: transaction.tx,
+      transactionStatus: transaction.status,
+      txHash: transaction.txHash,
     };
   }
 );
@@ -83,7 +76,7 @@ const enqueueDeployTransaction = authorizeWrapper(
       await enqueueTransactionDomain(
         args.databaseName,
         ctx.userName,
-        'deploy'
+        ETransactionType.Deploy
       )
     ).toString()
 );
@@ -95,12 +88,7 @@ const confirmTransaction = authorizeWrapper(
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    confirmTransactionDomain(
-      args.databaseName,
-      ctx.userName,
-      args.id,
-      args.txHash
-    )
+    await confirmTransactionDomain(args.databaseName, ctx.userName, args.txHash)
 );
 
 type TTransactionResolver = {

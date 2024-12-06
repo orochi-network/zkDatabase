@@ -1,17 +1,18 @@
 import { logger } from "@helper";
 import { EncryptionKey } from "@orochi-network/vault";
 import { UnsignedTransaction, ZkCompileService } from "@service";
+import { ETransactionStatus, ETransactionType } from "@zkdb/common";
 import {
   DatabaseEngine,
-  ModelDbSetting,
-  ModelDbTransaction,
+  ModelDatabase,
   ModelProof,
   ModelSecureStorage,
+  ModelTransaction,
 } from "@zkdb/storage";
-import { Mina, PrivateKey, PublicKey } from "o1js";
+import { PrivateKey, PublicKey } from "o1js";
+import { setTimeout } from "timers/promises";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
-import { setTimeout } from "timers/promises";
 
 const TIMEOUT = 1000;
 
@@ -23,7 +24,7 @@ export type DbTransactionQueue = {
 };
 
 async function findTransactionWithRetry(
-  modelTransaction: ModelDbTransaction,
+  modelTransaction: ModelTransaction,
   id: string,
   maxWaitTimeMs = 3000,
   intervalMs = 500
@@ -66,8 +67,8 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
     await proofDb.connect();
   }
 
-  const modelTransaction = ModelDbTransaction.getInstance();
-  const modelDbSettings = ModelDbSetting.getInstance();
+  const modelTransaction = ModelTransaction.getInstance();
+  const modelDatabase = ModelDatabase.getInstance();
 
   while (true) {
     const request = await redisQueue.dequeue();
@@ -84,11 +85,11 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
         continue;
       }
 
-      const dbSettings = await modelDbSettings.getSetting(tx.databaseName);
+      const database = await modelDatabase.getDatabase(tx.databaseName);
 
-      // Impossible case
-      if (!dbSettings) {
-        logger.error(`Settings for ${tx.databaseName} has not been found`);
+      // Make sure database must be existed first
+      if (!database) {
+        logger.error(`database for ${tx.databaseName} has not been found`);
         continue;
       }
 
@@ -96,10 +97,10 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
       try {
         const secureStorage = ModelSecureStorage.getInstance();
-
+        const { databaseName, merkleHeight } = database;
         let transaction: UnsignedTransaction;
         let zkAppPublicKey: string;
-        if (tx.transactionType === "deploy") {
+        if (tx.transactionType === ETransactionType.Deploy) {
           const zkAppPrivateKey = PrivateKey.random();
 
           zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
@@ -112,22 +113,22 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
           transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
-            dbSettings.merkleHeight,
-            dbSettings.databaseName
+            database.merkleHeight,
+            database.databaseName
           );
           await secureStorage.replaceOne(
             {
-              databaseName: dbSettings.databaseName,
+              databaseName,
             },
             {
               privateKey: encryptedZkAppPrivateKey,
-              databaseName: dbSettings.databaseName,
+              databaseName,
             },
             { upsert: true }
           );
-        } else if (tx.transactionType === "rollup") {
+        } else if (tx.transactionType === ETransactionType.Rollup) {
           const privateKey = await secureStorage.findOne({
-            databaseName: dbSettings.databaseName,
+            databaseName,
           });
 
           if (!privateKey) {
@@ -143,18 +144,16 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
           zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
 
-          const proof = await ModelProof.getInstance().getProof(
-            dbSettings.databaseName
-          );
+          const proof = await ModelProof.getInstance().getProof(databaseName);
 
           if (!proof) {
-            throw new Error(`Proof for ${dbSettings.databaseName} not found`);
+            throw new Error(`Proof for ${databaseName} not found`);
           }
 
           transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
-            dbSettings.merkleHeight,
+            merkleHeight,
             proof
           );
         } else {
@@ -164,12 +163,12 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
         }
 
         await modelTransaction.updateById(request.id, {
-          status: "ready",
+          status: ETransactionStatus.Unsigned,
           tx: transaction,
         });
 
         logger.info(
-          `Successfully compiled: Database: ${dbSettings.databaseName}, Transaction Type: ${tx.transactionType}`
+          `Successfully compiled: Database: ${databaseName}, Transaction Type: ${tx.transactionType}`
         );
       } catch (error) {
         let errorMessage: string;
@@ -183,7 +182,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
         logger.error(errorMessage);
 
         await modelTransaction.updateById(request.id, {
-          status: "failed",
+          status: ETransactionStatus.Failed,
           error: (error as Error).message,
         });
       }

@@ -1,8 +1,8 @@
 import { ClientSession } from 'mongodb';
 import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup, { TGroupInfo } from '../../model/database/user-group.js';
+import ModelUserGroup from '../../model/database/user-group.js';
+import ModelUser from '../../model/global/user.js';
 import { isDatabaseOwner } from './database.js';
-import { areUsersExist } from './user.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -45,11 +45,11 @@ async function createGroup(
   throw Error('Only database owner allowed to create group');
 }
 
-async function getGroupInfo(
+async function getGroupInfoDetail(
   databaseName: string,
   groupName: string,
   session?: ClientSession
-): Promise<TGroupInfo> {
+) {
   if (!(await isGroupExist(databaseName, groupName, session))) {
     throw Error(
       `Group ${groupName} does not exist for database ${databaseName}`
@@ -63,7 +63,7 @@ async function getGroupInfo(
   }
   return {
     ...group,
-    members: await (
+    listUser: await (
       await modelUserGroup.find({ groupId: group._id })
     ).toArray(),
   };
@@ -142,10 +142,11 @@ async function addUsersToGroup(
 ): Promise<boolean> {
   if (await isDatabaseOwner(databaseName, actor, session)) {
     const modelGroup = new ModelGroup(databaseName);
+    const modelUser = new ModelUser();
     const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
     if (groupExist) {
-      if (await areUsersExist(users)) {
+      if (await modelUser.areUsersExist(users)) {
         const modelUserGroup = new ModelUserGroup(databaseName);
         const result = await modelUserGroup.addUsersToGroup(users, group, {
           session,
@@ -172,10 +173,12 @@ async function excludeUsersToGroup(
 ): Promise<boolean> {
   if (await isDatabaseOwner(databaseName, actor, session)) {
     const modelGroup = new ModelGroup(databaseName);
+    const modelUser = new ModelUser();
+
     const groupExist = (await modelGroup.findGroup(group, session)) !== null;
 
     if (groupExist) {
-      if (await areUsersExist(users)) {
+      if (await modelUser.areUsersExist(users)) {
         const modelUserGroup = new ModelUserGroup(databaseName);
         const result = await modelUserGroup.removeUsersFromGroup(users, group, {
           session,
@@ -204,12 +207,13 @@ async function renameGroup(
     const modelUserGroup = new ModelGroup(databaseName);
     const group = await modelUserGroup.findGroup(groupName);
     if (group) {
-      await modelUserGroup.collection.updateOne(
+      const result = await modelUserGroup.collection.updateOne(
         {
           groupName,
         },
         { $set: { groupName: newGroupName } }
       );
+      return result && result.modifiedCount === 1;
     }
     throw Error(`Group ${groupName} does not exist`);
   }
@@ -235,7 +239,7 @@ export {
   checkUserGroupMembership,
   createGroup,
   excludeUsersToGroup,
-  getGroupInfo,
+  getGroupInfoDetail,
   getUsersGroup,
   isGroupExist,
   renameGroup,

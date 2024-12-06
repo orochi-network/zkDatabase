@@ -1,22 +1,14 @@
+import { TUserGroupRecord } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
-import ModelGroup, { GroupSchema } from './group.js';
+import { BulkWriteOptions, FindOptions, ObjectId, WithoutId } from 'mongodb';
+import ModelGroup from './group.js';
 
-export interface DocumentUserGroup extends Document {
-  userName: string;
-  groupId: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type TGroupInfo = GroupSchema & { members: DocumentUserGroup[] };
-
-export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
+export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =
     zkDatabaseConstants.databaseCollections.userGroup;
 
@@ -53,7 +45,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupId).toArray();
+    return userGroups.map((userGroup) => userGroup.groupOjectId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {

@@ -1,47 +1,15 @@
+import { TMerkleJson, TMerkleNode, TMerkleProof, TMerkleWitnessNode } from '@zkdb/common';
 import crypto from 'crypto';
-import {
-  BulkWriteOptions,
-  ClientSession,
-  Document,
-  FindOptions,
-  ObjectId,
-} from 'mongodb';
+import { BulkWriteOptions, FindOptions, ObjectId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
-import { ModelDbSetting } from './setting.js';
+import { ModelDatabase } from './database.js';
 
-// Data type for merkle tree to be able to store in database
-export interface MerkleProof extends Document {
-  sibling: string;
-  isLeft: boolean;
-}
-
-export type TMerkleProof = {
-  sibling: Field;
-  isLeft: boolean;
-};
-
-export type TMerkleNode = {
-  nodeId: ObjectId;
-  timestamp: Date;
-  hash: string;
-  level: number;
-  index: number;
-};
-
-export type TMerkleWitnessNode = {
-  hash: Field;
-  level: number;
-  index: number;
-  witness: boolean;
-  target: boolean;
-};
-
-export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
+export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
   private static instances = new Map<string, ModelMerkleTree>();
 
   private zeroes: Field[] = [];
@@ -74,16 +42,16 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
 
   public static async load(databaseName: string): Promise<ModelMerkleTree> {
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
-    const modelSetting = ModelDbSetting.getInstance();
+    const modelDatabase = ModelDatabase.getInstance();
 
-    const setting = await modelSetting.getSetting(databaseName);
+    const database = await modelDatabase.getDatabase(databaseName);
 
-    if (setting) {
-      modelMerkleTree.setHeight(setting.merkleHeight);
+    if (database) {
+      modelMerkleTree.setHeight(database.merkleHeight);
       return modelMerkleTree;
     }
 
-    throw Error(`${databaseName} setting has not been found.`);
+    throw Error(`Database: ${databaseName} has not been found.`);
   }
 
   public static getEmptyRoot(height: number): Field {
@@ -194,7 +162,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     index: bigint,
     timestamp: Date,
     options?: FindOptions
-  ): Promise<TMerkleWitnessNode[]> {
+  ): Promise<TMerkleJson<TMerkleWitnessNode>[]> {
     if (index >= this.leafCount) {
       throw new Error(
         `index ${index} is out of range for ${this.leafCount} leaves.`
@@ -203,7 +171,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
 
     let currIndex = BigInt(index);
 
-    const witnessPath: TMerkleWitnessNode[] = [];
+    const witnessPath: TMerkleJson<TMerkleWitnessNode>[] = [];
 
     for (let level = 0; level < this._height - 1; level += 1) {
       const isLeft = currIndex % 2n === 0n;
@@ -213,11 +181,12 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
         await this.getNode(level, currIndex, timestamp, options).then(
           (node) => {
             return {
-              hash: node,
+              hash: node.toString(),
               level,
               index: Number(currIndex),
               witness: false,
               target: currIndex === index,
+              empty: node.equals(this.zeroes[level]).toBoolean(),
             };
           }
         )
@@ -227,11 +196,12 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
         await this.getNode(level, siblingIndex, timestamp, options).then(
           (node) => {
             return {
-              hash: node,
+              hash: node.toString(),
               level,
               index: Number(siblingIndex),
               witness: true,
               target: false,
+              empty: node.equals(this.zeroes[level]).toBoolean(),
             };
           }
         )
@@ -244,11 +214,12 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
       await this.getNode(this._height - 1, 0n, timestamp, options).then(
         (node) => {
           return {
-            hash: node,
+            hash: node.toString(),
             level: this.height - 1,
             index: Number(0n),
             witness: false,
             target: false,
+            empty: node.equals(this.zeroes[this._height - 1]).toBoolean(),
           };
         }
       )
@@ -294,7 +265,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     level: number,
     timestamp: Date,
     options?: FindOptions
-  ): Promise<TMerkleNode[]> {
+  ): Promise<TMerkleJson<TMerkleNode>[]> {
     const query = {
       level,
       timestamp: { $lte: timestamp },
@@ -322,9 +293,9 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleNode> {
     }
 
     const latestNodes = await this.collection
-      .aggregate<TMerkleNode>(pipeline)
+      .aggregate<TMerkleJson<TMerkleNode>>(pipeline)
       .toArray();
-
+ 
     return latestNodes;
   }
 

@@ -1,34 +1,25 @@
+import {
+  TDatabaseRequest,
+  TMerkleTreeGetNodeRequest,
+  TMerkleTreeGetNodesByLevelRequest,
+  TMerkleTreeIndexRequest,
+  TMerkleTreeWitnessByDocumentRequest,
+  databaseName,
+  indexNumber,
+  objectId,
+  pagination,
+} from '@zkdb/common';
 import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
-  getMerkleNodesByLevel,
-  getWitnessByDocumentId,
-  getMerkleWitnessPath,
-  getMerkleTreeInfo as getMerkleTreeInfoDomain,
   getChildrenNodes as getChildrenNodesDomain,
+  getMerkleNodesByLevel,
+  getMerkleTreeInfo as getMerkleTreeInfoDomain,
+  getMerkleWitnessPath,
+  getWitnessByDocumentId,
 } from '../../domain/use-case/merkle-tree.js';
-import publicWrapper from '../validation.js';
-import { databaseName, indexNumber, objectId, pagination } from './common.js';
-import { TDatabaseRequest } from './database.js';
-import { Pagination } from '../types/pagination.js';
-
-export type TMerkleTreeIndexRequest = TDatabaseRequest & {
-  index: bigint;
-};
-
-export type TMerkleTreeWitnessByDocumentRequest = TDatabaseRequest & {
-  docId: string;
-};
-
-export type TMerkleTreeGetNodeRequest = TMerkleTreeIndexRequest & {
-  level: number;
-};
-
-export type TMerkleTreeGetNodesByLevelRequest = TDatabaseRequest & {
-  level: number;
-  pagination: Pagination;
-};
+import { publicWrapper } from '../validation.js';
 
 export const MerkleTreeGetNodesByLevelRequest =
   Joi.object<TMerkleTreeGetNodesByLevelRequest>({
@@ -128,7 +119,9 @@ const getNode = publicWrapper(
   async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
     const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
     return withTransaction((session) =>
-      merkleTreeService.getNode(args.level, args.index, new Date(), { session })
+      merkleTreeService.getNode(args.level, BigInt(args.index), new Date(), {
+        session,
+      })
     );
   }
 );

@@ -1,16 +1,10 @@
 import { ClientSession } from 'mongodb';
+import { TSequencedItem } from '@zkdb/common';
 import { zkDatabaseConstants } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
-export type Sequence = "merkle-index" | "operation";
-
-export type SequencedItem = {
-  _id: string;
-  seq: number;
-};
-
-export class ModelSequencer extends ModelBasic<SequencedItem> {
+export class ModelSequencer extends ModelBasic<TSequencedItem> {
   private static instances = new Map<string, ModelSequencer>();
 
   private constructor(databaseName: string) {
@@ -30,7 +24,7 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
   }
 
   async getNextValue(
-    sequenceName: Sequence,
+    sequenceName: TSequencedItem,
     session?: ClientSession
   ): Promise<number> {
     const updateResult = await this.collection.findOneAndUpdate(

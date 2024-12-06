@@ -4,7 +4,7 @@ import {
   ProofStateOutput,
 } from '@zkdb/smart-contract';
 import {
-  ModelDbSetting,
+  ModelDatabase,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -39,9 +39,9 @@ export async function createProof(taskId: string) {
 
   try {
     const circuitName = `${task.database}.${task.collection}`;
-    const modelDbSetting = ModelDbSetting.getInstance();
+    const modelDatabase = ModelDatabase.getInstance();
     const { merkleHeight, appPublicKey } =
-      (await modelDbSetting.getSetting(task.database)) || {};
+      (await modelDatabase.getDatabase(task.database)) || {};
 
     if (!merkleHeight) {
       throw new Error(
@@ -119,7 +119,7 @@ export async function createProof(taskId: string) {
       } else {
         const rollupProof = await modelProof.findOne({
           merkleRoot: onChainRootState.toString(),
-          database: task.database
+          database: task.database,
         });
         if (rollupProof) {
           proof = await circuit.updateTransition(
