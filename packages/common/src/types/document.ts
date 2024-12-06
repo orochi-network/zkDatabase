@@ -11,5 +11,18 @@ export type TDocument = {
   document: Record<string, TDocumentField>;
 };
 
-// Document history can return TDocumentRecord[]
 export type TDocumentRecord = TDbRecord<TDocument>;
+
+export type TDocumentHistory = {
+  docId: string;
+  documents: TDocumentRecord[];
+  metadata: TDocumentHistoryMetadata;
+  active: boolean;
+};
+
+export type TDocumentHistoryMetadata = {
+  permission: boolean;
+  merkleIndex: number;
+  group: string;
+  owner: string;
+};
