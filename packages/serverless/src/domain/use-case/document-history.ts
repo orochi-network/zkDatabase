@@ -153,7 +153,8 @@ MongoDB pipeline to already handle this case`
   );
 }
 
-// NOTE(wonrax): I don't know why single document history does respond with metadata
+// NOTE(wonrax): I don't know why single document history does not respond with
+// metadata
 type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
 
 async function readHistoryDocument(
