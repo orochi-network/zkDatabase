@@ -11,6 +11,6 @@ export type TDbTransaction = {
   databaseName: string;
   status: TTransactionStatus;
   transactionType: TTransactionType;
-  tx: string;
+  rawTransaction: string;
   zkAppPublicKey: string;
 };

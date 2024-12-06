@@ -10,8 +10,8 @@ import {
   TTransactionRequest,
 } from "./types/transaction.js";
 
-const TRANSACTION_DRAFT_GET = gql`
-  query GetTransactionDraft(
+const TRANSACTION_DRAFT = gql`
+  query TransactionDraft(
     $databaseName: String!
     $transactionType: TransactionType!
   ) {
@@ -31,12 +31,12 @@ const TRANSACTION_DRAFT_GET = gql`
 `;
 
 const TRANSACTION_CONFIRM = gql`
-  mutation ConfirmTransaction(
+  mutation TransactionConfirm(
     $databaseName: String!
     $transactionObjectId: String!
     $txHash: String!
   ) {
-    confirmTransaction(
+    transactionConfirm(
       databaseName: $databaseName
       transactionObjectId: $transactionObjectId
       txHash: $txHash
@@ -49,7 +49,7 @@ export const transaction = <T>(client: TApolloClient<T>) => ({
     TDbTransaction,
     TTransactionRequest,
     { transactionDraft: TDbTransaction }
-  >(client, TRANSACTION_DRAFT_GET, (data) => data.transactionDraft),
+  >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
   transactionConfirm: createMutateFunction<
     boolean,
     TTransactionConfirmRequest,
