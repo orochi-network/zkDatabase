@@ -6,14 +6,14 @@ import {
 } from "./types/rollup.js";
 
 const ROLLUP_CREATE = gql`
-  mutation CreateRollUp($databaseName: String!) {
-    createRollUp(databaseName: $databaseName)
+  mutation RollUpHistoryAdd($databaseName: String!) {
+    rollUpHistoryAdd(databaseName: $databaseName)
   }
 `;
 
-const ROLLUP_HISTORY_GET = gql`
-  mutation GetRollUpHistory($databaseName: String!) {
-    getRollUpHistory(databaseName: $databaseName) {
+const ROLLUP_HISTORY = gql`
+  mutation RollUpHistory($databaseName: String!) {
+    rollUpCreate(databaseName: $databaseName) {
       state
       extraData
       history {
@@ -30,14 +30,14 @@ const ROLLUP_HISTORY_GET = gql`
   }
 `;
 export const rollup = <T>(client: TApolloClient<T>) => ({
-  createRollUp: createMutateFunction<
+  rollUpCreate: createMutateFunction<
     boolean,
     TCreateRollUpRequest,
-    { createRollUp: boolean }
-  >(client, ROLLUP_CREATE, (data) => data.createRollUp),
-  getRollUpHistory: createMutateFunction<
+    { rollUpCreate: boolean }
+  >(client, ROLLUP_CREATE, (data) => data.rollUpCreate),
+  rollUpHistory: createMutateFunction<
     TGetRollUpHistoryResponse,
     TCreateRollUpRequest,
-    { getRollUpHistory: TGetRollUpHistoryResponse }
-  >(client, ROLLUP_HISTORY_GET, (data) => data.getRollUpHistory),
+    { rollUpHistory: TGetRollUpHistoryResponse }
+  >(client, ROLLUP_HISTORY, (data) => data.rollUpHistory),
 });

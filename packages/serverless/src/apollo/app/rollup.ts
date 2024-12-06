@@ -39,12 +39,12 @@ type RollUpHistory {
 }
 
 extend type Mutation {
-  getRollUpHistory(databaseName: String!): RollUpHistory!
-  createRollUp(databaseName: String!): Boolean
+  rollUpCreate(databaseName: String!): RollUpHistory!
+  rollUpHistoryAdd(databaseName: String!): Boolean
 }
 `;
 
-const getRollUpHistory = authorizeWrapper(
+const rollUpHistory = authorizeWrapper(
   Joi.object({
     databaseName,
     transactionType,
@@ -53,7 +53,7 @@ const getRollUpHistory = authorizeWrapper(
     getRollUpHistoryDomain(args.databaseName)
 );
 
-const createRollUp = authorizeWrapper(
+const rollUpCreate = authorizeWrapper(
   Joi.object({
     databaseName,
   }),
@@ -66,15 +66,15 @@ const createRollUp = authorizeWrapper(
 type TRollUpResolver = {
   JSON: typeof GraphQLJSON;
   Mutation: {
-    getRollUpHistory: typeof getRollUpHistory;
-    createRollUp: typeof createRollUp;
+    rollUpHistory: typeof rollUpHistory;
+    rollUpCreate: typeof rollUpCreate;
   };
 };
 
 export const resolversRollUp: TRollUpResolver = {
   JSON: GraphQLJSON,
   Mutation: {
-    getRollUpHistory,
-    createRollUp,
+    rollUpHistory,
+    rollUpCreate,
   },
 };
