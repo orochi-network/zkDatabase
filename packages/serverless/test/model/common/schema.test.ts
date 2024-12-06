@@ -119,10 +119,6 @@ describe('Schema', () => {
     const deserializedUser = User.deserialize(serializedUser);
     const userHash = deserializedUser.hash();
 
-    console.log('serializedUser', serializedUser);
-    console.log('deserializedUser', deserializedUser);
-    console.log('userHash', userHash);
-
     // Verify
     expect(userHash).toEqual(EXPECTED_HASH);
   });
