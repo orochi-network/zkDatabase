@@ -1,11 +1,11 @@
 import {
-  TCollectionRequest,
-  TIndexCreateRequest,
-  TIndexListRequest,
   collectionName,
   databaseName,
   indexName,
   IndexSchema,
+  TCollectionRequest,
+  TIndexCreateRequest,
+  TIndexListRequest,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -66,7 +66,7 @@ export const typeDefsCollectionIndex = gql`
     indexCreate(
       databaseName: String!
       collectionName: String!
-      index: [IndexInput!]!
+      index: JSON!
     ): Boolean
     indexDrop(
       databaseName: String!
@@ -83,11 +83,11 @@ const indexList = authorizeWrapper(
     listIndexes(args.databaseName, ctx.userName, args.collectionName)
 );
 
-const indexListInfo = authorizeWrapper(
-  CollectionRequest,
-  async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
-);
+// const indexListInfo = authorizeWrapper(
+//   CollectionRequest,
+//   async (_root: unknown, args: TIndexListRequest, ctx) =>
+//     listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
+// );
 
 const indexExist = authorizeWrapper(
   IndexDetailRequest,
@@ -128,7 +128,7 @@ type TCollectionIndexResolvers = {
   Query: {
     indexList: typeof indexList;
     indexExist: typeof indexExist;
-    indexListInfo: typeof indexListInfo;
+    // indexListInfo: typeof indexListInfo;
   };
   Mutation: {
     indexCreate: typeof indexCreate;
@@ -141,7 +141,7 @@ export const resolversCollectionIndex: TCollectionIndexResolvers = {
   Query: {
     indexList,
     indexExist,
-    indexListInfo,
+    // indexListInfo,
   },
   Mutation: {
     indexCreate,

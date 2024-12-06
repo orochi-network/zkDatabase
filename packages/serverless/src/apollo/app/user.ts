@@ -93,7 +93,6 @@ export const typeDefsUser = gql`
   input SignUpInput {
     userName: String!
     email: String!
-    publicKey: String!
     userData: JSON
     timestamp: Int!
   }
@@ -104,7 +103,7 @@ export const typeDefsUser = gql`
     userData: JSON
     publicKey: String!
     activated: Boolean!
-    createAt: String!
+    createdAt: String!
     updatedAt: String!
   }
 

@@ -61,10 +61,10 @@ export class ModelSystemDatabase<T extends Document> extends ModelBasic<T> {
     collectionName: string,
     session?: ClientSession
   ): Promise<void> {
-    const isExist = await this.isCollectionExist(collectionName);
-    if (!isExist) {
-      await this.db.createCollection(collectionName, { session });
-    }
+    // const isExist = await this.isCollectionExist(collectionName);
+    // if (!isExist) {
+    await this.db.createCollection(collectionName, { session });
+    // }
   }
 
   public async dropCollection(collectionName: string): Promise<boolean> {

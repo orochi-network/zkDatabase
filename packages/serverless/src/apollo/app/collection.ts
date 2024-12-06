@@ -1,7 +1,9 @@
 import {
   collectionName,
   databaseName,
+  ESortingSchema,
   groupName,
+  index,
   O1JS_VALID_TYPE,
   TDatabaseRequest,
   TSchemaFieldDefinition,
@@ -23,7 +25,8 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean().optional(),
+  index: Joi.boolean().optional(),
+  sorting: ESortingSchema,
 });
 
 export const schemaFields = Joi.array().items(schemaField);

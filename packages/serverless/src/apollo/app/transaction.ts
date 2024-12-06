@@ -34,7 +34,7 @@ export const typeDefsTransaction = gql`
     getTransaction(
       databaseName: String!
       transactionType: TransactionType!
-    ): DbTransaction!
+    ): Transaction!
   }
 
   extend type Mutation {

@@ -23,7 +23,7 @@ export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TDatabase, 'appPublicKey'>;
 
-export type TDatabaseSearchRequest = {
+export type TDatabaseListRequest = {
   query: Partial<TDatabaseRecord>;
   pagination: TPagination;
 };

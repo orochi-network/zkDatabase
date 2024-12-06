@@ -9,6 +9,7 @@ import {
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { DB, ModelDatabase, ModelTransaction } from '@zkdb/storage';
+import { getCurrentTime } from 'helper/common.js';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import ModelGroup from '../../model/database/group.js';
@@ -49,6 +50,8 @@ export async function createDatabase(
         merkleHeight,
         databaseOwner: actor,
         appPublicKey: '',
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
       },
       { session }
     );
@@ -153,7 +156,7 @@ export async function getListDatabaseDetail(
         const dbInfo = databaseInfoMap[databaseName];
         const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
 
-        const collections = await listCollection(databaseName, actor);
+        const collection = await listCollection(databaseName, actor);
 
         const latestTransaction = await getLatestTransaction(
           databaseName,
@@ -198,7 +201,7 @@ export async function getListDatabaseDetail(
           databaseOwner,
           merkleHeight,
           databaseSize,
-          collections,
+          collection,
           appPublicKey,
           deployStatus,
         };

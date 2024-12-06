@@ -32,14 +32,14 @@ export class ModelDatabase extends ModelBasic<WithoutId<TDatabaseRecord>> {
   }
 
   public async createDatabase(
-    setting: TDatabaseRecord,
+    database: WithoutId<TDatabaseRecord>,
     options?: InsertOneOptions
   ): Promise<InsertOneResult<TDatabaseRecord>> {
     try {
-      const result = await this.collection.insertOne(setting, options);
+      const result = await this.collection.insertOne(database, options);
       return result;
     } catch (error) {
-      throw new Error(`Failed to create database setting: ${error}`);
+      throw new Error(`Failed to create database: ${error}`);
     }
   }
 

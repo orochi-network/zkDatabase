@@ -47,7 +47,7 @@ export function publicWrapper<Req = unknown, Res = any, R = any>(
   ...params: any[]
 ): THandler<Req, Res, R, TPublicContext> {
   if (params.length === 2) {
-    const [resolver, schema] = params;
+    const [schema, resolver] = params;
     return async (
       root: R,
       args: Req,
@@ -86,7 +86,7 @@ export function authorizeWrapper<Req = unknown, Res = any, R = any>(
   ...params: any[]
 ): THandler<Req, Res, R, TAuthorizedContext> {
   if (params.length === 2) {
-    const [resolver, schema] = params;
+    const [schema, resolver] = params;
     return async (
       root: R,
       args: Req,

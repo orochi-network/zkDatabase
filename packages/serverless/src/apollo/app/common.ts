@@ -1,6 +1,21 @@
 import { gql } from '../../helper/common.js';
 
 export const typeDefsCommon = gql`
+  enum TransactionType {
+    Deploy
+    Rollup
+  }
+
+  enum TransactionStatus {
+    Unsigned
+    Signed
+    Unconfirmed
+    Confirming
+    Failed
+    Confirmed
+    Unknown
+  }
+
   enum Sorting {
     Asc
     Desc
@@ -42,45 +57,43 @@ export const typeDefsCommon = gql`
     data: String!
   }
 
-  type SchemaFieldInput {
+  input SchemaFieldInput {
     name: String!
     kind: SchemaType!
-    indexed: Boolean
-    # Default is ASC or -1
+    index: Boolean
+    # Default is ASC or -
     sorting: Sorting
   }
 
   type SchemaFieldOutput {
-    order: Int!
     name: String!
     kind: SchemaType!
-    indexed: Boolean
+    index: Boolean
     # Default is ASC or -1
     sorting: Sorting
   }
 
-  type CollectionMetadataOutput {
+  type CollectionMetadata {
     owner: String!
     group: String!
     permission: Int!
   }
 
-  type ACollectionMetadata {
-    permission: Int!;
-    collection: string!;
-    _id: ObjectId!;
-    createdAt: Date!;
-    updatedAt: Date!;
-    field: [String]!;
-    definition: [SchemaDefinition]!;
-
-}
+  type MetadataCollection {
+    permission: Int!
+    collectionName: String!
+    createdAt: Date!
+    updatedAt: Date!
+    sizeOnDisk: Int
+    schema: [SchemaFieldOutput]!
+  }
 
   type CollectionDescriptionOutput {
-    name: String!
-    index: [String]!
+    collectionName: String!
     schema: [SchemaFieldOutput!]!
-    ownership: CollectionMetadataOutput!
+    owner: String!
+    group: String!
+    permission: Int!
     sizeOnDisk: Int!
   }
 `;
