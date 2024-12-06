@@ -23,7 +23,7 @@ const TRANSACTION_DRAFT_GET = gql`
       databaseName
       transactionType
       status
-      transactionBody
+      rawTransaction
       txHash
       error
     }
