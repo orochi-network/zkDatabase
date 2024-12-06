@@ -45,12 +45,12 @@ const TRANSACTION_CONFIRM = gql`
 `;
 
 export const transaction = <T>(client: TApolloClient<T>) => ({
-  getTransactionDraft: createQueryFunction<
+  transactionDraft: createQueryFunction<
     TDbTransaction,
     TTransactionRequest,
     { transactionDraft: TDbTransaction }
   >(client, TRANSACTION_DRAFT_GET, (data) => data.transactionDraft),
-  confirmTransaction: createMutateFunction<
+  transactionConfirm: createMutateFunction<
     boolean,
     TTransactionConfirmRequest,
     { confirmTransaction: boolean }
