@@ -41,9 +41,9 @@ export const typeDefsTransaction = gql`
   }
 
   extend type Mutation {
-    enqueueDeployTransaction(databaseName: String!): String!
+    transactionDeployEnqueue(databaseName: String!): String!
 
-    confirmTransaction(databaseName: String!, txHash: String!): Boolean
+    transactionConfirm(databaseName: String!, txHash: String!): Boolean
   }
 `;
 
@@ -66,7 +66,7 @@ const transactionDraft = authorizeWrapper(
   }
 );
 
-const enqueueDeployTransaction = authorizeWrapper(
+const transactionDeployEnqueue = authorizeWrapper(
   Joi.object({
     databaseName,
   }),
@@ -80,7 +80,7 @@ const enqueueDeployTransaction = authorizeWrapper(
     ).toString()
 );
 
-const confirmTransaction = authorizeWrapper(
+const transactionConfirm = authorizeWrapper(
   Joi.object({
     databaseName,
     id: Joi.string().required(),
@@ -96,8 +96,8 @@ type TTransactionResolver = {
     transactionDraft: typeof transactionDraft;
   };
   Mutation: {
-    enqueueDeployTransaction: typeof enqueueDeployTransaction;
-    confirmTransaction: typeof confirmTransaction;
+    transactionDeployEnqueue: typeof transactionDeployEnqueue;
+    transactionConfirm: typeof transactionConfirm;
   };
 };
 
@@ -107,7 +107,7 @@ export const resolversTransaction: TTransactionResolver = {
     transactionDraft,
   },
   Mutation: {
-    enqueueDeployTransaction,
-    confirmTransaction,
+    transactionDeployEnqueue,
+    transactionConfirm,
   },
 };
