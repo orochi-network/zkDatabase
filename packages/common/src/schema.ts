@@ -167,7 +167,7 @@ export class Schema {
               value = (anyThis[name] as Int64).toBigint();
               break;
             case 'Bool':
-              value = anyThis[name];
+              value = (anyThis[name] as Bool).toBoolean();
               break;
             case 'Sign':
               value = (anyThis[name] as Sign).isPositive().toBoolean();
@@ -200,17 +200,13 @@ export class Schema {
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
             case 'UInt64':
-              result[name] = ProvableTypeMap[kind].from(value);
-              break;
             case 'Field':
-              result[name] = ProvableTypeMap[kind].from(value);
-              break;
             case 'UInt32':
             case 'Int64':
               result[name] = ProvableTypeMap[kind].from(value);
               break;
             case 'Bool':
-              result[name] = value;
+              result[name] = Bool(value);
               break;
             case 'Sign':
               result[name] = value ? Sign.one : Sign.minusOne;
