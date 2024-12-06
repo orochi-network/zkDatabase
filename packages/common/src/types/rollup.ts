@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TTransaction } from './transaction.js';
 
@@ -31,7 +31,7 @@ export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
 // Compound Type
 export type TRollUpTransactionHistory = TRollUpHistory &
-  Omit<TDbRecord<TTransaction>, '_id'>;
+  WithoutId<TDbRecord<TTransaction>>;
 
 export type RollUpData = {
   history: TRollUpHistory[];
