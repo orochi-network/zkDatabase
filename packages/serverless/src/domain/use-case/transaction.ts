@@ -15,7 +15,7 @@ import { isDatabaseOwner } from './database.js';
 
 const MINA_DECIMAL = 1e9;
 
-const requiredBalanceMap = new Map<ETransactionType, number>([
+const MAP_MINIMAL_BALANCE = new Map<ETransactionType, number>([
   [ETransactionType.Deploy, MINA_DECIMAL * 1.1],
   [ETransactionType.Rollup, MINA_DECIMAL * 0.1],
 ]);
@@ -185,7 +185,7 @@ export async function getTransactionDraft(
       if (account) {
         const balance = account.balance.toBigInt();
 
-        const minBalance = BigInt(requiredBalanceMap.get(transactionType)!);
+        const minBalance = BigInt(MAP_MINIMAL_BALANCE.get(transactionType)!);
 
         if (balance < minBalance) {
           throw new Error(
