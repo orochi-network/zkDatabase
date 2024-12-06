@@ -206,7 +206,7 @@ export class Schema {
               result[name] = ProvableTypeMap[kind].from(value);
               break;
             case 'Bool':
-              result[name] = Bool(value);
+              result[name] = new Bool(value);
               break;
             case 'Sign':
               result[name] = value ? Sign.one : Sign.minusOne;
