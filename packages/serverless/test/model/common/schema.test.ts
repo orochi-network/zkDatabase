@@ -1,3 +1,6 @@
+/** This test ensures Schema class is compatible with zk app and has consistent
+ * serialization and deserialization methods. */
+
 /* eslint-disable max-classes-per-file */
 import {
   AccountUpdate,
@@ -10,12 +13,30 @@ import {
   method,
   Field,
   state,
+  Int64,
+  UInt64,
+  Bool,
+  PublicKey,
+  Signature,
+  Character,
+  Sign,
 } from 'o1js';
-import { Schema } from '../../../src/domain/common/schema.js';
+import { Schema } from '@zkdb/common';
 
 class User extends Schema.create({
   name: Field,
   age: UInt32,
+  // circuitString: CircuitString, // TODO: not sure how this works, need to investigate
+  i64: Int64,
+  u64: UInt64,
+  bool: Bool,
+  privateKey: PrivateKey,
+  publicKey: PublicKey,
+  signature: Signature,
+  character: Character,
+  sign: Sign,
+  field: Field,
+  // merkleMapWitness: MerkleMapWitness, // not implemented
 }) {}
 
 class TestSmartContract extends SmartContract {
@@ -27,16 +48,48 @@ class TestSmartContract extends SmartContract {
   }
 }
 describe('Schema', () => {
+  const privateKey = PrivateKey.random();
+  const publicKey = privateKey.toPublicKey();
+  const signature = Signature.create(privateKey, [Field(0), Field(1)]);
+  const name = Field(0);
+  const age = UInt32.from(4);
+  const i64 = Int64.create(new UInt64(0)).add(2);
+  const u64 = new UInt64(3);
+  const bool = new Bool(false);
+  const character = new Character(10);
+  const sign = Sign.minusOne;
+  const field = new Field(5);
+
+  const EXPECTED_HASH = Poseidon.hash(
+    name
+      .toFields()
+      .concat(age.toFields())
+      .concat(i64.toFields())
+      .concat(u64.toFields())
+      .concat(bool.toFields())
+      .concat(privateKey.toFields())
+      .concat(publicKey.toFields())
+      .concat(signature.toFields())
+      .concat(character.toField())
+      .concat(sign.toFields())
+      .concat(field.toFields())
+  );
+
   it('Should hash schema', () => {
     // Set up
     const myUser = new User({
-      name: Field(0),
-      age: UInt32.from(4),
+      name,
+      age,
+      i64,
+      u64,
+      bool,
+      privateKey,
+      publicKey,
+      signature,
+      character,
+      sign,
+      field,
     });
-
-    const EXPECTED_HASH = Poseidon.hash(
-      Field(0).toFields().concat(UInt32.from(4).toFields())
-    );
 
     // Execute
     const userHash = myUser.hash();
@@ -48,18 +101,27 @@ describe('Schema', () => {
   it('Should hash schema after deserialization', () => {
     // Set up
     const myUser = new User({
-      name: Field(0),
-      age: UInt32.from(4),
+      name,
+      age,
+      i64,
+      u64,
+      bool,
+      privateKey,
+      publicKey,
+      signature,
+      character,
+      sign,
+      field,
     });
-
-    const EXPECTED_HASH = Poseidon.hash(
-      Field(0).toFields().concat(UInt32.from(4).toFields())
-    );
 
     // Execute
     const serializedUser = myUser.serialize();
     const deserializedUser = User.deserialize(serializedUser);
     const userHash = deserializedUser.hash();
+
+    console.log('serializedUser', serializedUser);
+    console.log('deserializedUser', deserializedUser);
+    console.log('userHash', userHash);
 
     // Verify
     expect(userHash).toEqual(EXPECTED_HASH);
@@ -70,15 +132,20 @@ describe('Schema', () => {
     const userSchemaStructure = User.getSchema();
 
     const myUser = new User({
-      name: Field(0),
-      age: UInt32.from(4),
+      name,
+      age,
+      i64,
+      u64,
+      bool,
+      privateKey,
+      publicKey,
+      signature,
+      character,
+      sign,
+      field,
     });
 
     const serializedUser = myUser.serialize();
-
-    const EXPECTED_HASH = Poseidon.hash(
-      Field(0).toFields().concat(UInt32.from(4).toFields())
-    );
 
     // Execute
     const UserSchema = Schema.fromSchema(userSchemaStructure);
@@ -98,7 +165,6 @@ describe('Schema', () => {
     const Local = await Mina.LocalBlockchain({ proofsEnabled: useProof });
     Mina.setActiveInstance(Local);
     const { key: deployerKey } = Local.testAccounts[0];
-    const { key: senderKey } = Local.testAccounts[1];
 
     const zkAppPrivateKey = PrivateKey.random();
     const zkAppAddress = zkAppPrivateKey.toPublicKey();
@@ -117,13 +183,18 @@ describe('Schema', () => {
     await deployTxn.sign([deployerKey, zkAppPrivateKey]).send();
 
     const myUser = new User({
-      name: Field(0),
-      age: UInt32.from(4),
+      name,
+      age,
+      i64,
+      u64,
+      bool,
+      privateKey,
+      publicKey,
+      signature,
+      character,
+      sign,
+      field,
     });
-
-    const EXPECTED_HASH = Poseidon.hash(
-      Field(0).toFields().concat(UInt32.from(4).toFields())
-    );
 
     // Execute
     const tx = await Mina.transaction(
@@ -136,7 +207,7 @@ describe('Schema', () => {
     );
 
     await tx.prove();
-    await tx.sign([senderKey, zkAppPrivateKey]).send();
+    await tx.sign([deployerKey, zkAppPrivateKey]).send();
 
     // Verify
     expect(zkAppInstance.user.get()).toEqual(EXPECTED_HASH);
