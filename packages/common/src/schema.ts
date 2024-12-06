@@ -209,6 +209,8 @@ export class Schema {
               result[name] = new Bool(value);
               break;
             case 'Sign':
+              // True = 1
+              // False = -1
               result[name] = value ? Sign.one : Sign.minusOne;
               break;
             default:
