@@ -15,6 +15,11 @@ import { isDatabaseOwner } from './database.js';
 
 const MINA_DECIMAL = 1e9;
 
+const requiredBalanceMap = new Map<ETransactionType, number>([
+  [ETransactionType.Deploy, MINA_DECIMAL * 1.1],
+  [ETransactionType.Rollup, MINA_DECIMAL * 0.1],
+]);
+
 export async function enqueueTransaction(
   databaseName: string,
   actor: string,
@@ -138,7 +143,7 @@ export async function enqueueTransaction(
   return insertResult.insertedId;
 }
 
-export async function getUnsignedTransaction(
+export async function getTransactionDraft(
   databaseName: string,
   actor: string,
   transactionType: ETransactionType
@@ -180,9 +185,11 @@ export async function getUnsignedTransaction(
       if (account) {
         const balance = account.balance.toBigInt();
 
-        if (balance < MINA_DECIMAL * 1.1) {
+        const minBalance = BigInt(requiredBalanceMap.get(transactionType)!);
+
+        if (balance < minBalance) {
           throw new Error(
-            'Your account need at least 1.1 Mina to create database'
+            `Your account need at least ${minBalance} balance unit for ${transactionType}`
           );
         }
 
@@ -192,7 +199,7 @@ export async function getUnsignedTransaction(
       }
     }
 
-    throw new Error('There is not any transaction for signing');
+    throw new Error('There is not any unsigned transaction');
   }
 
   throw new Error('Only database owner can deploy database');

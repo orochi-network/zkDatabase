@@ -9,7 +9,7 @@ import Joi from 'joi';
 import {
   confirmTransaction as confirmTransactionDomain,
   enqueueTransaction as enqueueTransactionDomain,
-  getUnsignedTransaction as getUnsignedTransactionDomain,
+  getTransactionDraft,
 } from '../../domain/use-case/transaction.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
@@ -34,7 +34,7 @@ export const typeDefsTransaction = gql`
   }
 
   extend type Query {
-    getUnsignedTransaction(
+    transactionDraft(
       databaseName: String!
       transactionType: TransactionType!
     ): Transaction!
@@ -47,13 +47,13 @@ export const typeDefsTransaction = gql`
   }
 `;
 
-const getUnsignedTransaction = authorizeWrapper(
+const transactionDraft = authorizeWrapper(
   Joi.object({
     databaseName,
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) => {
-    const transaction = await getUnsignedTransactionDomain(
+    const transaction = await getTransactionDraft(
       args.databaseName,
       ctx.userName,
       args.transactionType
@@ -93,7 +93,7 @@ const confirmTransaction = authorizeWrapper(
 type TTransactionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
-    getUnsignedTransaction: typeof getUnsignedTransaction;
+    transactionDraft: typeof transactionDraft;
   };
   Mutation: {
     enqueueDeployTransaction: typeof enqueueDeployTransaction;
@@ -104,7 +104,7 @@ type TTransactionResolver = {
 export const resolversTransaction: TTransactionResolver = {
   JSON: GraphQLJSON,
   Query: {
-    getUnsignedTransaction,
+    transactionDraft,
   },
   Mutation: {
     enqueueDeployTransaction,

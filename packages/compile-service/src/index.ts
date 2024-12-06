@@ -162,7 +162,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
           );
         }
 
-        await modelTransaction.updateById(request.id, {
+        await modelTransaction.updateById(tx._id, {
           status: ETransactionStatus.Unsigned,
           rawTransaction,
         });
@@ -181,7 +181,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
         logger.error(errorMessage);
 
-        await modelTransaction.updateById(request.id, {
+        await modelTransaction.updateById(tx._id, {
           status: ETransactionStatus.Failed,
           error: (error as Error).message,
         });
