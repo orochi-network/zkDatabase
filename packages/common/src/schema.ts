@@ -52,6 +52,13 @@ type TProvableSerializationMap = {
 };
 
 /**
+ * Represents all possible serialized values that can be stored in a provable
+ * field. This is a union type of all values in the TProvableSerializationMap.
+ */
+export type TProvableSerializationValue =
+  TProvableSerializationMap[keyof TProvableSerializationMap];
+
+/**
  * Represents a field with a name, kind, and the actual value.
  * Rendered as a union of all possible field types.
  * ```ts
@@ -138,7 +145,7 @@ export class Schema {
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
           const { name, kind } = Document.schemaEntries[i];
-          let value: TProvableSerializationMap[keyof TProvableSerializationMap];
+          let value: TProvableSerializationValue;
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
