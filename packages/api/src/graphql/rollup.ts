@@ -6,14 +6,14 @@ import {
 } from "./types/rollup.js";
 
 const ROLLUP_CREATE = gql`
-  mutation RollUpHistoryAdd($databaseName: String!) {
-    rollUpHistoryAdd(databaseName: $databaseName)
+  mutation RollUpCreate($databaseName: String!) {
+    rollUpCreate(databaseName: $databaseName)
   }
 `;
 
 const ROLLUP_HISTORY = gql`
   mutation RollUpHistory($databaseName: String!) {
-    rollUpCreate(databaseName: $databaseName) {
+    rollUpHistory(databaseName: $databaseName) {
       state
       extraData
       history {
