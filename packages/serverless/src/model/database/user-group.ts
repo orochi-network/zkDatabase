@@ -1,11 +1,18 @@
-import { TUserGroupRecord } from '@zkdb/common';
+import { TUserGroup, TUserGroupRecord } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { BulkWriteOptions, FindOptions, ObjectId, WithoutId } from 'mongodb';
+import {
+  BulkWriteOptions,
+  FindOptions,
+  InsertOneOptions,
+  InsertOneResult,
+  ObjectId,
+  WithoutId,
+} from 'mongodb';
 import ModelGroup from './group.js';
 
 export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
@@ -14,6 +21,13 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
 
   constructor(databaseName: string) {
     super(databaseName, DB.service, ModelUserGroup.collectionName);
+  }
+
+  public async createUserGroup(
+    args: WithoutId<TUserGroupRecord>,
+    options?: InsertOneOptions
+  ): Promise<InsertOneResult<TUserGroup>> {
+    return this.insertOne(args, options);
   }
 
   public async checkMembership(

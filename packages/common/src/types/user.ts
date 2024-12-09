@@ -23,7 +23,7 @@ export type TUserSignInResponse = TUser & {
 
 export type TUserSignUpInput = Pick<
   TUser,
-  'userName' | 'email' | 'publicKey' | 'userData'
+  'userName' | 'email' | 'userData'
 > & {
   timestamp: number;
 };

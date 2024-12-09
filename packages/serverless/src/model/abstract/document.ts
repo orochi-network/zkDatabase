@@ -5,11 +5,16 @@ import {
   TDocumentRecordResponse,
   TProvableTypeString,
 } from '@zkdb/common';
-import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import {
+  DB,
+  ModelBasic,
+  ModelCollection,
+  ModelMetadataDatabase,
+} from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
+import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
-import { getCurrentTime } from 'helper/common.js';
 
 /** Database-serialized version of a document record. */
 export type TDocumentRecordSerialized = Omit<
@@ -75,7 +80,7 @@ export class ModelDocument extends ModelBasic<
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance();
+    return ModelMetadataDatabase.getInstance();
   }
 
   get modelCollection() {

@@ -12,7 +12,9 @@ export type TGroup = {
 
 export type TUserGroup = {
   userName: string;
+  groupName: string;
   groupOjectId: ObjectId;
+  userObjectId: ObjectId;
 };
 
 export type TGroupRecord = TDbRecord<TGroup>;

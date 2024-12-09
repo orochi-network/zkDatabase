@@ -60,8 +60,8 @@ type MerkleProof {
 }
 
 type MerkleNode {
-  index: Int!,
-  level: Int!,
+  index: Int!
+  level: Int!
   hash: String!
   empty: Boolean!
 }

@@ -29,7 +29,7 @@ import {
   TDocumentHistoryListRequest,
 } from '@zkdb/common';
 
-import { DEFAULT_PAGINATION } from 'common/const.js';
+import { DEFAULT_PAGINATION } from '../../common/const.js';
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -149,7 +149,7 @@ export const typeDefsDocument = gql`
     documentCreate(
       databaseName: String!
       collectionName: String!
-      document: [DocumentRecordInput!]!
+      document: [SchemaFieldInput!]!
       documentPermission: Int
     ): [MerkleWitness!]!
 
@@ -157,7 +157,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       query: JSON!
-      document: [DocumentRecordInput!]!
+      document: [SchemaFieldInput!]!
     ): [MerkleWitness!]!
 
     documentDrop(

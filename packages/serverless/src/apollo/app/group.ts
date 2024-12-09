@@ -191,11 +191,16 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
 const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
   GroupCreateRequest,
   async (_root, args, ctx) =>
-    createGroup(
-      args.databaseName,
-      ctx.userName,
-      args.groupName,
-      args.groupDescription
+    Boolean(
+      withTransaction((session) =>
+        createGroup(
+          args.databaseName,
+          ctx.userName,
+          args.groupName,
+          args.groupDescription,
+          session
+        )
+      )
     )
 );
 

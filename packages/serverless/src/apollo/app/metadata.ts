@@ -11,9 +11,7 @@ import {
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { setPermission } from '../../domain/use-case/permission.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -34,15 +32,15 @@ enum OwnershipGroup {
 }
 
 type DocumentMetadataOutput {
-  _id: String!;
-  createdAt: Date!;
-  updatedAt: Date!;
+  _id: String!
+  createdAt: Date!
+  updatedAt: Date!
   owner: String!
   group: String!
-  permission: Int!;
-  collection: String!;
-  docId: String!;
-  merkleIndex: String!;
+  permission: Int!
+  collection: String!
+  docId: String!
+  merkleIndex: String!
 }
 
 extend type Query {
@@ -70,15 +68,15 @@ extend type Mutation {
     collectionName: String!
     docId: String
     permission: Int!
-  ): CollectionMetadataOutput!
+  ): CollectionMetadata!
 
-  permissionOwn(
+  permissionTransferOwnership(
     databaseName: String!
     collectionName: String!
     docId: String
     grouping: OwnershipGroup!
     newOwner: String!
-  ): CollectionMetadataOutput
+  ): Boolean
 }
 `;
 
@@ -111,22 +109,6 @@ const getMetadataCollection = authorizeWrapper(
       ctx.userName,
       true
     )
-);
-
-const collectionMetadata = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    collectionName,
-  }),
-  async (_root: unknown, args: TCollectionRequest, ctx) => {
-    const metadata = await ModelMetadataCollection.getInstance(
-      args.databaseName
-    ).getMetadata(args.collectionName);
-    if (!metadata) {
-      throw new Error(`Metadata not found for collection ${collectionName}`);
-    }
-    return metadata;
-  }
 );
 
 // Mutation
@@ -192,7 +174,6 @@ type TPermissionResolver = {
   Query: {
     getMetadataDocument: typeof getMetadataDocument;
     getMetadataCollection: typeof getMetadataCollection;
-    collectionMetadata: typeof collectionMetadata;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
@@ -205,7 +186,6 @@ export const resolversPermission: TPermissionResolver = {
   Query: {
     getMetadataCollection,
     getMetadataDocument,
-    collectionMetadata,
   },
   Mutation: {
     permissionSet,

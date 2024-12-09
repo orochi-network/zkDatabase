@@ -1,12 +1,15 @@
 import {
   collectionName,
   databaseName,
+  ESortingSchema,
   groupName,
   O1JS_VALID_TYPE,
+  TCollectionListRequest,
+  TCollectionListResponse,
   TDatabaseRequest,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
-import { ModelSystemDatabase, withTransaction } from '@zkdb/storage';
+import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -23,7 +26,8 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean().optional(),
+  index: Joi.boolean().optional(),
+  sorting: ESortingSchema,
 });
 
 export const schemaFields = Joi.array().items(schemaField);
@@ -74,41 +78,44 @@ export const typeDefsCollection = gql`
 `;
 
 // Query
-const collectionList = authorizeWrapper(
+const collectionList = authorizeWrapper<
+  TCollectionListRequest,
+  TCollectionListResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    listCollection(args.databaseName, ctx.userName)
+  async (_root, args, ctx) => listCollection(args.databaseName, ctx.userName)
 );
 
-const collectionExist = publicWrapper(
+const collectionExist = publicWrapper<TCollectionRequest, boolean>(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest) =>
-    (
-      await ModelSystemDatabase.getInstance(args.databaseName).listCollections()
-    ).some((collection) => collection === args.collectionName)
+  async (_root, args) =>
+    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
+      (collection) => collection === args.collectionName
+    )
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper(
+const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
   CollectionCreateRequest,
-  async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    return withTransaction((session) =>
-      createCollection(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.schema,
-        args.groupName,
-        args.permission,
-        session
+  async (_root, args, ctx) =>
+    Boolean(
+      withTransaction((session) =>
+        createCollection(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.schema,
+          args.groupName,
+          args.permission,
+          session
+        )
       )
-    );
-  }
+    )
 );
 
 type TCollectionResolvers = {

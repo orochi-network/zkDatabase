@@ -1,21 +1,25 @@
 import {
+  DatabaseCreateRequest,
+  DatabaseListRequest,
   TDatabaseChangeOwnerRequest,
   TDatabaseCreateRequest,
+  TDatabaseListRequest,
+  TDatabaseListResponse,
   TDatabaseRequest,
-  TDatabaseSearchRequest,
+  TDatabaseResponse,
   TDatabaseUpdateDeployedRequest,
   databaseName,
-  pagination,
   userName,
 } from '@zkdb/common';
 import {
   DB,
+  ModelMetadataDatabase,
   ModelDatabase,
-  ModelSystemDatabase,
   withTransaction,
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
+import { Document } from 'mongodb';
 import {
   changeDatabaseOwner,
   createDatabase,
@@ -23,12 +27,7 @@ import {
   updateDeployedDatabase,
 } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-
-const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
-  databaseName,
-  merkleHeight: Joi.number().integer().positive().min(8).max(256).required(),
-});
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 const DatabaseUpdateDeployedRequest =
   Joi.object<TDatabaseUpdateDeployedRequest>({
@@ -51,7 +50,7 @@ export const typeDefsDatabase = gql`
   type Query
   type Mutation
 
-  type DbSetting {
+  type Database {
     merkleHeight: Int!
     publicKey: String
     databaseOwner: String!
@@ -73,26 +72,26 @@ export const typeDefsDatabase = gql`
     tx: String!
   }
 
-  type DbDescription {
+  type DatabaseDetail {
     databaseName: String!
-    databaseSize: String!
     databaseOwner: String!
-    appPublicKey: String
     merkleHeight: Int!
+    appPublicKey: String
+    collection: [MetadataCollection]
+    databaseSize: Int
     deployStatus: TransactionStatus
-    collections: [CollectionDescriptionOutput]!
   }
 
-  type DatabasePaginationOutput {
-    data: [DbDescription]!
-    totalSize: Int!
+  type DatabaseListResponse {
+    data: [DatabaseDetail]!
+    total: Int!
     offset: Int!
   }
 
   extend type Query {
-    dbList(query: JSON, pagination: PaginationInput): DatabasePaginationOutput!
+    dbList(query: JSON, pagination: PaginationInput): DatabaseListResponse!
     dbStats(databaseName: String!): JSON
-    dbSetting(databaseName: String!): DbSetting!
+    dbInfo(databaseName: String!): Database!
     dbExist(databaseName: String!): Boolean!
     #dbFindIndex(databaseName: String!, index: Int!): JSON
   }
@@ -105,34 +104,27 @@ export const typeDefsDatabase = gql`
   }
 `;
 
-export const merkleHeight = Joi.number().integer().positive().required();
-
-const databaseSearch = Joi.object({
-  query: Joi.object().optional(),
-  pagination,
-});
-
 // Query
-const dbStats = publicWrapper(
+const dbStats = publicWrapper<TDatabaseRequest, Document>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) =>
+  async (_root, args, _ctx) =>
     // Using system database to get stats
-    ModelSystemDatabase.getInstance(args.databaseName).stats()
+    ModelDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = authorizeWrapper(
-  databaseSearch,
-  async (_root: unknown, args: TDatabaseSearchRequest, _ctx) =>
+const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
+  DatabaseListRequest,
+  async (_root, args, _ctx) =>
     getListDatabaseDetail(_ctx.userName, args.query, args.pagination)
 );
 
-const dbSetting = publicWrapper(
+const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
+  async (_root, args, _ctx) => {
     const { databases } = await DB.service.client.db().admin().listDatabases();
 
     const isDatabaseExist = databases.some(
@@ -143,7 +135,7 @@ const dbSetting = publicWrapper(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const database = await ModelDatabase.getInstance().getDatabase(
+    const database = await ModelMetadataDatabase.getInstance().getDatabase(
       args.databaseName
     );
 
@@ -155,36 +147,39 @@ const dbSetting = publicWrapper(
   }
 );
 
-const dbDeployedUpdate = authorizeWrapper(
-  DatabaseUpdateDeployedRequest,
-  async (_root: unknown, args: TDatabaseUpdateDeployedRequest, _) =>
-    updateDeployedDatabase(args.databaseName, args.appPublicKey)
+const dbDeployedUpdate = authorizeWrapper<
+  TDatabaseUpdateDeployedRequest,
+  boolean
+>(DatabaseUpdateDeployedRequest, async (_root, args, _) =>
+  updateDeployedDatabase(args.databaseName, args.appPublicKey)
 );
 
-const dbCreate = authorizeWrapper(
+const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
   DatabaseCreateRequest,
-  async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    withTransaction((session) =>
-      createDatabase(
-        args.databaseName,
-        args.merkleHeight,
-        ctx.userName,
-        session
+  async (_root, args, ctx) =>
+    Boolean(
+      withTransaction((session) =>
+        createDatabase(
+          args.databaseName,
+          args.merkleHeight,
+          ctx.userName,
+          session
+        )
       )
     )
 );
 
-const dbChangeOwner = authorizeWrapper(
+const dbChangeOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
   DatabaseChangeOwnerRequest,
-  async (_root: unknown, args: TDatabaseChangeOwnerRequest, ctx) =>
+  async (_root, args, ctx) =>
     changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
 );
 
-const dbExist = publicWrapper(
+const dbExist = publicWrapper<TDatabaseRequest, boolean>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
+  async (_root, args, _ctx) => {
     const { databases } = await DB.service.client.db().admin().listDatabases();
     return databases.some((db) => db.name === args.databaseName);
   }
@@ -195,7 +190,7 @@ type TDatabaseResolver = {
   Query: {
     dbStats: typeof dbStats;
     dbList: typeof dbList;
-    dbSetting: typeof dbSetting;
+    dbInfo: typeof dbInfo;
     dbExist: typeof dbExist;
   };
   Mutation: {
@@ -210,7 +205,7 @@ export const resolversDatabase: TDatabaseResolver = {
   Query: {
     dbStats,
     dbList,
-    dbSetting,
+    dbInfo,
     dbExist,
   },
   Mutation: {

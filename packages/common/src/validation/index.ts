@@ -1,8 +1,6 @@
-import { ETransactionType, TDocumentField } from '@types';
+import { ESorting, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
 import Joi from 'joi';
-
-import { ESorting } from 'src/types/collection';
 
 export const O1JS_VALID_TYPE = [
   'CircuitString',
@@ -31,13 +29,6 @@ export const objectId = Joi.string()
   .max(36)
   .required()
   .pattern(/^[a-f0-9]+/i);
-
-export const databaseName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
 
 export const userName = Joi.string()
   .trim()
@@ -73,13 +64,6 @@ export const publicKey = Joi.string()
   .required()
   .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
 
-export const indexName = Joi.string()
-  .trim()
-  .min(2)
-  .max(128)
-  .required()
-  .pattern(/^[_a-z]+[_a-z0-9]+/i);
-
 export const indexNumber = Joi.string()
   .regex(/^[0-9]+$/)
   .required();
@@ -96,25 +80,12 @@ export const documentField = Joi.object<TDocumentField>({
   value: Joi.string().raw().required(),
 });
 
-export const pagination = Joi.object({
-  offset: Joi.number().integer().min(0).default(0).optional(),
-  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
-});
-
-export const search = Joi.object({
-  search: Joi.optional(),
-  pagination,
-});
-
-export const sortingOrder = Joi.string().valid(...Object.values(ESorting));
-
-export const collectionIndex = Joi.object({
-  name: indexName,
-  sorting: sortingOrder,
-});
-
 export const transactionType = Joi.string().valid(
   ...Object.values(ETransactionType)
 );
 
 export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict().value;
+
+export * from './collection';
+export * from './common';
+export * from './database';

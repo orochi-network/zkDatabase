@@ -40,7 +40,7 @@ export async function isUserExist(userName: string): Promise<boolean> {
 }
 
 export async function signUpUser(user: TUser, signature: TMinaSignature) {
-  const { userName, userData, publicKey, email } = user;
+  const { userName, publicKey, email } = user;
   const client = new Client({ network: config.NETWORK_ID });
   if (client.verifyMessage(signature)) {
     const jsonData: TUser = JSON.parse(signature.data);
@@ -54,11 +54,7 @@ export async function signUpUser(user: TUser, signature: TMinaSignature) {
 
     try {
       const existingUser = await modelUser.collection.findOne({
-        $or: [
-          { email: user.email },
-          { userName: user.userName },
-          { publicKey: user.publicKey },
-        ],
+        $or: [{ email }, { userName }, { publicKey }],
       });
 
       if (existingUser) {
@@ -77,7 +73,6 @@ export async function signUpUser(user: TUser, signature: TMinaSignature) {
       throw error;
     }
 
-    // TODO: Check user existence by public key
     const result = await modelUser.create(user);
     if (result) {
       return result;

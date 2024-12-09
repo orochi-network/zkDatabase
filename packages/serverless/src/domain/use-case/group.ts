@@ -1,4 +1,5 @@
 import { ClientSession } from 'mongodb';
+import { getCurrentTime } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
@@ -29,17 +30,36 @@ async function createGroup(
         `Group ${groupName} is already exist for database ${databaseName}`
       );
     }
-
+    // Initialize model
     const modelGroup = new ModelGroup(databaseName);
+    const modelUserGroup = new ModelUserGroup(databaseName);
+    const modelUser = new ModelUser();
 
-    const group = await modelGroup.createGroup(
-      groupName,
-      groupDescription,
-      actor,
-      { session }
-    );
-
-    return group != null;
+    const user = await modelUser.findOne({ userName: actor }, { session });
+    if (user) {
+      // Create group first
+      const group = await modelGroup.createGroup(
+        groupName,
+        groupDescription,
+        actor,
+        { session }
+      );
+      // Create user group
+      const userGroup = await modelUserGroup.createUserGroup(
+        {
+          userName: actor,
+          groupOjectId: group.insertedId,
+          userObjectId: user._id,
+          createdAt: getCurrentTime(),
+          updatedAt: getCurrentTime(),
+          groupName: groupName,
+        },
+        { session }
+      );
+      // Make sure both group & userGroup inserted
+      return group != null && userGroup != null;
+    }
+    throw new Error('User can not be found');
   }
 
   throw Error('Only database owner allowed to create group');
