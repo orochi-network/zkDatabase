@@ -1,6 +1,6 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
-
+import { ESequencer, TDocumentField, TMerkleProof } from '@zkdb/common';
 import {
   ModelMerkleTree,
   ModelQueueTask,
@@ -9,9 +9,7 @@ import {
 } from '@zkdb/storage';
 
 import ModelDocument from '../../model/abstract/document.js';
-
 import { buildSchema } from './schema.js';
-import { TDocumentField, TMerkleProof } from '@zkdb/common';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
 // Prove the creation of a document
@@ -53,8 +51,8 @@ export async function proveCreateDocument(
   });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue(
-    'operation',
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
     compoundSession?.sessionService
   );
 
@@ -124,7 +122,7 @@ export async function proveUpdateDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.nextValue(ESequencer.Operation, session);
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -183,7 +181,7 @@ export async function proveDeleteDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.nextValue(ESequencer.Operation, session);
 
   await ModelQueueTask.getInstance().queueTask(
     {
