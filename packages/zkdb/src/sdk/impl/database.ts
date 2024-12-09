@@ -121,15 +121,15 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async createRollup(): Promise<boolean> {
-    const result = await this.apiClient.rollup.createRollUp({
+  async rollupCreate(): Promise<boolean> {
+    const result = await this.apiClient.rollup.rollupCreate({
       databaseName: this.databaseName,
     });
     return result.unwrap();
   }
 
-  async getRollUpHistory(): Promise<TGetRollUpHistory> {
-    const result = await this.apiClient.rollup.getRollUpHistory({
+  async rollupHistory(): Promise<TGetRollUpHistory> {
+    const result = await this.apiClient.rollup.rollupHistory({
       databaseName: this.databaseName,
     });
     return result.unwrap();
