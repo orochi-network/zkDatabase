@@ -20,7 +20,7 @@ const MAP_MINIMAL_BALANCE = new Map<ETransactionType, number>([
   [ETransactionType.Rollup, MINA_DECIMAL * 0.1],
 ]);
 
-export async function enqueueTransaction(
+export async function transactionDeployEnqueue(
   databaseName: string,
   actor: string,
   transactionType: ETransactionType,
@@ -143,7 +143,7 @@ export async function enqueueTransaction(
   return insertResult.insertedId;
 }
 
-export async function getTransactionDraft(
+export async function transactionDraft(
   databaseName: string,
   actor: string,
   transactionType: ETransactionType
@@ -220,7 +220,7 @@ export async function getLatestTransaction(
   return txs.length === 0 ? null : txs[0];
 }
 
-export async function confirmTransaction(
+export async function transactionConfirm(
   databaseName: string,
   actor: string,
   txHash: string

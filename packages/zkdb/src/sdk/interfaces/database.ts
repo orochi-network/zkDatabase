@@ -38,8 +38,8 @@ export interface ZKDatabase {
   getProof(): Promise<JsonProof>;
 
   // Transaction
-  getTransactionDraft(transactionType: TTransactionType): Promise<TDbTransaction>;
-  confirmTransaction(id: string, txHash: string): Promise<boolean>;
+  transactionDraft(transactionType: TTransactionType): Promise<TDbTransaction>;
+  transactionConfirm(id: string, txHash: string): Promise<boolean>;
 
   // Rollup
   createRollup(): Promise<boolean>;

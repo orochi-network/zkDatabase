@@ -19,7 +19,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import logger from '../../helper/logger.js';
-import { enqueueTransaction } from './transaction.js';
+import { transactionDeployEnqueue } from './transaction.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -61,7 +61,7 @@ export async function createRollUp(
     }
   }
 
-  const txId = await enqueueTransaction(
+  const txId = await transactionDeployEnqueue(
     databaseName,
     actor,
     ETransactionType.Rollup,
