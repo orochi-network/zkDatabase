@@ -7,11 +7,7 @@ import {
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  transactionConfirm as transactionConfirmDomain,
-  transactionDeployEnqueue as transactionDeployEnqueueDomain,
-  transactionDraft as transactionDraftDomain,
-} from '../../domain/use-case/transaction.js';
+import Transaction from '../../domain/use-case/transaction.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import { databaseName, transactionType } from './common.js';
@@ -57,7 +53,7 @@ const transactionDraft = authorizeWrapper<
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) => {
-    const transaction = await transactionDraftDomain(
+    const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,
       args.transactionType
@@ -76,7 +72,7 @@ const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     (
-      await transactionDeployEnqueueDomain(
+      await Transaction.enqueue(
         args.databaseName,
         ctx.userName,
         ETransactionType.Deploy
@@ -94,7 +90,7 @@ const transactionConfirm = authorizeWrapper<
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    await transactionConfirmDomain(args.databaseName, ctx.userName, args.txHash)
+    await Transaction.confirm(args.databaseName, ctx.userName, args.txHash)
 );
 
 type TTransactionResolver = {
