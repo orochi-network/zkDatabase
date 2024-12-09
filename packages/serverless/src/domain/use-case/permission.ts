@@ -15,7 +15,7 @@ import ModelMetadataDocument, {
 import { isDatabaseOwner } from './database.js';
 import { checkUserGroupMembership } from './group.js';
 
-async function fetchPermissionDetails(
+async function fetchPermissionDetail(
   databaseName: string,
   actor: string,
   metadata: IMetadataDocument | IMetadataCollection | null,
@@ -56,7 +56,7 @@ export async function readPermission(
     : { collection: collectionName };
   const metadata = await modelMetadata.findOne(key, { session });
 
-  return fetchPermissionDetails(databaseName, actor, metadata);
+  return fetchPermissionDetail(databaseName, actor, metadata);
 }
 
 async function checkPermission(

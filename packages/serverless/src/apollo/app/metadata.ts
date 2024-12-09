@@ -1,19 +1,17 @@
+import { collectionName, databaseName, objectId, userName } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
+import {
+  readCollectionMetadata,
+  readDocumentMetadata,
+} from '../../domain/use-case/metadata.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { setPermission } from '../../domain/use-case/permission.js';
-import { getSchemaDefinition } from '../../domain/use-case/schema.js';
 import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, objectId, userName } from './common.js';
-import {
-  readCollectionMetadata,
-  readDocumentMetadata,
-} from '../../domain/use-case/metadata.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -34,15 +32,15 @@ enum OwnershipGroup {
 }
 
 type DocumentMetadataOutput {
-  _id: String!;
-  createdAt: Date!;
-  updatedAt: Date!;
+  _id: String!
+  createdAt: Date!
+  updatedAt: Date!
   owner: String!
   group: String!
-  permission: Int!;
-  collection: String!;
-  docId: String!;
-  merkleIndex: String!;
+  permission: Int!
+  collection: String!
+  docId: String!
+  merkleIndex: String!
 }
 
 extend type Query {
@@ -70,15 +68,15 @@ extend type Mutation {
     collectionName: String!
     docId: String
     permission: Int!
-  ): CollectionMetadataOutput!
+  ): CollectionMetadata!
 
-  permissionOwn(
+  permissionTransferOwnership(
     databaseName: String!
     collectionName: String!
     docId: String
     grouping: OwnershipGroup!
     newOwner: String!
-  ): CollectionMetadataOutput
+  ): Boolean
 }
 `;
 
@@ -111,15 +109,6 @@ const getMetadataCollection = authorizeWrapper(
       ctx.userName,
       true
     )
-);
-
-const collectionSchema = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    collectionName,
-  }),
-  async (_root: unknown, args: TCollectionRequest, ctx) =>
-    getSchemaDefinition(args.databaseName, args.collectionName, ctx.userName)
 );
 
 // Mutation
@@ -185,7 +174,6 @@ type TPermissionResolver = {
   Query: {
     getMetadataDocument: typeof getMetadataDocument;
     getMetadataCollection: typeof getMetadataCollection;
-    collectionSchema: typeof collectionSchema;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
@@ -198,7 +186,6 @@ export const resolversPermission: TPermissionResolver = {
   Query: {
     getMetadataCollection,
     getMetadataDocument,
-    collectionSchema,
   },
   Mutation: {
     permissionSet,

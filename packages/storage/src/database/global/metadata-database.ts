@@ -1,4 +1,4 @@
-import { TDatabase } from '@zkdb/common';
+import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import {
   Filter,
   FindOptions,
@@ -6,45 +6,49 @@ import {
   InsertOneResult,
   UpdateOptions,
   UpdateResult,
+  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstants } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
-export class ModelDatabase extends ModelBasic<TDatabase> {
-  private static instance: ModelDatabase;
+
+export class ModelMetadataDatabase extends ModelBasic<
+  WithoutId<TMetadataDatabaseRecord>
+> {
+  private static instance: ModelMetadataDatabase;
 
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.setting
+      zkDatabaseConstants.globalCollections.metadata_database
     );
   }
 
   public static getInstance() {
-    if (!ModelDatabase.instance) {
-      this.instance = new ModelDatabase();
+    if (!ModelMetadataDatabase.instance) {
+      this.instance = new ModelMetadataDatabase();
     }
     return this.instance;
   }
 
-  public async createDatabase(
-    setting: TDatabase,
+  public async createMetadataDatabase(
+    database: WithoutId<TMetadataDatabaseRecord>,
     options?: InsertOneOptions
-  ): Promise<InsertOneResult<TDatabase>> {
+  ): Promise<InsertOneResult<TMetadataDatabaseRecord>> {
     try {
-      const result = await this.collection.insertOne(setting, options);
+      const result = await this.collection.insertOne(database, options);
       return result;
     } catch (error) {
-      throw new Error(`Failed to create database setting: ${error}`);
+      throw new Error(`Failed to create database: ${error}`);
     }
   }
 
   public async updateDatabase(
     databaseName: string,
-    updateField: Partial<Pick<TDatabase, keyof TDatabase>>,
+    updateField: Partial<TMetadataDatabaseRecord>,
     options?: UpdateOptions
   ): Promise<UpdateResult> {
     // Runtime validation ensure no empty update
@@ -66,7 +70,7 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   public async getDatabase(
     databaseName: string,
     options?: FindOptions
-  ): Promise<TDatabase | null> {
+  ): Promise<TMetadataDatabase | null> {
     try {
       const database = await this.collection.findOne({ databaseName }, options);
       return database;
@@ -76,9 +80,9 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
   }
 
   public async getListDatabase(
-    filter: Filter<TDatabase>,
+    filter: Filter<TMetadataDatabase>,
     options?: FindOptions
-  ): Promise<TDatabase[]> {
+  ): Promise<TMetadataDatabase[]> {
     try {
       // Prevent user getting system database
       return (await this.collection.find(filter, options).toArray()).filter(
@@ -89,7 +93,7 @@ export class ModelDatabase extends ModelBasic<TDatabase> {
     }
   }
 
-  public async count(filter?: Filter<TDatabase>) {
+  public async count(filter?: Filter<TMetadataDatabase>) {
     return await this.collection.countDocuments(filter);
   }
 }

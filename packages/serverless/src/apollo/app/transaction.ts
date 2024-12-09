@@ -4,13 +4,14 @@ import {
   TTransactionRequest,
   TTransactionConfirmRequest,
   TTransactionResponse,
+  databaseName,
+  transactionType,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Transaction from '../../domain/use-case/transaction.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
 
 export const typeDefsTransaction = gql`
   #graphql

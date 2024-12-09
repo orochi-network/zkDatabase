@@ -1,16 +1,18 @@
-import { TMetadataCollection } from '@zkdb/common';
+import { TDbRecord, TMetadataCollection } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { Document, FindOptions } from 'mongodb';
+import { FindOptions, WithoutId } from 'mongodb';
 
 export interface IMetadataCollection
-  extends Document,
-    Omit<TMetadataCollection, 'sizeOnDisk'> {}
-export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {
+  extends Omit<TDbRecord<TMetadataCollection>, 'sizeOnDisk'> {}
+
+export class ModelMetadataCollection extends ModelGeneral<
+  WithoutId<IMetadataCollection>
+> {
   private static collectionName: string =
     zkDatabaseConstants.databaseCollections.metadataCollection;
 
@@ -30,13 +32,10 @@ export class ModelMetadataCollection extends ModelGeneral<IMetadataCollection> {
     return ModelMetadataCollection.instances[databaseName];
   }
 
-  public async getMetadata(
-    collectionName: string,
-    options?: FindOptions
-  ): Promise<IMetadataCollection | null> {
+  public async getMetadata(collectionName: string, options?: FindOptions) {
     return this.findOne(
       {
-        collection: collectionName,
+        collectionName,
       },
       options
     );

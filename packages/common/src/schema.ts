@@ -16,6 +16,7 @@ import {
   MerkleMapWitness,
   Struct,
 } from 'o1js';
+import { TMerkleWitnessNodeData } from './types/merkle-tree';
 
 export const ProvableTypeMap = {
   CircuitString,
@@ -34,13 +35,59 @@ export const ProvableTypeMap = {
 
 export type TProvableTypeString = keyof typeof ProvableTypeMap;
 
-export type TContractSchemaField = {
-  name: string;
-  kind: TProvableTypeString;
-  value: string;
+/** Map of Provable types to their corresponding JavaScript types. */
+type TProvableSerializationMap = {
+  CircuitString: string;
+  UInt32: number;
+  Int64: bigint;
+  UInt64: bigint;
+  Bool: boolean;
+  PrivateKey: string;
+  PublicKey: string;
+  Signature: string;
+  Character: string;
+  Sign: boolean;
+  Field: string;
+  MerkleMapWitness: TMerkleWitnessNodeData[];
 };
 
-export type TContractSchemaFieldDefinition = Omit<TContractSchemaField, 'value'>;
+/**
+ * Represents all possible serialized values that can be stored in a provable
+ * field. This is a union type of all values in the TProvableSerializationMap.
+ */
+export type TProvableSerializationValue =
+  TProvableSerializationMap[keyof TProvableSerializationMap];
+
+/**
+ * Represents a field with a name, kind, and the actual value.
+ * Rendered as a union of all possible field types.
+ * ```ts
+ * type TContractSchemaField = {
+ *     name: string;
+ *     kind: "CircuitString";
+ *     value: string;
+ * } | {
+ *     name: string;
+ *     kind: "UInt32";
+ *     value: bigint;
+ * } | {
+ * } | ... 7 more ... | {
+ *     ...;
+ * }
+ * ```
+ */
+export type TContractSchemaField = {
+  [K in TProvableTypeString]: {
+    name: string;
+    kind: K;
+    value: TProvableSerializationMap[K];
+  };
+}[TProvableTypeString];
+
+export type TContractSchemaFieldDefinition = Omit<
+  TContractSchemaField,
+  'value'
+>;
 
 export interface SchemaExtend {
   serialize(): TContractSchemaField[];
@@ -75,14 +122,15 @@ export class Schema {
     type: A
   ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
     class Document extends Struct(type) {
-      private static schemaEntries: TContractSchemaFieldDefinition[] = Object.entries(
-        type as any
-      ).map(([name, kind]): TContractSchemaFieldDefinition => {
-        return {
-          name,
-          kind: (kind as any).name.replace(/^_/, ''),
-        };
-      });
+      private static schemaEntries: TContractSchemaFieldDefinition[] =
+        Object.entries(type as any).map(
+          ([name, kind]): TContractSchemaFieldDefinition => {
+            return {
+              name,
+              kind: (kind as any).name.replace(/^_/, ''),
+            };
+          }
+        );
 
       public static getSchema(): TContractSchemaFieldDefinition[] {
         return Document.schemaEntries.map(({ name, kind }) => ({
@@ -97,12 +145,32 @@ export class Schema {
         const result: any = [];
         for (let i = 0; i < Document.schemaEntries.length; i += 1) {
           const { name, kind } = Document.schemaEntries[i];
-          let value = 'N/A';
+          let value: TProvableSerializationValue;
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
             case 'Signature':
               value = anyThis[name].toBase58();
+              break;
+            case 'MerkleMapWitness':
+              throw new Error('MerkleMapWitness is not supported');
+            case 'UInt64':
+              value = (anyThis[name] as UInt64).toBigInt();
+              break;
+            case 'Field':
+              value = anyThis[name].toString();
+              break;
+            case 'UInt32':
+              value = (anyThis[name] as UInt32).toBigint();
+              break;
+            case 'Int64':
+              value = (anyThis[name] as Int64).toBigint();
+              break;
+            case 'Bool':
+              value = (anyThis[name] as Bool).toBoolean();
+              break;
+            case 'Sign':
+              value = (anyThis[name] as Sign).isPositive().toBoolean();
               break;
             default:
               value = anyThis[name].toString();
@@ -131,21 +199,19 @@ export class Schema {
               break;
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
-            case 'UInt32':
             case 'UInt64':
-            case 'Int64':
             case 'Field':
+            case 'UInt32':
+            case 'Int64':
               result[name] = ProvableTypeMap[kind].from(value);
               break;
             case 'Bool':
-              result[name] =
-                value.toLowerCase() === 'true'
-                  ? new Bool(true)
-                  : new Bool(false);
+              result[name] = new Bool(value);
               break;
             case 'Sign':
-              result[name] =
-                value.toLowerCase() === 'true' ? Sign.minusOne : Sign.one;
+              // True = 1
+              // False = -1
+              result[name] = value ? Sign.one : Sign.minusOne;
               break;
             default:
               result[name] = ProvableTypeMap[kind].fromString(value);

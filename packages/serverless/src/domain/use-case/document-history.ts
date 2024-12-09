@@ -1,18 +1,24 @@
 /* eslint-disable import/prefer-default-export */
-import { TDocument, TDocumentHistory, TPagination } from '@zkdb/common';
-import { DB, zkDatabaseConstants } from '@zkdb/storage';
-import { ClientSession } from 'mongodb';
-import ModelDocument from '../../model/abstract/document.js';
-import { isDatabaseOwner } from './database.js';
 import {
-  buildDocumentFields,
-  filterDocumentsByPermission,
-} from './document.js';
+  TDocumentHistory as TDocumentHistoryBase,
+  TDocumentRecord,
+  TMetadataDocument,
+  TPagination,
+} from '@zkdb/common';
+import { DB, zkDatabaseConstants } from '@zkdb/storage';
+import { ClientSession, ObjectId } from 'mongodb';
+import ModelDocument, {
+  TDocumentRecordSerialized,
+} from '../../model/abstract/document.js';
+import { isDatabaseOwner } from './database.js';
+import { filterDocumentsByPermission } from './document.js';
 import { getUsersGroup } from './group.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
+import assert from 'assert';
+import { TPickOptional } from '@orochi-network/framework';
 
 function buildHistoryPipeline(pagination: TPagination): Array<any> {
   return [
@@ -23,7 +29,7 @@ function buildHistoryPipeline(pagination: TPagination): Array<any> {
       },
     },
     {
-      $sort: { docId: 1, timestamp: 1 },
+      $sort: { docId: 1, createdAt: 1 },
     },
     {
       $match: {
@@ -64,6 +70,19 @@ function buildHistoryPipeline(pagination: TPagination): Array<any> {
   ];
 }
 
+/** The data being returned by the mongodb pipeline above.
+ * TODO: Need debugging to actually confirm this */
+type TDocumentHistorySerialized = {
+  _id: ObjectId;
+  documents: TDocumentRecordSerialized[];
+  metadata: Omit<TMetadataDocument, 'collectionName'>;
+  active: boolean;
+};
+
+type TDocumentHistory = Omit<TDocumentHistoryBase, 'documents'> & {
+  documents: TPickOptional<TDocumentRecord, 'previousObjectId'>[];
+};
+
 async function listHistoryDocuments(
   databaseName: string,
   collectionName: string,
@@ -89,11 +108,12 @@ async function listHistoryDocuments(
 
     const pipeline = buildHistoryPipeline(pagination);
 
-    const documentsWithMetadata = await documentsCollection
+    const documentsWithMetadata = (await documentsCollection
       .aggregate(pipeline)
-      .toArray();
+      // TODO: need debugging to confirm the accuracy of this type annotation
+      .toArray()) as TDocumentHistorySerialized[];
 
-    let filteredDocuments: any[];
+    let filteredDocuments: TDocumentHistorySerialized[] = [];
 
     if (!(await isDatabaseOwner(databaseName, actor))) {
       filteredDocuments = filterDocumentsByPermission(
@@ -106,16 +126,22 @@ async function listHistoryDocuments(
     }
 
     const result = filteredDocuments.map((historyDocument) => {
-      const documents = historyDocument.documents.map((document: any) => ({
-        fields: buildDocumentFields(document),
-        docId: historyDocument._id,
-        createdAt: historyDocument.timestamp,
-      }));
+      assert(
+        historyDocument.documents.length > 0,
+        `Document history is empty, which should not happen if we expect the \
+MongoDB pipeline to already handle this case`
+      );
 
       return {
-        docId: historyDocument._id,
-        documents,
-        metadata: historyDocument.metadata,
+        docId: historyDocument.documents[0].docId,
+        documents: historyDocument.documents.map((doc) => ({
+          ...doc,
+          document: ModelDocument.deserializeDocument(doc.document),
+        })),
+        metadata: {
+          ...historyDocument.metadata,
+          collectionName,
+        },
         active: historyDocument.active,
       };
     });
@@ -128,13 +154,17 @@ async function listHistoryDocuments(
   );
 }
 
+// NOTE(wonrax): I don't know why single document history does not respond with
+// metadata
+type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
+
 async function readHistoryDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<HistoryDocument | null> {
+): Promise<TSingleDocumentHistory | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -177,21 +207,12 @@ async function readHistoryDocument(
     session
   );
 
-  const documents: TDocument[] = documentHistoryRecords.map(
-    (documentRecord) => {
-      const document = buildDocumentFields(documentRecord);
-
-      return {
-        docId: documentRecord.docId,
-        fields: document,
-        createdAt: documentRecord.timestamp,
-      };
-    }
-  );
-
   return {
     docId,
-    documents,
+    documents: documentHistoryRecords.map((doc) => ({
+      ...doc,
+      document: ModelDocument.deserializeDocument(doc.document),
+    })),
     active: documentHistoryRecords[0].active,
   };
 }
