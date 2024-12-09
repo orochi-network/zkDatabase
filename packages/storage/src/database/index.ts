@@ -5,7 +5,7 @@ import { ModelSequencer } from './common/sequencer.js';
 import { DatabaseEngine } from './database-engine.js';
 import { ModelCollection } from './general/collection.js';
 import { DocumentMetaIndex, ModelDatabase } from './general/database.js';
-import { ModelDatabaseMetadata } from './global/database-metadata.js';
+import { ModelMetadataDatabase } from './global/metadata-database.js';
 import { ModelProof } from './global/proof.js';
 import { ModelQueueTask, TaskEntity } from './global/queue.js';
 import { ModelRollup } from './global/rollup-history.js';
@@ -24,7 +24,7 @@ export {
   ModelBasic,
   ModelCollection,
   ModelDatabase,
-  ModelDatabaseMetadata,
+  ModelMetadataDatabase,
   ModelGeneral,
   ModelMerkleTree,
   ModelProof,

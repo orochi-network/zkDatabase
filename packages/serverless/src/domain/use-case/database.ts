@@ -2,13 +2,13 @@ import { Fill } from '@orochi-network/queue';
 import {
   ETransactionStatus,
   ETransactionType,
-  TDatabase,
   TDatabaseDetail,
+  TMetadataDatabase,
   TPagination,
   TPaginationReturn,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { DB, ModelDatabaseMetadata, ModelTransaction } from '@zkdb/storage';
+import { DB, ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { getCurrentTime } from 'helper/common.js';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
@@ -31,7 +31,7 @@ export async function createDatabase(
   session?: ClientSession
 ) {
   const user = await new ModelUser().findOne({ userName: actor }, { session });
-  const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
+  const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
 
   if (user) {
     // Case database already exist
@@ -44,7 +44,7 @@ export async function createDatabase(
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
 
-    const dbSetting = await modelDatabaseMetadata.createDatabase(
+    const dbSetting = await modelDatabaseMetadata.createMetadataDatabase(
       {
         databaseName,
         merkleHeight,
@@ -93,7 +93,7 @@ export async function updateDeployedDatabase(
 ) {
   try {
     // Add appPublicKey for database that deployed
-    await ModelDatabaseMetadata.getInstance().updateDatabase(databaseName, {
+    await ModelMetadataDatabase.getInstance().updateDatabase(databaseName, {
       appPublicKey,
     });
     // Remove data from deploy transaction
@@ -131,7 +131,7 @@ export async function getListDatabaseDetail(
       {}
     );
 
-  const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
+  const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
   const modelTx = ModelTransaction.getInstance();
 
   const databaseList = await modelDatabaseMetadata.getListDatabase(filter, {
@@ -150,7 +150,7 @@ export async function getListDatabaseDetail(
 
   const databases: TDatabaseDetail[] = (
     await Fill(
-      databaseList.map((setting: TDatabase) => async () => {
+      databaseList.map((setting: TMetadataDatabase) => async () => {
         const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
           setting;
         const dbInfo = databaseInfoMap[databaseName];
@@ -221,8 +221,8 @@ export async function getListDatabaseDetail(
 export async function getDatabase(
   databaseName: string,
   session?: ClientSession
-): Promise<TDatabase> {
-  const setting = await ModelDatabaseMetadata.getInstance().getDatabase(
+): Promise<TMetadataDatabase> {
+  const setting = await ModelMetadataDatabase.getInstance().getDatabase(
     databaseName,
     {
       session,
@@ -241,7 +241,7 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDatabaseMetadata.getInstance().getDatabase(
+  const setting = await ModelMetadataDatabase.getInstance().getDatabase(
     databaseName,
     {
       session,
@@ -265,7 +265,7 @@ export async function changeDatabaseOwner(
 
   if (actor === dbOwner) {
     if (await isUserExist(newOwner)) {
-      const result = await ModelDatabaseMetadata.getInstance().updateDatabase(
+      const result = await ModelMetadataDatabase.getInstance().updateDatabase(
         databaseName,
         { databaseOwner: newOwner }
       );

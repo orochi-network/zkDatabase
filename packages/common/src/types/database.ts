@@ -3,33 +3,34 @@ import { TMetadataCollection } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
-export type TDatabase = {
+//@NOTE: This is for the whole metadata of the database
+export type TMetadataDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
   appPublicKey: string;
 };
 
-export type TDatabaseDetail = TDatabase & {
+export type TDatabaseDetail = TMetadataDatabase & {
   collection: TMetadataCollection[];
   databaseSize: number;
   deployStatus: ETransactionStatus;
 };
 
-export type TDatabaseMetadataRecord = TDbRecord<TDatabase>;
+export type TMetadataDatabaseRecord = TDbRecord<TMetadataDatabase>;
 
 // Database
-export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
+export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
 
-export type TDatabaseResponse = TDatabase;
+export type TDatabaseResponse = TMetadataDatabase;
 
 // Database update deploy
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
-  Pick<TDatabase, 'appPublicKey'>;
+  Pick<TMetadataDatabase, 'appPublicKey'>;
 
 // Database list
 export type TDatabaseListRequest = {
-  query: Partial<TDatabaseMetadataRecord>;
+  query: Partial<TMetadataDatabaseRecord>;
   pagination: TPagination;
 };
 

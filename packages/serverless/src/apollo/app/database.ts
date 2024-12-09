@@ -13,7 +13,7 @@ import {
 } from '@zkdb/common';
 import {
   DB,
-  ModelDatabaseMetadata,
+  ModelMetadataDatabase,
   ModelDatabase,
   withTransaction,
 } from '@zkdb/storage';
@@ -135,7 +135,7 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const database = await ModelDatabaseMetadata.getInstance().getDatabase(
+    const database = await ModelMetadataDatabase.getInstance().getDatabase(
       args.databaseName
     );
 

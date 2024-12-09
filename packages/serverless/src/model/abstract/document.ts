@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
+import { TPickOptional } from '@orochi-network/framework';
 import {
   TDocumentField,
   TDocumentRecord,
@@ -9,13 +10,12 @@ import {
   DB,
   ModelBasic,
   ModelCollection,
-  ModelDatabaseMetadata,
+  ModelMetadataDatabase,
 } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
+import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
-import { getCurrentTime } from 'helper/common.js';
-import { TPickOptional } from '@orochi-network/framework';
 
 // TODO: the naming maybe confusing with TDocumentRecord from common
 export type IDocumentRecord = TPickOptional<
@@ -87,7 +87,7 @@ export class ModelDocument extends ModelBasic<
   }
 
   get modelDatabase() {
-    return ModelDatabaseMetadata.getInstance();
+    return ModelMetadataDatabase.getInstance();
   }
 
   get modelCollection() {

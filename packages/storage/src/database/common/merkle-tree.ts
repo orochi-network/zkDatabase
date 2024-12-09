@@ -12,7 +12,7 @@ import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
-import { ModelDatabaseMetadata } from '../global/database-metadata.js';
+import { ModelMetadataDatabase } from '../global/metadata-database.js';
 
 export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -47,7 +47,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public static async load(databaseName: string): Promise<ModelMerkleTree> {
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
-    const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
+    const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
 
     const database = await modelDatabaseMetadata.getDatabase(databaseName);
 

@@ -9,7 +9,7 @@ import {
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   CompoundSession,
-  ModelDatabaseMetadata,
+  ModelMetadataDatabase,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -90,7 +90,7 @@ export async function getRollUpHistory(
   const modelTransaction = ModelTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
   const queue = ModelQueueTask.getInstance();
-  const database = await ModelDatabaseMetadata.getInstance().getDatabase(
+  const database = await ModelMetadataDatabase.getInstance().getDatabase(
     databaseName,
     {
       session,

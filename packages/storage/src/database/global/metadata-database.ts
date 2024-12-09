@@ -1,4 +1,4 @@
-import { TDatabase, TDatabaseMetadataRecord } from '@zkdb/common';
+import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import {
   Filter,
   FindOptions,
@@ -14,30 +14,30 @@ import ModelBasic from '../base/basic.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
 
-export class ModelDatabaseMetadata extends ModelBasic<
-  WithoutId<TDatabaseMetadataRecord>
+export class ModelMetadataDatabase extends ModelBasic<
+  WithoutId<TMetadataDatabaseRecord>
 > {
-  private static instance: ModelDatabaseMetadata;
+  private static instance: ModelMetadataDatabase;
 
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.metadata
+      zkDatabaseConstants.globalCollections.metadata_database
     );
   }
 
   public static getInstance() {
-    if (!ModelDatabaseMetadata.instance) {
-      this.instance = new ModelDatabaseMetadata();
+    if (!ModelMetadataDatabase.instance) {
+      this.instance = new ModelMetadataDatabase();
     }
     return this.instance;
   }
 
-  public async createDatabase(
-    database: WithoutId<TDatabaseMetadataRecord>,
+  public async createMetadataDatabase(
+    database: WithoutId<TMetadataDatabaseRecord>,
     options?: InsertOneOptions
-  ): Promise<InsertOneResult<TDatabaseMetadataRecord>> {
+  ): Promise<InsertOneResult<TMetadataDatabaseRecord>> {
     try {
       const result = await this.collection.insertOne(database, options);
       return result;
@@ -48,7 +48,7 @@ export class ModelDatabaseMetadata extends ModelBasic<
 
   public async updateDatabase(
     databaseName: string,
-    updateField: Partial<TDatabaseMetadataRecord>,
+    updateField: Partial<TMetadataDatabaseRecord>,
     options?: UpdateOptions
   ): Promise<UpdateResult> {
     // Runtime validation ensure no empty update
@@ -70,7 +70,7 @@ export class ModelDatabaseMetadata extends ModelBasic<
   public async getDatabase(
     databaseName: string,
     options?: FindOptions
-  ): Promise<TDatabase | null> {
+  ): Promise<TMetadataDatabase | null> {
     try {
       const database = await this.collection.findOne({ databaseName }, options);
       return database;
@@ -80,9 +80,9 @@ export class ModelDatabaseMetadata extends ModelBasic<
   }
 
   public async getListDatabase(
-    filter: Filter<TDatabase>,
+    filter: Filter<TMetadataDatabase>,
     options?: FindOptions
-  ): Promise<TDatabase[]> {
+  ): Promise<TMetadataDatabase[]> {
     try {
       // Prevent user getting system database
       return (await this.collection.find(filter, options).toArray()).filter(
@@ -93,7 +93,7 @@ export class ModelDatabaseMetadata extends ModelBasic<
     }
   }
 
-  public async count(filter?: Filter<TDatabase>) {
+  public async count(filter?: Filter<TMetadataDatabase>) {
     return await this.collection.countDocuments(filter);
   }
 }

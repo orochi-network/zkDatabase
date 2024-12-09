@@ -4,7 +4,7 @@ import { UnsignedTransaction, ZkCompileService } from "@service";
 import { ETransactionStatus, ETransactionType } from "@zkdb/common";
 import {
   DatabaseEngine,
-  ModelDatabaseMetadata,
+  ModelMetadataDatabase,
   ModelProof,
   ModelSecureStorage,
   ModelTransaction,
@@ -68,7 +68,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
   }
 
   const modelTransaction = ModelTransaction.getInstance();
-  const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
+  const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
 
   while (true) {
     const request = await redisQueue.dequeue();
