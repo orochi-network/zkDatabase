@@ -9,7 +9,7 @@ import {
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   CompoundSession,
-  ModelDatabase,
+  ModelDatabaseMetadata,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -90,9 +90,12 @@ export async function getRollUpHistory(
   const modelTransaction = ModelTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
   const queue = ModelQueueTask.getInstance();
-  const database = await ModelDatabase.getInstance().getDatabase(databaseName, {
-    session,
-  });
+  const database = await ModelDatabaseMetadata.getInstance().getDatabase(
+    databaseName,
+    {
+      session,
+    }
+  );
 
   if (!database?.appPublicKey) {
     throw Error('Database is not bound to zk app');

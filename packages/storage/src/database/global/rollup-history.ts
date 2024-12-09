@@ -7,6 +7,7 @@ import ModelBasic from '../base/basic.js';
 
 export class ModelRollup extends ModelBasic<TRollUpHistory> {
   private static instance: ModelRollup;
+
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,

@@ -5,7 +5,12 @@ import {
   TDocumentRecord,
   TProvableTypeString,
 } from '@zkdb/common';
-import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import {
+  DB,
+  ModelBasic,
+  ModelCollection,
+  ModelDatabaseMetadata,
+} from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
 import logger from '../../helper/logger.js';
@@ -82,7 +87,7 @@ export class ModelDocument extends ModelBasic<
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance();
+    return ModelDatabaseMetadata.getInstance();
   }
 
   get modelCollection() {

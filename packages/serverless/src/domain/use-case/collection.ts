@@ -1,6 +1,6 @@
 import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
-import { DB, ModelCollection, ModelSystemDatabase } from '@zkdb/storage';
+import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
 import { ClientSession, IndexSpecification } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
@@ -95,7 +95,7 @@ async function createCollection(
   session?: ClientSession
 ): Promise<boolean> {
   // Get system database
-  const modelSystemDatabase = ModelSystemDatabase.getInstance(databaseName);
+  const modelSystemDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelSystemDatabase.isCollectionExist(collectionName)) {
     throw Error(
@@ -151,7 +151,7 @@ async function listCollection(
 
   if (await isDatabaseOwner(databaseName, actor)) {
     availableCollections =
-      await ModelSystemDatabase.getInstance(databaseName).listCollections();
+      await ModelDatabase.getInstance(databaseName).listCollections();
   } else {
     const collectionsMetadata = await ModelMetadataCollection.getInstance(
       databaseName
@@ -268,7 +268,7 @@ export async function listIndexesInfo(
       const property =
         Object.keys(key).length > 1 ? EProperty.Compound : EProperty.Unique;
       return {
-        name,
+        indexName: name,
         size,
         access,
         since,
@@ -344,9 +344,9 @@ export async function collectionExist(
   databaseName: string,
   collectionName: string
 ): Promise<boolean> {
-  return (
-    await ModelSystemDatabase.getInstance(databaseName).listCollections()
-  ).some((collection) => collection === collectionName);
+  return (await ModelDatabase.getInstance(databaseName).listCollections()).some(
+    (collection) => collection === collectionName
+  );
 }
 
 export {

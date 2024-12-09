@@ -9,7 +9,7 @@ import { isOk } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import { DatabaseEngine } from '../database-engine.js';
-import ModelDatabase from './system-database.js';
+import ModelDatabaseMetadata from './database.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -19,7 +19,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelCollection<any>> = new Map();
 
   public get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
+    return ModelDatabaseMetadata.getInstance(this.databaseName);
   }
 
   public static getInstance<T extends Document>(

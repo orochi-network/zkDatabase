@@ -5,7 +5,7 @@ import {
   TTransactionRecord,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { ModelDatabase, ModelTransaction } from '@zkdb/storage';
+import { ModelDatabaseMetadata, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { redisQueue } from '../../helper/mq.js';
@@ -26,7 +26,7 @@ export async function enqueueTransaction(
 
   // Check if smart contract is already bound to database
   if (transactionType === ETransactionType.Deploy) {
-    const database = await ModelDatabase.getInstance().getDatabase(
+    const database = await ModelDatabaseMetadata.getInstance().getDatabase(
       databaseName,
       { session }
     );
@@ -152,7 +152,7 @@ export async function getTransactionForSigning(
 
   if (await isDatabaseOwner(databaseName, actor)) {
     const database =
-      await ModelDatabase.getInstance().getDatabase(databaseName);
+      await ModelDatabaseMetadata.getInstance().getDatabase(databaseName);
 
     if (!database) {
       throw Error(`Database ${databaseName} does not exist`);

@@ -8,7 +8,7 @@ import {
   TPaginationReturn,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { DB, ModelDatabase, ModelTransaction } from '@zkdb/storage';
+import { DB, ModelDatabaseMetadata, ModelTransaction } from '@zkdb/storage';
 import { getCurrentTime } from 'helper/common.js';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
@@ -31,11 +31,11 @@ export async function createDatabase(
   session?: ClientSession
 ) {
   const user = await new ModelUser().findOne({ userName: actor }, { session });
-  const modelDatabase = ModelDatabase.getInstance();
+  const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
 
   if (user) {
     // Case database already exist
-    if (await modelDatabase.getDatabase(databaseName, { session })) {
+    if (await modelDatabaseMetadata.getDatabase(databaseName, { session })) {
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
@@ -44,7 +44,7 @@ export async function createDatabase(
     await ModelGroup.init(databaseName);
     await ModelUserGroup.init(databaseName);
 
-    const dbSetting = await modelDatabase.createDatabase(
+    const dbSetting = await modelDatabaseMetadata.createDatabase(
       {
         databaseName,
         merkleHeight,
@@ -68,7 +68,6 @@ export async function createDatabase(
       await createGroup(
         databaseName,
         actor,
-        user._id,
         DEFAULT_GROUP_ADMIN,
         'Default group for owner',
         session
@@ -94,7 +93,7 @@ export async function updateDeployedDatabase(
 ) {
   try {
     // Add appPublicKey for database that deployed
-    await ModelDatabase.getInstance().updateDatabase(databaseName, {
+    await ModelDatabaseMetadata.getInstance().updateDatabase(databaseName, {
       appPublicKey,
     });
     // Remove data from deploy transaction
@@ -132,10 +131,10 @@ export async function getListDatabaseDetail(
       {}
     );
 
-  const modelDatabase = ModelDatabase.getInstance();
+  const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
   const modelTx = ModelTransaction.getInstance();
 
-  const databaseList = await modelDatabase.getListDatabase(filter, {
+  const databaseList = await modelDatabaseMetadata.getListDatabase(filter, {
     skip: pagination?.offset,
     limit: pagination?.limit,
   });
@@ -215,7 +214,7 @@ export async function getListDatabaseDetail(
   return {
     data: databases.filter(Boolean),
     offset: pagination?.offset ?? 0,
-    total: await modelDatabase.count(filter),
+    total: await modelDatabaseMetadata.count(filter),
   };
 }
 
@@ -223,9 +222,12 @@ export async function getDatabase(
   databaseName: string,
   session?: ClientSession
 ): Promise<TDatabase> {
-  const setting = await ModelDatabase.getInstance().getDatabase(databaseName, {
-    session,
-  });
+  const setting = await ModelDatabaseMetadata.getInstance().getDatabase(
+    databaseName,
+    {
+      session,
+    }
+  );
 
   if (setting) {
     return setting;
@@ -239,9 +241,12 @@ export async function isDatabaseOwner(
   actor: string,
   session?: ClientSession
 ): Promise<boolean> {
-  const setting = await ModelDatabase.getInstance().getDatabase(databaseName, {
-    session,
-  });
+  const setting = await ModelDatabaseMetadata.getInstance().getDatabase(
+    databaseName,
+    {
+      session,
+    }
+  );
 
   if (setting) {
     return setting.databaseOwner === actor;
@@ -260,7 +265,7 @@ export async function changeDatabaseOwner(
 
   if (actor === dbOwner) {
     if (await isUserExist(newOwner)) {
-      const result = await ModelDatabase.getInstance().updateDatabase(
+      const result = await ModelDatabaseMetadata.getInstance().updateDatabase(
         databaseName,
         { databaseOwner: newOwner }
       );

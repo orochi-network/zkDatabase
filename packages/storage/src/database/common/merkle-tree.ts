@@ -1,4 +1,9 @@
-import { TMerkleJson, TMerkleNode, TMerkleProof, TMerkleWitnessNode } from '@zkdb/common';
+import {
+  TMerkleJson,
+  TMerkleNode,
+  TMerkleProof,
+  TMerkleWitnessNode,
+} from '@zkdb/common';
 import crypto from 'crypto';
 import { BulkWriteOptions, FindOptions, ObjectId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
@@ -7,7 +12,7 @@ import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
-import { ModelDatabase } from './database.js';
+import { ModelDatabaseMetadata } from '../global/database-metadata.js';
 
 export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -42,9 +47,9 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public static async load(databaseName: string): Promise<ModelMerkleTree> {
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
-    const modelDatabase = ModelDatabase.getInstance();
+    const modelDatabaseMetadata = ModelDatabaseMetadata.getInstance();
 
-    const database = await modelDatabase.getDatabase(databaseName);
+    const database = await modelDatabaseMetadata.getDatabase(databaseName);
 
     if (database) {
       modelMerkleTree.setHeight(database.merkleHeight);
@@ -295,7 +300,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
     const latestNodes = await this.collection
       .aggregate<TMerkleJson<TMerkleNode>>(pipeline)
       .toArray();
- 
+
     return latestNodes;
   }
 

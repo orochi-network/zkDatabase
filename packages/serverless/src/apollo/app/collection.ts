@@ -9,7 +9,7 @@ import {
   TDatabaseRequest,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
-import { ModelSystemDatabase, withTransaction } from '@zkdb/storage';
+import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import {
@@ -94,9 +94,9 @@ const collectionExist = publicWrapper<TCollectionRequest, boolean>(
     collectionName,
   }),
   async (_root, args) =>
-    (
-      await ModelSystemDatabase.getInstance(args.databaseName).listCollections()
-    ).some((collection) => collection === args.collectionName)
+    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
+      (collection) => collection === args.collectionName
+    )
 );
 
 // Mutation

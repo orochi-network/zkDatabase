@@ -13,8 +13,8 @@ import {
 } from '@zkdb/common';
 import {
   DB,
+  ModelDatabaseMetadata,
   ModelDatabase,
-  ModelSystemDatabase,
   withTransaction,
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -111,7 +111,7 @@ const dbStats = publicWrapper<TDatabaseRequest, Document>(
   }),
   async (_root, args, _ctx) =>
     // Using system database to get stats
-    ModelSystemDatabase.getInstance(args.databaseName).stats()
+    ModelDatabase.getInstance(args.databaseName).stats()
 );
 
 const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
@@ -135,7 +135,7 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
       throw Error(`Database ${args.databaseName} does not exist`);
     }
 
-    const database = await ModelDatabase.getInstance().getDatabase(
+    const database = await ModelDatabaseMetadata.getInstance().getDatabase(
       args.databaseName
     );
 

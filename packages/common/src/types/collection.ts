@@ -49,7 +49,7 @@ export type TCollection = {
 export type TCollectionRecord = TDbRecord<TCollection>;
 
 export type TCollectionIndexInfo = {
-  name: string;
+  indexName: string;
   size: number;
   access: number;
   since: Date;
@@ -71,22 +71,32 @@ export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
   Omit<OwnershipAndPermission, 'owner'>;
 
-export type TCollectionListRequest = { databaseName: string };
+// Collection list
+export type TCollectionListRequest = TDatabaseRequest;
+
 export type TCollectionListResponse = TMetadataCollection[];
 
+// Index
 export type TIndexRequest = {
   indexName: string;
 };
 
+// Index list
 export type TIndexListRequest = TCollectionRequest;
+
 export type TIndexListResponse = TCollectionIndexInfo[];
 
+// Index create
 export type TIndexCreateRequest = TIndexRequest &
   TCollectionRequest & {
     index: TCollectionIndex;
   };
 
+// Index exist
 export type TIndexExistRequest = TIndexCreateRequest;
+
+// Index drop
 export type TIndexDropRequest = TIndexCreateRequest;
 
+// Index detail
 export type TIndexDetailRequest = TIndexRequest;

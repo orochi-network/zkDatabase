@@ -1,4 +1,4 @@
-import { TDatabase, TDatabaseRecord } from '@zkdb/common';
+import { TDatabase, TDatabaseMetadataRecord } from '@zkdb/common';
 import {
   Filter,
   FindOptions,
@@ -13,28 +13,31 @@ import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
-export class ModelDatabase extends ModelBasic<WithoutId<TDatabaseRecord>> {
-  private static instance: ModelDatabase;
+
+export class ModelDatabaseMetadata extends ModelBasic<
+  WithoutId<TDatabaseMetadataRecord>
+> {
+  private static instance: ModelDatabaseMetadata;
 
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.setting
+      zkDatabaseConstants.globalCollections.metadata
     );
   }
 
   public static getInstance() {
-    if (!ModelDatabase.instance) {
-      this.instance = new ModelDatabase();
+    if (!ModelDatabaseMetadata.instance) {
+      this.instance = new ModelDatabaseMetadata();
     }
     return this.instance;
   }
 
   public async createDatabase(
-    database: WithoutId<TDatabaseRecord>,
+    database: WithoutId<TDatabaseMetadataRecord>,
     options?: InsertOneOptions
-  ): Promise<InsertOneResult<TDatabaseRecord>> {
+  ): Promise<InsertOneResult<TDatabaseMetadataRecord>> {
     try {
       const result = await this.collection.insertOne(database, options);
       return result;
@@ -45,7 +48,7 @@ export class ModelDatabase extends ModelBasic<WithoutId<TDatabaseRecord>> {
 
   public async updateDatabase(
     databaseName: string,
-    updateField: Partial<Pick<TDatabaseRecord, keyof TDatabaseRecord>>,
+    updateField: Partial<TDatabaseMetadataRecord>,
     options?: UpdateOptions
   ): Promise<UpdateResult> {
     // Runtime validation ensure no empty update

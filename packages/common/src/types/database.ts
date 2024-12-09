@@ -16,29 +16,36 @@ export type TDatabaseDetail = TDatabase & {
   deployStatus: ETransactionStatus;
 };
 
-export type TDatabaseRecord = TDbRecord<TDatabase>;
+export type TDatabaseMetadataRecord = TDbRecord<TDatabase>;
 
+// Database
 export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
 
 export type TDatabaseResponse = TDatabase;
 
+// Database update deploy
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TDatabase, 'appPublicKey'>;
 
+// Database list
 export type TDatabaseListRequest = {
-  query: Partial<TDatabaseRecord>;
+  query: Partial<TDatabaseMetadataRecord>;
   pagination: TPagination;
 };
 
 export type TDatabaseListResponse = TPaginationReturn<TDatabaseDetail[]>;
+
+// Database create
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
 
+// Database find index
 export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
+// Database change owner
 export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
   newOwner: string;
 };
