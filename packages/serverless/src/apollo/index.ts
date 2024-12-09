@@ -40,10 +40,10 @@ export const TypedefsApp = [
 export const ResolversApp = [
   resolversDatabase,
   resolversCollection,
-  // resolversDocument,
+  resolversDocument,
   resolversCollectionIndex,
   resolversUser,
-  // resolversGroup,
+  resolversGroup,
   resolversPermission,
   resolversMerkleTree,
   resolversProof,
