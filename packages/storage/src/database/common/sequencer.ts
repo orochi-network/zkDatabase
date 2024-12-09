@@ -7,6 +7,9 @@ import { getCurrentTime } from '../../helper/common.js';
 import ModelCollection from '../general/collection.js';
 
 export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
+  public static readonly INITIAL_SEQUENCE_VALUE = 1;
+  public static readonly SEQUENCE_INCREMENT = 1;
+
   private static instances = new Map<string, ModelSequencer>();
 
   private constructor(databaseName: string) {
@@ -38,7 +41,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     if (index) {
       const updateResult = await this.collection.findOneAndUpdate(
         { type: sequenceName },
-        { $inc: { seq: 1 }, $set: { updatedAt: getCurrentTime() } },
+        { $inc: { seq: ModelSequencer.SEQUENCE_INCREMENT }, $set: { updatedAt: getCurrentTime() } },
         { upsert: true, returnDocument: 'after', session }
       );
 
@@ -53,7 +56,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       const insertResult = await this.collection.insertOne(
         {
           type: sequenceName,
-          seq: 1,
+          seq: ModelSequencer.INITIAL_SEQUENCE_VALUE,
           createdAt: creationTime,
           updatedAt: creationTime,
         },
@@ -64,7 +67,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
         throw new Error(`Failed to create sequence '${sequenceName}'`);
       }
 
-      return 1;
+      return ModelSequencer.INITIAL_SEQUENCE_VALUE;
     }
   }
 
