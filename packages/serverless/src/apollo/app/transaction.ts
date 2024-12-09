@@ -3,9 +3,9 @@ import {
   TDatabaseRequest,
   TTransactionRequest,
   TTransactionConfirmRequest,
-  TTransactionResponse,
   databaseName,
   transactionType,
+  TTransactionWithId,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -47,7 +47,7 @@ export const typeDefsTransaction = gql`
 
 const transactionDraft = authorizeWrapper<
   TTransactionRequest,
-  TTransactionResponse
+  TTransactionWithId
 >(
   Joi.object({
     databaseName,

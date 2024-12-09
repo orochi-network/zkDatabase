@@ -82,7 +82,7 @@ export type TTransactionRequest = TDatabaseRequest & {
  * @property {TTransaction} transaction (Rollup or Deploy)
  * @property {string} transactionObjectId - Unique Object ID of the transaction in the database
  */
-export type TTransactionResponse = WithoutId<TTransaction> & {
+export type TTransactionWithId = WithoutId<TTransaction> & {
   transactionObjectId: string;
 };
 
@@ -93,7 +93,7 @@ export type TTransactionResponse = WithoutId<TTransaction> & {
  * @param {string} objectId - Transaction object ID
  */
 export type TTransactionByIdRequest = TDatabaseRequest & {
-  objectId: string;
+  transactionObjectId: string;
 };
 
 /**
