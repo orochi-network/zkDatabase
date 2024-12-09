@@ -68,6 +68,7 @@ export async function createDatabase(
       await createGroup(
         databaseName,
         actor,
+        user._id,
         DEFAULT_GROUP_ADMIN,
         'Default group for owner',
         session

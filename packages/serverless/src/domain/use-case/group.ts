@@ -1,8 +1,9 @@
-import { ClientSession } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
+import { getCurrentTime } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup, { TGroupInfo } from '../../model/database/user-group.js';
-import { isDatabaseOwner } from './database.js';
 import ModelUser from '../../model/global/user.js';
+import { isDatabaseOwner } from './database.js';
 
 async function isGroupExist(
   databaseName: string,
@@ -19,6 +20,7 @@ async function isGroupExist(
 async function createGroup(
   databaseName: string,
   actor: string,
+  actorId: ObjectId,
   groupName: string,
   groupDescription?: string,
   session?: ClientSession
@@ -29,17 +31,30 @@ async function createGroup(
         `Group ${groupName} is already exist for database ${databaseName}`
       );
     }
-
+    // Initialize model
     const modelGroup = new ModelGroup(databaseName);
-
+    const modelUserGroup = new ModelUserGroup(databaseName);
+    // Create group first
     const group = await modelGroup.createGroup(
       groupName,
       groupDescription,
       actor,
       { session }
     );
-
-    return group != null;
+    // Create user group
+    const userGroup = await modelUserGroup.createUserGroup(
+      {
+        userName: actor,
+        groupId: group.insertedId,
+        userId: actorId,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+        groupName: groupName,
+      },
+      { session }
+    );
+    // Make sure both group & userGroup inserted
+    return group != null && userGroup != null;
   }
 
   throw Error('Only database owner allowed to create group');

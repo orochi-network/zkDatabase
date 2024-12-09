@@ -1,27 +1,37 @@
+import { TUserGroup, TUserGroupRecord } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
+import {
+  BulkWriteOptions,
+  FindOptions,
+  InsertOneOptions,
+  InsertOneResult,
+  ObjectId,
+  WithoutId,
+} from 'mongodb';
 import ModelGroup, { GroupSchema } from './group.js';
 
-export interface DocumentUserGroup extends Document {
-  userName: string;
-  groupId: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type TGroupInfo = GroupSchema & {
+  members: WithoutId<TUserGroupRecord>[];
+};
 
-export type TGroupInfo = GroupSchema & { members: DocumentUserGroup[] };
-
-export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
+export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =
     zkDatabaseConstants.databaseCollections.userGroup;
 
   constructor(databaseName: string) {
     super(databaseName, DB.service, ModelUserGroup.collectionName);
+  }
+
+  public async createUserGroup(
+    args: WithoutId<TUserGroupRecord>,
+    options?: InsertOneOptions
+  ): Promise<InsertOneResult<TUserGroup>> {
+    return this.insertOne(args, options);
   }
 
   public async checkMembership(
