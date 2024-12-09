@@ -3,6 +3,7 @@
 
 import {
   EDatabaseProofStatus,
+  ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TDocumentReadResponse,
@@ -148,8 +149,8 @@ async function createDocument(
 
   // 2. Create new sequence value
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const merkleIndex = await sequencer.getNextValue(
-    'merkle-index',
+  const merkleIndex = await sequencer.nextValue(
+    ESequencer.MerkleIndex,
     compoundSession?.sessionService
   );
 

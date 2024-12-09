@@ -1,6 +1,6 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
-import { ETransactionStatus } from './transaction.js';
+import { TTransaction } from './transaction.js';
 
 /**
  * Rollup state
@@ -17,18 +17,21 @@ export enum ERollUpState {
   Failed = 'Failed',
 }
 
-export type TRollUpHistory = TDbRecord<{
+export type TRollUpHistory = {
   databaseName: string;
-  currentMerkleTreeRoot: string;
-  previousMerkleTreeRoot: string;
+  merkletreeRootCurrent: string;
+  merkletreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
-  transactionHash: string;
-  status: ETransactionStatus;
-  error: string;
-}>;
+};
+
+export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
+
+// Compound Type
+export type TRollUpTransactionHistory = TRollUpHistory &
+  WithoutId<TDbRecord<TTransaction>>;
 
 export type RollUpData = {
   history: TRollUpHistory[];

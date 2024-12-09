@@ -5,13 +5,14 @@ export type TCreateRollUpRequest = {
 export type TGetRollUpHistoryResponse = {
   state: TRollUpState;
   history: {
-    createdAt: Date;
-    currentMerkleTreeRoot: string;
     databaseName: string;
-    previousMerkleTreeRoot: string;
+    merkletreeRootCurrent: string;
+    merkletreeRootPrevious: string;
     status: TRollUpStatus;
-    transactionHash: string;
+    txHash: string;
     transactionType: TTransactionType;
+    createdAt: Date;
+    updatedAt: Date;
     error: string;
   };
   extraData: number;
