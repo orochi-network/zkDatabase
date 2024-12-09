@@ -11,9 +11,7 @@ import {
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
 import { setPermission } from '../../domain/use-case/permission.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -72,13 +70,13 @@ extend type Mutation {
     permission: Int!
   ): CollectionMetadata!
 
-  permissionOwn(
+  permissionTransferOwnership(
     databaseName: String!
     collectionName: String!
     docId: String
     grouping: OwnershipGroup!
     newOwner: String!
-  ): CollectionMetadata
+  ): Boolean
 }
 `;
 
@@ -113,22 +111,6 @@ const getMetadataCollection = authorizeWrapper(
     )
 );
 
-// const collectionMetadata = authorizeWrapper(
-//   Joi.object({
-//     databaseName,
-//     collectionName,
-//   }),
-//   async (_root: unknown, args: TCollectionRequest, ctx) => {
-//     const metadata = await ModelMetadataCollection.getInstance(
-//       args.databaseName
-//     ).getMetadata(args.collectionName);
-//     if (!metadata) {
-//       throw new Error(`Metadata not found for collection ${collectionName}`);
-//     }
-//     return metadata;
-//   }
-// );
-
 // Mutation
 const permissionSet = authorizeWrapper(
   Joi.object({
@@ -151,52 +133,51 @@ const permissionSet = authorizeWrapper(
   }
 );
 
-// const permissionTransferOwnership = authorizeWrapper(
-//   Joi.object({
-//     databaseName,
-//     collectionName,
-//     docId: objectId.optional(),
-//     grouping: ownershipGroup,
-//     newOwner: userName,
-//   }),
-//   async (_root: unknown, args: any, context) => {
-//     return withTransaction((session) => {
-//       if (args.docId) {
-//         // Document case with docId
-//         return changeDocumentOwnership(
-//           args.databaseName,
-//           args.collectionName,
-//           args.docId,
-//           context.userName,
-//           args.grouping,
-//           args.newOwner,
-//           session
-//         );
-//       } else {
-//         // Collection case without docId
-//         return changeCollectionOwnership(
-//           args.databaseName,
-//           args.collectionName,
-//           context.userName,
-//           args.grouping,
-//           args.newOwner,
-//           session
-//         );
-//       }
-//     });
-//   }
-// );
+const permissionTransferOwnership = authorizeWrapper(
+  Joi.object({
+    databaseName,
+    collectionName,
+    docId: objectId.optional(),
+    grouping: ownershipGroup,
+    newOwner: userName,
+  }),
+  async (_root: unknown, args: any, context) => {
+    return withTransaction((session) => {
+      if (args.docId) {
+        // Document case with docId
+        return changeDocumentOwnership(
+          args.databaseName,
+          args.collectionName,
+          args.docId,
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        );
+      } else {
+        // Collection case without docId
+        return changeCollectionOwnership(
+          args.databaseName,
+          args.collectionName,
+          context.userName,
+          args.grouping,
+          args.newOwner,
+          session
+        );
+      }
+    });
+  }
+);
 
 type TPermissionResolver = {
   JSON: typeof GraphQLJSON;
   Query: {
     getMetadataDocument: typeof getMetadataDocument;
     getMetadataCollection: typeof getMetadataCollection;
-    // collectionMetadata: typeof collectionMetadata;
   };
   Mutation: {
     permissionSet: typeof permissionSet;
-    // permissionTransferOwnership: typeof permissionTransferOwnership;
+    permissionTransferOwnership: typeof permissionTransferOwnership;
   };
 };
 
@@ -205,10 +186,9 @@ export const resolversPermission: TPermissionResolver = {
   Query: {
     getMetadataCollection,
     getMetadataDocument,
-    // collectionMetadata,
   },
   Mutation: {
     permissionSet,
-    // permissionTransferOwnership,
+    permissionTransferOwnership,
   },
 };

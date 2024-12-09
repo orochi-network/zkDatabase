@@ -13,7 +13,6 @@ import {
   createIndex,
   doesIndexExist,
   dropIndex,
-  listIndexes,
   listIndexesInfo as listIndexesInfoDomain,
 } from '../../domain/use-case/collection.js';
 import { convertIndexSpecification, gql } from '../../helper/common.js';
@@ -80,14 +79,8 @@ export const typeDefsCollectionIndex = gql`
 const indexList = authorizeWrapper(
   CollectionRequest,
   async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexes(args.databaseName, ctx.userName, args.collectionName)
+    listIndexesInfoDomain(args.databaseName, ctx.userName, args.collectionName)
 );
-
-// const indexListInfo = authorizeWrapper(
-//   CollectionRequest,
-//   async (_root: unknown, args: TIndexListRequest, ctx) =>
-//     listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
-// );
 
 const indexExist = authorizeWrapper(
   IndexDetailRequest,
@@ -128,7 +121,6 @@ type TCollectionIndexResolvers = {
   Query: {
     indexList: typeof indexList;
     indexExist: typeof indexExist;
-    // indexListInfo: typeof indexListInfo;
   };
   Mutation: {
     indexCreate: typeof indexCreate;
@@ -141,7 +133,6 @@ export const resolversCollectionIndex: TCollectionIndexResolvers = {
   Query: {
     indexList,
     indexExist,
-    // indexListInfo,
   },
   Mutation: {
     indexCreate,
