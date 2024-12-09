@@ -13,11 +13,7 @@ import {
   ObjectId,
   WithoutId,
 } from 'mongodb';
-import ModelGroup, { GroupSchema } from './group.js';
-
-export type TGroupInfo = GroupSchema & {
-  members: WithoutId<TUserGroupRecord>[];
-};
+import ModelGroup from './group.js';
 
 export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =
@@ -63,7 +59,7 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupId).toArray();
+    return userGroups.map((userGroup) => userGroup.groupOjectId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {

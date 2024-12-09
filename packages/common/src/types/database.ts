@@ -1,6 +1,6 @@
 import { TDbRecord } from './common.js';
 import { TMetadataCollection } from './metadata.js';
-import { TPagination } from './pagination.js';
+import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
 export type TDatabase = {
@@ -20,6 +20,8 @@ export type TDatabaseRecord = TDbRecord<TDatabase>;
 
 export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
 
+export type TDatabaseResponse = TDatabase;
+
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TDatabase, 'appPublicKey'>;
 
@@ -28,6 +30,7 @@ export type TDatabaseListRequest = {
   pagination: TPagination;
 };
 
+export type TDatabaseListResponse = TPaginationReturn<TDatabaseDetail[]>;
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };

@@ -5,7 +5,10 @@ import {
   IndexSchema,
   TCollectionRequest,
   TIndexCreateRequest,
+  TIndexDropRequest,
+  TIndexExistRequest,
   TIndexListRequest,
+  TIndexListResponse,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -76,15 +79,15 @@ export const typeDefsCollectionIndex = gql`
 `;
 
 // Query
-const indexList = authorizeWrapper(
+const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
   CollectionRequest,
-  async (_root: unknown, args: TIndexListRequest, ctx) =>
+  async (_root, args, ctx) =>
     listIndexesInfoDomain(args.databaseName, ctx.userName, args.collectionName)
 );
 
-const indexExist = authorizeWrapper(
+const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
+  async (_root, args, ctx) =>
     doesIndexExist(
       args.databaseName,
       ctx.userName,
@@ -94,9 +97,9 @@ const indexExist = authorizeWrapper(
 );
 
 // Mutation
-const indexCreate = authorizeWrapper(
+const indexCreate = authorizeWrapper<TIndexCreateRequest, boolean>(
   IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
+  async (_root, args, ctx) =>
     createIndex(
       args.databaseName,
       ctx.userName,
@@ -105,9 +108,9 @@ const indexCreate = authorizeWrapper(
     )
 );
 
-const indexDrop = authorizeWrapper(
+const indexDrop = authorizeWrapper<TIndexDropRequest, boolean>(
   IndexDetailRequest,
-  async (_root: unknown, args: TIndexCreateRequest & TCollectionRequest, ctx) =>
+  async (_root, args, ctx) =>
     dropIndex(
       args.databaseName,
       ctx.userName,

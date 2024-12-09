@@ -2,6 +2,7 @@ import { OwnershipAndPermission } from '@zkdb/permission';
 import { IndexDirection } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
+import { TMetadataCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
 /**
@@ -70,14 +71,22 @@ export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
   Omit<OwnershipAndPermission, 'owner'>;
 
+export type TCollectionListRequest = { databaseName: string };
+export type TCollectionListResponse = TMetadataCollection[];
+
 export type TIndexRequest = {
   indexName: string;
 };
 
 export type TIndexListRequest = TCollectionRequest;
+export type TIndexListResponse = TCollectionIndexInfo[];
 
-export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex;
-};
+export type TIndexCreateRequest = TIndexRequest &
+  TCollectionRequest & {
+    index: TCollectionIndex;
+  };
+
+export type TIndexExistRequest = TIndexCreateRequest;
+export type TIndexDropRequest = TIndexCreateRequest;
 
 export type TIndexDetailRequest = TIndexRequest;

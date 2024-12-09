@@ -3,8 +3,9 @@ import {
   databaseName,
   ESortingSchema,
   groupName,
-  index,
   O1JS_VALID_TYPE,
+  TCollectionListRequest,
+  TCollectionListResponse,
   TDatabaseRequest,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
@@ -77,41 +78,44 @@ export const typeDefsCollection = gql`
 `;
 
 // Query
-const collectionList = authorizeWrapper(
+const collectionList = authorizeWrapper<
+  TCollectionListRequest,
+  TCollectionListResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    listCollection(args.databaseName, ctx.userName)
+  async (_root, args, ctx) => listCollection(args.databaseName, ctx.userName)
 );
 
-const collectionExist = publicWrapper(
+const collectionExist = publicWrapper<TCollectionRequest, boolean>(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest) =>
+  async (_root, args) =>
     (
       await ModelSystemDatabase.getInstance(args.databaseName).listCollections()
     ).some((collection) => collection === args.collectionName)
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper(
+const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
   CollectionCreateRequest,
-  async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    return withTransaction((session) =>
-      createCollection(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.schema,
-        args.groupName,
-        args.permission,
-        session
+  async (_root, args, ctx) =>
+    Boolean(
+      withTransaction((session) =>
+        createCollection(
+          args.databaseName,
+          args.collectionName,
+          ctx.userName,
+          args.schema,
+          args.groupName,
+          args.permission,
+          session
+        )
       )
-    );
-  }
+    )
 );
 
 type TCollectionResolvers = {

@@ -4,7 +4,9 @@ import {
   TDatabaseChangeOwnerRequest,
   TDatabaseCreateRequest,
   TDatabaseListRequest,
+  TDatabaseListResponse,
   TDatabaseRequest,
+  TDatabaseResponse,
   TDatabaseUpdateDeployedRequest,
   databaseName,
   userName,
@@ -17,6 +19,7 @@ import {
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
+import { Document } from 'mongodb';
 import {
   changeDatabaseOwner,
   createDatabase,
@@ -102,26 +105,26 @@ export const typeDefsDatabase = gql`
 `;
 
 // Query
-const dbStats = publicWrapper(
+const dbStats = publicWrapper<TDatabaseRequest, Document>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) =>
+  async (_root, args, _ctx) =>
     // Using system database to get stats
     ModelSystemDatabase.getInstance(args.databaseName).stats()
 );
 
-const dbList = authorizeWrapper(
+const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
   DatabaseListRequest,
-  async (_root: unknown, args: TDatabaseListRequest, _ctx) =>
+  async (_root, args, _ctx) =>
     getListDatabaseDetail(_ctx.userName, args.query, args.pagination)
 );
 
-const dbInfo = publicWrapper(
+const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
+  async (_root, args, _ctx) => {
     const { databases } = await DB.service.client.db().admin().listDatabases();
 
     const isDatabaseExist = databases.some(
@@ -144,36 +147,39 @@ const dbInfo = publicWrapper(
   }
 );
 
-const dbDeployedUpdate = authorizeWrapper(
-  DatabaseUpdateDeployedRequest,
-  async (_root: unknown, args: TDatabaseUpdateDeployedRequest, _) =>
-    updateDeployedDatabase(args.databaseName, args.appPublicKey)
+const dbDeployedUpdate = authorizeWrapper<
+  TDatabaseUpdateDeployedRequest,
+  boolean
+>(DatabaseUpdateDeployedRequest, async (_root, args, _) =>
+  updateDeployedDatabase(args.databaseName, args.appPublicKey)
 );
 
-const dbCreate = authorizeWrapper(
+const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
   DatabaseCreateRequest,
-  async (_root: unknown, args: TDatabaseCreateRequest, ctx) =>
-    withTransaction((session) =>
-      createDatabase(
-        args.databaseName,
-        args.merkleHeight,
-        ctx.userName,
-        session
+  async (_root, args, ctx) =>
+    Boolean(
+      withTransaction((session) =>
+        createDatabase(
+          args.databaseName,
+          args.merkleHeight,
+          ctx.userName,
+          session
+        )
       )
     )
 );
 
-const dbChangeOwner = authorizeWrapper(
+const dbChangeOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
   DatabaseChangeOwnerRequest,
-  async (_root: unknown, args: TDatabaseChangeOwnerRequest, ctx) =>
+  async (_root, args, ctx) =>
     changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
 );
 
-const dbExist = publicWrapper(
+const dbExist = publicWrapper<TDatabaseRequest, boolean>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, _ctx) => {
+  async (_root, args, _ctx) => {
     const { databases } = await DB.service.client.db().admin().listDatabases();
     return databases.some((db) => db.name === args.databaseName);
   }
