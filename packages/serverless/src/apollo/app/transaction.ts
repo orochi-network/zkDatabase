@@ -41,7 +41,7 @@ export const typeDefsTransaction = gql`
   extend type Mutation {
     transactionDeployEnqueue(databaseName: String!): String!
 
-    transactionConfirm(databaseName: String!, txHash: String!): Boolean
+    transactionConfirm(databaseName: String!, transactionObjectId: String!, txHash: String!): Boolean
   }
 `;
 
@@ -87,11 +87,11 @@ const transactionConfirm = authorizeWrapper<
 >(
   Joi.object({
     databaseName,
-    id: Joi.string().required(),
+    transactionObjectId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    await Transaction.confirm(args.databaseName, ctx.userName, args.txHash)
+    await Transaction.confirm(args.databaseName, ctx.userName, args.transactionObjectId, args.txHash)
 );
 
 type TTransactionResolver = {

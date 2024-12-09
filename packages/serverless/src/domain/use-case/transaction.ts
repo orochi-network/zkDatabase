@@ -225,14 +225,22 @@ export default class Transaction {
     return txs.length === 0 ? null : txs[0];
   }
 
-  static async confirm(databaseName: string, actor: string, txHash: string) {
+  static async confirm(
+    databaseName: string,
+    actor: string,
+    transactionObjectId: string,
+    txHash: string
+  ) {
     if (!(await isDatabaseOwner(databaseName, actor))) {
       throw Error('Only database owner can confirm transactions');
     }
-    await ModelTransaction.getInstance().updateByTxHash(txHash, {
-      txHash,
-      status: ETransactionStatus.Confirming,
-    });
+    await ModelTransaction.getInstance().updateById(
+      new ObjectId(transactionObjectId),
+      {
+        txHash,
+        status: ETransactionStatus.Confirming,
+      }
+    );
     return true;
   }
 }
