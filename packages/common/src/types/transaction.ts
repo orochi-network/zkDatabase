@@ -1,3 +1,4 @@
+import { WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
@@ -46,7 +47,7 @@ export type TTransaction = {
   transactionType: ETransactionType;
   databaseName: string;
   status: ETransactionStatus;
-  rawTransaction: string,
+  transactionRaw: string;
   txHash: string;
   error: string;
 };
@@ -62,7 +63,7 @@ export type TTransaction = {
  * @param {string} TTransaction.error - Error message
  * @param {Date} createdAt - Created at
  * @param {Date} updatedAt - Updated at
-  */
+ */
 export type TTransactionRecord = TDbRecord<TTransaction>;
 
 /**
@@ -70,9 +71,19 @@ export type TTransactionRecord = TDbRecord<TTransaction>;
  * @typedef TTransactionRequest
  * @param {string} TDatabaseRequest.databaseName - Database name
  * @param {ETransactionType} transactionType - Transaction type
-  */
+ */
 export type TTransactionRequest = TDatabaseRequest & {
   transactionType: ETransactionType;
+};
+
+/**
+ * Transaction response
+ * @typedef TTransactionResponse
+ * @property {TTransaction} transaction (Rollup or Deploy)
+ * @property {string} transactionObjectId - Unique Object ID of the transaction in the database
+ */
+export type TTransactionResponse = WithoutId<TTransaction> & {
+  transactionObjectId: string;
 };
 
 /**
