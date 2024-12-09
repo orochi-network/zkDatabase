@@ -3,8 +3,8 @@ import { TCollection } from './collection.js';
 import { TDbRecord } from './common.js';
 
 export type TMetadataBasic = OwnershipAndPermission & {
-    collectionName: string;
-  };
+  collectionName: string;
+};
 
 // Document metadata
 export type TMetadataDocument = TMetadataBasic & {
@@ -15,9 +15,10 @@ export type TMetadataDocument = TMetadataBasic & {
 export type TMetadataDocumentRecord = TDbRecord<TMetadataDocument>;
 
 // Collection metadata
-export type TMetadataCollection = TMetadataBasic & TCollection & {
-  sizeOnDisk: number;
-}
+export type TMetadataCollection = TMetadataBasic &
+  TCollection & {
+    sizeOnDisk: number;
+  };
 
 export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
 

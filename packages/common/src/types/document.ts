@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
 import { TDbRecord } from './common.js';
+import { TMetadataDocument } from './metadata.js';
 
 export type TDocumentField = TContractSchemaField;
 
@@ -16,13 +17,6 @@ export type TDocumentRecord = TDbRecord<TDocument>;
 export type TDocumentHistory = {
   docId: string;
   documents: TDocumentRecord[];
-  metadata: TDocumentHistoryMetadata;
+  metadata: TMetadataDocument;
   active: boolean;
-};
-
-export type TDocumentHistoryMetadata = {
-  permission: boolean;
-  merkleIndex: number;
-  group: string;
-  owner: string;
 };

@@ -2,6 +2,7 @@
 import {
   TDocumentHistory as TDocumentHistoryBase,
   TDocumentRecord,
+  TMetadataDocument,
   TPagination,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstants } from '@zkdb/storage';
@@ -69,16 +70,12 @@ function buildHistoryPipeline(pagination: TPagination): Array<any> {
   ];
 }
 
-// TODO: need debugging to confirm the accuracy of this type annotation
+/** The data being returned by the mongodb pipeline above.
+ * TODO: Need debugging to actually confirm this */
 type TDocumentHistorySerialized = {
   _id: ObjectId;
   documents: TDocumentRecordSerialized[];
-  metadata: {
-    permission: boolean;
-    merkleIndex: number;
-    group: string;
-    owner: string;
-  };
+  metadata: Omit<TMetadataDocument, 'collectionName'>;
   active: boolean;
 };
 
@@ -113,6 +110,7 @@ async function listHistoryDocuments(
 
     const documentsWithMetadata = (await documentsCollection
       .aggregate(pipeline)
+      // TODO: need debugging to confirm the accuracy of this type annotation
       .toArray()) as TDocumentHistorySerialized[];
 
     let filteredDocuments: TDocumentHistorySerialized[] = [];
@@ -140,7 +138,10 @@ MongoDB pipeline to already handle this case`
           ...doc,
           document: ModelDocument.deserializeDocument(doc.document),
         })),
-        metadata: historyDocument.metadata,
+        metadata: {
+          ...historyDocument.metadata,
+          collectionName,
+        },
         active: historyDocument.active,
       };
     });
