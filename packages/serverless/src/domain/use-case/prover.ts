@@ -1,6 +1,6 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
-
+import { ESequencer, TDocumentField, TMerkleProof } from '@zkdb/common';
 import {
   ModelMerkleTree,
   ModelQueueTask,
@@ -9,9 +9,7 @@ import {
 } from '@zkdb/storage';
 
 import ModelDocument from '../../model/abstract/document.js';
-
 import { buildSchema } from './schema.js';
-import { ESequencer, TDocumentField, TMerkleProof } from '@zkdb/common';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
 // Prove the creation of a document
