@@ -17,8 +17,6 @@ import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import {
   TDocumentField,
-  TPagination,
-  TCollectionRequest,
   collectionName,
   databaseName,
   documentField,
