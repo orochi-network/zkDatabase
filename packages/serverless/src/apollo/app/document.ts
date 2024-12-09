@@ -23,36 +23,15 @@ import {
   databaseName,
   documentField,
   pagination,
+  TDocumentCreateRequest,
+  TDocumentsFindRequest,
+  TDocumentFindRequest,
+  TDocumentUpdateRequest,
+  TDocumentHistoryGetRequest,
+  TDocumentHistoryListRequest,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from 'common/const.js';
-
-export type TDocumentsFindRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-  pagination: TPagination;
-};
-
-export type TDocumentFindRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-};
-
-export type TDocumentCreateRequest = TCollectionRequest & {
-  document: TDocumentField[];
-  documentPermission: number;
-};
-
-export type TDocumentUpdateRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-  document: TDocumentField[];
-};
-
-export type TDocumentHistoryGetRequest = TCollectionRequest & {
-  docId: string;
-};
-
-export type TDocumentHistoryListRequest = TCollectionRequest & {
-  pagination: TPagination;
-};
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
