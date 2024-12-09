@@ -80,10 +80,10 @@ export type TTransactionRequest = TDatabaseRequest & {
  * Transaction response
  * @typedef TTransactionResponse
  * @property {TTransaction} transaction (Rollup or Deploy)
- * @property {string} transactionObjectId - Unique Object ID of the transaction in the database
+ * @property {string} _id - Primary key of the transaction
  */
-export type TTransactionWithId = WithoutId<TTransaction> & {
-  transactionObjectId: string;
+export type TTransactionWithId = WithoutId<TTransactionRecord> & {
+  _id: string;
 };
 
 /**
