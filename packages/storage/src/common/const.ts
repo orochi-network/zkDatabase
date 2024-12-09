@@ -8,7 +8,7 @@ export const zkDatabaseConstants = {
   // Global collections within the global database
   globalCollections: {
     // Global settings
-    setting: 'setting',
+    metadata_database: 'metadata_database',
 
     // Session
     session: 'session',

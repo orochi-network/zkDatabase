@@ -10,7 +10,7 @@ import {
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   CompoundSession,
-  ModelDatabase,
+  ModelMetadataDatabase,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -20,8 +20,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import logger from '../../helper/logger.js';
-import { enqueueTransaction } from './transaction.js';
-import { getCurrentTime } from '../../helper/common.js';
+import Transaction from './transaction.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -63,7 +62,7 @@ export async function createRollUp(
     }
   }
 
-  const transactionObjectId = await enqueueTransaction(
+  const txId = await Transaction.enqueue(
     databaseName,
     actor,
     ETransactionType.Rollup,
@@ -92,9 +91,12 @@ export async function getRollUpHistory(
   const modelTransaction = ModelTransaction.getInstance();
   const minaNetwork = MinaNetwork.getInstance();
   const queue = ModelQueueTask.getInstance();
-  const database = await ModelDatabase.getInstance().getDatabase(databaseName, {
-    session,
-  });
+  const database = await ModelMetadataDatabase.getInstance().getDatabase(
+    databaseName,
+    {
+      session,
+    }
+  );
 
   if (!database?.appPublicKey) {
     throw Error('Database is not bound to zk app');

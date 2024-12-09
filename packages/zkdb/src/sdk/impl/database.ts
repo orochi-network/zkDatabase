@@ -102,7 +102,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async getTransactionDraft(
+  async transactionDraft(
     transactionType: TTransactionType
   ): Promise<TDbTransaction> {
     const result = await this.apiClient.transaction.transactionDraft({
@@ -112,7 +112,7 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async confirmTransaction(id: string, txHash: string): Promise<boolean> {
+  async transactionConfirm(id: string, txHash: string): Promise<boolean> {
     const result = await this.apiClient.transaction.transactionConfirm({
       databaseName: this.databaseName,
       transactionObjectId: id,

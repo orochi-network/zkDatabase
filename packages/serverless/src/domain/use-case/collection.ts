@@ -1,35 +1,34 @@
 import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
-import { DB, ModelCollection, ModelSystemDatabase } from '@zkdb/storage';
+import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
-import { ClientSession } from 'mongodb';
+import { ClientSession, IndexSpecification } from 'mongodb';
+import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import {
-  DEFAULT_GROUP_ADMIN,
-  PERMISSION_DEFAULT_VALUE,
-} from '../../common/const.js';
-import { getIndexCollectionBySchemaDefinition } from '../../helper/common.js';
+  getCurrentTime,
+  getIndexCollectionBySchemaDefinition,
+} from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 
 import {
   EProperty,
-  ESorting,
-  TCollectionIndex,
+  PERMISSION_DEFAULT_VALUE,
   TCollectionIndexInfo,
+  TCollectionIndexSpecification,
   TMetadataCollection,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
-import { createCollectionMetadata } from './collection-metadata.js';
 import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
 import { readCollectionMetadata } from './metadata.js';
 import { hasCollectionPermission } from './permission.js';
-import { getSchemaDefinition } from './schema.js';
 
 async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  index: TCollectionIndex
+  index: TCollectionIndexSpecification,
+  session?: ClientSession
 ): Promise<boolean> {
   // Validate input parameters
   if (!index || Object.keys(index).length === 0) {
@@ -38,40 +37,47 @@ async function createIndex(
 
   // Check permissions
   if (
-    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
-  ) {
-    // Fetch schema definition
-    const schema = await getSchemaDefinition(
+    await hasCollectionPermission(
       databaseName,
       collectionName,
       actor,
-      true
-    );
+      'system',
+      session
+    )
+  ) {
+    const metadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    ).getMetadata(collectionName, { session });
 
+    if (!metadata) {
+      throw new Error(`Metadata not found for collection ${collectionName}`);
+    }
     // Validate that all keys in the index exist in the schema
-    const invalidIndexes = Object.keys(index).filter(
+    const invalidIndex = Object.keys(index).filter(
       (fieldName) =>
-        !schema.some((schemaField) => schemaField.name === fieldName)
+        !metadata.schema.some((schemaField) => schemaField.name === fieldName)
     );
 
-    if (invalidIndexes.length > 0) {
-      const invalidList = invalidIndexes.join(', ');
+    if (invalidIndex.length > 0) {
+      const invalidList = invalidIndex.join(', ');
       throw new Error(
         `Invalid index fields: ${invalidList}. These fields are not part of the '${collectionName}' collection schema. Please ensure all index fields exist in the schema and are spelled correctly.`
       );
     }
 
     // Map index fields to MongoDB format
-    const mongoIndex = Object.entries(index).map(([field, sorting]) => ({
-      [`document.${field}.name`]: sorting === ESorting.Asc ? 1 : -1,
-    }));
-
+    const mongoIndex: IndexSpecification = {};
+    for (const i in index) {
+      if (index[i]) {
+        mongoIndex[`document.${i}.name`] = index[i];
+      }
+    }
     // Create the index using ModelCollection
     return ModelCollection.getInstance(
       databaseName,
       DB.service,
       collectionName
-    ).index(mongoIndex);
+    ).index(mongoIndex, { session });
   }
 
   throw new Error(
@@ -89,7 +95,7 @@ async function createCollection(
   session?: ClientSession
 ): Promise<boolean> {
   // Get system database
-  const modelSystemDatabase = ModelSystemDatabase.getInstance(databaseName);
+  const modelSystemDatabase = ModelDatabase.getInstance(databaseName);
 
   if (await modelSystemDatabase.isCollectionExist(collectionName)) {
     throw Error(
@@ -104,23 +110,34 @@ async function createCollection(
   }
 
   await modelSystemDatabase.createCollection(collectionName, session);
-
-  await createCollectionMetadata(
-    databaseName,
-    collectionName,
-    schema,
-    permission,
-    actor,
-    groupName,
-    session
+  // Create metadata collection
+  await ModelMetadataCollection.getInstance(databaseName).insertOne(
+    {
+      permission,
+      collectionName,
+      schema,
+      owner: actor,
+      group: groupName,
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
+    },
+    {
+      session,
+    }
   );
 
   // Create index by schema definition
-  const collectionIndex: TCollectionIndex =
+  const collectionIndex: TCollectionIndexSpecification =
     getIndexCollectionBySchemaDefinition(schema);
 
   if (Object.keys(collectionIndex).length > 0) {
-    await createIndex(databaseName, actor, collectionName, collectionIndex);
+    await createIndex(
+      databaseName,
+      actor,
+      collectionName,
+      collectionIndex,
+      session
+    );
   }
 
   return true;
@@ -134,11 +151,13 @@ async function listCollection(
 
   if (await isDatabaseOwner(databaseName, actor)) {
     availableCollections =
-      await ModelSystemDatabase.getInstance(databaseName).listCollections();
+      await ModelDatabase.getInstance(databaseName).listCollections();
   } else {
-    const collectionsMetadata = await (
-      await ModelMetadataCollection.getInstance(databaseName).find()
-    ).toArray();
+    const collectionsMetadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    )
+      .find()
+      .toArray();
 
     const modelUserGroup = new ModelUserGroup(databaseName);
 
@@ -151,7 +170,7 @@ async function listCollection(
         (actorGroups.includes(metadata.group) && permission.group.read) ||
         permission.other.read
       ) {
-        availableCollections.push(metadata.collection);
+        availableCollections.push(metadata.collectionName);
       }
     }
   }
@@ -160,7 +179,12 @@ async function listCollection(
     await Fill(
       availableCollections.map(
         (collectionName) => async () =>
-          readCollectionMetadata(databaseName, collectionName, actor, true)
+          await readCollectionMetadata(
+            databaseName,
+            collectionName,
+            actor,
+            true
+          )
       )
     )
   )
@@ -244,7 +268,7 @@ export async function listIndexesInfo(
       const property =
         Object.keys(key).length > 1 ? EProperty.Compound : EProperty.Unique;
       return {
-        name,
+        indexName: name,
         size,
         access,
         since,
@@ -320,9 +344,9 @@ export async function collectionExist(
   databaseName: string,
   collectionName: string
 ): Promise<boolean> {
-  return (
-    await ModelSystemDatabase.getInstance(databaseName).listCollections()
-  ).some((collection) => collection === collectionName);
+  return (await ModelDatabase.getInstance(databaseName).listCollections()).some(
+    (collection) => collection === collectionName
+  );
 }
 
 export {

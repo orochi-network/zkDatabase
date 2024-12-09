@@ -57,7 +57,7 @@ export async function getMerkleNodesByLevel(
     return {
       data: nodes,
       offset: pagination?.offset ?? 0,
-      totalSize: await modelMerkleTree.countLatestNodesByLevel(
+      total: await modelMerkleTree.countLatestNodesByLevel(
         nodeLevel,
         new Date()
       ),

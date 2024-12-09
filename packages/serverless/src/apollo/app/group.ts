@@ -1,9 +1,16 @@
 import {
-  TDatabaseRequest,
   TGroupAddUsersRequest,
   TGroupCreateRequest,
-  TGroupRenameRequest,
-  TGroupRequest,
+  TGroupInfoDetailRequest,
+  TGroupInfoDetailResponse,
+  TGroupListAllRequest,
+  TGroupListAllResponse,
+  TGroupListByUserRequest,
+  TGroupUpdateRequest,
+  databaseName,
+  groupDescription,
+  groupName,
+  userName,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -13,132 +20,124 @@ import {
   changeGroupDescription,
   createGroup,
   excludeUsersToGroup,
-  getGroupInfo,
+  getGroupInfoDetail,
   renameGroup,
 } from '../../domain/use-case/group.js';
+import { gql } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  databaseName,
-  groupDescription,
-  groupName,
-  groupOptionalDescription,
-  userName,
-} from './common.js';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
-export const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
+const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
-  groupDescription: groupOptionalDescription,
+  groupDescription: groupDescription(false),
 });
 
-export const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
+const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
-  groupDescription,
+  groupDescription: groupDescription(false),
 });
 
-export const typeDefsGroup = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsGroup = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-type Member {
-  userName: String!
-  createdAt: String!,
-}
+  type GroupUserInfo {
+    userName: String!
+    updatedAt: String!
+    createdAt: String!
+  }
 
-type GroupInfoDetail {
-  groupName: String!,
-  description: String!,
-  createdAt: String!,
-  createBy: String!
-  members: [Member]
-}
-type GroupInfo {
-  groupName: String!
-  description: String!
-  createdAt: Int!
-  createBy: String!
-}
+  type GroupInfoDetailResponse {
+    groupName: String!
+    description: String!
+    createBy: String!
+    updatedAt: String!
+    createdAt: String!
+    listUser: [GroupUserInfo]!
+  }
 
-extend type Query {
-  groupListAll(databaseName: String!): [GroupInfo]!
-  groupListByUser(databaseName: String!, userName: String!): [String]!
-  groupInfoDetail(databaseName: String!, groupName: String!): GroupInfoDetail!
-}
+  type GroupListAllResponse {
+    groupName: String!
+    description: String!
+    createBy: String!
+    updatedAt: String!
+    createdAt: String!
+  }
 
-extend type Mutation {
-  groupCreate(
-    databaseName: String!,
-    groupName: String!,
-    groupDescription: String
-  ): Boolean
+  extend type Query {
+    groupListAll(databaseName: String!): [GroupListAllResponse]!
 
-  groupAddUsers(
-    databaseName: String!,
-    groupName: String!,
-    userNames: [String!]!
-  ): Boolean
+    groupListByUser(databaseName: String!, userName: String!): [String]
 
-  groupRemoveUsers(
-    databaseName: String!,
-    groupName: String!,
-    userNames: [String!]!
-  ): Boolean
+    groupInfoDetail(
+      databaseName: String!
+      groupName: String!
+    ): GroupInfoDetailResponse
+  }
 
-  groupChangeDescription(
-    databaseName: String!,
-    groupName: String!,
-    groupDescription: String!
-  ): Boolean
+  extend type Mutation {
+    groupCreate(
+      databaseName: String!
+      groupName: String!
+      groupDescription: String
+    ): Boolean
 
-  groupRename(
-    databaseName: String!,
-    groupName: String!,
-    newGroupName: String!
-  ): Boolean
-}
+    groupAddUser(
+      databaseName: String!
+      groupName: String!
+      listUser: [String!]!
+    ): Boolean
+
+    groupRemoveUser(
+      databaseName: String!
+      groupName: String!
+      listUser: [String!]!
+    ): Boolean
+
+    groupUpdate(
+      databaseName: String!
+      groupName: String!
+      newGroupName: String
+      newGroupDescription: String
+    ): Boolean
+  }
 `;
 
 // Query
-const groupListAll = publicWrapper(
+const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest) => {
-    const modelGroup = new ModelGroup(args.databaseName);
-    const groups = await (await modelGroup.find({})).toArray();
-    return groups.map((group) => ({
-      ...group,
-      createdAt: group.createdAt.getSeconds(),
-    }));
+  async (_root, args) => {
+    const groups = await new ModelGroup(args.databaseName).find({}).toArray();
+    return groups;
   }
 );
 
-export type TGroupListByUserRequest = TDatabaseRequest & {
-  userName: string;
-};
-
-const groupListByUser = publicWrapper(
+const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
   Joi.object({
     databaseName,
     userName,
   }),
-  async (_root: unknown, args: TGroupListByUserRequest) => {
-    const modelUserGroup = new ModelUserGroup(args.databaseName);
-    return modelUserGroup.listGroupByUserName(args.userName);
-  }
+  async (_root, args) =>
+    new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
 );
 
-const groupInfoDetail = publicWrapper(
+const groupInfoDetail = publicWrapper<
+  TGroupInfoDetailRequest,
+  TGroupInfoDetailResponse
+>(
   Joi.object({
     databaseName,
     groupName,
   }),
-  async (_root: unknown, args: TGroupRequest) => {
-    const group = await getGroupInfo(args.databaseName, args.groupName);
+  async (_root, args) => {
+    const group = await getGroupInfoDetail(args.databaseName, args.groupName);
     if (group) {
       return group;
     }
@@ -146,105 +145,96 @@ const groupInfoDetail = publicWrapper(
   }
 );
 
-const groupRename = authorizeWrapper(
+const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
   Joi.object({
     databaseName,
     groupName,
     newGroupName: groupName,
+    newGroupDescription: groupDescription(false),
   }),
-  async (_root: unknown, args: TGroupRenameRequest, ctx) =>
-    withTransaction(async (session) =>
-      renameGroup(
-        args.databaseName,
-        ctx.userName,
-        args.groupName,
-        args.newGroupName,
-        session
-      )
-    )
+  async (_root, args, ctx) => {
+    const { databaseName, groupName, newGroupName, newGroupDescription } = args;
+    const result = await withTransaction(async (session) => {
+      if (newGroupName) {
+        if (
+          !(await renameGroup(
+            databaseName,
+            ctx.userName,
+            groupName,
+            newGroupName,
+            session
+          ))
+        ) {
+          throw Error(`Failed to rename group ${groupName} to ${newGroupName}`);
+        }
+      }
+      if (newGroupDescription) {
+        if (
+          !(await changeGroupDescription(
+            databaseName,
+            ctx.userName,
+            groupName,
+            newGroupDescription,
+            session
+          ))
+        ) {
+          throw Error(`Failed to change description of group ${groupName}`);
+        }
+      }
+      return true;
+    });
+
+    return result !== null && result;
+  }
 );
 
-const groupCreate = authorizeWrapper(
+const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
   GroupCreateRequest,
-  async (_root: unknown, args: TGroupCreateRequest, ctx) =>
-    withTransaction(async (session) =>
-      createGroup(
-        args.databaseName,
-        ctx.userName,
-        args.groupName,
-        args.groupDescription,
-        session
+  async (_root, args, ctx) =>
+    Boolean(
+      withTransaction((session) =>
+        createGroup(
+          args.databaseName,
+          ctx.userName,
+          args.groupName,
+          args.groupDescription,
+          session
+        )
       )
     )
 );
 
-const groupAddUsers = authorizeWrapper(
+const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
   Joi.object({
     databaseName,
     groupName,
-    userNames: Joi.array().items(Joi.string().required()).required(),
+    listUser: Joi.array().items(Joi.string().required()).required(),
   }),
-  async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    withTransaction(async (session) =>
-      addUsersToGroup(
-        args.databaseName,
-        ctx.userName,
-        args.groupName,
-        args.userNames,
-        session
-      )
+  async (_root, args, ctx) =>
+    addUsersToGroup(
+      args.databaseName,
+      ctx.userName,
+      args.groupName,
+      args.listUser
     )
 );
 
-const groupRemoveUsers = authorizeWrapper(
+const groupRemoveUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
   Joi.object({
     databaseName,
     groupName,
-    userNames: Joi.array().items(Joi.string().required()).required(),
+    listUser: Joi.array().items(Joi.string().required()).required(),
   }),
   async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    withTransaction(async (session) =>
-      excludeUsersToGroup(
-        args.databaseName,
-        ctx.userName,
-        args.groupName,
-        args.userNames,
-        session
-      )
+    excludeUsersToGroup(
+      args.databaseName,
+      ctx.userName,
+      args.groupName,
+      args.listUser
     )
 );
 
-const groupChangeDescription = authorizeWrapper(
-  GroupDescriptionChangeRequest,
-  async (_root: unknown, args: TGroupCreateRequest, ctx) =>
-    withTransaction(async (session) =>
-      changeGroupDescription(
-        args.databaseName,
-        ctx.userName,
-        args.groupName,
-        args.groupDescription,
-        session
-      )
-    )
-);
-
-type TGroupResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    groupListAll: typeof groupListAll;
-    groupListByUser: typeof groupListByUser;
-    groupInfoDetail: typeof groupInfoDetail;
-  };
-  Mutation: {
-    groupCreate: typeof groupCreate;
-    groupAddUsers: typeof groupAddUsers;
-    groupChangeDescription: typeof groupChangeDescription;
-    groupRemoveUsers: typeof groupRemoveUsers;
-    groupRename: typeof groupRename;
-  };
-};
-
-export const resolversGroup: TGroupResolver = {
+export const resolversGroup = {
   JSON: GraphQLJSON,
   Query: {
     groupListAll,
@@ -253,9 +243,8 @@ export const resolversGroup: TGroupResolver = {
   },
   Mutation: {
     groupCreate,
-    groupAddUsers,
-    groupChangeDescription,
-    groupRemoveUsers,
-    groupRename,
+    groupAddUser,
+    groupRemoveUser,
+    groupUpdate,
   },
 };

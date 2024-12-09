@@ -6,6 +6,7 @@ import {
 } from '@zkdb/common';
 import Client from 'mina-signer';
 import { ClientSession, FindOptions } from 'mongodb';
+import { DEFAULT_PAGINATION } from '../../common/const.js';
 import config from '../../helper/config.js';
 import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
@@ -13,26 +14,23 @@ import { FilterCriteria } from '../utils/document.js';
 
 export async function findUser(
   query?: FilterCriteria,
-  pagination?: TPagination,
+  paginationInput?: TPagination,
   session?: ClientSession
 ): Promise<TPaginationReturn<TUser[]>> {
   const modelUser = new ModelUser();
 
   const options: FindOptions = {};
-  if (pagination) {
-    options.limit = pagination.limit;
-    options.skip = pagination.offset;
-  }
+  const pagination = paginationInput || DEFAULT_PAGINATION;
 
   return {
-    data: await (
-      await modelUser.find(query || {}, {
+    data: await modelUser
+      .find(query || {}, {
         session,
         ...options,
       })
-    ).toArray(),
-    offset: pagination?.offset ?? 0,
-    totalSize: await modelUser.count(query, { session }),
+      .toArray(),
+    ...pagination,
+    total: await modelUser.count(query, { session }),
   };
 }
 
@@ -41,29 +39,22 @@ export async function isUserExist(userName: string): Promise<boolean> {
   return (await modelUser.findOne({ userName })) !== null;
 }
 
-export async function signUpUser(
-  user: TUser,
-  userData: any,
-  signature: TMinaSignature
-) {
+export async function signUpUser(user: TUser, signature: TMinaSignature) {
+  const { userName, publicKey, email } = user;
   const client = new Client({ network: config.NETWORK_ID });
   if (client.verifyMessage(signature)) {
-    const jsonData = JSON.parse(signature.data);
-    if (jsonData.userName !== user.userName) {
+    const jsonData: TUser = JSON.parse(signature.data);
+    if (jsonData.userName !== userName) {
       throw new Error('Username does not match');
     }
-    if (jsonData.email !== user.email) {
+    if (jsonData.email !== email) {
       throw new Error('Email does not match');
     }
     const modelUser = new ModelUser();
 
     try {
       const existingUser = await modelUser.collection.findOne({
-        $or: [
-          { email: user.email },
-          { userName: user.userName },
-          { publicKey: user.publicKey },
-        ],
+        $or: [{ email }, { userName }, { publicKey }],
       });
 
       if (existingUser) {
@@ -82,15 +73,9 @@ export async function signUpUser(
       throw error;
     }
 
-    // TODO: Check user existence by public key
-    const result = await modelUser.create(
-      user.userName,
-      user.email,
-      user.publicKey,
-      userData.userData
-    );
-    if (result && result.acknowledged) {
-      return user;
+    const result = await modelUser.create(user);
+    if (result) {
+      return result;
     }
 
     // TODO: Return more meaningful error

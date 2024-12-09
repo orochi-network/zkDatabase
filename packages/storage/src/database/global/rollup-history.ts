@@ -8,6 +8,7 @@ import { WithoutId } from 'mongodb';
 
 export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
   private static instance: ModelRollup;
+
   private constructor() {
     super(
       zkDatabaseConstants.globalDatabase,

@@ -14,11 +14,8 @@ export default {
     alias({
       entries: [
         { find: '@', replacement: 'src' },
-        { find: '@common', replacement: 'src/common' },
-        { find: '@sdk', replacement: 'src/sdk' },
-        { find: '@utils', replacement: 'src/utils' },
         { find: '@types', replacement: 'src/types' },
-        { find: '@tests', replacement: 'src/tests' },
+        { find: '@validation', replacement: 'src/validation' },
       ],
     }),
     commonjs(),

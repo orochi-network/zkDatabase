@@ -35,15 +35,15 @@ export async function readCollectionMetadata(
   const modelCollectionMetadata = ModelMetadataCollection.getInstance(database);
 
   const metadata = await modelCollectionMetadata.findOne(
-    { collection },
+    { collectionName: collection },
     { session }
   );
-
   if (!metadata) {
     throw new Error(
       `Cannot find metadata collection of ${collection} in database ${database}`
     );
   }
+
   const modelCollection = ModelCollection.getInstance(
     database,
     DB.service,

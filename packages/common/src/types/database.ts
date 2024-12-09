@@ -1,41 +1,52 @@
 import { TDbRecord } from './common.js';
 import { TMetadataCollection } from './metadata.js';
-import { TPagination } from './pagination.js';
+import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
-export type TDatabase = {
+//@NOTE: This is for the whole metadata of the database
+export type TMetadataDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
   appPublicKey: string;
 };
 
-export type TDatabaseDetail = TDatabase & {
+export type TDatabaseDetail = TMetadataDatabase & {
   collection: TMetadataCollection[];
   databaseSize: number;
   deployStatus: ETransactionStatus;
 };
 
-export type TDatabaseRecord = TDbRecord<TDatabase>;
+export type TMetadataDatabaseRecord = TDbRecord<TMetadataDatabase>;
 
-export type TDatabaseRequest = Pick<TDatabase, 'databaseName'>;
+// Database
+export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
 
+export type TDatabaseResponse = TMetadataDatabase;
+
+// Database update deploy
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
-  Pick<TDatabase, 'appPublicKey'>;
+  Pick<TMetadataDatabase, 'appPublicKey'>;
 
-export type TDatabaseSearchRequest = {
-  query: Partial<TDatabaseRecord>;
+// Database list
+export type TDatabaseListRequest = {
+  query: Partial<TMetadataDatabaseRecord>;
   pagination: TPagination;
 };
 
+export type TDatabaseListResponse = TPaginationReturn<TDatabaseDetail[]>;
+
+// Database create
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
 
+// Database find index
 export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
+// Database change owner
 export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
   newOwner: string;
 };

@@ -4,7 +4,7 @@ import {
   ProofStateOutput,
 } from '@zkdb/smart-contract';
 import {
-  ModelDatabase,
+  ModelMetadataDatabase,
   ModelMerkleTree,
   ModelProof,
   ModelQueueTask,
@@ -39,9 +39,9 @@ export async function createProof(taskId: string) {
 
   try {
     const circuitName = `${task.database}.${task.collection}`;
-    const modelDatabase = ModelDatabase.getInstance();
+    const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
     const { merkleHeight, appPublicKey } =
-      (await modelDatabase.getDatabase(task.database)) || {};
+      (await modelDatabaseMetadata.getDatabase(task.database)) || {};
 
     if (!merkleHeight) {
       throw new Error(

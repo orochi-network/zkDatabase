@@ -1,22 +1,15 @@
+import { TGroupRecord } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstants,
 } from '@zkdb/storage';
-import { ClientSession, Document, InsertOneOptions } from 'mongodb';
+import { ClientSession, InsertOneOptions, WithoutId } from 'mongodb';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
 
-export interface GroupSchema extends Document {
-  groupName: string;
-  description: string;
-  createBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export class ModelGroup extends ModelGeneral<GroupSchema> {
+export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
   private static collectionName: string =
     zkDatabaseConstants.databaseCollections.group;
 
@@ -27,14 +20,14 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
   public async createGroup(
     groupName: string,
     description?: string,
-    createBy?: string,
+    createdBy?: string,
     options?: InsertOneOptions
   ) {
     return this.insertOne(
       {
         groupName,
-        description: description || `Group ${groupName}`,
-        createBy: createBy || ZKDATABASE_USER_SYSTEM,
+        groupDescription: description || `Group ${groupName}`,
+        createdBy: createdBy || ZKDATABASE_USER_SYSTEM,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
@@ -42,10 +35,7 @@ export class ModelGroup extends ModelGeneral<GroupSchema> {
     );
   }
 
-  public async findGroup(
-    groupName: string,
-    session?: ClientSession
-  ): Promise<GroupSchema | null> {
+  public async findGroup(groupName: string, session?: ClientSession) {
     return this.collection.findOne({ groupName }, { session });
   }
 

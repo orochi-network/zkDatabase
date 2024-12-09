@@ -1,13 +1,13 @@
+import { EOwnershipType } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUser from '../../model/global/user.js';
 import { isGroupExist } from './group.js';
 import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
-import { EOwnershipType } from '@zkdb/common';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 
 export async function changeDocumentOwnership(
   databaseName: string,
@@ -46,7 +46,7 @@ export async function changeDocumentOwnership(
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
 
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
         docId,
@@ -56,11 +56,12 @@ export async function changeDocumentOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   } else {
     if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
         docId,
@@ -70,6 +71,7 @@ export async function changeDocumentOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   }
 }
 
@@ -108,7 +110,7 @@ export async function changeCollectionOwnership(
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
 
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
       },
@@ -117,11 +119,12 @@ export async function changeCollectionOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   } else {
     if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
       },
@@ -130,5 +133,7 @@ export async function changeCollectionOwnership(
       },
       { session }
     );
+
+    return result.matchedCount === 1;
   }
 }

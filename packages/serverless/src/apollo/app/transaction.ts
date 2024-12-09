@@ -3,17 +3,15 @@ import {
   TDatabaseRequest,
   TTransactionRequest,
   TTransactionConfirmRequest,
+  TTransactionResponse,
+  databaseName,
+  transactionType,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  confirmTransaction as confirmTransactionDomain,
-  enqueueTransaction as enqueueTransactionDomain,
-  getTransactionDraft,
-} from '../../domain/use-case/transaction.js';
+import Transaction from '../../domain/use-case/transaction.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
 
 export const typeDefsTransaction = gql`
   #graphql
@@ -47,13 +45,16 @@ export const typeDefsTransaction = gql`
   }
 `;
 
-const transactionDraft = authorizeWrapper(
+const transactionDraft = authorizeWrapper<
+  TTransactionRequest,
+  TTransactionResponse
+>(
   Joi.object({
     databaseName,
     transactionType,
   }),
   async (_root: unknown, args: TTransactionRequest, ctx) => {
-    const transaction = await getTransactionDraft(
+    const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,
       args.transactionType
@@ -66,13 +67,13 @@ const transactionDraft = authorizeWrapper(
   }
 );
 
-const transactionDeployEnqueue = authorizeWrapper(
+const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
   Joi.object({
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     (
-      await enqueueTransactionDomain(
+      await Transaction.enqueue(
         args.databaseName,
         ctx.userName,
         ETransactionType.Deploy
@@ -80,14 +81,17 @@ const transactionDeployEnqueue = authorizeWrapper(
     ).toString()
 );
 
-const transactionConfirm = authorizeWrapper(
+const transactionConfirm = authorizeWrapper<
+  TTransactionConfirmRequest,
+  boolean
+>(
   Joi.object({
     databaseName,
     id: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    await confirmTransactionDomain(args.databaseName, ctx.userName, args.txHash)
+    await Transaction.confirm(args.databaseName, ctx.userName, args.txHash)
 );
 
 type TTransactionResolver = {
