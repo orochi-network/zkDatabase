@@ -19,7 +19,7 @@ const TRANSACTION_DRAFT = gql`
       databaseName: $databaseName
       transactionType: $transactionType
     ) {
-      _id
+      transactionObjectId
       databaseName
       transactionType
       status

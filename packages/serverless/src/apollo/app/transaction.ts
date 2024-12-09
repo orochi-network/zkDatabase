@@ -22,7 +22,7 @@ export const typeDefsTransaction = gql`
   type Mutation
 
   type Transaction {
-    _id: String!
+    transactionObjectId: String!
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
@@ -61,7 +61,7 @@ const transactionDraft = authorizeWrapper(
 
     return {
       ...transaction,
-      _id: transaction._id.toString(),
+      transactionObjectId: transaction._id.toString(),
     };
   }
 );
