@@ -14,46 +14,22 @@ import {
   readHistoryDocument,
 } from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
-import { IDocumentRecord } from '../../model/abstract/document.js';
 import { authorizeWrapper } from '../validation.js';
 import {
   TDocumentField,
-  TPagination,
-  TCollectionRequest,
   collectionName,
   databaseName,
   documentField,
   pagination,
+  TDocumentCreateRequest,
+  TDocumentsFindRequest,
+  TDocumentFindRequest,
+  TDocumentUpdateRequest,
+  TDocumentHistoryGetRequest,
+  TDocumentHistoryListRequest,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from 'common/const.js';
-
-export type TDocumentsFindRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-  pagination: TPagination;
-};
-
-export type TDocumentFindRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-};
-
-export type TDocumentCreateRequest = TCollectionRequest & {
-  document: IDocumentRecord;
-  documentPermission: number;
-};
-
-export type TDocumentUpdateRequest = TCollectionRequest & {
-  query: { [key: string]: string };
-  document: TDocumentField[];
-};
-
-export type TDocumentHistoryGetRequest = TCollectionRequest & {
-  docId: string;
-};
-
-export type TDocumentHistoryListRequest = TCollectionRequest & {
-  pagination: TPagination;
-};
 
 export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -72,6 +48,8 @@ export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
   documentPermission: Joi.number().min(0).max(0xffffff).required(),
+  // TODO: CRITICAL: validate this since user could pass an arbitrary object
+  // and it will be stored in the database
   document: Joi.required(),
 });
 
@@ -79,6 +57,8 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
+  // TODO: CRITICAL: validate this since user could pass an arbitrary object
+  // and it will be stored in the database
   document: Joi.required(),
 });
 
@@ -208,7 +188,7 @@ const documentFind = authorizeWrapper(
 
     return {
       docId: document.docId,
-      field: document.field,
+      document: document.document,
       createdAt: document.createdAt,
     };
   }

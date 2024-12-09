@@ -5,6 +5,8 @@ import {
   EDatabaseProofStatus,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
+  TDocumentReadResponse,
+  TDocumentRecordResponse,
   TMetadataDocument,
   TPagination,
   TPaginationReturn,
@@ -26,9 +28,7 @@ import {
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
-import ModelDocument, {
-  IDocumentRecord,
-} from '../../model/abstract/document.js';
+import ModelDocument from '../../model/abstract/document.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
@@ -43,11 +43,6 @@ import {
   proveDeleteDocument,
   proveUpdateDocument,
 } from './prover.js';
-
-export type TReadDocumentResult = Pick<
-  IDocumentRecord,
-  'docId' | 'document' | 'createdAt'
->;
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -68,7 +63,7 @@ async function readDocument(
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<TReadDocumentResult | null> {
+): Promise<TDocumentReadResponse | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -413,7 +408,10 @@ export function filterDocumentsByPermission(
 }
 
 // TODO: might need to reconsider better type annotation
-type TDocumentResponse = Omit<IDocumentRecord, '_id' | 'active' | 'updatedAt'>;
+type TDocumentResponse = Omit<
+  TDocumentRecordResponse,
+  '_id' | 'active' | 'updatedAt'
+>;
 
 // TODO: might need to reconsider better type annotation
 type TDocumentWithMetadataResponse = TDocumentResponse & {
