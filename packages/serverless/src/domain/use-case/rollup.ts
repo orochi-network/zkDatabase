@@ -162,7 +162,7 @@ export async function getRollUpHistory(
     previousMerkleTreeRoot: history.previousMerkleTreeRoot,
     transactionObjectId: history.transactionObjectId,
     proofObjectId: history.proofObjectId,
-    rawTransaction: transaction.rawTransaction,
+    transactionRaw: transaction.transactionRaw,
     txHash: transaction?.txHash,
     createdAt: transaction.createdAt,
     transactionHash: transaction?.txHash,
