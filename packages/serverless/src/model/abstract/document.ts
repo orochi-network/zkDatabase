@@ -2,7 +2,7 @@
 // eslint-disable-next-line max-classes-per-file
 import {
   TDocumentField,
-  TDocumentRecord,
+  TDocumentRecordResponse,
   TProvableTypeString,
 } from '@zkdb/common';
 import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
@@ -10,21 +10,14 @@ import { randomUUID } from 'crypto';
 import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
 import logger from '../../helper/logger.js';
 import { getCurrentTime } from 'helper/common.js';
-import { TPickOptional } from '@orochi-network/framework';
-
-// TODO: the naming maybe confusing with TDocumentRecord from common
-export type IDocumentRecord = TPickOptional<
-  TDocumentRecord,
-  'previousObjectId'
->;
 
 /** Database-serialized version of a document record. */
-export type TDocumentRecordSerialized = TPickOptional<
-  Omit<TDocumentRecord, 'document'> & {
-    document: Record<string, TContractSchemaFieldSerializable>;
-  },
-  'previousObjectId'
->;
+export type TDocumentRecordSerialized = Omit<
+  TDocumentRecordResponse,
+  'document'
+> & {
+  document: Record<string, TContractSchemaFieldSerializable>;
+};
 
 /** Map of Provable types to their corresponding BSON types. */
 type TProvableSerializationMap = {

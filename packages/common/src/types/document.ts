@@ -14,9 +14,21 @@ export type TDocument = {
 
 export type TDocumentRecord = TDbRecord<TDocument>;
 
+export type TDocumentRecordResponse = Omit<
+  TDocumentRecord,
+  'previousObjectId'
+> & {
+  previousObjectId?: ObjectId;
+};
+
+export type TDocumentReadResponse = Pick<
+  TDocumentRecordResponse,
+  'docId' | 'document' | 'createdAt'
+>;
+
 export type TDocumentHistory = {
   docId: string;
-  documents: TDocumentRecord[];
+  documents: TDocumentRecordResponse[];
   metadata: TMetadataDocument;
   active: boolean;
 };

@@ -14,7 +14,6 @@ import {
   readHistoryDocument,
 } from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
-import { IDocumentRecord } from '../../model/abstract/document.js';
 import { authorizeWrapper } from '../validation.js';
 import {
   TDocumentField,
@@ -38,7 +37,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  document: IDocumentRecord;
+  document: TDocumentField[];
   documentPermission: number;
 };
 
@@ -72,6 +71,8 @@ export const DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
   documentPermission: Joi.number().min(0).max(0xffffff).required(),
+  // TODO: CRITICAL: validate this since user could pass an arbitrary object
+  // and it will be stored in the database
   document: Joi.required(),
 });
 
@@ -79,6 +80,8 @@ export const DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
+  // TODO: CRITICAL: validate this since user could pass an arbitrary object
+  // and it will be stored in the database
   document: Joi.required(),
 });
 
@@ -208,7 +211,7 @@ const documentFind = authorizeWrapper(
 
     return {
       docId: document.docId,
-      field: document.field,
+      document: document.document,
       createdAt: document.createdAt,
     };
   }
