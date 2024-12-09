@@ -1,9 +1,8 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { TPickOptional } from '@orochi-network/framework';
 import {
   TDocumentField,
-  TDocumentRecord,
+  TDocumentRecordResponse,
   TProvableTypeString,
 } from '@zkdb/common';
 import {
@@ -17,19 +16,13 @@ import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
 
-// TODO: the naming maybe confusing with TDocumentRecord from common
-export type IDocumentRecord = TPickOptional<
-  TDocumentRecord,
-  'previousObjectId'
->;
-
 /** Database-serialized version of a document record. */
-export type TDocumentRecordSerialized = TPickOptional<
-  Omit<TDocumentRecord, 'document'> & {
-    document: Record<string, TContractSchemaFieldSerializable>;
-  },
-  'previousObjectId'
->;
+export type TDocumentRecordSerialized = Omit<
+  TDocumentRecordResponse,
+  'document'
+> & {
+  document: Record<string, TContractSchemaFieldSerializable>;
+};
 
 /** Map of Provable types to their corresponding BSON types. */
 type TProvableSerializationMap = {
@@ -116,8 +109,8 @@ export class ModelDocument extends ModelBasic<
   public static serializeDocument(
     document: Record<string, TDocumentField>
   ): Record<string, TContractSchemaFieldSerializable> {
-    return Object.entries(document)
-      .map(([_, field]) => {
+    return Object.values(document)
+      .map((field) => {
         switch (field.kind) {
           case 'UInt32':
             return {
@@ -129,6 +122,14 @@ export class ModelDocument extends ModelBasic<
               ...field,
               value: new Long(field.value),
             };
+          case 'Bool':
+          case 'Sign':
+          case 'Character':
+          case 'PublicKey':
+          case 'PrivateKey':
+          case 'Signature':
+          case 'CircuitString':
+            return field;
           case 'Field':
           case 'UInt64':
           case 'MerkleMapWitness':
@@ -136,7 +137,10 @@ export class ModelDocument extends ModelBasic<
               `Field type ${field.kind} is not yet supported in database`
             );
           default:
-            return field;
+            throw new Error(
+              `Unhandled field type, it is required that we handle all \
+possible field kinds explicitly to ensure correctness.`
+            );
         }
       })
       .reduce(
@@ -153,8 +157,8 @@ export class ModelDocument extends ModelBasic<
   public static deserializeDocument(
     document: Record<string, TContractSchemaFieldSerializable>
   ): Record<string, TDocumentField> {
-    return Object.entries(document)
-      .map(([_, field]) => {
+    return Object.values(document)
+      .map((field) => {
         switch (field.kind) {
           case 'UInt32':
             return {
@@ -166,6 +170,14 @@ export class ModelDocument extends ModelBasic<
               ...field,
               value: field.value.toBigInt(),
             };
+          case 'Bool':
+          case 'Sign':
+          case 'Character':
+          case 'PublicKey':
+          case 'PrivateKey':
+          case 'Signature':
+          case 'CircuitString':
+            return field;
           case 'Field':
           case 'UInt64':
           case 'MerkleMapWitness':
@@ -173,7 +185,10 @@ export class ModelDocument extends ModelBasic<
               `Field type ${field.kind} is not yet supported in database`
             );
           default:
-            return field;
+            throw new Error(
+              `Unhandled field type, it is required that we handle all \
+possible field kinds explicitly to ensure correctness.`
+            );
         }
       })
       .reduce(

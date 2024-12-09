@@ -19,6 +19,7 @@ export type TMetadataCollection = TMetadataBasic &
   TCollection & {
     sizeOnDisk: number;
   };
+
 export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
 
 /**
