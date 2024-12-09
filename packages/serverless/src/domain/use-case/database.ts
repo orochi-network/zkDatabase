@@ -20,7 +20,7 @@ import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
 import { listCollection } from './collection.js';
 import { addUsersToGroup, createGroup } from './group.js';
-import { enqueueTransaction, getLatestTransaction } from './transaction.js';
+import Transaction from './transaction.js';
 import { isUserExist } from './user.js';
 
 // eslint-disable-next-line import/prefer-default-export
@@ -57,7 +57,7 @@ export async function createDatabase(
     );
     if (dbSetting) {
       // enqueue transaction
-      await enqueueTransaction(
+      await Transaction.enqueue(
         databaseName,
         actor,
         ETransactionType.Deploy,
@@ -158,7 +158,7 @@ export async function getListDatabaseDetail(
 
         const collection = await listCollection(databaseName, actor);
 
-        const latestTransaction = await getLatestTransaction(
+        const latestTransaction = await Transaction.latest(
           databaseName,
           ETransactionType.Deploy
         );

@@ -102,20 +102,20 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async getTransaction(
+  async transactionDraft(
     transactionType: TTransactionType
   ): Promise<TDbTransaction> {
-    const result = await this.apiClient.transaction.getTransaction({
+    const result = await this.apiClient.transaction.transactionDraft({
       databaseName: this.databaseName,
       transactionType,
     });
     return result.unwrap();
   }
 
-  async confirmTransaction(id: string, txHash: string): Promise<boolean> {
-    const result = await this.apiClient.transaction.confirmTransaction({
+  async transactionConfirm(id: string, txHash: string): Promise<boolean> {
+    const result = await this.apiClient.transaction.transactionConfirm({
       databaseName: this.databaseName,
-      confirmTransactionId: id,
+      transactionObjectId: id,
       txHash,
     });
     return result.unwrap();

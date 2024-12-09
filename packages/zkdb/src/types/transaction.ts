@@ -7,10 +7,10 @@ export type TTransactionStatus =
   | 'success'
   | 'unknown';
 export type TDbTransaction = {
-  id: string;
+  transactionObjectId: string;
   databaseName: string;
   status: TTransactionStatus;
   transactionType: TTransactionType;
-  tx: string;
+  rawTransaction: string;
   zkAppPublicKey: string;
 };

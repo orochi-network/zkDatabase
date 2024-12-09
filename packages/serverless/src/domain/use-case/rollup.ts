@@ -19,7 +19,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import logger from '../../helper/logger.js';
-import { enqueueTransaction } from './transaction.js';
+import Transaction from './transaction.js';
 
 export async function createRollUp(
   databaseName: string,
@@ -61,7 +61,7 @@ export async function createRollUp(
     }
   }
 
-  const txId = await enqueueTransaction(
+  const txId = await Transaction.enqueue(
     databaseName,
     actor,
     ETransactionType.Rollup,
@@ -160,6 +160,10 @@ export async function getRollUpHistory(
     databaseName: history.databaseName,
     currentMerkleTreeRoot: history.currentMerkleTreeRoot,
     previousMerkleTreeRoot: history.previousMerkleTreeRoot,
+    transactionObjectId: history.transactionObjectId,
+    proofObjectId: history.proofObjectId,
+    rawTransaction: transaction.rawTransaction,
+    txHash: transaction?.txHash,
     createdAt: transaction.createdAt,
     transactionHash: transaction?.txHash,
     status,

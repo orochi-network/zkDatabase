@@ -10,46 +10,47 @@ import {
   TTransactionRequest,
 } from "./types/transaction.js";
 
-const TRANSACTION_GET = gql`
-  query GetTransaction(
+const TRANSACTION_DRAFT = gql`
+  query TransactionDraft(
     $databaseName: String!
     $transactionType: TransactionType!
   ) {
-    getTransaction(
+    transactionDraft(
       databaseName: $databaseName
       transactionType: $transactionType
     ) {
+      transactionObjectId
       databaseName
       transactionType
       status
-      id
-      tx
-      zkAppPublicKey
+      rawTransaction
+      txHash
+      error
     }
   }
 `;
 
 const TRANSACTION_CONFIRM = gql`
-  mutation ConfirmTransaction(
+  mutation TransactionConfirm(
     $databaseName: String!
-    $confirmTransactionId: String!
+    $transactionObjectId: String!
     $txHash: String!
   ) {
-    confirmTransaction(
+    transactionConfirm(
       databaseName: $databaseName
-      id: $confirmTransactionId
+      transactionObjectId: $transactionObjectId
       txHash: $txHash
     )
   }
 `;
 
 export const transaction = <T>(client: TApolloClient<T>) => ({
-  getTransaction: createQueryFunction<
+  transactionDraft: createQueryFunction<
     TDbTransaction,
     TTransactionRequest,
-    { getTransaction: TDbTransaction }
-  >(client, TRANSACTION_GET, (data) => data.getTransaction),
-  confirmTransaction: createMutateFunction<
+    { transactionDraft: TDbTransaction }
+  >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
+  transactionConfirm: createMutateFunction<
     boolean,
     TTransactionConfirmRequest,
     { confirmTransaction: boolean }

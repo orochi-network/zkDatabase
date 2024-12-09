@@ -21,11 +21,13 @@ enum RollUpState {
 type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
-  transactionHash: String,
-  status: TransactionStatus!,
-  currentMerkleTreeRoot: String!,
-  previousMerkleTreeRoot: String!,
+  txHash: String
+  rawTransaction: String!
+  status: TransactionStatus!
+  merkletreeRootCurrent: String!
+  merkletreeRootPrevious: String!
   createdAt: Date!
+  updatedAt: Date!
   error: String
 }
 
