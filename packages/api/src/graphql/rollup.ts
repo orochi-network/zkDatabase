@@ -6,14 +6,14 @@ import {
 } from "./types/rollup.js";
 
 const ROLLUP_CREATE = gql`
-  mutation RollUpCreate($databaseName: String!) {
-    rollUpCreate(databaseName: $databaseName)
+  mutation RollupCreate($databaseName: String!) {
+    rollupCreate(databaseName: $databaseName)
   }
 `;
 
 const ROLLUP_HISTORY = gql`
-  mutation RollUpHistory($databaseName: String!) {
-    rollUpHistory(databaseName: $databaseName) {
+  mutation RollupHistory($databaseName: String!) {
+    rollupHistory(databaseName: $databaseName) {
       state
       extraData
       history {
@@ -21,21 +21,22 @@ const ROLLUP_HISTORY = gql`
         transactionType
         txHash
         status
-        currentMerkleTreeRoot
-        previousMerkleTreeRoot
+        merkletreeRootCurrent
+        merkletreeRootPrevious
         createdAt
+        updatedAt
         error
       }
     }
   }
 `;
 export const rollup = <T>(client: TApolloClient<T>) => ({
-  rollUpCreate: createMutateFunction<
+  rollupCreate: createMutateFunction<
     boolean,
     TCreateRollUpRequest,
     { rollUpCreate: boolean }
   >(client, ROLLUP_CREATE, (data) => data.rollUpCreate),
-  rollUpHistory: createMutateFunction<
+  rollupHistory: createMutateFunction<
     TGetRollUpHistoryResponse,
     TCreateRollUpRequest,
     { rollUpHistory: TGetRollUpHistoryResponse }

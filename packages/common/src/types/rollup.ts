@@ -19,8 +19,8 @@ export enum ERollUpState {
 
 export type TRollUpHistory = {
   databaseName: string;
-  currentMerkleTreeRoot: string;
-  previousMerkleTreeRoot: string;
+  merkletreeRootCurrent: string;
+  merkletreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
   transactionObjectId: ObjectId;
