@@ -133,8 +133,8 @@ export class ModelDocument extends ModelBasic<
             );
           default:
             throw new Error(
-              `Unhandled field type, it is required that we handle all possible field kinds \
-to ensure correctness.`
+              `Unhandled field type, it is required that we handle all \
+possible field kinds explicitly to ensure correctness.`
             );
         }
       })
@@ -181,8 +181,8 @@ to ensure correctness.`
             );
           default:
             throw new Error(
-              `Unhandled field type, it is required that we handle all possible field kinds \
-to ensure correctness.`
+              `Unhandled field type, it is required that we handle all \
+possible field kinds explicitly to ensure correctness.`
             );
         }
       })
