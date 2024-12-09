@@ -1,199 +1,199 @@
-// /* eslint-disable import/prefer-default-export */
-// import { TDocument, TDocumentHistory, TPagination } from '@zkdb/common';
-// import { DB, zkDatabaseConstants } from '@zkdb/storage';
-// import { ClientSession } from 'mongodb';
-// import ModelDocument from '../../model/abstract/document.js';
-// import { isDatabaseOwner } from './database.js';
-// import {
-//   buildDocumentFields,
-//   filterDocumentsByPermission,
-// } from './document.js';
-// import { getUsersGroup } from './group.js';
-// import {
-//   hasCollectionPermission,
-//   hasDocumentPermission,
-// } from './permission.js';
+/* eslint-disable import/prefer-default-export */
+import { TDocument, TDocumentHistory, TPagination } from '@zkdb/common';
+import { DB, zkDatabaseConstants } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
+import ModelDocument from '../../model/abstract/document.js';
+import { isDatabaseOwner } from './database.js';
+import {
+  buildDocumentFields,
+  filterDocumentsByPermission,
+} from './document.js';
+import { getUsersGroup } from './group.js';
+import {
+  hasCollectionPermission,
+  hasDocumentPermission,
+} from './permission.js';
 
-// function buildHistoryPipeline(pagination: TPagination): Array<any> {
-//   return [
-//     {
-//       $group: {
-//         _id: '$docId',
-//         documents: { $push: '$$ROOT' },
-//       },
-//     },
-//     {
-//       $sort: { docId: 1, timestamp: 1 },
-//     },
-//     {
-//       $match: {
-//         _id: { $ne: null },
-//       },
-//     },
-//     {
-//       $skip: pagination.offset,
-//     },
-//     {
-//       $limit: pagination.limit,
-//     },
-//     {
-//       $lookup: {
-//         from: zkDatabaseConstants.databaseCollections.permission,
-//         let: { docId: '$_id' },
-//         pipeline: [
-//           {
-//             $match: {
-//               $expr: { $eq: ['$docId', '$$docId'] },
-//             },
-//           },
-//           {
-//             $project: {
-//               permission: true,
-//               merkleIndex: true,
-//               group: true,
-//               owner: true,
-//             },
-//           },
-//         ],
-//         as: 'metadata',
-//       },
-//     },
-//     {
-//       $unwind: '$metadata',
-//     },
-//   ];
-// }
+function buildHistoryPipeline(pagination: TPagination): Array<any> {
+  return [
+    {
+      $group: {
+        _id: '$docId',
+        documents: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $sort: { docId: 1, timestamp: 1 },
+    },
+    {
+      $match: {
+        _id: { $ne: null },
+      },
+    },
+    {
+      $skip: pagination.offset,
+    },
+    {
+      $limit: pagination.limit,
+    },
+    {
+      $lookup: {
+        from: zkDatabaseConstants.databaseCollections.permission,
+        let: { docId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$docId', '$$docId'] },
+            },
+          },
+          {
+            $project: {
+              permission: true,
+              merkleIndex: true,
+              group: true,
+              owner: true,
+            },
+          },
+        ],
+        as: 'metadata',
+      },
+    },
+    {
+      $unwind: '$metadata',
+    },
+  ];
+}
 
-// async function listHistoryDocuments(
-//   databaseName: string,
-//   collectionName: string,
-//   actor: string,
-//   pagination: TPagination,
-//   session?: ClientSession
-// ): Promise<TDocumentHistory[]> {
-//   if (
-//     await hasCollectionPermission(
-//       databaseName,
-//       collectionName,
-//       actor,
-//       'read',
-//       session
-//     )
-//   ) {
-//     const { client } = DB.service;
+async function listHistoryDocuments(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  pagination: TPagination,
+  session?: ClientSession
+): Promise<TDocumentHistory[]> {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
+    const { client } = DB.service;
 
-//     const database = client.db(databaseName);
-//     const documentsCollection = database.collection(collectionName);
+    const database = client.db(databaseName);
+    const documentsCollection = database.collection(collectionName);
 
-//     const userGroups = await getUsersGroup(databaseName, actor);
+    const userGroups = await getUsersGroup(databaseName, actor);
 
-//     const pipeline = buildHistoryPipeline(pagination);
+    const pipeline = buildHistoryPipeline(pagination);
 
-//     const documentsWithMetadata = await documentsCollection
-//       .aggregate(pipeline)
-//       .toArray();
+    const documentsWithMetadata = await documentsCollection
+      .aggregate(pipeline)
+      .toArray();
 
-//     let filteredDocuments: any[];
+    let filteredDocuments: any[];
 
-//     if (!(await isDatabaseOwner(databaseName, actor))) {
-//       filteredDocuments = filterDocumentsByPermission(
-//         documentsWithMetadata,
-//         actor,
-//         userGroups
-//       );
-//     } else {
-//       filteredDocuments = documentsWithMetadata;
-//     }
+    if (!(await isDatabaseOwner(databaseName, actor))) {
+      filteredDocuments = filterDocumentsByPermission(
+        documentsWithMetadata,
+        actor,
+        userGroups
+      );
+    } else {
+      filteredDocuments = documentsWithMetadata;
+    }
 
-//     const result = filteredDocuments.map((historyDocument) => {
-//       const documents = historyDocument.documents.map((document: any) => ({
-//         fields: buildDocumentFields(document),
-//         docId: historyDocument._id,
-//         createdAt: historyDocument.timestamp,
-//       }));
+    const result = filteredDocuments.map((historyDocument) => {
+      const documents = historyDocument.documents.map((document: any) => ({
+        fields: buildDocumentFields(document),
+        docId: historyDocument._id,
+        createdAt: historyDocument.timestamp,
+      }));
 
-//       return {
-//         docId: historyDocument._id,
-//         documents,
-//         metadata: historyDocument.metadata,
-//         active: historyDocument.active,
-//       };
-//     });
+      return {
+        docId: historyDocument._id,
+        documents,
+        metadata: historyDocument.metadata,
+        active: historyDocument.active,
+      };
+    });
 
-//     return result;
-//   }
+    return result;
+  }
 
-//   throw new Error(
-//     `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-//   );
-// }
+  throw new Error(
+    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  );
+}
 
-// async function readHistoryDocument(
-//   databaseName: string,
-//   collectionName: string,
-//   actor: string,
-//   docId: string,
-//   session?: ClientSession
-// ): Promise<HistoryDocument | null> {
-//   if (
-//     !(await hasCollectionPermission(
-//       databaseName,
-//       collectionName,
-//       actor,
-//       'read',
-//       session
-//     ))
-//   ) {
-//     throw new Error(
-//       `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-//     );
-//   }
+async function readHistoryDocument(
+  databaseName: string,
+  collectionName: string,
+  actor: string,
+  docId: string,
+  session?: ClientSession
+): Promise<HistoryDocument | null> {
+  if (
+    !(await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    ))
+  ) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+    );
+  }
 
-//   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-//   const latestDocument = await modelDocument.findHistoryOne(docId, session);
+  const latestDocument = await modelDocument.findHistoryOne(docId, session);
 
-//   if (!latestDocument) {
-//     return null;
-//   }
+  if (!latestDocument) {
+    return null;
+  }
 
-//   const hasReadPermission = await hasDocumentPermission(
-//     databaseName,
-//     collectionName,
-//     actor,
-//     docId,
-//     'read',
-//     session
-//   );
+  const hasReadPermission = await hasDocumentPermission(
+    databaseName,
+    collectionName,
+    actor,
+    docId,
+    'read',
+    session
+  );
 
-//   if (!hasReadPermission) {
-//     throw new Error(
-//       `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
-//     );
-//   }
+  if (!hasReadPermission) {
+    throw new Error(
+      `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
+    );
+  }
 
-//   const documentHistoryRecords = await modelDocument.findHistoryOne(
-//     docId,
-//     session
-//   );
+  const documentHistoryRecords = await modelDocument.findHistoryOne(
+    docId,
+    session
+  );
 
-//   const documents: TDocument[] = documentHistoryRecords.map(
-//     (documentRecord) => {
-//       const document = buildDocumentFields(documentRecord);
+  const documents: TDocument[] = documentHistoryRecords.map(
+    (documentRecord) => {
+      const document = buildDocumentFields(documentRecord);
 
-//       return {
-//         docId: documentRecord.docId,
-//         fields: document,
-//         createdAt: documentRecord.timestamp,
-//       };
-//     }
-//   );
+      return {
+        docId: documentRecord.docId,
+        fields: document,
+        createdAt: documentRecord.timestamp,
+      };
+    }
+  );
 
-//   return {
-//     docId,
-//     documents,
-//     active: documentHistoryRecords[0].active,
-//   };
-// }
+  return {
+    docId,
+    documents,
+    active: documentHistoryRecords[0].active,
+  };
+}
 
-// export { listHistoryDocuments, readHistoryDocument };
+export { listHistoryDocuments, readHistoryDocument };
