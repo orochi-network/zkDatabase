@@ -77,9 +77,7 @@ export type TCollectionListRequest = TDatabaseRequest;
 export type TCollectionListResponse = TMetadataCollection[];
 
 // Index
-export type TIndexRequest = {
-  indexName: string;
-};
+export type TIndexRequest = Pick<TCollectionIndexInfo, 'indexName'>;
 
 // Index list
 export type TIndexListRequest = TCollectionRequest;
