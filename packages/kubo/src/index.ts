@@ -123,11 +123,11 @@ export class RequestBuilder {
   public args: Partial<IKuboArg>;
 
   constructor(
-    comand: string,
+    command: string,
     defaultOpt: Partial<IKuboOption> = {},
     defautArgs: Partial<IKuboArg> = {}
   ) {
-    this.command = comand;
+    this.command = command;
     this.args = defautArgs;
     this.options = defaultOpt;
   }
@@ -149,11 +149,11 @@ export class RequestBuilder {
   }
 
   public static new(
-    comand: string,
+    command: string,
     defaultOpt: Partial<IKuboOption> = {},
     defautArgs: Partial<IKuboArg> = {}
   ) {
-    return new RequestBuilder(comand, defaultOpt, defautArgs);
+    return new RequestBuilder(command, defaultOpt, defautArgs);
   }
 }
 
