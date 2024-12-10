@@ -95,7 +95,7 @@ const transactionConfirm = authorizeWrapper<
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    await Transaction.confirm(
+    Transaction.confirm(
       args.databaseName,
       ctx.userName,
       args.transactionObjectId,

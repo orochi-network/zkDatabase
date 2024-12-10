@@ -93,7 +93,7 @@ export async function proveUpdateDocument(
 
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,
@@ -122,7 +122,10 @@ export async function proveUpdateDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.nextValue(ESequencer.Operation, session);
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
+    session
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -181,7 +184,10 @@ export async function proveDeleteDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.nextValue(ESequencer.Operation, session);
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
+    session
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
