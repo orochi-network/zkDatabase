@@ -34,29 +34,4 @@ export const permission = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.permissionSet
   ),
-  // get: createQueryFunction<
-  //   TOwnershipAndPermissionResponse,
-  //   TOwnershipAndPermissionRequest,
-  //   { permissionList: TOwnershipAndPermissionResponse }
-  // >(
-  //   client,
-  //   gql`
-  //     query PermissionList(
-  //       $databaseName: String!
-  //       $collectionName: String!
-  //       $docId: String
-  //     ) {
-  //       permissionList(
-  //         databaseName: $databaseName
-  //         collectionName: $collectionName
-  //         docId: $docId
-  //       ) {
-  //         userName
-  //         groupName
-  //         permission
-  //       }
-  //     }
-  //   `,
-  //   (data) => data.permissionList
-  // ),
 });
