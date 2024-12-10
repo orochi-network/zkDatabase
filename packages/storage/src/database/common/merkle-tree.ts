@@ -1,20 +1,23 @@
 import {
   TMerkleJson,
   TMerkleNode,
+  TMerkleNodeRecord,
   TMerkleProof,
   TMerkleWitnessNode,
 } from '@zkdb/common';
 import crypto from 'crypto';
-import { BulkWriteOptions, FindOptions, ObjectId } from 'mongodb';
+import { BulkWriteOptions, FindOptions, ObjectId, WithoutId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
-import { zkDatabaseConstants } from '../../common/const.js';
+import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
 import { ModelMetadataDatabase } from '../global/metadata-database.js';
 
-export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
+export class ModelMerkleTree extends ModelGeneral<
+  WithoutId<TMerkleNodeRecord>
+> {
   private static instances = new Map<string, ModelMerkleTree>();
 
   private zeroes: Field[] = [];
@@ -25,10 +28,11 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
     super(
       databaseName,
       DB.service,
-      zkDatabaseConstants.databaseCollections.merkleTree,
+      zkDatabaseConstant.databaseCollection.merkleTree,
+      // @NOTE: Do we need this code
       {
         timeseries: {
-          timeField: 'timestamp',
+          timeField: 'updatedAt',
           granularity: 'seconds',
         },
       }
@@ -80,22 +84,22 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
     this.zeroes = zeroes;
   }
 
-  public getZeroNodes() {
+  public getZeroNodes(): Field[] {
     return this.zeroes;
   }
 
-  public async getRoot(timestamp: Date, options?: FindOptions): Promise<Field> {
-    const root = await this.getNode(this._height - 1, 0n, timestamp, options);
+  public async getRoot(updatedAt: Date, options?: FindOptions): Promise<Field> {
+    const root = await this.getNode(this._height - 1, 0n, updatedAt, options);
     return Field(root);
   }
 
   public async setLeaf(
     index: bigint,
     leaf: Field,
-    timestamp: Date,
+    updatedAt: Date,
     options?: FindOptions
   ): Promise<Field> {
-    const witnesses = await this.getWitness(index, timestamp, options);
+    const witnesses = await this.getWitness(index, updatedAt, options);
     const ExtendedWitnessClass = createExtendedMerkleWitness(this._height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
@@ -106,7 +110,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
     for (let level = 0; level < this._height; level += 1) {
       const dataToInsert = {
         nodeId: ModelMerkleTree.encodeLevelAndIndexToObjectId(level, currIndex),
-        timestamp,
+        updatedAt,
         hash: path[level].toString(),
         level,
         index: currIndex,
@@ -133,7 +137,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public async getWitness(
     index: bigint,
-    timestamp: Date,
+    updatedAt: Date,
     options?: FindOptions
   ): Promise<TMerkleProof[]> {
     if (index >= this.leafCount) {
@@ -150,7 +154,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
-        this.getNode(level, siblingIndex, timestamp, options).then(
+        this.getNode(level, siblingIndex, updatedAt, options).then(
           (sibling) => {
             return { isLeft, sibling };
           }
@@ -165,7 +169,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public async getWitnessPath(
     index: bigint,
-    timestamp: Date,
+    updatedAt: Date,
     options?: FindOptions
   ): Promise<TMerkleJson<TMerkleWitnessNode>[]> {
     if (index >= this.leafCount) {
@@ -183,7 +187,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPath.push(
-        await this.getNode(level, currIndex, timestamp, options).then(
+        await this.getNode(level, currIndex, updatedAt, options).then(
           (node) => {
             return {
               hash: node.toString(),
@@ -198,7 +202,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
       );
 
       witnessPath.push(
-        await this.getNode(level, siblingIndex, timestamp, options).then(
+        await this.getNode(level, siblingIndex, updatedAt, options).then(
           (node) => {
             return {
               hash: node.toString(),
@@ -216,7 +220,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
     }
 
     witnessPath.push(
-      await this.getNode(this._height - 1, 0n, timestamp, options).then(
+      await this.getNode(this._height - 1, 0n, updatedAt, options).then(
         (node) => {
           return {
             hash: node.toString(),
@@ -235,7 +239,7 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
   public async getNode(
     level: number,
     index: bigint,
-    timestamp: Date,
+    updatedAt: Date,
     options?: FindOptions
   ): Promise<Field> {
     try {
@@ -246,12 +250,12 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
       const query = {
         nodeId,
-        timestamp: { $lte: timestamp },
+        updatedAt: { $lte: updatedAt },
       };
 
       const node = await this.collection
         .find(query, options)
-        .sort({ timestamp: -1 }) // Gets the latest state at or before the specified timestamp
+        .sort({ updatedAt: -1 }) // Gets the latest state at or before the specified updatedAt
         .limit(1)
         .toArray();
 
@@ -268,17 +272,17 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public async getNodesByLevel(
     level: number,
-    timestamp: Date,
+    updatedAt: Date,
     options?: FindOptions
   ): Promise<TMerkleJson<TMerkleNode>[]> {
     const query = {
       level,
-      timestamp: { $lte: timestamp },
+      updatedAt: { $lte: updatedAt },
     };
 
     const pipeline: any[] = [
       { $match: query },
-      { $sort: { index: 1, timestamp: -1 } },
+      { $sort: { index: 1, updatedAt: -1 } },
       {
         $group: {
           _id: '$index',
@@ -306,21 +310,21 @@ export class ModelMerkleTree extends ModelGeneral<TMerkleJson<TMerkleNode>> {
 
   public async countLatestNodesByLevel(
     level: number,
-    timestamp: Date
+    updatedAt: Date
   ): Promise<number> {
     const query = {
       level,
-      timestamp: { $lte: timestamp },
+      updatedAt: { $lte: updatedAt },
     };
 
     const latestNodesAggregation = await this.collection
       .aggregate([
         { $match: query },
-        { $sort: { index: 1, timestamp: -1 } },
+        { $sort: { index: 1, updatedAt: -1 } },
         {
           $group: {
             _id: '$index',
-            latestTimestamp: { $first: '$timestamp' },
+            latestTimestamp: { $first: '$updatedAt' },
           },
         },
         { $count: 'totalLatestNodes' },

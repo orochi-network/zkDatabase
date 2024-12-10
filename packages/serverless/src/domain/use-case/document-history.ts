@@ -7,8 +7,7 @@ import {
   TPagination,
   TSingleDocumentHistory,
 } from '@zkdb/common';
-import { DB, zkDatabaseConstants } from '@zkdb/storage';
-import assert from 'assert';
+import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocument, {
   TDocumentRecordSerialized,
@@ -45,7 +44,7 @@ function buildHistoryPipeline(pagination: TPagination): Array<any> {
     },
     {
       $lookup: {
-        from: zkDatabaseConstants.databaseCollections.permission,
+        from: zkDatabaseConstant.databaseCollection.permission,
         let: { docId: '$_id' },
         pipeline: [
           {

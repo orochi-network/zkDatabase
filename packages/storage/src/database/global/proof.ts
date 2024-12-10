@@ -1,5 +1,5 @@
 import { FindOptions, InsertOneOptions, WithId } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
+import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
@@ -27,9 +27,9 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public static getInstance(): ModelProof {
     if (!this.instance) {
       this.instance = new ModelProof(
-        zkDatabaseConstants.globalProofDatabase,
+        zkDatabaseConstant.globalProofDatabase,
         DB.proof,
-        zkDatabaseConstants.globalCollections.proof
+        zkDatabaseConstant.globalCollection.proof
       );
     }
     return this.instance;

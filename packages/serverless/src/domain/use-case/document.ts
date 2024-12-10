@@ -21,7 +21,7 @@ import {
   ModelSequencer,
   TaskEntity,
   withTransaction,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
@@ -351,7 +351,7 @@ function buildPipeline(matchQuery: any, pagination?: TPagination): Array<any> {
   return [
     {
       $lookup: {
-        from: zkDatabaseConstants.databaseCollections.permission,
+        from: zkDatabaseConstant.databaseCollection.permission,
         let: { docId: '$docId' },
         pipeline: [
           {

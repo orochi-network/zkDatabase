@@ -5,7 +5,7 @@ import {
   ObjectId,
 } from 'mongodb';
 import {
-  zkDatabaseConstants,
+  zkDatabaseConstant,
   zkDatabaseMetadataCollections,
 } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
@@ -25,7 +25,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {
-    super(databaseName || zkDatabaseConstants.globalDatabase, DB.service);
+    super(databaseName || zkDatabaseConstant.globalDatabase, DB.service);
   }
 
   public static getInstance<T extends Document>(

@@ -14,7 +14,7 @@ import {
   UpdateResult,
   WithId,
 } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
+import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
@@ -24,9 +24,9 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstant.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.transaction
+      zkDatabaseConstant.globalCollection.transaction
     );
   }
 
@@ -113,9 +113,9 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
 
   public static async init() {
     const collection = ModelCollection.getInstance<TTransactionRecord>(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstant.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.transaction
+      zkDatabaseConstant.globalCollection.transaction
     );
     if (!(await collection.isExist())) {
       await collection.index(

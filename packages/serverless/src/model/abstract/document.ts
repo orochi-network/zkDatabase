@@ -306,7 +306,7 @@ possible field kinds explicitly to ensure correctness.`
     return this.collection.findOne(
       { ...filter, active: true },
       {
-        sort: { timestamp: -1 },
+        sort: { updatedAt: -1 },
         session,
       }
     );
