@@ -19,10 +19,6 @@ export const O1JS_VALID_TYPE = [
 
 export const ESortingSchema = Joi.string().valid(ESorting.Asc, ESorting.Desc);
 
-export const CollectionIndex = Joi.object()
-  .pattern(Joi.string(), ESortingSchema) // Keys are strings, values must be 'Asc' or 'Desc'
-  .required();
-
 export const objectId = Joi.string()
   .trim()
   .min(36)
