@@ -1,15 +1,26 @@
-import { withTransaction } from '@zkdb/storage';
+import {
+  pagination,
+  TMinaSignature,
+  TUser,
+  TUserFindRequest,
+  TUserFindResponse,
+  TUserSignInRequest,
+  TUserSignInResponse,
+  TUserSignUpInput,
+  TUserSignUpRequest,
+  TUserSignUpResponse,
+} from '@zkdb/common';
 import { randomUUID } from 'crypto';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
-import { TPublicContext } from '../../common/types.js';
+import { DEFAULT_PAGINATION } from '../../common/const.js';
 import {
   findUser as findUserDomain,
-  searchUser as searchUserDomain,
   signUpUser,
 } from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
+import config from '../../helper/config.js';
 import {
   ACCESS_TOKEN_EXPIRE_TIME,
   calculateAccessTokenDigest,
@@ -19,18 +30,7 @@ import {
 import RedisInstance from '../../helper/redis.js';
 import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
-import mapPagination from '../mapper/pagination.js';
-import { Pagination } from '../types/pagination.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { pagination } from './common.js';
-import config from '../../helper/config.js';
-
-// We extend express session to define session expiration time
-declare module 'express-session' {
-  interface SessionData {
-    ecdsaChallenge?: string;
-  }
-}
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 const timestamp = Joi.number()
   .custom((value, helper) => {
@@ -43,16 +43,7 @@ const timestamp = Joi.number()
   })
   .required();
 
-export type TSignatureProof = {
-  signature: {
-    field: string;
-    scalar: string;
-  };
-  publicKey: string;
-  data: string;
-};
-
-export const SignatureProof = Joi.object<TSignatureProof>({
+export const SignatureProof = Joi.object<TMinaSignature>({
   signature: Joi.object({
     field: Joi.string()
       .pattern(/[0-9]+/)
@@ -68,61 +59,24 @@ export const SignatureProof = Joi.object<TSignatureProof>({
   data: Joi.string().required(),
 });
 
-export type TSignInRequest = {
-  proof: TSignatureProof;
-};
-
-export const SignInRequest = Joi.object<TSignInRequest>({
+export const SignInRequest = Joi.object<TUserSignInRequest>({
   proof: SignatureProof.required(),
 });
 
-export type TSignUpRequest = {
-  userName: string;
-  email: string;
-  userData: any;
-  timestamp: number;
-};
-
-export type TUserFindRequest = {
-  query: { [key: string]: string };
-  pagination: Pagination;
-};
-
-type TUserSearchRequest = {
-  query: { [key: string]: string };
-  pagination: Pagination;
-};
-
-type TUserInfo = {
-  userName: string;
-  email: string;
-  publicKey: string;
-};
-
-export const SignUpRequest = Joi.object<TSignUpRequest>({
+export const UserSignUpInput = Joi.object<TUserSignUpInput>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
   timestamp,
-  userData: Joi.object(),
+  userData: Joi.object().optional(),
 });
 
-export type TSignUpWrapper = {
-  signUp: TSignUpRequest;
-  proof: TSignatureProof;
-};
-
-export const SignUpWrapper = Joi.object<TSignUpWrapper>({
-  signUp: SignUpRequest.required(),
+export const SignUpRequest = Joi.object<TUserSignUpRequest>({
+  newUser: UserSignUpInput,
   proof: SignatureProof.required(),
 });
 
-export const USER_FIND_REQUEST = Joi.object<TUserFindRequest>({
-  query: Joi.object(),
-  pagination,
-});
-
-export const USER_SEARCH_REQUEST = Joi.object<TUserSearchRequest>({
-  query: Joi.object<TUserInfo>({
+export const UserFindRequest = Joi.object<TUserFindRequest>({
+  query: Joi.object<TUser>({
     userName: Joi.string().min(1).max(256),
     email: Joi.string().email(),
     publicKey: Joi.string().min(1).max(256),
@@ -136,110 +90,93 @@ export const typeDefsUser = gql`
   type Query
   type Mutation
 
-  input SignatureInput {
-    field: String
-    scalar: String
-  }
-
-  input ProofInput {
-    signature: SignatureInput
-    publicKey: String
-    data: String
-  }
-
-  input SignUp {
-    userName: String
-    email: String
-    timestamp: Int
+  input SignUpInput {
+    userName: String!
+    email: String!
     userData: JSON
+    timestamp: Int!
   }
 
-  type SignUpData {
-    userName: String
-    email: String
-    publicKey: String
+  type SignUpResponse {
+    userName: String!
+    email: String!
+    userData: JSON
+    publicKey: String!
+    activated: Boolean!
+    createdAt: String!
+    updatedAt: String!
   }
 
   type SignInResponse {
-    userName: String
-    accessToken: String
-    userData: JSON
-    publicKey: String
-    email: String
+    userName: String!
+    accessToken: String!
+    userData: JSON!
+    publicKey: String!
+    email: String!
   }
 
   type User {
-    userName: String!
-    email: String!
-    publicKey: String!
+    userName: String
+    email: String
+    publicKey: String
+    activated: Boolean!
   }
 
-  input FindUser {
+  type UserFindResponse {
+    data: [User]!
+    total: Int!
+    offset: Int!
+  }
+
+  input UserFindQueryInput {
     userName: String
     email: String
     publicKey: String
   }
 
-  type UserPaginationOutput {
-    data: [User]!
-    totalSize: Int!
-    offset: Int!
-  }
-
   extend type Query {
-    userSignInData: SignInResponse
-    # TODO: Replace JSON
-    findUser(query: JSON, pagination: PaginationInput): UserPaginationOutput!
-    searchUser(
-      query: FindUser!
+    userMe: SignInResponse
+
+    userFind(
+      query: UserFindQueryInput
       pagination: PaginationInput
-    ): UserPaginationOutput!
+    ): UserFindResponse
   }
 
   extend type Mutation {
     userSignIn(proof: ProofInput!): SignInResponse
-    userGetEcdsaChallenge: String!
-    userSignOut: Boolean
-    userSignUp(signUp: SignUp!, proof: ProofInput!): SignUpData
+
+    userEcdsaChallenge: String!
+
+    userSignOut: Boolean!
+
+    userSignUp(newUser: SignUpInput!, proof: ProofInput!): SignUpResponse
   }
 `;
 
 // Query
-const userSignInData = authorizeWrapper(
-  Joi.object().unknown(),
-  async (_root: unknown, _args: any, context) => {
-    const user = await new ModelUser().findOne({
-      userName: context.userName,
-    });
-    if (user) {
-      return user;
-    }
-    throw new Error('User not found');
+const userMe = authorizeWrapper(async (_root, _args, context) => {
+  const user = await new ModelUser().findOne({
+    userName: context.userName,
+  });
+  if (user) {
+    return user;
   }
-);
+  throw new Error('User not found');
+});
 
-const searchUser = publicWrapper(
-  USER_SEARCH_REQUEST,
-  async (_root: unknown, args: TUserSearchRequest) => {
-    return searchUserDomain(args.query, mapPagination(args.pagination));
-  }
-);
-
-const findUser = publicWrapper(
-  USER_FIND_REQUEST,
-  async (_root: unknown, args: TUserFindRequest) => {
-    return withTransaction(async (session) =>
-      findUserDomain(args.query, mapPagination(args.pagination), session)
+const userFind = publicWrapper<TUserFindRequest, TUserFindResponse>(
+  UserFindRequest,
+  async (_root, args) => {
+    const result = await findUserDomain(
+      args.query,
+      args.pagination || DEFAULT_PAGINATION
     );
+    return result;
   }
 );
 
-// Mutation
-const userGetEcdsaChallenge = async (
-  _root: unknown,
-  _args: any,
-  context: TPublicContext
-) => {
+const userEcdsaChallenge = publicWrapper(async (_root, _args, context) => {
   const { req } = context;
   // Create new session and store ECDSA challenge
   req.session.ecdsaChallenge = `Please sign this message with your wallet to signin zkDatabase: ${randomUUID()}`;
@@ -247,11 +184,11 @@ const userGetEcdsaChallenge = async (
   req.session.save();
 
   return req.session.ecdsaChallenge;
-};
+});
 
-const userSignIn = publicWrapper(
+const userSignIn = publicWrapper<TUserSignInRequest, TUserSignInResponse>(
   SignInRequest,
-  async (_root: unknown, args: TSignInRequest, context) => {
+  async (_root, args, context) => {
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
     }
@@ -269,7 +206,7 @@ const userSignIn = publicWrapper(
       });
 
       if (user) {
-        const { userName, email } = user;
+        const { userName, email, publicKey, userData, activated } = user;
         const accessToken = await JwtAuthorization.sign({ userName, email });
         const accessTokenDigest = calculateAccessTokenDigest(accessToken);
         await RedisInstance.accessTokenDigest(accessTokenDigest).set(
@@ -277,8 +214,12 @@ const userSignIn = publicWrapper(
           { EX: ACCESS_TOKEN_EXPIRE_TIME }
         );
         return {
-          ...user,
+          userData,
+          publicKey,
+          email,
+          userName,
           accessToken,
+          activated,
         };
       }
       throw new Error('User not found');
@@ -287,12 +228,9 @@ const userSignIn = publicWrapper(
   }
 );
 
-// @Todo improve this
-const userSignOut = authorizeWrapper(
-  Joi.object().unknown(),
-  async (_root: unknown, _args: any, context) => {
+const userSignOut = authorizeWrapper<unknown, boolean>(
+  async (_root, _args, context) => {
     const { req } = context;
-
     if (req.headers.authorization) {
       const accessTokenDigest = calculateAccessTokenDigest(
         headerToAccessToken(req.headers.authorization)
@@ -304,49 +242,35 @@ const userSignOut = authorizeWrapper(
   }
 );
 
-const userSignUp = publicWrapper(
-  SignUpWrapper,
-  async (_root: unknown, args: TSignUpWrapper) => {
+const userSignUp = publicWrapper<TUserSignUpRequest, TUserSignUpResponse>(
+  SignUpRequest,
+  async (_root, args) => {
     const {
-      signUp: { userData, userName, email },
+      newUser: { userData, userName, email },
       proof,
     } = args;
-    return signUpUser(
+    const result = signUpUser(
       {
         userName,
         email,
         publicKey: proof.publicKey,
+        userData,
+        activated: true,
       },
-      userData,
       proof
     );
+    return result;
   }
 );
 
-type TUserResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    userSignInData: typeof userSignInData;
-    findUser: typeof findUser;
-    searchUser: typeof searchUser;
-  };
-  Mutation: {
-    userGetEcdsaChallenge: typeof userGetEcdsaChallenge;
-    userSignIn: typeof userSignIn;
-    userSignOut: typeof userSignOut;
-    userSignUp: typeof userSignOut;
-  };
-};
-
-export const resolversUser: TUserResolver = {
+export const resolversUser = {
   JSON: GraphQLJSON,
   Query: {
-    userSignInData,
-    findUser,
-    searchUser,
+    userMe,
+    userFind,
   },
   Mutation: {
-    userGetEcdsaChallenge,
+    userEcdsaChallenge,
     userSignIn,
     userSignOut,
     userSignUp,

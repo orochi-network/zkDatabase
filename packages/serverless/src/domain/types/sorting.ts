@@ -1,1 +1,0 @@
-export type Sorting = 'ASC' | 'DESC'

@@ -4,17 +4,21 @@ import {
   PermissionRecordKey,
 } from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import { PermissionBasic } from '../../common/types.js';
 import logger from '../../helper/logger.js';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import {
+  IMetadataCollection,
+  ModelMetadataCollection,
+} from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument, {
+  IMetadataDocument,
+} from '../../model/database/metadata-document.js';
 import { isDatabaseOwner } from './database.js';
 import { checkUserGroupMembership } from './group.js';
 
-async function fetchPermissionDetails(
+async function fetchPermissionDetail(
   databaseName: string,
   actor: string,
-  metadata: PermissionBasic | null,
+  metadata: IMetadataDocument | IMetadataCollection | null,
   session?: ClientSession
 ): Promise<number> {
   if (!metadata) {
@@ -44,15 +48,15 @@ export async function readPermission(
   session?: ClientSession
 ): Promise<number> {
   const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+    ? new ModelMetadataDocument(databaseName)
+    : ModelMetadataCollection.getInstance(databaseName);
 
   const key = docId
     ? { docId, collection: collectionName }
     : { collection: collectionName };
   const metadata = await modelMetadata.findOne(key, { session });
 
-  return fetchPermissionDetails(databaseName, actor, metadata);
+  return fetchPermissionDetail(databaseName, actor, metadata);
 }
 
 async function checkPermission(
@@ -143,8 +147,8 @@ export async function setPermission(
 
   if (hasSystemPermission) {
     const modelPermission = docId
-      ? new ModelDocumentMetadata(databaseName)
-      : ModelCollectionMetadata.getInstance(databaseName);
+      ? new ModelMetadataDocument(databaseName)
+      : ModelMetadataCollection.getInstance(databaseName);
 
     const locationQuery = {
       collection: collectionName,

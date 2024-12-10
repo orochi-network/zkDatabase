@@ -1560,10 +1560,10 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/api@1.1.13":
-  version "1.1.13"
-  resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.13.tgz#901d9cf05135273d8bb95da8a058189041cb33b5"
-  integrity sha512-pdPRsmaK9fec1M9wVsIjMA21ys4vyVG2LauxrWHy08m3Zdz9s74w0lYFKNzhhkFg7C+627z0Zcdb+adqC+542A==
+"@zkdb/api@^1.1.14":
+  version "1.1.14"
+  resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.14.tgz#83d485a7ad294c5596b5c6044688a0fa85c9a960"
+  integrity sha512-TB/LfMbntkwqORihxQm0AfGiWoRArJHpRkIBVUrghHl34XPNJ00jJc/DzFeM3n7JZJ7ZekfL8tICxJB9z1Q4Vg==
   dependencies:
     "@apollo/client" "^3.10.6"
     "@types/node" "^22.6.1"
@@ -4538,12 +4538,12 @@ zen-observable@0.8.15:
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.15.tgz#96415c512d8e3ffd920afd3889604e30b9eaac15"
   integrity sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==
 
-zkdb@^1.2.11:
-  version "1.2.11"
-  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.2.11.tgz#dcde196aa2848815ed1c3c797fa45c297e0c540a"
-  integrity sha512-do+2//WD+xW2VOcPdiRaeO5cfnZcItB0UNfLCCQzHu52IfB/oH+xpnFer2f4aodxvKLdYzuPtzA52mjUro0bPw==
+zkdb@^1.2.12:
+  version "1.2.12"
+  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.2.12.tgz#54ca72c6b6e8e0c96a6d8037846fbd8c5aadea7c"
+  integrity sha512-zG9CAQDeAo1Xk6Ov09ThHvWEgqyTAvI7jTVR2KDcadY9ZcojuKDjbtxdMSwu2g25PkByUJo66jnovuJ6Ch38xQ==
   dependencies:
-    "@zkdb/api" "1.1.13"
+    "@zkdb/api" "^1.1.14"
     "@zkdb/smart-contract" "1.1.7"
     graphql "16.9.0"
     graphql-request "7.1.2"

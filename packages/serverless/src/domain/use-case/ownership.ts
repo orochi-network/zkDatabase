@@ -1,8 +1,8 @@
+import { EOwnershipType } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUser from '../../model/global/user.js';
-import { OwnershipGroup } from '../types/ownership.js';
 import { isGroupExist } from './group.js';
 import {
   hasCollectionPermission,
@@ -14,7 +14,7 @@ export async function changeDocumentOwnership(
   collectionName: string,
   docId: string,
   actor: string,
-  group: OwnershipGroup,
+  group: EOwnershipType,
   newOwner: string,
   session?: ClientSession
 ) {
@@ -33,9 +33,9 @@ export async function changeDocumentOwnership(
     );
   }
 
-  const modelMetadata = new ModelDocumentMetadata(databaseName);
+  const modelMetadata = new ModelMetadataDocument(databaseName);
 
-  if (group === 'User') {
+  if (group === EOwnershipType.User) {
     const modelUser = new ModelUser();
 
     if (
@@ -46,7 +46,7 @@ export async function changeDocumentOwnership(
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
 
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
         docId,
@@ -56,11 +56,12 @@ export async function changeDocumentOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   } else {
     if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
         docId,
@@ -70,6 +71,7 @@ export async function changeDocumentOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   }
 }
 
@@ -77,7 +79,7 @@ export async function changeCollectionOwnership(
   databaseName: string,
   collectionName: string,
   actor: string,
-  group: OwnershipGroup,
+  group: EOwnershipType,
   newOwner: string,
   session?: ClientSession
 ) {
@@ -95,9 +97,9 @@ export async function changeCollectionOwnership(
     );
   }
 
-  const modelMetadata = ModelCollectionMetadata.getInstance(databaseName);
+  const modelMetadata = ModelMetadataCollection.getInstance(databaseName);
 
-  if (group === 'User') {
+  if (group === EOwnershipType.User) {
     const modelUser = new ModelUser();
 
     if (
@@ -108,7 +110,7 @@ export async function changeCollectionOwnership(
       throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
     }
 
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
       },
@@ -117,11 +119,12 @@ export async function changeCollectionOwnership(
       },
       { session }
     );
+    return result.matchedCount === 1;
   } else {
     if (!isGroupExist(databaseName, newOwner, session)) {
       throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
     }
-    await modelMetadata.updateOne(
+    const result = await modelMetadata.updateOne(
       {
         collection: collectionName,
       },
@@ -130,5 +133,7 @@ export async function changeCollectionOwnership(
       },
       { session }
     );
+
+    return result.matchedCount === 1;
   }
 }

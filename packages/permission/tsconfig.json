@@ -21,35 +21,7 @@
     "noFallthroughCasesInSwitch": true,
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
-    "paths": {
-      "@o1js/*": [
-        "../../node_modules/o1js/dist/node/lib/provable/*"
-      ],
-      "@common": [
-        "./src/common"
-      ],
-      "@sdk": [
-        "./src/sdk"
-      ],
-      "@types": [
-        "./src/types"
-      ],
-      "@utils": [
-        "./src/utils"
-      ],
-      "@tests": [
-        "./src/tests"
-      ]
-    }
   },
-  "references": [
-    {
-      "path": "../api"
-    },
-    {
-      "path": "../smart-contract"
-    }
-  ],
   "include": [
     "./src"
   ],
