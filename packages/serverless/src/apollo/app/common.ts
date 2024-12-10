@@ -36,6 +36,11 @@ export const typeDefsCommon = gql`
     MerkleMapWitness
   }
 
+  enum CollectionIndexProperty {
+    Compound
+    Unique
+  }
+
   type IndexInput {
     name: String!
     sorting: Sorting!

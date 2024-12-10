@@ -8,6 +8,7 @@ import {
   TSingleDocumentHistory,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
+import assert from 'assert';
 import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocument, {
   TDocumentRecordSerialized,
