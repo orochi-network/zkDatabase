@@ -3,7 +3,7 @@ import {
   DB,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { Document } from 'mongodb';
 
@@ -11,7 +11,7 @@ export interface IMetadataDocument extends Document, TMetadataDocument {}
 
 export class ModelMetadataDocument extends ModelGeneral<IMetadataDocument> {
   static collectionName: string =
-    zkDatabaseConstants.databaseCollections.metadataDocument;
+    zkDatabaseConstant.databaseCollection.metadataDocument;
 
   constructor(databaseName: string) {
     super(databaseName, DB.service, ModelMetadataDocument.collectionName);

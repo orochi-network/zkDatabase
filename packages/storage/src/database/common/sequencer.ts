@@ -1,6 +1,6 @@
 import { ClientSession, WithoutId } from 'mongodb';
 import { ESequencer, TSequencedItem } from '@zkdb/common';
-import { zkDatabaseConstants } from '../../common/index.js';
+import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import { getCurrentTime } from '../../helper/common.js';
@@ -16,7 +16,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     super(
       databaseName,
       DB.service,
-      zkDatabaseConstants.databaseCollections.sequencer
+      zkDatabaseConstant.databaseCollection.sequencer
     );
   }
 
@@ -41,7 +41,10 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     if (index) {
       const updateResult = await this.collection.findOneAndUpdate(
         { type: sequenceName },
-        { $inc: { seq: ModelSequencer.SEQUENCE_INCREMENT }, $set: { updatedAt: getCurrentTime() } },
+        {
+          $inc: { seq: ModelSequencer.SEQUENCE_INCREMENT },
+          $set: { updatedAt: getCurrentTime() },
+        },
         { upsert: true, returnDocument: 'after', session }
       );
 
@@ -75,7 +78,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     const collection = ModelCollection.getInstance(
       databaseName,
       DB.service,
-      zkDatabaseConstants.databaseCollections.sequencer
+      zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {
       collection.index({ type: 1 }, { unique: true });

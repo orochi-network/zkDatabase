@@ -23,7 +23,7 @@ export type TMerkleProofData = TMerkleJson<TMerkleProof>;
 
 export type TMerkleNodeData = TMerkleJson<TMerkleNode>;
 
-export type TMerkleNodeRecord = TDbRecord<TMerkleNode>;
+export type TMerkleNodeRecord = TDbRecord<TMerkleNodeData>;
 
 export type TMerkleWitnessNode = TMerkleNode & {
   witness: boolean;
