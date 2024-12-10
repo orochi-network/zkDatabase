@@ -98,7 +98,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
       try {
         const secureStorage = ModelSecureStorage.getInstance();
         const { databaseName, merkleHeight } = database;
-        let rawTransaction: UnsignedTransaction;
+        let transactionRaw: UnsignedTransaction;
         let zkAppPublicKey: string;
         if (tx.transactionType === ETransactionType.Deploy) {
           const zkAppPrivateKey = PrivateKey.random();
@@ -110,7 +110,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
             Buffer.from(config.SERVICE_SECRET, "base64")
           ).toString("base64");
 
-          rawTransaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
+          transactionRaw = await zkAppCompiler.compileAndCreateDeployUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
             database.merkleHeight,
@@ -150,7 +150,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
             throw new Error(`Proof for ${databaseName} not found`);
           }
 
-          rawTransaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+          transactionRaw = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
             request.payerAddress,
             zkAppPrivateKey,
             merkleHeight,
@@ -164,7 +164,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
         await modelTransaction.updateById(tx._id, {
           status: ETransactionStatus.Unsigned,
-          rawTransaction,
+          transactionRaw,
         });
 
         logger.info(

@@ -24,7 +24,7 @@ type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
   txHash: String
-  rawTransaction: String!
+  transactionRaw: String!
   status: TransactionStatus!
   merkletreeRootCurrent: String!
   merkletreeRootPrevious: String!

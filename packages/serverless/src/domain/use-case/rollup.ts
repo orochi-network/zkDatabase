@@ -169,7 +169,7 @@ export default class Rollup {
       merkletreeRootPrevious: history.merkletreeRootPrevious,
       transactionObjectId: history.transactionObjectId,
       proofObjectId: history.proofObjectId,
-      rawTransaction: transaction.rawTransaction,
+      transactionRaw: transaction.transactionRaw,
       txHash: transaction?.txHash,
       createdAt: transaction.createdAt,
       updatedAt: transaction.updatedAt,

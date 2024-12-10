@@ -1,14 +1,15 @@
 import { gql } from "@apollo/client";
 import {
+  TTransactionWithId,
+  TTransactionConfirmRequest,
+  TTransactionRequest,
+} from "@zkdb/common";
+
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common.js";
-import {
-  TDbTransaction,
-  TTransactionConfirmRequest,
-  TTransactionRequest,
-} from "./types/transaction.js";
 
 const TRANSACTION_DRAFT = gql`
   query TransactionDraft(
@@ -23,7 +24,7 @@ const TRANSACTION_DRAFT = gql`
       databaseName
       transactionType
       status
-      rawTransaction
+      transactionRaw
       txHash
       error
     }
@@ -46,9 +47,9 @@ const TRANSACTION_CONFIRM = gql`
 
 export const transaction = <T>(client: TApolloClient<T>) => ({
   transactionDraft: createQueryFunction<
-    TDbTransaction,
+    TTransactionWithId,
     TTransactionRequest,
-    { transactionDraft: TDbTransaction }
+    { transactionDraft: TTransactionWithId }
   >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
   transactionConfirm: createMutateFunction<
     boolean,

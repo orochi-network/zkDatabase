@@ -142,9 +142,9 @@ export async function buildSchema(
       throw new Error(`Field ${sch.name} not found in document`);
     }
 
-    const { name, kind, value } = documentField;
+    const { name, kind } = documentField;
     structType[name] = ProvableTypeMap[kind as TProvableTypeString];
-    encodedDocument.push({ name, kind, value });
+    encodedDocument.push(documentField);
   });
 
   const structuredSchema = Schema.create(structType);

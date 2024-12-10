@@ -1,11 +1,11 @@
 import { IApiClient } from '@zkdb/api';
 import { JsonProof } from 'o1js';
+import { ETransactionType, TTransactionWithId } from '@zkdb/common';
+
 import {
   DatabaseSetting,
   GroupDescription,
-  TDbTransaction,
   TGetRollUpHistory,
-  TTransactionType,
 } from '../../types';
 import {
   ZKCollection,
@@ -103,8 +103,8 @@ export class ZKDatabaseImpl implements ZKDatabase {
   }
 
   async transactionDraft(
-    transactionType: TTransactionType
-  ): Promise<TDbTransaction> {
+    transactionType: ETransactionType
+  ): Promise<TTransactionWithId> {
     const result = await this.apiClient.transaction.transactionDraft({
       databaseName: this.databaseName,
       transactionType,
