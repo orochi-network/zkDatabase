@@ -1,9 +1,6 @@
 import { gql } from "@apollo/client";
+import { RollUpData, TDatabaseRequest } from "@zkdb/common";
 import { createMutateFunction, TApolloClient } from "./common.js";
-import {
-  TCreateRollUpRequest,
-  TGetRollUpHistoryResponse,
-} from "./types/rollup.js";
 
 const ROLLUP_CREATE = gql`
   mutation RollupCreate($databaseName: String!) {
@@ -33,12 +30,12 @@ const ROLLUP_HISTORY = gql`
 export const rollup = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
     boolean,
-    TCreateRollUpRequest,
+    TDatabaseRequest,
     { rollUpCreate: boolean }
   >(client, ROLLUP_CREATE, (data) => data.rollUpCreate),
   rollupHistory: createMutateFunction<
-    TGetRollUpHistoryResponse,
-    TCreateRollUpRequest,
-    { rollUpHistory: TGetRollUpHistoryResponse }
+    RollUpData,
+    TDatabaseRequest,
+    { rollUpHistory: RollUpData }
   >(client, ROLLUP_HISTORY, (data) => data.rollUpHistory),
 });

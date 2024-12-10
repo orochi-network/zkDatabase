@@ -1,9 +1,11 @@
 /* eslint-disable import/prefer-default-export */
+import { TPickOptional } from '@orochi-network/framework';
 import {
   TDocumentHistory as TDocumentHistoryBase,
   TDocumentRecord,
   TMetadataDocument,
   TPagination,
+  TSingleDocumentHistory,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
@@ -17,8 +19,6 @@ import {
   hasCollectionPermission,
   hasDocumentPermission,
 } from './permission.js';
-import assert from 'assert';
-import { TPickOptional } from '@orochi-network/framework';
 
 function buildHistoryPipeline(pagination: TPagination): Array<any> {
   return [
@@ -153,10 +153,6 @@ MongoDB pipeline to already handle this case`
     `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
   );
 }
-
-// NOTE(wonrax): I don't know why single document history does not respond with
-// metadata
-type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
 
 async function readHistoryDocument(
   databaseName: string,

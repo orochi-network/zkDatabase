@@ -1,6 +1,6 @@
 import { ApolloClient, InMemoryCache } from "@apollo/client";
+import { TEnvironment } from "@zkdb/common";
 import { environment } from "../graphql/environment";
-import { TEnvironment } from "../graphql/types/environment";
 
 export const getNetworkEnvironment = async (
   uri: string

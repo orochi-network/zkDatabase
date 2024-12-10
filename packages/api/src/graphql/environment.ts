@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
+import { TEnvironment } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common.js";
-import { TEnvironment } from "./types/environment.js";
 
 const ENVIRONMENT_GET = gql`
   query GetEnvironment {

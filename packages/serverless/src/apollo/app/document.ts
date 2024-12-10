@@ -22,7 +22,7 @@ import {
   documentField,
   pagination,
   TDocumentCreateRequest,
-  TDocumentsFindRequest,
+  TDocumentListFindRequest,
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryGetRequest,
@@ -37,7 +37,7 @@ export const DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   query: Joi.object(),
 });
 
-export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentsFindRequest>({
+export const DOCUMENTS_FIND_REQUEST = Joi.object<TDocumentListFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -196,7 +196,7 @@ const documentFind = authorizeWrapper(
 
 const documentsFind = authorizeWrapper(
   DOCUMENTS_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
+  async (_root: unknown, args: TDocumentListFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await searchDocuments(
         args.databaseName,
@@ -214,7 +214,7 @@ const documentsFind = authorizeWrapper(
 
 const documentsWithMetadataFind = authorizeWrapper(
   Joi.object().optional(),
-  async (_root: unknown, args: TDocumentsFindRequest, ctx) => {
+  async (_root: unknown, args: TDocumentListFindRequest, ctx) => {
     return withTransaction(async (session) => {
       const documents = await findDocumentsWithMetadata(
         args.databaseName,

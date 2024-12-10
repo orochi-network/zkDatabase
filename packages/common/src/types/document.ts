@@ -1,9 +1,10 @@
 import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
-import { TDbRecord } from './common.js';
-import { TMetadataDocument } from './metadata.js';
 import { TCollectionRequest } from './collection.js';
-import { TPagination } from './pagination.js';
+import { TDbRecord } from './common.js';
+import { TMerkleProof } from './merkle-tree.js';
+import { TMetadataDocument } from './metadata.js';
+import { TPagination, TPaginationReturn } from './pagination.js';
 
 export type TDocumentField = TContractSchemaField;
 
@@ -14,7 +15,13 @@ export type TDocument = {
   document: Record<string, TDocumentField>;
 };
 
+export type TDocumentResponse = TMerkleProof[];
+
 export type TDocumentRecord = TDbRecord<TDocument>;
+
+// NOTE(wonrax): I don't know why single document history does not respond with
+// metadata
+export type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
 
 export type TDocumentRecordResponse = Omit<
   TDocumentRecord,
@@ -28,10 +35,21 @@ export type TDocumentReadResponse = Pick<
   'docId' | 'document' | 'createdAt'
 >;
 
-export type TDocumentsFindRequest = TCollectionRequest & {
+export type TDocumentHistory = {
+  docId: string;
+  documents: TDocumentRecordResponse[];
+  metadata: TMetadataDocument;
+  active: boolean;
+};
+
+export type TDocumentListFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
+
+export type TDocumentListFindResponse = TPaginationReturn<
+  Array<TDocumentResponse>
+>;
 
 export type TDocumentFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
@@ -51,13 +69,10 @@ export type TDocumentHistoryGetRequest = TCollectionRequest & {
   docId: string;
 };
 
+export type TDocumentHistoryGetResponse = TSingleDocumentHistory;
+
 export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentHistory = {
-  docId: string;
-  documents: TDocumentRecordResponse[];
-  metadata: TMetadataDocument;
-  active: boolean;
-};
+export type TDocumentHistoryListResponse = TDocumentHistory[];

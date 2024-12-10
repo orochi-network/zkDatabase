@@ -48,7 +48,6 @@ extend type Mutation {
 const rollupHistory = authorizeWrapper<TDatabaseRequest, RollUpData>(
   Joi.object({
     databaseName,
-    transactionType,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
     Rollup.history(args.databaseName)

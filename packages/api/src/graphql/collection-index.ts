@@ -1,10 +1,16 @@
 import { gql } from "@apollo/client";
 import {
+  TIndexCreateRequest,
+  TIndexDropRequest,
+  TIndexExistRequest,
+  TIndexListRequest,
+  TIndexListResponse,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TCollectionIndex } from "./types/collection-index";
 
 const COLLECTION_INDEX_CREATE = gql`
   mutation IndexCreate(
@@ -57,26 +63,22 @@ const COLLECTION_INDEX_LIST = gql`
 export const collectionIndex = <T>(client: TApolloClient<T>) => ({
   create: createMutateFunction<
     boolean,
-    {
-      databaseName: string;
-      collectionName: string;
-      index: TCollectionIndex[];
-    },
+    TIndexCreateRequest,
     { indexCreate: boolean }
   >(client, COLLECTION_INDEX_CREATE, (data) => data.indexCreate),
-  delete: createMutateFunction<
+  drop: createMutateFunction<
     boolean,
-    { databaseName: string; collectionName: string; indexName: string },
+    TIndexDropRequest,
     { indexDrop: boolean }
   >(client, COLLECTION_INDEX_DELETE, (data) => data.indexDrop),
   exist: createQueryFunction<
     boolean,
-    { databaseName: string; collectionName: string; indexName: string },
+    TIndexExistRequest,
     { indexExist: boolean }
   >(client, COLLECTION_INDEX_EXIST, (data) => data.indexExist),
   list: createQueryFunction<
     string[],
-    { databaseName: string; collectionName: string },
-    { indexList: string[] }
+    TIndexListRequest,
+    { indexList: TIndexListResponse }
   >(client, COLLECTION_INDEX_LIST, (data) => data.indexList),
 });

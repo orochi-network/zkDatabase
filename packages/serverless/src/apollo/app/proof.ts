@@ -43,14 +43,17 @@ extend type Query {
 }
 `;
 
-const getProofStatus = authorizeWrapper(
+const getProofStatus = authorizeWrapper<
+  TDocumentProofRequest,
+  EDatabaseProofStatus
+>(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TDocumentProofRequest, ctx) => {
-    return withTransaction(async (session) => {
+  async (_root, args, ctx) => {
+    const proof = await withTransaction(async (session) => {
       const modelProof = ModelQueueTask.getInstance();
 
       if (
@@ -68,27 +71,19 @@ const getProofStatus = authorizeWrapper(
           docId: args.docId,
         });
 
-        if (proof) {
-          switch (proof.status) {
-            case 'queued':
-              return 'QUEUED';
-            case 'proving':
-              return 'PROVING';
-            case 'proved':
-              return 'PROVED';
-            case 'failed':
-              return 'FAILED';
-            default:
-              throw new Error(`Unknown proof status: ${proof.status}`);
-          }
-        }
-        throw Error('Proof has not been found');
+        return proof;
       }
 
       throw new Error(
         `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
       );
     });
+
+    if (!proof) {
+      throw Error('Proof has not been found');
+    }
+
+    return proof.status as EDatabaseProofStatus;
   }
 );
 

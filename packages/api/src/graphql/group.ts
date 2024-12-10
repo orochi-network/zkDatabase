@@ -1,15 +1,24 @@
 import { gql } from "@apollo/client";
 import {
+  TGroupAddUsersRequest,
+  TGroupCreateRequest,
+  TGroupInfoDetailRequest,
+  TGroupInfoDetailResponse,
+  TGroupListAllRequest,
+  TGroupListAllResponse,
+  TGroupRemoveUsersRequest,
+  TGroupUpdateRequest,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TGroupInfo, TGroupInfoDetail } from "./types";
 
 export const group = <T>(client: TApolloClient<T>) => ({
   addUser: createMutateFunction<
     boolean,
-    { databaseName: string; groupName: string; userNames: string[] },
+    TGroupAddUsersRequest,
     { groupAddUsers: boolean }
   >(
     client,
@@ -28,10 +37,10 @@ export const group = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.groupAddUsers
   ),
-  updateDescription: createMutateFunction<
+  update: createMutateFunction<
     boolean,
-    { databaseName: string; groupName: string; groupDescription: string },
-    { groupChangeDescription: boolean }
+    TGroupUpdateRequest,
+    { groupUpdate: boolean }
   >(
     client,
     gql`
@@ -47,11 +56,11 @@ export const group = <T>(client: TApolloClient<T>) => ({
         )
       }
     `,
-    (data) => data.groupChangeDescription
+    (data) => data.groupUpdate
   ),
   create: createMutateFunction<
     boolean,
-    { databaseName: string; groupName: string; groupDescription: string },
+    TGroupCreateRequest,
     { groupCreate: boolean }
   >(
     client,
@@ -72,7 +81,7 @@ export const group = <T>(client: TApolloClient<T>) => ({
   ),
   removeUser: createMutateFunction<
     boolean,
-    { databaseName: string; groupName: string; userNames: string[] },
+    TGroupRemoveUsersRequest,
     { groupRemoveUsers: boolean }
   >(
     client,
@@ -91,31 +100,10 @@ export const group = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.groupRemoveUsers
   ),
-  rename: createMutateFunction<
-    boolean,
-    { databaseName: string; groupName: string; newGroupName: string },
-    { groupRename: boolean }
-  >(
-    client,
-    gql`
-      mutation GroupRename(
-        $databaseName: String!
-        $groupName: String!
-        $newGroupName: String!
-      ) {
-        groupRename(
-          databaseName: $databaseName
-          groupName: $groupName
-          newGroupName: $newGroupName
-        )
-      }
-    `,
-    (data) => data.groupRename
-  ),
   info: createQueryFunction<
-    TGroupInfoDetail,
+    TGroupInfoDetailRequest,
     { databaseName: string; groupName: string },
-    { groupInfo: TGroupInfoDetail }
+    { groupInfo: TGroupInfoDetailResponse }
   >(
     client,
     gql`
@@ -126,9 +114,9 @@ export const group = <T>(client: TApolloClient<T>) => ({
     (data) => data.groupInfo
   ),
   list: createQueryFunction<
-    TGroupInfo[],
-    { databaseName: string },
-    { groupListAll: TGroupInfo[] }
+    TGroupListAllResponse,
+    TGroupListAllRequest,
+    { groupListAll: TGroupListAllResponse }
   >(
     client,
     gql`

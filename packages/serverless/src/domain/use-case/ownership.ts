@@ -14,7 +14,7 @@ export async function changeDocumentOwnership(
   collectionName: string,
   docId: string,
   actor: string,
-  group: EOwnershipType,
+  groupType: EOwnershipType,
   newOwner: string,
   session?: ClientSession
 ) {
@@ -35,7 +35,7 @@ export async function changeDocumentOwnership(
 
   const modelMetadata = new ModelMetadataDocument(databaseName);
 
-  if (group === EOwnershipType.User) {
+  if (groupType === EOwnershipType.User) {
     const modelUser = new ModelUser();
 
     if (

@@ -1,13 +1,17 @@
 import { gql } from "@apollo/client";
+import {
+  EDocumentProofStatus,
+  TDatabaseRequest,
+  TDocumentProofRequest,
+  TZKDatabaseProof,
+} from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
-import { TProofStatus, TProofStatusRequest, TZKProof, TUser } from "./types";
-export type TUserSignUpRecord = TUser;
 
 export const proof = <T>(client: TApolloClient<T>) => ({
   status: createQueryFunction<
-    TProofStatus,
-    TProofStatusRequest,
-    { getProofStatus: TProofStatus }
+    EDocumentProofStatus,
+    TDocumentProofRequest,
+    { getProofStatus: EDocumentProofStatus }
   >(
     client,
     gql`
@@ -26,9 +30,9 @@ export const proof = <T>(client: TApolloClient<T>) => ({
     (data) => data.getProofStatus
   ),
   get: createQueryFunction<
-    TZKProof,
-    { databaseName: string },
-    { getProof: TZKProof }
+    TZKDatabaseProof,
+    TDatabaseRequest,
+    { getProof: TZKDatabaseProof }
   >(
     client,
     gql`

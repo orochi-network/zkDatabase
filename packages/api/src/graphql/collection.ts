@@ -1,12 +1,16 @@
 import { gql } from "@apollo/client";
 import {
+  TCollection,
+  TCollectionCreateRequest,
+  TCollectionListRequest,
+  TCollectionListResponse,
+  TCollectionRequest,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import { TSchema } from "./types";
-import { TCollection } from "./types/collection";
-import { TCollectionIndex } from "./types/collection-index";
 
 const COLLECTION_CREATE = gql`
   mutation CollectionCreate(
@@ -57,41 +61,20 @@ const COLLECTION_LIST = gql`
   }
 `;
 
-export type TCollectionListRequest = {
-  databaseName: string;
-};
-
-export type TCollectionListResponse = { collectionList: TCollection[] };
-
-export type TCollectionExistRequest = TCollectionListRequest & {
-  collectionName: string;
-};
-
-export type TCollectionExistResponse = { collectionExist: boolean };
-
-export type TCollectionCreateRequest = TCollectionExistRequest & {
-  schema: TSchema;
-  groupName?: string;
-  index?: TCollectionIndex[];
-  permission?: number;
-};
-
-export type TCollectionCreateResponse = { collectionCreate: boolean };
-
 export const collection = <T>(client: TApolloClient<T>) => ({
   create: createMutateFunction<
     boolean,
     TCollectionCreateRequest,
-    TCollectionCreateResponse
+    { collectionCreate: boolean }
   >(client, COLLECTION_CREATE, (data) => data.collectionCreate),
   exist: createQueryFunction<
     boolean,
-    TCollectionExistRequest,
-    TCollectionExistResponse
+    TCollectionRequest,
+    { collectionExist: boolean }
   >(client, COLLECTION_EXIST, (data) => data.collectionExist),
   list: createQueryFunction<
     TCollection[],
     TCollectionListRequest,
-    TCollectionListResponse
+    { collectionList: TCollectionListResponse }
   >(client, COLLECTION_LIST, (data) => data.collectionList),
 });
