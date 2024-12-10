@@ -8,7 +8,7 @@ import {
   UpdateResult,
   WithoutId,
 } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
+import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
@@ -21,9 +21,9 @@ export class ModelMetadataDatabase extends ModelBasic<
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstant.globalDatabase,
       DB.service,
-      zkDatabaseConstants.globalCollections.metadata_database
+      zkDatabaseConstant.globalCollection.metadata_database
     );
   }
 

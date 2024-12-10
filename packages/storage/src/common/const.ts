@@ -1,12 +1,12 @@
 // Common constants for zkDatabase
-export const zkDatabaseConstants = {
+export const zkDatabaseConstant = {
   // Global database for system management
   globalDatabase: '_zkdatabase_metadata',
 
   globalProofDatabase: '_zkdatabase_proof_service',
 
   // Global collections within the global database
-  globalCollections: {
+  globalCollection: {
     // Global settings
     metadata_database: 'metadata_database',
 
@@ -31,7 +31,7 @@ export const zkDatabaseConstants = {
   },
 
   // Collections that are common across different databases
-  databaseCollections: {
+  databaseCollection: {
     // Metadata document
     metadataDocument: '_zkdatabase_metadata_document',
     // Metadata collection
@@ -56,6 +56,6 @@ export const zkDatabaseConstants = {
 
 // Metadata collections
 export const zkDatabaseMetadataCollections = [
-  ...Object.values(zkDatabaseConstants.globalCollections),
-  ...Object.values(zkDatabaseConstants.databaseCollections),
+  ...Object.values(zkDatabaseConstant.globalCollection),
+  ...Object.values(zkDatabaseConstant.databaseCollection),
 ];

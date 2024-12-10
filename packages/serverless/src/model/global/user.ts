@@ -3,7 +3,7 @@ import {
   DB,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { WithoutId } from 'mongodb';
 import {
@@ -14,7 +14,7 @@ import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
 
 export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   private static collectionName: string =
-    zkDatabaseConstants.globalCollections.user;
+    zkDatabaseConstant.globalCollection.user;
 
   static defaultUsers: string[] = [
     ZKDATABASE_USER_NOBODY,
@@ -23,7 +23,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
 
   constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstant.globalDatabase,
       DB.service,
       ModelUser.collectionName
     );
@@ -31,7 +31,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
 
   public static async init() {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalDatabase,
+      zkDatabaseConstant.globalDatabase,
       DB.service,
       ModelUser.collectionName
     );

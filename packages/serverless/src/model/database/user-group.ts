@@ -3,7 +3,7 @@ import {
   DB,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import {
   BulkWriteOptions,
@@ -17,7 +17,7 @@ import ModelGroup from './group.js';
 
 export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =
-    zkDatabaseConstants.databaseCollections.userGroup;
+    zkDatabaseConstant.databaseCollection.userGroup;
 
   constructor(databaseName: string) {
     super(databaseName, DB.service, ModelUserGroup.collectionName);

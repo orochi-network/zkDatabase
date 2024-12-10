@@ -3,7 +3,7 @@ import {
   DB,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession, InsertOneOptions, WithoutId } from 'mongodb';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
@@ -11,7 +11,7 @@ import { getCurrentTime } from '../../helper/common.js';
 
 export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
   private static collectionName: string =
-    zkDatabaseConstants.databaseCollections.group;
+    zkDatabaseConstant.databaseCollection.group;
 
   constructor(databaseName: string) {
     super(databaseName, DB.service, ModelGroup.collectionName);

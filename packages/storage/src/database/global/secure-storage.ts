@@ -1,4 +1,4 @@
-import { zkDatabaseConstants } from '../../common/index.js';
+import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
@@ -13,9 +13,9 @@ export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalProofDatabase,
+      zkDatabaseConstant.globalProofDatabase,
       DB.proof,
-      zkDatabaseConstants.globalCollections.secure
+      zkDatabaseConstant.globalCollection.secure
     );
   }
 
@@ -29,9 +29,9 @@ export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
 
   public static async init() {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalProofDatabase,
+      zkDatabaseConstant.globalProofDatabase,
       DB.proof,
-      zkDatabaseConstants.globalCollections.queue
+      zkDatabaseConstant.globalCollection.queue
     );
     if (!(await collection.isExist())) {
       collection.index({ databaseName: 1 }, { unique: true });

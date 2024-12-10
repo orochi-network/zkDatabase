@@ -3,7 +3,7 @@ import {
   DB,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { FindOptions, WithoutId } from 'mongodb';
 
@@ -14,7 +14,7 @@ export class ModelMetadataCollection extends ModelGeneral<
   WithoutId<IMetadataCollection>
 > {
   private static collectionName: string =
-    zkDatabaseConstants.databaseCollections.metadataCollection;
+    zkDatabaseConstant.databaseCollection.metadataCollection;
 
   private static instances: Record<string, any> = {};
 
