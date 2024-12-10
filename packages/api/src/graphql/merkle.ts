@@ -1,13 +1,9 @@
 import { gql } from "@apollo/client";
+import { TDatabaseRequest, TMerkleProof } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
-import { TMerkleWitness } from "./types";
 
 export const merkle = <T>(client: TApolloClient<T>) => ({
-  root: createQueryFunction<
-    string,
-    { databaseName: string },
-    { getRoot: string }
-  >(
+  root: createQueryFunction<string, TDatabaseRequest, { getRoot: string }>(
     client,
     gql`
       query GetRoot($databaseName: String!) {
@@ -17,9 +13,9 @@ export const merkle = <T>(client: TApolloClient<T>) => ({
     (data) => data.getRoot
   ),
   witness: createQueryFunction<
-    TMerkleWitness,
+    TMerkleProof[],
     { databaseName: string; docId: string },
-    { getWitnessByDocument: TMerkleWitness }
+    { getWitnessByDocument: TMerkleProof[] }
   >(
     client,
     gql`

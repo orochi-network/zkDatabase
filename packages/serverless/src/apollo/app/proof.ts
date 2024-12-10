@@ -1,11 +1,15 @@
-import Joi from 'joi';
-import GraphQLJSON from 'graphql-type-json';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import { collectionName, databaseName, objectId } from './common.js';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
 import { hasDocumentPermission } from '../../domain/use-case/permission.js';
-import { TCollectionRequest } from './collection.js';
-import { EDatabaseProofStatus } from '../../domain/types/proof-status.js';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
+import {
+  EDatabaseProofStatus,
+  TDocumentProofRequest,
+  collectionName,
+  databaseName,
+  objectId,
+} from '@zkdb/common';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -39,18 +43,17 @@ extend type Query {
 }
 `;
 
-export type TProofRequest = TCollectionRequest & {
-  docId: string;
-};
-
-const getProofStatus = authorizeWrapper(
+const getProofStatus = authorizeWrapper<
+  TDocumentProofRequest,
+  EDatabaseProofStatus
+>(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root: unknown, args: TProofRequest, ctx) => {
-    return withTransaction(async (session) => {
+  async (_root, args, ctx) => {
+    const proof = await withTransaction(async (session) => {
       const modelProof = ModelQueueTask.getInstance();
 
       if (
@@ -68,27 +71,19 @@ const getProofStatus = authorizeWrapper(
           docId: args.docId,
         });
 
-        if (proof) {
-          switch (proof.status) {
-            case 'queued':
-              return 'QUEUED';
-            case 'proving':
-              return 'PROVING';
-            case 'proved':
-              return 'PROVED';
-            case 'failed':
-              return 'FAILED';
-            default:
-              throw new Error(`Unknown proof status: ${proof.status}`);
-          }
-        }
-        throw Error('Proof has not been found');
+        return proof;
       }
 
       throw new Error(
         `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
       );
     });
+
+    if (!proof) {
+      throw Error('Proof has not been found');
+    }
+
+    return proof.status as EDatabaseProofStatus;
   }
 );
 
@@ -96,7 +91,7 @@ const getProof = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TProofRequest) => {
+  async (_root: unknown, args: TDocumentProofRequest) => {
     const modelProof = ModelProof.getInstance();
 
     return modelProof.getProof(args.databaseName);
@@ -107,7 +102,7 @@ const getDatabaseProofStatus = publicWrapper(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TProofRequest) => {
+  async (_root: unknown, args: TDocumentProofRequest) => {
     const modelTask = ModelQueueTask.getInstance();
 
     const task = await modelTask.findOne({
@@ -116,12 +111,12 @@ const getDatabaseProofStatus = publicWrapper(
     });
 
     if (task) {
-      return EDatabaseProofStatus.Pending;
+      return EDatabaseProofStatus.Proving;
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
 
-      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.Empty;
+      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.None;
     }
   }
 );

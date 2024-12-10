@@ -1,14 +1,12 @@
 import { gql } from "@apollo/client";
+import { TOwnershipDocumentOwnRequest } from "@zkdb/common";
 import { createMutateFunction, TApolloClient } from "./common";
-import { TOwnership, TOwnershipAndPermissionRequest, TUser } from "./types";
-
-export type TUserSignUpRecord = TUser;
 
 export const ownership = <T>(client: TApolloClient<T>) => ({
   setOwnership: createMutateFunction<
-    TOwnership,
-    TOwnershipAndPermissionRequest & { grouping: string; newOwner: string },
-    { permissionOwn: TOwnership }
+    boolean,
+    TOwnershipDocumentOwnRequest,
+    { permissionOwn: boolean }
   >(
     client,
     gql`

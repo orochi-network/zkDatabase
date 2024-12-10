@@ -1,17 +1,20 @@
 import { gql } from "@apollo/client";
 import {
+  TDocumentCreateRequest,
+  TDocumentFindRequest,
+  TDocumentHistoryGetRequest,
+  TDocumentListFindRequest,
+  TDocumentListFindResponse,
+  TDocumentReadResponse,
+  TDocumentResponse,
+  TDocumentUpdateRequest,
+  TSingleDocumentHistory,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import {
-  TDocumentEncoded,
-  TDocumentHistoryPayload,
-  TDocumentPayload,
-  TMerkleWitness,
-  TPagination,
-  TPaginationResponse,
-} from "./types";
 
 const DOCUMENT_DELETE = gql`
   mutation DocumentDrop(
@@ -150,49 +153,34 @@ const DOCUMENT_HISTORY = gql`
 `;
 
 export const document = <T>(client: TApolloClient<T>) => ({
-  delete: createMutateFunction<
-    TMerkleWitness,
-    { databaseName: string; collectionName: string; documentQuery: any },
-    { documentDrop: TMerkleWitness }
+  drop: createMutateFunction<
+    TDocumentResponse,
+    TDocumentFindRequest,
+    { documentDrop: TDocumentResponse }
   >(client, DOCUMENT_DELETE, (data) => data.documentDrop),
   create: createMutateFunction<
-    TMerkleWitness,
-    {
-      databaseName: string;
-      collectionName: string;
-      documentRecord: TDocumentEncoded;
-      documentPermission?: number;
-    },
-    { documentCreate: TMerkleWitness }
+    TDocumentResponse,
+    TDocumentCreateRequest,
+    { documentCreate: TDocumentResponse }
   >(client, DOCUMENT_CREATE, (data) => data.documentCreate),
   update: createMutateFunction<
-    TMerkleWitness,
-    {
-      databaseName: string;
-      collectionName: string;
-      documentQuery: any;
-      documentRecord: TDocumentEncoded;
-    },
-    { documentUpdate: TMerkleWitness }
+    TDocumentResponse,
+    TDocumentUpdateRequest,
+    { documentUpdate: TDocumentResponse }
   >(client, DOCUMENT_UPDATE, (data) => data.documentUpdate),
   findOne: createQueryFunction<
-    TDocumentPayload,
+    TDocumentReadResponse | null,
     { databaseName: string; collectionName: string; documentQuery: any },
-    { documentFind: TDocumentPayload }
+    { documentFind: TDocumentReadResponse | null }
   >(client, DOCUMENT_FIND_ONE, (data) => data.documentFind),
   findMany: createQueryFunction<
-    TDocumentPayload[],
-    {
-      databaseName: string;
-      collectionName: string;
-      documentQuery: any;
-      pagination?: TPagination;
-    },
-    { documentsFind: TPaginationResponse<TDocumentPayload[]> }
+    TDocumentListFindResponse,
+    TDocumentListFindRequest,
+    { documentsFind: TDocumentListFindResponse }
   >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind.data),
   history: createQueryFunction<
-    TDocumentHistoryPayload,
-    { databaseName: string; collectionName: string; docId: string },
-    { historyDocumentGet: TDocumentHistoryPayload }
+    TSingleDocumentHistory,
+    TDocumentHistoryGetRequest,
+    { historyDocumentGet: TSingleDocumentHistory }
   >(client, DOCUMENT_HISTORY, (data) => data.historyDocumentGet),
 });

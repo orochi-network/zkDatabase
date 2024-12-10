@@ -1,26 +1,23 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
-
+import { ESequencer, TDocumentField, TMerkleProof } from '@zkdb/common';
 import {
-  TMerkleProof,
   ModelMerkleTree,
   ModelQueueTask,
   ModelSequencer,
   CompoundSession,
 } from '@zkdb/storage';
 
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
 import ModelDocument from '../../model/abstract/document.js';
-
-import { DocumentFields } from '../types/document.js';
 import { buildSchema } from './schema.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
 // Prove the creation of a document
 export async function proveCreateDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  document: DocumentFields,
+  document: TDocumentField[],
   compoundSession?: CompoundSession
 ): Promise<TMerkleProof[]> {
   const merkleTree = await ModelMerkleTree.load(databaseName);
@@ -31,7 +28,7 @@ export async function proveCreateDocument(
     document,
     compoundSession?.sessionService
   );
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
@@ -54,8 +51,8 @@ export async function proveCreateDocument(
   });
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue(
-    'operation',
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
     compoundSession?.sessionService
   );
 
@@ -84,7 +81,7 @@ export async function proveUpdateDocument(
   databaseName: string,
   collectionName: string,
   docId: string,
-  newDocument: DocumentFields,
+  newDocument: TDocumentField[],
   session?: ClientSession
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
@@ -96,7 +93,7 @@ export async function proveUpdateDocument(
 
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,
@@ -125,7 +122,10 @@ export async function proveUpdateDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
+    session
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {
@@ -163,7 +163,7 @@ export async function proveDeleteDocument(
 
   const merkleTree = await ModelMerkleTree.load(databaseName);
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
   const documentMetadata = await modelDocumentMetadata.findOne(
     {
       docId,
@@ -184,7 +184,10 @@ export async function proveDeleteDocument(
   );
 
   const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
+  const operationNumber = await sequencer.nextValue(
+    ESequencer.Operation,
+    session
+  );
 
   await ModelQueueTask.getInstance().queueTask(
     {

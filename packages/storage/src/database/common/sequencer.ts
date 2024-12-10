@@ -1,23 +1,22 @@
-import { ClientSession } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/index.js';
+import { ClientSession, WithoutId } from 'mongodb';
+import { ESequencer, TSequencedItem } from '@zkdb/common';
+import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
+import { getCurrentTime } from '../../helper/common.js';
+import ModelCollection from '../general/collection.js';
 
-export type Sequence = "merkle-index" | "operation";
+export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
+  public static readonly INITIAL_SEQUENCE_VALUE = 1;
+  public static readonly SEQUENCE_INCREMENT = 1;
 
-export type SequencedItem = {
-  _id: string;
-  seq: number;
-};
-
-export class ModelSequencer extends ModelBasic<SequencedItem> {
   private static instances = new Map<string, ModelSequencer>();
 
   private constructor(databaseName: string) {
     super(
       databaseName,
       DB.service,
-      zkDatabaseConstants.databaseCollections.sequencer
+      zkDatabaseConstant.databaseCollection.sequencer
     );
   }
 
@@ -25,26 +24,64 @@ export class ModelSequencer extends ModelBasic<SequencedItem> {
     const key = databaseName;
     if (!ModelSequencer.instances.has(key)) {
       ModelSequencer.instances.set(key, new ModelSequencer(databaseName));
+      ModelSequencer.init(key);
     }
     return ModelSequencer.instances.get(key)!;
   }
 
-  async getNextValue(
-    sequenceName: Sequence,
+  async nextValue(
+    sequenceName: ESequencer,
     session?: ClientSession
   ): Promise<number> {
-    const updateResult = await this.collection.findOneAndUpdate(
-      { _id: sequenceName },
-      { $inc: { seq: 1 } },
-      { upsert: true, returnDocument: 'after', session }
+    const index = await this.collection.findOne(
+      { type: sequenceName },
+      { session }
     );
 
-    if (!updateResult) {
-      throw new Error(
-        `Failed to get next value for sequence '${sequenceName}'`
+    if (index) {
+      const updateResult = await this.collection.findOneAndUpdate(
+        { type: sequenceName },
+        {
+          $inc: { seq: ModelSequencer.SEQUENCE_INCREMENT },
+          $set: { updatedAt: getCurrentTime() },
+        },
+        { upsert: true, returnDocument: 'after', session }
       );
-    }
 
-    return updateResult.seq;
+      if (!updateResult) {
+        throw new Error(`Failed to increment sequence '${sequenceName}'`);
+      }
+
+      return updateResult.seq;
+    } else {
+      const creationTime = getCurrentTime();
+
+      const insertResult = await this.collection.insertOne(
+        {
+          type: sequenceName,
+          seq: ModelSequencer.INITIAL_SEQUENCE_VALUE,
+          createdAt: creationTime,
+          updatedAt: creationTime,
+        },
+        { session }
+      );
+
+      if (!insertResult.insertedId) {
+        throw new Error(`Failed to create sequence '${sequenceName}'`);
+      }
+
+      return ModelSequencer.INITIAL_SEQUENCE_VALUE;
+    }
+  }
+
+  private static async init(databaseName: string) {
+    const collection = ModelCollection.getInstance(
+      databaseName,
+      DB.service,
+      zkDatabaseConstant.databaseCollection.sequencer
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ type: 1 }, { unique: true });
+    }
   }
 }

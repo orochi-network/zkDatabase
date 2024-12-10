@@ -1,0 +1,31 @@
+# TypeScript files
+src
+
+# Editor
+.vscode
+
+
+# System
+.DS_Store
+
+# Unnecessary
+data
+docs
+.husky
+tsconfig.json
+typedoc.json
+.gitignore
+.gitattributes
+.eslintrc.cjs
+.prettierignore
+babel.config.cjs
+config.json
+jest-resolver.cjs
+jest.config.js
+
+# Never reveal your keys!
+keys
+.env
+*.log
+.prettierrc
+*.tgz

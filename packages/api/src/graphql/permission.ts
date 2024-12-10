@@ -1,24 +1,16 @@
 import { gql } from "@apollo/client";
+import { TMetadataBasic } from "@zkdb/common";
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import {
-  TOwnershipAndPermissionRequest,
-  TOwnershipAndPermissionResponse,
-  TUser,
-} from "./types";
-
-export type TUserSignUpRecord = TUser;
 
 export const permission = <T>(client: TApolloClient<T>) => ({
   set: createMutateFunction<
-    TOwnershipAndPermissionResponse,
-    TOwnershipAndPermissionRequest & {
-      permission: number;
-    },
-    { permissionSet: TOwnershipAndPermissionResponse }
+    boolean,
+    TMetadataBasic,
+    { permissionSet: boolean }
   >(
     client,
     gql`
@@ -41,30 +33,5 @@ export const permission = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.permissionSet
-  ),
-  get: createQueryFunction<
-    TOwnershipAndPermissionResponse,
-    TOwnershipAndPermissionRequest,
-    { permissionList: TOwnershipAndPermissionResponse }
-  >(
-    client,
-    gql`
-      query PermissionList(
-        $databaseName: String!
-        $collectionName: String!
-        $docId: String
-      ) {
-        permissionList(
-          databaseName: $databaseName
-          collectionName: $collectionName
-          docId: $docId
-        ) {
-          userName
-          groupName
-          permission
-        }
-      }
-    `,
-    (data) => data.permissionList
   ),
 });

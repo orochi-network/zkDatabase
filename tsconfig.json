@@ -9,7 +9,7 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "resolveJsonModule": true,
-    "removeComments": true,
+    "removeComments": false,
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": true,
@@ -17,6 +17,12 @@
     "preserveSymlinks": true
   },
   "references": [
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/permission"
+    },
     {
       "path": "./packages/smart-contract"
     },
@@ -46,7 +52,7 @@
     },
     {
       "path": "./packages/ftp"
-    }
+    },
   ],
   "include": [
     "./src/"

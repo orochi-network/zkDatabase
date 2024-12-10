@@ -1,17 +1,22 @@
-import { ModelMerkleTree, TMerkleProof } from '@zkdb/storage';
+import { ModelMerkleTree } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { MerkleNode, MerkleTreeInfo } from '../types/merkle-tree.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { Field } from 'o1js';
+import {
+  TMerkleNode,
+  TMerkleProof,
+  TMerkleTreeInfo,
+  TPaginationReturn,
+  TPagination,
+  TMerkleJson,
+} from '@zkdb/common';
 
-// eslint-disable-next-line import/prefer-default-export
 export async function getWitnessByDocumentId(
   databaseName: string,
   docId: string,
   session?: ClientSession
 ): Promise<TMerkleProof[]> {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,
@@ -31,8 +36,8 @@ export async function getWitnessByDocumentId(
 export async function getMerkleNodesByLevel(
   databaseName: string,
   nodeLevel: number,
-  pagination?: Pagination
-): Promise<PaginationReturn<MerkleNode[]>> {
+  pagination?: TPagination
+): Promise<TPaginationReturn<TMerkleJson<TMerkleNode>[]>> {
   const modelMerkleTree = await ModelMerkleTree.load(databaseName);
 
   const zeroNodes = modelMerkleTree.getZeroNodes();
@@ -46,13 +51,13 @@ export async function getMerkleNodesByLevel(
       level,
       index,
       hash,
-      empty: zeroNodes[level].equals(Field(hash)).toBoolean()
+      empty: zeroNodes[level].equals(Field(hash)).toBoolean(),
     }));
 
     return {
       data: nodes,
       offset: pagination?.offset ?? 0,
-      totalSize: await modelMerkleTree.countLatestNodesByLevel(
+      total: await modelMerkleTree.countLatestNodesByLevel(
         nodeLevel,
         new Date()
       ),
@@ -64,7 +69,7 @@ export async function getMerkleNodesByLevel(
 
 export async function getMerkleTreeInfo(
   databaseName: string
-): Promise<MerkleTreeInfo> {
+): Promise<TMerkleTreeInfo> {
   const modelMerkleTree = await ModelMerkleTree.load(databaseName);
 
   const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
@@ -79,7 +84,7 @@ export async function getChildrenNodes(
   databaseName: string,
   parentLevel: number,
   parentIndex: bigint
-): Promise<MerkleNode[]> {
+): Promise<TMerkleJson<TMerkleNode>[]> {
   if (!Number.isInteger(parentLevel) || parentLevel < 0) {
     throw new Error(
       `Invalid parentLevel: ${parentLevel}. It must be a non-negative integer.`
@@ -145,7 +150,7 @@ export async function getMerkleWitnessPath(
   databaseName: string,
   docId: string
 ) {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
   const docMetadata = await modelDocumentMetadata.findOne({
     docId,

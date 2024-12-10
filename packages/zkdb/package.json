@@ -96,6 +96,7 @@
     "o1js": "^1.9.*"
   },
   "dependencies": {
+    "@zkdb/common": "^0.1.1",
     "@zkdb/api": "^1.1.14",
     "@zkdb/permission": "0.1.6",
     "@zkdb/smart-contract": "1.1.7",

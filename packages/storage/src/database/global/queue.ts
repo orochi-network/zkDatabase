@@ -8,7 +8,7 @@ import {
   UpdateOptions,
   WithId,
 } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
+import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
@@ -33,9 +33,9 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalProofDatabase,
+      zkDatabaseConstant.globalProofDatabase,
       DB.proof,
-      zkDatabaseConstants.globalCollections.queue
+      zkDatabaseConstant.globalCollection.queue
     );
   }
 
@@ -213,9 +213,9 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
   public static async init() {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalProofDatabase,
+      zkDatabaseConstant.globalProofDatabase,
       DB.proof,
-      zkDatabaseConstants.globalCollections.queue
+      zkDatabaseConstant.globalCollection.queue
     );
     if (!(await collection.isExist())) {
       collection.index({ database: 1, operationNumber: 1 }, { unique: true });

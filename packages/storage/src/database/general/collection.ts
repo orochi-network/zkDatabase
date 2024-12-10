@@ -1,3 +1,4 @@
+import { TCollectionIndexMap } from '@zkdb/common';
 import {
   CreateIndexesOptions,
   Document,
@@ -5,11 +6,10 @@ import {
   IndexSpecification,
 } from 'mongodb';
 import { isOk } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
-import ModelDatabase from './database.js';
 import { DatabaseEngine } from '../database-engine.js';
+import ModelMetadataDatabase from './database.js';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -19,7 +19,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelCollection<any>> = new Map();
 
   public get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
+    return ModelMetadataDatabase.getInstance(this.databaseName);
   }
 
   public static getInstance<T extends Document>(
@@ -64,11 +64,11 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   }
 
   public async index(
-    indexSpec: IndexSpecification,
+    indexSpec: TCollectionIndexMap<T> | IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ): Promise<boolean> {
     return isOk(async () =>
-      this.collection.createIndex(indexSpec, indexOptions)
+      this.collection.createIndex(indexSpec as IndexSpecification, indexOptions)
     );
   }
 

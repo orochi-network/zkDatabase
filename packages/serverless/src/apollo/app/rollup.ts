@@ -1,13 +1,14 @@
-import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
-import { TDatabaseRequest } from './database.js';
-import GraphQLJSON from 'graphql-type-json';
 import {
-  getRollUpHistory as getRollUpHistoryDomain,
-  createRollUp as createRollUpDomain,
-} from '../../domain/use-case/rollup.js';
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
+  TDatabaseRequest,
+  databaseName,
+  transactionType,
+  RollUpData,
+} from '@zkdb/common';
+import { withCompoundTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import Rollup from '../../domain/use-case/rollup.js';
+import { authorizeWrapper } from '../validation.js';
 
 export const typeDefsRollUp = `#graphql
 scalar Date
@@ -22,11 +23,13 @@ enum RollUpState {
 type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
-  transactionHash: String,
-  status: TransactionStatus!,
-  currentMerkleTreeRoot: String!,
-  previousMerkleTreeRoot: String!,
+  txHash: String
+  transactionRaw: String!
+  status: TransactionStatus!
+  merkletreeRootCurrent: String!
+  merkletreeRootPrevious: String!
   createdAt: Date!
+  updatedAt: Date!
   error: String
 }
 
@@ -37,42 +40,43 @@ type RollUpHistory {
 }
 
 extend type Mutation {
-  getRollUpHistory(databaseName: String!): RollUpHistory!
-  createRollUp(databaseName: String!): Boolean
+  rollupCreate(databaseName: String!): Boolean
+  rollupHistory(databaseName: String!): RollUpHistory!
 }
 `;
 
-const getRollUpHistory = authorizeWrapper(
+const rollupHistory = authorizeWrapper<TDatabaseRequest, RollUpData>(
   Joi.object({
     databaseName,
-    transactionType,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    getRollUpHistoryDomain(args.databaseName)
+    Rollup.history(args.databaseName)
 );
 
-const createRollUp = authorizeWrapper(
+const rollupCreate = authorizeWrapper<TDatabaseRequest, boolean>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    withCompoundTransaction((compoundSession) =>
-      createRollUpDomain(args.databaseName, ctx.userName, compoundSession)
-    )
+  async (_root: unknown, args: TDatabaseRequest, ctx) => {
+    const result = await withCompoundTransaction((compoundSession) =>
+      Rollup.create(args.databaseName, ctx.userName, compoundSession)
+    );
+    return result === null ? false : result;
+  }
 );
 
 type TRollUpResolver = {
   JSON: typeof GraphQLJSON;
   Mutation: {
-    getRollUpHistory: typeof getRollUpHistory;
-    createRollUp: typeof createRollUp;
+    rollupHistory: typeof rollupHistory;
+    rollupCreate: typeof rollupCreate;
   };
 };
 
 export const resolversRollUp: TRollUpResolver = {
   JSON: GraphQLJSON,
   Mutation: {
-    getRollUpHistory,
-    createRollUp,
+    rollupHistory,
+    rollupCreate,
   },
 };
