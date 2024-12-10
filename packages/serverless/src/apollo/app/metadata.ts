@@ -1,4 +1,14 @@
-import { collectionName, databaseName, objectId, userName } from '@zkdb/common';
+import {
+  collectionName,
+  databaseName,
+  objectId,
+  TMetadataCollection,
+  TMetadataCollectionRequest,
+  TMetadataDocument,
+  TMetadataDocumentRequest,
+  TOwnershipDocumentOwnRequest,
+  userName,
+} from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -81,34 +91,54 @@ extend type Mutation {
 `;
 
 // Query
-const getMetadataDocument = authorizeWrapper(
+const getMetadataDocument = authorizeWrapper<
+  TMetadataDocumentRequest,
+  TMetadataDocument
+>(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId,
   }),
-  async (_root: unknown, args: any, ctx) =>
-    readDocumentMetadata(
+  async (_root, args, ctx) => {
+    const documentMetadata = await readDocumentMetadata(
       args.databaseName,
       args.collectionName,
       args.docId,
       ctx.userName,
       true
-    )
+    );
+
+    if (!documentMetadata) {
+      throw new Error(`Can't find metadata document: ${args.docId}`);
+    }
+
+    return documentMetadata;
+  }
 );
 
-const getMetadataCollection = authorizeWrapper(
+const getMetadataCollection = authorizeWrapper<
+  TMetadataCollectionRequest,
+  TMetadataCollection
+>(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: any, ctx) =>
-    readCollectionMetadata(
+  async (_root, args, ctx) => {
+    const collectionMetadata = await readCollectionMetadata(
       args.databaseName,
       args.collectionName,
       ctx.userName,
       true
-    )
+    );
+
+    if (!collectionMetadata) {
+      throw new Error(`Can't find metadata collection: ${args.collectionName}`);
+    }
+
+    return collectionMetadata;
+  }
 );
 
 // Mutation
@@ -133,7 +163,10 @@ const permissionSet = authorizeWrapper(
   }
 );
 
-const permissionTransferOwnership = authorizeWrapper(
+const permissionTransferOwnership = authorizeWrapper<
+  TOwnershipDocumentOwnRequest,
+  boolean
+>(
   Joi.object({
     databaseName,
     collectionName,
@@ -141,31 +174,33 @@ const permissionTransferOwnership = authorizeWrapper(
     grouping: ownershipGroup,
     newOwner: userName,
   }),
-  async (_root: unknown, args: any, context) => {
-    return withTransaction((session) => {
-      if (args.docId) {
-        // Document case with docId
-        return changeDocumentOwnership(
-          args.databaseName,
-          args.collectionName,
-          args.docId,
-          context.userName,
-          args.grouping,
-          args.newOwner,
-          session
-        );
-      } else {
-        // Collection case without docId
-        return changeCollectionOwnership(
-          args.databaseName,
-          args.collectionName,
-          context.userName,
-          args.grouping,
-          args.newOwner,
-          session
-        );
-      }
-    });
+  async (_root: unknown, args, context) => {
+    return Boolean(
+      await withTransaction((session) => {
+        if (args.docId) {
+          // Document case with docId
+          return changeDocumentOwnership(
+            args.databaseName,
+            args.collectionName,
+            args.docId,
+            context.userName,
+            args.groupType,
+            args.newOwner,
+            session
+          );
+        } else {
+          // Collection case without docId
+          return changeCollectionOwnership(
+            args.databaseName,
+            args.collectionName,
+            context.userName,
+            args.groupType,
+            args.newOwner,
+            session
+          );
+        }
+      })
+    );
   }
 );
 

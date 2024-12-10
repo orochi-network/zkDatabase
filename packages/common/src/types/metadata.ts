@@ -1,6 +1,8 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { TCollection } from './collection.js';
 import { TDbRecord } from './common.js';
+import { TDatabaseRequest } from './database.js';
+import { TDocument } from './document.js';
 
 export type TMetadataBasic = OwnershipAndPermission & {
   collectionName: string;
@@ -36,4 +38,13 @@ export type TMetadataDetailDocument<T> = TMetadataDetail<T, TMetadataDocument>;
 export type TMetadataDetailCollection<T> = TMetadataDetail<
   T,
   TMetadataCollection
+>;
+
+export type TMetadataDocumentRequest = TDatabaseRequest &
+  Pick<TCollection, 'collectionName'> &
+  Pick<TDocument, 'docId'>;
+
+export type TMetadataCollectionRequest = Omit<
+  TMetadataDocumentRequest,
+  'docId'
 >;
