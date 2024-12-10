@@ -1,4 +1,4 @@
-import { TCollectionIndexSpecification } from '@zkdb/common';
+import { TCollectionIndexMap } from '@zkdb/common';
 import {
   CreateIndexesOptions,
   Document,
@@ -64,7 +64,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   }
 
   public async index(
-    indexSpec: TCollectionIndexSpecification<T> | IndexSpecification,
+    indexSpec: TCollectionIndexMap<T> | IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ): Promise<boolean> {
     return isOk(async () =>

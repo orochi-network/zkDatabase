@@ -1,6 +1,6 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { IndexDirection } from 'mongodb';
-import { TDbRecord } from './common.js';
+import { TDbRecord, TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
@@ -18,26 +18,23 @@ export enum ESorting {
 
 /**
  * Property type
+ * The value must compatible with MongoDB
  * @enum
  * @readonly
  * @property {string} Compound - Compound index
  * @property {string} Unique - Unique index
  */
 export enum EProperty {
-  Compound = 'Compound',
-  Unique = 'Unique',
+  Compound = 'compound',
+  Unique = 'unique',
 }
 
 export type TCollectionIndex<T = Record<string, any>> = Partial<
   Record<keyof T, ESorting>
 >;
 
-export type TCollectionIndexSpecification<T = Record<string, any>> = Partial<
-  Record<keyof T, IndexDirection>
->;
-
 /** Mapping type of index on server side */
-export type TCollectionIndexMap<T> = {
+export type TCollectionIndexMap<T = any> = {
   [Property in keyof T as `document.${string & Property}.name`]?: IndexDirection;
 };
 
@@ -48,13 +45,23 @@ export type TCollection = {
 
 export type TCollectionRecord = TDbRecord<TCollection>;
 
-export type TCollectionIndexInfo = {
-  indexName: string;
+// Collection index info in MongoDB
+export type TCollectionIndexInfoMongo = {
+  name: string;
   size: number;
   access: number;
   since: Date;
   property: EProperty;
 };
+
+// Mapped collection index info
+export type TCollectionIndexInfo = TPickAlter<
+  TCollectionIndexInfoMongo,
+  {
+    name: 'indexName';
+    since: 'createdAt';
+  }
+>;
 
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;
@@ -77,7 +84,8 @@ export type TCollectionListRequest = TDatabaseRequest;
 export type TCollectionListResponse = TMetadataCollection[];
 
 // Index
-export type TIndexRequest = Pick<TCollectionIndexInfo, 'indexName'>;
+export type TIndexRequest = TCollectionRequest &
+  Pick<TCollectionIndexInfo, 'indexName'>;
 
 // Index list
 export type TIndexListRequest = TCollectionRequest;

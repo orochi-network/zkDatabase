@@ -2,11 +2,11 @@ import { Fill } from '@orochi-network/queue';
 import { Permission } from '@zkdb/permission';
 import { DB, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
-import { ClientSession, IndexSpecification } from 'mongodb';
+import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import {
+  convertSchemaDefinitionToIndex,
   getCurrentTime,
-  getIndexCollectionBySchemaDefinition,
 } from '../../helper/common.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 
@@ -14,7 +14,7 @@ import {
   EProperty,
   PERMISSION_DEFAULT_VALUE,
   TCollectionIndexInfo,
-  TCollectionIndexSpecification,
+  TCollectionIndexMap,
   TMetadataCollection,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
@@ -27,7 +27,7 @@ async function createIndex(
   databaseName: string,
   actor: string,
   collectionName: string,
-  index: TCollectionIndexSpecification,
+  index: TCollectionIndexMap,
   session?: ClientSession
 ): Promise<boolean> {
   // Validate input parameters
@@ -65,19 +65,12 @@ async function createIndex(
       );
     }
 
-    // Map index fields to MongoDB format
-    const mongoIndex: IndexSpecification = {};
-    for (const i in index) {
-      if (index[i]) {
-        mongoIndex[`document.${i}.name`] = index[i];
-      }
-    }
     // Create the index using ModelCollection
     return ModelCollection.getInstance(
       databaseName,
       DB.service,
       collectionName
-    ).index(mongoIndex, { session });
+    ).index(index, { session });
   }
 
   throw new Error(
@@ -127,8 +120,7 @@ async function createCollection(
   );
 
   // Create index by schema definition
-  const collectionIndex: TCollectionIndexSpecification =
-    getIndexCollectionBySchemaDefinition(schema);
+  const collectionIndex = convertSchemaDefinitionToIndex(schema);
 
   if (Object.keys(collectionIndex).length > 0) {
     await createIndex(
@@ -262,7 +254,7 @@ export async function listIndexesInfo(
       const size = indexSizes[name] || 0;
       const usageStats = indexUsageMap[name] || {};
       const access = usageStats.accesses?.ops || 0;
-      const since = usageStats.accesses?.since
+      const createdAt = usageStats.accesses?.since
         ? new Date(usageStats.accesses.since)
         : new Date(0);
       const property =
@@ -271,7 +263,7 @@ export async function listIndexesInfo(
         indexName: name,
         size,
         access,
-        since,
+        createdAt,
         property,
       };
     });

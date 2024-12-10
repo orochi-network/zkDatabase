@@ -1,7 +1,7 @@
 import {
   ESorting,
   TCollectionIndex,
-  TCollectionIndexSpecification,
+  TCollectionIndexMap,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
 import logger from './logger.js';
@@ -52,20 +52,20 @@ export function objectToLookupPattern(
 
 export const gql = (...args: any[]): string => args.join('\n');
 
-export const convertIndexSpecification = (
+export const convertToIndexSpecification = <T = TCollectionIndex>(
   index: TCollectionIndex
-): TCollectionIndexSpecification => {
-  const result: TCollectionIndexSpecification = {};
+): TCollectionIndexMap<T> => {
+  const result: TCollectionIndexMap<T> = {};
   for (const key in index) {
     if (index[key]) {
-      result[key] =
-        index[key] === ESorting.Asc
-          ? 1
-          : index[key] === ESorting.Desc
-            ? -1
-            : index[key] === 'text'
-              ? 'text'
-              : undefined;
+      const fieldKey = `document.${key}.name` as keyof TCollectionIndexMap<T>;
+      if (result[fieldKey] === ESorting.Asc) {
+        result[fieldKey] =
+          1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
+      } else if (result[fieldKey] === ESorting.Desc) {
+        result[fieldKey] =
+          -1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
+      }
     }
   }
   return result;
@@ -92,18 +92,20 @@ export const convertIndexSpecification = (
  * console.log(result);
  * // Output:
  * //
- * //   { field1: 1, field3: -1 },
+ * //   { document.field1.name: 1, document.field3.name: -1 },
  * //
  * ```
  */
 
-export const getIndexCollectionBySchemaDefinition = <T = Record<string, any>>(
+export const convertSchemaDefinitionToIndex = <T = TCollectionIndex>(
   schema: TSchemaFieldDefinition[]
-): TCollectionIndexSpecification<T> => {
-  return schema
+): TCollectionIndexMap<T> => {
+  const indexTmp: TCollectionIndex = schema
     .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
-    .reduce<TCollectionIndexSpecification<T>>((acc, field) => {
-      acc[field.name as keyof T] = field.sorting === ESorting.Asc ? 1 : -1;
+    .reduce<TCollectionIndex<T>>((acc, field) => {
+      acc[field.name as keyof T] = field.sorting;
       return acc;
     }, {});
+
+  return convertToIndexSpecification(indexTmp);
 };
