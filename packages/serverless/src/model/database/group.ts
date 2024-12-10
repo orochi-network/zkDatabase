@@ -39,14 +39,14 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
     return this.collection.findOne({ groupName }, { session });
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
       DB.service,
       ModelGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ groupName: 1 }, { unique: true });
+      await collection.index({ groupName: 1 }, { unique: false, session });
     }
   }
 }

@@ -5,7 +5,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { WithoutId } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
@@ -29,16 +29,16 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
     );
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
       DB.service,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true });
-      collection.index({ publicKey: 1 }, { unique: true });
-      collection.index({ email: 1 }, { unique: true });
+      collection.index({ userName: 1 }, { unique: true, session });
+      collection.index({ publicKey: 1 }, { unique: true, session });
+      collection.index({ email: 1 }, { unique: true, session });
     }
   }
 

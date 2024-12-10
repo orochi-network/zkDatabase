@@ -1,6 +1,5 @@
 import {
   ClientSession,
-  Db,
   Filter,
   FindOptions,
   InsertOneOptions,
@@ -211,16 +210,19 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     );
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
       zkDatabaseConstant.globalCollection.queue
     );
     if (!(await collection.isExist())) {
-      collection.index({ database: 1, operationNumber: 1 }, { unique: true });
-      collection.index({ merkleRoot: 1 }, { unique: false });
-      collection.index({ merkleIndex: 1 }, { unique: false });
+      collection.index(
+        { database: 1, operationNumber: 1 },
+        { unique: true, session }
+      );
+      collection.index({ merkleRoot: 1 }, { unique: false, session });
+      collection.index({ merkleIndex: 1 }, { unique: false, session });
     }
   }
 }

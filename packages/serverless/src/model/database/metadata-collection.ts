@@ -5,7 +5,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { FindOptions, WithoutId } from 'mongodb';
+import { ClientSession, FindOptions, WithoutId } from 'mongodb';
 
 export interface IMetadataCollection
   extends Omit<TDbRecord<TMetadataCollection>, 'sizeOnDisk'> {}
@@ -41,14 +41,14 @@ export class ModelMetadataCollection extends ModelGeneral<
     );
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
       DB.service,
       ModelMetadataCollection.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1 }, { unique: true });
+      await collection.index({ collectionName: 1 }, { unique: true, session });
     }
   }
 }

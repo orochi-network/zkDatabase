@@ -5,7 +5,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { Document } from 'mongodb';
+import { ClientSession, Document } from 'mongodb';
 
 export interface IMetadataDocument extends Document, TMetadataDocument {}
 
@@ -17,15 +17,18 @@ export class ModelMetadataDocument extends ModelGeneral<IMetadataDocument> {
     super(databaseName, DB.service, ModelMetadataDocument.collectionName);
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = new ModelCollection(
       databaseName,
       DB.service,
       ModelMetadataDocument.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1, docId: 1 }, { unique: true });
-      await collection.index({ merkleIndex: 1 }, { unique: true });
+      await collection.index(
+        { collection: 1, docId: 1 },
+        { unique: true, session }
+      );
+      await collection.index({ merkleIndex: 1 }, { unique: true, session });
     }
   }
 }

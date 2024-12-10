@@ -7,6 +7,7 @@ import {
 } from '@zkdb/storage';
 import {
   BulkWriteOptions,
+  ClientSession,
   FindOptions,
   InsertOneOptions,
   InsertOneResult,
@@ -39,7 +40,10 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     if (!group) {
       return false;
     }
-    const matchedRecord = await this.count({ userName, groupId: group._id });
+    const matchedRecord = await this.count({
+      userName,
+      groupOjectId: group._id,
+    });
     return matchedRecord === 1;
   }
 
@@ -81,9 +85,9 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
       (g) => !groupOfUser.includes(g)
     );
 
-    const operations = newGroupIdToAdd.map((groupId) => ({
+    const operations = newGroupIdToAdd.map((groupOjectId) => ({
       updateOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
         update: {
           $set: { updatedAt: new Date() },
           $setOnInsert: { createdAt: new Date() },
@@ -100,11 +104,11 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
     const operations = userNames.map((userName) => ({
       updateOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
         update: {
           $set: { updatedAt: new Date() },
           $setOnInsert: { createdAt: new Date() },
@@ -121,25 +125,28 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
     const operations = userNames.map((userName) => ({
       deleteOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
       },
     }));
 
     return this.collection.bulkWrite(operations, options);
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
       DB.service,
       ModelUserGroup.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1 }, { unique: false });
+      await collection.index({ userName: 1 }, { unique: false, session });
+      await collection.index({ groupName: 1 }, { unique: false, session });
+      await collection.index({ groupOjectId: 1 }, { unique: true, session });
+      await collection.index({ userObjectId: 1 }, { unique: true, session });
     }
   }
 }
