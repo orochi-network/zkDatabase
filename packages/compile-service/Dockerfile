@@ -31,7 +31,7 @@ RUN yarn workspace @zkdb/smart-contract build && \
 FROM orochinetwork/node:20-alpine AS runner
 
 # Create a non-root user and group in the runner stage
-RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
+RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S -G appuser -h /usr/src/app appuser
 
 # Set the working directory
 WORKDIR /usr/src/app
