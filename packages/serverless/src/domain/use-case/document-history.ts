@@ -1,9 +1,9 @@
 /* eslint-disable import/prefer-default-export */
 import {
+  TDocumentHistory,
   TDocumentHistoryListResponse,
   TMetadataDocument,
   TPagination,
-  TDocumentHistoryResponse,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
@@ -131,7 +131,9 @@ MongoDB pipeline to already handle this case`
         docId: historyDocument.documents[0].docId,
         documents: historyDocument.documents.map((doc) => ({
           ...doc,
-          document: ModelDocument.deserializeDocument(doc.document),
+          document: Object.values(
+            ModelDocument.deserializeDocument(doc.document)
+          ),
         })),
         metadata: {
           ...historyDocument.metadata,
@@ -155,7 +157,7 @@ async function findDocumentHistory(
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<TDocumentHistoryResponse | null> {
+): Promise<TDocumentHistory | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -198,13 +200,19 @@ async function findDocumentHistory(
     session
   );
 
+  throw new Error(
+    `this whole function needs to be refactored to remove duplicate logic and \
+add document metadata`
+  );
+
   return {
     docId,
     documents: documentHistoryRecords.map((doc) => ({
       ...doc,
-      document: ModelDocument.deserializeDocument(doc.document),
+      document: Object.values(ModelDocument.deserializeDocument(doc.document)),
     })),
     active: documentHistoryRecords[0].active,
+    metadata: {} as any, // TODO:
   };
 }
 

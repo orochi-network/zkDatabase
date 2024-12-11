@@ -19,17 +19,13 @@ export type TDocumentResponse = TMerkleProof[];
 
 export type TDocumentRecord = TDbRecord<TDocument>;
 
-// NOTE(wonrax): I don't know why single document history does not respond with
-// metadata
-export type TDocumentHistoryResponse = Omit<TDocumentHistory, 'metadata'>;
-
 /** Type derived from the base document record type, but with optional fields
  *  to represent the actual object type (i.e. nullable). */
 export type TDocumentRecordOptional = Omit<
   TDocumentRecord,
   'previousObjectId'
 > & {
-  previousObjectId?: ObjectId;
+  previousObjectId: ObjectId | null;
 };
 
 /** Same with [TDocumentRecordOptional], but `document` field is an array
@@ -44,7 +40,7 @@ export type TDocumentFindResponse = Omit<
 
 export type TDocumentHistory = {
   docId: string;
-  documents: TDocumentRecordOptional[];
+  documents: TDocumentFindResponse[];
   metadata: TMetadataDocument;
   active: boolean;
 };

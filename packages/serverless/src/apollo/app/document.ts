@@ -31,6 +31,8 @@ import {
   TWithProofStatus,
   TDocumentWithMetadataResponse,
   TDocumentHistoryListResponse,
+  TDocumentField,
+  TProvableTypeString,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';

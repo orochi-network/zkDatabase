@@ -214,6 +214,7 @@ possible field kinds explicitly to ensure correctness.`
         active: true,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
+        previousObjectId: null,
       },
       session
     );
