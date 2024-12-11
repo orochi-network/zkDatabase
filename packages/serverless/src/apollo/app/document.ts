@@ -76,7 +76,7 @@ export const SCHEMA_DOCUMENT_UPDATE_REQUEST =
     document: Joi.required(),
   });
 
-export const SCHEMA_DOCUMENT_HISTORY_GET_REQUEST =
+export const SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
@@ -309,7 +309,7 @@ const dropDocument = authorizeWrapper(
 );
 
 const findDocumentHistory = authorizeWrapper(
-  SCHEMA_DOCUMENT_HISTORY_GET_REQUEST,
+  SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
       findDocumentHistoryImpl(
