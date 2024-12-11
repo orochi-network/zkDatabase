@@ -1,4 +1,12 @@
 import { TCollectionRequest } from './collection.js';
+import { TDbRecord } from './common.js';
+
+export type TOwnership = {
+  databaseName: string;
+  owner: string;
+};
+
+export type TOwnershipRecord = TDbRecord<TOwnership>;
 
 /**
  * Ownership types

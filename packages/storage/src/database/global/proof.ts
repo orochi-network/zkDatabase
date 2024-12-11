@@ -1,27 +1,11 @@
-import { FindOptions, InsertOneOptions, WithId } from 'mongodb';
+import { FindOptions, InsertOneOptions, WithId, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
+import { TProofRecord } from '@zkdb/common';
 
-export type ZKProof = {
-  publicInput: string[];
-  publicOutput: string[];
-  maxProofsVerified: 0 | 1 | 2;
-  proof: string;
-};
-
-export type ProofMetadata = {
-  createdAt?: Date;
-  database: string;
-  collection: string;
-  merkleRoot: string;
-  prevMerkleRoot: string;
-};
-
-export type ProofDetails = ZKProof & ProofMetadata;
-
-export class ModelProof extends ModelGeneral<ProofDetails> {
+export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public static instance: ModelProof;
 
   public static getInstance(): ModelProof {
@@ -36,7 +20,7 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   }
 
   public async saveProof(
-    proofDetails: ProofDetails,
+    proofDetails: TProofRecord,
     options?: InsertOneOptions
   ): Promise<boolean> {
     try {
@@ -57,11 +41,11 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public async getProof(
     database: string,
     options?: FindOptions
-  ): Promise<WithId<ProofDetails> | null> {
+  ): Promise<WithId<TProofRecord> | null> {
     const proof = await this.collection.findOne(
       { database },
       { ...options, sort: { createdAt: -1 } }
     );
-    return proof as WithId<ProofDetails> | null;
+    return proof as WithId<TProofRecord> | null;
   }
 }

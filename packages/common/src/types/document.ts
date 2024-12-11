@@ -15,8 +15,6 @@ export type TDocument = {
   document: Record<string, TDocumentField>;
 };
 
-export type TDocumentResponse = TMerkleProof[];
-
 export type TDocumentRecord = TDbRecord<TDocument>;
 
 // NOTE(wonrax): I don't know why single document history does not respond with
@@ -37,7 +35,7 @@ export type TDocumentReadResponse = Pick<
 
 export type TDocumentHistory = {
   docId: string;
-  documents: TDocumentRecordResponse[];
+  documentRevision: TDocumentRecord[];
   metadata: TMetadataDocument;
   active: boolean;
 };
@@ -47,9 +45,10 @@ export type TDocumentListFindRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentListFindResponse = TPaginationReturn<
-  Array<TDocumentResponse>
->;
+export type TDocumentMerkleProofResponse = TMerkleProof[];
+
+export type TDocumentListFindResponse =
+  TPaginationReturn<TDocumentMerkleProofResponse>;
 
 export type TDocumentFindRequest = TCollectionRequest & {
   query: { [key: string]: string };

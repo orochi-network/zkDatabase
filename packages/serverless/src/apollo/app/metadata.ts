@@ -20,7 +20,7 @@ import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
-import { setPermission } from '../../domain/use-case/permission.js';
+import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
 import { authorizeWrapper } from '../validation.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
@@ -151,7 +151,7 @@ const permissionSet = authorizeWrapper(
   }),
   async (_root: unknown, args: any, context) => {
     await withTransaction((session) =>
-      setPermission(
+      PermissionSecurity.setPermission(
         args.databaseName,
         args.collectionName,
         context.userName,

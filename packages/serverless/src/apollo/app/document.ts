@@ -4,9 +4,8 @@ import Joi from 'joi';
 import {
   createDocument,
   deleteDocument,
-  findDocumentsWithMetadata,
+  findDocumentWithMetadata,
   readDocument,
-  searchDocuments,
   updateDocument,
 } from '../../domain/use-case/document.js';
 import {
@@ -195,10 +194,9 @@ const documentFind = authorizeWrapper(
 );
 
 const documentsFind = authorizeWrapper(
-  DOCUMENTS_FIND_REQUEST,
   async (_root: unknown, args: TDocumentListFindRequest, ctx) => {
     return withTransaction(async (session) => {
-      const documents = await searchDocuments(
+      const documents = await findDocumentWithMetadata(
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -216,7 +214,7 @@ const documentsWithMetadataFind = authorizeWrapper(
   Joi.object().optional(),
   async (_root: unknown, args: TDocumentListFindRequest, ctx) => {
     return withTransaction(async (session) => {
-      const documents = await findDocumentsWithMetadata(
+      const documents = await findDocumentWithMetadata(
         args.databaseName,
         args.collectionName,
         ctx.userName,

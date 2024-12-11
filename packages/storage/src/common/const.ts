@@ -43,9 +43,6 @@ export const zkDatabaseConstant = {
     // User -> Group mapping
     userGroup: '_zkdatabase_user_group',
 
-    // Permission
-    permission: '_zkdatabase_permission',
-
     // Merkle tree collection
     merkleTree: '_zkdatabase_merkle_tree',
 

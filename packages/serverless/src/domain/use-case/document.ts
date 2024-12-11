@@ -3,17 +3,20 @@
 
 import {
   EDatabaseProofStatus,
+  EDocumentProofStatus,
   ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TDocumentReadResponse,
+  TDocumentRecord,
   TDocumentRecordResponse,
+  TMetadataDetailDocument,
   TMetadataDocument,
   TPagination,
   TPaginationReturn,
   TWithProofStatus,
 } from '@zkdb/common';
-import { Permission } from '@zkdb/permission';
+import { Permission, PermissionBase } from '@zkdb/permission';
 import {
   CompoundSession,
   DB,
@@ -25,6 +28,7 @@ import {
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
+  DEFAULT_PAGINATION,
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
@@ -34,11 +38,7 @@ import { ModelMetadataCollection } from '../../model/database/metadata-collectio
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { isDatabaseOwner } from './database.js';
-import { getUsersGroup } from './group.js';
-import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+import { PermissionSecurity } from './permission-security.js';
 import {
   proveCreateDocument,
   proveDeleteDocument,
@@ -65,15 +65,13 @@ async function readDocument(
   filter: FilterCriteria,
   session?: ClientSession
 ): Promise<TDocumentReadResponse | null> {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    ))
-  ) {
+  const actorPermissionCollection = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    session
+  );
+  if (!actorPermissionCollection.read) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
     );
@@ -90,16 +88,15 @@ async function readDocument(
     return null;
   }
 
-  const hasReadPermission = await hasDocumentPermission(
+  const actorPermissionDocument = await PermissionSecurity.document(
     databaseName,
     collectionName,
     actor,
     documentRecord.docId,
-    'read',
     session
   );
 
-  if (!hasReadPermission) {
+  if (!actorPermissionDocument.read) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
     );
@@ -120,17 +117,15 @@ async function createDocument(
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'create',
-      compoundSession?.sessionService
-    ))
-  ) {
+  const actorPermissionCollection = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    compoundSession?.sessionService
+  );
+  if (!actorPermissionCollection.write) {
     throw new Error(
-      `Access denied: Actor '${actor}' does not have 'create' permission for collection '${collectionName}'.`
+      `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
     );
   }
 
@@ -213,19 +208,6 @@ async function updateDocument(
   filter: FilterCriteria,
   update: TDocumentField[]
 ) {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'write'
-    ))
-  ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
-    );
-  }
-
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
   const documentRecord = await withTransaction(async (session) => {
     const oldDocumentRecord = await modelDocument.findOne(
@@ -234,16 +216,14 @@ async function updateDocument(
     );
 
     if (oldDocumentRecord) {
-      if (
-        !(await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          oldDocumentRecord.docId,
-          'write',
-          session
-        ))
-      ) {
+      const actorPermissionDocument = await PermissionSecurity.document(
+        databaseName,
+        collectionName,
+        actor,
+        oldDocumentRecord.docId,
+        session
+      );
+      if (!actorPermissionDocument.write) {
         throw new Error(
           `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
         );
@@ -287,20 +267,6 @@ async function deleteDocument(
   filter: FilterCriteria
 ) {
   const result = await withTransaction(async (session) => {
-    if (
-      !(await hasCollectionPermission(
-        databaseName,
-        collectionName,
-        actor,
-        'delete',
-        session
-      ))
-    ) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'delete' permission for collection '${collectionName}'.`
-      );
-    }
-
     const modelDocument = ModelDocument.getInstance(
       databaseName,
       collectionName
@@ -309,16 +275,14 @@ async function deleteDocument(
     const findResult = await modelDocument.findOne(parseQuery(filter), session);
 
     if (findResult) {
-      if (
-        !(await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          findResult.docId,
-          'delete',
-          session
-        ))
-      ) {
+      const actorPermissionDocument = await PermissionSecurity.document(
+        databaseName,
+        collectionName,
+        findResult.docId,
+        actor,
+        session
+      );
+      if (!actorPermissionDocument.write) {
         throw new Error(
           `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
         );
@@ -347,255 +311,70 @@ async function deleteDocument(
   throw Error('Document not found');
 }
 
-function buildPipeline(matchQuery: any, pagination?: TPagination): Array<any> {
-  return [
-    {
-      $lookup: {
-        from: zkDatabaseConstant.databaseCollection.permission,
-        let: { docId: '$docId' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ['$docId', '$$docId'] },
-            },
-          },
-          {
-            $project: {
-              permissionOwner: true,
-              permissionGroup: true,
-              permissionOther: true,
-              merkleIndex: true,
-              group: true,
-              owner: true,
-            },
-          },
-        ],
-        as: 'metadata',
-      },
-    },
-    {
-      $unwind: '$metadata',
-    },
-    {
-      $match: matchQuery,
-    },
-    {
-      $skip: pagination?.offset || 0,
-    },
-    {
-      $limit: pagination?.limit || 10,
-    },
-  ];
-}
-
-export function filterDocumentsByPermission(
-  listDocument: Array<any>,
-  actor: string,
-  userGroups: Array<string>
-): Array<any> {
-  return listDocument.filter(({ metadata }) => {
-    const permission = Permission.from(metadata.permission);
-    if (!metadata) {
-      return false;
-    }
-    if (metadata.owner === actor) {
-      return permission.owner.read;
-    }
-    if (userGroups.includes(metadata.group)) {
-      return permission.group.read;
-    }
-    return permission.other.read;
-  });
-}
-
-// TODO: might need to reconsider better type annotation
-type TDocumentResponse = Omit<
-  TDocumentRecordResponse,
-  '_id' | 'active' | 'updatedAt'
->;
-
-// TODO: might need to reconsider better type annotation
-type TDocumentWithMetadataResponse = TDocumentResponse & {
-  metadata: Omit<TMetadataDocument, 'collectionName' | 'docId'>;
-};
-
-async function findDocumentsWithMetadata(
+async function findDocumentWithMetadata(
   databaseName: string,
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
   pagination?: TPagination,
   session?: ClientSession
-): Promise<TWithProofStatus<TDocumentWithMetadataResponse>[]> {
-  if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    )
-  ) {
-    const { client } = DB.service;
-
-    const database = client.db(databaseName);
-    const documentsCollection = database.collection(collectionName);
-
-    const userGroups = await getUsersGroup(databaseName, actor);
-    const tasks =
-      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
-
-    const pipeline = buildPipeline(
-      query ? parseQuery(query) : null,
-      pagination
-    );
-
-    const documentsWithMetadata = await documentsCollection
-      .aggregate(pipeline)
-      .toArray();
-
-    // TODO: might need to reconsider proper type annotation
-    let filteredDocuments: any[];
-
-    if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermission(
-        documentsWithMetadata,
-        actor,
-        userGroups
-      );
-    } else {
-      filteredDocuments = documentsWithMetadata;
-    }
-
-    const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      const task = tasks?.find(
-        (taskEntity: TaskEntity) =>
-          taskEntity.docId === documentRecord._id.toString()
-      );
-
-      const document = {
-        docId: documentRecord._id,
-        document: fieldArrayToRecord(documentRecord.document),
-        createdAt: documentRecord.createdAt,
-      };
-
-      const metadata = {
-        merkleIndex: documentRecord.metadata.merkleIndex,
-        group: documentRecord.metadata.group,
-        owner: documentRecord.metadata.owner,
-        permission: documentRecord.metadata.permission,
-      };
-
-      // TODO: monkey patching for now because we might also need to refactor
-      // queue if we're to change status to enum
-      const mapStatusToProofStatus = (status: string): EDatabaseProofStatus => {
-        switch (status) {
-          case 'queued':
-            return EDatabaseProofStatus.None;
-          case 'proving':
-            return EDatabaseProofStatus.Proving;
-          case 'proved':
-            return EDatabaseProofStatus.Proved;
-          case 'failed':
-            return EDatabaseProofStatus.Failed;
-          default:
-            // TODO: is this variant correct in this case?
-            return EDatabaseProofStatus.None;
-        }
-      };
-
-      const object = {
-        ...document,
-        metadata,
-        proofStatus: mapStatusToProofStatus(task ? task.status.toString() : ''),
-      };
-
-      return object;
-    });
-
-    return transformedDocuments;
+): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
+  const { client } = DB.service;
+  const database = client.db(databaseName);
+  const paginationInfo = pagination || DEFAULT_PAGINATION;
+  const pipeline = [];
+  if (query) {
+    pipeline.push({ $match: parseQuery(query) });
   }
+  pipeline.push({
+    $lookup: {
+      from: zkDatabaseConstant.databaseCollection.metadataDocument,
+      let: { docId: '$docId' },
+      pipeline: [
+        {
+          $match: {
+            $expr: { $eq: ['$docId', '$$docId'] },
+          },
+        },
+      ],
+      as: 'metadata',
+    },
+    $skip: paginationInfo.offset,
+    $limit: paginationInfo.limit,
+  });
 
-  throw new Error(
-    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
+  const listDocumentWithMetadata = (await database
+    .collection(collectionName)
+    .aggregate(pipeline)
+    .toArray()) as TMetadataDetailDocument<TDocumentRecord>[];
+
+  const listQueueTask =
+    await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+
+  const taskMap = new Map(
+    listQueueTask?.map((task) => [task.docId, task.status]) || []
   );
-}
 
-async function searchDocuments(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
-  query?: FilterCriteria,
-  pagination: TPagination = { offset: 0, limit: 100 },
-  session: ClientSession | undefined = undefined
-): Promise<TPaginationReturn<Array<TDocumentResponse>>> {
-  if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    )
-  ) {
-    const { client } = DB.service;
+  const result = await PermissionSecurity.filterMetadataDocumentDetail(
+    databaseName,
+    listDocumentWithMetadata,
+    actor,
+    PermissionBase.permissionRead()
+  );
 
-    const database = client.db(databaseName);
-    const documentsCollection = database.collection(collectionName);
-
-    const userGroups = await getUsersGroup(databaseName, actor);
-
-    const pipeline = buildPipeline(
-      query ? { ...parseQuery(query), active: true } : null,
-      pagination
-    );
-
-    const documentsWithMetadata = await documentsCollection
-      .aggregate(pipeline)
-      .toArray();
-
-    // TODO: might need to reconsider proper type annotation
-    let filteredDocuments: any[];
-
-    if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermission(
-        documentsWithMetadata,
-        actor,
-        userGroups
-      );
-    } else {
-      filteredDocuments = documentsWithMetadata;
-    }
-
-    const transformedDocuments = filteredDocuments.map((documentRecord) => {
-      return {
-        docId: documentRecord.docId,
-        document: fieldArrayToRecord(documentRecord.document),
-        createdAt: documentRecord.timestamp,
-      };
-    });
-
+  return result.map((item) => {
     return {
-      data: transformedDocuments,
-      offset: pagination.offset,
-      total: await ModelDocument.getInstance(
-        databaseName,
-        collectionName
-      ).countActiveDocuments(),
+      ...item,
+      proofStatus: taskMap.get(item.docId) || EDocumentProofStatus.Failed,
     };
-  }
-
-  throw new Error(
-    `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-  );
+  });
 }
 
 export {
   createDocument,
   deleteDocument,
-  findDocumentsWithMetadata,
+  findDocumentWithMetadata,
   readDocument,
-  searchDocuments,
   updateDocument,
 };
 

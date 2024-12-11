@@ -1,14 +1,15 @@
+import { TDbRecord } from '@zkdb/common';
 import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
 
-export type PrivateKey = {
+type TDatabaseKeyRecord = TDbRecord<{
   privateKey: string;
   databaseName: string;
-};
+}>;
 
-export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
+export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
   private static instance: ModelSecureStorage | null = null;
 
   private constructor() {
