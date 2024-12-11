@@ -6,6 +6,7 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/index.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
@@ -70,12 +71,24 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
       DB.proof,
       zkDatabaseConstant.globalCollection.proof
     );
+    /*
+      databaseName: string;
+      merkletreeRootCurrent: string;
+      merkletreeRootPrevious: string;
+      transactionObjectId: ObjectId;
+      proofObjectId: ObjectId;
+    */
     if (!(await collection.isExist())) {
       collection.index({ databaseName: 1 }, { unique: true, session });
       collection.index({ merkletreeRootCurrent: 1 }, { unique: true, session });
-      collection.index({ merkletreeRootCurrent: 1 }, { unique: true, session });
+      collection.index(
+        { merkletreeRootPrevious: 1 },
+        { unique: true, session }
+      );
       collection.index({ proofObjectId: 1 }, { unique: true, session });
       collection.index({ transactionObjectId: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

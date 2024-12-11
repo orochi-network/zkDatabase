@@ -1,3 +1,5 @@
+import { ClientSession, Document } from 'mongodb';
+import { ModelCollection } from '../database/index.js';
 import logger from './logger.js';
 
 export interface AppContext {
@@ -40,4 +42,12 @@ export function objectToLookupPattern(obj: {
     result.push({ [entries[i][0]]: entries[i][1] });
   }
   return result;
+}
+
+export function addTimestampMongoDB<T extends Document>(
+  collection: ModelCollection<T>,
+  session?: ClientSession
+) {
+  collection.index({ createdAt: 1 }, { session });
+  collection.index({ updatedAt: 1 }, { session });
 }

@@ -1,4 +1,5 @@
 import { TCollectionRequest } from './collection.js';
+import { TDbRecord } from './common.js';
 
 /**
  * Ownership types
@@ -49,6 +50,17 @@ export type TZKDatabaseProof = {
   maxProofsVerified: 0 | 1 | 2;
   proof: string;
 };
+
+export type TMetadataProof = {
+  database: string;
+  collection: string;
+  merkleRoot: string;
+  prevMerkleRoot: string;
+};
+
+export type TProof = TZKDatabaseProof & TMetadataProof;
+
+export type TProofRecord = TDbRecord<TProof>;
 
 export type TDocumentProofRequest = TCollectionRequest & {
   docId: string;

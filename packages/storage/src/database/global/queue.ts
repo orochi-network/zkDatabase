@@ -1,3 +1,4 @@
+import { EDocumentProofStatus, TQueueTaskRecord } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -5,29 +6,16 @@ import {
   InsertOneOptions,
   ObjectId,
   UpdateOptions,
-  WithId,
+  UpdateResult,
+  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 
-export type Status = 'queued' | 'proving' | 'proved' | 'failed';
-
-export type TaskEntity = {
-  operationNumber: number;
-  merkleIndex: bigint;
-  hash: string;
-  status: Status;
-  createdAt: Date;
-  database: string;
-  collection: string;
-  docId: string;
-  merkleRoot: string;
-  error?: string;
-};
-
-export class ModelQueueTask extends ModelGeneral<TaskEntity> {
+export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -46,7 +34,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   }
 
   public async queueTask(
-    task: TaskEntity,
+    task: WithoutId<TQueueTaskRecord>,
     options?: InsertOneOptions
   ): Promise<void> {
     if (!this.collection) {
@@ -55,7 +43,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     await this.collection.insertOne(
       {
         ...task,
-        status: 'queued',
+        status: EDocumentProofStatus.Queued,
       },
       options
     );
@@ -63,7 +51,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
   public async getLatestQueuedTaskByDatabase(
     session?: ClientSession
-  ): Promise<WithId<TaskEntity> | null> {
+  ): Promise<TQueueTaskRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -93,7 +81,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
         [
           {
             $match: {
-              status: 'queued',
+              status: EDocumentProofStatus.Queued,
               database: { $nin: executingDatabaseList },
             },
           },
@@ -117,12 +105,12 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       )
       .toArray();
 
-    return latestQueuedTasks[0] as WithId<TaskEntity>;
+    return latestQueuedTasks[0] as TQueueTaskRecord;
   }
 
   public async getTasksByCollection(
     collectionName: string
-  ): Promise<TaskEntity[] | null> {
+  ): Promise<TQueueTaskRecord[] | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -138,45 +126,41 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
   }
 
-  public async getNewTask(options?: FindOptions): Promise<TaskEntity | null> {
+  public async getNewTask(
+    options?: FindOptions
+  ): Promise<TQueueTaskRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    const result = await this.collection.findOne(
-      { status: 'queued' },
+    return this.collection.findOne(
+      { status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
-
-    const task = result as TaskEntity | null;
-    return task;
   }
 
   public async getQueuedTask(
-    filter: Filter<TaskEntity>,
+    filter: Filter<TQueueTaskRecord>,
     options?: FindOptions
   ) {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    const result = await this.collection.findOne(
-      { ...filter, status: 'queued' },
+    return this.collection.findOne(
+      { ...filter, status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
-
-    const task = result as TaskEntity | null;
-    return task;
   }
 
   public async markTaskAsExecuting(
     taskId: ObjectId,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'proving' } },
+      { $set: { status: EDocumentProofStatus.Proving } },
       options
     );
   }
@@ -184,13 +168,13 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   public async markTaskProcessed(
     taskId: ObjectId,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'proved' } },
+      { $set: { status: EDocumentProofStatus.Proved } },
       options
     );
   }
@@ -199,23 +183,34 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     taskId: ObjectId,
     errorMessage: string,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'failed', error: errorMessage } },
+      { $set: { status: EDocumentProofStatus.Failed, error: errorMessage } },
       options
     );
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance(
+    const collection = ModelCollection.getInstance<TQueueTaskRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
       zkDatabaseConstant.globalCollection.queue
     );
+    /*
+      operationNumber: number;
+      merkleIndex: bigint;
+      hash: string;
+      status: EDocumentProofStatus;
+      database: string;
+      collection: string;
+      docId: string;
+      merkleRoot: string;
+      error?: string;
+    */
     if (!(await collection.isExist())) {
       collection.index(
         { database: 1, operationNumber: 1 },
@@ -223,6 +218,9 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       );
       collection.index({ merkleRoot: 1 }, { unique: false, session });
       collection.index({ merkleIndex: 1 }, { unique: false, session });
+      collection.index({ hash: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

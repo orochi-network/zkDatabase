@@ -1,28 +1,18 @@
-import { ClientSession, FindOptions, InsertOneOptions, WithId } from 'mongodb';
+import { TProofRecord } from '@zkdb/common';
+import {
+  ClientSession,
+  FindOptions,
+  InsertOneOptions,
+  WithoutId,
+} from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
 
-export type ZKProof = {
-  publicInput: string[];
-  publicOutput: string[];
-  maxProofsVerified: 0 | 1 | 2;
-  proof: string;
-};
-
-export type ProofMetadata = {
-  createdAt?: Date;
-  database: string;
-  collection: string;
-  merkleRoot: string;
-  prevMerkleRoot: string;
-};
-
-export type ProofDetails = ZKProof & ProofMetadata;
-
-export class ModelProof extends ModelGeneral<ProofDetails> {
+export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public static instance: ModelProof;
 
   public static getInstance(): ModelProof {
@@ -37,17 +27,11 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   }
 
   public async saveProof(
-    proofDetails: ProofDetails,
+    proof: WithoutId<TProofRecord>,
     options?: InsertOneOptions
   ): Promise<boolean> {
     try {
-      await this.collection.insertOne(
-        {
-          ...proofDetails,
-          createdAt: new Date(),
-        },
-        options
-      );
+      await this.collection.insertOne(proof, options);
       return true;
     } catch (error) {
       logger.error('Error saving proof:', error);
@@ -58,28 +42,43 @@ export class ModelProof extends ModelGeneral<ProofDetails> {
   public async getProof(
     database: string,
     options?: FindOptions
-  ): Promise<WithId<ProofDetails> | null> {
-    const proof = await this.collection.findOne(
+  ): Promise<TProofRecord | null> {
+    return this.collection.findOne(
       { database },
       { ...options, sort: { createdAt: -1 } }
     );
-    return proof as WithId<ProofDetails> | null;
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance<ProofDetails>(
+    const collection = ModelCollection.getInstance<TProofRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
       zkDatabaseConstant.globalCollection.proof
     );
+    /*
+      publicInput: string[];
+      publicOutput: string[];
+      maxProofsVerified: 0 | 1 | 2;
+      proof: string;
+      createdAt?: Date;
+      database: string;
+      collection: string;
+      merkleRoot: string;
+      prevMerkleRoot: string;
+    */
     if (!(await collection.isExist())) {
       collection.index({ proof: 1 }, { unique: true, session });
+      collection.index({ database: 1 }, { session });
       collection.index(
         { database: 1, collection: 1 },
         { unique: true, session }
       );
       collection.index({ merkleRoot: 1 }, { unique: true, session });
       collection.index({ prevMerkleRoot: 1 }, { unique: true, session });
+      collection.index({ publicInput: 1 }, { unique: true, session });
+      collection.index({ publicOutput: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }
