@@ -38,7 +38,7 @@ export type TDocumentFindResponse = Omit<
   document: TDocumentField[];
 };
 
-export type TDocumentHistory = {
+export type TDocumentHistoryResponse = {
   docId: string;
   documents: TDocumentFindResponse[];
   metadata: TMetadataDocument;
@@ -81,4 +81,4 @@ export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentHistoryListResponse = TDocumentHistory[];
+export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];

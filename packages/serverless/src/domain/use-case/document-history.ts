@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  TDocumentHistory,
+  TDocumentHistoryResponse,
   TDocumentHistoryListResponse,
   TMetadataDocument,
   TPagination,
@@ -157,7 +157,7 @@ async function findDocumentHistory(
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<TDocumentHistory | null> {
+): Promise<TDocumentHistoryResponse | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
