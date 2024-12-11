@@ -51,13 +51,6 @@ export type TZKDatabaseProof = {
   proof: string;
 };
 
-export type TMetadataProof = {
-  database: string;
-  collection: string;
-  merkleRoot: string;
-  prevMerkleRoot: string;
-};
-
 export type TDocumentProofRequest = TCollectionRequest & {
   docId: string;
 };
