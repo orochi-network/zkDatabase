@@ -3,7 +3,7 @@ import { TContractSchemaField } from '../schema.js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
-import { TMetadataDocument } from './metadata.js';
+import { TMetadataDetail, TMetadataDocument } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 
 export type TDocumentField = TContractSchemaField;
@@ -19,30 +19,38 @@ export type TDocumentResponse = TMerkleProof[];
 
 export type TDocumentRecord = TDbRecord<TDocument>;
 
-// NOTE(wonrax): I don't know why single document history does not respond with
-// metadata
-export type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
-
-export type TDocumentRecordResponse = Omit<
+/** Type derived from the base document record type, but with optional fields
+ *  to represent the actual object type (i.e. nullable). */
+export type TDocumentRecordOptional = Omit<
   TDocumentRecord,
   'previousObjectId'
 > & {
-  previousObjectId?: ObjectId;
+  previousObjectId: ObjectId | null;
 };
 
-export type TDocumentReadResponse = Pick<
-  TDocumentRecordResponse,
-  'docId' | 'document' | 'createdAt'
->;
+/** Same with [TDocumentRecordOptional], but `document` field is an array
+ *  instead of a Record like in our database, the motivation is to make it
+ *  typable in GraphQL since GraphQL does not support Record type. */
+export type TDocumentFindResponse = Omit<
+  TDocumentRecordOptional,
+  'document'
+> & {
+  document: TDocumentField[];
+};
 
-export type TDocumentHistory = {
+export type TDocumentHistoryResponse = {
   docId: string;
-  documents: TDocumentRecordResponse[];
+  documents: TDocumentFindResponse[];
   metadata: TMetadataDocument;
   active: boolean;
 };
 
-export type TDocumentListFindRequest = TCollectionRequest & {
+export type TDocumentWithMetadataResponse = TMetadataDetail<
+  TDocumentRecordOptional,
+  TMetadataDocument
+>;
+
+export type TDocumentListRequest = TCollectionRequest & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
@@ -65,14 +73,12 @@ export type TDocumentUpdateRequest = TCollectionRequest & {
   document: TDocumentField[];
 };
 
-export type TDocumentHistoryGetRequest = TCollectionRequest & {
+export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;
 };
-
-export type TDocumentHistoryGetResponse = TSingleDocumentHistory;
 
 export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentHistoryListResponse = TDocumentHistory[];
+export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];
