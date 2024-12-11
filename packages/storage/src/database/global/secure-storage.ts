@@ -1,9 +1,9 @@
-import { WithoutId } from 'mongodb';
+import { TSecureStorageRecord } from '@zkdb/common';
+import { ClientSession, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
-import { TSecureStorageRecord } from '@zkdb/common';
 
 export class ModelSecureStorage extends ModelGeneral<
   WithoutId<TSecureStorageRecord>
@@ -26,7 +26,7 @@ export class ModelSecureStorage extends ModelGeneral<
     return ModelSecureStorage.instance;
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
@@ -37,8 +37,8 @@ export class ModelSecureStorage extends ModelGeneral<
       databaseName: string;
     */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true });
-      collection.index({ privateKey: 1 }, { unique: true });
+      collection.index({ databaseName: 1 }, { unique: true, session });
+      collection.index({ privateKey: 1 }, { unique: true, session });
     }
   }
 }

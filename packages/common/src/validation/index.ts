@@ -40,12 +40,15 @@ export const collectionName = Joi.string()
   .required()
   .pattern(/^[a-z]+[_a-z0-9]+/i);
 
-export const groupName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+export const groupName = (required: boolean = true) => {
+  const joiGroupName = Joi.string()
+    .trim()
+    .min(4)
+    .max(128)
+    .required()
+    .pattern(/^[a-z]+[_a-z0-9]+/i);
+  return required ? joiGroupName.required() : joiGroupName.optional();
+};
 
 export const groupDescription = (required: boolean = true) => {
   const joiGroupDescription = Joi.string().max(512);

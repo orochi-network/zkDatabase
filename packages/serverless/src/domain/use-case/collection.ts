@@ -21,7 +21,7 @@ import {
 import { isDatabaseOwner } from './database.js';
 import { isGroupExist } from './group.js';
 import { readCollectionMetadata } from './metadata.js';
-import { hasCollectionPermission } from './permission.js';
+import { PermissionSecurity } from './permission-security.js';
 
 async function createIndex(
   databaseName: string,
@@ -37,11 +37,10 @@ async function createIndex(
 
   // Check permissions
   if (
-    await hasCollectionPermission(
+    await PermissionSecurity.collection(
       databaseName,
       collectionName,
       actor,
-      'system',
       session
     )
   ) {
@@ -184,44 +183,17 @@ async function listCollection(
     .filter(Boolean);
 }
 
-async function listIndexes(
-  databaseName: string,
-  actor: string,
-  collectionName: string,
-  skipPermissionCheck: boolean = false,
-  session?: ClientSession
-): Promise<string[]> {
-  if (
-    skipPermissionCheck ||
-    (await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    ))
-  ) {
-    // TODO: Should we check if index fields exist for a collection
-    return ModelCollection.getInstance(
-      databaseName,
-      DB.service,
-      collectionName
-    ).listIndexes();
-  }
-
-  throw Error(
-    `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
-  );
-}
-
-export async function listIndexesInfo(
+export async function getIndexInfo(
   databaseName: string,
   collectionName: string,
   actor: string
 ): Promise<TCollectionIndexInfo[]> {
-  if (
-    await hasCollectionPermission(databaseName, collectionName, actor, 'read')
-  ) {
+  const actorPermission = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor
+  );
+  if (actorPermission.read) {
     const modelCollection = ModelCollection.getInstance(
       databaseName,
       DB.service,
@@ -283,15 +255,13 @@ async function doesIndexExist(
   indexName: string,
   session?: ClientSession
 ): Promise<boolean> {
-  if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    )
-  ) {
+  const actorPermission = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    session
+  );
+  if (actorPermission.read) {
     return ModelCollection.getInstance(
       databaseName,
       DB.service,
@@ -310,9 +280,12 @@ async function dropIndex(
   collectionName: string,
   indexName: string
 ): Promise<boolean> {
-  if (
-    await hasCollectionPermission(databaseName, collectionName, actor, 'system')
-  ) {
+  const actorPermission = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor
+  );
+  if (actorPermission.system) {
     // TODO: Allow people to choose the sorting order
     if (await doesIndexExist(databaseName, actor, collectionName, indexName)) {
       return ModelCollection.getInstance(
@@ -347,5 +320,4 @@ export {
   doesIndexExist,
   dropIndex,
   listCollection,
-  listIndexes,
 };

@@ -4,10 +4,7 @@ import { ModelMetadataCollection } from '../../model/database/metadata-collectio
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUser from '../../model/global/user.js';
 import { isGroupExist } from './group.js';
-import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+import { PermissionSecurity } from './permission-security.js';
 
 export async function changeDocumentOwnership(
   databaseName: string,
@@ -18,16 +15,14 @@ export async function changeDocumentOwnership(
   newOwner: string,
   session?: ClientSession
 ) {
-  if (
-    !(await hasDocumentPermission(
-      databaseName,
-      collectionName,
-      actor,
-      docId,
-      'system',
-      session
-    ))
-  ) {
+  const actorPermission = await PermissionSecurity.document(
+    databaseName,
+    collectionName,
+    docId,
+    actor,
+    session
+  );
+  if (!actorPermission.system) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'system' permission for the specified document.`
     );
@@ -83,15 +78,13 @@ export async function changeCollectionOwnership(
   newOwner: string,
   session?: ClientSession
 ) {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'system',
-      session
-    ))
-  ) {
+  const actorPermission = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    session
+  );
+  if (!actorPermission.system) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'system' permission for collection '${collectionName}'.`
     );

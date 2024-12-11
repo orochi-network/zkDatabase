@@ -1,6 +1,5 @@
 import {
   ETransactionType,
-  TDbRecordOptional,
   TTransaction,
   TTransactionRecord,
 } from '@zkdb/common';

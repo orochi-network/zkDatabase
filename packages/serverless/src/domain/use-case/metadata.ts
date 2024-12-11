@@ -4,50 +4,47 @@ import ModelMetadataDocument from '../../model/database/metadata-document.js';
 
 import { TMetadataCollection, TMetadataDocument } from '@zkdb/common';
 import { DB, ModelCollection } from '@zkdb/storage';
-import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+import { PermissionSecurity } from './permission-security.js';
 
 export async function readCollectionMetadata(
-  database: string,
-  collection: string,
+  databaseName: string,
+  collectionName: string,
   actor: string,
   checkPermission = false,
   session?: ClientSession
 ): Promise<TMetadataCollection> {
   if (checkPermission) {
-    const hasReadPermission = await hasCollectionPermission(
-      database,
-      collection,
+    const actorPermissions = PermissionSecurity.collection(
+      databaseName,
+      collectionName,
       actor,
-      'read',
       session
     );
 
-    if (!hasReadPermission) {
+    if (!(await actorPermissions).read) {
       throw new Error(
         `Access denied: Actor '${actor}' does not have 'read' permission for the specified collection`
       );
     }
   }
 
-  const modelCollectionMetadata = ModelMetadataCollection.getInstance(database);
+  const modelCollectionMetadata =
+    ModelMetadataCollection.getInstance(databaseName);
 
   const metadata = await modelCollectionMetadata.findOne(
-    { collectionName: collection },
+    { collectionName },
     { session }
   );
   if (!metadata) {
     throw new Error(
-      `Cannot find metadata collection of ${collection} in database ${database}`
+      `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
     );
   }
 
   const modelCollection = ModelCollection.getInstance(
-    database,
+    databaseName,
     DB.service,
-    collection
+    collectionName
   );
 
   const sizeOnDisk = await modelCollection.size();
@@ -58,33 +55,35 @@ export async function readCollectionMetadata(
 }
 
 export async function readDocumentMetadata(
-  database: string,
-  collection: string,
+  databaseName: string,
+  collectionName: string,
   docId: string,
   actor: string,
   checkPermission = false,
   session?: ClientSession
 ): Promise<TMetadataDocument | null> {
   if (checkPermission) {
-    const hasReadPermission = await hasDocumentPermission(
-      database,
-      collection,
-      actor,
+    const actorPermissions = await PermissionSecurity.document(
+      databaseName,
+      collectionName,
       docId,
-      'read',
+      actor,
       session
     );
 
-    if (!hasReadPermission) {
+    if (!actorPermissions.read) {
       throw new Error(
         `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
       );
     }
   }
 
-  const modelMetadata = new ModelMetadataDocument(database);
+  const modelMetadata = new ModelMetadataDocument(databaseName);
 
-  const metadata = await modelMetadata.findOne({ docId, collection });
+  const metadata = await modelMetadata.findOne(
+    { docId, collectionName },
+    { session }
+  );
 
   if (!metadata) {
     throw Error('Metadata has not been found');

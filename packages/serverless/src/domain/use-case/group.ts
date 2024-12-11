@@ -240,18 +240,6 @@ async function renameGroup(
 
   throw Error('Only database owner allowed to rename group');
 }
-
-async function getUsersGroup(
-  databaseName: string,
-  userName: string,
-  session?: ClientSession
-): Promise<string[]> {
-  // TODO: Check Database Ownership
-  return new ModelUserGroup(databaseName).listGroupByUserName(userName, {
-    session,
-  });
-}
-
 export {
   addUsersToGroup,
   addUserToGroups,

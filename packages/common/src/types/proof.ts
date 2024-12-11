@@ -33,7 +33,7 @@ export enum EDocumentProofStatus {
   Failed = 'Failed',
 }
 
-export type TWithProofStatus<T> = T & { proofStatus: EDatabaseProofStatus };
+export type TWithProofStatus<T> = T & { proofStatus: EDocumentProofStatus };
 
 export type TMinaSignature = {
   signature: {
@@ -58,10 +58,29 @@ export type TMetadataProof = {
   prevMerkleRoot: string;
 };
 
-export type TProof = TZKDatabaseProof & TMetadataProof;
-
-export type TProofRecord = TDbRecord<TProof>;
-
 export type TDocumentProofRequest = TCollectionRequest & {
   docId: string;
 };
+
+export type TQueue = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+  operationNumber: number;
+  merkleIndex: bigint;
+  hash: string;
+  status: EDocumentProofStatus;
+  merkleRoot: string;
+  error?: string;
+};
+
+export type TQueueRecord = TDbRecord<TQueue>;
+
+export type TProof = {
+  databaseName: string;
+  collectionName: string;
+  merkleRoot: string;
+  previousMerkleRoot: string;
+};
+
+export type TProofRecord = TDbRecord<TProof> & TZKDatabaseProof;

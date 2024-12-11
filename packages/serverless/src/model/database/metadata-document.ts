@@ -1,15 +1,15 @@
-import { TMetadataDocument } from '@zkdb/common';
+import { TMetadataDocumentRecord } from '@zkdb/common';
 import {
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, Document } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 
-export interface IMetadataDocument extends Document, TMetadataDocument {}
-
-export class ModelMetadataDocument extends ModelGeneral<IMetadataDocument> {
+export class ModelMetadataDocument extends ModelGeneral<
+  WithoutId<TMetadataDocumentRecord>
+> {
   static collectionName: string =
     zkDatabaseConstant.databaseCollection.metadataDocument;
 

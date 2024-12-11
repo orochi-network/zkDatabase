@@ -20,7 +20,7 @@ import {
   changeCollectionOwnership,
   changeDocumentOwnership,
 } from '../../domain/use-case/ownership.js';
-import { setPermission } from '../../domain/use-case/permission.js';
+import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
 import { authorizeWrapper } from '../validation.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
@@ -41,14 +41,11 @@ enum OwnershipGroup {
   Group
 }
 
-type DocumentMetadataOutput {
-  _id: String!
-  createdAt: Date!
-  updatedAt: Date!
+type TMetadataDocument {
   owner: String!
   group: String!
   permission: Int!
-  collection: String!
+  collectionName: String!
   docId: String!
   merkleIndex: String!
 }
@@ -58,7 +55,7 @@ extend type Query {
     databaseName: String!
     collectionName: String!
     docId: String!
-  ): DocumentMetadataOutput
+  ): TMetadataDocument
 
  # TODO: keep JSON for now since we have to make sure what it will return
   getMetadataCollection(
@@ -151,7 +148,7 @@ const permissionSet = authorizeWrapper(
   }),
   async (_root: unknown, args: any, context) => {
     await withTransaction((session) =>
-      setPermission(
+      PermissionSecurity.setPermission(
         args.databaseName,
         args.collectionName,
         context.userName,

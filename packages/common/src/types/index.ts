@@ -9,7 +9,6 @@ export * from './metadata';
 export * from './ownership';
 export * from './pagination';
 export * from './proof';
-export * from './queue-task';
 export * from './rollup';
 export * from './schema';
 export * from './search';

@@ -1,4 +1,4 @@
-import { EDocumentProofStatus, TQueueTaskRecord } from '@zkdb/common';
+import { EDocumentProofStatus, TQueueRecord } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -10,12 +10,12 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
 
-export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
+export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -34,7 +34,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
   }
 
   public async queueTask(
-    task: WithoutId<TQueueTaskRecord>,
+    task: WithoutId<TQueueRecord>,
     options?: InsertOneOptions
   ): Promise<void> {
     if (!this.collection) {
@@ -51,7 +51,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
 
   public async getLatestQueuedTaskByDatabase(
     session?: ClientSession
-  ): Promise<TQueueTaskRecord | null> {
+  ): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -61,7 +61,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
         [
           {
             $match: {
-              status: 'proving',
+              status: EDocumentProofStatus.Proving,
             },
           },
           {
@@ -105,12 +105,12 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
       )
       .toArray();
 
-    return latestQueuedTasks[0] as TQueueTaskRecord;
+    return latestQueuedTasks[0] as TQueueRecord;
   }
 
   public async getTasksByCollection(
     collectionName: string
-  ): Promise<TQueueTaskRecord[] | null> {
+  ): Promise<TQueueRecord[] | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -126,9 +126,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
     }
   }
 
-  public async getNewTask(
-    options?: FindOptions
-  ): Promise<TQueueTaskRecord | null> {
+  public async getNewTask(options?: FindOptions): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -139,9 +137,9 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
   }
 
   public async getQueuedTask(
-    filter: Filter<TQueueTaskRecord>,
+    filter: Filter<TQueueRecord>,
     options?: FindOptions
-  ) {
+  ): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -195,7 +193,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueTaskRecord>> {
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance<TQueueTaskRecord>(
+    const collection = ModelCollection.getInstance<TQueueRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
       zkDatabaseConstant.globalCollection.queue
