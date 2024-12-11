@@ -5,9 +5,9 @@ import logger from '../../helper/logger.js';
 export default async function withTransaction<T>(
   callback: (session: ClientSession) => Promise<T>,
   type: 'service' | 'proof' = 'service'
-): Promise<T | null> {
+): Promise<T> {
   const session = DB[type].client.startSession();
-  let result: T | null = null;
+  let result: T;
   try {
     result = await session.withTransaction(
       async () => {
@@ -22,6 +22,8 @@ export default async function withTransaction<T>(
 
     // If the transaction has succeeded, commit it
     await session.commitTransaction();
+
+    return result;
   } catch (error) {
     // Log the error and handle the transaction abort
     logger.error('DatabaseEngine::withTransaction()', {
@@ -49,6 +51,4 @@ export default async function withTransaction<T>(
   } finally {
     await session.endSession();
   }
-
-  return result;
 }

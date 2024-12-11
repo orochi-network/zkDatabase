@@ -58,7 +58,7 @@ export function fieldArrayToRecord(
   );
 }
 
-async function readDocument(
+async function findDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -103,9 +103,10 @@ async function readDocument(
   }
 
   return {
-    docId: documentRecord.docId,
-    document: ModelDocument.deserializeDocument(documentRecord.document),
-    createdAt: documentRecord.createdAt,
+    ...documentRecord,
+    document: Object.values(
+      ModelDocument.deserializeDocument(documentRecord.document)
+    ),
   };
 }
 
@@ -265,7 +266,7 @@ async function deleteDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria
-) {
+): Promise<TMerkleProof[]> {
   const result = await withTransaction(async (session) => {
     const modelDocument = ModelDocument.getInstance(
       databaseName,

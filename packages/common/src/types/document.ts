@@ -1,9 +1,9 @@
 import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
 import { TCollectionRequest } from './collection.js';
-import { TDbRecord } from './common.js';
+import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
-import { TMetadataDocument } from './metadata.js';
+import { TMetadataDetail, TMetadataDocument } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 
 export type TDocumentField = TContractSchemaField;
@@ -12,35 +12,32 @@ export type TDocument = {
   docId: string;
   active: boolean;
   previousObjectId: ObjectId;
+  // This field will be JSON in graphql
   document: Record<string, TDocumentField>;
 };
 
 export type TDocumentRecord = TDbRecord<TDocument>;
 
-// NOTE(wonrax): I don't know why single document history does not respond with
-// metadata
-export type TSingleDocumentHistory = Omit<TDocumentHistory, 'metadata'>;
-
-export type TDocumentRecordResponse = Omit<
+/** Type derived from the base document record type, but with optional fields
+ *  to represent the actual object type (i.e. nullable). */
+export type TDocumentRecordNullable = TNullable<
   TDocumentRecord,
   'previousObjectId'
-> & {
-  previousObjectId?: ObjectId;
-};
-
-export type TDocumentReadResponse = Pick<
-  TDocumentRecordResponse,
-  'docId' | 'document' | 'createdAt'
 >;
 
 export type TDocumentHistory = {
   docId: string;
-  documentRevision: TDocumentRecord[];
+  documentRevision: TDocumentRecordNullable[];
   metadata: TMetadataDocument;
   active: boolean;
 };
 
-export type TDocumentListFindRequest = TCollectionRequest & {
+export type TDocumentWithMetadataResponse = TMetadataDetail<
+  TDocumentRecordNullable,
+  TMetadataDocument
+>;
+
+export type TDocumentListRequest = TCollectionRequest & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
@@ -64,11 +61,9 @@ export type TDocumentUpdateRequest = TCollectionRequest & {
   document: TDocumentField[];
 };
 
-export type TDocumentHistoryGetRequest = TCollectionRequest & {
+export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;
 };
-
-export type TDocumentHistoryGetResponse = TSingleDocumentHistory;
 
 export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;

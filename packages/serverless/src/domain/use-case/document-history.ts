@@ -1,11 +1,9 @@
 /* eslint-disable import/prefer-default-export */
-import { TPickOptional } from '@orochi-network/framework';
 import {
-  TDocumentHistory as TDocumentHistoryBase,
-  TDocumentRecord,
+  TDocumentHistoryResponse,
+  TDocumentHistoryListResponse,
   TMetadataDocument,
   TPagination,
-  TSingleDocumentHistory,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
@@ -26,25 +24,23 @@ type TDocumentHistorySerialized = {
   active: boolean;
 };
 
-type TDocumentHistory = Omit<TDocumentHistoryBase, 'documents'> & {
-  documents: TPickOptional<TDocumentRecord, 'previousObjectId'>[];
-};
-
-async function listHistoryDocument(
+async function listDocumentHistory(
   databaseName: string,
   collectionName: string,
   docId: string,
   actor: string,
   pagination: TPagination,
   session?: ClientSession
-): Promise<TDocumentHistory[]> {
-  const actorPermission = await PermissionSecurity.collection(
-    databaseName,
-    collectionName,
-    actor,
-    session
-  );
-  if (actorPermission.read) {
+): Promise<TDocumentHistoryListResponse> {
+  if (
+    await hasCollectionPermission(
+      databaseName,
+      collectionName,
+      actor,
+      'read',
+      session
+    )
+  ) {
     const { client } = DB.service;
     const paginationInfo = pagination || DEFAULT_PAGINATION;
     const pipeline = [
@@ -121,7 +117,9 @@ MongoDB pipeline to already handle this case`
         docId: historyDocument.documents[0].docId,
         documents: historyDocument.documents.map((doc) => ({
           ...doc,
-          document: ModelDocument.deserializeDocument(doc.document),
+          document: Object.values(
+            ModelDocument.deserializeDocument(doc.document)
+          ),
         })),
         metadata: {
           ...historyDocument.metadata,
@@ -139,7 +137,7 @@ MongoDB pipeline to already handle this case`
   );
 }
 
-async function readHistoryDocument(
+async function findDocumentHistory(
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -184,14 +182,20 @@ async function readHistoryDocument(
     session
   );
 
+  throw new Error(
+    `this whole function needs to be refactored to remove duplicate logic and \
+add document metadata`
+  );
+
   return {
     docId,
     documents: documentHistoryRecords.map((doc) => ({
       ...doc,
-      document: ModelDocument.deserializeDocument(doc.document),
+      document: Object.values(ModelDocument.deserializeDocument(doc.document)),
     })),
     active: documentHistoryRecords[0].active,
+    metadata: {} as any, // TODO:
   };
 }
 
-export { listHistoryDocuments, readHistoryDocument };
+export { listDocumentHistory, findDocumentHistory };
