@@ -75,7 +75,7 @@ export default class Rollup {
 
     await modelRollUp.create(
       {
-        merkletreeRootCurrent: latestProofForDb.prevMerkleRoot,
+        merkletreeRootCurrent: latestProofForDb.previousMerkleRoot,
         merkletreeRootPrevious: latestProofForDb.merkleRoot,
         databaseName: databaseName,
         transactionObjectId,

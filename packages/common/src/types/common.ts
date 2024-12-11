@@ -1,5 +1,7 @@
 import { Request } from 'express';
+import { extend } from 'joi';
 import { ObjectId } from 'mongodb';
+import { type } from 'os';
 
 type TDbRecordBasic = {
   _id: ObjectId;
@@ -45,3 +47,12 @@ export type TPickAlter<T, P extends Partial<Record<keyof T, string>>> = {
       : never
     : never]: K extends keyof T ? T[K] : never;
 };
+
+export type TNullable<T, K extends keyof T> = {
+  [P in K]: T[P] | null;
+};
+
+export type TPickOptional<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
+
+export type TPickNullable<T, K extends keyof T> = Omit<T, K> & TNullable<T, K>;

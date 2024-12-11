@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
 import { TCollectionRequest } from './collection.js';
-import { TDbRecord } from './common.js';
+import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TMetadataDetail, TMetadataDocument } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
@@ -12,41 +12,28 @@ export type TDocument = {
   docId: string;
   active: boolean;
   previousObjectId: ObjectId;
+  // This field will be JSON in graphql
   document: Record<string, TDocumentField>;
 };
-
-export type TDocumentResponse = TMerkleProof[];
 
 export type TDocumentRecord = TDbRecord<TDocument>;
 
 /** Type derived from the base document record type, but with optional fields
  *  to represent the actual object type (i.e. nullable). */
-export type TDocumentRecordOptional = Omit<
+export type TDocumentRecordNullable = TNullable<
   TDocumentRecord,
   'previousObjectId'
-> & {
-  previousObjectId: ObjectId | null;
-};
+>;
 
-/** Same with [TDocumentRecordOptional], but `document` field is an array
- *  instead of a Record like in our database, the motivation is to make it
- *  typable in GraphQL since GraphQL does not support Record type. */
-export type TDocumentFindResponse = Omit<
-  TDocumentRecordOptional,
-  'document'
-> & {
-  document: TDocumentField[];
-};
-
-export type TDocumentHistoryResponse = {
+export type TDocumentHistory = {
   docId: string;
-  documents: TDocumentFindResponse[];
+  documentRevision: TDocumentRecordNullable[];
   metadata: TMetadataDocument;
   active: boolean;
 };
 
 export type TDocumentWithMetadataResponse = TMetadataDetail<
-  TDocumentRecordOptional,
+  TDocumentRecordNullable,
   TMetadataDocument
 >;
 
@@ -55,9 +42,10 @@ export type TDocumentListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentListFindResponse = TPaginationReturn<
-  Array<TDocumentResponse>
->;
+export type TDocumentMerkleProofResponse = TMerkleProof[];
+
+export type TDocumentListFindResponse =
+  TPaginationReturn<TDocumentMerkleProofResponse>;
 
 export type TDocumentFindRequest = TCollectionRequest & {
   query: { [key: string]: string };
@@ -81,4 +69,4 @@ export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];
+export type TDocumentHistoryListResponse = TDocumentHistory[];

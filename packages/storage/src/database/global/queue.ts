@@ -1,34 +1,20 @@
+import { EDocumentProofStatus, TQueueRecord } from '@zkdb/common';
 import {
   ClientSession,
-  Db,
   Filter,
   FindOptions,
   InsertOneOptions,
   ObjectId,
   UpdateOptions,
   WithId,
+  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
 
-export type Status = 'queued' | 'proving' | 'proved' | 'failed';
-
-export type TaskEntity = {
-  operationNumber: number;
-  merkleIndex: bigint;
-  hash: string;
-  status: Status;
-  createdAt: Date;
-  database: string;
-  collection: string;
-  docId: string;
-  merkleRoot: string;
-  error?: string;
-};
-
-export class ModelQueueTask extends ModelGeneral<TaskEntity> {
+export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -47,7 +33,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
   }
 
   public async queueTask(
-    task: TaskEntity,
+    task: WithoutId<TQueueRecord>,
     options?: InsertOneOptions
   ): Promise<void> {
     if (!this.collection) {
@@ -56,7 +42,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     await this.collection.insertOne(
       {
         ...task,
-        status: 'queued',
+        status: EDocumentProofStatus.Queued,
       },
       options
     );
@@ -64,7 +50,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
 
   public async getLatestQueuedTaskByDatabase(
     session?: ClientSession
-  ): Promise<WithId<TaskEntity> | null> {
+  ): Promise<WithId<TQueueRecord> | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -118,12 +104,12 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
       )
       .toArray();
 
-    return latestQueuedTasks[0] as WithId<TaskEntity>;
+    return latestQueuedTasks[0] as WithId<TQueueRecord>;
   }
 
   public async getTasksByCollection(
     collectionName: string
-  ): Promise<TaskEntity[] | null> {
+  ): Promise<TQueueRecord[] | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -139,32 +125,32 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
   }
 
-  public async getNewTask(options?: FindOptions): Promise<TaskEntity | null> {
+  public async getNewTask(options?: FindOptions): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     const result = await this.collection.findOne(
-      { status: 'queued' },
+      { status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
 
-    const task = result as TaskEntity | null;
+    const task = result as TQueueRecord | null;
     return task;
   }
 
   public async getQueuedTask(
-    filter: Filter<TaskEntity>,
+    filter: Filter<TQueueRecord>,
     options?: FindOptions
   ) {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     const result = await this.collection.findOne(
-      { ...filter, status: 'queued' },
+      { ...filter, status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
 
-    const task = result as TaskEntity | null;
+    const task = result as TQueueRecord | null;
     return task;
   }
 
@@ -177,7 +163,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
     await this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'proving' } },
+      { $set: { status: EDocumentProofStatus.Proving } },
       options
     );
   }
@@ -191,7 +177,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
     await this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'proved' } },
+      { $set: { status: EDocumentProofStatus.Proved } },
       options
     );
   }
@@ -206,7 +192,7 @@ export class ModelQueueTask extends ModelGeneral<TaskEntity> {
     }
     await this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: 'failed', error: errorMessage } },
+      { $set: { status: EDocumentProofStatus.Failed, error: errorMessage } },
       options
     );
   }

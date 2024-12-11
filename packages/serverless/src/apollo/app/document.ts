@@ -4,10 +4,9 @@ import Joi from 'joi';
 import {
   createDocument as createDocumentImpl,
   deleteDocument,
-  listDocumentWithMetadata as listDocumentWithMetadataImpl,
-  findDocument as findDocumentImpl,
-  listDocument as listDocumentImpl,
-  updateDocument as updateDocumentImpl,
+  findDocumentWithMetadata,
+  readDocument,
+  updateDocument,
 } from '../../domain/use-case/document.js';
 import {
   findDocumentHistory as findDocumentHistoryImpl,

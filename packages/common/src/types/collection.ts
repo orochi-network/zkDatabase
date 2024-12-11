@@ -35,7 +35,7 @@ export type TCollectionIndex<T = Record<string, any>> = Partial<
 
 /** Mapping type of index on server side */
 export type TCollectionIndexMap<T = any> = {
-  [Property in keyof T as `document.${string & Property}.name`]?: IndexDirection;
+  [Property in keyof T as `document.${string & Property}.value`]?: IndexDirection;
 };
 
 export type TCollection = {
@@ -82,6 +82,9 @@ export type TCollectionCreateRequest = TCollectionRequest &
 export type TCollectionListRequest = TDatabaseRequest;
 
 export type TCollectionListResponse = TMetadataCollection[];
+
+// Collection exist
+export type TCollectionExistRequest = TCollectionRequest;
 
 // Index
 export type TIndexRequest = TCollectionRequest &

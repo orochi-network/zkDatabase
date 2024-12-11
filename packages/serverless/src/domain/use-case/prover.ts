@@ -1,6 +1,11 @@
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
-import { ESequencer, TDocumentField, TMerkleProof } from '@zkdb/common';
+import {
+  EDocumentProofStatus,
+  ESequencer,
+  TDocumentField,
+  TMerkleProof,
+} from '@zkdb/common';
 import {
   ModelMerkleTree,
   ModelQueueTask,
@@ -60,10 +65,11 @@ export async function proveCreateDocument(
     {
       merkleIndex: BigInt(index),
       hash: hash.toString(),
-      status: 'queued',
+      status: EDocumentProofStatus.Queued,
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      updatedAt: currDate,
+      databaseName,
+      collectionName,
       docId,
       operationNumber,
       merkleRoot: newRoot.toString(),
@@ -131,10 +137,11 @@ export async function proveUpdateDocument(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: hash.toString(),
-      status: 'queued',
+      status: EDocumentProofStatus.Queued,
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      updatedAt: currDate,
+      databaseName,
+      collectionName,
       docId,
       operationNumber,
       merkleRoot: newRoot.toString(),
@@ -193,10 +200,11 @@ export async function proveDeleteDocument(
     {
       merkleIndex: BigInt(documentMetadata.merkleIndex),
       hash: Field(0).toString(),
-      status: 'queued',
+      status: EDocumentProofStatus.Queued,
       createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+      updatedAt: currDate,
+      databaseName,
+      collectionName,
       docId,
       operationNumber,
       merkleRoot: newRoot.toString(),

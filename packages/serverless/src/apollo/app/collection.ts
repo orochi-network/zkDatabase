@@ -4,10 +4,10 @@ import {
   ESortingSchema,
   groupName,
   O1JS_VALID_TYPE,
+  TCollectionCreateRequest,
+  TCollectionExistRequest,
   TCollectionListRequest,
   TCollectionListResponse,
-  TDatabaseRequest,
-  TSchemaFieldDefinition,
 } from '@zkdb/common';
 import { ModelDatabase, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -30,28 +30,11 @@ export const schemaField = Joi.object({
   sorting: ESortingSchema,
 });
 
-export const schemaFields = Joi.array().items(schemaField);
-
-export type TCollectionRequest = TDatabaseRequest & {
-  collectionName: string;
-};
-
-export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: TSchemaFieldDefinition[];
-  permission?: number;
-  groupName?: string;
-};
-
-export const CollectionRequest = Joi.object<TCollectionRequest>({
-  collectionName,
-  databaseName,
-});
-
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
-  groupName: groupName.optional(),
-  schema: schemaFields,
+  group: groupName(false),
+  schema: Joi.array().items(schemaField).optional(),
   permission: Joi.number().min(0).max(0xffffff).optional(),
 });
 
@@ -63,6 +46,7 @@ export const typeDefsCollection = gql`
 
   extend type Query {
     collectionList(databaseName: String!): [CollectionDescriptionOutput]!
+
     collectionExist(databaseName: String!, collectionName: String!): Boolean
   }
 
@@ -88,7 +72,7 @@ const collectionList = authorizeWrapper<
   async (_root, args, ctx) => listCollection(args.databaseName, ctx.userName)
 );
 
-const collectionExist = publicWrapper<TCollectionRequest, boolean>(
+const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
   Joi.object({
     databaseName,
     collectionName,
@@ -110,7 +94,7 @@ const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
           args.collectionName,
           ctx.userName,
           args.schema,
-          args.groupName,
+          args.group,
           args.permission,
           session
         )
@@ -118,18 +102,7 @@ const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
     )
 );
 
-type TCollectionResolvers = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    collectionList: typeof collectionList;
-    collectionExist: typeof collectionExist;
-  };
-  Mutation: {
-    collectionCreate: typeof collectionCreate;
-  };
-};
-
-export const resolversCollection: TCollectionResolvers = {
+export const resolversCollection = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,

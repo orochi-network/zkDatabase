@@ -15,11 +15,10 @@ import {
   createIndex,
   doesIndexExist,
   dropIndex,
-  listIndexesInfo as listIndexesInfoDomain,
+  getIndexInfo,
 } from '../../domain/use-case/collection.js';
 import { convertToIndexSpecification, gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
-import { CollectionRequest } from './collection.js';
 
 export const typeDefsCollectionIndex = gql`
   scalar JSON
@@ -65,9 +64,12 @@ export const typeDefsCollectionIndex = gql`
 
 // Query
 const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
-  CollectionRequest,
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
   async (_root, args, ctx) =>
-    listIndexesInfoDomain(args.databaseName, ctx.userName, args.collectionName)
+    getIndexInfo(args.databaseName, ctx.userName, args.collectionName)
 );
 
 const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(

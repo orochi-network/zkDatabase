@@ -12,62 +12,8 @@ import ModelDocument, {
   TDocumentRecordSerialized,
 } from '../../model/abstract/document.js';
 import { isDatabaseOwner } from './database.js';
-import { filterDocumentsByPermission } from './document.js';
-import { getUsersGroup } from './group.js';
-import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
-
-function buildHistoryPipeline(pagination: TPagination): Array<any> {
-  return [
-    {
-      $group: {
-        _id: '$docId',
-        documents: { $push: '$$ROOT' },
-      },
-    },
-    {
-      $sort: { docId: 1, createdAt: 1 },
-    },
-    {
-      $match: {
-        _id: { $ne: null },
-      },
-    },
-    {
-      $skip: pagination.offset,
-    },
-    {
-      $limit: pagination.limit,
-    },
-    {
-      $lookup: {
-        from: zkDatabaseConstant.databaseCollection.permission,
-        let: { docId: '$_id' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ['$docId', '$$docId'] },
-            },
-          },
-          {
-            $project: {
-              permission: true,
-              merkleIndex: true,
-              group: true,
-              owner: true,
-            },
-          },
-        ],
-        as: 'metadata',
-      },
-    },
-    {
-      $unwind: '$metadata',
-    },
-  ];
-}
+import { PermissionSecurity } from './permission-security.js';
+import { DEFAULT_PAGINATION } from 'common/const.js';
 
 /** The data being returned by the mongodb pipeline above.
  * TODO: Need debugging to actually confirm this */
@@ -81,6 +27,7 @@ type TDocumentHistorySerialized = {
 async function listDocumentHistory(
   databaseName: string,
   collectionName: string,
+  docId: string,
   actor: string,
   pagination: TPagination,
   session?: ClientSession
@@ -95,13 +42,52 @@ async function listDocumentHistory(
     )
   ) {
     const { client } = DB.service;
+    const paginationInfo = pagination || DEFAULT_PAGINATION;
+    const pipeline = [
+      {
+        $match: {
+          _id: { $ne: null },
+          docId,
+        },
+      },
+      {
+        $group: {
+          docId: '$docId',
+          documentRevision: { $push: '$$ROOT' },
+        },
+      },
+      {
+        $sort: { docId: 1, createdAt: 1 },
+      },
+      {
+        $lookup: {
+          from: zkDatabaseConstant.databaseCollection.metadataDocument,
+          let: { docId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ['$docId', '$$docId'] },
+              },
+            },
+          ],
+          as: 'metadata',
+        },
+      },
+      {
+        $skip: paginationInfo.offset,
+      },
+      {
+        $limit: paginationInfo.limit,
+      },
+    ];
 
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
 
-    const userGroups = await getUsersGroup(databaseName, actor);
-
-    const pipeline = buildHistoryPipeline(pagination);
+    const listGroup = await PermissionSecurity.listGroupOfUser(
+      databaseName,
+      actor
+    );
 
     const documentsWithMetadata = (await documentsCollection
       .aggregate(pipeline)
@@ -157,16 +143,14 @@ async function findDocumentHistory(
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<TDocumentHistoryResponse | null> {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    ))
-  ) {
+): Promise<TSingleDocumentHistory | null> {
+  const actorPermissionCollection = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    session
+  );
+  if (!actorPermissionCollection.read) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
     );
@@ -179,17 +163,15 @@ async function findDocumentHistory(
   if (!latestDocument) {
     return null;
   }
-
-  const hasReadPermission = await hasDocumentPermission(
+  const actorPermissionDocument = await PermissionSecurity.document(
     databaseName,
     collectionName,
     actor,
     docId,
-    'read',
     session
   );
 
-  if (!hasReadPermission) {
+  if (!actorPermissionDocument.read) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
     );

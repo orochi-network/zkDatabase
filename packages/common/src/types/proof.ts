@@ -1,4 +1,5 @@
 import { TCollectionRequest } from './collection.js';
+import { TDbRecord } from './common.js';
 
 /**
  * Ownership types
@@ -32,7 +33,7 @@ export enum EDocumentProofStatus {
   Failed = 'Failed',
 }
 
-export type TWithProofStatus<T> = T & { proofStatus: EDatabaseProofStatus };
+export type TWithProofStatus<T> = T & { proofStatus: EDocumentProofStatus };
 
 export type TMinaSignature = {
   signature: {
@@ -53,3 +54,26 @@ export type TZKDatabaseProof = {
 export type TDocumentProofRequest = TCollectionRequest & {
   docId: string;
 };
+
+export type TQueue = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+  operationNumber: number;
+  merkleIndex: bigint;
+  hash: string;
+  status: EDocumentProofStatus;
+  merkleRoot: string;
+  error?: string;
+};
+
+export type TQueueRecord = TDbRecord<TQueue>;
+
+export type TProof = {
+  databaseName: string;
+  collectionName: string;
+  merkleRoot: string;
+  previousMerkleRoot: string;
+};
+
+export type TProofRecord = TDbRecord<TProof> & TZKDatabaseProof;
