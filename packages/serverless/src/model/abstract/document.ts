@@ -2,7 +2,7 @@
 // eslint-disable-next-line max-classes-per-file
 import {
   TDocumentField,
-  TDocumentRecordResponse,
+  TDocumentRecordOptional,
   TProvableTypeString,
 } from '@zkdb/common';
 import {
@@ -18,7 +18,7 @@ import logger from '../../helper/logger.js';
 
 /** Database-serialized version of a document record. */
 export type TDocumentRecordSerialized = Omit<
-  TDocumentRecordResponse,
+  TDocumentRecordOptional,
   'document'
 > & {
   document: Record<string, TContractSchemaFieldSerializable>;

@@ -1,11 +1,9 @@
 /* eslint-disable import/prefer-default-export */
-import { TPickOptional } from '@orochi-network/framework';
 import {
-  TDocumentHistory as TDocumentHistoryBase,
-  TDocumentRecord,
+  TDocumentHistoryListResponse,
   TMetadataDocument,
   TPagination,
-  TSingleDocumentHistory,
+  TDocumentHistoryResponse,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
@@ -80,17 +78,13 @@ type TDocumentHistorySerialized = {
   active: boolean;
 };
 
-type TDocumentHistory = Omit<TDocumentHistoryBase, 'documents'> & {
-  documents: TPickOptional<TDocumentRecord, 'previousObjectId'>[];
-};
-
-async function listHistoryDocuments(
+async function listDocumentHistory(
   databaseName: string,
   collectionName: string,
   actor: string,
   pagination: TPagination,
   session?: ClientSession
-): Promise<TDocumentHistory[]> {
+): Promise<TDocumentHistoryListResponse> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -155,13 +149,13 @@ MongoDB pipeline to already handle this case`
   );
 }
 
-async function readHistoryDocument(
+async function findDocumentHistory(
   databaseName: string,
   collectionName: string,
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<TSingleDocumentHistory | null> {
+): Promise<TDocumentHistoryResponse | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -214,4 +208,4 @@ async function readHistoryDocument(
   };
 }
 
-export { listHistoryDocuments, readHistoryDocument };
+export { listDocumentHistory, findDocumentHistory };

@@ -41,14 +41,11 @@ enum OwnershipGroup {
   Group
 }
 
-type DocumentMetadataOutput {
-  _id: String!
-  createdAt: Date!
-  updatedAt: Date!
+type TMetadataDocument {
   owner: String!
   group: String!
   permission: Int!
-  collection: String!
+  collectionName: String!
   docId: String!
   merkleIndex: String!
 }
@@ -58,7 +55,7 @@ extend type Query {
     databaseName: String!
     collectionName: String!
     docId: String!
-  ): DocumentMetadataOutput
+  ): TMetadataDocument
 
  # TODO: keep JSON for now since we have to make sure what it will return
   getMetadataCollection(

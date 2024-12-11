@@ -6,9 +6,9 @@ import {
   ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
-  TDocumentReadResponse,
-  TDocumentRecordResponse,
-  TMetadataDocument,
+  TDocumentFindResponse,
+  TDocumentWithMetadataResponse,
+  TMerkleProof,
   TPagination,
   TPaginationReturn,
   TWithProofStatus,
@@ -58,13 +58,13 @@ export function fieldArrayToRecord(
   );
 }
 
-async function readDocument(
+async function findDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<TDocumentReadResponse | null> {
+): Promise<TDocumentFindResponse | null> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -106,9 +106,10 @@ async function readDocument(
   }
 
   return {
-    docId: documentRecord.docId,
-    document: ModelDocument.deserializeDocument(documentRecord.document),
-    createdAt: documentRecord.createdAt,
+    ...documentRecord,
+    document: Object.values(
+      ModelDocument.deserializeDocument(documentRecord.document)
+    ),
   };
 }
 
@@ -119,7 +120,7 @@ async function createDocument(
   fields: TDocumentField[],
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
-) {
+): Promise<TMerkleProof[]> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -212,7 +213,7 @@ async function updateDocument(
   actor: string,
   filter: FilterCriteria,
   update: TDocumentField[]
-) {
+): Promise<TMerkleProof[]> {
   if (
     !(await hasCollectionPermission(
       databaseName,
@@ -285,7 +286,7 @@ async function deleteDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria
-) {
+): Promise<TMerkleProof[]> {
   const result = await withTransaction(async (session) => {
     if (
       !(await hasCollectionPermission(
@@ -408,24 +409,14 @@ export function filterDocumentsByPermission(
   });
 }
 
-// TODO: might need to reconsider better type annotation
-type TDocumentResponse = Omit<
-  TDocumentRecordResponse,
-  '_id' | 'active' | 'updatedAt'
->;
-
-// TODO: might need to reconsider better type annotation
-type TDocumentWithMetadataResponse = TDocumentResponse & {
-  metadata: Omit<TMetadataDocument, 'collectionName' | 'docId'>;
-};
-
-async function findDocumentsWithMetadata(
+async function listDocumentWithMetadata(
   databaseName: string,
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
   pagination?: TPagination,
   session?: ClientSession
+  // TODO: might need to reconsider better return type annotation
 ): Promise<TWithProofStatus<TDocumentWithMetadataResponse>[]> {
   if (
     await hasCollectionPermission(
@@ -474,9 +465,9 @@ async function findDocumentsWithMetadata(
       );
 
       const document = {
+        ...documentRecord,
         docId: documentRecord._id,
         document: fieldArrayToRecord(documentRecord.document),
-        createdAt: documentRecord.createdAt,
       };
 
       const metadata = {
@@ -521,14 +512,14 @@ async function findDocumentsWithMetadata(
   );
 }
 
-async function searchDocuments(
+async function listDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
   query?: FilterCriteria,
   pagination: TPagination = { offset: 0, limit: 100 },
   session: ClientSession | undefined = undefined
-): Promise<TPaginationReturn<Array<TDocumentResponse>>> {
+): Promise<TPaginationReturn<Array<TDocumentFindResponse>>> {
   if (
     await hasCollectionPermission(
       databaseName,
@@ -569,9 +560,8 @@ async function searchDocuments(
 
     const transformedDocuments = filteredDocuments.map((documentRecord) => {
       return {
-        docId: documentRecord.docId,
+        ...documentRecord,
         document: fieldArrayToRecord(documentRecord.document),
-        createdAt: documentRecord.timestamp,
       };
     });
 
@@ -593,9 +583,9 @@ async function searchDocuments(
 export {
   createDocument,
   deleteDocument,
-  findDocumentsWithMetadata,
-  readDocument,
-  searchDocuments,
+  listDocumentWithMetadata,
+  findDocument,
+  listDocument,
   updateDocument,
 };
 
