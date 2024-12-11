@@ -19,6 +19,7 @@ import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 
 export class ModelTransaction extends ModelBasic<
   WithoutId<TTransactionRecord>
@@ -117,12 +118,22 @@ export class ModelTransaction extends ModelBasic<
       DB.service,
       zkDatabaseConstant.globalCollection.transaction
     );
+    /*
+      transactionType: ETransactionType;
+      databaseName: string;
+      status: ETransactionStatus;
+      transactionRaw: string;
+      txHash: string;
+      error: string;
+    */
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { session });
       await collection.index(
         { databaseName: 1, transactionType: 1, txHash: 1 },
         { unique: false }
       );
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

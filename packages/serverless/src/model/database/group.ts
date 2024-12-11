@@ -8,6 +8,7 @@ import {
 import { ClientSession, InsertOneOptions, WithoutId } from 'mongodb';
 import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
+import { addTimestampMongoDB } from '@zkdb/storage';
 
 export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
   private static collectionName: string =
@@ -45,8 +46,14 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
       DB.service,
       ModelGroup.collectionName
     );
+    /*
+      groupName: string;
+      groupDescription: string;
+    */
     if (!(await collection.isExist())) {
-      await collection.index({ groupName: 1 }, { unique: false, session });
+      collection.index({ groupName: 1 }, { unique: false, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

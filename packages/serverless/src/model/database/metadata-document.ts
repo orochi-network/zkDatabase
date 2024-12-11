@@ -1,5 +1,6 @@
 import { TMetadataDocumentRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DB,
   ModelCollection,
   ModelGeneral,
@@ -24,11 +25,10 @@ export class ModelMetadataDocument extends ModelGeneral<
       ModelMetadataDocument.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index(
-        { collection: 1, docId: 1 },
-        { unique: true, session }
-      );
-      await collection.index({ merkleIndex: 1 }, { unique: true, session });
+      collection.index({ collection: 1, docId: 1 }, { unique: true, session });
+      collection.index({ merkleIndex: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

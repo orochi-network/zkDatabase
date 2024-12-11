@@ -4,6 +4,7 @@ import { zkDatabaseConstant } from '../../common/index.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 
 export class ModelSecureStorage extends ModelGeneral<
   WithoutId<TSecureStorageRecord>
@@ -39,6 +40,8 @@ export class ModelSecureStorage extends ModelGeneral<
     if (!(await collection.isExist())) {
       collection.index({ databaseName: 1 }, { unique: true, session });
       collection.index({ privateKey: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
     }
   }
 }

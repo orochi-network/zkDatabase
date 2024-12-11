@@ -1,5 +1,6 @@
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DB,
   ModelCollection,
   ModelGeneral,
@@ -27,19 +28,6 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
       DB.service,
       ModelUser.collectionName
     );
-  }
-
-  public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance(
-      zkDatabaseConstant.globalDatabase,
-      DB.service,
-      ModelUser.collectionName
-    );
-    if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true, session });
-      collection.index({ publicKey: 1 }, { unique: true, session });
-      collection.index({ email: 1 }, { unique: true, session });
-    }
   }
 
   public static isValidUser(userName: string) {
@@ -99,6 +87,21 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
       }
     }
     return null;
+  }
+
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstant.globalDatabase,
+      DB.service,
+      ModelUser.collectionName
+    );
+    if (!(await collection.isExist())) {
+      collection.index({ userName: 1 }, { unique: true, session });
+      collection.index({ publicKey: 1 }, { unique: true, session });
+      collection.index({ email: 1 }, { unique: true, session });
+
+      addTimestampMongoDB(collection, session);
+    }
   }
 }
 

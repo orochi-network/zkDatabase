@@ -39,10 +39,11 @@ export async function createDatabase(
       // Ensure database existing
       throw new Error(`Database name ${databaseName} already taken`);
     }
-    await ModelMetadataDocument.init(databaseName);
-    await ModelMetadataCollection.init(databaseName);
-    await ModelGroup.init(databaseName);
-    await ModelUserGroup.init(databaseName);
+    // Initialize index
+    await ModelMetadataDocument.init(databaseName, session);
+    await ModelMetadataCollection.init(databaseName, session);
+    await ModelGroup.init(databaseName, session);
+    await ModelUserGroup.init(databaseName, session);
 
     const dbSetting = await modelDatabaseMetadata.createMetadataDatabase(
       {
