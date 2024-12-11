@@ -8,7 +8,12 @@ import {
   TPaginationReturn,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { DB, ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
+import {
+  DB,
+  ModelMetadataDatabase,
+  ModelSequencer,
+  ModelTransaction,
+} from '@zkdb/storage';
 import { getCurrentTime } from 'helper/common.js';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
@@ -44,6 +49,7 @@ export async function createDatabase(
     await ModelMetadataCollection.init(databaseName, session);
     await ModelGroup.init(databaseName, session);
     await ModelUserGroup.init(databaseName, session);
+    await ModelSequencer.init(databaseName, session);
 
     const dbSetting = await modelDatabaseMetadata.createMetadataDatabase(
       {

@@ -133,7 +133,7 @@ export class ModelTransaction extends ModelBasic<
         { unique: false }
       );
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

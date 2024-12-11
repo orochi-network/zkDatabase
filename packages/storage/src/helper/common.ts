@@ -44,10 +44,12 @@ export function objectToLookupPattern(obj: {
   return result;
 }
 
-export function addTimestampMongoDB<T extends Document>(
+export async function addTimestampMongoDB<T extends Document>(
   collection: ModelCollection<T>,
   session?: ClientSession
 ) {
-  collection.index({ createdAt: 1 }, { session });
-  collection.index({ updatedAt: 1 }, { session });
+  // We need to use `await` to ensures each collection.index() operation complete
+  // If an error occurs, it will immediately throw an exception, which can be caught and handled rollback
+  await collection.index({ createdAt: 1 }, { session });
+  await collection.index({ updatedAt: 1 }, { session });
 }

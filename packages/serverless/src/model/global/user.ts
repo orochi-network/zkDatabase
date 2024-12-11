@@ -96,11 +96,11 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true, session });
-      collection.index({ publicKey: 1 }, { unique: true, session });
-      collection.index({ email: 1 }, { unique: true, session });
+      await collection.index({ userName: 1 }, { unique: true, session });
+      await collection.index({ publicKey: 1 }, { unique: true, session });
+      await collection.index({ email: 1 }, { unique: true, session });
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

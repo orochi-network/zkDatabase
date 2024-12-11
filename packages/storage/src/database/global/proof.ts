@@ -67,18 +67,18 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
       prevMerkleRoot: string;
     */
     if (!(await collection.isExist())) {
-      collection.index({ proof: 1 }, { unique: true, session });
-      collection.index({ database: 1 }, { session });
-      collection.index(
+      await collection.index({ proof: 1 }, { unique: true, session });
+      await collection.index({ database: 1 }, { session });
+      await collection.index(
         { database: 1, collection: 1 },
         { unique: true, session }
       );
-      collection.index({ merkleRoot: 1 }, { unique: true, session });
-      collection.index({ prevMerkleRoot: 1 }, { unique: true, session });
-      collection.index({ publicInput: 1 }, { unique: true, session });
-      collection.index({ publicOutput: 1 }, { unique: true, session });
+      await collection.index({ merkleRoot: 1 }, { unique: true, session });
+      await collection.index({ prevMerkleRoot: 1 }, { unique: true, session });
+      await collection.index({ publicInput: 1 }, { unique: true, session });
+      await collection.index({ publicOutput: 1 }, { unique: true, session });
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

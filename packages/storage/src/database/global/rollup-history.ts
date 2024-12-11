@@ -79,16 +79,22 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true, session });
-      collection.index({ merkletreeRootCurrent: 1 }, { unique: true, session });
-      collection.index(
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index(
+        { merkletreeRootCurrent: 1 },
+        { unique: true, session }
+      );
+      await collection.index(
         { merkletreeRootPrevious: 1 },
         { unique: true, session }
       );
-      collection.index({ proofObjectId: 1 }, { unique: true, session });
-      collection.index({ transactionObjectId: 1 }, { unique: true, session });
+      await collection.index({ proofObjectId: 1 }, { unique: true, session });
+      await collection.index(
+        { transactionObjectId: 1 },
+        { unique: true, session }
+      );
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

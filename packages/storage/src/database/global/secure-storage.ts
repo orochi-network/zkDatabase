@@ -38,10 +38,10 @@ export class ModelSecureStorage extends ModelGeneral<
       databaseName: string;
     */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true, session });
-      collection.index({ privateKey: 1 }, { unique: true, session });
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index({ privateKey: 1 }, { unique: true, session });
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

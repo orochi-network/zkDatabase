@@ -210,15 +210,15 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       error?: string;
     */
     if (!(await collection.isExist())) {
-      collection.index(
+      await collection.index(
         { database: 1, operationNumber: 1 },
         { unique: true, session }
       );
-      collection.index({ merkleRoot: 1 }, { unique: false, session });
-      collection.index({ merkleIndex: 1 }, { unique: false, session });
-      collection.index({ hash: 1 }, { unique: true, session });
+      await collection.index({ merkleRoot: 1 }, { unique: false, session });
+      await collection.index({ merkleIndex: 1 }, { unique: false, session });
+      await collection.index({ hash: 1 }, { unique: true, session });
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

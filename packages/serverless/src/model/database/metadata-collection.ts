@@ -49,9 +49,9 @@ export class ModelMetadataCollection extends ModelGeneral<
       ModelMetadataCollection.collectionName
     );
     if (!(await collection.isExist())) {
-      collection.index({ collectionName: 1 }, { unique: true, session });
+      await collection.index({ collectionName: 1 }, { unique: true, session });
 
-      addTimestampMongoDB(collection, session);
+      await addTimestampMongoDB(collection, session);
     }
   }
 }
