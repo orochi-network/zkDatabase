@@ -19,6 +19,8 @@ export type TUserGroup = {
 
 export type TGroupRecord = TDbRecord<TGroup>;
 
+export type TGroupDetail = TGroupRecord & { listUser: TGroupUserInfo[] };
+
 export type TUserGroupRecord = TDbRecord<TUserGroup>;
 
 export type TGroupRequest = TDatabaseRequest & Pick<TGroup, 'groupName'>;
@@ -42,9 +44,7 @@ export type TGroupListAllResponse = WithoutId<TGroupRecord>[];
 
 export type TGroupInfoDetailRequest = TGroupRequest;
 
-export type TGroupInfoDetailResponse = WithoutId<TGroupRecord> & {
-  listUser: TGroupUserInfo[];
-};
+export type TGroupInfoDetailResponse = TGroupDetail;
 
 export type TGroupCreateRequest = TDatabaseRequest &
   Pick<TGroup, 'groupName' | 'groupDescription'>;

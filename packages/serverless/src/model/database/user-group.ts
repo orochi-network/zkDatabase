@@ -100,41 +100,40 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     return this.collection.bulkWrite(operations, options);
   }
 
-  public async addUsersToGroup(
-    userNames: string[],
+  public async addUserListToGroup(
+    listUserName: string[],
     groupName: string,
     options?: BulkWriteOptions
   ) {
     const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
-    const operations = userNames.map((userName) => ({
+    const listOperation = listUserName.map((userName) => ({
       updateOne: {
         filter: { userName, groupOjectId },
         update: {
           $set: { updatedAt: new Date() },
-          $setOnInsert: { createdAt: new Date() },
         },
         upsert: true,
       },
     }));
 
-    return this.collection.bulkWrite(operations, options);
+    return this.collection.bulkWrite(listOperation, options);
   }
 
-  public async removeUsersFromGroup(
-    userNames: string[],
+  public async removeUserListFromGroup(
+    listUserName: string[],
     groupName: string,
     options?: BulkWriteOptions
   ) {
     const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
-    const operations = userNames.map((userName) => ({
+    const listOperation = listUserName.map((userName) => ({
       deleteOne: {
         filter: { userName, groupOjectId },
       },
     }));
 
-    return this.collection.bulkWrite(operations, options);
+    return this.collection.bulkWrite(listOperation, options);
   }
 
   public static async init(databaseName: string, session?: ClientSession) {
