@@ -143,6 +143,15 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
       DB.service,
       ModelUserGroup.collectionName
     );
+
+    /*
+      userName: string;
+      groupName: string;
+      groupOjectId: ObjectId
+      userObjectId: ObjectId
+      createdAt: Date
+      updatedAt: Date
+    */
     if (!(await collection.isExist())) {
       await collection.index({ userName: 1 }, { unique: false, session });
       await collection.index({ groupName: 1 }, { unique: false, session });

@@ -55,28 +55,27 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
       DB.proof,
       zkDatabaseConstant.globalCollection.proof
     );
+
     /*
       publicInput: string[];
       publicOutput: string[];
       maxProofsVerified: 0 | 1 | 2;
       proof: string;
       createdAt?: Date;
-      database: string;
-      collection: string;
+      databaseName: string;
+      collectionName: string;
       merkleRoot: string;
       prevMerkleRoot: string;
     */
     if (!(await collection.isExist())) {
       await collection.index({ proof: 1 }, { unique: true, session });
-      await collection.index({ database: 1 }, { session });
+      await collection.index({ databaseName: 1 }, { session });
       await collection.index(
-        { database: 1, collection: 1 },
+        { databaseName: 1, collectionName: 1 },
         { unique: true, session }
       );
       await collection.index({ merkleRoot: 1 }, { unique: true, session });
       await collection.index({ prevMerkleRoot: 1 }, { unique: true, session });
-      await collection.index({ publicInput: 1 }, { unique: true, session });
-      await collection.index({ publicOutput: 1 }, { unique: true, session });
 
       await addTimestampMongoDB(collection, session);
     }

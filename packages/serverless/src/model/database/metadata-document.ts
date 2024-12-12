@@ -24,6 +24,17 @@ export class ModelMetadataDocument extends ModelGeneral<
       DB.service,
       ModelMetadataDocument.collectionName
     );
+
+    /*
+      docId: string;
+      merkleIndex: string;
+      owner: string;
+      group: string;
+      permission: number;
+      collectionName: string;
+      createdAt: Date;
+      updatedAt: Date;
+    */
     if (!(await collection.isExist())) {
       await collection.index(
         { collection: 1, docId: 1 },

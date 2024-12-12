@@ -48,6 +48,16 @@ export class ModelMetadataCollection extends ModelGeneral<
       DB.service,
       ModelMetadataCollection.collectionName
     );
+
+    /*
+      collectionName: string;
+      owner: string;
+      group: string;
+      permission: number;
+      schema: Object; 
+      createdAt: Date;
+      updatedAt: Date;
+    */
     if (!(await collection.isExist())) {
       await collection.index({ collectionName: 1 }, { unique: true, session });
 

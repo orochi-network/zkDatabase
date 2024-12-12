@@ -114,10 +114,14 @@ export class ModelMetadataDatabase extends ModelBasic<
         appPublicKey: string;
       */
       await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ databaseOwner: 1 }, { unique: false, session });
       await collection.index({ merkleHeight: 1 }, { unique: false, session });
       await collection.index({ appPublicKey: 1 }, { unique: false, session });
-
+      // Compound index
+      await collection.index(
+        { databaseName: 1, databaseOwner: 1, mekrleHeight: 1 },
+        { unique: true, session }
+      );
+      // Timestamp index
       await addTimestampMongoDB(collection, session);
     }
   }

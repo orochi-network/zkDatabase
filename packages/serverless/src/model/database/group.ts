@@ -49,9 +49,12 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
     /*
       groupName: string;
       groupDescription: string;
+      createdBy: string;
+      createdAt: Date
+      updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await collection.index({ groupName: 1 }, { unique: false, session });
+      await collection.index({ groupName: 1 }, { unique: true, session });
 
       await addTimestampMongoDB(collection, session);
     }

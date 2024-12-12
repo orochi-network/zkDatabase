@@ -25,14 +25,22 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
       DB.service,
       ModelOwnership.collectionName
     );
+    /*
+      databaseName: string;
+      owner: string;
+      createdAt: Date
+      updatedAt: Date
+    */
     if (!(await collection.isExist())) {
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index({ owner: 1 }, { unique: false, session });
+
+      // Compound index
       await collection.index(
         { databaseName: 1, owner: 1 },
         { unique: true, session }
       );
-      await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ owner: 1 }, { unique: false, session });
-
+      // Timestamp index
       await addTimestampMongoDB(collection, session);
     }
   }
