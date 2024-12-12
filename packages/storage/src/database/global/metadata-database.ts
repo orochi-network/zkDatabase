@@ -123,7 +123,7 @@ export class ModelMetadataDatabase extends ModelBasic<
       );
       await collection.index(
         { databaseOwner: 1, merkleHeight: 1 },
-        { unique: true, session }
+        { unique: false, session }
       );
       // Timestamp index
       await addTimestampMongoDB(collection, session);
