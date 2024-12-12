@@ -2,14 +2,13 @@
 // TODO: debug types to annotate the actual correct types
 
 import {
-  EDatabaseProofStatus,
   EDocumentProofStatus,
   ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
-  TDocumentReadResponse,
   TDocumentRecord,
   TDocumentRecordResponse,
+  TMerkleProof,
   TMetadataDetailDocument,
   TMetadataDocument,
   TPagination,
@@ -375,7 +374,7 @@ export {
   createDocument,
   deleteDocument,
   findDocumentWithMetadata,
-  readDocument,
+  findDocument,
   updateDocument,
 };
 

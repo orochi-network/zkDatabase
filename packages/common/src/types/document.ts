@@ -69,4 +69,5 @@ export type TDocumentHistoryListRequest = TCollectionRequest & {
   pagination: TPagination;
 };
 
-export type TDocumentHistoryListResponse = TDocumentHistory[];
+export type TDocumentHistoryResponse = TDocumentHistory;
+export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];
