@@ -115,7 +115,7 @@ export class ModelMetadataDatabase extends ModelBasic<
       */
       await collection.index({ databaseName: 1 }, { unique: true, session });
       await collection.index({ merkleHeight: 1 }, { unique: false, session });
-      await collection.index({ appPublicKey: 1 }, { unique: false, session });
+      await collection.index({ appPublicKey: 1 }, { unique: true, session });
       // Compound index
       await collection.index(
         { databaseName: 1, databaseOwner: 1 },
