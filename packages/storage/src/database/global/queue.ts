@@ -6,10 +6,11 @@ import {
   InsertOneOptions,
   ObjectId,
   UpdateOptions,
-  WithId,
+  UpdateResult,
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
@@ -50,7 +51,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
 
   public async getLatestQueuedTaskByDatabase(
     session?: ClientSession
-  ): Promise<WithId<TQueueRecord> | null> {
+  ): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
@@ -60,7 +61,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         [
           {
             $match: {
-              status: 'proving',
+              status: EDocumentProofStatus.Proving,
             },
           },
           {
@@ -80,7 +81,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         [
           {
             $match: {
-              status: 'queued',
+              status: EDocumentProofStatus.Queued,
               database: { $nin: executingDatabaseList },
             },
           },
@@ -104,7 +105,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       )
       .toArray();
 
-    return latestQueuedTasks[0] as WithId<TQueueRecord>;
+    return latestQueuedTasks[0] as TQueueRecord;
   }
 
   public async getTasksByCollection(
@@ -129,39 +130,33 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    const result = await this.collection.findOne(
+    return this.collection.findOne(
       { status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
-
-    const task = result as TQueueRecord | null;
-    return task;
   }
 
   public async getQueuedTask(
     filter: Filter<TQueueRecord>,
     options?: FindOptions
-  ) {
+  ): Promise<TQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    const result = await this.collection.findOne(
+    return this.collection.findOne(
       { ...filter, status: EDocumentProofStatus.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
-
-    const task = result as TQueueRecord | null;
-    return task;
   }
 
   public async markTaskAsExecuting(
     taskId: ObjectId,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
       { $set: { status: EDocumentProofStatus.Proving } },
       options
@@ -171,11 +166,11 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   public async markTaskProcessed(
     taskId: ObjectId,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
       { $set: { status: EDocumentProofStatus.Proved } },
       options
@@ -186,27 +181,44 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     taskId: ObjectId,
     errorMessage: string,
     options?: UpdateOptions
-  ): Promise<void> {
+  ): Promise<UpdateResult> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
-    await this.collection.updateOne(
+    return this.collection.updateOne(
       { _id: taskId },
       { $set: { status: EDocumentProofStatus.Failed, error: errorMessage } },
       options
     );
   }
 
-  public static async init() {
-    const collection = ModelCollection.getInstance(
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance<TQueueRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DB.proof,
       zkDatabaseConstant.globalCollection.queue
     );
+    /*
+      operationNumber: number;
+      merkleIndex: bigint;
+      hash: string;
+      status: EDocumentProofStatus;
+      database: string;
+      collection: string;
+      docId: string;
+      merkleRoot: string;
+      error?: string;
+    */
     if (!(await collection.isExist())) {
-      collection.index({ database: 1, operationNumber: 1 }, { unique: true });
-      collection.index({ merkleRoot: 1 }, { unique: false });
-      collection.index({ merkleIndex: 1 }, { unique: false });
+      await collection.index(
+        { database: 1, operationNumber: 1 },
+        { unique: true, session }
+      );
+      await collection.index({ merkleRoot: 1 }, { unique: false, session });
+      await collection.index({ merkleIndex: 1 }, { unique: false, session });
+      await collection.index({ hash: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

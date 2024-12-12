@@ -1,5 +1,6 @@
 import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import {
+  ClientSession,
   Filter,
   FindOptions,
   InsertOneOptions,
@@ -11,6 +12,8 @@ import {
 import { zkDatabaseConstant } from '../../common/const.js';
 import { DB } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
+import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
 
@@ -95,5 +98,35 @@ export class ModelMetadataDatabase extends ModelBasic<
 
   public async count(filter?: Filter<TMetadataDatabase>) {
     return await this.collection.countDocuments(filter);
+  }
+
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance<TMetadataDatabase>(
+      zkDatabaseConstant.globalProofDatabase,
+      DB.proof,
+      zkDatabaseConstant.globalCollection.proof
+    );
+    if (!(await collection.isExist())) {
+      /*
+        databaseName: string;
+        databaseOwner: string;
+        merkleHeight: number;
+        appPublicKey: string;
+      */
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index({ merkleHeight: 1 }, { unique: false, session });
+      await collection.index({ appPublicKey: 1 }, { unique: false, session });
+      // Compound index
+      await collection.index(
+        { databaseName: 1, databaseOwner: 1 },
+        { unique: true, session }
+      );
+      await collection.index(
+        { databaseOwner: 1, merkleHeight: 1 },
+        { unique: false, session }
+      );
+      // Timestamp index
+      await addTimestampMongoDB(collection, session);
+    }
   }
 }

@@ -6,6 +6,10 @@ import {
   ModelTransaction,
   ModelQueueTask,
   ModelSecureStorage,
+  withCompoundTransaction,
+  ModelMetadataDatabase,
+  ModelProof,
+  ModelRollup,
 } from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
@@ -28,6 +32,9 @@ import { NetworkId } from 'o1js';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { TApplicationContext } from '@zkdb/common';
 import { nobodyContext } from './common/const.js';
+import ModelUser from './model/global/user.js';
+import { setServers } from 'dns';
+import ModelOwnership from 'model/global/ownership.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -44,10 +51,19 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   if (!proofDb.isConnected()) {
     await proofDb.connect();
   }
-
-  await ModelTransaction.init();
-  await ModelQueueTask.init();
-  await ModelSecureStorage.init();
+  // For global Model that need to init index first
+  await withCompoundTransaction(async (session) => {
+    // service db
+    await ModelTransaction.init(session.sessionService);
+    await ModelUser.init(session.sessionService);
+    await ModelMetadataDatabase.init(session.sessionService);
+    await ModelRollup.init(session.sessionService);
+    await ModelOwnership.init(session.sessionService);
+    // proof db
+    await ModelQueueTask.init(session.sessionProof);
+    await ModelSecureStorage.init(session.sessionProof);
+    await ModelProof.init(session.sessionProof);
+  });
 
   MinaNetwork.getInstance().connect(
     config.NETWORK_ID as NetworkId,

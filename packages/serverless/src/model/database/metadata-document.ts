@@ -1,11 +1,12 @@
 import { TMetadataDocumentRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { WithoutId } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 
 export class ModelMetadataDocument extends ModelGeneral<
   WithoutId<TMetadataDocumentRecord>
@@ -17,15 +18,31 @@ export class ModelMetadataDocument extends ModelGeneral<
     super(databaseName, DB.service, ModelMetadataDocument.collectionName);
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = new ModelCollection(
       databaseName,
       DB.service,
       ModelMetadataDocument.collectionName
     );
+
+    /*
+      docId: string;
+      merkleIndex: string;
+      owner: string;
+      group: string;
+      permission: number;
+      collectionName: string;
+      createdAt: Date;
+      updatedAt: Date;
+    */
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1, docId: 1 }, { unique: true });
-      await collection.index({ merkleIndex: 1 }, { unique: true });
+      await collection.index(
+        { collection: 1, docId: 1 },
+        { unique: true, session }
+      );
+      await collection.index({ merkleIndex: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

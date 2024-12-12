@@ -1,3 +1,5 @@
+import { ClientSession, Document } from 'mongodb';
+import { ModelCollection } from '../database/index.js';
 import logger from './logger.js';
 
 export interface AppContext {
@@ -40,4 +42,14 @@ export function objectToLookupPattern(obj: {
     result.push({ [entries[i][0]]: entries[i][1] });
   }
   return result;
+}
+
+export async function addTimestampMongoDB<T extends Document>(
+  collection: ModelCollection<T>,
+  session?: ClientSession
+) {
+  // We need to use `await` to ensures each collection.index() operation complete
+  // If an error occurs, it will immediately throw an exception, which can be caught and handled rollback
+  await collection.index({ createdAt: 1 }, { session });
+  await collection.index({ updatedAt: 1 }, { session });
 }
