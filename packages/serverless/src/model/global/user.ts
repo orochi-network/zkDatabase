@@ -1,7 +1,7 @@
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -26,7 +26,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUser.collectionName
     );
   }
@@ -122,7 +122,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.service,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

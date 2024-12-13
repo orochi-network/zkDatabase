@@ -1,7 +1,7 @@
 import { TGroupRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -13,7 +13,7 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
     zkDatabaseConstant.databaseCollection.group;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelGroup.collectionName);
+    super(databaseName, DATABASE_ENGINE.serverless, ModelGroup.collectionName);
   }
 
   public async create(
@@ -26,7 +26,7 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelGroup.collectionName
     );
     /*

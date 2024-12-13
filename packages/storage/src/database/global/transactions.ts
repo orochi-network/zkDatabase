@@ -10,26 +10,27 @@ import {
   FindOptions,
   InsertOneResult,
   ObjectId,
+  OptionalId,
   ReplaceOptions,
   UpdateResult,
   WithId,
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
 
 export class ModelTransaction extends ModelBasic<
-  WithoutId<TTransactionRecord>
+  OptionalId<TTransactionRecord>
 > {
   private static instance: ModelTransaction;
 
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.transaction
     );
   }
@@ -115,7 +116,7 @@ export class ModelTransaction extends ModelBasic<
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TTransactionRecord>(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.transaction
     );
     /*

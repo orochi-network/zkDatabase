@@ -11,7 +11,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
 
@@ -21,7 +21,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   private constructor() {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.queue
     );
   }
@@ -195,7 +195,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TQueueRecord>(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.queue
     );
     /*

@@ -9,7 +9,7 @@ import crypto from 'crypto';
 import { BulkWriteOptions, FindOptions, ObjectId, WithoutId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
@@ -27,7 +27,7 @@ export class ModelMerkleTree extends ModelGeneral<
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.merkleTree,
       // @NOTE: Do we need this code
       {

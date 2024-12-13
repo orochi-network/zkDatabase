@@ -7,7 +7,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/index.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
@@ -18,7 +18,7 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.rollup
     );
   }
@@ -68,7 +68,7 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
       WithoutId<TRollUpHistoryRecord>
     >(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.proof
     );
     /*

@@ -320,7 +320,7 @@ async function findDocumentWithMetadata(
   pagination?: TPagination,
   session?: ClientSession
 ): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
-  const { client } = DB.service;
+  const { client } = DATABASE_ENGINE.serverless;
   const database = client.db(databaseName);
   const paginationInfo = pagination || DEFAULT_PAGINATION;
   const pipeline = [];
