@@ -1,16 +1,15 @@
-import { Fill } from '@orochi-network/queue';
 import {
   ETransactionStatus,
   ETransactionType,
-  TDatabaseDetail,
-  TMetadataDatabase,
-  TMetadataDetail,
-  TPagination,
+  TDatabaseParamCreate,
+  TDatabaseParamDeploy,
+  TDatabaseParamIsOwner,
+  TDatabaseParamListDetail,
+  TDatabaseParamTransferOwner,
+  TMetadataDatabaseDetail,
   TPaginationReturn,
 } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
 import {
-  DATABASE_ENGINE,
   ModelDatabase,
   ModelMetadataDatabase,
   ModelSequencer,
@@ -19,38 +18,21 @@ import {
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
+import logger from '../../helper/logger.js';
 import ModelGroup from '../../model/database/group.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
-import { FilterCriteria } from '../utils/document.js';
-import { Collection, listCollection } from './collection.js';
 import { Group } from './group.js';
 import Transaction from './transaction.js';
-import { isUserExist } from './user.js';
 
-type TDatabaseParamCreate = Pick<
-  TMetadataDatabase,
-  'databaseName' | 'merkleHeight' | 'databaseOwner'
->;
-
-type TDatabaseParamIsOwner = Pick<
-  TMetadataDatabase,
-  'databaseName' | 'databaseOwner'
->;
-
-type TDatabaseParamListDetail = Pick<TMetadataDatabase, 'databaseOwner'> & {
-  filter: Partial<TMetadataDatabase>;
-  pagination?: TPagination;
-};
-
-class Database {
+export class Database {
   public static async create(
-    params: TDatabaseParamCreate,
+    paramCreate: TDatabaseParamCreate,
     session?: ClientSession
   ) {
-    const { databaseName, databaseOwner, merkleHeight } = params;
+    const { databaseName, databaseOwner, merkleHeight } = paramCreate;
     // Find user
     const user = await new ModelUser().findOne(
       { userName: databaseOwner },
@@ -61,7 +43,7 @@ class Database {
       const modelDatabaseMetadata = new ModelMetadataDatabase();
 
       // Case database already exist
-      if (await modelDatabaseMetadata.getDatabase(databaseName, { session })) {
+      if (await modelDatabaseMetadata.findOne({ databaseName }, { session })) {
         // Ensure database existing
         throw new Error(`Database name ${databaseName} already taken`);
       }
@@ -72,18 +54,18 @@ class Database {
       await ModelUserGroup.init(databaseName, session);
       await ModelSequencer.init(databaseName, session);
 
-      const metadataDatabase =
-        await modelDatabaseMetadata.createMetadataDatabase(
-          {
-            databaseName,
-            merkleHeight,
-            databaseOwner,
-            appPublicKey: '',
-            createdAt: getCurrentTime(),
-            updatedAt: getCurrentTime(),
-          },
-          { session }
-        );
+      const metadataDatabase = await modelDatabaseMetadata.insertOne(
+        {
+          databaseName,
+          merkleHeight,
+          databaseOwner,
+          appPublicKey: '',
+          createdAt: getCurrentTime(),
+          updatedAt: getCurrentTime(),
+          deployStatus: ETransactionStatus.Unsigned,
+        },
+        { session }
+      );
       if (metadataDatabase) {
         // Enqueue transaction
         await Transaction.enqueue(
@@ -121,13 +103,13 @@ class Database {
   }
 
   public static async isOwner(
-    params: TDatabaseParamIsOwner,
+    paramIsOwner: TDatabaseParamIsOwner,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, databaseOwner } = params;
+    const { databaseName, databaseOwner } = paramIsOwner;
 
-    const database = await ModelMetadataDatabase.getInstance().getDatabase(
-      databaseName,
+    const database = await ModelMetadataDatabase.getInstance().findOne(
+      { databaseName },
       {
         session,
       }
@@ -140,8 +122,10 @@ class Database {
     throw Error('Setting has not been found');
   }
 
-  public static async listDetail(params: TDatabaseParamListDetail) {
-    const { databaseOwner, filter, pagination } = params;
+  public static async listDetail(
+    paramListDetail: TDatabaseParamListDetail
+  ): Promise<TPaginationReturn<TMetadataDatabaseDetail[]>> {
+    const { filter, pagination } = paramListDetail;
     // Get db instance from ModelDatabase
     const { db } = new ModelDatabase();
     // Get system DB metadata from Mongo: name, sizeOnDisk, empty,...
@@ -155,197 +139,68 @@ class Database {
         offset: pagination?.offset || 0,
       };
     }
-    // Using map to assign default value sizeOnDisk to 0
-    // Instead using reduce
-    const listDatabase = databases.map((database) => ({
-      ...database,
-      sizeOnDisk: database.sizeOnDisk || 0,
-    }));
-
+    // Convert database from Mongo to a Map to perform merge 2 object by databaseName
+    // Perform O(2n) instead of O(n^2)
+    // Map<databaseName, sizeOfDisk>
+    const databaseMap = new Map<string, number | undefined>(
+      databases.map(({ name, sizeOnDisk }) => [name, sizeOnDisk])
+    );
     // Get database metadata
     const modelMetadataDatabase = new ModelMetadataDatabase();
 
-    const listMetadataDatabase = await modelMetadataDatabase.getListDatabase(
-      filter,
-      {
-        skip: pagination?.offset,
-        limit: pagination?.limit,
-      }
-    );
-    // Using Fill to perform a concurrency heavy join between mongoDB db and our metadata db
-    const listDetailDatabase: TDatabaseDetail[] = (
-      await Fill(
-        listMetadataDatabase.map(
-          (database) => async (): Promise<TDatabaseDetail> => {
-            const { databaseName, merkleHeight, appPublicKey } = database;
-            const collection = await listCollection(
-              databaseName,
-              databaseOwner
-            );
+    const listMetadataDatabase = await modelMetadataDatabase.list(filter, {
+      skip: pagination?.offset,
+      limit: pagination?.limit,
+    });
 
-            return {};
-          }
-        )
-      )
-    ).map(({ result }) => result);
-
-    return listDetailDatabase;
+    return {
+      data: listMetadataDatabase.map((metadata) => ({
+        ...metadata,
+        sizeOnDisk: databaseMap.get(metadata.databaseName),
+      })),
+      total: await modelMetadataDatabase.count(filter),
+      offset: pagination?.offset || 0,
+    };
   }
 
-  public static async updateDeployedDatabase(
-    databaseName: string,
-    appPublicKey: string
-  ) {
+  public static async transferOwnership(
+    paramTransferOwner: TDatabaseParamTransferOwner
+  ): Promise<boolean> {
+    const { databaseName, databaseOwner, newOwner } = paramTransferOwner;
+    const { collection } = new ModelMetadataDatabase();
+    if (await Database.isOwner({ databaseName, databaseOwner })) {
+      const result = await collection.findOneAndUpdate(
+        { databaseName, databaseOwner },
+        {
+          $set: { databaseOwner: newOwner },
+        }
+      );
+
+      return result != null;
+    }
+
+    return false;
+  }
+
+  public static async deploy(paramDeploy: TDatabaseParamDeploy) {
     try {
+      const { databaseName, appPublicKey } = paramDeploy;
       // Add appPublicKey for database that deployed
-      await ModelMetadataDatabase.getInstance().updateDatabase(databaseName, {
-        appPublicKey,
-      });
+      await ModelMetadataDatabase.getInstance().updateOne(
+        { databaseName },
+        {
+          appPublicKey,
+        }
+      );
       // Remove data from deploy transaction
       await ModelTransaction.getInstance().remove(
         databaseName,
         ETransactionType.Deploy
       );
       return true;
-    } catch (err) {
-      throw new Error(`Cannot update deployed database ${err}`);
+    } catch (error) {
+      logger.debug(`Cannot deploy database ${error}`);
+      return false;
     }
   }
-}
-
-export async function getListDatabaseDetail(
-  actor: string,
-  filter: FilterCriteria,
-  pagination?: TPagination
-): Promise<TPaginationReturn<TDatabaseDetail[]>> {
-  const databasesInfo = await DATABASE_ENGINE.serverless.client
-    .db()
-    .admin()
-    .listDatabases();
-
-  if (!databasesInfo?.databases?.length) {
-    return {
-      data: [],
-      total: 0,
-      offset: pagination?.offset ?? 0,
-    };
-  }
-
-  const databaseInfoMap: Record<string, { sizeOnDisk: number }> =
-    databasesInfo.databases.reduce<Record<string, { sizeOnDisk: number }>>(
-      (acc, dbInfo) => ({
-        ...acc,
-        [dbInfo.name]: { sizeOnDisk: dbInfo.sizeOnDisk || 0 },
-      }),
-      {}
-    );
-
-  const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
-  const modelTx = ModelTransaction.getInstance();
-
-  const databaseList = await modelDatabaseMetadata.getListDatabase(filter, {
-    skip: pagination?.offset,
-    limit: pagination?.limit,
-  });
-
-  if (!databaseList?.length) {
-    // When user don't have any DB
-    return {
-      data: [],
-      total: 0,
-      offset: pagination?.offset ?? 0,
-    };
-  }
-
-  const databases: TDatabaseDetail[] = (
-    await Fill(
-      databaseList.map((setting: TMetadataDatabase) => async () => {
-        const { databaseName, merkleHeight, databaseOwner, appPublicKey } =
-          setting;
-        const dbInfo = databaseInfoMap[databaseName];
-        const databaseSize = dbInfo ? dbInfo.sizeOnDisk : null;
-
-        const collection = await listCollection(databaseName, actor);
-
-        const latestTransaction = await Transaction.latest(
-          databaseName,
-          ETransactionType.Deploy
-        );
-
-        let deployStatus = latestTransaction?.status ?? null;
-
-        if (
-          latestTransaction &&
-          deployStatus === ETransactionStatus.Confirming
-        ) {
-          if (latestTransaction.txHash) {
-            const zkAppTransaction =
-              await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
-                latestTransaction.txHash
-              );
-
-            if (zkAppTransaction?.txStatus === 'failed') {
-              deployStatus = ETransactionStatus.Failed;
-              await modelTx.updateById(latestTransaction._id, {
-                status: deployStatus,
-                error: zkAppTransaction.failures.join(' '),
-              });
-            } else if (zkAppTransaction?.txStatus === 'applied') {
-              deployStatus = ETransactionStatus.Confirmed;
-              await modelTx.updateById(latestTransaction._id, {
-                status: deployStatus,
-              });
-            }
-          } else {
-            deployStatus = ETransactionStatus.Failed;
-            await modelTx.updateById(latestTransaction._id, {
-              status: deployStatus,
-              error: 'Transaction hash is missed',
-            });
-          }
-        }
-
-        return {
-          databaseName,
-          databaseOwner,
-          merkleHeight,
-          databaseSize,
-          collection,
-          appPublicKey,
-          deployStatus,
-        };
-      })
-    )
-  )
-    .map(({ result }) => result)
-    .filter(Boolean);
-
-  return {
-    data: databases.filter(Boolean),
-    offset: pagination?.offset ?? 0,
-    total: await modelDatabaseMetadata.count(filter),
-  };
-}
-
-export async function changeDatabaseOwner(
-  databaseName: string,
-  actor: string,
-  newOwner: string
-): Promise<boolean> {
-  const database = await getDatabase(databaseName);
-  const dbOwner = database.databaseOwner;
-
-  if (actor === dbOwner) {
-    if (await isUserExist(newOwner)) {
-      const result = await ModelMetadataDatabase.getInstance().updateDatabase(
-        databaseName,
-        { databaseOwner: newOwner }
-      );
-      return result.acknowledged;
-    }
-
-    throw Error(`User ${newOwner} does not exist`);
-  }
-
-  throw Error('You do not have permission to change the db owner');
 }

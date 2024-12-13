@@ -1,4 +1,11 @@
 import {
+  SchemaGroupAddUser,
+  SchemaGroupCreate,
+  SchemaGroupDetail,
+  SchemaGroupListAll,
+  SchemaGroupListUser,
+  SchemaGroupRemoveUser,
+  SchemaGroupUpdate,
   TGroupAddUsersRequest,
   TGroupCreateRequest,
   TGroupInfoDetailRequest,
@@ -7,38 +14,15 @@ import {
   TGroupListAllResponse,
   TGroupListByUserRequest,
   TGroupUpdateRequest,
-  databaseName,
-  groupDescription,
-  groupName,
-  userName,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
-import Joi from 'joi';
-import {
-  addUsersToGroup,
-  changeGroupDescription,
-  createGroup,
-  excludeUsersToGroup,
-  getGroupInfoDetail,
-  renameGroup,
-} from '../../domain/use-case/group.js';
+
+import { Group } from '../../domain/use-case/group.js';
 import { gql } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-
-const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
-  databaseName,
-  groupName,
-  groupDescription: groupDescription(false),
-});
-
-const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
-  databaseName,
-  groupName,
-  groupDescription: groupDescription(false),
-});
 
 export const typeDefsGroup = gql`
   #graphql
@@ -110,9 +94,7 @@ export const typeDefsGroup = gql`
 
 // Query
 const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
-  Joi.object({
-    databaseName,
-  }),
+  SchemaGroupListAll,
   async (_root, args) => {
     const groups = await new ModelGroup(args.databaseName).find({}).toArray();
     return groups;
@@ -120,68 +102,33 @@ const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
 );
 
 const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
-  Joi.object({
-    databaseName,
-    userName,
-  }),
+  SchemaGroupListUser,
   async (_root, args) =>
     new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
 );
 
-const groupInfoDetail = publicWrapper<
+const groupDetail = publicWrapper<
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse
->(
-  Joi.object({
-    databaseName,
-    groupName,
-  }),
-  async (_root, args) => {
-    const group = await getGroupInfoDetail(args.databaseName, args.groupName);
-    if (group) {
-      return group;
-    }
-    throw Error(`Group ${args.groupName} does not exist`);
-  }
+>(SchemaGroupDetail, async (_root, { databaseName, groupName }) =>
+  Group.detail({ databaseName, groupName })
 );
 
 const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    newGroupName: groupName,
-    newGroupDescription: groupDescription(false),
-  }),
+  SchemaGroupUpdate,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
     const result = await withTransaction(async (session) => {
-      if (newGroupName) {
-        if (
-          !(await renameGroup(
-            databaseName,
-            ctx.userName,
-            groupName,
-            newGroupName,
-            session
-          ))
-        ) {
-          throw Error(`Failed to rename group ${groupName} to ${newGroupName}`);
-        }
-      }
-      if (newGroupDescription) {
-        if (
-          !(await changeGroupDescription(
-            databaseName,
-            ctx.userName,
-            groupName,
-            newGroupDescription,
-            session
-          ))
-        ) {
-          throw Error(`Failed to change description of group ${groupName}`);
-        }
-      }
-      return true;
+      return Group.updateMetadata(
+        {
+          databaseName,
+          groupName,
+          newGroupName,
+          newGroupDescription,
+          createdBy: ctx.userName,
+        },
+        session
+      );
     });
 
     return result !== null && result;
@@ -189,15 +136,17 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
 );
 
 const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
-  GroupCreateRequest,
-  async (_root, args, ctx) =>
+  SchemaGroupCreate,
+  async (_root, { databaseName, groupDescription, groupName }, ctx) =>
     Boolean(
       withTransaction((session) =>
-        createGroup(
-          args.databaseName,
-          ctx.userName,
-          args.groupName,
-          args.groupDescription,
+        Group.create(
+          {
+            databaseName,
+            groupName,
+            groupDescription,
+            createdBy: ctx.userName,
+          },
           session
         )
       )
@@ -205,33 +154,25 @@ const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
 );
 
 const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    listUser: Joi.array().items(Joi.string().required()).required(),
-  }),
-  async (_root, args, ctx) =>
-    addUsersToGroup(
-      args.databaseName,
-      ctx.userName,
-      args.groupName,
-      args.listUser
-    )
+  SchemaGroupAddUser,
+  async (_root, { databaseName, groupName, listUser }, ctx) =>
+    Group.addListUser({
+      databaseName,
+      groupName,
+      listUserName: listUser,
+      createdBy: ctx.userName,
+    })
 );
 
 const groupRemoveUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    listUser: Joi.array().items(Joi.string().required()).required(),
-  }),
-  async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    excludeUsersToGroup(
-      args.databaseName,
-      ctx.userName,
-      args.groupName,
-      args.listUser
-    )
+  SchemaGroupRemoveUser,
+  async (_root: unknown, { databaseName, groupName, listUser }, ctx) =>
+    Group.removeListUser({
+      databaseName,
+      groupName,
+      listUserName: listUser,
+      createdBy: ctx.userName,
+    })
 );
 
 export const resolversGroup = {
@@ -239,7 +180,7 @@ export const resolversGroup = {
   Query: {
     groupListAll,
     groupListByUser,
-    groupInfoDetail,
+    groupDetail,
   },
   Mutation: {
     groupCreate,

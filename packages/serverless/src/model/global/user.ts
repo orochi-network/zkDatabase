@@ -91,38 +91,10 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
     return listUserName.length === listUser.length;
   }
 
-  /**
-   * Creates a new user with the provided details.
-   *
-   * @param newUser - The details of the new user to be created, excluding the 'activated' field.
-   * @returns A promise resolving to the created user or relevant response.
-   */
-  public async create(
-    newUser: Omit<TUser, 'activated'>
-  ): Promise<InsertOneResult<TUserRecord>> {
-    const { userData, email, publicKey, userName } = newUser;
-
-    if (await this.isExist({ userName, email, publicKey })) {
-      // Case userName or email already existed
-      logger.info(`username: ${userName}, email ${email} already existed`);
-      throw new Error(`User already existed`);
-    }
-
-    return this.insertOne({
-      userName,
-      email,
-      publicKey,
-      userData,
-      activated: true,
-      createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
-    });
-  }
-
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.service,
+      DATABASE_ENGINE.serverless,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

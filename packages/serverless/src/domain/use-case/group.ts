@@ -4,7 +4,6 @@ import {
   TGroupParamCreate,
   TGroupParamDetail,
   TGroupParamExist,
-  TGroupParamIsParticipant,
   TGroupParamUpdateMetadata,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
@@ -12,7 +11,7 @@ import { getCurrentTime } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import ModelUser from '../../model/global/user.js';
-import { isDatabaseOwner } from './database.js';
+import { Database } from './database.js';
 
 /**
  * The `Group` class provides methods to manage groups, including creating groups,
@@ -22,15 +21,15 @@ export class Group {
   /**
    * Checks if a group exists based on the provided parameters.
    *
-   * @param params - The parameters used to filter and identify the group, following the `TGroupParamBase` type.
+   * @param paramGroupExist - The parameters used to filter and identify the group, following the `TGroupParamBase` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if a matching group exists, otherwise `false`.
    */
   public static async exist(
-    params: TGroupParamExist,
+    paramGroupExist: TGroupParamExist,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName } = params;
+    const { databaseName, groupName } = paramGroupExist;
 
     const modelGroup = new ModelGroup(databaseName);
 
@@ -42,18 +41,24 @@ export class Group {
   /**
    * Creates a new group based on the provided parameters.
    *
-   * @param params - The parameters required to create the group, adhering to the `TGroupParamCreate` type.
+   * @param paramGroupCreate - The parameters required to create the group, adhering to the `TGroupParamCreate` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the group is created successfully, otherwise `false`.
    */
   public static async create(
-    params: TGroupParamCreate,
+    paramGroupCreate: TGroupParamCreate,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, groupDescription, createdBy } = params;
+    const { databaseName, groupName, groupDescription, createdBy } =
+      paramGroupCreate;
 
     // Checking actor is owner first
-    if (await isDatabaseOwner(databaseName, createdBy, session)) {
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
       // Checking group existed before
       if (await Group.exist({ databaseName, groupName }, session)) {
         throw new Error(
@@ -73,7 +78,7 @@ export class Group {
       // Checking user exist
       if (user) {
         // Create group instance
-        const group = await modelGroup.create(
+        const group = await modelGroup.insertOne(
           {
             groupName,
             groupDescription: groupDescription || `Group ${groupName}`,
@@ -85,7 +90,7 @@ export class Group {
         );
 
         // Create user-group instance
-        const userGroup = await modelUserGroup.createUserGroup(
+        const userGroup = await modelUserGroup.insertOne(
           {
             userName: user.userName,
             groupOjectId: group.insertedId,
@@ -108,15 +113,15 @@ export class Group {
   /**
    * Retrieves detailed information about a group based on the provided parameters.
    *
-   * @param params - The parameters to identify the group, following the `TGroupParamDetail` type.
+   * @param paramGroupDetail - The parameters to identify the group, following the `TGroupParamDetail` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to the group detail, conforming to the `TGroupDetail` type.
    */
   public static async detail(
-    params: TGroupParamDetail,
+    paramGroupDetail: TGroupParamDetail,
     session?: ClientSession
   ): Promise<TGroupDetail> {
-    const { databaseName, groupName } = params;
+    const { databaseName, groupName } = paramGroupDetail;
 
     // Checking group existed before
     if (!(await Group.exist({ databaseName, groupName }, session))) {
@@ -149,23 +154,33 @@ export class Group {
   /**
    * Updates the metadata of a group based on the provided parameters.
    *
-   * @param params - The parameters specifying the group and the metadata to update, following the `TGroupParamUpdateMetadata` type.
+   * @param paramUpdateMetadata - The parameters specifying the group and the metadata to update, following the `TGroupParamUpdateMetadata` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the metadata was updated successfully, otherwise `false`.
    */
   public static async updateMetadata(
-    params: TGroupParamUpdateMetadata,
+    paramUpdateMetadata: TGroupParamUpdateMetadata,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, createdBy, newGroupName, newDescription } =
-      params;
+    const {
+      databaseName,
+      groupName,
+      createdBy,
+      newGroupName,
+      newGroupDescription,
+    } = paramUpdateMetadata;
     // Check if user don't input both newDescription & newGroupName
     // Using Falsy to ensure user don't input thing like '', 0, null
-    if (!newGroupName && !newDescription) {
+    if (!newGroupName && !newGroupDescription) {
       throw new Error('Need to provide at least one field to update');
     }
     // Check actor permission
-    if (await isDatabaseOwner(databaseName, createdBy, session)) {
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
       // Initialize model
       const modelGroup = new ModelGroup(databaseName);
       // Find group
@@ -179,7 +194,10 @@ export class Group {
           },
           {
             // MongoDB will not update if value is 'undefined', no need checking
-            $set: { groupName: newGroupName, groupDescription: newDescription },
+            $set: {
+              groupName: newGroupName,
+              groupDescription: newGroupDescription,
+            },
           },
           { session }
         );
@@ -214,17 +232,26 @@ export class Group {
   /**
    * Adds a list of users to a group based on the provided parameters.
    *
-   * @param params - The parameters specifying the group and the users to add, following the `TGroupParamAddListUser` type.
+   * @param paramAddListUser - The parameters specifying the group and the users to add, following the `TGroupParamAddListUser` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were added successfully, otherwise `false`.
    */
   public static async addListUser(
-    params: TGroupParamAddListUser,
+    paramAddListUser: TGroupParamAddListUser,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, createdBy, listUserName } = params;
+    const { databaseName, groupName, createdBy, listUserName } =
+      paramAddListUser;
     // Permission owner checking
-    if (await isDatabaseOwner(databaseName, createdBy, session)) {
+    if (
+      await Database.isOwner(
+        {
+          databaseName,
+          databaseOwner: createdBy,
+        },
+        session
+      )
+    ) {
       // Initialize group model
       const modelGroup = new ModelGroup(databaseName);
 
@@ -257,17 +284,23 @@ export class Group {
   /**
    * Removes a list of users from a group based on the provided parameters.
    *
-   * @param params - The parameters specifying the group and the users to remove, following the `TGroupParamAddListUser` type.
+   * @param paramRemoveListUser - The parameters specifying the group and the users to remove, following the `TGroupParamAddListUser` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were removed successfully, otherwise `false`.
    */
   public static async removeListUser(
-    params: TGroupParamAddListUser,
+    paramRemoveListUser: TGroupParamAddListUser,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, createdBy, listUserName } = params;
+    const { databaseName, groupName, createdBy, listUserName } =
+      paramRemoveListUser;
     // Permission owner checking
-    if (await isDatabaseOwner(databaseName, createdBy, session)) {
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
       // Initialize group model
       const modelGroup = new ModelGroup(databaseName);
 

@@ -225,8 +225,6 @@ export default class Transaction {
     return txs.length === 0 ? null : txs[0];
   }
 
-  static 
-
   static async confirm(
     databaseName: string,
     actor: string,

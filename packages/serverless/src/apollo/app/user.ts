@@ -1,21 +1,18 @@
 import {
-  pagination,
-  TMinaSignature,
-  TUser,
+  SchemaSignIn,
+  SchemaSignUp,
+  SchemaUserFind,
   TUserFindRequest,
   TUserFindResponse,
   TUserSignInRequest,
   TUserSignInResponse,
-  TUserSignUpInput,
   TUserSignUpRequest,
   TUserSignUpResponse,
 } from '@zkdb/common';
 import { randomUUID } from 'crypto';
 import { User } from 'domain/use-case/user.js';
 import GraphQLJSON from 'graphql-type-json';
-import Joi from 'joi';
 import Client from 'mina-signer';
-import { DEFAULT_PAGINATION } from '../../common/const.js';
 import { gql } from '../../helper/common.js';
 import config from '../../helper/config.js';
 import {
@@ -28,58 +25,6 @@ import RedisInstance from '../../helper/redis.js';
 import { sessionDestroy } from '../../helper/session.js';
 import ModelUser from '../../model/global/user.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-
-const timestamp = Joi.number()
-  .custom((value, helper) => {
-    // 5 minutes is the timeout for signing up proof
-    const timeDiff = Math.floor(Date.now() / 1000) - value;
-    if (timeDiff >= 0 && timeDiff < 300) {
-      return value;
-    }
-    return helper.error('Invalid timestamp of time proof');
-  })
-  .required();
-
-export const SignatureProof = Joi.object<TMinaSignature>({
-  signature: Joi.object({
-    field: Joi.string()
-      .pattern(/[0-9]+/)
-      .required(),
-    scalar: Joi.string()
-      .pattern(/[0-9]+/)
-      .required(),
-  }).required(),
-  publicKey: Joi.string()
-    .min(40)
-    .pattern(/^[A-HJ-NP-Za-km-z1-9]*$/)
-    .required(),
-  data: Joi.string().required(),
-});
-
-export const SignInRequest = Joi.object<TUserSignInRequest>({
-  proof: SignatureProof.required(),
-});
-
-export const UserSignUpInput = Joi.object<TUserSignUpInput>({
-  userName: Joi.string().required(),
-  email: Joi.string().email().required(),
-  timestamp,
-  userData: Joi.object().optional(),
-});
-
-export const SignUpRequest = Joi.object<TUserSignUpRequest>({
-  newUser: UserSignUpInput,
-  proof: SignatureProof.required(),
-});
-
-export const UserFindRequest = Joi.object<TUserFindRequest>({
-  query: Joi.object<TUser>({
-    userName: Joi.string().min(1).max(256),
-    email: Joi.string().email(),
-    publicKey: Joi.string().min(1).max(256),
-  }),
-  pagination,
-});
 
 export const typeDefsUser = gql`
   #graphql
@@ -163,14 +108,9 @@ const userMe = authorizeWrapper(async (_root, _args, context) => {
 });
 
 const userFind = publicWrapper<TUserFindRequest, TUserFindResponse>(
-  UserFindRequest,
-  async (_root, args) => {
-    const result = await findUserDomain(
-      args.query,
-      args.pagination || DEFAULT_PAGINATION
-    );
-    return result;
-  }
+  SchemaUserFind,
+  async (_root, { query, pagination }) =>
+    User.findMany({ query, paginationInput: pagination })
 );
 
 const userEcdsaChallenge = publicWrapper(async (_root, _args, context) => {
@@ -184,7 +124,7 @@ const userEcdsaChallenge = publicWrapper(async (_root, _args, context) => {
 });
 
 const userSignIn = publicWrapper<TUserSignInRequest, TUserSignInResponse>(
-  SignInRequest,
+  SchemaSignIn,
   async (_root, args, context) => {
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
@@ -240,14 +180,14 @@ const userSignOut = authorizeWrapper<unknown, boolean>(
 );
 
 const userSignUp = publicWrapper<TUserSignUpRequest, TUserSignUpResponse>(
-  SignUpRequest,
+  SchemaSignUp,
   async (_root, args) => {
     const {
       newUser: { userData, userName, email },
       proof,
     } = args;
 
-    return User.signUpUser({
+    return User.signUp({
       user: {
         userName,
         email,

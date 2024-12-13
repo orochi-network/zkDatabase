@@ -6,8 +6,9 @@ import {
   TUserRecord,
 } from '@zkdb/common';
 import Client from 'mina-signer';
-import { ClientSession, InsertOneResult, WithoutId } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 import { DEFAULT_PAGINATION } from '../../common/const.js';
+import { getCurrentTime } from '../../helper/common.js';
 import config from '../../helper/config.js';
 import ModelUser from '../../model/global/user.js';
 import { FilterCriteria } from '../utils/document.js';
@@ -64,11 +65,14 @@ export class User {
         }
       }
 
-      const createResult = await modelUser.create({
+      const createResult = await modelUser.insertOne({
         email,
         userName,
         publicKey: signature.publicKey,
         userData,
+        activated: true,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
       });
       // Get user after inserted
       const user = await modelUser.findOne({ _id: createResult.insertedId });

@@ -1,6 +1,8 @@
 import {
-  DatabaseCreateRequest,
-  DatabaseListRequest,
+  SchemaDatabaseCreate,
+  SchemaDatabaseList,
+  SchemaDatabaseTransferOwner,
+  SchemaDatabaseUpdateDeploy,
   TDatabaseChangeOwnerRequest,
   TDatabaseCreateRequest,
   TDatabaseListRequest,
@@ -9,40 +11,20 @@ import {
   TDatabaseResponse,
   TDatabaseUpdateDeployedRequest,
   databaseName,
-  userName,
 } from '@zkdb/common';
 import {
-  DB,
-  ModelMetadataDatabase,
+  DATABASE_ENGINE,
   ModelDatabase,
+  ModelMetadataDatabase,
   withTransaction,
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document } from 'mongodb';
-import {
-  changeDatabaseOwner,
-  createDatabase,
-  getListDatabaseDetail,
-  updateDeployedDatabase,
-} from '../../domain/use-case/database.js';
+
+import { Database } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-
-const DatabaseUpdateDeployedRequest =
-  Joi.object<TDatabaseUpdateDeployedRequest>({
-    databaseName,
-    appPublicKey: Joi.string()
-      .trim()
-      .length(55)
-      .required()
-      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
-  });
-
-const DatabaseChangeOwnerRequest = Joi.object<TDatabaseChangeOwnerRequest>({
-  databaseName,
-  newOwner: userName,
-});
 
 export const typeDefsDatabase = gql`
   #graphql
@@ -93,14 +75,12 @@ export const typeDefsDatabase = gql`
     dbStats(databaseName: String!): JSON
     dbInfo(databaseName: String!): Database!
     dbExist(databaseName: String!): Boolean!
-    #dbFindIndex(databaseName: String!, index: Int!): JSON
   }
 
   extend type Mutation {
     dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
     dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
     dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
-    #dbDrop(databaseName: String!): Boolean
   }
 `;
 
@@ -115,67 +95,66 @@ const dbStats = publicWrapper<TDatabaseRequest, Document>(
 );
 
 const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
-  DatabaseListRequest,
-  async (_root, args, _ctx) =>
-    getListDatabaseDetail(_ctx.userName, args.query, args.pagination)
+  SchemaDatabaseList,
+  async (_root, { query, pagination }, _ctx) =>
+    Database.listDetail({ filter: query, pagination })
 );
 
 const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root, args, _ctx) => {
+  async (_root, { databaseName }, _ctx) => {
     const { databases } = await DATABASE_ENGINE.serverless.client
       .db()
       .admin()
       .listDatabases();
 
-    const isDatabaseExist = databases.some(
-      (db) => db.name === args.databaseName
-    );
+    const isDatabaseExist = databases.some((db) => db.name === databaseName);
 
     if (!isDatabaseExist) {
-      throw Error(`Database ${args.databaseName} does not exist`);
+      throw Error(`Database ${databaseName} does not exist`);
     }
 
-    const database = await ModelMetadataDatabase.getInstance().getDatabase(
-      args.databaseName
-    );
+    const database = await ModelMetadataDatabase.getInstance().findOne({
+      databaseName,
+    });
 
     if (database) {
       return database;
     }
 
-    throw new Error(`Settings for ${args.databaseName} does not exist`);
+    throw new Error(`Metadata for ${databaseName} does not exist`);
   }
 );
 
-const dbDeployedUpdate = authorizeWrapper<
-  TDatabaseUpdateDeployedRequest,
-  boolean
->(DatabaseUpdateDeployedRequest, async (_root, args, _) =>
-  updateDeployedDatabase(args.databaseName, args.appPublicKey)
+const dbDeploy = authorizeWrapper<TDatabaseUpdateDeployedRequest, boolean>(
+  SchemaDatabaseUpdateDeploy,
+  async (_root, { databaseName, appPublicKey }, _) =>
+    Database.deploy({ databaseName, appPublicKey })
 );
 
 const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
-  DatabaseCreateRequest,
-  async (_root, args, ctx) =>
+  SchemaDatabaseCreate,
+  async (_root, { databaseName, merkleHeight }, ctx) =>
     Boolean(
       withTransaction((session) =>
-        createDatabase(
-          args.databaseName,
-          args.merkleHeight,
-          ctx.userName,
+        Database.create(
+          { databaseName, merkleHeight, databaseOwner: ctx.userName },
           session
         )
       )
     )
 );
 
-const dbChangeOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
-  DatabaseChangeOwnerRequest,
-  async (_root, args, ctx) =>
-    changeDatabaseOwner(args.databaseName, ctx.userName, args.newOwner)
+const dbTransferOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
+  SchemaDatabaseTransferOwner,
+  async (_root, { databaseName, newOwner }, ctx) =>
+    Database.transferOwnership({
+      databaseName,
+      newOwner,
+      databaseOwner: ctx.userName,
+    })
 );
 
 const dbExist = publicWrapper<TDatabaseRequest, boolean>(
@@ -183,30 +162,15 @@ const dbExist = publicWrapper<TDatabaseRequest, boolean>(
     databaseName,
   }),
   async (_root, args, _ctx) => {
-    const { databases } = await DATABASE_ENGINE.serverless.client
-      .db()
-      .admin()
-      .listDatabases();
+    const { db } = new ModelDatabase();
+
+    const { databases } = await db.admin().listDatabases();
+
     return databases.some((db) => db.name === args.databaseName);
   }
 );
 
-type TDatabaseResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    dbStats: typeof dbStats;
-    dbList: typeof dbList;
-    dbInfo: typeof dbInfo;
-    dbExist: typeof dbExist;
-  };
-  Mutation: {
-    dbCreate: typeof dbCreate;
-    dbChangeOwner: typeof dbChangeOwner;
-    dbDeployedUpdate: typeof dbDeployedUpdate;
-  };
-};
-
-export const resolversDatabase: TDatabaseResolver = {
+export const resolversDatabase = {
   JSON: GraphQLJSON,
   Query: {
     dbStats,
@@ -216,7 +180,7 @@ export const resolversDatabase: TDatabaseResolver = {
   },
   Mutation: {
     dbCreate,
-    dbChangeOwner,
-    dbDeployedUpdate,
+    dbTransferOwner,
+    dbDeploy,
   },
 };

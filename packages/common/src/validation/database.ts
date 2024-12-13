@@ -1,5 +1,10 @@
-import { TDatabaseCreateRequest, TDatabaseListRequest } from '@types';
-import { pagination } from '@validation';
+import {
+  TDatabaseChangeOwnerRequest,
+  TDatabaseCreateRequest,
+  TDatabaseListRequest,
+  TDatabaseUpdateDeployedRequest,
+} from '@types';
+import { pagination, userName } from '@validation';
 import Joi from 'joi';
 import { ObjectId } from 'mongodb';
 
@@ -26,12 +31,28 @@ const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
   }).optional(),
 });
 
-export const DatabaseListRequest = Joi.object<TDatabaseListRequest>({
+export const SchemaDatabaseList = Joi.object<TDatabaseListRequest>({
   query: SchemaDatabaseRecordQuery.optional(),
   pagination,
 });
 
-export const DatabaseCreateRequest = Joi.object<TDatabaseCreateRequest>({
+export const SchemaDatabaseCreate = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight,
 });
+
+export const SchemaDatabaseUpdateDeploy =
+  Joi.object<TDatabaseUpdateDeployedRequest>({
+    databaseName,
+    appPublicKey: Joi.string()
+      .trim()
+      .length(55)
+      .required()
+      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
+  });
+
+export const SchemaDatabaseTransferOwner =
+  Joi.object<TDatabaseChangeOwnerRequest>({
+    databaseName,
+    newOwner: userName,
+  });

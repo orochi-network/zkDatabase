@@ -45,7 +45,7 @@ export type TGroupParamUpdateMetadata = Pick<
   'databaseName' | 'groupName' | 'createdBy'
 > & {
   newGroupName?: string;
-  newDescription?: string;
+  newGroupDescription?: string;
 };
 
 export type TGroupParamAddListUser = Pick<
