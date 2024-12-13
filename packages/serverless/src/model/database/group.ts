@@ -1,14 +1,12 @@
 import { TGroupRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DB,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession, InsertOneOptions, WithoutId } from 'mongodb';
-import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import { addTimestampMongoDB } from '@zkdb/storage';
 
 export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
   private static collectionName: string =
@@ -18,26 +16,11 @@ export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
     super(databaseName, DB.service, ModelGroup.collectionName);
   }
 
-  public async createGroup(
-    groupName: string,
-    description?: string,
-    createdBy?: string,
+  public async create(
+    args: WithoutId<TGroupRecord>,
     options?: InsertOneOptions
   ) {
-    return this.insertOne(
-      {
-        groupName,
-        groupDescription: description || `Group ${groupName}`,
-        createdBy: createdBy || ZKDATABASE_USER_SYSTEM,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      options
-    );
-  }
-
-  public async findGroup(groupName: string, session?: ClientSession) {
-    return this.collection.findOne({ groupName }, { session });
+    return this.insertOne(args, options);
   }
 
   public static async init(databaseName: string, session?: ClientSession) {
