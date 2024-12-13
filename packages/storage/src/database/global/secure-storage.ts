@@ -1,10 +1,14 @@
-import { TDbRecord, TDatabaseKeyRecord } from '@zkdb/common';
+import { TSecureStorageRecord } from '@zkdb/common';
+import { ClientSession, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/index.js';
 import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
 
-export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
+export class ModelSecureStorage extends ModelGeneral<
+  WithoutId<TSecureStorageRecord>
+> {
   private static instance: ModelSecureStorage | null = null;
 
   private constructor() {
@@ -23,15 +27,21 @@ export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
     return ModelSecureStorage.instance;
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
       DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.queue
     );
+    /*
+      privateKey: string;
+      databaseName: string;
+    */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true });
-      collection.index({ privateKey: 1 }, { unique: true });
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index({ privateKey: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

@@ -1,5 +1,6 @@
 import { TMetadataCollectionRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -42,14 +43,26 @@ export class ModelMetadataCollection extends ModelGeneral<
     );
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
       DATABASE_ENGINE.serverless,
       ModelMetadataCollection.collectionName
     );
+
+    /*
+      collectionName: string;
+      owner: string;
+      group: string;
+      permission: number;
+      schema: Object; 
+      createdAt: Date;
+      updatedAt: Date;
+    */
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1 }, { unique: true });
+      await collection.index({ collectionName: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

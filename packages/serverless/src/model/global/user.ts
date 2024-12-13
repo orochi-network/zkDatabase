@@ -1,11 +1,12 @@
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { WithoutId } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
@@ -99,6 +100,21 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
       }
     }
     return null;
+  }
+
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstant.globalDatabase,
+      DB.service,
+      ModelUser.collectionName
+    );
+    if (!(await collection.isExist())) {
+      await collection.index({ userName: 1 }, { unique: true, session });
+      await collection.index({ publicKey: 1 }, { unique: true, session });
+      await collection.index({ email: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
+    }
   }
 }
 

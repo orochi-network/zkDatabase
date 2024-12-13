@@ -1,10 +1,10 @@
 import {
   ETransactionType,
-  TDbRecordOptional,
   TTransaction,
   TTransactionRecord,
 } from '@zkdb/common';
 import {
+  ClientSession,
   DeleteResult,
   Filter,
   FindOptions,
@@ -13,11 +13,14 @@ import {
   ReplaceOptions,
   UpdateResult,
   WithId,
+  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
+
 import { DatabaseEngine } from '../database-engine.js';
 
 export class ModelTransaction extends ModelBasic<TTransactionRecord> {
@@ -39,7 +42,7 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
   }
 
   public async create(
-    args: TDbRecordOptional<TTransactionRecord>,
+    args: WithoutId<TTransactionRecord>,
     options?: ReplaceOptions
   ): Promise<InsertOneResult<TTransactionRecord>> {
     const result = await this.collection.insertOne(args, { ...options });
@@ -85,10 +88,7 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
       .toArray();
   }
 
-  public async findById(
-    id: string,
-    options?: FindOptions
-  ): Promise<WithId<TTransactionRecord> | null> {
+  public async findById(id: string, options?: FindOptions) {
     const tx = await this.collection.findOne(
       { _id: new ObjectId(id) },
       options
@@ -112,17 +112,28 @@ export class ModelTransaction extends ModelBasic<TTransactionRecord> {
     return await this.collection.countDocuments(filter);
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TTransactionRecord>(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.transaction
     );
+    /*
+      transactionType: ETransactionType;
+      databaseName: string;
+      status: ETransactionStatus;
+      transactionRaw: string;
+      txHash: string;
+      error: string;
+    */
     if (!(await collection.isExist())) {
+      await collection.index({ databaseName: 1 }, { session });
       await collection.index(
         { databaseName: 1, transactionType: 1, txHash: 1 },
         { unique: false }
       );
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

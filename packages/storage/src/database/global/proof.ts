@@ -1,9 +1,16 @@
-import { FindOptions, InsertOneOptions, WithId, WithoutId } from 'mongodb';
+import { TProofRecord } from '@zkdb/common';
+import {
+  ClientSession,
+  FindOptions,
+  InsertOneOptions,
+  WithoutId,
+} from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
+import { addTimestampMongoDB } from '../../helper/common.js';
+import { DB } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
-import { TProofRecord } from '@zkdb/common';
+import ModelCollection from '../general/collection.js';
 
 export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public static instance: ModelProof;
@@ -20,17 +27,11 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   }
 
   public async saveProof(
-    proofDetails: TProofRecord,
+    proof: WithoutId<TProofRecord>,
     options?: InsertOneOptions
   ): Promise<boolean> {
     try {
-      await this.collection.insertOne(
-        {
-          ...proofDetails,
-          createdAt: new Date(),
-        },
-        options
-      );
+      await this.collection.insertOne(proof, options);
       return true;
     } catch (error) {
       logger.error('Error saving proof:', error);
@@ -41,11 +42,42 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public async getProof(
     database: string,
     options?: FindOptions
-  ): Promise<WithId<TProofRecord> | null> {
-    const proof = await this.collection.findOne(
+  ): Promise<TProofRecord | null> {
+    return this.collection.findOne(
       { database },
       { ...options, sort: { createdAt: -1 } }
     );
-    return proof as WithId<TProofRecord> | null;
+  }
+
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance<TProofRecord>(
+      zkDatabaseConstant.globalProofDatabase,
+      DB.proof,
+      zkDatabaseConstant.globalCollection.proof
+    );
+
+    /*
+      publicInput: string[];
+      publicOutput: string[];
+      maxProofsVerified: 0 | 1 | 2;
+      proof: string;
+      createdAt?: Date;
+      databaseName: string;
+      collectionName: string;
+      merkleRoot: string;
+      prevMerkleRoot: string;
+    */
+    if (!(await collection.isExist())) {
+      await collection.index({ proof: 1 }, { unique: true, session });
+      await collection.index({ databaseName: 1 }, { session });
+      await collection.index(
+        { databaseName: 1, collectionName: 1 },
+        { unique: true, session }
+      );
+      await collection.index({ merkleRoot: 1 }, { unique: true, session });
+      await collection.index({ prevMerkleRoot: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
+    }
   }
 }

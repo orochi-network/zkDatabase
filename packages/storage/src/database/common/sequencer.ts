@@ -3,7 +3,7 @@ import { ESequencer, TSequencedItem } from '@zkdb/common';
 import { zkDatabaseConstant } from '../../common/index.js';
 import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
-import { getCurrentTime } from '../../helper/common.js';
+import { addTimestampMongoDB, getCurrentTime } from '../../helper/common.js';
 import ModelCollection from '../general/collection.js';
 
 export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
@@ -74,14 +74,15 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     }
   }
 
-  private static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
       DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {
-      collection.index({ type: 1 }, { unique: true });
+      await collection.index({ type: 1 }, { unique: true });
+      await addTimestampMongoDB(collection, session);
     }
   }
 }
