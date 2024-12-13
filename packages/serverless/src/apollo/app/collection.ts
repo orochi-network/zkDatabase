@@ -67,7 +67,10 @@ const collectionList = authorizeWrapper<
   Joi.object({
     databaseName,
   }),
-  async (_root, args, ctx) => Collection.list(args.databaseName, ctx.userName)
+  async (_root, args, ctx) =>
+    withTransaction((session) =>
+      Collection.list(args.databaseName, ctx.userName, session)
+    )
 );
 
 const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
