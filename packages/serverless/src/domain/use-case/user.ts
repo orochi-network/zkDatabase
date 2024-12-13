@@ -24,7 +24,7 @@ export type TUserParamFindPagination = {
 };
 
 export class User {
-  public static async signUpUser(
+  public static async signUp(
     params: TUserParamSignUp
   ): Promise<WithoutId<TUserRecord>> {
     const {
