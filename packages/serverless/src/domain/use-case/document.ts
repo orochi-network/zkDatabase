@@ -1,5 +1,8 @@
 // TODO: need end to end testing for every function in this file
 // TODO: debug types to annotate the actual correct types
+// TODO: pagination does not work properly since we fetch all documents with
+// the pagination filter first and then filter them by permission, which can
+// lead to less documents being returned than expected.
 
 import {
   EDocumentProofStatus,
@@ -7,12 +10,10 @@ import {
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TDocumentRecord,
-  TDocumentRecordResponse,
+  TDocumentRecordNullable,
   TMerkleProof,
   TMetadataDetailDocument,
-  TMetadataDocument,
   TPagination,
-  TPaginationReturn,
   TWithProofStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
@@ -21,7 +22,6 @@ import {
   DB,
   ModelQueueTask,
   ModelSequencer,
-  TaskEntity,
   withTransaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
@@ -36,7 +36,6 @@ import ModelDocument from '../../model/abstract/document.js';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
-import { isDatabaseOwner } from './database.js';
 import { PermissionSecurity } from './permission-security.js';
 import {
   proveCreateDocument,
@@ -63,7 +62,7 @@ async function findDocument(
   actor: string,
   filter: FilterCriteria,
   session?: ClientSession
-): Promise<TDocumentReadResponse | null> {
+): Promise<TDocumentRecordNullable | null> {
   const actorPermissionCollection = await PermissionSecurity.collection(
     databaseName,
     collectionName,
@@ -101,19 +100,14 @@ async function findDocument(
     );
   }
 
-  return {
-    ...documentRecord,
-    document: Object.values(
-      ModelDocument.deserializeDocument(documentRecord.document)
-    ),
-  };
+  return documentRecord;
 }
 
 async function createDocument(
   databaseName: string,
   collectionName: string,
   actor: string,
-  fields: TDocumentField[],
+  fields: Record<string, TDocumentField>,
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
@@ -131,13 +125,13 @@ async function createDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  if (fields.length === 0) {
+  if (Object.keys(fields).length === 0) {
     throw new Error('Document array is empty. At least one field is required.');
   }
 
   // Save the document to the database
   const insertResult = await modelDocument.insertOneFromFields(
-    ModelDocument.serializeDocument(fieldArrayToRecord(fields)),
+    fields,
     undefined,
     compoundSession?.sessionService
   );
@@ -194,7 +188,7 @@ async function createDocument(
     databaseName,
     collectionName,
     insertResult.docId,
-    fields,
+    Object.values(fields),
     compoundSession
   );
 
@@ -206,7 +200,7 @@ async function updateDocument(
   collectionName: string,
   actor: string,
   filter: FilterCriteria,
-  update: TDocumentField[]
+  update: Record<string, TDocumentField>
 ) {
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
   const documentRecord = await withTransaction(async (session) => {
@@ -229,17 +223,13 @@ async function updateDocument(
         );
       }
 
-      if (update.length === 0) {
+      if (Object.keys(update).length === 0) {
         throw new Error(
           'Document array is empty. At least one field is required.'
         );
       }
 
-      await modelDocument.updateOne(
-        oldDocumentRecord.docId,
-        ModelDocument.serializeDocument(fieldArrayToRecord(update)),
-        session
-      );
+      await modelDocument.updateOne(oldDocumentRecord.docId, update, session);
 
       return oldDocumentRecord;
     }
@@ -250,7 +240,7 @@ async function updateDocument(
       databaseName,
       collectionName,
       documentRecord.docId,
-      update
+      Object.values(update)
     );
     return witness;
   }
@@ -345,7 +335,7 @@ async function findDocumentWithMetadata(
 
   const listDocumentWithMetadata = (await database
     .collection(collectionName)
-    .aggregate(pipeline)
+    .aggregate(pipeline, { session })
     .toArray()) as TMetadataDetailDocument<TDocumentRecord>[];
 
   const listQueueTask =

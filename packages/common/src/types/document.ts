@@ -52,7 +52,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
 };
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  document: TDocumentField[];
+  document: Record<string, TDocumentField>;
   documentPermission: number;
 };
 
@@ -70,4 +70,3 @@ export type TDocumentHistoryListRequest = TCollectionRequest & {
 };
 
 export type TDocumentHistoryResponse = TDocumentHistory;
-export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];

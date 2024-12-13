@@ -5,7 +5,7 @@ import {
   createDocument as createDocumentImpl,
   deleteDocument,
   findDocumentWithMetadata,
-  readDocument,
+  findDocument as findDocumentImpl,
 } from '../../domain/use-case/document.js';
 import {
   findDocumentHistory as findDocumentHistoryImpl,
@@ -24,12 +24,11 @@ import {
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
   TDocumentHistoryListRequest,
-  TDocumentFindResponse,
   TPaginationReturn,
   TWithProofStatus,
   TDocumentWithMetadataResponse,
   TDocumentHistoryListResponse,
-  TDocumentField,
+  documentRecord as schemaDocumentRecord,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
@@ -47,62 +46,6 @@ export const SCHEMA_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
   pagination,
 });
 
-const SCHEMA_DOCUMENT_FIELD = Joi.object<TDocumentField, true>()
-  .custom(
-    // {
-    //   name: Joi.string()
-    //     .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
-    //     .required(),
-    //   kind: Joi.string()
-    //     .valid(...O1JS_VALID_TYPE)
-    //     .required(),
-    //   value: Joi.string().raw().required(),
-    // }
-    (raw, helpers) => {
-      const { value: name, error: nameError } = Joi.string()
-        .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
-        .validate(raw.name);
-      if (nameError) {
-        return nameError;
-      }
-
-      const { value: kind, error: kindError } = Joi.string().validate(
-        raw.value
-      );
-      if (kindError) {
-        return kindError;
-      }
-
-      let field: Omit<TDocumentField, 'name'>;
-
-      switch (kind) {
-        case 'PrivateKey':
-        case 'PublicKey':
-        case 'Signature': {
-          let { value, error } = Joi.string()
-            // https://datatracker.ietf.org/doc/html/draft-msporny-base58-03#page-3 // Base58 string
-            .pattern(
-              /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
-            )
-            .validate(raw.value);
-          if (error) {
-            return error;
-          }
-          field = { kind, value };
-          break;
-        }
-        case 'CircuitString':
-          const { value: val, error } = Joi.string().validate(raw.value);
-          if (error) {
-            return error;
-          }
-          field = { kind, value: val1 };
-          break;
-      }
-    }
-  )
-  .unknown(false);
-
 export const SCHEMA_DOCUMENT_CREATE_REQUEST = Joi.object<
   TDocumentCreateRequest,
   true
@@ -111,12 +54,8 @@ export const SCHEMA_DOCUMENT_CREATE_REQUEST = Joi.object<
   collectionName,
   documentPermission: Joi.number().min(0).max(0xffffff).required(),
 
-  // TODO: CRITICAL: validate this since user could pass an arbitrary object
-  // and it will be stored in the database. Objectives:
-  // 1. Validate the object to conform to the schema type
-  // 2. Ensure no extra fields are present
-  // 3. Consider: detect duplicate fields and throw error to prevent mistakes
-  document: Joi.array().required(),
+  // TODO: need testing
+  document: schemaDocumentRecord,
 });
 
 export const SCHEMA_DOCUMENT_UPDATE_REQUEST =
@@ -125,12 +64,8 @@ export const SCHEMA_DOCUMENT_UPDATE_REQUEST =
     collectionName,
     query: Joi.object(),
 
-    // TODO: CRITICAL: validate this since user could pass an arbitrary object
-    // and it will be stored in the database. Objectives:
-    // 1. Validate the object to conform to the schema type
-    // 2. Ensure no extra fields are present
-    // 3. Consider: detect duplicate fields and throw error to prevent mistakes
-    document: Joi.required(),
+    // TODO: need testing
+    document: schemaDocumentRecord,
   });
 
 export const SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST =

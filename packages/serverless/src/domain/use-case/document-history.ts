@@ -1,16 +1,18 @@
+// TODO: pagination does not work properly since we fetch all documents with
+// the pagination filter first and then filter them by permission, which can
+// lead to less documents being returned than expected.
+
 /* eslint-disable import/prefer-default-export */
 import {
   TDocumentHistoryResponse,
-  TDocumentHistoryListResponse,
+  TDocumentRecordNullable,
   TMetadataDocument,
   TPagination,
 } from '@zkdb/common';
 import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelDocument, {
-  TDocumentRecordSerialized,
-} from '../../model/abstract/document.js';
+import ModelDocument from '../../model/abstract/document.js';
 import { isDatabaseOwner } from './database.js';
 import { PermissionSecurity } from './permission-security.js';
 import { DEFAULT_PAGINATION } from 'common/const.js';
@@ -19,7 +21,7 @@ import { DEFAULT_PAGINATION } from 'common/const.js';
  * TODO: Need debugging to actually confirm this */
 type TDocumentHistorySerialized = {
   _id: ObjectId;
-  documents: TDocumentRecordSerialized[];
+  documents: TDocumentRecordNullable[];
   metadata: Omit<TMetadataDocument, 'collectionName'>;
   active: boolean;
 };
@@ -31,16 +33,15 @@ async function listDocumentHistory(
   actor: string,
   pagination: TPagination,
   session?: ClientSession
-): Promise<TDocumentHistoryListResponse> {
-  if (
-    await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'read',
-      session
-    )
-  ) {
+): Promise<TDocumentHistoryResponse[]> {
+  const permission = await PermissionSecurity.collection(
+    databaseName,
+    collectionName,
+    actor,
+    session
+  );
+
+  if (permission.read) {
     const { client } = DB.service;
     const paginationInfo = pagination || DEFAULT_PAGINATION;
     const pipeline = [

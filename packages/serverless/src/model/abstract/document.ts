@@ -1,9 +1,9 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
 import {
+  TContractSchemaField,
   TDocumentField,
-  TDocumentRecordOptional,
-  TProvableTypeString,
+  TDocumentRecordNullable,
 } from '@zkdb/common';
 import {
   DB,
@@ -12,61 +12,16 @@ import {
   ModelMetadataDatabase,
 } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
-import { ClientSession, Filter, Long, OptionalId } from 'mongodb';
+import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
-
-/** Database-serialized version of a document record. */
-export type TDocumentRecordSerialized = Omit<
-  TDocumentRecordOptional,
-  'document'
-> & {
-  document: Record<string, TContractSchemaFieldSerializable>;
-};
-
-/** Map of Provable types to their corresponding BSON types. */
-type TProvableSerializationMap = {
-  CircuitString: string;
-  UInt32: Long;
-  Int64: Long;
-  Bool: boolean;
-  PrivateKey: string;
-  PublicKey: string;
-  Signature: string;
-  Character: string;
-  Sign: boolean;
-
-  // Leaving as any as not yet implemented, reason: concerns about indexing,
-  // operators like $gt, $lt and the combination of them (e.g. will $gt on the
-  // indexed field work and how?)
-  Field: any;
-
-  // Leaving as any as not yet implemented, reason: won't fit in bson 64-bit
-  // integer
-  UInt64: any;
-
-  // Leaving as any as not yet implemented
-  MerkleMapWitness: any;
-};
-
-/**
- * Represents a field with a name, kind, and the actual value that can be stored
- * in the database. Rendered as a union of all possible field types.
- */
-export type TContractSchemaFieldSerializable = {
-  [K in TProvableTypeString]: {
-    name: string;
-    kind: K;
-    value: TProvableSerializationMap[K];
-  };
-}[TProvableTypeString];
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
 export class ModelDocument extends ModelBasic<
-  OptionalId<TDocumentRecordSerialized>
+  OptionalId<TDocumentRecordNullable>
 > {
   public static instances = new Map<string, ModelDocument>();
 
@@ -102,111 +57,13 @@ export class ModelDocument extends ModelBasic<
     return ModelDocument.instances.get(key)!;
   }
 
-  /**
-   * Serializes a document by converting its fields to the appropriate database
-   * field types.
-   */
-  public static serializeDocument(
-    document: Record<string, TDocumentField>
-  ): Record<string, TContractSchemaFieldSerializable> {
-    return Object.values(document)
-      .map((field) => {
-        switch (field.kind) {
-          case 'UInt32':
-            return {
-              ...field,
-              value: new Long(field.value),
-            };
-          case 'Int64':
-            return {
-              ...field,
-              value: new Long(field.value),
-            };
-          case 'Bool':
-          case 'Sign':
-          case 'Character':
-          case 'PublicKey':
-          case 'PrivateKey':
-          case 'Signature':
-          case 'CircuitString':
-            return field;
-          case 'Field':
-          case 'UInt64':
-          case 'MerkleMapWitness':
-            throw new Error(
-              `Field type ${field.kind} is not yet supported in database`
-            );
-          default:
-            throw new Error(
-              `Unhandled field type, it is required that we handle all \
-possible field kinds explicitly to ensure correctness.`
-            );
-        }
-      })
-      .reduce(
-        (acc, field) => {
-          acc[field.name] = field;
-          return acc;
-        },
-        {} as Record<string, TContractSchemaFieldSerializable>
-      );
-  }
-
-  /** Deserializes a document by converting its fields to the appropriate
-   * document field types. */
-  public static deserializeDocument(
-    document: Record<string, TContractSchemaFieldSerializable>
-  ): Record<string, TDocumentField> {
-    return Object.values(document)
-      .map((field) => {
-        switch (field.kind) {
-          case 'UInt32':
-            return {
-              ...field,
-              value: field.value.toNumber(),
-            };
-          case 'Int64':
-            return {
-              ...field,
-              value: field.value.toBigInt(),
-            };
-          case 'Bool':
-          case 'Sign':
-          case 'Character':
-          case 'PublicKey':
-          case 'PrivateKey':
-          case 'Signature':
-          case 'CircuitString':
-            return field;
-          case 'Field':
-          case 'UInt64':
-          case 'MerkleMapWitness':
-            throw new Error(
-              `Field type ${field.kind} is not yet supported in database`
-            );
-          default:
-            throw new Error(
-              `Unhandled field type, it is required that we handle all \
-possible field kinds explicitly to ensure correctness.`
-            );
-        }
-      })
-      .reduce(
-        (acc, field) => {
-          acc[field.name] = field;
-          return acc;
-        },
-        {} as Record<string, TDocumentField>
-      );
-  }
-
   /** Construct a document with fields and insert it to the collection, marking
    * it as active */
   public async insertOneFromFields(
-    fields: Record<string, TContractSchemaFieldSerializable>,
+    fields: Record<string, TContractSchemaField>,
     docId?: string,
     session?: ClientSession
-  ): Promise<TDocumentRecordSerialized> {
+  ): Promise<TDocumentRecordNullable> {
     return this.insertOne(
       {
         document: fields,
@@ -221,9 +78,9 @@ possible field kinds explicitly to ensure correctness.`
   }
 
   public async insertOne(
-    doc: OptionalId<TDocumentRecordSerialized>,
+    doc: OptionalId<TDocumentRecordNullable>,
     session?: ClientSession
-  ): Promise<TDocumentRecordSerialized> {
+  ): Promise<TDocumentRecordNullable> {
     logger.debug(`Inserting document to collection`, { doc });
     const result = await this.collection.insertOne(doc, { session });
 
@@ -241,7 +98,7 @@ possible field kinds explicitly to ensure correctness.`
    * inactive. */
   public async updateOne(
     docId: string,
-    fields: Record<string, TContractSchemaFieldSerializable>,
+    fields: Record<string, TDocumentField>,
     session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
