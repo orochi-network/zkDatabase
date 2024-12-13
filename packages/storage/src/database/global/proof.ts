@@ -19,7 +19,7 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
     if (!this.instance) {
       this.instance = new ModelProof(
         zkDatabaseConstant.globalProofDatabase,
-        DB.proof,
+        DATABASE_ENGINE.proofService,
         zkDatabaseConstant.globalCollection.proof
       );
     }

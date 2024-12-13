@@ -41,7 +41,7 @@ async function listDocumentHistory(
       session
     )
   ) {
-    const { client } = DB.service;
+    const { client } = DATABASE_ENGINE.serverless;
     const paginationInfo = pagination || DEFAULT_PAGINATION;
     const pipeline = [
       {

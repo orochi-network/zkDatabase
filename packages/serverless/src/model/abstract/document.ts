@@ -6,7 +6,7 @@ import {
   TProvableTypeString,
 } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelBasic,
   ModelCollection,
   ModelMetadataDatabase,
@@ -71,7 +71,7 @@ export class ModelDocument extends ModelBasic<
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, DB.service, collectionName, {
+    super(databaseName, DATABASE_ENGINE.serverless, collectionName, {
       timeseries: {
         timeField: 'updatedAt',
         granularity: 'seconds',
@@ -86,7 +86,7 @@ export class ModelDocument extends ModelBasic<
   get modelCollection() {
     return ModelCollection.getInstance(
       this.databaseName!,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       this.collectionName!
     );
   }

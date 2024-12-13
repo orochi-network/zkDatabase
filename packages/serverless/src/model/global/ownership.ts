@@ -1,7 +1,7 @@
 import { TOwnershipRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -14,7 +14,7 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelOwnership.collectionName
     );
   }
@@ -22,7 +22,7 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelOwnership.collectionName
     );
     /*

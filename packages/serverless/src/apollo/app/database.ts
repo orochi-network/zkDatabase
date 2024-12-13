@@ -125,7 +125,10 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
     databaseName,
   }),
   async (_root, args, _ctx) => {
-    const { databases } = await DB.service.client.db().admin().listDatabases();
+    const { databases } = await DATABASE_ENGINE.serverless.client
+      .db()
+      .admin()
+      .listDatabases();
 
     const isDatabaseExist = databases.some(
       (db) => db.name === args.databaseName
@@ -180,7 +183,10 @@ const dbExist = publicWrapper<TDatabaseRequest, boolean>(
     databaseName,
   }),
   async (_root, args, _ctx) => {
-    const { databases } = await DB.service.client.db().admin().listDatabases();
+    const { databases } = await DATABASE_ENGINE.serverless.client
+      .db()
+      .admin()
+      .listDatabases();
     return databases.some((db) => db.name === args.databaseName);
   }
 );

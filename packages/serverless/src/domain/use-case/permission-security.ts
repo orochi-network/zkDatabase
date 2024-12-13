@@ -1,5 +1,14 @@
 import {
-  Ownership,
+  TDocumentRecord,
+  TMetadataCollectionRecord,
+  TMetadataDetailDocument,
+  TMetadataDocument,
+  TParamCollection,
+  TParamDatabase,
+  TParamDocument,
+  TPermissionSudo,
+} from '@zkdb/common';
+import {
   OwnershipAndPermission,
   Permission,
   PermissionBase,
@@ -9,11 +18,6 @@ import { ModelMetadataCollection } from '../../model/database/metadata-collectio
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { isDatabaseOwner } from './database.js';
-import {
-  TDocumentRecord,
-  TMetadataDetailDocument,
-  TMetadataDocument,
-} from '@zkdb/common';
 
 export class PermissionSecurity {
   // List all groups of a user
@@ -31,10 +35,10 @@ export class PermissionSecurity {
 
   // Get permission of a database
   public static async database(
-    databaseName: string,
-    actor: string,
+    paramDatabase: TParamDatabase,
     session?: ClientSession
   ): Promise<PermissionBase> {
+    const { databaseName, actor } = paramDatabase;
     // If user is database owner then return all system permissions
     if (await isDatabaseOwner(databaseName, actor, session)) {
       return PermissionBase.permissionAll();
@@ -44,23 +48,27 @@ export class PermissionSecurity {
 
   // Get permission of a collection
   public static async collection(
-    databaseName: string,
-    collectionName: string,
-    actor: string,
+    paramCollection: TPermissionSudo<TParamCollection>,
     session?: ClientSession
   ): Promise<PermissionBase> {
+    const { databaseName, collectionName, actor, sudo } = paramCollection;
     // If user is database owner then return all system permissions
     if (await isDatabaseOwner(databaseName, actor)) {
       return PermissionBase.permissionAll();
     }
     const imMetadataCollection =
       ModelMetadataCollection.getInstance(databaseName);
-    const metadata = await imMetadataCollection.findOne(
-      {
-        collectionName,
-      },
-      { session }
-    );
+    // If ownership and permission is not provided then fetch from metadata collection
+    const metadata =
+      sudo ||
+      (
+        await imMetadataCollection.findOne(
+          {
+            collectionName,
+          },
+          { session }
+        )
+      )?.metadata;
 
     const listGroup = await PermissionSecurity.listGroupOfUser(
       databaseName,
@@ -77,24 +85,25 @@ export class PermissionSecurity {
 
   // Get permission of a collection
   public static async document(
-    databaseName: string,
-    collectionName: string,
-    docId: string,
-    actor: string,
+    paramDocument: TPermissionSudo<TParamDocument>,
     session?: ClientSession
   ): Promise<PermissionBase> {
+    const { databaseName, collectionName, docId, actor, sudo } = paramDocument;
     // If user is database owner then return all system permissions
     if (await isDatabaseOwner(databaseName, actor)) {
       return PermissionBase.permissionAll();
     }
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
-    const metadata = await imMetadataDocument.findOne(
-      {
-        collectionName,
-        docId,
-      },
-      { session }
-    );
+    // Ownership and permission of document is not provided then we're going to check in the database
+    const metadata =
+      sudo ||
+      (await imMetadataDocument.findOne(
+        {
+          collectionName,
+          docId,
+        },
+        { session }
+      ));
     const listGroup = await PermissionSecurity.listGroupOfUser(
       databaseName,
       actor,
@@ -148,6 +157,34 @@ export class PermissionSecurity {
     ).contain(requiredPermission);
   }
 
+  public static async filterMetadataCollection(
+    databaseName: string,
+    listCollection: TMetadataCollectionRecord[],
+    actor: string,
+    requiredPermission: PermissionBase,
+    session?: ClientSession
+  ): Promise<TMetadataCollectionRecord[]> {
+    // If user is database owner then return all system permissions
+    if (await isDatabaseOwner(databaseName, actor)) {
+      return listCollection;
+    }
+
+    const listGroup = await PermissionSecurity.listGroupOfUser(
+      databaseName,
+      actor,
+      session
+    );
+
+    return listCollection.filter((currentCollection) =>
+      PermissionSecurity.requiredPermissionMatch(
+        actor,
+        listGroup,
+        currentCollection.metadata,
+        requiredPermission
+      )
+    );
+  }
+
   // Filter a document list by required permission
   public static async filterDocument(
     databaseName: string,
@@ -198,7 +235,7 @@ export class PermissionSecurity {
     databaseName: string,
     listDoc: TMetadataDetailDocument<TDocumentRecord>[],
     actor: string,
-    requirePermission: PermissionBase,
+    requiredPermission: PermissionBase,
     session?: ClientSession
   ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
     // If user is database owner then return all system permissions
@@ -217,7 +254,7 @@ export class PermissionSecurity {
         actor,
         listGroup,
         currentDoc.metadata,
-        requirePermission
+        requiredPermission
       )
     );
   }
@@ -257,7 +294,7 @@ export class PermissionSecurity {
       const collectionMetadata = await imMetadataCollection.findOne({
         collectionName,
       });
-      if (actor !== collectionMetadata?.owner) {
+      if (actor !== collectionMetadata?.metadata?.owner) {
         throw new Error(
           `Permission ${actor} is not owner of collection ${collectionName}`
         );

@@ -83,7 +83,7 @@ export const transactionType = Joi.string().valid(
   ...Object.values(ETransactionType)
 );
 
-export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict().value;
+export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
 
 export * from './collection';
 export * from './common';

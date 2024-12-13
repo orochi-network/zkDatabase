@@ -38,12 +38,11 @@ export type TCollectionIndexMap<T = any> = {
   [Property in keyof T as `document.${string & Property}.value`]?: IndexDirection;
 };
 
+// It's base type of collection, it isn't how it will be store in mongodb
 export type TCollection = {
   collectionName: string;
   schema: TSchemaFieldDefinition[];
 };
-
-export type TCollectionRecord = TDbRecord<TCollection>;
 
 // Collection index info in MongoDB
 export type TCollectionIndexInfoMongo = {
