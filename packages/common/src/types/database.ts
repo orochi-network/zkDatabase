@@ -1,5 +1,4 @@
-import { TDbRecord } from './common.js';
-import { TMetadataCollection } from './metadata.js';
+import { TDbRecord, TPickOptional } from './common.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
@@ -9,18 +8,16 @@ export type TMetadataDatabase = {
   databaseOwner: string;
   merkleHeight: number;
   appPublicKey: string;
-};
-
-export type TDatabaseKeyRecord = TDbRecord<{
-  privateKey: string;
-  databaseName: string;
-}>;
-
-export type TDatabaseDetail = TMetadataDatabase & {
-  collection: TMetadataCollection[];
-  databaseSize: number;
+  // @TODO: This field will be update by our task scheduler to polling status from blockchain
   deployStatus: ETransactionStatus;
 };
+
+export type TMetadataDatabaseMongo = {
+  sizeOnDisk: number;
+};
+
+export type TMetadataDatabaseDetail = TMetadataDatabase &
+  TPickOptional<TMetadataDatabaseMongo, 'sizeOnDisk'>;
 
 export type TMetadataDatabaseRecord = TDbRecord<TMetadataDatabase>;
 
@@ -39,7 +36,9 @@ export type TDatabaseListRequest = {
   pagination: TPagination;
 };
 
-export type TDatabaseListResponse = TPaginationReturn<TDatabaseDetail[]>;
+export type TDatabaseListResponse = TPaginationReturn<
+  TMetadataDatabaseDetail[]
+>;
 
 // Database create
 export type TDatabaseCreateRequest = TDatabaseRequest & {
