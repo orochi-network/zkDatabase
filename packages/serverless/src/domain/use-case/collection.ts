@@ -17,7 +17,7 @@ import {
   convertSchemaDefinitionToIndex,
   getCurrentTime,
 } from '../../helper/common.js';
-import { isGroupExist } from './group.js';
+import { Group } from './group.js';
 import { PermissionSecurity } from './permission-security.js';
 
 export class Collection {
@@ -210,7 +210,7 @@ export class Collection {
       );
     }
 
-    if (!(await isGroupExist(databaseName, groupName, session))) {
+    if (!(await Group.exist({ databaseName, groupName }, session))) {
       throw Error(
         `Group ${groupName} does not exist in database ${databaseName}`
       );

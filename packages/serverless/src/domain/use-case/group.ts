@@ -26,7 +26,7 @@ export class Group {
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if a matching group exists, otherwise `false`.
    */
-  public static async isExist(
+  public static async exist(
     params: TGroupParamExist,
     session?: ClientSession
   ): Promise<boolean> {
@@ -55,7 +55,7 @@ export class Group {
     // Checking actor is owner first
     if (await isDatabaseOwner(databaseName, createdBy, session)) {
       // Checking group existed before
-      if (await Group.isExist({ databaseName, groupName }, session)) {
+      if (await Group.exist({ databaseName, groupName }, session)) {
         throw new Error(
           `Group ${groupName} is already exist for database ${databaseName}`
         );
@@ -112,14 +112,14 @@ export class Group {
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to the group detail, conforming to the `TGroupDetail` type.
    */
-  public static async getDetail(
+  public static async detail(
     params: TGroupParamDetail,
     session?: ClientSession
   ): Promise<TGroupDetail> {
     const { databaseName, groupName } = params;
 
     // Checking group existed before
-    if (!(await Group.isExist({ databaseName, groupName }, session))) {
+    if (!(await Group.exist({ databaseName, groupName }, session))) {
       throw Error(
         `Group ${groupName} does not exist for database ${databaseName}`
       );
@@ -144,34 +144,6 @@ export class Group {
     }
 
     throw new Error('Group not existed');
-  }
-
-  /**
-   * Checks if a user is a participant in a group based on the provided parameters.
-   *
-   * @param params - The parameters to identify the group and user, following the `TGroupParamIsParticipant` type.
-   * @param session - (Optional) The MongoDB session for transactional queries.
-   * @returns A promise resolving to `true` if the user is a participant, otherwise `false`.
-   */
-  public static async isParticipant(
-    params: TGroupParamIsParticipant,
-    session?: ClientSession
-  ): Promise<boolean> {
-    const { databaseName, groupName, userName } = params;
-
-    // Checking group existed before
-    if (!(await Group.isExist({ databaseName, groupName }, session))) {
-      throw Error(
-        `Group ${groupName} does not exist for database ${databaseName}`
-      );
-    }
-    // Initialize model
-    const modelUserGroup = new ModelUserGroup(databaseName);
-    const listGroup = await modelUserGroup.listGroupByUserName(userName, {
-      session,
-    });
-    // Checking whether the group is a part of list Group of that user
-    return listGroup.includes(groupName);
   }
 
   /**
@@ -246,7 +218,7 @@ export class Group {
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were added successfully, otherwise `false`.
    */
-  public static async addListUserToGroup(
+  public static async addListUser(
     params: TGroupParamAddListUser,
     session?: ClientSession
   ): Promise<boolean> {
@@ -289,7 +261,7 @@ export class Group {
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were removed successfully, otherwise `false`.
    */
-  public static async removeListUserFromGroup(
+  public static async removeListUser(
     params: TGroupParamAddListUser,
     session?: ClientSession
   ): Promise<boolean> {
