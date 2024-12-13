@@ -21,7 +21,7 @@ import { isGroupExist } from './group.js';
 import { PermissionSecurity } from './permission-security.js';
 
 export class Collection {
-  public static async createIndex(
+  public static async indexCreate(
     paramCollection: TPermissionSudo<TParamCollection>,
     index: TCollectionIndexMap,
     session?: ClientSession
@@ -82,95 +82,7 @@ export class Collection {
     );
   }
 
-  public static async create(
-    paramCollection: TParamCollection,
-    schema: TSchemaFieldDefinition[],
-    groupName = DEFAULT_GROUP_ADMIN,
-    permission = PERMISSION_DEFAULT_VALUE,
-    session?: ClientSession
-  ): Promise<boolean> {
-    const { databaseName, collectionName, actor } = paramCollection;
-    // Get system database
-    const modelDatabase = ModelDatabase.getInstance(databaseName);
-
-    if (await modelDatabase.isCollectionExist(collectionName)) {
-      throw Error(
-        `Collection ${collectionName} already exist in database ${databaseName}`
-      );
-    }
-
-    if (!(await isGroupExist(databaseName, groupName, session))) {
-      throw Error(
-        `Group ${groupName} does not exist in database ${databaseName}`
-      );
-    }
-
-    if (!(await modelDatabase.createCollection(collectionName, session))) {
-      throw new Error(`Failed to create collection ${collectionName}`);
-    }
-
-    // Create metadata collection
-    const resultInsertMetadata = await ModelMetadataCollection.getInstance(
-      databaseName
-    ).insertOne(
-      {
-        collectionName,
-        schema,
-        metadata: {
-          owner: actor,
-          group: groupName,
-          permission: permission.value,
-        },
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      {
-        session,
-      }
-    );
-
-    if (!resultInsertMetadata.acknowledged) {
-      throw new Error(
-        `Failed to insert metadata for collection ${collectionName}`
-      );
-    }
-
-    // Create index by schema definition
-    const collectionIndex = convertSchemaDefinitionToIndex(schema);
-
-    if (Object.keys(collectionIndex).length > 0) {
-      const result = await Collection.createIndex(
-        { databaseName, actor, collectionName },
-        collectionIndex,
-        session
-      );
-      return result;
-    }
-
-    return true;
-  }
-
-  public static async list(
-    databaseName: string,
-    actor: string,
-    session?: ClientSession
-  ): Promise<TMetadataCollectionRecord[]> {
-    const listMetadataCollection = await ModelMetadataCollection.getInstance(
-      databaseName
-    )
-      .find()
-      .toArray();
-
-    return PermissionSecurity.filterMetadataCollection(
-      databaseName,
-      listMetadataCollection,
-      actor,
-      PermissionBase.permissionRead(),
-      session
-    );
-  }
-
-  public static async listIndex(
+  public static async indexList(
     paramCollection: TParamCollection
   ): Promise<TCollectionIndexInfo[]> {
     const { databaseName, collectionName, actor } = paramCollection;
@@ -231,7 +143,7 @@ export class Collection {
     );
   }
 
-  public static async isIndexExist(
+  public static async indexExist(
     paramCollection: TParamCollection,
     indexName: string,
     session?: ClientSession
@@ -254,7 +166,7 @@ export class Collection {
     );
   }
 
-  public static async dropIndex(
+  public static async indexDrop(
     paramCollection: TParamCollection,
     indexName: string
   ): Promise<boolean> {
@@ -263,7 +175,7 @@ export class Collection {
       await PermissionSecurity.collection(paramCollection);
     if (actorPermission.system) {
       // TODO: Owner should able to drop
-      if (await Collection.isIndexExist(paramCollection, indexName)) {
+      if (await Collection.indexExist(paramCollection, indexName)) {
         return ModelCollection.getInstance(
           databaseName,
           DATABASE_ENGINE.serverless,
@@ -281,7 +193,95 @@ export class Collection {
     );
   }
 
-  public static async collectionExist(
+  public static async create(
+    paramCollection: TParamCollection,
+    schema: TSchemaFieldDefinition[],
+    groupName = DEFAULT_GROUP_ADMIN,
+    permission = PERMISSION_DEFAULT_VALUE,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const { databaseName, collectionName, actor } = paramCollection;
+    // Get system database
+    const modelDatabase = ModelDatabase.getInstance(databaseName);
+
+    if (await modelDatabase.isCollectionExist(collectionName)) {
+      throw Error(
+        `Collection ${collectionName} already exist in database ${databaseName}`
+      );
+    }
+
+    if (!(await isGroupExist(databaseName, groupName, session))) {
+      throw Error(
+        `Group ${groupName} does not exist in database ${databaseName}`
+      );
+    }
+
+    if (!(await modelDatabase.createCollection(collectionName, session))) {
+      throw new Error(`Failed to create collection ${collectionName}`);
+    }
+
+    // Create metadata collection
+    const resultInsertMetadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    ).insertOne(
+      {
+        collectionName,
+        schema,
+        metadata: {
+          owner: actor,
+          group: groupName,
+          permission: permission.value,
+        },
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+      {
+        session,
+      }
+    );
+
+    if (!resultInsertMetadata.acknowledged) {
+      throw new Error(
+        `Failed to insert metadata for collection ${collectionName}`
+      );
+    }
+
+    // Create index by schema definition
+    const collectionIndex = convertSchemaDefinitionToIndex(schema);
+
+    if (Object.keys(collectionIndex).length > 0) {
+      const result = await Collection.indexCreate(
+        { databaseName, actor, collectionName },
+        collectionIndex,
+        session
+      );
+      return result;
+    }
+
+    return true;
+  }
+
+  public static async list(
+    databaseName: string,
+    actor: string,
+    session?: ClientSession
+  ): Promise<TMetadataCollectionRecord[]> {
+    const listMetadataCollection = await ModelMetadataCollection.getInstance(
+      databaseName
+    )
+      .find()
+      .toArray();
+
+    return PermissionSecurity.filterMetadataCollection(
+      databaseName,
+      listMetadataCollection,
+      actor,
+      PermissionBase.permissionRead(),
+      session
+    );
+  }
+
+  public static async exist(
     databaseName: string,
     collectionName: string
   ): Promise<boolean> {
