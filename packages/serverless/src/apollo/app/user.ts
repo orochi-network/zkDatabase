@@ -11,14 +11,11 @@ import {
   TUserSignUpResponse,
 } from '@zkdb/common';
 import { randomUUID } from 'crypto';
+import { User } from 'domain/use-case/user.js';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
 import { DEFAULT_PAGINATION } from '../../common/const.js';
-import {
-  findUser as findUserDomain,
-  signUpUser,
-} from '../../domain/use-case/user.js';
 import { gql } from '../../helper/common.js';
 import config from '../../helper/config.js';
 import {
@@ -249,17 +246,16 @@ const userSignUp = publicWrapper<TUserSignUpRequest, TUserSignUpResponse>(
       newUser: { userData, userName, email },
       proof,
     } = args;
-    const result = signUpUser(
-      {
+
+    return User.signUpUser({
+      user: {
         userName,
         email,
-        publicKey: proof.publicKey,
         userData,
         activated: true,
       },
-      proof
-    );
-    return result;
+      signature: proof,
+    });
   }
 );
 

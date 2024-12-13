@@ -261,7 +261,7 @@ export class Group {
       if (group) {
         const modelUser = new ModelUser();
         // Check list of user exist
-        if (await modelUser.areUsersExist(listUserName)) {
+        if (await modelUser.isListUserExist(listUserName)) {
           const modelUserGroup = new ModelUserGroup(databaseName);
           const result = await modelUserGroup.addUserListToGroup(
             listUserName,
@@ -304,7 +304,7 @@ export class Group {
       if (group) {
         const modelUser = new ModelUser();
         // Check list of user exist
-        if (await modelUser.areUsersExist(listUserName)) {
+        if (await modelUser.isListUserExist(listUserName)) {
           const modelUserGroup = new ModelUserGroup(databaseName);
           const result = await modelUserGroup.removeUserListFromGroup(
             listUserName,
