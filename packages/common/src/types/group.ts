@@ -3,6 +3,7 @@ import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TUser, TUserRecord } from './user.js';
 
+// For model layer type
 export type TGroup = {
   groupName: string;
   groupDescription: string;
@@ -23,6 +24,38 @@ export type TGroupDetail = TGroupRecord & { listUser: TGroupUserInfo[] };
 
 export type TUserGroupRecord = TDbRecord<TUserGroup>;
 
+// For use-case param type
+type TGroupParam = TGroup & {
+  databaseName: string;
+};
+
+export type TGroupParamCreate = TGroupParam;
+
+type TGroupDatabaseNameParam = Pick<TGroupParam, 'databaseName' | 'groupName'>;
+export type TGroupParamExist = TGroupDatabaseNameParam;
+
+export type TGroupParamDetail = TGroupDatabaseNameParam;
+
+export type TGroupParamIsParticipant = TGroupDatabaseNameParam & {
+  userName: string;
+};
+
+export type TGroupParamUpdateMetadata = Pick<
+  TGroupParam,
+  'databaseName' | 'groupName' | 'createdBy'
+> & {
+  newGroupName?: string;
+  newDescription?: string;
+};
+
+export type TGroupParamAddListUser = Pick<
+  TGroupParam,
+  'databaseName' | 'createdBy' | 'groupName'
+> & {
+  listUserName: string[];
+};
+
+// For application layer type
 export type TGroupRequest = TDatabaseRequest & Pick<TGroup, 'groupName'>;
 
 export type TGroupUpdateRequest = TGroupRequest & {
