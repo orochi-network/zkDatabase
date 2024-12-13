@@ -1,6 +1,6 @@
 import { TUserGroup, TUserGroupRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -20,7 +20,11 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     zkDatabaseConstant.databaseCollection.userGroup;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelUserGroup.collectionName);
+    super(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      ModelUserGroup.collectionName
+    );
   }
 
   public async createUserGroup(
@@ -135,7 +139,7 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUserGroup.collectionName
     );
     if (!(await collection.isExist())) {

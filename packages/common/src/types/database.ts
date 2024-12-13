@@ -11,6 +11,11 @@ export type TMetadataDatabase = {
   appPublicKey: string;
 };
 
+export type TDatabaseKeyRecord = TDbRecord<{
+  privateKey: string;
+  databaseName: string;
+}>;
+
 export type TDatabaseDetail = TMetadataDatabase & {
   collection: TMetadataCollection[];
   databaseSize: number;

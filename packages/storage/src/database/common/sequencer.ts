@@ -1,7 +1,7 @@
 import { ClientSession, WithoutId } from 'mongodb';
 import { ESequencer, TSequencedItem } from '@zkdb/common';
 import { zkDatabaseConstant } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 import { getCurrentTime } from '../../helper/common.js';
 import ModelCollection from '../general/collection.js';
@@ -15,7 +15,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
   }
@@ -77,7 +77,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   private static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {

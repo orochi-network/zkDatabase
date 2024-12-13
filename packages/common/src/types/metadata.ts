@@ -4,23 +4,27 @@ import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TDocument } from './document.js';
 
-export type TMetadataBasic = OwnershipAndPermission & {
-  collectionName: string;
-};
+export type TMetadataBasic = OwnershipAndPermission;
 
 // Document metadata
 export type TMetadataDocument = TMetadataBasic & {
+  collectionName: string;
   docId: string;
   merkleIndex: string;
 };
 
 export type TMetadataDocumentRecord = TDbRecord<TMetadataDocument>;
 
+// Metadata from mongodb
+export type TMetadataCollectionMongo = {
+  sizeOnDisk: number;
+};
+
 // Collection metadata
-export type TMetadataCollection = TMetadataBasic &
-  TCollection & {
-    sizeOnDisk: number;
-  };
+export type TMetadataCollection = TMetadataDetail<
+  TCollection & Partial<TMetadataCollectionMongo>,
+  TMetadataBasic
+>;
 
 export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
 
@@ -34,11 +38,6 @@ export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
 export type TMetadataDetail<T, M> = T & { metadata: M };
 
 export type TMetadataDetailDocument<T> = TMetadataDetail<T, TMetadataDocument>;
-
-export type TMetadataDetailCollection<T> = TMetadataDetail<
-  T,
-  TMetadataCollection
->;
 
 export type TMetadataDocumentRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'> &

@@ -1,6 +1,6 @@
 import { FindOptions, InsertOneOptions, WithId, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
 import { TProofRecord } from '@zkdb/common';
@@ -12,7 +12,7 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
     if (!this.instance) {
       this.instance = new ModelProof(
         zkDatabaseConstant.globalProofDatabase,
-        DB.proof,
+        DATABASE_ENGINE.proofService,
         zkDatabaseConstant.globalCollection.proof
       );
     }

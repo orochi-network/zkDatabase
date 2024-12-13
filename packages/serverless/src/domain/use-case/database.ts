@@ -112,7 +112,10 @@ export async function getListDatabaseDetail(
   filter: FilterCriteria,
   pagination?: TPagination
 ): Promise<TPaginationReturn<TDatabaseDetail[]>> {
-  const databasesInfo = await DB.service.client.db().admin().listDatabases();
+  const databasesInfo = await DATABASE_ENGINE.serverless.client
+    .db()
+    .admin()
+    .listDatabases();
 
   if (!databasesInfo?.databases?.length) {
     return {

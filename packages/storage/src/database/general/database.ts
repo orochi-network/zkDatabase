@@ -8,7 +8,7 @@ import {
   zkDatabaseConstant,
   zkDatabaseMetadataCollections,
 } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 export type DocumentMetaIndex = {
@@ -25,7 +25,10 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {
-    super(databaseName || zkDatabaseConstant.globalDatabase, DB.service);
+    super(
+      databaseName || zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.serverless
+    );
   }
 
   public static getInstance<T extends Document>(
@@ -58,11 +61,15 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   public async createCollection(
     collectionName: string,
     session?: ClientSession
-  ): Promise<void> {
+  ): Promise<boolean> {
     const isExist = await this.isCollectionExist(collectionName);
     if (!isExist) {
-      await this.db.createCollection(collectionName, { session });
+      const result = await this.db.createCollection(collectionName, {
+        session,
+      });
+      return typeof result === 'object' && result !== null;
     }
+    return false;
   }
 
   public async dropCollection(collectionName: string): Promise<boolean> {

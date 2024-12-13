@@ -1,17 +1,14 @@
-import { TDbRecord, TMetadataCollection } from '@zkdb/common';
+import { TMetadataCollectionRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { FindOptions, WithoutId } from 'mongodb';
-
-export interface IMetadataCollection
-  extends Omit<TDbRecord<TMetadataCollection>, 'sizeOnDisk'> {}
+import { FindOptions, OptionalId } from 'mongodb';
 
 export class ModelMetadataCollection extends ModelGeneral<
-  WithoutId<IMetadataCollection>
+  OptionalId<TMetadataCollectionRecord>
 > {
   private static collectionName: string =
     zkDatabaseConstant.databaseCollection.metadataCollection;
@@ -19,7 +16,11 @@ export class ModelMetadataCollection extends ModelGeneral<
   private static instances: Record<string, any> = {};
 
   private constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelMetadataCollection.collectionName);
+    super(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      ModelMetadataCollection.collectionName
+    );
   }
 
   public static getInstance(databaseName: string): ModelMetadataCollection {
@@ -44,7 +45,7 @@ export class ModelMetadataCollection extends ModelGeneral<
   public static async init(databaseName: string) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelMetadataCollection.collectionName
     );
     if (!(await collection.isExist())) {

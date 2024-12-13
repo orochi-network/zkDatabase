@@ -16,3 +16,4 @@ export * from './setting';
 export * from './transaction';
 export * from './user';
 export * from './environment';
+export * from './param';

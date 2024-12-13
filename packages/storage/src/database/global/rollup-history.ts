@@ -1,7 +1,7 @@
 import { TRollUpHistory, TRollUpHistoryRecord } from '@zkdb/common';
 import { ReplaceOptions, UpdateResult } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import { WithoutId } from 'mongodb';
@@ -12,7 +12,7 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.rollup
     );
   }

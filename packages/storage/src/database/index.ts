@@ -7,9 +7,9 @@ import { ModelCollection } from './general/collection.js';
 import { DocumentMetaIndex, ModelDatabase } from './general/database.js';
 import { ModelMetadataDatabase } from './global/metadata-database.js';
 import { ModelProof } from './global/proof.js';
-import { ModelQueueTask, TaskEntity } from './global/queue.js';
+import { ModelQueueTask } from './global/queue.js';
 import { ModelRollup } from './global/rollup-history.js';
-import { ModelSecureStorage, PrivateKey } from './global/secure-storage.js';
+import { ModelSecureStorage } from './global/secure-storage.js';
 import { ModelTransaction } from './global/transactions.js';
 import {
   CompoundSession,
@@ -33,8 +33,6 @@ export {
   ModelSecureStorage,
   ModelSequencer,
   ModelTransaction,
-  PrivateKey,
-  TaskEntity,
   withCompoundTransaction,
   withTransaction,
 };

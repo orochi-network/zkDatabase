@@ -9,7 +9,7 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelBasic from '../base/basic.js';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
@@ -22,7 +22,7 @@ export class ModelMetadataDatabase extends ModelBasic<
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.metadata_database
     );
   }

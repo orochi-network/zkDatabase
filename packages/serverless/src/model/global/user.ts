@@ -1,6 +1,6 @@
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -24,7 +24,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUser.collectionName
     );
   }
@@ -32,7 +32,7 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

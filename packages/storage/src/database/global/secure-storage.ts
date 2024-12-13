@@ -1,13 +1,8 @@
-import { TDbRecord } from '@zkdb/common';
+import { TDbRecord, TDatabaseKeyRecord } from '@zkdb/common';
 import { zkDatabaseConstant } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
-
-type TDatabaseKeyRecord = TDbRecord<{
-  privateKey: string;
-  databaseName: string;
-}>;
 
 export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
   private static instance: ModelSecureStorage | null = null;
@@ -15,7 +10,7 @@ export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
   private constructor() {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.secure
     );
   }
@@ -31,7 +26,7 @@ export class ModelSecureStorage extends ModelGeneral<TDatabaseKeyRecord> {
   public static async init() {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.queue
     );
     if (!(await collection.isExist())) {
