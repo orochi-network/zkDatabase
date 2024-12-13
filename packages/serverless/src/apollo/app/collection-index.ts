@@ -11,12 +11,7 @@ import {
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  createIndex,
-  doesIndexExist,
-  dropIndex,
-  getIndexInfo,
-} from '../../domain/use-case/collection.js';
+import { Collection } from '../../domain/use-case/collection.js';
 import { convertToIndexSpecification, gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 
@@ -68,8 +63,12 @@ const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
     databaseName,
     collectionName,
   }),
-  async (_root, args, ctx) =>
-    getIndexInfo(args.databaseName, ctx.userName, args.collectionName)
+  async (_root, { databaseName, collectionName }, ctx) =>
+    Collection.indexList({
+      databaseName,
+      actor: ctx.userName,
+      collectionName,
+    })
 );
 
 const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(
@@ -78,12 +77,14 @@ const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(
     collectionName,
     indexName,
   }),
-  async (_root, args, ctx) =>
-    doesIndexExist(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      args.indexName
+  async (_root, { databaseName, collectionName, indexName }, ctx) =>
+    Collection.indexExist(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      indexName
     )
 );
 
@@ -94,12 +95,14 @@ const indexCreate = authorizeWrapper<TIndexCreateRequest, boolean>(
     collectionName,
     index: CollectionIndex,
   }),
-  async (_root, args, ctx) =>
-    createIndex(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      convertToIndexSpecification(args.index)
+  async (_root, { databaseName, collectionName, index }, ctx) =>
+    Collection.indexCreate(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      convertToIndexSpecification(index)
     )
 );
 
@@ -109,12 +112,14 @@ const indexDrop = authorizeWrapper<TIndexDropRequest, boolean>(
     collectionName,
     indexName,
   }),
-  async (_root, args, ctx) =>
-    dropIndex(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      args.indexName
+  async (_root, { databaseName, collectionName, indexName }, ctx) =>
+    Collection.indexDrop(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      indexName
     )
 );
 

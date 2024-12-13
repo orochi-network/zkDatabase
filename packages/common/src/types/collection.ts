@@ -101,10 +101,10 @@ export type TIndexCreateRequest = TIndexRequest &
   };
 
 // Index exist
-export type TIndexExistRequest = TIndexCreateRequest;
+export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
 
 // Index drop
-export type TIndexDropRequest = TIndexCreateRequest;
+export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;
 
 // Index detail
 export type TIndexDetailRequest = TIndexRequest;
