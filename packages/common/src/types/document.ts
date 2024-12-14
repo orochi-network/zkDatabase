@@ -66,6 +66,7 @@ export type TDocumentHistoryFindRequest = TCollectionRequest & {
 };
 
 export type TDocumentHistoryListRequest = TCollectionRequest & {
+  docId: string;
   pagination: TPagination;
 };
 

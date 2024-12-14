@@ -4,8 +4,9 @@ import Joi from 'joi';
 import {
   createDocument as createDocumentImpl,
   deleteDocument,
-  findDocumentWithMetadata,
+  listDocumentWithMetadata as listDocumentWithMetadataImpl,
   findDocument as findDocumentImpl,
+  updateDocument as updateDocumentImpl,
 } from '../../domain/use-case/document.js';
 import {
   findDocumentHistory as findDocumentHistoryImpl,
@@ -17,6 +18,7 @@ import {
   collectionName,
   databaseName,
   documentField,
+  documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
   TDocumentListRequest,
@@ -24,11 +26,10 @@ import {
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
   TDocumentHistoryListRequest,
-  TPaginationReturn,
   TWithProofStatus,
   TDocumentWithMetadataResponse,
-  TDocumentHistoryListResponse,
-  documentRecord as schemaDocumentRecord,
+  TDocumentRecordNullable,
+  TDocumentHistoryResponse,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
@@ -99,12 +100,6 @@ export const typeDefsDocument = gql`
     proofStatus: String
   }
 
-  type TListDocumentResponse {
-    data: [TDocumentReadResponse]!
-    totalSize: Int!
-    offset: Int!
-  }
-
   type TDocumentHistoryResponse {
     docId: String!
     documents: [TDocumentReadResponse!]!
@@ -128,13 +123,6 @@ export const typeDefsDocument = gql`
       collectionName: String!
       query: JSON!
     ): TDocumentReadResponse
-
-    listDocument(
-      databaseName: String!
-      collectionName: String!
-      query: JSON!
-      pagination: PaginationInput
-    ): TListDocumentResponse!
 
     listDocumentWithMetadata(
       databaseName: String!
@@ -183,7 +171,7 @@ export const typeDefsDocument = gql`
 // Query
 const findDocument = authorizeWrapper<
   TDocumentFindRequest,
-  TDocumentFindResponse | null
+  TDocumentRecordNullable | null
 >(SCHEMA_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
   const document = await withTransaction((session) =>
     findDocumentImpl(
@@ -197,33 +185,6 @@ const findDocument = authorizeWrapper<
 
   return document;
 });
-
-const listDocument = authorizeWrapper<
-  TDocumentListRequest,
-  TPaginationReturn<Array<TDocumentFindResponse>>
->(
-  SCHEMA_DOCUMENT_LIST_REQUEST,
-  async (_root: unknown, args: TDocumentListRequest, ctx) => {
-    const result = await withTransaction(async (session) => {
-      const documents = await listDocumentImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.query,
-        args.pagination || DEFAULT_PAGINATION,
-        session
-      );
-
-      return documents;
-    });
-
-    if (result == null) {
-      throw new Error('Failed to list documents, transaction returned null');
-    }
-
-    return result;
-  }
-);
 
 const listDocumentWithMetadata = authorizeWrapper<
   TDocumentListRequest,
@@ -317,12 +278,14 @@ const findDocumentHistory = authorizeWrapper(
 
 const listDocumentHistory = authorizeWrapper<
   TDocumentHistoryListRequest,
-  TDocumentHistoryListResponse
+  TDocumentHistoryResponse[]
+  // TODO: validate input
 >(Joi.object().optional(), async (_root: unknown, args, ctx) => {
   return withTransaction(async (session) => {
     const documents = await listDocumentHistoryImpl(
       args.databaseName,
       args.collectionName,
+      args.docId,
       ctx.userName,
       args.pagination || DEFAULT_PAGINATION,
       session
@@ -336,7 +299,6 @@ export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
     findDocument,
-    listDocument,
     listDocumentWithMetadata,
     findDocumentHistory,
     listDocumentHistory,

@@ -26,12 +26,7 @@ export class ModelDocument extends ModelBasic<
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, DB.service, collectionName, {
-      timeseries: {
-        timeField: 'updatedAt',
-        granularity: 'seconds',
-      },
-    });
+    super(databaseName, DB.service, collectionName);
   }
 
   get modelDatabase() {

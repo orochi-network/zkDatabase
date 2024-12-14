@@ -301,7 +301,7 @@ async function deleteDocument(
   throw Error('Document not found');
 }
 
-async function findDocumentWithMetadata(
+async function listDocumentWithMetadata(
   databaseName: string,
   collectionName: string,
   actor: string,
@@ -363,7 +363,7 @@ async function findDocumentWithMetadata(
 export {
   createDocument,
   deleteDocument,
-  findDocumentWithMetadata,
+  listDocumentWithMetadata,
   findDocument,
   updateDocument,
 };

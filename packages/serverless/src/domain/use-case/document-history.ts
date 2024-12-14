@@ -13,9 +13,9 @@ import { DB, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
 import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocument from '../../model/abstract/document.js';
-import { isDatabaseOwner } from './database.js';
 import { PermissionSecurity } from './permission-security.js';
 import { DEFAULT_PAGINATION } from 'common/const.js';
+import { PermissionBase } from '@zkdb/permission';
 
 /** The data being returned by the mongodb pipeline above.
  * TODO: Need debugging to actually confirm this */
@@ -26,6 +26,7 @@ type TDocumentHistorySerialized = {
   active: boolean;
 };
 
+// TODO: This does not work yet, need to rework
 async function listDocumentHistory(
   databaseName: string,
   collectionName: string,
@@ -85,29 +86,20 @@ async function listDocumentHistory(
     const database = client.db(databaseName);
     const documentsCollection = database.collection(collectionName);
 
-    const listGroup = await PermissionSecurity.listGroupOfUser(
-      databaseName,
-      actor
-    );
-
     const documentsWithMetadata = (await documentsCollection
       .aggregate(pipeline)
       // TODO: need debugging to confirm the accuracy of this type annotation
       .toArray()) as TDocumentHistorySerialized[];
 
-    let filteredDocuments: TDocumentHistorySerialized[] = [];
-
-    if (!(await isDatabaseOwner(databaseName, actor))) {
-      filteredDocuments = filterDocumentsByPermission(
-        documentsWithMetadata,
+    let filteredDocuments =
+      await PermissionSecurity.filterMetadataDocumentDetail(
+        databaseName,
+        documentsWithMetadata as any, // TODO: Fix this type annotation
         actor,
-        userGroups
+        PermissionBase.permissionRead()
       );
-    } else {
-      filteredDocuments = documentsWithMetadata;
-    }
 
-    const result = filteredDocuments.map((historyDocument) => {
+    const result = filteredDocuments.map((historyDocument: any) => {
       assert(
         historyDocument.documents.length > 0,
         `Document history is empty, which should not happen if we expect the \
@@ -116,11 +108,9 @@ MongoDB pipeline to already handle this case`
 
       return {
         docId: historyDocument.documents[0].docId,
-        documents: historyDocument.documents.map((doc) => ({
+        documents: historyDocument.documents.map((doc: any) => ({
           ...doc,
-          document: Object.values(
-            ModelDocument.deserializeDocument(doc.document)
-          ),
+          document: Object.values(doc.document),
         })),
         metadata: {
           ...historyDocument.metadata,
@@ -130,7 +120,7 @@ MongoDB pipeline to already handle this case`
       };
     });
 
-    return result;
+    return result as any;
   }
 
   throw new Error(
@@ -138,13 +128,16 @@ MongoDB pipeline to already handle this case`
   );
 }
 
+// TODO: This does not work yet, need to refactor to remove duplicate logic and
+// add document metadata. Also catch up with UI designer to confirm the data
+// needed to display
 async function findDocumentHistory(
   databaseName: string,
   collectionName: string,
   actor: string,
   docId: string,
   session?: ClientSession
-): Promise<TSingleDocumentHistory | null> {
+): Promise<TDocumentHistoryResponse | null> {
   const actorPermissionCollection = await PermissionSecurity.collection(
     databaseName,
     collectionName,
@@ -188,15 +181,15 @@ async function findDocumentHistory(
 add document metadata`
   );
 
-  return {
-    docId,
-    documents: documentHistoryRecords.map((doc) => ({
-      ...doc,
-      document: Object.values(ModelDocument.deserializeDocument(doc.document)),
-    })),
-    active: documentHistoryRecords[0].active,
-    metadata: {} as any, // TODO:
-  };
+  // return {
+  //   docId,
+  //   documents: documentHistoryRecords.map((doc) => ({
+  //     ...doc,
+  //     document: Object.values(ModelDocument.deserializeDocument(doc.document)),
+  //   })),
+  //   active: documentHistoryRecords[0].active,
+  //   metadata: // TODO:
+  // };
 }
 
 export { listDocumentHistory, findDocumentHistory };
