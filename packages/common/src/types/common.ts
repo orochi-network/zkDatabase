@@ -1,7 +1,6 @@
 import { Request } from 'express';
-import { extend } from 'joi';
 import { ObjectId } from 'mongodb';
-import { type } from 'os';
+import { TPagination } from './pagination';
 
 type TDbRecordBasic = {
   _id: ObjectId;
@@ -12,6 +11,11 @@ type TDbRecordBasic = {
 export type TDbRecord<T> = T & TDbRecordBasic;
 
 export type TDbRecordOptional<T> = T & Partial<TDbRecordBasic>;
+
+export type TParamPagination<T> = {
+  query?: Partial<T>;
+  paginationInput?: TPagination;
+};
 
 // We extend express session to define session expiration time
 declare module 'express-session' {

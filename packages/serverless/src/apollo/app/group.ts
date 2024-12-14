@@ -1,11 +1,11 @@
 import {
-  SchemaGroupAddUser,
-  SchemaGroupCreate,
-  SchemaGroupDetail,
-  SchemaGroupListAll,
-  SchemaGroupListUser,
-  SchemaGroupRemoveUser,
-  SchemaGroupUpdate,
+  JOI_GROUP_ADD_USER,
+  JOI_GROUP_CREATE,
+  JOI_GROUP_DETAIL,
+  JOI_GROUP_LIST_ALL,
+  JOI_GROUP_LIST_USER,
+  JOI_GROUP_REMOVE_USER,
+  JOI_GROUP_UPDATE,
   TGroupAddUsersRequest,
   TGroupCreateRequest,
   TGroupInfoDetailRequest,
@@ -94,7 +94,7 @@ export const typeDefsGroup = gql`
 
 // Query
 const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
-  SchemaGroupListAll,
+  JOI_GROUP_LIST_ALL,
   async (_root, args) => {
     const groups = await new ModelGroup(args.databaseName).find({}).toArray();
     return groups;
@@ -102,7 +102,7 @@ const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
 );
 
 const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
-  SchemaGroupListUser,
+  JOI_GROUP_LIST_USER,
   async (_root, args) =>
     new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
 );
@@ -110,12 +110,12 @@ const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
 const groupDetail = publicWrapper<
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse
->(SchemaGroupDetail, async (_root, { databaseName, groupName }) =>
+>(JOI_GROUP_DETAIL, async (_root, { databaseName, groupName }) =>
   Group.detail({ databaseName, groupName })
 );
 
 const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
-  SchemaGroupUpdate,
+  JOI_GROUP_UPDATE,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
     const result = await withTransaction(async (session) => {
@@ -136,7 +136,7 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
 );
 
 const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
-  SchemaGroupCreate,
+  JOI_GROUP_CREATE,
   async (_root, { databaseName, groupDescription, groupName }, ctx) =>
     Boolean(
       withTransaction((session) =>
@@ -154,7 +154,7 @@ const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
 );
 
 const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  SchemaGroupAddUser,
+  JOI_GROUP_ADD_USER,
   async (_root, { databaseName, groupName, listUser }, ctx) =>
     Group.addListUser({
       databaseName,
@@ -165,7 +165,7 @@ const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
 );
 
 const groupRemoveUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  SchemaGroupRemoveUser,
+  JOI_GROUP_REMOVE_USER,
   async (_root: unknown, { databaseName, groupName, listUser }, ctx) =>
     Group.removeListUser({
       databaseName,

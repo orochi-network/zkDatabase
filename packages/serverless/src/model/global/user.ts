@@ -6,15 +6,14 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, InsertOneResult, WithoutId } from 'mongodb';
+import { ClientSession, OptionalId } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
-import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
-import logger from '../../helper/logger.js';
+import { objectToLookupPattern } from '../../helper/common.js';
 
-export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
+export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   private static collectionName: string =
     zkDatabaseConstant.globalCollection.user;
 

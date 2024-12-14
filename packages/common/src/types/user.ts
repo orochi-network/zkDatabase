@@ -3,6 +3,7 @@ import { TDbRecord } from './common.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { TMinaSignature } from './proof.js';
 
+// For model layer
 export type TUser = {
   userName: string;
   email: string;
@@ -17,6 +18,15 @@ export type TUserSignInRequest = {
   proof: TMinaSignature;
 };
 
+// For use-case param
+
+export type TUserParamSignUp = {
+  // Remove publicKey from TUser since TMinaSignature already have
+  user: Omit<TUser, 'publicKey'>;
+  signature: TMinaSignature;
+};
+
+// For application layer
 export type TUserSignInResponse = TUser & {
   accessToken: string;
 };

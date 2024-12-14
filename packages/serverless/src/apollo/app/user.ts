@@ -1,7 +1,7 @@
 import {
-  SchemaSignIn,
-  SchemaSignUp,
-  SchemaUserFind,
+  JOI_USER_SIGN_IN,
+  JOI_SIGN_UP,
+  JOI_USER_FIND,
   TUserFindRequest,
   TUserFindResponse,
   TUserSignInRequest,
@@ -108,7 +108,7 @@ const userMe = authorizeWrapper(async (_root, _args, context) => {
 });
 
 const userFind = publicWrapper<TUserFindRequest, TUserFindResponse>(
-  SchemaUserFind,
+  JOI_USER_FIND,
   async (_root, { query, pagination }) =>
     User.findMany({ query, paginationInput: pagination })
 );
@@ -124,7 +124,7 @@ const userEcdsaChallenge = publicWrapper(async (_root, _args, context) => {
 });
 
 const userSignIn = publicWrapper<TUserSignInRequest, TUserSignInResponse>(
-  SchemaSignIn,
+  JOI_USER_SIGN_IN,
   async (_root, args, context) => {
     if (typeof context.req.session.ecdsaChallenge !== 'string') {
       throw new Error('Invalid ECDSA challenge');
@@ -180,7 +180,7 @@ const userSignOut = authorizeWrapper<unknown, boolean>(
 );
 
 const userSignUp = publicWrapper<TUserSignUpRequest, TUserSignUpResponse>(
-  SchemaSignUp,
+  JOI_SIGN_UP,
   async (_root, args) => {
     const {
       newUser: { userData, userName, email },

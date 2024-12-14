@@ -9,7 +9,7 @@ import {
 import { pagination, publicKey, timestamp, userName } from '@validation';
 import Joi from 'joi';
 
-export const SignatureProof = Joi.object<TMinaSignature>({
+export const JOI_SIGNATURE_PROOF = Joi.object<TMinaSignature>({
   signature: Joi.object({
     field: Joi.string()
       .pattern(/[0-9]+/)
@@ -22,23 +22,23 @@ export const SignatureProof = Joi.object<TMinaSignature>({
   data: Joi.string().required(),
 });
 
-export const SchemaSignIn = Joi.object<TUserSignInRequest>({
-  proof: SignatureProof.required(),
+export const JOI_USER_SIGN_IN = Joi.object<TUserSignInRequest>({
+  proof: JOI_SIGNATURE_PROOF.required(),
 });
 
-export const SchemaUserSignUp = Joi.object<TUserSignUpInput>({
+export const JOI_USER_SIGN_UP = Joi.object<TUserSignUpInput>({
   userName: Joi.string().required(),
   email: Joi.string().email().required(),
   timestamp,
   userData: Joi.object().optional(),
 });
 
-export const SchemaSignUp = Joi.object<TUserSignUpRequest>({
-  newUser: SchemaUserSignUp,
-  proof: SignatureProof.required(),
+export const JOI_SIGN_UP = Joi.object<TUserSignUpRequest>({
+  newUser: JOI_USER_SIGN_UP,
+  proof: JOI_SIGNATURE_PROOF.required(),
 });
 
-export const SchemaUserFind = Joi.object<TUserFindRequest>({
+export const JOI_USER_FIND = Joi.object<TUserFindRequest>({
   query: Joi.object<TUser>({
     userName,
     email: Joi.string().email(),

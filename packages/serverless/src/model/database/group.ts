@@ -6,9 +6,9 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, WithoutId } from 'mongodb';
+import { ClientSession, OptionalId } from 'mongodb';
 
-export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
+export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
   private static collectionName: string =
     zkDatabaseConstant.databaseCollection.group;
 

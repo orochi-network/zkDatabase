@@ -1,8 +1,8 @@
 import {
-  TMinaSignature,
-  TPagination,
   TPaginationReturn,
+  TParamPagination,
   TUser,
+  TUserParamSignUp,
   TUserRecord,
 } from '@zkdb/common';
 import Client from 'mina-signer';
@@ -11,27 +11,15 @@ import { DEFAULT_PAGINATION } from '../../common/const.js';
 import { getCurrentTime } from '../../helper/common.js';
 import config from '../../helper/config.js';
 import ModelUser from '../../model/global/user.js';
-import { FilterCriteria } from '../utils/document.js';
-
-export type TUserParamSignUp = {
-  // Remove publicKey from TUser since TMinaSignature already have
-  user: Omit<TUser, 'publicKey'>;
-  signature: TMinaSignature;
-};
-
-export type TUserParamFindPagination = {
-  query?: FilterCriteria;
-  paginationInput?: TPagination;
-};
 
 export class User {
   public static async signUp(
-    params: TUserParamSignUp
+    paramSignUp: TUserParamSignUp
   ): Promise<WithoutId<TUserRecord>> {
     const {
       user: { userName, email, userData },
       signature,
-    } = params;
+    } = paramSignUp;
     // Init client mina-signer
     const client = new Client({ network: config.NETWORK_ID });
     // Ensure the signature verified
@@ -86,10 +74,10 @@ export class User {
   }
 
   public static async findMany(
-    params: TUserParamFindPagination,
+    paramUserPagination: TParamPagination<Omit<TUser, 'userData'>>,
     session?: ClientSession
   ): Promise<TPaginationReturn<TUser[]>> {
-    const { query, paginationInput } = params;
+    const { query, paginationInput } = paramUserPagination;
     // Initialize model
     const modelUser = new ModelUser();
 

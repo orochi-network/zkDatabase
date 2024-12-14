@@ -15,42 +15,40 @@ import {
   userName,
 } from '@validation';
 
-// export const SchemaGroupBase =
-
-export const SchemaGroupCreate = Joi.object<TGroupCreateRequest>({
+export const JOI_GROUP_CREATE = Joi.object<TGroupCreateRequest>({
   databaseName,
   groupName,
   groupDescription: groupDescription(false),
 });
 
-export const SchemaGroupUpdate = Joi.object<TGroupUpdateRequest>({
+export const JOI_GROUP_UPDATE = Joi.object<TGroupUpdateRequest>({
   databaseName,
   groupName,
-  newGroupName: groupName,
+  newGroupName: groupName(false),
   newGroupDescription: groupDescription(false),
 });
 
-export const SchemaGroupDetail = Joi.object<TGroupInfoDetailRequest>({
+export const JOI_GROUP_DETAIL = Joi.object<TGroupInfoDetailRequest>({
   databaseName,
   groupName,
 });
 
-export const SchemaGroupListUser = Joi.object<TGroupListByUserRequest>({
+export const JOI_GROUP_LIST_USER = Joi.object<TGroupListByUserRequest>({
   databaseName,
   userName,
 });
 
-export const SchemaGroupListAll = Joi.object<TGroupListAllRequest>({
+export const JOI_GROUP_LIST_ALL = Joi.object<TGroupListAllRequest>({
   databaseName,
 });
 
-export const SchemaGroupAddUser = Joi.object<TGroupAddUsersRequest>({
+export const JOI_GROUP_ADD_USER = Joi.object<TGroupAddUsersRequest>({
   databaseName,
   groupName,
   listUser: Joi.array().items(Joi.string().required()).required(),
 });
 
-export const SchemaGroupRemoveUser = Joi.object<TGroupRemoveUsersRequest>({
+export const JOI_GROUP_REMOVE_USER = Joi.object<TGroupRemoveUsersRequest>({
   databaseName,
   groupName,
   listUser: Joi.array().items(Joi.string().required()).required(),

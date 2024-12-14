@@ -1,6 +1,6 @@
 import { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { TDatabaseRequest, TMetadataDatabase } from './database.js';
 import { TUser, TUserRecord } from './user.js';
 
 // For model layer type
@@ -25,32 +25,27 @@ export type TGroupDetail = TGroupRecord & { listUser: TGroupUserInfo[] };
 export type TUserGroupRecord = TDbRecord<TUserGroup>;
 
 // For use-case param type
-type TGroupParam = TGroup & {
-  databaseName: string;
-};
+export type TGroupParam = Pick<TGroup, 'groupName'> &
+  Pick<TMetadataDatabase, 'databaseName'>;
 
-export type TGroupParamCreate = TGroupParam;
+export type TGroupParamCreate = TGroup &
+  Pick<TMetadataDatabase, 'databaseName'>;
 
-type TGroupDatabaseNameParam = Pick<TGroupParam, 'databaseName' | 'groupName'>;
-export type TGroupParamExist = TGroupDatabaseNameParam;
-
-export type TGroupParamDetail = TGroupDatabaseNameParam;
-
-export type TGroupParamIsParticipant = TGroupDatabaseNameParam & {
+export type TGroupParamIsParticipant = TGroupParam & {
   userName: string;
 };
 
 export type TGroupParamUpdateMetadata = Pick<
-  TGroupParam,
+  TGroupParamCreate,
   'databaseName' | 'groupName' | 'createdBy'
 > & {
   newGroupName?: string;
   newGroupDescription?: string;
 };
 
-export type TGroupParamAddListUser = Pick<
-  TGroupParam,
-  'databaseName' | 'createdBy' | 'groupName'
+export type TGroupParamListUser = Pick<
+  TGroupParamCreate,
+  'databaseName' | 'groupName' | 'createdBy'
 > & {
   listUserName: string[];
 };
