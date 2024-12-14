@@ -26,7 +26,7 @@ type TDocumentHistorySerialized = {
   active: boolean;
 };
 
-// TODO: This does not work yet, need to rework
+// TODO: test this function
 async function listDocumentHistory(
   databaseName: string,
   collectionName: string,
@@ -94,12 +94,18 @@ async function listDocumentHistory(
     let filteredDocuments =
       await PermissionSecurity.filterMetadataDocumentDetail(
         databaseName,
-        documentsWithMetadata as any, // TODO: Fix this type annotation
+        documentsWithMetadata.map((doc) => ({
+          ...doc,
+          metadata: {
+            ...doc.metadata,
+            collectionName,
+          },
+        })),
         actor,
         PermissionBase.permissionRead()
       );
 
-    const result = filteredDocuments.map((historyDocument: any) => {
+    const result = filteredDocuments.map((historyDocument) => {
       assert(
         historyDocument.documents.length > 0,
         `Document history is empty, which should not happen if we expect the \
@@ -108,10 +114,7 @@ MongoDB pipeline to already handle this case`
 
       return {
         docId: historyDocument.documents[0].docId,
-        documents: historyDocument.documents.map((doc: any) => ({
-          ...doc,
-          document: Object.values(doc.document),
-        })),
+        documentRevision: historyDocument.documents,
         metadata: {
           ...historyDocument.metadata,
           collectionName,
@@ -120,7 +123,7 @@ MongoDB pipeline to already handle this case`
       };
     });
 
-    return result as any;
+    return result;
   }
 
   throw new Error(

@@ -11,6 +11,7 @@ import ModelUserGroup from '../../model/database/user-group.js';
 import { isDatabaseOwner } from './database.js';
 import {
   TDocumentRecord,
+  TMetadataDetail,
   TMetadataDetailDocument,
   TMetadataDocument,
 } from '@zkdb/common';
@@ -194,13 +195,13 @@ export class PermissionSecurity {
   }
 
   // Filter a document list by required permission
-  public static async filterMetadataDocumentDetail(
+  public static async filterMetadataDocumentDetail<T>(
     databaseName: string,
-    listDoc: TMetadataDetailDocument<TDocumentRecord>[],
+    listDoc: TMetadataDetail<T, TMetadataDocument>[],
     actor: string,
     requirePermission: PermissionBase,
     session?: ClientSession
-  ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
+  ): Promise<TMetadataDetail<T, TMetadataDocument>[]> {
     // If user is database owner then return all system permissions
     if (await isDatabaseOwner(databaseName, actor)) {
       return listDoc;
