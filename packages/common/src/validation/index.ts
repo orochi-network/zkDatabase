@@ -1,5 +1,6 @@
 import { ESorting, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
+import {} from '@zkdb/common';
 import Joi from 'joi';
 
 export const O1JS_VALID_TYPE = [
@@ -17,7 +18,10 @@ export const O1JS_VALID_TYPE = [
   'MerkleMapWitness',
 ];
 
-export const ESortingSchema = Joi.string().valid(ESorting.Asc, ESorting.Desc);
+export const ESortingSchema = (required: true) => {
+  const joiSorting = Joi.string().valid(ESorting.Asc, ESorting.Desc);
+  return required ? joiSorting.required() : joiSorting.optional();
+};
 
 export const objectId = Joi.string()
   .trim()
@@ -182,7 +186,7 @@ export const transactionType = Joi.string().valid(
   ...Object.values(ETransactionType)
 );
 
-export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict().value;
+export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
 
 export * from './collection';
 export * from './common';

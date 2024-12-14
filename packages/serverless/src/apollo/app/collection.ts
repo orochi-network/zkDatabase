@@ -9,13 +9,11 @@ import {
   TCollectionListRequest,
   TCollectionListResponse,
 } from '@zkdb/common';
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
+import { Permission } from '@zkdb/permission';
+import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  createCollection,
-  listCollection,
-} from '../../domain/use-case/collection.js';
+import { Collection } from '../../domain/use-case/collection.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
 
@@ -27,7 +25,7 @@ export const schemaField = Joi.object({
     .valid(...O1JS_VALID_TYPE)
     .required(),
   index: Joi.boolean().optional(),
-  sorting: ESortingSchema,
+  sorting: ESortingSchema(true),
 });
 
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
@@ -69,7 +67,10 @@ const collectionList = authorizeWrapper<
   Joi.object({
     databaseName,
   }),
-  async (_root, args, ctx) => listCollection(args.databaseName, ctx.userName)
+  async (_root, args, ctx) =>
+    withTransaction((session) =>
+      Collection.list(args.databaseName, ctx.userName, session)
+    )
 );
 
 const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
@@ -78,26 +79,24 @@ const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
     collectionName,
   }),
   async (_root, args) =>
-    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
-      (collection) => collection === args.collectionName
-    )
+    Collection.exist(args.databaseName, args.collectionName)
 );
 
 // Mutation
 const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
   CollectionCreateRequest,
   async (_root, args, ctx) =>
-    Boolean(
-      withTransaction((session) =>
-        createCollection(
-          args.databaseName,
-          args.collectionName,
-          ctx.userName,
-          args.schema,
-          args.group,
-          args.permission,
-          session
-        )
+    withTransaction((session) =>
+      Collection.create(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
+        args.schema,
+        args.group,
+        Permission.from(args.permission),
+        session
       )
     )
 );

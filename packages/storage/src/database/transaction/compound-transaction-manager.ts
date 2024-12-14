@@ -1,5 +1,5 @@
 import { ClientSession, MongoError } from 'mongodb';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 
 export type CompoundSession = {
@@ -10,8 +10,8 @@ export type CompoundSession = {
 export async function withCompoundTransaction<T>(
   callback: (session: CompoundSession) => Promise<T>
 ): Promise<T | null> {
-  const sessionService = DB['service'].client.startSession();
-  const sessionProof = DB['proof'].client.startSession();
+  const sessionService = DATABASE_ENGINE.serverless.client.startSession();
+  const sessionProof = DATABASE_ENGINE.proofService.client.startSession();
   let result: T | null = null;
 
   try {
@@ -42,11 +42,7 @@ export async function withCompoundTransaction<T>(
       } catch (abortError) {
         logger.error(
           'DatabaseEngine::withCompoundTransaction() - Abort failed for service',
-          {
-            message: (abortError as MongoError).message,
-            code: (abortError as MongoError).code,
-            stack: (abortError as Error).stack,
-          }
+          abortError
         );
       }
     }
@@ -57,11 +53,7 @@ export async function withCompoundTransaction<T>(
       } catch (abortError) {
         logger.error(
           'DatabaseEngine::withCompoundTransaction() - Abort failed for proof',
-          {
-            message: (abortError as MongoError).message,
-            code: (abortError as MongoError).code,
-            stack: (abortError as Error).stack,
-          }
+          abortError
         );
       }
     }

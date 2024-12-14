@@ -1,7 +1,7 @@
 import { TMetadataDocumentRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
@@ -15,13 +15,17 @@ export class ModelMetadataDocument extends ModelGeneral<
     zkDatabaseConstant.databaseCollection.metadataDocument;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelMetadataDocument.collectionName);
+    super(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      ModelMetadataDocument.collectionName
+    );
   }
 
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = new ModelCollection(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelMetadataDocument.collectionName
     );
 

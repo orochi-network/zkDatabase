@@ -66,7 +66,7 @@ export const typeDefsCommon = gql`
     name: String!
     kind: SchemaType!
     index: Boolean
-    # Default is ASC or -
+    # Default is Asc or 1
     sorting: Sorting
   }
 
@@ -74,7 +74,7 @@ export const typeDefsCommon = gql`
     name: String!
     kind: SchemaType!
     index: Boolean
-    # Default is ASC or -1
+    # Default is ASC or 1
     sorting: Sorting
   }
 

@@ -9,7 +9,7 @@ import {
   TMetadataDocument,
   TPagination,
 } from '@zkdb/common';
-import { DB, zkDatabaseConstant } from '@zkdb/storage';
+import { DATABASE_ENGINE, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
 import { ClientSession, ObjectId } from 'mongodb';
 import ModelDocument from '../../model/abstract/document.js';
@@ -36,14 +36,16 @@ async function listDocumentHistory(
   session?: ClientSession
 ): Promise<TDocumentHistoryResponse[]> {
   const permission = await PermissionSecurity.collection(
-    databaseName,
-    collectionName,
-    actor,
+    {
+      databaseName,
+      collectionName,
+      actor,
+    },
     session
   );
 
   if (permission.read) {
-    const { client } = DB.service;
+    const { client } = DATABASE_ENGINE.serverless;
     const paginationInfo = pagination || DEFAULT_PAGINATION;
     const pipeline = [
       {
@@ -142,9 +144,11 @@ async function findDocumentHistory(
   session?: ClientSession
 ): Promise<TDocumentHistoryResponse | null> {
   const actorPermissionCollection = await PermissionSecurity.collection(
-    databaseName,
-    collectionName,
-    actor,
+    {
+      databaseName,
+      collectionName,
+      actor,
+    },
     session
   );
   if (!actorPermissionCollection.read) {
@@ -161,10 +165,12 @@ async function findDocumentHistory(
     return null;
   }
   const actorPermissionDocument = await PermissionSecurity.document(
-    databaseName,
-    collectionName,
-    actor,
-    docId,
+    {
+      databaseName,
+      collectionName,
+      actor,
+      docId,
+    },
     session
   );
 
