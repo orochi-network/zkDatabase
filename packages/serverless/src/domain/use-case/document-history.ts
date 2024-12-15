@@ -4,6 +4,7 @@
 
 /* eslint-disable import/prefer-default-export */
 import {
+  TDocumentHistory,
   TDocumentHistoryResponse,
   TDocumentRecordNullable,
   TMetadataDocument,
@@ -86,46 +87,39 @@ async function listDocumentHistory(
     ];
 
     const database = client.db(databaseName);
-    const documentsCollection = database.collection(collectionName);
+    const documentCollection = database.collection(collectionName);
 
-    const documentsWithMetadata = (await documentsCollection
+    const queryResult = (await documentCollection
       .aggregate(pipeline)
       // TODO: need debugging to confirm the accuracy of this type annotation
       .toArray()) as TDocumentHistorySerialized[];
 
-    let filteredDocuments =
-      await PermissionSecurity.filterMetadataDocumentDetail(
-        databaseName,
-        documentsWithMetadata.map((doc) => ({
-          ...doc,
+    const listDocumentHistoryWithMetadata: TDocumentHistory[] = queryResult.map(
+      (doc) => {
+        assert(
+          doc.documents.length > 0,
+          `Document history is empty, which should not happen if we expect the \
+MongoDB pipeline to already handle this case`
+        );
+
+        return {
+          docId: doc.documents[0].docId,
+          documentRevision: doc.documents,
           metadata: {
             ...doc.metadata,
             collectionName,
           },
-        })),
-        actor,
-        PermissionBase.permissionRead()
-      );
+          active: doc.active,
+        };
+      }
+    );
 
-    const result = filteredDocuments.map((historyDocument) => {
-      assert(
-        historyDocument.documents.length > 0,
-        `Document history is empty, which should not happen if we expect the \
-MongoDB pipeline to already handle this case`
-      );
-
-      return {
-        docId: historyDocument.documents[0].docId,
-        documentRevision: historyDocument.documents,
-        metadata: {
-          ...historyDocument.metadata,
-          collectionName,
-        },
-        active: historyDocument.active,
-      };
-    });
-
-    return result;
+    return PermissionSecurity.filterListDocumentHistory(
+      databaseName,
+      listDocumentHistoryWithMetadata,
+      actor,
+      PermissionBase.permissionRead()
+    );
   }
 
   throw new Error(
