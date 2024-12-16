@@ -80,7 +80,7 @@ export class ModelDocument extends ModelGeneral<
 
   /** Update a document by creating a new revision and setting the old one to
    * inactive. */
-  public async updateDocument(
+  public async update(
     docId: string,
     fields: Record<string, TDocumentField>,
     session: ClientSession

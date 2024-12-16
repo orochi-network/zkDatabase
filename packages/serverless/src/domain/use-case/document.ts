@@ -236,6 +236,8 @@ async function updateDocument(
         );
       }
 
+      // TODO: shouldn't we create a new revision and set the old ones as
+      // inactive instead? i.e. Using ModelDocument.update()
       await imDocument.updateOne(
         { docId: oldDocumentRecord.docId },
         {
