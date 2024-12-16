@@ -3,15 +3,15 @@ import {
   ETransactionType,
   TDbRecord,
   TTransaction,
-  TTransactionRecord,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
+import { getCurrentTime } from '../../helper/common.js';
 import { redisQueue } from '../../helper/mq.js';
 import ModelUser from '../../model/global/user.js';
-import { isDatabaseOwner } from './database.js';
+import { Database } from './database.js';
 
 export default class Transaction {
   static readonly MINA_DECIMAL = 1e9;
@@ -27,7 +27,9 @@ export default class Transaction {
     transactionType: ETransactionType,
     session?: ClientSession
   ): Promise<ObjectId> {
-    if (!(await isDatabaseOwner(databaseName, actor, session))) {
+    if (
+      !(await Database.isOwner({ databaseName, databaseOwner: actor }, session))
+    ) {
       throw Error('Only database owner can roll up the transaction');
     }
 
@@ -39,25 +41,23 @@ export default class Transaction {
       );
 
       // Make sure public is set and have value
-      if (
-        typeof database?.appPublicKey === 'string' &&
-        database.appPublicKey.length > 0
-      ) {
+      if (database?.appPublicKey) {
         throw Error('Smart contract is already bound to database');
       }
     }
 
-    const modelTransaction = ModelTransaction.getInstance();
+    const imTransaction = ModelTransaction.getInstance();
 
-    const txs = await modelTransaction.list(databaseName, transactionType, {
+    const txList = await imTransaction.list(databaseName, transactionType, {
       session,
     });
 
     // Validate transactions
-    if (txs.length > 0) {
+    if (txList.length > 0) {
+      // This case database already deployed on chain before
       if (
         transactionType === ETransactionType.Deploy &&
-        txs.some(
+        txList.some(
           (tx: WithId<TTransaction>) =>
             tx.status === ETransactionStatus.Confirmed
         )
@@ -70,7 +70,7 @@ export default class Transaction {
       if (
         // If we have uncompleted transaction, we should not allow to deploy new one.
         // Un-completed transaction is mean that transaction is unsigned or signed without broadcast.
-        txs.some(
+        txList.some(
           (tx: WithId<TTransaction>) =>
             tx.status === ETransactionStatus.Unsigned ||
             tx.status === ETransactionStatus.Signed
@@ -79,7 +79,7 @@ export default class Transaction {
         throw Error('You have uncompleted transaction');
       }
 
-      const pendingTx = txs.find(
+      const pendingTx = txList.find(
         (tx: WithId<TTransaction>) =>
           tx.status === ETransactionStatus.Confirming
       );
@@ -96,8 +96,8 @@ export default class Transaction {
           }
 
           if (onchainTx.txStatus === 'applied') {
-            await modelTransaction.updateById(
-              pendingTx._id,
+            await imTransaction.updateOne(
+              { _id: pendingTx._id },
               {
                 status: ETransactionStatus.Confirmed,
               },
@@ -105,8 +105,8 @@ export default class Transaction {
             );
             throw Error('You deploy transaction is already succeeded');
           } else if (onchainTx.txStatus === 'failed') {
-            await modelTransaction.updateById(
-              pendingTx._id,
+            await imTransaction.updateOne(
+              { _id: pendingTx._id },
               {
                 status: ETransactionStatus.Failed,
                 error: onchainTx.failures.join(' '),
@@ -128,14 +128,19 @@ export default class Transaction {
       { session }
     );
 
-    const insertResult = await modelTransaction.create(
-      // Force type since txHash is null at this point.
-      // @TODO: Add default value for createdAt and updatedAt fields.
+    const insertResult = await imTransaction.insertOne(
+      // @TODO: Make sure to check falsy don't just check typeof undefined or null.
+      // Since we using default value
       {
         transactionType,
         databaseName,
         status: ETransactionStatus.Unsigned,
-      } as TTransactionRecord,
+        transactionRaw: '',
+        txHash: '',
+        error: '',
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
       { session }
     );
 
@@ -154,15 +159,15 @@ export default class Transaction {
     actor: string,
     transactionType: ETransactionType
   ): Promise<TDbRecord<TTransaction>> {
-    const modelUser = new ModelUser();
+    const imUser = new ModelUser();
 
-    const user = await modelUser.findOne({ userName: actor });
+    const user = await imUser.findOne({ userName: actor });
 
     if (!user) {
       throw Error(`User ${actor} does not exist`);
     }
 
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       const database = await ModelMetadataDatabase.getInstance().findOne({
         databaseName,
       });
@@ -171,12 +176,12 @@ export default class Transaction {
         throw Error(`Database ${databaseName} does not exist`);
       }
 
-      const transactions = await ModelTransaction.getInstance().list(
+      const transactionList = await ModelTransaction.getInstance().list(
         databaseName,
         transactionType
       );
 
-      const readyTransaction = transactions.find(
+      const readyTransaction = transactionList.find(
         (tx) => tx.status === ETransactionStatus.Unsigned
       );
 
@@ -217,13 +222,13 @@ export default class Transaction {
   static async latest(databaseName: string, transactionType: ETransactionType) {
     const modelTransaction = ModelTransaction.getInstance();
 
-    const txs = await modelTransaction.list(databaseName, transactionType, {
+    const txList = await modelTransaction.list(databaseName, transactionType, {
       sort: {
         createdAt: -1,
       },
     });
 
-    return txs.length === 0 ? null : txs[0];
+    return txList.length === 0 ? null : txList[0];
   }
 
   static async confirm(
@@ -232,11 +237,11 @@ export default class Transaction {
     transactionObjectId: string,
     txHash: string
   ) {
-    if (!(await isDatabaseOwner(databaseName, actor))) {
+    if (!(await Database.isOwner({ databaseName, databaseOwner: actor }))) {
       throw Error('Only database owner can confirm transactions');
     }
-    await ModelTransaction.getInstance().updateById(
-      new ObjectId(transactionObjectId),
+    await ModelTransaction.getInstance().updateOne(
+      { _id: new ObjectId(transactionObjectId) },
       {
         txHash,
         status: ETransactionStatus.Confirming,
