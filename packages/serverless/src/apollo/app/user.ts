@@ -1,7 +1,7 @@
 import {
   pagination,
+  proofTimestamp,
   publicKey,
-  timestamp,
   TMinaSignature,
   TUser,
   TUserFindRequest,
@@ -121,9 +121,9 @@ export const JOI_USER_SIGN_IN = Joi.object<TUserSignInRequest>({
 });
 
 export const JOI_USER_SIGN_UP = Joi.object<TUserSignUpInput>({
-  userName: Joi.string().required(),
+  userName,
   email: Joi.string().email().required(),
-  timestamp,
+  timestamp: proofTimestamp,
   userData: Joi.object().optional(),
 });
 
