@@ -131,6 +131,7 @@ export default class Transaction {
     const insertResult = await imTransaction.insertOne(
       // @TODO: Make sure to check falsy don't just check typeof undefined or null.
       // Since we using default value
+      // @TODO: Need refactor or allow nullable to insert empty transaction
       {
         transactionType,
         databaseName,
