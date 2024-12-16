@@ -96,8 +96,10 @@ export const typeDefsGroup = gql`
 const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
   JOI_GROUP_LIST_ALL,
   async (_root, args) => {
-    const groups = await new ModelGroup(args.databaseName).find({}).toArray();
-    return groups;
+    const groupList = await new ModelGroup(args.databaseName)
+      .find({})
+      .toArray();
+    return groupList;
   }
 );
 

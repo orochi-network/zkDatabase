@@ -137,8 +137,8 @@ const userSignIn = publicWrapper<TUserSignInRequest, TUserSignInResponse>(
     }
 
     if (client.verifyMessage(args.proof)) {
-      const modelUser = new ModelUser();
-      const user = await modelUser.findOne({
+      const imUser = new ModelUser();
+      const user = await imUser.findOne({
         publicKey: args.proof.publicKey,
       });
 

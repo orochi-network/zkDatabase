@@ -30,7 +30,7 @@ import Transaction from './transaction.js';
 export class Database {
   public static async create(
     paramCreate: TDatabaseParamCreate,
-    session?: ClientSession
+    session: ClientSession
   ) {
     const { databaseName, databaseOwner, merkleHeight } = paramCreate;
     // Find user
@@ -40,10 +40,10 @@ export class Database {
     );
     // Ensure databaseOwner existed
     if (user) {
-      const modelDatabaseMetadata = new ModelMetadataDatabase();
+      const imMetadataDatabase = new ModelMetadataDatabase();
 
       // Case database already exist
-      if (await modelDatabaseMetadata.findOne({ databaseName }, { session })) {
+      if (await imMetadataDatabase.findOne({ databaseName }, { session })) {
         // Ensure database existing
         throw new Error(`Database name ${databaseName} already taken`);
       }
@@ -54,7 +54,7 @@ export class Database {
       await ModelUserGroup.init(databaseName, session);
       await ModelSequencer.init(databaseName, session);
 
-      const metadataDatabase = await modelDatabaseMetadata.insertOne(
+      const metadataDatabase = await imMetadataDatabase.insertOne(
         {
           databaseName,
           merkleHeight,
@@ -146,9 +146,9 @@ export class Database {
       databases.map(({ name, sizeOnDisk }) => [name, sizeOnDisk])
     );
     // Get database metadata
-    const modelMetadataDatabase = new ModelMetadataDatabase();
+    const imMetadataDatabase = new ModelMetadataDatabase();
 
-    const listMetadataDatabase = await modelMetadataDatabase.list(filter, {
+    const listMetadataDatabase = await imMetadataDatabase.list(filter, {
       skip: pagination?.offset,
       limit: pagination?.limit,
     });
@@ -158,7 +158,7 @@ export class Database {
         ...metadata,
         sizeOnDisk: databaseMap.get(metadata.databaseName),
       })),
-      total: await modelMetadataDatabase.count(filter),
+      total: await imMetadataDatabase.count(filter),
       offset: pagination?.offset || 0,
     };
   }
@@ -182,7 +182,10 @@ export class Database {
     return false;
   }
 
-  public static async deploy(paramDeploy: TDatabaseParamDeploy) {
+  public static async deploy(
+    paramDeploy: TDatabaseParamDeploy,
+    session: ClientSession
+  ) {
     try {
       const { databaseName, appPublicKey } = paramDeploy;
       // Add appPublicKey for database that deployed
@@ -190,12 +193,14 @@ export class Database {
         { databaseName },
         {
           appPublicKey,
-        }
+        },
+        { session }
       );
       // Remove data from deploy transaction
       await ModelTransaction.getInstance().remove(
         databaseName,
-        ETransactionType.Deploy
+        ETransactionType.Deploy,
+        session
       );
       return true;
     } catch (error) {
