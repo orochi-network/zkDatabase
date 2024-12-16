@@ -7,12 +7,12 @@ import {
 } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
-  ModelBasic,
   ModelCollection,
+  ModelGeneral,
   ModelMetadataDatabase,
 } from '@zkdb/storage';
-import { randomUUID } from 'crypto';
-import { ClientSession, Filter, OptionalId } from 'mongodb';
+import { randomUUID, UUID } from 'crypto';
+import { ClientSession, Filter, InsertOneResult, OptionalId } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
 
@@ -20,7 +20,7 @@ import logger from '../../helper/logger.js';
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
-export class ModelDocument extends ModelBasic<
+export class ModelDocument extends ModelGeneral<
   OptionalId<TDocumentRecordNullable>
 > {
   public static instances = new Map<string, ModelDocument>();
@@ -56,42 +56,31 @@ export class ModelDocument extends ModelBasic<
    * it as active */
   public async insertOneFromFields(
     fields: Record<string, TContractSchemaField>,
-    docId?: string,
+    docId?: UUID,
     session?: ClientSession
-  ): Promise<TDocumentRecordNullable> {
-    return this.insertOne(
-      {
-        document: fields,
-        docId: docId || randomUUID(),
-        active: true,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-        previousObjectId: null,
-      },
-      session
-    );
-  }
-
-  public async insertOne(
-    doc: OptionalId<TDocumentRecordNullable>,
-    session?: ClientSession
-  ): Promise<TDocumentRecordNullable> {
-    logger.debug(`Inserting document to collection`, { doc });
-    const result = await this.collection.insertOne(doc, { session });
-
-    if (result.acknowledged) {
-      return {
-        ...doc,
-        _id: doc._id || result.insertedId,
-      };
-    }
-
-    throw Error('Error occurred when inserting document');
+  ): Promise<[InsertOneResult<TDocumentRecordNullable>, UUID]> {
+    const insertingDocId = docId || randomUUID();
+    return [
+      await this.insertOne(
+        {
+          document: fields,
+          docId: insertingDocId,
+          active: true,
+          createdAt: getCurrentTime(),
+          updatedAt: getCurrentTime(),
+          previousObjectId: null,
+        },
+        {
+          session,
+        }
+      ),
+      insertingDocId,
+    ];
   }
 
   /** Update a document by creating a new revision and setting the old one to
    * inactive. */
-  public async updateOne(
+  public async updateDocument(
     docId: string,
     fields: Record<string, TDocumentField>,
     session: ClientSession
@@ -112,7 +101,7 @@ export class ModelDocument extends ModelBasic<
       await this.collection.findOneAndUpdate(
         { _id: findDocument._id },
         {
-          $set: { active: false, nextId: documentUpdated._id },
+          $set: { active: false, nextId: documentUpdated.insertedId },
         },
         {
           session,
@@ -127,7 +116,7 @@ export class ModelDocument extends ModelBasic<
 
   public async dropOne(docId: string, session?: ClientSession) {
     logger.debug(`ModelDocument::drop()`, { docId });
-    const findDocument = await this.find({ docId });
+    const findDocument = await this.find({ docId }, { session }).toArray();
 
     const docIds = findDocument.map((doc) => doc.docId);
 
@@ -154,7 +143,7 @@ export class ModelDocument extends ModelBasic<
     return result;
   }
 
-  public async findOne(filter: Filter<any>, session?: ClientSession) {
+  public async findOneActive(filter: Filter<any>, session?: ClientSession) {
     logger.debug(`ModelDocument::findOne()`, { filter });
     return this.collection.findOne(
       { ...filter, active: true },
@@ -166,13 +155,8 @@ export class ModelDocument extends ModelBasic<
   }
 
   public async findHistoryOne(docId: string, session?: ClientSession) {
-    const documents = this.find({ docId }, session);
+    const documents = this.find({ docId }, { session });
     return documents;
-  }
-
-  public async find(filter?: Filter<any>, session?: ClientSession) {
-    logger.debug(`ModelDocument::find()`, { filter });
-    return this.collection.find(filter || {}, { session }).toArray();
   }
 
   public async countActiveDocuments(filter?: Filter<any>) {

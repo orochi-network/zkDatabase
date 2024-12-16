@@ -81,10 +81,9 @@ async function findDocument(
 
   const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const documentRecord = await modelDocument.findOne(
-    parseQuery(filter),
-    session
-  );
+  const documentRecord = await modelDocument.findOne(parseQuery(filter), {
+    session,
+  });
 
   if (!documentRecord) {
     return null;
@@ -135,7 +134,7 @@ async function createDocument(
   }
 
   // Save the document to the database
-  const insertResult = await imDocument.insertOneFromFields(
+  const [_, docId] = await imDocument.insertOneFromFields(
     fields,
     undefined,
     compoundSession?.sessionService
@@ -176,7 +175,7 @@ async function createDocument(
   await imDocumentMetadata.insertOne(
     {
       collectionName,
-      docId: insertResult.docId,
+      docId,
       merkleIndex: merkleIndex.toString(),
       ...{
         // I'm set these to system user and group as default
@@ -198,7 +197,7 @@ async function createDocument(
   const witness = await proveCreateDocument(
     databaseName,
     collectionName,
-    insertResult.docId,
+    docId,
     Object.values(fields),
     compoundSession
   );
@@ -215,10 +214,9 @@ async function updateDocument(
 
   const imDocument = ModelDocument.getInstance(databaseName, collectionName);
   const documentRecord = await withTransaction(async (session) => {
-    const oldDocumentRecord = await imDocument.findOne(
-      parseQuery(filter),
-      session
-    );
+    const oldDocumentRecord = await imDocument.findOne(parseQuery(filter), {
+      session,
+    });
 
     if (oldDocumentRecord) {
       const actorPermissionDocument = await PermissionSecurity.document(
@@ -237,7 +235,15 @@ async function updateDocument(
         );
       }
 
-      await imDocument.updateOne(oldDocumentRecord.docId, update, session);
+      await imDocument.updateOne(
+        { docId: oldDocumentRecord.docId },
+        {
+          document: update,
+        },
+        {
+          session,
+        }
+      );
 
       return oldDocumentRecord;
     }
@@ -267,7 +273,9 @@ async function deleteDocument(
   const result = await withTransaction(async (session) => {
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const findResult = await imDocument.findOne(parseQuery(filter), session);
+    const findResult = await imDocument.findOne(parseQuery(filter), {
+      session,
+    });
 
     if (findResult) {
       const actorPermissionDocument = await PermissionSecurity.document(
