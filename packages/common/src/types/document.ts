@@ -58,7 +58,7 @@ export type TDocumentCreateRequest = TCollectionRequest & {
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
   query: { [key: string]: string };
-  document: TDocumentField[];
+  document: Record<string, TDocumentField>;
 };
 
 export type TDocumentHistoryFindRequest = TCollectionRequest & {

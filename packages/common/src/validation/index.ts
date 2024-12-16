@@ -1,6 +1,5 @@
 import { ESorting, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
-import {} from '@zkdb/common';
 import Joi from 'joi';
 
 export const O1JS_VALID_TYPE = [
@@ -173,7 +172,9 @@ export const documentRecord = Joi.object<
     }
 
     if (name !== value.name) {
-      return helpers.error(`Field name mismatch: ${name} !== ${value.name}`);
+      return helpers.error(
+        `Field name mismatch: have key ${name} but field name is ${value.name}`
+      );
     }
 
     final[name] = value;

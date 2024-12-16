@@ -151,9 +151,9 @@ async function findDocumentHistory(
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-  const latestDocument = await modelDocument.findHistoryOne(docId, session);
+  const latestDocument = await imDocument.findHistoryOne(docId, session);
 
   if (!latestDocument) {
     return null;
@@ -174,7 +174,7 @@ async function findDocumentHistory(
     );
   }
 
-  const documentHistoryRecords = await modelDocument.findHistoryOne(
+  const documentHistoryRecords = await imDocument.findHistoryOne(
     docId,
     session
   );

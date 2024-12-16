@@ -14,12 +14,14 @@ import {
   TMerkleProof,
   TMetadataDetailDocument,
   TPagination,
+  TParamCollection,
+  TPermissionSudo,
   TWithProofStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
   CompoundSession,
-  DB,
+  DATABASE_ENGINE,
   ModelQueueTask,
   ModelSequencer,
   withTransaction,
@@ -64,9 +66,11 @@ async function findDocument(
   session?: ClientSession
 ): Promise<TDocumentRecordNullable | null> {
   const actorPermissionCollection = await PermissionSecurity.collection(
-    databaseName,
-    collectionName,
-    actor,
+    {
+      databaseName,
+      collectionName,
+      actor,
+    },
     session
   );
   if (!actorPermissionCollection.read) {
@@ -87,10 +91,12 @@ async function findDocument(
   }
 
   const actorPermissionDocument = await PermissionSecurity.document(
-    databaseName,
-    collectionName,
-    actor,
-    documentRecord.docId,
+    {
+      databaseName,
+      collectionName,
+      actor,
+      docId: documentRecord.docId,
+    },
     session
   );
 
@@ -104,65 +110,70 @@ async function findDocument(
 }
 
 async function createDocument(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
+  permissionParams: TPermissionSudo<TParamCollection>,
   fields: Record<string, TDocumentField>,
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
   const actorPermissionCollection = await PermissionSecurity.collection(
-    databaseName,
-    collectionName,
-    actor,
+    permissionParams,
     compoundSession?.sessionService
   );
+
+  const { databaseName, collectionName, actor } = permissionParams;
+
   if (!actorPermissionCollection.write) {
     throw new Error(
       `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
     );
   }
 
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
   if (Object.keys(fields).length === 0) {
     throw new Error('Document array is empty. At least one field is required.');
   }
 
   // Save the document to the database
-  const insertResult = await modelDocument.insertOneFromFields(
+  const insertResult = await imDocument.insertOneFromFields(
     fields,
     undefined,
     compoundSession?.sessionService
   );
 
   // 2. Create new sequence value
-  const sequencer = ModelSequencer.getInstance(databaseName);
-  const merkleIndex = await sequencer.nextValue(
+  const imSequencer = ModelSequencer.getInstance(databaseName);
+  const merkleIndex = await imSequencer.nextValue(
     ESequencer.MerkleIndex,
     compoundSession?.sessionService
   );
 
   // 3. Create Metadata
-  const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
+  const imDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-  const modelSchema = ModelMetadataCollection.getInstance(databaseName);
+  const imCollectionMetadata =
+    ModelMetadataCollection.getInstance(databaseName);
 
-  const documentSchema = await modelSchema.getMetadata(collectionName, {
-    session: compoundSession?.sessionService,
-  });
+  const documentSchema = await imCollectionMetadata.getMetadata(
+    collectionName,
+    {
+      session: compoundSession?.sessionService,
+    }
+  );
 
   if (!documentSchema) {
     throw new Error('Cannot get documentSchema');
   }
 
-  const { permission: collectionPermission } = documentSchema;
+  const {
+    metadata: { permission: collectionPermission },
+  } = documentSchema;
 
   const permissionCombine = Permission.from(permission).combine(
     Permission.from(collectionPermission)
   );
 
-  await modelDocumentMetadata.insertOne(
+  await imDocumentMetadata.insertOne(
     {
       collectionName,
       docId: insertResult.docId,
@@ -177,7 +188,7 @@ async function createDocument(
       // Overwrite inherited permission with the new one
       permission: permissionCombine.value,
       owner: actor,
-      group: documentSchema.group,
+      group: documentSchema.metadata.group,
       createdAt: getCurrentTime(),
       updatedAt: getCurrentTime(),
     },
@@ -196,25 +207,22 @@ async function createDocument(
 }
 
 async function updateDocument(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
+  permissionParams: TPermissionSudo<TParamCollection>,
   filter: FilterCriteria,
   update: Record<string, TDocumentField>
 ) {
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
+  const { databaseName, collectionName, actor } = permissionParams;
+
+  const imDocument = ModelDocument.getInstance(databaseName, collectionName);
   const documentRecord = await withTransaction(async (session) => {
-    const oldDocumentRecord = await modelDocument.findOne(
+    const oldDocumentRecord = await imDocument.findOne(
       parseQuery(filter),
       session
     );
 
     if (oldDocumentRecord) {
       const actorPermissionDocument = await PermissionSecurity.document(
-        databaseName,
-        collectionName,
-        actor,
-        oldDocumentRecord.docId,
+        { ...permissionParams, docId: oldDocumentRecord.docId },
         session
       );
       if (!actorPermissionDocument.write) {
@@ -229,7 +237,7 @@ async function updateDocument(
         );
       }
 
-      await modelDocument.updateOne(oldDocumentRecord.docId, update, session);
+      await imDocument.updateOne(oldDocumentRecord.docId, update, session);
 
       return oldDocumentRecord;
     }
@@ -251,25 +259,22 @@ async function updateDocument(
 }
 
 async function deleteDocument(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
+  permissionParams: TPermissionSudo<TParamCollection>,
   filter: FilterCriteria
 ): Promise<TMerkleProof[]> {
-  const result = await withTransaction(async (session) => {
-    const modelDocument = ModelDocument.getInstance(
-      databaseName,
-      collectionName
-    );
+  const { databaseName, collectionName, actor } = permissionParams;
 
-    const findResult = await modelDocument.findOne(parseQuery(filter), session);
+  const result = await withTransaction(async (session) => {
+    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+    const findResult = await imDocument.findOne(parseQuery(filter), session);
 
     if (findResult) {
       const actorPermissionDocument = await PermissionSecurity.document(
-        databaseName,
-        collectionName,
-        findResult.docId,
-        actor,
+        {
+          ...permissionParams,
+          docId: findResult.docId,
+        },
         session
       );
       if (!actorPermissionDocument.write) {
@@ -277,7 +282,7 @@ async function deleteDocument(
           `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
         );
       }
-      await modelDocument.dropOne(findResult.docId);
+      await imDocument.dropOne(findResult.docId);
     }
 
     return findResult;
@@ -366,10 +371,4 @@ export {
   listDocumentWithMetadata,
   findDocument,
   updateDocument,
-};
-
-export type TDocument = {
-  docId: string;
-  active: boolean;
-  document: Record<string, TDocumentField>;
 };

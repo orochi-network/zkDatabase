@@ -17,7 +17,6 @@ import { authorizeWrapper } from '../validation.js';
 import {
   collectionName,
   databaseName,
-  documentField,
   documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
@@ -30,24 +29,26 @@ import {
   TDocumentWithMetadataResponse,
   TDocumentRecordNullable,
   TDocumentHistoryResponse,
+  TMerkleProof,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
+import { Permission } from '@zkdb/permission';
 
-export const SCHEMA_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
 });
 
-export const SCHEMA_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
+export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
   pagination,
 });
 
-export const SCHEMA_DOCUMENT_CREATE_REQUEST = Joi.object<
+export const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<
   TDocumentCreateRequest,
   true
 >({
@@ -59,24 +60,23 @@ export const SCHEMA_DOCUMENT_CREATE_REQUEST = Joi.object<
   document: schemaDocumentRecord,
 });
 
-export const SCHEMA_DOCUMENT_UPDATE_REQUEST =
-  Joi.object<TDocumentUpdateRequest>({
-    databaseName,
-    collectionName,
-    query: Joi.object(),
+export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
+  databaseName,
+  collectionName,
+  query: Joi.object(),
 
-    // TODO: need testing
-    document: schemaDocumentRecord,
-  });
+  // TODO: need testing
+  document: schemaDocumentRecord,
+});
 
-export const SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST =
+export const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
     docId: Joi.string(),
   });
 
-export const SCHEMA_DOCUMENT_HISTORY_LIST_REQUEST =
+export const JOI_DOCUMENT_HISTORY_LIST_REQUEST =
   Joi.object<TDocumentHistoryListRequest>({
     databaseName,
     collectionName,
@@ -172,7 +172,7 @@ export const typeDefsDocument = gql`
 const findDocument = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentRecordNullable | null
->(SCHEMA_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
+>(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
   const document = await withTransaction((session) =>
     findDocumentImpl(
       args.databaseName,
@@ -213,56 +213,57 @@ const listDocumentWithMetadata = authorizeWrapper<
 );
 
 // Mutation
-const createDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_CREATE_REQUEST,
+const createDocument = authorizeWrapper<
+  TDocumentCreateRequest,
+  TMerkleProof[] | null
+>(
+  JOI_DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
     withCompoundTransaction((compoundSession) =>
       createDocumentImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
         args.document,
-        args.documentPermission,
+        Permission.from(args.documentPermission),
         compoundSession
       )
     )
 );
 
 const updateDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_UPDATE_REQUEST,
+  JOI_DOCUMENT_UPDATE_REQUEST,
   async (_root: unknown, args: TDocumentUpdateRequest, ctx) => {
-    for (let i = 0; i < args.document.length; i += 1) {
-      const { error } = documentField.validate(args.document[i]);
-      if (error)
-        throw new Error(
-          `DocumentRecord ${args.document[i].name} is not valid ${error.message}`
-        );
-    }
-
     return updateDocumentImpl(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query,
-      args.document as any
+      args.document
     );
   }
 );
 
 const dropDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_FIND_REQUEST,
+  JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     return deleteDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query
     );
   }
 );
 
 const findDocumentHistory = authorizeWrapper(
-  SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST,
+  JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
       findDocumentHistoryImpl(
