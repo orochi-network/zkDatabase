@@ -1,49 +1,48 @@
 import {
-  TDatabaseRequest,
-  TMerkleTreeGetNodeRequest,
-  TMerkleTreeGetNodesByLevelRequest,
-  TMerkleTreeIndexRequest,
-  TMerkleTreeWitnessByDocumentRequest,
+  TMerkleTreeChildrenNodeRequest,
+  TMerkleTreeChildrenNodeResponse,
+  TMerkleTreeInfoRequest,
+  TMerkleTreeInfoResponse,
+  TMerkleTreeListNodeRequest,
+  TMerkleTreeListNodeResponse,
+  TMerkleTreeProofByDocIdRequest,
+  TMerkleTreeProofByDocIdResponse,
+  TMerkleTreeProofByIndexRequest,
+  TMerkleTreeProofByIndexResponse,
+  TMerkleTreeProofPathRequest,
+  TMerkleTreeProofPathResponse,
   databaseName,
   indexNumber,
   objectId,
   pagination,
 } from '@zkdb/common';
-import { ModelMerkleTree, withTransaction } from '@zkdb/storage';
+import { ModelMerkleTree } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  getChildrenNodes as getChildrenNodesDomain,
-  getMerkleNodesByLevel,
-  getMerkleTreeInfo as getMerkleTreeInfoDomain,
-  getMerkleWitnessPath,
-  getWitnessByDocumentId,
-} from '../../domain/use-case/merkle-tree.js';
+import { MerkleTree } from '../../domain/use-case/merkle-tree.js';
 import { publicWrapper } from '../validation.js';
 
-export const MerkleTreeGetNodesByLevelRequest =
-  Joi.object<TMerkleTreeGetNodesByLevelRequest>({
-    databaseName,
-    level: Joi.number().required(),
-    pagination,
-  });
+export const JOI_MERKLE_TREE_LIST_NODE = Joi.object({
+  databaseName,
+  level: Joi.number().required(),
+  pagination,
+});
 
-export const MerkleTreeInfoRequest = Joi.object<TDatabaseRequest>({
+export const JOI_MERKLE_TREE_INFO = Joi.object({
   databaseName,
 });
 
-export const MerkleTreeIndexRequest = Joi.object<TMerkleTreeIndexRequest>({
+export const JOI_MERKLE_TREE_PROOF_BY_INDEX = Joi.object({
   databaseName,
   index: indexNumber,
 });
 
-export const MerkleTreeWitnessByDocumentRequest =
-  Joi.object<TMerkleTreeWitnessByDocumentRequest>({
-    databaseName,
-    docId: objectId,
-  });
+export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
+  databaseName,
+  docId: objectId,
+});
 
-export const MerkleTreeGetNodeRequest = Joi.object<TMerkleTreeGetNodeRequest>({
+export const JOI_MERKLE_TREE_GET_NODE = Joi.object({
   databaseName,
   index: indexNumber,
   level: Joi.number().required(),
@@ -66,7 +65,7 @@ type MerkleNode {
   empty: Boolean!
 }
 
-type MerkleWitnessNode {
+type MerkleNodeDetail {
   hash: String!
   level: Int!
   index: Int!
@@ -86,104 +85,91 @@ type MerkleTreeInfo {
 }
 
 extend type Query {
-  getNode(databaseName: String!, level: Int!, index: String!): String!
-  getNodesByLevel(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
-  getChildrenNodes(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
-  getMerkleTreeInfo(databaseName: String!): MerkleTreeInfo!
-  getRoot(databaseName: String!): String!
-  getWitness(databaseName: String!, index: String!): [MerkleProof]!
-  getWitnessByDocument(databaseName: String!, docId: String!): [MerkleProof]!
-  getWitnessPath(databaseName: String!, docId: String!): [MerkleWitnessNode]!
+
+  merkleListNode(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
+  
+  merkleChildrenNode(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
+  
+  merkleTreeInfo(databaseName: String!): MerkleTreeInfo!
+  
+  merkleProof(databaseName: String!, index: String!): [MerkleProof]!
+  
+  merkleProofDocId(databaseName: String!, docId: String!): [MerkleProof]!
+  
+  merkleProofPath(databaseName: String!, docId: String!): [MerkleNodeDetail]!
 }
 `;
 
-const getWitness = publicWrapper(
-  MerkleTreeIndexRequest,
-  async (_root: unknown, args: TMerkleTreeIndexRequest) => {
-    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
-    return merkleTreeService.getWitness(BigInt(args.index), new Date());
-  }
-);
+const merkleProof = publicWrapper<
+  TMerkleTreeProofByIndexRequest,
+  TMerkleTreeProofByIndexResponse
+>(JOI_MERKLE_TREE_PROOF_BY_INDEX, async (_root, args) => {
+  const imMerkleTree = await ModelMerkleTree.getInstance(args.databaseName);
+  const resultMerkleProof = await imMerkleTree.getMerkleProof(
+    BigInt(args.index),
+    new Date()
+  );
 
-const getWitnessByDocument = publicWrapper(
-  MerkleTreeWitnessByDocumentRequest,
-  async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) => {
-    return withTransaction((session) =>
-      getWitnessByDocumentId(args.databaseName, args.docId, session)
-    );
-  }
-);
+  return resultMerkleProof.map((proof) => ({
+    isLeft: proof.isLeft,
+    sibling: proof.sibling.toString(),
+  }));
+});
 
-const getNode = publicWrapper(
-  MerkleTreeGetNodeRequest,
-  async (_root: unknown, args: TMerkleTreeGetNodeRequest) => {
-    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
-    return withTransaction((session) =>
-      merkleTreeService.getNode(args.level, BigInt(args.index), new Date(), {
-        session,
-      })
-    );
-  }
-);
-
-const getNodesByLevel = publicWrapper(
-  MerkleTreeGetNodesByLevelRequest,
-  async (_root: unknown, args: TMerkleTreeGetNodesByLevelRequest) =>
-    getMerkleNodesByLevel(args.databaseName, args.level, args.pagination)
-);
-
-const getMerkleTreeInfo = publicWrapper(
-  MerkleTreeInfoRequest,
-  async (_root: unknown, args: TDatabaseRequest) =>
-    getMerkleTreeInfoDomain(args.databaseName)
-);
-
-const getRoot = publicWrapper(
-  Joi.object({
+const merkleProofDocId = publicWrapper<
+  TMerkleTreeProofByDocIdRequest,
+  TMerkleTreeProofByDocIdResponse
+>(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) => {
+  const resultMerkleProofByDocId = await MerkleTree.document(
     databaseName,
-  }),
-  async (_root: unknown, args: TDatabaseRequest) => {
-    const merkleTreeService = await ModelMerkleTree.load(args.databaseName);
-    return merkleTreeService.getRoot(new Date());
-  }
+    docId
+  );
+  return resultMerkleProofByDocId.map((proof) => {
+    return {
+      isLeft: proof.isLeft,
+      sibling: proof.sibling.toString(),
+    };
+  });
+});
+
+const merkleListNode = publicWrapper<
+  TMerkleTreeListNodeRequest,
+  TMerkleTreeListNodeResponse
+>(
+  JOI_MERKLE_TREE_LIST_NODE,
+  async (_root, { databaseName, level, pagination }) =>
+    MerkleTree.merkleNodeByLevel(databaseName, level, pagination)
 );
 
-const getChildrenNodes = publicWrapper(
-  MerkleTreeGetNodeRequest,
-  async (_root: unknown, args: TMerkleTreeGetNodeRequest) =>
-    getChildrenNodesDomain(args.databaseName, args.level, BigInt(args.index))
+const merkleTreeInfo = publicWrapper<
+  TMerkleTreeInfoRequest,
+  TMerkleTreeInfoResponse
+>(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
+  MerkleTree.merkleTreeInfo(databaseName)
 );
 
-const getWitnessPath = publicWrapper(
-  MerkleTreeWitnessByDocumentRequest,
-  async (_root: unknown, args: TMerkleTreeWitnessByDocumentRequest) =>
-    getMerkleWitnessPath(args.databaseName, args.docId)
+const merkleChildrenNode = publicWrapper<
+  TMerkleTreeChildrenNodeRequest,
+  TMerkleTreeChildrenNodeResponse
+>(JOI_MERKLE_TREE_GET_NODE, async (_root, { databaseName, level, index }) =>
+  MerkleTree.getChildrenNode(databaseName, level, index)
 );
 
-type TMerkleTreeResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    getWitness: typeof getWitness;
-    getNode: typeof getNode;
-    getWitnessByDocument: typeof getWitnessByDocument;
-    getRoot: typeof getRoot;
-    getNodesByLevel: typeof getNodesByLevel;
-    getMerkleTreeInfo: typeof getMerkleTreeInfo;
-    getChildrenNodes: typeof getChildrenNodes;
-    getWitnessPath: typeof getWitnessPath;
-  };
-};
+const merkleProofPath = publicWrapper<
+  TMerkleTreeProofPathRequest,
+  TMerkleTreeProofPathResponse
+>(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) =>
+  MerkleTree.merkleProofPath(databaseName, docId)
+);
 
-export const resolversMerkleTree: TMerkleTreeResolver = {
+export const resolversMerkleTree = {
   JSON: GraphQLJSON,
   Query: {
-    getWitness,
-    getNode,
-    getWitnessByDocument,
-    getRoot,
-    getNodesByLevel,
-    getMerkleTreeInfo,
-    getChildrenNodes,
-    getWitnessPath,
+    merkleProof,
+    merkleProofDocId,
+    merkleChildrenNode,
+    merkleListNode,
+    merkleTreeInfo,
+    merkleProofPath,
   },
 };
