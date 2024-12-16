@@ -20,6 +20,20 @@ export enum EOwnershipType {
   Group = 'Group',
 }
 
+// For param use-case
+
+export type TParamCollectionOwnership = {
+  databaseName: string;
+  collectionName: string;
+  actor: string;
+  groupType: EOwnershipType;
+  newOwner: string;
+};
+
+export type TParamDocumentOwnership = TParamCollectionOwnership & {
+  docId: string;
+};
+
 export type TOwnershipDocumentRequest = TCollectionRequest & {
   docId: string;
 };

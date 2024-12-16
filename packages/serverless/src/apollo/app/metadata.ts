@@ -14,12 +14,10 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 
 import { Metadata } from '../../domain/use-case/metadata.js';
-import {
-  changeCollectionOwnership,
-  changeDocumentOwnership,
-} from '../../domain/use-case/ownership.js';
+
 import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
 import { authorizeWrapper } from '../validation.js';
+import { Ownership } from '../../domain/use-case/ownership.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -167,28 +165,36 @@ const permissionTransferOwnership = authorizeWrapper<
     grouping: ownershipGroup,
     newOwner: userName,
   }),
-  async (_root: unknown, args, context) => {
+  async (
+    _root: unknown,
+    { databaseName, collectionName, docId, groupType, newOwner },
+    context
+  ) => {
     return Boolean(
       await withTransaction((session) => {
-        if (args.docId) {
+        if (docId) {
           // Document case with docId
-          return changeDocumentOwnership(
-            args.databaseName,
-            args.collectionName,
-            args.docId,
-            context.userName,
-            args.groupType,
-            args.newOwner,
+          return Ownership.transferDocument(
+            {
+              databaseName,
+              collectionName,
+              docId,
+              groupType,
+              newOwner,
+              actor: context.userName,
+            },
             session
           );
         } else {
           // Collection case without docId
-          return changeCollectionOwnership(
-            args.databaseName,
-            args.collectionName,
-            context.userName,
-            args.groupType,
-            args.newOwner,
+          return Ownership.transferCollection(
+            {
+              databaseName,
+              collectionName,
+              groupType,
+              newOwner,
+              actor: context.userName,
+            },
             session
           );
         }

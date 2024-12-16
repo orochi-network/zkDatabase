@@ -38,7 +38,7 @@ export class Prover {
       throw new Error(`Metadata of document ${docId} is missed`);
     }
 
-    const imMerkleTree = await ModelMerkleTree.load(databaseName);
+    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     // Building schema
     const schema = await buildSchema(
@@ -81,7 +81,7 @@ export class Prover {
       { session: session.proofService }
     );
 
-    return imMerkleTree.getWitness(BigInt(index), currDate, {
+    return imMerkleTree.getMerkleProof(BigInt(index), currDate, {
       session: session.serverless,
     });
   }
@@ -101,7 +101,7 @@ export class Prover {
       throw new Error(`Document ${docId} does not exist`);
     }
 
-    const imMerkleTree = await ModelMerkleTree.load(databaseName);
+    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
     const metadataDocument = await imMetadataDocument.findOne(
@@ -152,7 +152,7 @@ export class Prover {
       { session }
     );
 
-    return imMerkleTree.getWitness(merkleIndex, currDate, {
+    return imMerkleTree.getMerkleProof(merkleIndex, currDate, {
       session,
     });
   }
@@ -171,7 +171,7 @@ export class Prover {
       throw new Error(`Document ${docId} does not exist to be proved`);
     }
 
-    const imMerkleTree = await ModelMerkleTree.load(databaseName);
+    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
@@ -219,7 +219,7 @@ export class Prover {
       { session }
     );
 
-    return imMerkleTree.getWitness(merkleIndex, currDate, {
+    return imMerkleTree.getMerkleProof(merkleIndex, currDate, {
       session,
     });
   }
