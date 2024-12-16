@@ -94,27 +94,23 @@ export const typeDefsDocument = gql`
     sibling: String!
   }
 
-  type TListDocumentWithMetadata {
-    document: TDocumentReadResponse!
+  type TListDocumentWithMetadataResponse {
+    document: TDocumentResponse!
     metadata: TMetadataDocument!
     proofStatus: String
   }
 
   type TDocumentHistoryResponse {
     docId: String!
-    documents: [TDocumentReadResponse!]!
+    documentRevision: [TDocumentRecordNullable!]!
+    metadata: TMetadataDocument!
+    active: Boolean!
   }
 
-  type TDocumentReadResponse {
+  type TDocumentResponse {
     docId: String!
-    document: [TDocumentField!]!
+    document: JSON
     createdAt: Date
-  }
-
-  type TDocumentField {
-    name: String!
-    kind: String!
-    value: String!
   }
 
   extend type Query {
@@ -122,14 +118,14 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       query: JSON!
-    ): TDocumentReadResponse
+    ): TDocumentResponse
 
     listDocumentWithMetadata(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
-    ): [TListDocumentWithMetadata]!
+    ): [TListDocumentWithMetadataResponse]!
 
     findDocumentHistory(
       databaseName: String!

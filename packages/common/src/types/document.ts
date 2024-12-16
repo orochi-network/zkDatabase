@@ -1,6 +1,5 @@
 import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
-import { TCollectionRequest } from './collection.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TMetadataDetail, TMetadataDocument } from './metadata.js';
@@ -32,8 +31,10 @@ export type TDocumentHistory = {
   active: boolean;
 };
 
+export type TDocumentResponse = TDocumentRecordNullable;
+
 export type TDocumentWithMetadataResponse = TMetadataDetail<
-  TDocumentRecordNullable,
+  TDocumentResponse,
   TMetadataDocument
 >;
 
