@@ -64,22 +64,24 @@ export type TMerkleTreeProofByDocIdRequest = TDatabaseRequest & {
 
 export type TMerkleTreeProofByDocIdResponse = TMerkleTreeProofByIndexResponse;
 
-export type TMerkleTreeListNodeRequest = TDatabaseRequest & {
+export type TMerkleTreeNodeListByLevelRequest = TDatabaseRequest & {
   level: number;
   pagination: TPagination;
 };
 
-export type TMerkleTreeListNodeResponse = TPaginationReturn<TMerkleNodeJson[]>;
+export type TMerkleTreeNodeListByLevelResponse = TPaginationReturn<
+  TMerkleNodeJson[]
+>;
 
 export type TMerkleTreeInfoRequest = TDatabaseRequest;
 
 export type TMerkleTreeInfoResponse = TMerkleTreeInfo;
 
-export type TMerkleTreeChildrenNodeRequest = TDatabaseRequest &
+export type TMerkleTreeNodeChildrenRequest = TDatabaseRequest &
   Pick<TMerkle, 'index' | 'level'>;
 
-export type TMerkleTreeChildrenNodeResponse = TMerkleNodeJson[];
+export type TMerkleTreeNodeChildrenResponse = TMerkleNodeJson[];
 
-export type TMerkleTreeProofPathRequest = TMerkleTreeProofByDocIdRequest;
+export type TMerkleTreeNodePathRequest = TMerkleTreeProofByDocIdRequest;
 
-export type TMerkleTreeProofPathResponse = TMerkleNodeDetailJson[];
+export type TMerkleTreeNodePathResponse = TMerkleNodeDetailJson[];

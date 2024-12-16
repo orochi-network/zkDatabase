@@ -1,16 +1,16 @@
 import {
-  TMerkleTreeChildrenNodeRequest,
-  TMerkleTreeChildrenNodeResponse,
+  TMerkleTreeNodeChildrenRequest,
+  TMerkleTreeNodeChildrenResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
-  TMerkleTreeListNodeRequest,
-  TMerkleTreeListNodeResponse,
+  TMerkleTreeNodeListByLevelRequest,
+  TMerkleTreeNodeListByLevelResponse,
   TMerkleTreeProofByDocIdRequest,
   TMerkleTreeProofByDocIdResponse,
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse,
-  TMerkleTreeProofPathRequest,
-  TMerkleTreeProofPathResponse,
+  TMerkleTreeNodePathRequest,
+  TMerkleTreeNodePathResponse,
   databaseName,
   indexNumber,
   objectId,
@@ -22,7 +22,7 @@ import Joi from 'joi';
 import { MerkleTree } from '../../domain/use-case/merkle-tree.js';
 import { publicWrapper } from '../validation.js';
 
-export const JOI_MERKLE_TREE_LIST_NODE = Joi.object({
+export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
   databaseName,
   level: Joi.number().required(),
   pagination,
@@ -42,7 +42,7 @@ export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
   docId: objectId,
 });
 
-export const JOI_MERKLE_TREE_GET_NODE = Joi.object({
+export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
   databaseName,
   index: indexNumber,
   level: Joi.number().required(),
@@ -86,17 +86,17 @@ type MerkleTreeInfo {
 
 extend type Query {
 
-  merkleListNode(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
-  
-  merkleChildrenNode(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
-  
   merkleTreeInfo(databaseName: String!): MerkleTreeInfo!
   
   merkleProof(databaseName: String!, index: String!): [MerkleProof]!
   
   merkleProofDocId(databaseName: String!, docId: String!): [MerkleProof]!
+
+  merkleNodeByLevel(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
   
-  merkleProofPath(databaseName: String!, docId: String!): [MerkleNodeDetail]!
+  merkleNodePath(databaseName: String!, docId: String!): [MerkleNodeDetail]!
+
+  merkleNodeChildren(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
 }
 `;
 
@@ -132,11 +132,11 @@ const merkleProofDocId = publicWrapper<
   });
 });
 
-const merkleListNode = publicWrapper<
-  TMerkleTreeListNodeRequest,
-  TMerkleTreeListNodeResponse
+const merkleNodeByLevel = publicWrapper<
+  TMerkleTreeNodeListByLevelRequest,
+  TMerkleTreeNodeListByLevelResponse
 >(
-  JOI_MERKLE_TREE_LIST_NODE,
+  JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
     MerkleTree.merkleNodeByLevel(databaseName, level, pagination)
 );
@@ -148,18 +148,20 @@ const merkleTreeInfo = publicWrapper<
   MerkleTree.merkleTreeInfo(databaseName)
 );
 
-const merkleChildrenNode = publicWrapper<
-  TMerkleTreeChildrenNodeRequest,
-  TMerkleTreeChildrenNodeResponse
->(JOI_MERKLE_TREE_GET_NODE, async (_root, { databaseName, level, index }) =>
-  MerkleTree.getChildrenNode(databaseName, level, index)
+const merkleNodeChildren = publicWrapper<
+  TMerkleTreeNodeChildrenRequest,
+  TMerkleTreeNodeChildrenResponse
+>(
+  JOI_MERKLE_TREE_NODE_CHILDREN,
+  async (_root, { databaseName, level, index }) =>
+    MerkleTree.merkleNodeChildren(databaseName, level, index)
 );
 
-const merkleProofPath = publicWrapper<
-  TMerkleTreeProofPathRequest,
-  TMerkleTreeProofPathResponse
+const merkleNodePath = publicWrapper<
+  TMerkleTreeNodePathRequest,
+  TMerkleTreeNodePathResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) =>
-  MerkleTree.merkleProofPath(databaseName, docId)
+  MerkleTree.merkleNodePath(databaseName, docId)
 );
 
 export const resolversMerkleTree = {
@@ -167,9 +169,9 @@ export const resolversMerkleTree = {
   Query: {
     merkleProof,
     merkleProofDocId,
-    merkleChildrenNode,
-    merkleListNode,
+    merkleNodeChildren,
+    merkleNodeByLevel,
     merkleTreeInfo,
-    merkleProofPath,
+    merkleNodePath,
   },
 };
