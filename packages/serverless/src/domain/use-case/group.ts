@@ -4,6 +4,8 @@ import {
   TGroupParamCreate,
   TGroupParamListUser,
   TGroupParamUpdateMetadata,
+  groupName as joiGroupName,
+  groupDescription as joiGroupDescription,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
@@ -173,6 +175,19 @@ export class Group {
     if (!newGroupName && !newGroupDescription) {
       throw new Error('Need to provide at least one field to update');
     }
+    // Double check new group name and description with Joi
+    const { error: groupDescriptionErr } =
+      joiGroupDescription(false).validate(newGroupDescription);
+    const { error: groupNameErr } = joiGroupName(false).validate(newGroupName);
+
+    if (groupDescriptionErr) {
+      throw new Error(`Description Error: ${groupDescriptionErr.message}`);
+    }
+
+    if (groupNameErr) {
+      throw new Error(`Name Error: ${groupNameErr.message}`);
+    }
+
     // Check actor permission
     if (
       await Database.isOwner(
