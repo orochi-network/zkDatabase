@@ -165,8 +165,8 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
   JOI_GROUP_UPDATE,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
-    const result = await withTransaction(async (session) => {
-      return Group.updateMetadata(
+    const result = await withTransaction(async (session) =>
+      Group.updateMetadata(
         {
           databaseName,
           groupName,
@@ -175,8 +175,8 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
           createdBy: ctx.userName,
         },
         session
-      );
-    });
+      )
+    );
 
     return result !== null && result;
   }

@@ -17,7 +17,6 @@ import {
   userName,
 } from '@zkdb/common';
 import {
-  DATABASE_ENGINE,
   ModelDatabase,
   ModelMetadataDatabase,
   withTransaction,
@@ -37,9 +36,11 @@ export const typeDefsDatabase = gql`
   type Mutation
 
   type Database {
-    merkleHeight: Int!
-    publicKey: String
+    databaseName: String!
     databaseOwner: String!
+    merkleHeight: Int!
+    appPublicKey: String!
+    deployStatus: TransactionStatus!
   }
 
   input PaginationInput {
@@ -47,29 +48,17 @@ export const typeDefsDatabase = gql`
     offset: Int
   }
 
-  type Collection {
-    name: String!
-  }
-
-  type DbDeploy {
-    databaseName: String!
-    merkleHeight: Int!
-    appPublicKey: String!
-    tx: String!
-  }
-
-  type DatabaseDetail {
+  type DatabaseMetadata {
     databaseName: String!
     databaseOwner: String!
     merkleHeight: Int!
-    appPublicKey: String
-    collection: [MetadataCollection]
+    appPublicKey: String!
     databaseSize: Int
-    deployStatus: TransactionStatus
+    deployStatus: TransactionStatus!
   }
 
   type DatabaseListResponse {
-    data: [DatabaseDetail]!
+    data: [DatabaseMetadata]!
     total: Int!
     offset: Int!
   }
@@ -83,8 +72,8 @@ export const typeDefsDatabase = gql`
 
   extend type Mutation {
     dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
-    dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
-    dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
+    dbTransferOwner(databaseName: String!, newOwner: String!): Boolean
+    dbDeploy(databaseName: String!, appPublicKey: String!): Boolean
   }
 `;
 
