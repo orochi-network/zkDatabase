@@ -1,6 +1,5 @@
 import { ESorting, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
-import {} from '@zkdb/common';
 import Joi from 'joi';
 
 export const O1JS_VALID_TYPE = [

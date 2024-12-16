@@ -1,19 +1,18 @@
 import {
-  TMerkleTreeNodeChildrenRequest,
-  TMerkleTreeNodeChildrenResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
+  TMerkleTreeNodeChildrenRequest,
+  TMerkleTreeNodeChildrenResponse,
   TMerkleTreeNodeListByLevelRequest,
   TMerkleTreeNodeListByLevelResponse,
+  TMerkleTreeNodePathRequest,
+  TMerkleTreeNodePathResponse,
   TMerkleTreeProofByDocIdRequest,
   TMerkleTreeProofByDocIdResponse,
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse,
-  TMerkleTreeNodePathRequest,
-  TMerkleTreeNodePathResponse,
   databaseName,
   indexNumber,
-  objectId,
   pagination,
 } from '@zkdb/common';
 import { ModelMerkleTree } from '@zkdb/storage';
@@ -39,7 +38,11 @@ export const JOI_MERKLE_TREE_PROOF_BY_INDEX = Joi.object({
 
 export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
   databaseName,
-  docId: objectId,
+  docId: Joi.string()
+    // regex for docId (20-36 characters long, including dashes)
+    // @TODO: better check for ObjectId, for now MongoDB accepts both hexadecimal and dash-encoded string formats
+    .regex(/^[0-9a-fA-F\-]{20,36}$/)
+    .required(),
 });
 
 export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
@@ -138,14 +141,14 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    MerkleTree.merkleNodeByLevel(databaseName, level, pagination)
+    MerkleTree.nodeByLevel(databaseName, level, pagination)
 );
 
 const merkleTreeInfo = publicWrapper<
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse
 >(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
-  MerkleTree.merkleTreeInfo(databaseName)
+  MerkleTree.info(databaseName)
 );
 
 const merkleNodeChildren = publicWrapper<
@@ -154,14 +157,14 @@ const merkleNodeChildren = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_CHILDREN,
   async (_root, { databaseName, level, index }) =>
-    MerkleTree.merkleNodeChildren(databaseName, level, index)
+    MerkleTree.nodeChildren(databaseName, level, index)
 );
 
 const merkleNodePath = publicWrapper<
   TMerkleTreeNodePathRequest,
   TMerkleTreeNodePathResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) =>
-  MerkleTree.merkleNodePath(databaseName, docId)
+  MerkleTree.nodePath(databaseName, docId)
 );
 
 export const resolversMerkleTree = {

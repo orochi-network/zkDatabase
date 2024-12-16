@@ -1,5 +1,4 @@
 import {
-  TMerkleNodeDetailJson,
   TMerkleNodeJson,
   TMerkleProof,
   TMerkleTreeInfo,
@@ -19,9 +18,12 @@ export class MerkleTree {
   ): Promise<TMerkleProof[]> {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-    const docMetadata = await modelDocumentMetadata.findOne({
-      docId,
-    });
+    const docMetadata = await modelDocumentMetadata.findOne(
+      {
+        docId,
+      },
+      { session }
+    );
 
     if (!docMetadata) {
       throw Error(`Metadata has not been found`);
@@ -38,7 +40,7 @@ export class MerkleTree {
     );
   }
 
-  public static async merkleNodeByLevel(
+  public static async nodeByLevel(
     databaseName: string,
     nodeLevel: number,
     pagination?: TPagination
@@ -49,9 +51,11 @@ export class MerkleTree {
 
     if (nodeLevel < modelMerkleTree.height) {
       const listNode = (
-        await modelMerkleTree.getListNodeByLevel(nodeLevel, new Date(), {
-          ...pagination,
-        })
+        await modelMerkleTree.getListNodeByLevel(
+          nodeLevel,
+          new Date(),
+          pagination
+        )
       ).map(({ level, index, hash }) => ({
         level,
         index,
@@ -72,9 +76,7 @@ export class MerkleTree {
     throw Error('Node Level must be less then Merkle Tree Height');
   }
 
-  public static async merkleTreeInfo(
-    databaseName: string
-  ): Promise<TMerkleTreeInfo> {
+  public static async info(databaseName: string): Promise<TMerkleTreeInfo> {
     const modelMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
@@ -85,26 +87,14 @@ export class MerkleTree {
     };
   }
 
-  public static async getChildrenNode(
+  public static async nodeChildren(
     databaseName: string,
     parentLevel: number,
     parentIndex: bigint
   ): Promise<TMerkleNodeJson[]> {
-    if (!Number.isInteger(parentLevel) || parentLevel < 0) {
+    if (!Number.isInteger(parentLevel) || parentLevel <= 0) {
       throw new Error(
-        `Invalid parentLevel: ${parentLevel}. It must be a non-negative integer.`
-      );
-    }
-
-    if (parentIndex < 0) {
-      throw new Error(
-        `Invalid parentIndex: ${parentIndex}. It must be a non-negative integer.`
-      );
-    }
-
-    if (parentLevel <= 0) {
-      throw new Error(
-        `Invalid parentLevel: ${parentLevel}. Leaves do not have children nodes.`
+        `Invalid parentLevel: ${parentLevel}. It must be a greater than zero integer.`
       );
     }
 
@@ -151,7 +141,7 @@ export class MerkleTree {
     ];
   }
 
-  public static async merkleProofPath(databaseName: string, docId: string) {
+  public static async nodePath(databaseName: string, docId: string) {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
     const docMetadata = await modelDocumentMetadata.findOne({
@@ -170,5 +160,3 @@ export class MerkleTree {
     );
   }
 }
-
-export default { MerkleTree };

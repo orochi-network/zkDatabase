@@ -1,9 +1,9 @@
 import {
   TMerkleJson,
   TMerkleNode,
-  TMerkleNodeDetail,
-  TMerkleNodeRecord,
+  TMerkleNodeDetailJson,
   TMerkleProof,
+  TMerkleRecod,
 } from '@zkdb/common';
 import { BulkWriteOptions, FindOptions, OptionalId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
@@ -14,9 +14,7 @@ import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js
 import ModelGeneral from '../base/general.js';
 import { ModelMetadataDatabase } from '../global/metadata-database.js';
 
-export class ModelMerkleTree extends ModelGeneral<
-  OptionalId<TMerkleNodeRecord>
-> {
+export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecod>> {
   private static instances = new Map<string, ModelMerkleTree>();
 
   private zeroes: Field[] = [];
@@ -88,7 +86,7 @@ export class ModelMerkleTree extends ModelGeneral<
     const inserts = [];
 
     for (let level = 0; level < this._height; level += 1) {
-      const dataToInsert: OptionalId<TMerkleNodeRecord> = {
+      const dataToInsert: OptionalId<TMerkleRecod> = {
         leaf: leaf.toString(),
         hash: path[level].toString(),
         level,
@@ -150,7 +148,7 @@ export class ModelMerkleTree extends ModelGeneral<
     index: bigint,
     before: Date,
     options?: FindOptions
-  ): Promise<TMerkleNodeDetail[]> {
+  ): Promise<TMerkleNodeDetailJson[]> {
     if (index >= this.leafCount) {
       throw new Error(
         `index ${index} is out of range for ${this.leafCount} leaves.`
@@ -159,7 +157,7 @@ export class ModelMerkleTree extends ModelGeneral<
 
     let currIndex = BigInt(index);
 
-    const witnessPath: TMerkleNodeDetail[] = [];
+    const witnessPath: TMerkleNodeDetailJson[] = [];
 
     for (let level = 0; level < this._height - 1; level += 1) {
       const isLeft = currIndex % 2n === 0n;
@@ -243,12 +241,12 @@ export class ModelMerkleTree extends ModelGeneral<
 
   public async getListNodeByLevel(
     level: number,
-    updatedAt: Date,
+    before: Date,
     options?: FindOptions
   ): Promise<TMerkleJson<TMerkleNode>[]> {
     const query = {
       level,
-      updatedAt: { $lte: updatedAt },
+      updatedAt: { $lte: before },
     };
 
     const pipeline: any[] = [
@@ -281,11 +279,11 @@ export class ModelMerkleTree extends ModelGeneral<
 
   public async countLatestNodeByLevel(
     level: number,
-    updatedAt: Date
+    before: Date
   ): Promise<number> {
     const query = {
       level,
-      updatedAt: { $lte: updatedAt },
+      updatedAt: { $lte: before },
     };
 
     const latestNodeAggregation = await this.collection

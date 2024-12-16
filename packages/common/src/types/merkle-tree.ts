@@ -1,6 +1,7 @@
 import { Field } from 'o1js';
 import { TDatabaseRequest } from './database.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
+import { TDbRecord } from './common.js';
 
 export type TMerkle = {
   // Must be index
@@ -14,6 +15,8 @@ export type TMerkleNode = Pick<
   TMerkleField<TMerkle>,
   'hash' | 'level' | 'index'
 >;
+
+export type TMerkleRecod = TDbRecord<TMerkle>;
 
 export type TMerkleProof = {
   sibling: Field;
