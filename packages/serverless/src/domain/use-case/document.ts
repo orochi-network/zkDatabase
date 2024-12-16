@@ -110,17 +110,17 @@ async function findDocument(
 }
 
 async function createDocument(
-  permissionParams: TPermissionSudo<TParamCollection>,
+  permissionParam: TPermissionSudo<TParamCollection>,
   fields: Record<string, TDocumentField>,
   permission = PERMISSION_DEFAULT_VALUE,
   compoundSession?: CompoundSession
 ) {
   const actorPermissionCollection = await PermissionSecurity.collection(
-    permissionParams,
+    permissionParam,
     compoundSession?.sessionService
   );
 
-  const { databaseName, collectionName, actor } = permissionParams;
+  const { databaseName, collectionName, actor } = permissionParam;
 
   if (!actorPermissionCollection.write) {
     throw new Error(
@@ -207,11 +207,11 @@ async function createDocument(
 }
 
 async function updateDocument(
-  permissionParams: TPermissionSudo<TParamCollection>,
+  permissionParam: TPermissionSudo<TParamCollection>,
   filter: FilterCriteria,
   update: Record<string, TDocumentField>
 ) {
-  const { databaseName, collectionName, actor } = permissionParams;
+  const { databaseName, collectionName, actor } = permissionParam;
 
   const imDocument = ModelDocument.getInstance(databaseName, collectionName);
   const documentRecord = await withTransaction(async (session) => {
@@ -221,7 +221,7 @@ async function updateDocument(
 
     if (oldDocumentRecord) {
       const actorPermissionDocument = await PermissionSecurity.document(
-        { ...permissionParams, docId: oldDocumentRecord.docId },
+        { ...permissionParam, docId: oldDocumentRecord.docId },
         session
       );
       if (!actorPermissionDocument.write) {
@@ -270,10 +270,10 @@ async function updateDocument(
 }
 
 async function deleteDocument(
-  permissionParams: TPermissionSudo<TParamCollection>,
+  permissionParam: TPermissionSudo<TParamCollection>,
   filter: FilterCriteria
 ): Promise<TMerkleProof[]> {
-  const { databaseName, collectionName, actor } = permissionParams;
+  const { databaseName, collectionName, actor } = permissionParam;
 
   const result = await withTransaction(async (session) => {
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
@@ -285,7 +285,7 @@ async function deleteDocument(
     if (findResult) {
       const actorPermissionDocument = await PermissionSecurity.document(
         {
-          ...permissionParams,
+          ...permissionParam,
           docId: findResult.docId,
         },
         session
