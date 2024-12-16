@@ -23,6 +23,7 @@ import { Permission, PermissionBase } from '@zkdb/permission';
 import {
   CompoundSession,
   DATABASE_ENGINE,
+  ModelDatabase,
   ModelQueueTask,
   ModelSequencer,
   withTransaction,
@@ -239,7 +240,9 @@ async function updateDocument(
       await imDocument.updateOne(
         { docId: oldDocumentRecord.docId },
         {
-          document: update,
+          $set: {
+            document: update,
+          },
         },
         {
           session,
@@ -323,8 +326,8 @@ async function listDocumentWithMetadata(
   pagination?: TPagination,
   session?: ClientSession
 ): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
-  const { client } = DATABASE_ENGINE.serverless;
-  const database = client.db(databaseName);
+  const { db: database } = new ModelDatabase();
+
   const paginationInfo = pagination || DEFAULT_PAGINATION;
   const pipeline = [];
   if (query) {

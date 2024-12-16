@@ -11,7 +11,7 @@ import {
   ModelGeneral,
   ModelMetadataDatabase,
 } from '@zkdb/storage';
-import { randomUUID, UUID } from 'crypto';
+import { randomUUID } from 'crypto';
 import { ClientSession, Filter, InsertOneResult, OptionalId } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
 import logger from '../../helper/logger.js';
@@ -56,9 +56,9 @@ export class ModelDocument extends ModelGeneral<
    * it as active */
   public async insertOneFromFields(
     fields: Record<string, TContractSchemaField>,
-    docId?: UUID,
+    docId?: string,
     session?: ClientSession
-  ): Promise<[InsertOneResult<TDocumentRecordNullable>, UUID]> {
+  ): Promise<[InsertOneResult<TDocumentRecordNullable>, string]> {
     const insertingDocId = docId || randomUUID();
     return [
       await this.insertOne(
@@ -101,7 +101,7 @@ export class ModelDocument extends ModelGeneral<
       await this.collection.findOneAndUpdate(
         { _id: findDocument._id },
         {
-          $set: { active: false, nextId: documentUpdated.insertedId },
+          $set: { active: false, nextId: documentUpdated[1] },
         },
         {
           session,
