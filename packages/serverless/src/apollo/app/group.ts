@@ -6,14 +6,20 @@ import {
   JOI_GROUP_LIST_USER,
   JOI_GROUP_REMOVE_USER,
   JOI_GROUP_UPDATE,
-  TGroupAddUsersRequest,
+  TGroupAddUserListRequest,
+  TGroupAddUserListResponse,
   TGroupCreateRequest,
+  TGroupCreateResponse,
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse,
   TGroupListAllRequest,
   TGroupListAllResponse,
   TGroupListByUserRequest,
+  TGroupListByUserResponse,
+  TGroupRemoveUserListRequest,
+  TGroupRemoveUserListResponse,
   TGroupUpdateRequest,
+  TGroupUpdateResponse,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -103,10 +109,11 @@ const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
   }
 );
 
-const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
-  JOI_GROUP_LIST_USER,
-  async (_root, args) =>
-    new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
+const groupListByUser = publicWrapper<
+  TGroupListByUserRequest,
+  TGroupListByUserResponse
+>(JOI_GROUP_LIST_USER, async (_root, args) =>
+  new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
 );
 
 const groupDetail = publicWrapper<
@@ -116,7 +123,7 @@ const groupDetail = publicWrapper<
   Group.detail({ databaseName, groupName })
 );
 
-const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
+const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
   JOI_GROUP_UPDATE,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
@@ -137,7 +144,7 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
   }
 );
 
-const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
+const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
   JOI_GROUP_CREATE,
   async (_root, { databaseName, groupDescription, groupName }, ctx) =>
     Boolean(
@@ -155,7 +162,10 @@ const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
     )
 );
 
-const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
+const groupAddUser = authorizeWrapper<
+  TGroupAddUserListRequest,
+  TGroupAddUserListResponse
+>(
   JOI_GROUP_ADD_USER,
   async (_root, { databaseName, groupName, listUser }, ctx) =>
     Group.addListUser({
@@ -166,7 +176,10 @@ const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
     })
 );
 
-const groupRemoveUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
+const groupRemoveUser = authorizeWrapper<
+  TGroupRemoveUserListRequest,
+  TGroupRemoveUserListResponse
+>(
   JOI_GROUP_REMOVE_USER,
   async (_root: unknown, { databaseName, groupName, listUser }, ctx) =>
     Group.removeListUser({

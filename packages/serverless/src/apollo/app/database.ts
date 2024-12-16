@@ -4,12 +4,16 @@ import {
   JOI_DATABASE_TRANSFER_OWNER,
   JOI_DATABASE_UPDATE_DEPLOY,
   TDatabaseChangeOwnerRequest,
+  TDatabaseChangeOwnerResponse,
   TDatabaseCreateRequest,
+  TDatabaseCreateResponse,
+  TDatabaseExistResponse,
   TDatabaseListRequest,
   TDatabaseListResponse,
   TDatabaseRequest,
   TDatabaseResponse,
   TDatabaseUpdateDeployedRequest,
+  TDatabaseUpdateDeployedResponse,
   databaseName,
 } from '@zkdb/common';
 import {
@@ -128,36 +132,43 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   }
 );
 
-const dbDeploy = authorizeWrapper<TDatabaseUpdateDeployedRequest, boolean>(
+const dbDeploy = authorizeWrapper<
+  TDatabaseUpdateDeployedRequest,
+  TDatabaseUpdateDeployedResponse
+>(
   JOI_DATABASE_UPDATE_DEPLOY,
   async (_root, { databaseName, appPublicKey }, _) =>
-    Database.deploy({ databaseName, appPublicKey })
-);
-
-const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
-  JOI_DATABASE_CREATE,
-  async (_root, { databaseName, merkleHeight }, ctx) =>
-    Boolean(
-      withTransaction((session) =>
-        Database.create(
-          { databaseName, merkleHeight, databaseOwner: ctx.userName },
-          session
-        )
-      )
+    withTransaction((session) =>
+      Database.deploy({ databaseName, appPublicKey }, session)
     )
 );
 
-const dbTransferOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
-  JOI_DATABASE_TRANSFER_OWNER,
-  async (_root, { databaseName, newOwner }, ctx) =>
-    Database.transferOwnership({
-      databaseName,
-      newOwner,
-      databaseOwner: ctx.userName,
-    })
+const dbCreate = authorizeWrapper<
+  TDatabaseCreateRequest,
+  TDatabaseCreateResponse
+>(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
+  Boolean(
+    withTransaction((session) =>
+      Database.create(
+        { databaseName, merkleHeight, databaseOwner: ctx.userName },
+        session
+      )
+    )
+  )
 );
 
-const dbExist = publicWrapper<TDatabaseRequest, boolean>(
+const dbTransferOwner = authorizeWrapper<
+  TDatabaseChangeOwnerRequest,
+  TDatabaseChangeOwnerResponse
+>(JOI_DATABASE_TRANSFER_OWNER, async (_root, { databaseName, newOwner }, ctx) =>
+  Database.transferOwnership({
+    databaseName,
+    newOwner,
+    databaseOwner: ctx.userName,
+  })
+);
+
+const dbExist = publicWrapper<TDatabaseRequest, TDatabaseExistResponse>(
   Joi.object({
     databaseName,
   }),

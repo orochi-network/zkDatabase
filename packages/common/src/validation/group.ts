@@ -1,11 +1,10 @@
-import Joi from 'joi';
 import {
-  TGroupAddUsersRequest,
+  TGroupAddUserListRequest,
   TGroupCreateRequest,
   TGroupInfoDetailRequest,
   TGroupListAllRequest,
   TGroupListByUserRequest,
-  TGroupRemoveUsersRequest,
+  TGroupRemoveUserListRequest,
   TGroupUpdateRequest,
 } from '@types';
 import {
@@ -14,6 +13,7 @@ import {
   groupName,
   userName,
 } from '@validation';
+import Joi from 'joi';
 
 export const JOI_GROUP_CREATE = Joi.object<TGroupCreateRequest>({
   databaseName,
@@ -42,13 +42,13 @@ export const JOI_GROUP_LIST_ALL = Joi.object<TGroupListAllRequest>({
   databaseName,
 });
 
-export const JOI_GROUP_ADD_USER = Joi.object<TGroupAddUsersRequest>({
+export const JOI_GROUP_ADD_USER = Joi.object<TGroupAddUserListRequest>({
   databaseName,
   groupName,
   listUser: Joi.array().items(Joi.string().required()).required(),
 });
 
-export const JOI_GROUP_REMOVE_USER = Joi.object<TGroupRemoveUsersRequest>({
+export const JOI_GROUP_REMOVE_USER = Joi.object<TGroupRemoveUserListRequest>({
   databaseName,
   groupName,
   listUser: Joi.array().items(Joi.string().required()).required(),

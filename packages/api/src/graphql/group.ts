@@ -1,6 +1,6 @@
 import { gql } from "@apollo/client";
 import {
-  TGroupAddUsersRequest,
+  TGroupAddUserListRequest,
   TGroupCreateRequest,
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse,
@@ -18,7 +18,7 @@ import {
 export const group = <T>(client: TApolloClient<T>) => ({
   addUser: createMutateFunction<
     boolean,
-    TGroupAddUsersRequest,
+    TGroupAddUserListRequest,
     { groupAddUsers: boolean }
   >(
     client,

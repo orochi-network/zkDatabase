@@ -59,6 +59,8 @@ export type TDatabaseResponse = TMetadataDatabase;
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TMetadataDatabase, 'appPublicKey'>;
 
+export type TDatabaseUpdateDeployedResponse = boolean;
+
 // Database list
 export type TDatabaseListRequest = {
   query: Partial<TMetadataDatabaseRecord>;
@@ -74,6 +76,8 @@ export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
 
+export type TDatabaseCreateResponse = boolean;
+
 // Database find index
 export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
   index: number;
@@ -83,3 +87,7 @@ export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
 export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
   newOwner: string;
 };
+
+export type TDatabaseChangeOwnerResponse = boolean;
+
+export type TDatabaseExistResponse = boolean;
