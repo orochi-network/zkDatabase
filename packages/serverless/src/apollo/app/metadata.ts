@@ -12,10 +12,8 @@ import {
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  readCollectionMetadata,
-  readDocumentMetadata,
-} from '../../domain/use-case/metadata.js';
+
+import { Metadata } from '../../domain/use-case/metadata.js';
 import {
   changeCollectionOwnership,
   changeDocumentOwnership,
@@ -97,17 +95,16 @@ const getMetadataDocument = authorizeWrapper<
     collectionName,
     docId: objectId,
   }),
-  async (_root, args, ctx) => {
-    const documentMetadata = await readDocumentMetadata(
-      args.databaseName,
-      args.collectionName,
-      args.docId,
-      ctx.userName,
-      true
-    );
+  async (_root, { databaseName, collectionName, docId }, ctx) => {
+    const documentMetadata = await Metadata.document({
+      databaseName,
+      collectionName,
+      docId,
+      actor: ctx.userName,
+    });
 
     if (!documentMetadata) {
-      throw new Error(`Can't find metadata document: ${args.docId}`);
+      throw new Error(`Can't find metadata document: ${docId}`);
     }
 
     return documentMetadata;
@@ -122,16 +119,15 @@ const getMetadataCollection = authorizeWrapper<
     databaseName,
     collectionName,
   }),
-  async (_root, args, ctx) => {
-    const collectionMetadata = await readCollectionMetadata(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      true
-    );
+  async (_root, { databaseName, collectionName }, ctx) => {
+    const collectionMetadata = await Metadata.collection({
+      databaseName,
+      collectionName,
+      actor: ctx.userName,
+    });
 
     if (!collectionMetadata) {
-      throw new Error(`Can't find metadata collection: ${args.collectionName}`);
+      throw new Error(`Can't find metadata collection: ${collectionName}`);
     }
 
     return collectionMetadata;

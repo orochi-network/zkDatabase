@@ -1,7 +1,6 @@
 import {
   EDocumentProofStatus,
   ESequencer,
-  TDocumentField,
   TParamProveCreate,
   TParamProveDelete,
   TParamProveUpdate,
