@@ -143,7 +143,10 @@ export class ModelDocument extends ModelGeneral<
     return result;
   }
 
-  public async findOneActive(filter: Filter<any>, session?: ClientSession) {
+  public async findOneActive(
+    filter: Filter<TDocumentRecordNullable>,
+    session?: ClientSession
+  ) {
     logger.debug(`ModelDocument::findOne()`, { filter });
     return this.collection.findOne(
       { ...filter, active: true },
