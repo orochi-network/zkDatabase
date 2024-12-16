@@ -28,8 +28,8 @@ import {
   TWithProofStatus,
   TDocumentWithMetadataResponse,
   TDocumentRecordNullable,
-  TDocumentHistoryResponse,
   TMerkleProof,
+  TDocumentHistoryListResponse,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
@@ -189,28 +189,24 @@ const findDocument = authorizeWrapper<
 const listDocumentWithMetadata = authorizeWrapper<
   TDocumentListRequest,
   TWithProofStatus<TDocumentWithMetadataResponse>[]
->(
-  // TODO: consider validating this
-  Joi.object().optional(),
-  async (_root: unknown, args, ctx) => {
-    const documents = await withTransaction(async (session) => {
-      return listDocumentWithMetadataImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.query,
-        args.pagination || DEFAULT_PAGINATION,
-        session
-      );
-    });
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
+  const documents = await withTransaction(async (session) => {
+    return listDocumentWithMetadataImpl(
+      args.databaseName,
+      args.collectionName,
+      ctx.userName,
+      args.query,
+      args.pagination || DEFAULT_PAGINATION,
+      session
+    );
+  });
 
-    if (documents == null) {
-      throw new Error('Failed to list documents, transaction returned null');
-    }
-
-    return documents;
+  if (documents == null) {
+    throw new Error('Failed to list documents, transaction returned null');
   }
-);
+
+  return documents;
+});
 
 // Mutation
 const createDocument = authorizeWrapper<
@@ -279,9 +275,8 @@ const findDocumentHistory = authorizeWrapper(
 
 const listDocumentHistory = authorizeWrapper<
   TDocumentHistoryListRequest,
-  TDocumentHistoryResponse[]
-  // TODO: validate input
->(Joi.object().optional(), async (_root: unknown, args, ctx) => {
+  TDocumentHistoryListResponse
+>(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   return withTransaction(async (session) => {
     const documents = await listDocumentHistoryImpl(
       args.databaseName,

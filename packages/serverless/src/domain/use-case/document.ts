@@ -3,6 +3,7 @@
 // TODO: pagination does not work properly since we fetch all documents with
 // the pagination filter first and then filter them by permission, which can
 // lead to less documents being returned than expected.
+// TODO: group all the functions into a static class to organize them better
 
 import {
   EDocumentProofStatus,

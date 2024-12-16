@@ -37,7 +37,12 @@ export type TDocumentWithMetadataResponse = TMetadataDetail<
   TMetadataDocument
 >;
 
-export type TDocumentListRequest = TCollectionRequest & {
+export type TDocumentNamespace = {
+  databaseName: string;
+  collectionName: string;
+};
+
+export type TDocumentListRequest = TDocumentNamespace & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
@@ -47,27 +52,28 @@ export type TDocumentMerkleProofResponse = TMerkleProof[];
 export type TDocumentListFindResponse =
   TPaginationReturn<TDocumentMerkleProofResponse>;
 
-export type TDocumentFindRequest = TCollectionRequest & {
+export type TDocumentFindRequest = TDocumentNamespace & {
   query: { [key: string]: string };
 };
 
-export type TDocumentCreateRequest = TCollectionRequest & {
+export type TDocumentCreateRequest = TDocumentNamespace & {
   document: Record<string, TDocumentField>;
   documentPermission: number;
 };
 
-export type TDocumentUpdateRequest = TCollectionRequest & {
+export type TDocumentUpdateRequest = TDocumentNamespace & {
   query: { [key: string]: string };
   document: Record<string, TDocumentField>;
 };
 
-export type TDocumentHistoryFindRequest = TCollectionRequest & {
+export type TDocumentHistoryFindRequest = TDocumentNamespace & {
   docId: string;
 };
 
-export type TDocumentHistoryListRequest = TCollectionRequest & {
+export type TDocumentHistoryListRequest = TDocumentNamespace & {
   docId: string;
   pagination: TPagination;
 };
 
 export type TDocumentHistoryResponse = TDocumentHistory;
+export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];
