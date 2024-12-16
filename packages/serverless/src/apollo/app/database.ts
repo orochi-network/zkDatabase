@@ -1,8 +1,4 @@
 import {
-  JOI_DATABASE_CREATE,
-  JOI_DATABASE_LIST,
-  JOI_DATABASE_TRANSFER_OWNER,
-  JOI_DATABASE_UPDATE_DEPLOY,
   TDatabaseChangeOwnerRequest,
   TDatabaseChangeOwnerResponse,
   TDatabaseCreateRequest,
@@ -15,6 +11,9 @@ import {
   TDatabaseUpdateDeployedRequest,
   TDatabaseUpdateDeployedResponse,
   databaseName,
+  merkleHeight,
+  pagination,
+  userName,
 } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
@@ -24,7 +23,7 @@ import {
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Document } from 'mongodb';
+import { Document, ObjectId } from 'mongodb';
 
 import { Database } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
@@ -87,6 +86,49 @@ export const typeDefsDatabase = gql`
     dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
   }
 `;
+
+// Joi definition
+
+const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
+  databaseName: Joi.string().optional(),
+  databaseOwner: Joi.string().optional(),
+  merkleHeight: Joi.number().integer().optional(),
+  appPublicKey: Joi.string().optional(),
+  createdAt: Joi.date().optional(),
+  updatedAt: Joi.date().optional(),
+  _id: Joi.custom((value, helpers) => {
+    if (!ObjectId.isValid(value)) {
+      return helpers.error('any.invalid');
+    }
+    return value;
+  }).optional(),
+});
+
+export const JOI_DATABASE_LIST = Joi.object<TDatabaseListRequest>({
+  query: SchemaDatabaseRecordQuery.optional(),
+  pagination,
+});
+
+export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
+  databaseName,
+  merkleHeight,
+});
+
+export const JOI_DATABASE_UPDATE_DEPLOY =
+  Joi.object<TDatabaseUpdateDeployedRequest>({
+    databaseName,
+    appPublicKey: Joi.string()
+      .trim()
+      .length(55)
+      .required()
+      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
+  });
+
+export const JOI_DATABASE_TRANSFER_OWNER =
+  Joi.object<TDatabaseChangeOwnerRequest>({
+    databaseName,
+    newOwner: userName,
+  });
 
 // Query
 const dbStats = publicWrapper<TDatabaseRequest, Document>(

@@ -1,17 +1,22 @@
 import {
-  JOI_USER_SIGN_IN,
-  JOI_SIGN_UP,
-  JOI_USER_FIND,
+  pagination,
+  publicKey,
+  timestamp,
+  TMinaSignature,
+  TUser,
   TUserFindRequest,
   TUserFindResponse,
   TUserSignInRequest,
   TUserSignInResponse,
+  TUserSignUpInput,
   TUserSignUpRequest,
   TUserSignUpResponse,
+  userName,
 } from '@zkdb/common';
 import { randomUUID } from 'crypto';
 import { User } from 'domain/use-case/user.js';
 import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
 import Client from 'mina-signer';
 import { gql } from '../../helper/common.js';
 import config from '../../helper/config.js';
@@ -95,6 +100,46 @@ export const typeDefsUser = gql`
     userSignUp(newUser: SignUpInput!, proof: ProofInput!): SignUpResponse
   }
 `;
+
+// Joi validation
+
+export const JOI_SIGNATURE_PROOF = Joi.object<TMinaSignature>({
+  signature: Joi.object({
+    field: Joi.string()
+      .pattern(/[0-9]+/)
+      .required(),
+    scalar: Joi.string()
+      .pattern(/[0-9]+/)
+      .required(),
+  }).required(),
+  publicKey,
+  data: Joi.string().required(),
+});
+
+export const JOI_USER_SIGN_IN = Joi.object<TUserSignInRequest>({
+  proof: JOI_SIGNATURE_PROOF.required(),
+});
+
+export const JOI_USER_SIGN_UP = Joi.object<TUserSignUpInput>({
+  userName: Joi.string().required(),
+  email: Joi.string().email().required(),
+  timestamp,
+  userData: Joi.object().optional(),
+});
+
+export const JOI_SIGN_UP = Joi.object<TUserSignUpRequest>({
+  newUser: JOI_USER_SIGN_UP,
+  proof: JOI_SIGNATURE_PROOF.required(),
+});
+
+export const JOI_USER_FIND = Joi.object<TUserFindRequest>({
+  query: Joi.object<TUser>({
+    userName,
+    email: Joi.string().email(),
+    publicKey,
+  }),
+  pagination,
+});
 
 // Query
 const userMe = authorizeWrapper(async (_root, _args, context) => {
