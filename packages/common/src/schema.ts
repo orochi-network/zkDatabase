@@ -16,7 +16,7 @@ import {
   MerkleMapWitness,
   Struct,
 } from 'o1js';
-import { TMerkleWitnessNodeData } from './types/merkle-tree';
+import {  TMerkleNodeJson } from './types/merkle-tree';
 
 export const ProvableTypeMap = {
   CircuitString,
@@ -48,7 +48,7 @@ type TProvableSerializationMap = {
   Character: string;
   Sign: boolean;
   Field: string;
-  MerkleMapWitness: TMerkleWitnessNodeData[];
+  MerkleMapWitness: TMerkleNodeJson[];
 };
 
 /**
