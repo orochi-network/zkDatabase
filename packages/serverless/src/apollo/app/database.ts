@@ -1,8 +1,8 @@
 import {
-  SchemaDatabaseCreate,
-  SchemaDatabaseList,
-  SchemaDatabaseTransferOwner,
-  SchemaDatabaseUpdateDeploy,
+  JOI_DATABASE_CREATE,
+  JOI_DATABASE_LIST,
+  JOI_DATABASE_TRANSFER_OWNER,
+  JOI_DATABASE_UPDATE_DEPLOY,
   TDatabaseChangeOwnerRequest,
   TDatabaseCreateRequest,
   TDatabaseListRequest,
@@ -95,7 +95,7 @@ const dbStats = publicWrapper<TDatabaseRequest, Document>(
 );
 
 const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
-  SchemaDatabaseList,
+  JOI_DATABASE_LIST,
   async (_root, { query, pagination }, _ctx) =>
     Database.listDetail({ filter: query, pagination })
 );
@@ -129,13 +129,13 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
 );
 
 const dbDeploy = authorizeWrapper<TDatabaseUpdateDeployedRequest, boolean>(
-  SchemaDatabaseUpdateDeploy,
+  JOI_DATABASE_UPDATE_DEPLOY,
   async (_root, { databaseName, appPublicKey }, _) =>
     Database.deploy({ databaseName, appPublicKey })
 );
 
 const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
-  SchemaDatabaseCreate,
+  JOI_DATABASE_CREATE,
   async (_root, { databaseName, merkleHeight }, ctx) =>
     Boolean(
       withTransaction((session) =>
@@ -148,7 +148,7 @@ const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
 );
 
 const dbTransferOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
-  SchemaDatabaseTransferOwner,
+  JOI_DATABASE_TRANSFER_OWNER,
   async (_root, { databaseName, newOwner }, ctx) =>
     Database.transferOwnership({
       databaseName,

@@ -31,17 +31,17 @@ const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
   }).optional(),
 });
 
-export const SchemaDatabaseList = Joi.object<TDatabaseListRequest>({
+export const JOI_DATABASE_LIST = Joi.object<TDatabaseListRequest>({
   query: SchemaDatabaseRecordQuery.optional(),
   pagination,
 });
 
-export const SchemaDatabaseCreate = Joi.object<TDatabaseCreateRequest>({
+export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
   databaseName,
   merkleHeight,
 });
 
-export const SchemaDatabaseUpdateDeploy =
+export const JOI_DATABASE_UPDATE_DEPLOY =
   Joi.object<TDatabaseUpdateDeployedRequest>({
     databaseName,
     appPublicKey: Joi.string()
@@ -51,7 +51,7 @@ export const SchemaDatabaseUpdateDeploy =
       .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
   });
 
-export const SchemaDatabaseTransferOwner =
+export const JOI_DATABASE_TRANSFER_OWNER =
   Joi.object<TDatabaseChangeOwnerRequest>({
     databaseName,
     newOwner: userName,
