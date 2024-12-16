@@ -4,8 +4,8 @@ import {
   TGroupParamCreate,
   TGroupParamListUser,
   TGroupParamUpdateMetadata,
-  groupName as joiGroupName,
   groupDescription as joiGroupDescription,
+  groupName as joiGroupName,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
 import { getCurrentTime } from '../../helper/common.js';
@@ -32,9 +32,9 @@ export class Group {
   ): Promise<boolean> {
     const { databaseName, groupName } = paramGroup;
 
-    const modelGroup = new ModelGroup(databaseName);
+    const imGroup = new ModelGroup(databaseName);
 
-    const group = await modelGroup.findOne({ groupName }, { session });
+    const group = await imGroup.findOne({ groupName }, { session });
 
     return group != null;
   }
@@ -43,12 +43,12 @@ export class Group {
    * Creates a new group based on the provided parameters.
    *
    * @param paramGroupCreate - The parameters required to create the group, adhering to the `TGroupParamCreate` type.
-   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @param session - The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the group is created successfully, otherwise `false`.
    */
   public static async create(
     paramGroupCreate: TGroupParamCreate,
-    session?: ClientSession
+    session: ClientSession
   ): Promise<boolean> {
     const { databaseName, groupName, groupDescription, createdBy } =
       paramGroupCreate;
@@ -67,19 +67,16 @@ export class Group {
         );
       }
       // Initialize model
-      const modelGroup = new ModelGroup(databaseName);
-      const modelUserGroup = new ModelUserGroup(databaseName);
-      const modelUser = new ModelUser();
+      const imGroup = new ModelGroup(databaseName);
+      const imUserGroup = new ModelUserGroup(databaseName);
+      const imUser = new ModelUser();
 
       // Get user
-      const user = await modelUser.findOne(
-        { userName: createdBy },
-        { session }
-      );
+      const user = await imUser.findOne({ userName: createdBy }, { session });
       // Checking user exist
       if (user) {
         // Create group instance
-        const group = await modelGroup.insertOne(
+        const group = await imGroup.insertOne(
           {
             groupName,
             groupDescription: groupDescription || `Group ${groupName}`,
@@ -91,7 +88,7 @@ export class Group {
         );
 
         // Create user-group instance
-        const userGroup = await modelUserGroup.insertOne(
+        const userGroup = await imUserGroup.insertOne(
           {
             userName: user.userName,
             groupOjectId: group.insertedId,
@@ -131,13 +128,13 @@ export class Group {
       );
     }
     // Initialize model
-    const modelUserGroup = new ModelUserGroup(databaseName);
-    const modelGroup = new ModelGroup(databaseName);
+    const imUserGroup = new ModelUserGroup(databaseName);
+    const imGroup = new ModelGroup(databaseName);
     // Find group
-    const group = await modelGroup.findOne({ groupName });
+    const group = await imGroup.findOne({ groupName });
 
     if (group) {
-      const listParticipant = await modelUserGroup
+      const listParticipant = await imUserGroup
         .find({
           groupOjectId: group._id,
         })
@@ -156,12 +153,12 @@ export class Group {
    * Updates the metadata of a group based on the provided parameters.
    *
    * @param paramUpdateMetadata - The parameters specifying the group and the metadata to update, following the `TGroupParamUpdateMetadata` type.
-   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @param session - The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the metadata was updated successfully, otherwise `false`.
    */
   public static async updateMetadata(
     paramUpdateMetadata: TGroupParamUpdateMetadata,
-    session?: ClientSession
+    session: ClientSession
   ): Promise<boolean> {
     const {
       databaseName,
@@ -196,12 +193,12 @@ export class Group {
       )
     ) {
       // Initialize model
-      const modelGroup = new ModelGroup(databaseName);
+      const imGroup = new ModelGroup(databaseName);
       // Find group
       // TODO: If using findOneAndUpdate, these code would cleaner not separate 2 query and 1 exist checking
-      const group = await modelGroup.findOne({ groupName }, { session });
+      const group = await imGroup.findOne({ groupName }, { session });
       if (group) {
-        const groupUpdateResult = await modelGroup.updateOne(
+        const groupUpdateResult = await imGroup.updateOne(
           {
             groupName,
             createdBy,
@@ -218,9 +215,9 @@ export class Group {
         // If new group name, modelUserGroup need to be update too
         if (newGroupName) {
           // Initialize modelUserGroup here
-          const modelUserGroup = new ModelUserGroup(databaseName);
+          const imUserGroup = new ModelUserGroup(databaseName);
 
-          const userGroupUpdateResult = await modelUserGroup.updateOne(
+          const userGroupUpdateResult = await imUserGroup.updateOne(
             {
               groupOjectId: group._id,
             },
@@ -266,16 +263,16 @@ export class Group {
       )
     ) {
       // Initialize group model
-      const modelGroup = new ModelGroup(databaseName);
+      const imGroup = new ModelGroup(databaseName);
 
-      const group = await modelGroup.findOne({ groupName }, { session });
+      const group = await imGroup.findOne({ groupName }, { session });
 
       if (group) {
-        const modelUser = new ModelUser();
+        const imUser = new ModelUser();
         // Check list of user exist
-        if (await modelUser.isListUserExist(listUserName)) {
-          const modelUserGroup = new ModelUserGroup(databaseName);
-          const result = await modelUserGroup.addUserListToGroup(
+        if (await imUser.isListUserExist(listUserName)) {
+          const imUserGroup = new ModelUserGroup(databaseName);
+          const result = await imUserGroup.addUserListToGroup(
             listUserName,
             groupName,
             {
@@ -314,16 +311,16 @@ export class Group {
       )
     ) {
       // Initialize group model
-      const modelGroup = new ModelGroup(databaseName);
+      const imGroup = new ModelGroup(databaseName);
 
-      const group = await modelGroup.findOne({ groupName }, { session });
+      const group = await imGroup.findOne({ groupName }, { session });
 
       if (group) {
-        const modelUser = new ModelUser();
+        const imUser = new ModelUser();
         // Check list of user exist
-        if (await modelUser.isListUserExist(listUserName)) {
-          const modelUserGroup = new ModelUserGroup(databaseName);
-          const result = await modelUserGroup.removeUserListFromGroup(
+        if (await imUser.isListUserExist(listUserName)) {
+          const imUserGroup = new ModelUserGroup(databaseName);
+          const result = await imUserGroup.removeUserListFromGroup(
             listUserName,
             groupName,
             {

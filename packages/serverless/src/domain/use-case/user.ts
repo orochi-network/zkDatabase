@@ -32,10 +32,10 @@ export class User {
       if (jsonData.email !== email) {
         throw new Error('Email does not match');
       }
-      const modelUser = new ModelUser();
+      const imUser = new ModelUser();
 
       // Check for existing user with conflicting data
-      const existingUser = await modelUser.collection.findOne({
+      const existingUser = await imUser.collection.findOne({
         $or: [{ email }, { userName }, { publicKey: signature.publicKey }],
       });
 
@@ -53,7 +53,7 @@ export class User {
         }
       }
 
-      const createResult = await modelUser.insertOne({
+      const createResult = await imUser.insertOne({
         email,
         userName,
         publicKey: signature.publicKey,
@@ -63,7 +63,7 @@ export class User {
         updatedAt: getCurrentTime(),
       });
       // Get user after inserted
-      const user = await modelUser.findOne({ _id: createResult.insertedId });
+      const user = await imUser.findOne({ _id: createResult.insertedId });
 
       if (user) {
         return user;
@@ -79,15 +79,15 @@ export class User {
   ): Promise<TPaginationReturn<TUser[]>> {
     const { query, paginationInput } = paramUserPagination;
     // Initialize model
-    const modelUser = new ModelUser();
+    const imUser = new ModelUser();
 
     const pagination = paginationInput || DEFAULT_PAGINATION;
 
     // Execute the query with pagination
     // Using promise.all to ensure all or nothing atomic result
     const [data, total] = await Promise.all([
-      modelUser.find(query, { session }).toArray(),
-      modelUser.count(query, { session }),
+      imUser.find(query, { session }).toArray(),
+      imUser.count(query, { session }),
     ]);
 
     return {

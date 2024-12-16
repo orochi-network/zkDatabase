@@ -58,6 +58,8 @@ export type TGroupUpdateRequest = TGroupRequest & {
   newGroupDescription: string;
 };
 
+export type TGroupUpdateResponse = boolean;
+
 export type TGroupUserInfo = Pick<
   TUserRecord,
   'userName' | 'createdAt' | 'updatedAt'
@@ -65,6 +67,8 @@ export type TGroupUserInfo = Pick<
 
 export type TGroupListByUserRequest = TDatabaseRequest &
   Pick<TUser, 'userName'>;
+
+export type TGroupListByUserResponse = string[];
 
 export type TGroupListAllRequest = TDatabaseRequest;
 
@@ -77,10 +81,16 @@ export type TGroupInfoDetailResponse = TGroupDetail;
 export type TGroupCreateRequest = TDatabaseRequest &
   Pick<TGroup, 'groupName' | 'groupDescription'>;
 
-export type TGroupAddUsersRequest = TGroupRequest & {
+export type TGroupCreateResponse = boolean;
+
+export type TGroupAddUserListRequest = TGroupRequest & {
   // List of userName
   listUser: string[];
 };
 
+export type TGroupAddUserListResponse = boolean;
+
 // It the same, that's why we create new type as an alias
-export type TGroupRemoveUsersRequest = TGroupAddUsersRequest;
+export type TGroupRemoveUserListRequest = TGroupAddUserListRequest;
+
+export type TGroupRemoveUserListResponse = boolean;

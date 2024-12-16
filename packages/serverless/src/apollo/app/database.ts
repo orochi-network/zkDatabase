@@ -1,26 +1,29 @@
 import {
-  JOI_DATABASE_CREATE,
-  JOI_DATABASE_LIST,
-  JOI_DATABASE_TRANSFER_OWNER,
-  JOI_DATABASE_UPDATE_DEPLOY,
   TDatabaseChangeOwnerRequest,
+  TDatabaseChangeOwnerResponse,
   TDatabaseCreateRequest,
+  TDatabaseCreateResponse,
+  TDatabaseExistResponse,
   TDatabaseListRequest,
   TDatabaseListResponse,
   TDatabaseRequest,
   TDatabaseResponse,
   TDatabaseUpdateDeployedRequest,
+  TDatabaseUpdateDeployedResponse,
   databaseName,
+  merkleHeight,
+  pagination,
+  publicKey,
+  userName,
 } from '@zkdb/common';
 import {
-  DATABASE_ENGINE,
   ModelDatabase,
   ModelMetadataDatabase,
   withTransaction,
 } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Document } from 'mongodb';
+import { Document, ObjectId } from 'mongodb';
 
 import { Database } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
@@ -33,9 +36,11 @@ export const typeDefsDatabase = gql`
   type Mutation
 
   type Database {
-    merkleHeight: Int!
-    publicKey: String
+    databaseName: String!
     databaseOwner: String!
+    merkleHeight: Int!
+    appPublicKey: String!
+    deployStatus: TransactionStatus!
   }
 
   input PaginationInput {
@@ -43,29 +48,17 @@ export const typeDefsDatabase = gql`
     offset: Int
   }
 
-  type Collection {
-    name: String!
-  }
-
-  type DbDeploy {
-    databaseName: String!
-    merkleHeight: Int!
-    appPublicKey: String!
-    tx: String!
-  }
-
-  type DatabaseDetail {
+  type DatabaseMetadata {
     databaseName: String!
     databaseOwner: String!
     merkleHeight: Int!
-    appPublicKey: String
-    collection: [MetadataCollection]
+    appPublicKey: String!
     databaseSize: Int
-    deployStatus: TransactionStatus
+    deployStatus: TransactionStatus!
   }
 
   type DatabaseListResponse {
-    data: [DatabaseDetail]!
+    data: [DatabaseMetadata]!
     total: Int!
     offset: Int!
   }
@@ -79,10 +72,49 @@ export const typeDefsDatabase = gql`
 
   extend type Mutation {
     dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
-    dbChangeOwner(databaseName: String!, newOwner: String!): Boolean
-    dbDeployedUpdate(databaseName: String!, appPublicKey: String!): Boolean
+    dbTransferOwner(databaseName: String!, newOwner: String!): Boolean
+    dbDeploy(databaseName: String!, appPublicKey: String!): Boolean
   }
 `;
+
+// Joi definition
+
+const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
+  databaseName: Joi.string().optional(),
+  databaseOwner: Joi.string().optional(),
+  merkleHeight: Joi.number().integer().optional(),
+  appPublicKey: Joi.string().optional(),
+  createdAt: Joi.date().optional(),
+  updatedAt: Joi.date().optional(),
+  _id: Joi.custom((value, helpers) => {
+    if (!ObjectId.isValid(value)) {
+      return helpers.error('any.invalid');
+    }
+    return value;
+  }).optional(),
+});
+
+export const JOI_DATABASE_LIST = Joi.object<TDatabaseListRequest>({
+  query: SchemaDatabaseRecordQuery.optional(),
+  pagination,
+});
+
+export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
+  databaseName,
+  merkleHeight,
+});
+
+export const JOI_DATABASE_UPDATE_DEPLOY =
+  Joi.object<TDatabaseUpdateDeployedRequest>({
+    databaseName,
+    appPublicKey: publicKey,
+  });
+
+export const JOI_DATABASE_TRANSFER_OWNER =
+  Joi.object<TDatabaseChangeOwnerRequest>({
+    databaseName,
+    newOwner: userName,
+  });
 
 // Query
 const dbStats = publicWrapper<TDatabaseRequest, Document>(
@@ -105,10 +137,8 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
     databaseName,
   }),
   async (_root, { databaseName }, _ctx) => {
-    const { databases } = await DATABASE_ENGINE.serverless.client
-      .db()
-      .admin()
-      .listDatabases();
+    const { db } = new ModelDatabase();
+    const { databases } = await db.admin().listDatabases();
 
     const isDatabaseExist = databases.some((db) => db.name === databaseName);
 
@@ -128,36 +158,43 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   }
 );
 
-const dbDeploy = authorizeWrapper<TDatabaseUpdateDeployedRequest, boolean>(
+const dbDeploy = authorizeWrapper<
+  TDatabaseUpdateDeployedRequest,
+  TDatabaseUpdateDeployedResponse
+>(
   JOI_DATABASE_UPDATE_DEPLOY,
   async (_root, { databaseName, appPublicKey }, _) =>
-    Database.deploy({ databaseName, appPublicKey })
-);
-
-const dbCreate = authorizeWrapper<TDatabaseCreateRequest, boolean>(
-  JOI_DATABASE_CREATE,
-  async (_root, { databaseName, merkleHeight }, ctx) =>
-    Boolean(
-      withTransaction((session) =>
-        Database.create(
-          { databaseName, merkleHeight, databaseOwner: ctx.userName },
-          session
-        )
-      )
+    withTransaction((session) =>
+      Database.deploy({ databaseName, appPublicKey }, session)
     )
 );
 
-const dbTransferOwner = authorizeWrapper<TDatabaseChangeOwnerRequest, boolean>(
-  JOI_DATABASE_TRANSFER_OWNER,
-  async (_root, { databaseName, newOwner }, ctx) =>
-    Database.transferOwnership({
-      databaseName,
-      newOwner,
-      databaseOwner: ctx.userName,
-    })
+const dbCreate = authorizeWrapper<
+  TDatabaseCreateRequest,
+  TDatabaseCreateResponse
+>(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
+  Boolean(
+    withTransaction((session) =>
+      Database.create(
+        { databaseName, merkleHeight, databaseOwner: ctx.userName },
+        session
+      )
+    )
+  )
 );
 
-const dbExist = publicWrapper<TDatabaseRequest, boolean>(
+const dbTransferOwner = authorizeWrapper<
+  TDatabaseChangeOwnerRequest,
+  TDatabaseChangeOwnerResponse
+>(JOI_DATABASE_TRANSFER_OWNER, async (_root, { databaseName, newOwner }, ctx) =>
+  Database.transferOwnership({
+    databaseName,
+    newOwner,
+    databaseOwner: ctx.userName,
+  })
+);
+
+const dbExist = publicWrapper<TDatabaseRequest, TDatabaseExistResponse>(
   Joi.object({
     databaseName,
   }),

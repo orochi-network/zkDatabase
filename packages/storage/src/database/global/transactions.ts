@@ -100,13 +100,16 @@ export class ModelTransaction extends ModelBasic<
 
   public async remove(
     databaseName: string,
-    transactionType: ETransactionType
+    transactionType: ETransactionType,
+    session?: ClientSession
   ): Promise<DeleteResult> {
-    const res = await this.collection.deleteOne({
-      databaseName,
-      transactionType,
-    });
-    return res;
+    return this.collection.deleteOne(
+      {
+        databaseName,
+        transactionType,
+      },
+      { session }
+    );
   }
 
   public async count(filter?: Filter<TTransaction>) {
