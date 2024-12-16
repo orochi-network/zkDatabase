@@ -85,7 +85,9 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
         continue;
       }
 
-      const database = await modelDatabaseMetadata.getDatabase(tx.databaseName);
+      const database = await modelDatabaseMetadata.findOne({
+        databaseName: tx.databaseName,
+      });
 
       // Make sure database must be existed first
       if (!database) {

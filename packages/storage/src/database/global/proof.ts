@@ -26,19 +26,6 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
     return this.instance;
   }
 
-  public async saveProof(
-    proof: WithoutId<TProofRecord>,
-    options?: InsertOneOptions
-  ): Promise<boolean> {
-    try {
-      await this.collection.insertOne(proof, options);
-      return true;
-    } catch (error) {
-      logger.error('Error saving proof:', error);
-      return false;
-    }
-  }
-
   public async getProof(
     database: string,
     options?: FindOptions

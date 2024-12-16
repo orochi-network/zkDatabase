@@ -31,7 +31,7 @@ export default class Rollup {
   ): Promise<boolean> {
     const modelProof = ModelProof.getInstance();
     const latestProofForDb = await modelProof.getProof(databaseName, {
-      session: compoundSession?.sessionProof,
+      session: compoundSession?.proofService,
     });
 
     if (!latestProofForDb) {
@@ -48,9 +48,10 @@ export default class Rollup {
     if (rollUp) {
       logger.debug('Identified repeated proof');
 
-      const transaction = await modelTransaction.findById(
-        rollUp.transactionObjectId.toString()
-      );
+      const transaction = await modelTransaction.findOne({
+        _id: rollUp.transactionObjectId,
+      });
+
       if (transaction) {
         if (transaction.status === ETransactionStatus.Confirmed) {
           throw Error('You cannot roll-up the same proof');
@@ -68,7 +69,7 @@ export default class Rollup {
       databaseName,
       actor,
       ETransactionType.Rollup,
-      compoundSession?.sessionService
+      compoundSession?.serverless
     );
 
     const currentTime = getCurrentTime();
@@ -83,7 +84,7 @@ export default class Rollup {
         createdAt: currentTime,
         updatedAt: currentTime,
       },
-      { session: compoundSession?.sessionService }
+      { session: compoundSession?.serverless }
     );
 
     return true;
@@ -97,8 +98,8 @@ export default class Rollup {
     const modelTransaction = ModelTransaction.getInstance();
     const minaNetwork = MinaNetwork.getInstance();
     const queue = ModelQueueTask.getInstance();
-    const database = await ModelMetadataDatabase.getInstance().getDatabase(
-      databaseName,
+    const database = await ModelMetadataDatabase.getInstance().findOne(
+      { databaseName },
       {
         session,
       }
@@ -181,9 +182,9 @@ export default class Rollup {
     const history = (
       await Promise.all(
         rollUpList.map(async (history) => {
-          const transaction = await modelTransaction.findById(
-            history.transactionObjectId.toString()
-          );
+          const transaction = await modelTransaction.findOne({
+            _id: history.transactionObjectId,
+          });
 
           if (!transaction) {
             logger.error('Transaction for history not found. It is impossible');
@@ -204,8 +205,10 @@ export default class Rollup {
 
             if (tx) {
               if (tx.txStatus === 'applied') {
-                await modelTransaction.updateById(
-                  history.transactionObjectId,
+                await modelTransaction.updateOne(
+                  {
+                    _id: history.transactionObjectId,
+                  },
                   {
                     status: ETransactionStatus.Confirmed,
                     error: undefined,
@@ -219,8 +222,10 @@ export default class Rollup {
                   ''
                 );
               } else if (tx.txStatus === 'failed') {
-                await modelTransaction.updateById(
-                  history.transactionObjectId,
+                await modelTransaction.updateOne(
+                  {
+                    _id: history.transactionObjectId,
+                  },
                   {
                     status: ETransactionStatus.Failed,
                     error: tx.failures.join(' '),

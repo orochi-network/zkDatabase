@@ -53,7 +53,7 @@ export class ModelMerkleTree extends ModelGeneral<
     const modelMerkleTree = ModelMerkleTree.getInstance(databaseName);
     const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
 
-    const database = await modelDatabaseMetadata.getDatabase(databaseName);
+    const database = await modelDatabaseMetadata.findOne({ databaseName });
 
     if (database) {
       modelMerkleTree.setHeight(database.merkleHeight);

@@ -33,8 +33,8 @@ export default class Transaction {
 
     // Check if smart contract is already bound to database
     if (transactionType === ETransactionType.Deploy) {
-      const database = await ModelMetadataDatabase.getInstance().getDatabase(
-        databaseName,
+      const database = await ModelMetadataDatabase.getInstance().findOne(
+        { databaseName },
         { session }
       );
 
@@ -163,8 +163,9 @@ export default class Transaction {
     }
 
     if (await isDatabaseOwner(databaseName, actor)) {
-      const database =
-        await ModelMetadataDatabase.getInstance().getDatabase(databaseName);
+      const database = await ModelMetadataDatabase.getInstance().findOne({
+        databaseName,
+      });
 
       if (!database) {
         throw Error(`Database ${databaseName} does not exist`);
