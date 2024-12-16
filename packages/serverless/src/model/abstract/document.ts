@@ -158,11 +158,10 @@ export class ModelDocument extends ModelGeneral<
   }
 
   public async findHistoryOne(docId: string, session?: ClientSession) {
-    const documents = this.find({ docId }, { session });
-    return documents;
+    return this.find({ docId }, { session });
   }
 
-  public async countActiveDocuments(filter?: Filter<any>) {
+  public async countActiveDocuments(filter?: Filter<TDocumentRecordNullable>) {
     return this.collection.countDocuments({ ...filter, active: true });
   }
 }
