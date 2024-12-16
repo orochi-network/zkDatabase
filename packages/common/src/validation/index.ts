@@ -1,6 +1,5 @@
 import { ESorting, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
-import {} from '@zkdb/common';
 import Joi from 'joi';
 
 export const O1JS_VALID_TYPE = [
@@ -87,8 +86,16 @@ export const transactionType = Joi.string().valid(
   ...Object.values(ETransactionType)
 );
 
+export const databaseName = Joi.string()
+  .trim()
+  .min(4)
+  .max(128)
+  .required()
+  .pattern(/^[a-z]+[_a-z0-9]+/i);
+
+export const merkleHeight = Joi.number().integer().positive().required();
+
 export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
 
 export * from './collection';
 export * from './common';
-export * from './database';

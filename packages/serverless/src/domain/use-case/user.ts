@@ -1,85 +1,99 @@
 import {
-  TMinaSignature,
-  TPagination,
   TPaginationReturn,
+  TParamPagination,
   TUser,
+  TUserParamSignUp,
+  TUserRecord,
 } from '@zkdb/common';
 import Client from 'mina-signer';
-import { ClientSession, FindOptions } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 import { DEFAULT_PAGINATION } from '../../common/const.js';
+import { getCurrentTime } from '../../helper/common.js';
 import config from '../../helper/config.js';
-import logger from '../../helper/logger.js';
 import ModelUser from '../../model/global/user.js';
-import { FilterCriteria } from '../utils/document.js';
 
-export async function findUser(
-  query?: FilterCriteria,
-  paginationInput?: TPagination,
-  session?: ClientSession
-): Promise<TPaginationReturn<TUser[]>> {
-  const modelUser = new ModelUser();
+export class User {
+  public static async signUp(
+    paramSignUp: TUserParamSignUp
+  ): Promise<WithoutId<TUserRecord>> {
+    const {
+      user: { userName, email, userData },
+      signature,
+    } = paramSignUp;
+    // Init client mina-signer
+    const client = new Client({ network: config.NETWORK_ID });
+    // Ensure the signature verified
+    if (client.verifyMessage(signature)) {
+      const jsonData: TUser = JSON.parse(signature.data);
+      // Ensure the signature data match with user input data
+      if (jsonData.userName !== userName) {
+        throw new Error('Username does not match');
+      }
+      if (jsonData.email !== email) {
+        throw new Error('Email does not match');
+      }
+      const imUser = new ModelUser();
 
-  const options: FindOptions = {};
-  const pagination = paginationInput || DEFAULT_PAGINATION;
-
-  return {
-    data: await modelUser
-      .find(query || {}, {
-        session,
-        ...options,
-      })
-      .toArray(),
-    ...pagination,
-    total: await modelUser.count(query, { session }),
-  };
-}
-
-export async function isUserExist(userName: string): Promise<boolean> {
-  const modelUser = new ModelUser();
-  return (await modelUser.findOne({ userName })) !== null;
-}
-
-export async function signUpUser(user: TUser, signature: TMinaSignature) {
-  const { userName, publicKey, email } = user;
-  const client = new Client({ network: config.NETWORK_ID });
-  if (client.verifyMessage(signature)) {
-    const jsonData: TUser = JSON.parse(signature.data);
-    if (jsonData.userName !== userName) {
-      throw new Error('Username does not match');
-    }
-    if (jsonData.email !== email) {
-      throw new Error('Email does not match');
-    }
-    const modelUser = new ModelUser();
-
-    try {
-      const existingUser = await modelUser.collection.findOne({
-        $or: [{ email }, { userName }, { publicKey }],
+      // Check for existing user with conflicting data
+      const existingUser = await imUser.collection.findOne({
+        $or: [{ email }, { userName }, { publicKey: signature.publicKey }],
       });
 
+      // TODO: We need to consider the trade off of this approach
+      // Better user friendly experience or security
       if (existingUser) {
-        if (existingUser.email === user.email) {
+        if (existingUser.email === email) {
           throw new Error('A user with this email already exists');
         }
-        if (existingUser.userName === user.userName) {
+        if (existingUser.userName === userName) {
           throw new Error('A user with this username already exists');
         }
-        if (existingUser.publicKey === user.publicKey) {
+        if (existingUser.publicKey === signature.publicKey) {
           throw new Error('A user with this public key already exists');
         }
       }
-    } catch (error) {
-      logger.error('Error checking existing user:', error);
-      throw error;
-    }
 
-    const result = await modelUser.create(user);
-    if (result) {
-      return result;
-    }
+      const createResult = await imUser.insertOne({
+        email,
+        userName,
+        publicKey: signature.publicKey,
+        userData,
+        activated: true,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      });
+      // Get user after inserted
+      const user = await imUser.findOne({ _id: createResult.insertedId });
 
-    // TODO: Return more meaningful error
-    throw new Error('Unable to create new user');
+      if (user) {
+        return user;
+      }
+      throw new Error('Unable to create new user');
+    }
+    throw new Error('Signature is not valid');
   }
-  throw new Error('Signature is not valid');
+
+  public static async findMany(
+    paramUserPagination: TParamPagination<Omit<TUser, 'userData'>>,
+    session?: ClientSession
+  ): Promise<TPaginationReturn<TUser[]>> {
+    const { query, paginationInput } = paramUserPagination;
+    // Initialize model
+    const imUser = new ModelUser();
+
+    const pagination = paginationInput || DEFAULT_PAGINATION;
+
+    // Execute the query with pagination
+    // Using promise.all to ensure all or nothing atomic result
+    const [data, total] = await Promise.all([
+      imUser.find(query, { session }).toArray(),
+      imUser.count(query, { session }),
+    ]);
+
+    return {
+      data,
+      total,
+      ...pagination,
+    };
+  }
 }

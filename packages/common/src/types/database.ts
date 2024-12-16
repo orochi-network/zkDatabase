@@ -1,30 +1,56 @@
-import { TDbRecord } from './common.js';
-import { TMetadataCollection } from './metadata.js';
+import { TDbRecord, TPickOptional } from './common.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
+// For model layer
 //@NOTE: This is for the whole metadata of the database
 export type TMetadataDatabase = {
   databaseName: string;
   databaseOwner: string;
   merkleHeight: number;
   appPublicKey: string;
-};
-
-export type TDatabaseKeyRecord = TDbRecord<{
-  privateKey: string;
-  databaseName: string;
-}>;
-
-export type TDatabaseDetail = TMetadataDatabase & {
-  collection: TMetadataCollection[];
-  databaseSize: number;
+  // @TODO: This field will be update by our task scheduler to polling status from blockchain
   deployStatus: ETransactionStatus;
 };
 
-export type TMetadataDatabaseRecord = TDbRecord<TMetadataDatabase>;
+export type TMetadataDatabaseMongo = {
+  sizeOnDisk: number;
+};
 
-// Database
+export type TMetadataDatabaseDetail = TMetadataDatabase &
+  TPickOptional<TMetadataDatabaseMongo, 'sizeOnDisk'>;
+
+export type TMetadataDatabaseRecord = TDbRecord<TMetadataDatabase>;
+// For param
+
+export type TDatabaseParamCreate = Pick<
+  TMetadataDatabase,
+  'databaseName' | 'merkleHeight' | 'databaseOwner'
+>;
+
+export type TDatabaseParamIsOwner = Pick<
+  TMetadataDatabase,
+  'databaseName' | 'databaseOwner'
+>;
+
+export type TDatabaseParamListDetail = {
+  filter: Partial<TMetadataDatabase>;
+  pagination?: TPagination;
+};
+
+export type TDatabaseParamTransferOwner = Pick<
+  TMetadataDatabase,
+  'databaseName' | 'databaseOwner'
+> & {
+  newOwner: string;
+};
+
+export type TDatabaseParamDeploy = Pick<
+  TMetadataDatabase,
+  'databaseName' | 'appPublicKey'
+>;
+
+// For application layer
 export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
 
 export type TDatabaseResponse = TMetadataDatabase;
@@ -33,18 +59,24 @@ export type TDatabaseResponse = TMetadataDatabase;
 export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
   Pick<TMetadataDatabase, 'appPublicKey'>;
 
+export type TDatabaseUpdateDeployedResponse = boolean;
+
 // Database list
 export type TDatabaseListRequest = {
   query: Partial<TMetadataDatabaseRecord>;
   pagination: TPagination;
 };
 
-export type TDatabaseListResponse = TPaginationReturn<TDatabaseDetail[]>;
+export type TDatabaseListResponse = TPaginationReturn<
+  TMetadataDatabaseDetail[]
+>;
 
 // Database create
 export type TDatabaseCreateRequest = TDatabaseRequest & {
   merkleHeight: number;
 };
+
+export type TDatabaseCreateResponse = boolean;
 
 // Database find index
 export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
@@ -55,3 +87,7 @@ export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
 export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
   newOwner: string;
 };
+
+export type TDatabaseChangeOwnerResponse = boolean;
+
+export type TDatabaseExistResponse = boolean;

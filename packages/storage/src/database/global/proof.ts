@@ -7,7 +7,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
@@ -52,7 +52,7 @@ export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TProofRecord>(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.proof
     );
 

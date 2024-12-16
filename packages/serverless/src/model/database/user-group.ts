@@ -29,13 +29,6 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     );
   }
 
-  public async createUserGroup(
-    args: WithoutId<TUserGroupRecord>,
-    options?: InsertOneOptions
-  ): Promise<InsertOneResult<TUserGroup>> {
-    return this.insertOne(args, options);
-  }
-
   public async checkMembership(
     userName: string,
     groupName: string

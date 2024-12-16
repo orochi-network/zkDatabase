@@ -68,7 +68,7 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
       WithoutId<TRollUpHistoryRecord>
     >(
       zkDatabaseConstant.globalProofDatabase,
-      DB.proof,
+      DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.proof
     );
     /*

@@ -1,44 +1,32 @@
 import {
-  TGroupAddUsersRequest,
+  databaseName,
+  groupDescription,
+  groupName,
+  TGroupAddUserListRequest,
+  TGroupAddUserListResponse,
   TGroupCreateRequest,
+  TGroupCreateResponse,
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse,
   TGroupListAllRequest,
   TGroupListAllResponse,
   TGroupListByUserRequest,
+  TGroupListByUserResponse,
+  TGroupRemoveUserListRequest,
+  TGroupRemoveUserListResponse,
   TGroupUpdateRequest,
-  databaseName,
-  groupDescription,
-  groupName,
+  TGroupUpdateResponse,
   userName,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
+
 import Joi from 'joi';
-import {
-  addUsersToGroup,
-  changeGroupDescription,
-  createGroup,
-  excludeUsersToGroup,
-  getGroupInfoDetail,
-  renameGroup,
-} from '../../domain/use-case/group.js';
+import { Group } from '../../domain/use-case/group.js';
 import { gql } from '../../helper/common.js';
 import ModelGroup from '../../model/database/group.js';
 import ModelUserGroup from '../../model/database/user-group.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-
-const GroupCreateRequest = Joi.object<TGroupCreateRequest>({
-  databaseName,
-  groupName,
-  groupDescription: groupDescription(false),
-});
-
-const GroupDescriptionChangeRequest = Joi.object<TGroupCreateRequest>({
-  databaseName,
-  groupName,
-  groupDescription: groupDescription(false),
-});
 
 export const typeDefsGroup = gql`
   #graphql
@@ -107,131 +95,137 @@ export const typeDefsGroup = gql`
     ): Boolean
   }
 `;
+// Joi validation
+
+export const JOI_GROUP_CREATE = Joi.object<TGroupCreateRequest>({
+  databaseName,
+  groupName,
+  groupDescription: groupDescription(false),
+});
+
+export const JOI_GROUP_UPDATE = Joi.object<TGroupUpdateRequest>({
+  databaseName,
+  groupName,
+  newGroupName: groupName(false),
+  newGroupDescription: groupDescription(false),
+});
+
+export const JOI_GROUP_DETAIL = Joi.object<TGroupInfoDetailRequest>({
+  databaseName,
+  groupName,
+});
+
+export const JOI_GROUP_LIST_USER = Joi.object<TGroupListByUserRequest>({
+  databaseName,
+  userName,
+});
+
+export const JOI_GROUP_LIST_ALL = Joi.object<TGroupListAllRequest>({
+  databaseName,
+});
+
+export const JOI_GROUP_ADD_USER = Joi.object<TGroupAddUserListRequest>({
+  databaseName,
+  groupName,
+  listUser: Joi.array().items(Joi.string().required()).required(),
+});
+
+export const JOI_GROUP_REMOVE_USER = Joi.object<TGroupRemoveUserListRequest>({
+  databaseName,
+  groupName,
+  listUser: Joi.array().items(Joi.string().required()).required(),
+});
 
 // Query
 const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
-  Joi.object({
-    databaseName,
-  }),
+  JOI_GROUP_LIST_ALL,
   async (_root, args) => {
-    const groups = await new ModelGroup(args.databaseName).find({}).toArray();
-    return groups;
+    const groupList = await new ModelGroup(args.databaseName)
+      .find({})
+      .toArray();
+    return groupList;
   }
 );
 
-const groupListByUser = publicWrapper<TGroupListByUserRequest, string[]>(
-  Joi.object({
-    databaseName,
-    userName,
-  }),
-  async (_root, args) =>
-    new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
+const groupListByUser = publicWrapper<
+  TGroupListByUserRequest,
+  TGroupListByUserResponse
+>(JOI_GROUP_LIST_USER, async (_root, args) =>
+  new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
 );
 
-const groupInfoDetail = publicWrapper<
+const groupDetail = publicWrapper<
   TGroupInfoDetailRequest,
   TGroupInfoDetailResponse
->(
-  Joi.object({
-    databaseName,
-    groupName,
-  }),
-  async (_root, args) => {
-    const group = await getGroupInfoDetail(args.databaseName, args.groupName);
-    if (group) {
-      return group;
-    }
-    throw Error(`Group ${args.groupName} does not exist`);
-  }
+>(JOI_GROUP_DETAIL, async (_root, { databaseName, groupName }) =>
+  Group.detail({ databaseName, groupName })
 );
 
-const groupUpdate = authorizeWrapper<TGroupUpdateRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    newGroupName: groupName,
-    newGroupDescription: groupDescription(false),
-  }),
+const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
+  JOI_GROUP_UPDATE,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
-    const result = await withTransaction(async (session) => {
-      if (newGroupName) {
-        if (
-          !(await renameGroup(
-            databaseName,
-            ctx.userName,
-            groupName,
-            newGroupName,
-            session
-          ))
-        ) {
-          throw Error(`Failed to rename group ${groupName} to ${newGroupName}`);
-        }
-      }
-      if (newGroupDescription) {
-        if (
-          !(await changeGroupDescription(
-            databaseName,
-            ctx.userName,
-            groupName,
-            newGroupDescription,
-            session
-          ))
-        ) {
-          throw Error(`Failed to change description of group ${groupName}`);
-        }
-      }
-      return true;
-    });
+    const result = await withTransaction(async (session) =>
+      Group.updateMetadata(
+        {
+          databaseName,
+          groupName,
+          newGroupName,
+          newGroupDescription,
+          createdBy: ctx.userName,
+        },
+        session
+      )
+    );
 
     return result !== null && result;
   }
 );
 
-const groupCreate = authorizeWrapper<TGroupCreateRequest, boolean>(
-  GroupCreateRequest,
-  async (_root, args, ctx) =>
+const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
+  JOI_GROUP_CREATE,
+  async (_root, { databaseName, groupDescription, groupName }, ctx) =>
     Boolean(
       withTransaction((session) =>
-        createGroup(
-          args.databaseName,
-          ctx.userName,
-          args.groupName,
-          args.groupDescription,
+        Group.create(
+          {
+            databaseName,
+            groupName,
+            groupDescription,
+            createdBy: ctx.userName,
+          },
           session
         )
       )
     )
 );
 
-const groupAddUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    listUser: Joi.array().items(Joi.string().required()).required(),
-  }),
-  async (_root, args, ctx) =>
-    addUsersToGroup(
-      args.databaseName,
-      ctx.userName,
-      args.groupName,
-      args.listUser
-    )
+const groupAddUser = authorizeWrapper<
+  TGroupAddUserListRequest,
+  TGroupAddUserListResponse
+>(
+  JOI_GROUP_ADD_USER,
+  async (_root, { databaseName, groupName, listUser }, ctx) =>
+    Group.addListUser({
+      databaseName,
+      groupName,
+      listUserName: listUser,
+      createdBy: ctx.userName,
+    })
 );
 
-const groupRemoveUser = authorizeWrapper<TGroupAddUsersRequest, boolean>(
-  Joi.object({
-    databaseName,
-    groupName,
-    listUser: Joi.array().items(Joi.string().required()).required(),
-  }),
-  async (_root: unknown, args: TGroupAddUsersRequest, ctx) =>
-    excludeUsersToGroup(
-      args.databaseName,
-      ctx.userName,
-      args.groupName,
-      args.listUser
-    )
+const groupRemoveUser = authorizeWrapper<
+  TGroupRemoveUserListRequest,
+  TGroupRemoveUserListResponse
+>(
+  JOI_GROUP_REMOVE_USER,
+  async (_root: unknown, { databaseName, groupName, listUser }, ctx) =>
+    Group.removeListUser({
+      databaseName,
+      groupName,
+      listUserName: listUser,
+      createdBy: ctx.userName,
+    })
 );
 
 export const resolversGroup = {
@@ -239,7 +233,7 @@ export const resolversGroup = {
   Query: {
     groupListAll,
     groupListByUser,
-    groupInfoDetail,
+    groupDetail,
   },
   Mutation: {
     groupCreate,

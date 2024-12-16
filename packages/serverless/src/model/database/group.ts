@@ -6,21 +6,14 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, InsertOneOptions, WithoutId } from 'mongodb';
+import { ClientSession, OptionalId } from 'mongodb';
 
-export class ModelGroup extends ModelGeneral<WithoutId<TGroupRecord>> {
+export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
   private static collectionName: string =
     zkDatabaseConstant.databaseCollection.group;
 
   constructor(databaseName: string) {
     super(databaseName, DATABASE_ENGINE.serverless, ModelGroup.collectionName);
-  }
-
-  public async create(
-    args: WithoutId<TGroupRecord>,
-    options?: InsertOneOptions
-  ) {
-    return this.insertOne(args, options);
   }
 
   public static async init(databaseName: string, session?: ClientSession) {

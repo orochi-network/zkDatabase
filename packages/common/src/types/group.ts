@@ -1,6 +1,6 @@
 import { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { TDatabaseRequest, TMetadataDatabase } from './database.js';
 import { TUser, TUserRecord } from './user.js';
 
 // For model layer type
@@ -25,32 +25,27 @@ export type TGroupDetail = TGroupRecord & { listUser: TGroupUserInfo[] };
 export type TUserGroupRecord = TDbRecord<TUserGroup>;
 
 // For use-case param type
-type TGroupParam = TGroup & {
-  databaseName: string;
-};
+export type TGroupParam = Pick<TGroup, 'groupName'> &
+  Pick<TMetadataDatabase, 'databaseName'>;
 
-export type TGroupParamCreate = TGroupParam;
+export type TGroupParamCreate = TGroup &
+  Pick<TMetadataDatabase, 'databaseName'>;
 
-type TGroupDatabaseNameParam = Pick<TGroupParam, 'databaseName' | 'groupName'>;
-export type TGroupParamExist = TGroupDatabaseNameParam;
-
-export type TGroupParamDetail = TGroupDatabaseNameParam;
-
-export type TGroupParamIsParticipant = TGroupDatabaseNameParam & {
+export type TGroupParamIsParticipant = TGroupParam & {
   userName: string;
 };
 
 export type TGroupParamUpdateMetadata = Pick<
-  TGroupParam,
+  TGroupParamCreate,
   'databaseName' | 'groupName' | 'createdBy'
 > & {
   newGroupName?: string;
-  newDescription?: string;
+  newGroupDescription?: string;
 };
 
-export type TGroupParamAddListUser = Pick<
-  TGroupParam,
-  'databaseName' | 'createdBy' | 'groupName'
+export type TGroupParamListUser = Pick<
+  TGroupParamCreate,
+  'databaseName' | 'groupName' | 'createdBy'
 > & {
   listUserName: string[];
 };
@@ -63,6 +58,8 @@ export type TGroupUpdateRequest = TGroupRequest & {
   newGroupDescription: string;
 };
 
+export type TGroupUpdateResponse = boolean;
+
 export type TGroupUserInfo = Pick<
   TUserRecord,
   'userName' | 'createdAt' | 'updatedAt'
@@ -70,6 +67,8 @@ export type TGroupUserInfo = Pick<
 
 export type TGroupListByUserRequest = TDatabaseRequest &
   Pick<TUser, 'userName'>;
+
+export type TGroupListByUserResponse = string[];
 
 export type TGroupListAllRequest = TDatabaseRequest;
 
@@ -82,10 +81,16 @@ export type TGroupInfoDetailResponse = TGroupDetail;
 export type TGroupCreateRequest = TDatabaseRequest &
   Pick<TGroup, 'groupName' | 'groupDescription'>;
 
-export type TGroupAddUsersRequest = TGroupRequest & {
+export type TGroupCreateResponse = boolean;
+
+export type TGroupAddUserListRequest = TGroupRequest & {
   // List of userName
   listUser: string[];
 };
 
+export type TGroupAddUserListResponse = boolean;
+
 // It the same, that's why we create new type as an alias
-export type TGroupRemoveUsersRequest = TGroupAddUsersRequest;
+export type TGroupRemoveUserListRequest = TGroupAddUserListRequest;
+
+export type TGroupRemoveUserListResponse = boolean;

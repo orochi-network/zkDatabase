@@ -6,14 +6,14 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, WithoutId } from 'mongodb';
+import { ClientSession, OptionalId } from 'mongodb';
 import {
   ZKDATABASE_USER_NOBODY,
   ZKDATABASE_USER_SYSTEM,
 } from '../../common/const.js';
-import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
+import { objectToLookupPattern } from '../../helper/common.js';
 
-export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
+export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   private static collectionName: string =
     zkDatabaseConstant.globalCollection.user;
 
@@ -30,28 +30,25 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
     );
   }
 
-  public static async init() {
-    const collection = ModelCollection.getInstance(
-      zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
-      ModelUser.collectionName
-    );
-    if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true });
-      collection.index({ publicKey: 1 }, { unique: true });
-      collection.index({ email: 1 }, { unique: true });
-    }
+  /**
+   * Validates whether the given username is valid.
+   *
+   * @param userName - The username to validate.
+   * @returns `true` if the username is valid, otherwise `false`.
+   */
+  public static isValid(userName: string): boolean {
+    return ModelUser.defaultUsers.includes(userName);
   }
 
-  public static isValidUser(userName: string) {
-    if (ModelUser.defaultUsers.includes(userName)) {
-      throw new Error('Username is reserved');
-    }
-  }
-
-  public async isUserExist(
+  /**
+   * Checks if a user exists based on the provided search criteria.
+   *
+   * @param searchingInfo - Partial search criteria for a user, excluding 'activated' and 'userData' fields.
+   * @returns A promise that resolves to `true` if the user exists, otherwise `false`.
+   */
+  public async isExist(
     searchingInfo: Partial<Omit<TUser, 'activated' | 'userData'>>
-  ) {
+  ): Promise<boolean> {
     // Search a user for given information is matched
     return (
       (await this.collection.countDocuments({
@@ -60,9 +57,15 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
     );
   }
 
+  /**
+   * Finds a user based on the provided search criteria.
+   *
+   * @param searchingInfo - Partial search criteria for a user, excluding 'activated' and 'userData' fields.
+   * @returns A promise resolving to the user if found, or `undefined` if not found.
+   */
   public async findUser(
     searchingInfo: Partial<Omit<TUser, 'activated' | 'userData'>>
-  ) {
+  ): Promise<TUserRecord[]> {
     // Search a user for given information is matched
     const result = await this.collection.find({
       $or: objectToLookupPattern(searchingInfo),
@@ -71,41 +74,26 @@ export class ModelUser extends ModelGeneral<WithoutId<TUserRecord>> {
     return result.toArray();
   }
 
-  public async areUsersExist(userNames: string[]) {
-    const users = await this.collection
+  /**
+   * Checks if a list of usernames exist.
+   *
+   * @param listUserName - An array of usernames to check for existence.
+   * @returns A promise that resolves to `true` if all usernames exist, otherwise `false`.
+   */
+  public async isListUserExist(listUserName: string[]): Promise<boolean> {
+    const listUser = await this.collection
       .find({
-        userName: { $in: userNames },
+        userName: { $in: listUserName },
       })
       .toArray();
 
-    return userNames.length === users.length;
-  }
-
-  public async create(newUser: Omit<TUser, 'activated'>) {
-    const { userData, email, publicKey, userName } = newUser;
-    ModelUser.isValidUser(userName);
-    if (!(await this.isUserExist({ userName, email, publicKey }))) {
-      const record: WithoutId<TUserRecord> = {
-        userName,
-        email,
-        publicKey,
-        userData,
-        activated: true,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      };
-      const result = await this.insertOne(record);
-      if (result && result?.acknowledged === true) {
-        return record;
-      }
-    }
-    return null;
+    return listUserName.length === listUser.length;
   }
 
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

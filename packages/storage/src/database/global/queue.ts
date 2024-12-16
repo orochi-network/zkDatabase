@@ -11,6 +11,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import ModelGeneral from '../base/general.js';
 import ModelCollection from '../general/collection.js';
 
