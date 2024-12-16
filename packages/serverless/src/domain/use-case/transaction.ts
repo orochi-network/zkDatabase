@@ -49,7 +49,7 @@ export default class Transaction {
 
     const modelTransaction = ModelTransaction.getInstance();
 
-    const txs = await modelTransaction.getTxs(databaseName, transactionType, {
+    const txs = await modelTransaction.list(databaseName, transactionType, {
       session,
     });
 
@@ -170,7 +170,7 @@ export default class Transaction {
         throw Error(`Database ${databaseName} does not exist`);
       }
 
-      const transactions = await ModelTransaction.getInstance().getTxs(
+      const transactions = await ModelTransaction.getInstance().list(
         databaseName,
         transactionType
       );
@@ -216,7 +216,7 @@ export default class Transaction {
   static async latest(databaseName: string, transactionType: ETransactionType) {
     const modelTransaction = ModelTransaction.getInstance();
 
-    const txs = await modelTransaction.getTxs(databaseName, transactionType, {
+    const txs = await modelTransaction.list(databaseName, transactionType, {
       sort: {
         createdAt: -1,
       },

@@ -1,5 +1,6 @@
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
+import { TDocumentField } from './document.js';
 
 /**
  * Ownership types
@@ -77,3 +78,17 @@ export type TProof = {
 };
 
 export type TProofRecord = TDbRecord<TProof> & TZKDatabaseProof;
+
+// For prover param use-case
+export type TParamProve = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+};
+export type TParamProveCreate = TParamProve & { document: TDocumentField[] };
+
+export type TParamProveUpdate = TParamProve & {
+  newDocument: TDocumentField[];
+};
+
+export type TParamProveDelete = TParamProve;

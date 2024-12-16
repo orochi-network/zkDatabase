@@ -202,6 +202,7 @@ export class Database {
         ETransactionType.Deploy,
         session
       );
+
       return true;
     } catch (error) {
       logger.debug(`Cannot deploy database ${error}`);
