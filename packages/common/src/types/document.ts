@@ -71,6 +71,8 @@ export type TDocumentHistoryFindRequest = TDocumentNamespace & {
   docId: string;
 };
 
+export type TDocumentModificationResponse = TMerkleProof[] | null;
+
 export type TDocumentHistoryListRequest = TDocumentNamespace & {
   docId: string;
   pagination: TPagination;

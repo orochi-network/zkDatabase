@@ -22,7 +22,6 @@ import {
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
   CompoundSession,
-  DATABASE_ENGINE,
   ModelDatabase,
   ModelQueueTask,
   ModelSequencer,

@@ -28,8 +28,9 @@ import {
   TWithProofStatus,
   TDocumentWithMetadataResponse,
   TDocumentRecordNullable,
-  TMerkleProof,
   TDocumentHistoryListResponse,
+  TDocumentModificationResponse,
+  TDocumentHistoryResponse,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
@@ -186,7 +187,7 @@ const listDocumentWithMetadata = authorizeWrapper<
   TDocumentListRequest,
   TWithProofStatus<TDocumentWithMetadataResponse>[]
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  const documents = await withTransaction(async (session) => {
+  const listDocument = await withTransaction(async (session) => {
     return listDocumentWithMetadataImpl(
       args.databaseName,
       args.collectionName,
@@ -197,17 +198,17 @@ const listDocumentWithMetadata = authorizeWrapper<
     );
   });
 
-  if (documents == null) {
+  if (listDocument == null) {
     throw new Error('Failed to list documents, transaction returned null');
   }
 
-  return documents;
+  return listDocument;
 });
 
 // Mutation
 const createDocument = authorizeWrapper<
   TDocumentCreateRequest,
-  TMerkleProof[] | null
+  TDocumentModificationResponse
 >(
   JOI_DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
@@ -225,22 +226,25 @@ const createDocument = authorizeWrapper<
     )
 );
 
-const updateDocument = authorizeWrapper(
-  JOI_DOCUMENT_UPDATE_REQUEST,
-  async (_root: unknown, args: TDocumentUpdateRequest, ctx) => {
-    return updateDocumentImpl(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query,
-      args.document
-    );
-  }
-);
+const updateDocument = authorizeWrapper<
+  TDocumentUpdateRequest,
+  TDocumentModificationResponse
+>(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
+  return updateDocumentImpl(
+    {
+      databaseName: args.databaseName,
+      collectionName: args.collectionName,
+      actor: ctx.userName,
+    },
+    args.query,
+    args.document
+  );
+});
 
-const dropDocument = authorizeWrapper(
+const dropDocument = authorizeWrapper<
+  TDocumentFindRequest,
+  TDocumentModificationResponse
+>(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
     return deleteDocument(
@@ -254,7 +258,10 @@ const dropDocument = authorizeWrapper(
   }
 );
 
-const findDocumentHistory = authorizeWrapper(
+const findDocumentHistory = authorizeWrapper<
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryResponse | null
+>(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
