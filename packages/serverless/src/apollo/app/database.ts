@@ -13,6 +13,7 @@ import {
   databaseName,
   merkleHeight,
   pagination,
+  publicKey,
   userName,
 } from '@zkdb/common';
 import {
@@ -117,11 +118,7 @@ export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
 export const JOI_DATABASE_UPDATE_DEPLOY =
   Joi.object<TDatabaseUpdateDeployedRequest>({
     databaseName,
-    appPublicKey: Joi.string()
-      .trim()
-      .length(55)
-      .required()
-      .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/),
+    appPublicKey: publicKey,
   });
 
 export const JOI_DATABASE_TRANSFER_OWNER =
@@ -151,10 +148,8 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
     databaseName,
   }),
   async (_root, { databaseName }, _ctx) => {
-    const { databases } = await DATABASE_ENGINE.serverless.client
-      .db()
-      .admin()
-      .listDatabases();
+    const { db } = new ModelDatabase();
+    const { databases } = await db.admin().listDatabases();
 
     const isDatabaseExist = databases.some((db) => db.name === databaseName);
 
