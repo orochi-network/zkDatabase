@@ -1,17 +1,17 @@
 import { gql } from "@apollo/client";
 import {
-  EDocumentProofStatus,
+  EProofStatusDocument,
   TDatabaseRequest,
-  TDocumentProofRequest,
+  TProofDocumentRequest,
   TZKDatabaseProof,
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
 export const proof = <T>(client: TApolloClient<T>) => ({
   status: createQueryFunction<
-    EDocumentProofStatus,
-    TDocumentProofRequest,
-    { getProofStatus: EDocumentProofStatus }
+    EProofStatusDocument,
+    TProofDocumentRequest,
+    { getProofStatus: EProofStatusDocument }
   >(
     client,
     gql`

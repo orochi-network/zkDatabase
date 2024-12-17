@@ -5,7 +5,7 @@
 // lead to less documents being returned than expected.
 // TODO: group all the functions into a static class to organize them better
 import {
-  EDocumentProofStatus,
+  EProofStatusDocument,
   ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
@@ -384,7 +384,7 @@ export class Document {
     return result.map((item) => {
       return {
         ...item,
-        proofStatus: taskMap.get(item.docId) || EDocumentProofStatus.Failed,
+        proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
       };
     });
   }
