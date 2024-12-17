@@ -1,4 +1,4 @@
-import { gql } from '../../helper/common.js';
+import { gql } from '@helper';
 
 export const typeDefsCommon = gql`
   enum TransactionType {

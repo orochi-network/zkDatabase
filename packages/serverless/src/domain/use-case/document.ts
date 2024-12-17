@@ -4,7 +4,6 @@
 // the pagination filter first and then filter them by permission, which can
 // lead to less documents being returned than expected.
 // TODO: group all the functions into a static class to organize them better
-
 import {
   EDocumentProofStatus,
   ESequencer,
@@ -33,14 +32,16 @@ import {
   DEFAULT_PAGINATION,
   ZKDATABASE_GROUP_SYSTEM,
   ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import ModelDocument from '../../model/abstract/document.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import { FilterCriteria, parseQuery } from '../utils/document.js';
-import { PermissionSecurity } from './permission-security.js';
-import { Prover } from './prover.js';
+} from '@common';
+import { getCurrentTime } from '@helper';
+import {
+  ModelDocument,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+} from '@model';
+import { FilterCriteria, parseQuery } from '../utils';
+import { PermissionSecurity } from './permission-security';
+import { Prover } from './prover';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(

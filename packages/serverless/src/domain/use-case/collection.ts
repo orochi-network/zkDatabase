@@ -10,15 +10,12 @@ import {
 } from '@zkdb/common';
 import { PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import { ModelMetadataCollection } from '@model';
 import { ClientSession } from 'mongodb';
-import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
-import {
-  convertSchemaDefinitionToIndex,
-  getCurrentTime,
-} from '../../helper/common.js';
-import { Group } from './group.js';
-import { PermissionSecurity } from './permission-security.js';
+import { DEFAULT_GROUP_ADMIN } from '@common';
+import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
+import { Group } from './group';
+import { PermissionSecurity } from './permission-security';
 
 export class Collection {
   public static async indexCreate(

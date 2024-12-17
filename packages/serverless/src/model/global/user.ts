@@ -7,11 +7,8 @@ import {
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession, OptionalId } from 'mongodb';
-import {
-  ZKDATABASE_USER_NOBODY,
-  ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { objectToLookupPattern } from '../../helper/common.js';
+import { ZKDATABASE_USER_NOBODY, ZKDATABASE_USER_SYSTEM } from '@common';
+import { objectToLookupPattern } from '@helper';
 
 export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   private static collectionName: string =

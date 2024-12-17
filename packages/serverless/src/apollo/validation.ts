@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { GraphQLError, GraphQLResolveInfo } from 'graphql';
-import { ZKDATABASE_USER_NOBODY } from '../common/const.js';
 import { TAuthorizedContext, TPublicContext } from '@zkdb/common';
+import { ZKDATABASE_USER_NOBODY } from '@common';
 
 export type THandler<Req, Res, R, C> = (
   _root: R,

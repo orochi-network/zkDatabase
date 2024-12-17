@@ -13,8 +13,7 @@ import {
 } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
 import { ClientSession, Filter, InsertOneResult, OptionalId } from 'mongodb';
-import { getCurrentTime } from '../../helper/common.js';
-import logger from '../../helper/logger.js';
+import { getCurrentTime, logger } from '@helper';
 
 /**
  * ModelDocument is a class that extends ModelBasic.

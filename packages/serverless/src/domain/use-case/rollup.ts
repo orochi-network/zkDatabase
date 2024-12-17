@@ -10,8 +10,8 @@ import {
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   CompoundSession,
-  ModelMetadataDatabase,
   ModelMerkleTree,
+  ModelMetadataDatabase,
   ModelProof,
   ModelQueueTask,
   ModelRollup,
@@ -19,11 +19,10 @@ import {
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
-import logger from '../../helper/logger.js';
-import Transaction from './transaction.js';
-import { getCurrentTime } from '../../helper/common.js';
+import { getCurrentTime, logger } from '@helper';
+import Transaction from './transaction';
 
-export default class Rollup {
+export class Rollup {
   static async create(
     databaseName: string,
     actor: string,
@@ -282,3 +281,5 @@ export default class Rollup {
     };
   }
 }
+
+export default Rollup;

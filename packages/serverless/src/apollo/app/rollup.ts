@@ -7,7 +7,7 @@ import {
 import { withCompoundTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import Rollup from '../../domain/use-case/rollup.js';
+import { Rollup } from '@domain';
 import { authorizeWrapper } from '../validation.js';
 
 export const typeDefsRollUp = `#graphql

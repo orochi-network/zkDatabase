@@ -8,12 +8,11 @@ import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
-import { getCurrentTime } from '../../helper/common.js';
-import { redisQueue } from '../../helper/mq.js';
-import ModelUser from '../../model/global/user.js';
-import { Database } from './database.js';
+import { getCurrentTime, redisQueue } from '@helper';
+import { ModelUser } from '@model';
+import { Database } from './database';
 
-export default class Transaction {
+export class Transaction {
   static readonly MINA_DECIMAL = 1e9;
 
   static readonly MAP_MINIMAL_BALANCE = new Map<ETransactionType, number>([
@@ -251,3 +250,5 @@ export default class Transaction {
     return true;
   }
 }
+
+export default Transaction;

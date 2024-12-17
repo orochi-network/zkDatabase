@@ -2,6 +2,7 @@
 import { ConfigLoader, TLogLevel, TNodeEnv } from '@orochi-network/framework';
 import { createHash } from 'crypto';
 import Joi from 'joi';
+import { NetworkId } from 'o1js';
 
 export type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
@@ -14,7 +15,7 @@ export type TApplicationConfig = {
   SERVICE_ORIGIN: Map<string, boolean>;
   OROCHI_LOG: TLogLevel;
   PROOF_MONGODB_URL: string;
-  NETWORK_ID: 'mainnet' | 'testnet';
+  NETWORK_ID: NetworkId;
   BLOCKBERRY_API_KEY: string;
   MINA_URL: string;
 };

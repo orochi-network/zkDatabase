@@ -1,10 +1,9 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Document } from '../../domain/use-case/document.js';
-import { DocumentHistory } from '../../domain/use-case/document-history.js';
-import { gql } from '../../helper/common.js';
-import { authorizeWrapper } from '../validation.js';
+import { Document, DocumentHistory } from '@domain';
+import { gql } from '@helper';
+import { authorizeWrapper } from '../validation';
 import {
   collectionName,
   databaseName,
@@ -24,7 +23,7 @@ import {
   TDocumentHistoryResponse,
 } from '@zkdb/common';
 
-import { DEFAULT_PAGINATION } from '../../common/const.js';
+import { DEFAULT_PAGINATION } from '@common';
 import { Permission } from '@zkdb/permission';
 
 export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({

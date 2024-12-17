@@ -5,7 +5,7 @@ import {
   RedisScripts,
   createClient,
 } from 'redis';
-import { config } from './config.js';
+import { config } from './config';
 
 export class RedisQueueService<T> {
   private redisClient: ReturnType<typeof createClient>;

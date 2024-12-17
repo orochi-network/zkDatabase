@@ -16,16 +16,17 @@ import {
   ModelTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import logger from '../../helper/logger.js';
-import ModelGroup from '../../model/database/group.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import ModelUser from '../../model/global/user.js';
-import { Group } from './group.js';
-import Transaction from './transaction.js';
+import { DEFAULT_GROUP_ADMIN } from '@common';
+import { getCurrentTime, logger } from '@helper';
+import {
+  ModelGroup,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUserGroup,
+  ModelUser,
+} from '@model';
+import { Group } from './group';
+import Transaction from './transaction';
 
 export class Database {
   public static async create(

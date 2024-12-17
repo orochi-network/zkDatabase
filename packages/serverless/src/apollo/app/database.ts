@@ -24,10 +24,9 @@ import {
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
-import { Database } from '../../domain/use-case/database.js';
-import { gql } from '../../helper/common.js';
-import { config } from '../../helper/config.js';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
+import { Database } from '@domain';
+import { config, gql } from '@helper';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsDatabase = gql`
   #graphql

@@ -15,9 +15,9 @@ import {
 import { DATABASE_ENGINE, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
 import { ClientSession, ObjectId } from 'mongodb';
-import ModelDocument from '../../model/abstract/document.js';
-import { PermissionSecurity } from './permission-security.js';
-import { DEFAULT_PAGINATION } from 'common/const.js';
+import { ModelDocument } from '@model';
+import { PermissionSecurity } from './permission-security';
+import { DEFAULT_PAGINATION } from '@common';
 import { PermissionBase } from '@zkdb/permission';
 
 /** The data being returned by the mongodb pipeline above.

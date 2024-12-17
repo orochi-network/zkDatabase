@@ -14,9 +14,8 @@ import {
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
-import ModelDocument from '../../model/abstract/document.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import { buildSchema } from './schema.js';
+import { ModelDocument, ModelMetadataDocument } from '@model';
+import { buildSchema } from './schema';
 
 export class Prover {
   public static async create(

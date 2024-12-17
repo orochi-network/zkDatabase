@@ -1,6 +1,6 @@
 import { TPagination, userName } from '@zkdb/common';
 import { Request } from 'express';
-import { TJWTAuthenticationPayload } from 'helper/jwt';
+import { TJWTAuthenticationPayload } from '@helper';
 import Joi from 'joi';
 
 export const ZKDATABASE_USER_NOBODY = 'nobody';

@@ -6,12 +6,12 @@ import {
   objectId,
   TDocumentProofRequest,
 } from '@zkdb/common';
-import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
+import { ModelProof, ModelQueueTask } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
-import { gql } from '../../helper/common.js';
+import { PermissionSecurity } from '@domain';
+import { authorizeWrapper, publicWrapper } from '../validation';
+import { gql } from '@helper';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = gql`

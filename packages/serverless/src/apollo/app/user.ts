@@ -14,22 +14,22 @@ import {
   userName,
 } from '@zkdb/common';
 import { randomUUID } from 'crypto';
-import { User } from 'domain/use-case/user.js';
+import { User } from '@domain';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
-import { gql } from '../../helper/common.js';
-import config from '../../helper/config.js';
 import {
+  gql,
+  config,
   ACCESS_TOKEN_EXPIRE_TIME,
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
-} from '../../helper/jwt.js';
-import RedisInstance from '../../helper/redis.js';
-import { sessionDestroy } from '../../helper/session.js';
-import ModelUser from '../../model/global/user.js';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
+  RedisInstance,
+  sessionDestroy,
+} from '@helper';
+import { ModelUser } from '@model';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsUser = gql`
   #graphql

@@ -1,21 +1,28 @@
 import {
+  resolversCollection,
   resolversCollectionIndex,
-  typeDefsCollectionIndex,
-} from './app/collection-index.js';
-import { resolversCollection, typeDefsCollection } from './app/collection.js';
-import { typeDefsCommon } from './app/common.js';
-import { resolversDatabase, typeDefsDatabase } from './app/database.js';
-import { resolversDocument, typeDefsDocument } from './app/document.js';
-import { resolversGroup, typeDefsGroup } from './app/group.js';
-import { resolversMerkleTree, typeDefsMerkleTree } from './app/merkle-tree.js';
-import { resolversPermission, typeDefsPermission } from './app/metadata.js';
-import { resolversProof, typeDefsProof } from './app/proof.js';
-import { resolversRollUp, typeDefsRollUp } from './app/rollup.js';
-import {
+  resolversDatabase,
+  resolversDocument,
+  resolversGroup,
+  resolversMerkleTree,
+  resolversPermission,
+  resolversProof,
+  resolversRollUp,
   resolversTransaction,
+  resolversUser,
+  typeDefsCollection,
+  typeDefsCollectionIndex,
+  typeDefsCommon,
+  typeDefsDatabase,
+  typeDefsDocument,
+  typeDefsGroup,
+  typeDefsMerkleTree,
+  typeDefsPermission,
+  typeDefsProof,
+  typeDefsRollUp,
   typeDefsTransaction,
-} from './app/transaction.js';
-import { resolversUser, typeDefsUser } from './app/user.js';
+  typeDefsUser,
+} from './app';
 
 export const TypedefsApp = [
   typeDefsCommon,
@@ -45,3 +52,5 @@ export const ResolversApp = [
   resolversTransaction,
   resolversRollUp,
 ];
+
+export * from './validation';
