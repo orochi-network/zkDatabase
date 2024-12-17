@@ -42,8 +42,17 @@ export const typeDefsCollection = gql`
   type Query
   type Mutation
 
+  type MetadataCollection {
+    collectionName: String!
+    schema: [SchemaFieldOutput]!
+    metadata: OwnershipAndPermission!
+    sizeOnDisk: Int
+    createdAt: Date!
+    updatedAt: Date!
+  }
+
   extend type Query {
-    collectionList(databaseName: String!): [CollectionDescriptionOutput]!
+    collectionList(databaseName: String!): [MetadataCollection]!
 
     collectionExist(databaseName: String!, collectionName: String!): Boolean
   }
@@ -52,8 +61,8 @@ export const typeDefsCollection = gql`
     collectionCreate(
       databaseName: String!
       collectionName: String!
-      groupName: String
       schema: [SchemaFieldInput!]!
+      groupName: String
       permission: Int
     ): Boolean
   }

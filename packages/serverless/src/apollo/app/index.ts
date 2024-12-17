@@ -3,7 +3,6 @@ export * from './collection-index';
 export * from './collection';
 export * from './database';
 export * from './document';
-export * from './environment';
 export * from './group';
 export * from './merkle-tree';
 export * from './metadata';

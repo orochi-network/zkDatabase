@@ -3,7 +3,6 @@ import {
   resolversCollectionIndex,
   resolversDatabase,
   resolversDocument,
-  resolversEnvironment,
   resolversGroup,
   resolversMerkleTree,
   resolversPermission,
@@ -16,7 +15,6 @@ import {
   typeDefsCommon,
   typeDefsDatabase,
   typeDefsDocument,
-  typeDefsEnvironment,
   typeDefsGroup,
   typeDefsMerkleTree,
   typeDefsPermission,
@@ -39,7 +37,6 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsTransaction,
   typeDefsRollUp,
-  typeDefsEnvironment,
 ];
 
 export const ResolversApp = [
@@ -54,7 +51,6 @@ export const ResolversApp = [
   resolversProof,
   resolversTransaction,
   resolversRollUp,
-  resolversEnvironment,
 ];
 
 export * from './validation';

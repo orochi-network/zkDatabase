@@ -15,11 +15,13 @@ scalar Date
 type Mutation
 
 enum RollUpState {
-  updated
-  outdated
-  failed
+  Updated
+  Updating
+  Outdated
+  Failed
 }
 
+# @TODO: Refactor rollup
 type RollUpHistoryItem {
   databaseName: String!
   transactionType: TransactionType!
@@ -28,9 +30,9 @@ type RollUpHistoryItem {
   status: TransactionStatus!
   merkletreeRootCurrent: String!
   merkletreeRootPrevious: String!
+  error: String
   createdAt: Date!
   updatedAt: Date!
-  error: String
 }
 
 type RollUpHistory {

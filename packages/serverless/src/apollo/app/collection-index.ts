@@ -25,7 +25,7 @@ export const typeDefsCollectionIndex = gql`
     indexName: String!
     size: Int!
     access: Int!
-    property: CollectionIndexProperty!
+    property: IndexProperty!
     createdAt: Date!
   }
 

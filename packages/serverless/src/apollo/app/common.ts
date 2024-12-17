@@ -6,6 +6,7 @@ export const typeDefsCommon = gql`
     Rollup
   }
 
+  # ETransactionStatus in TS
   enum TransactionStatus {
     Unsigned
     Signed
@@ -36,7 +37,8 @@ export const typeDefsCommon = gql`
     MerkleMapWitness
   }
 
-  enum CollectionIndexProperty {
+  # EProperty in TS
+  enum IndexProperty {
     Compound
     Unique
   }
@@ -47,8 +49,8 @@ export const typeDefsCommon = gql`
   }
 
   type PaginationInput {
-    offset: Int!
-    limit: Int!
+    offset: Int
+    limit: Int
   }
 
   input MinaSignatureInput {
@@ -70,35 +72,17 @@ export const typeDefsCommon = gql`
     sorting: Sorting
   }
 
+  type OwnershipAndPermission {
+    owner: String!
+    group: String!
+    permission: Int!
+  }
+
   type SchemaFieldOutput {
     name: String!
     kind: SchemaType!
     index: Boolean
     # Default is ASC or 1
     sorting: Sorting
-  }
-
-  type CollectionMetadata {
-    owner: String!
-    group: String!
-    permission: Int!
-  }
-
-  type MetadataCollection {
-    permission: Int!
-    collectionName: String!
-    createdAt: Date!
-    updatedAt: Date!
-    sizeOnDisk: Int
-    schema: [SchemaFieldOutput]!
-  }
-
-  type CollectionDescriptionOutput {
-    collectionName: String!
-    schema: [SchemaFieldOutput!]!
-    owner: String!
-    group: String!
-    permission: Int!
-    sizeOnDisk: Int!
   }
 `;

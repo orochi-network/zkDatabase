@@ -11,40 +11,48 @@ import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { PermissionSecurity } from '@domain';
 import { authorizeWrapper, publicWrapper } from '../validation';
+import { gql } from '@helper';
 
 /* eslint-disable import/prefer-default-export */
-export const typeDefsProof = `#graphql
-scalar JSON
-type Query
+export const typeDefsProof = gql`
+  #graphql
+  scalar JSON
+  type Query
 
-type Proof {
-  publicInput: [String!]!
-  publicOutput: [String!]!
-  maxProofsVerified: Int!
-  proof: String!
-}
+  # TZKDatabaseProof in TS
+  type ZkProof {
+    publicInput: [String!]!
+    publicOutput: [String!]!
+    maxProofsVerified: Int!
+    proof: String!
+  }
 
-enum ProofStatus {
-  QUEUED
-  PROVING
-  PROVED
-  FAILED
-}
+  enum ProofStatus {
+    Queued
+    Proving
+    Proved
+    Failed
+  }
 
-enum DatabaseProofStatus {
-  EMPTY
-  PENDING
-  PROVED
-}
+  enum DatabaseProofStatus {
+    None
+    Proving
+    Proved
+    Failed
+  }
 
-extend type Query {
-  getProofStatus(databaseName: String!, collectionName: String!, docId: String): ProofStatus!
-  getDatabaseProofStatus(databaseName: String!): DatabaseProofStatus!
-  getProof(databaseName: String!): Proof
-}
+  extend type Query {
+    zkProofStatusDocument(
+      databaseName: String!
+      collectionName: String!
+      docId: String
+    ): ProofStatus!
+    zkProofStatusDatabase(databaseName: String!): DatabaseProofStatus!
+    zkProof(databaseName: String!): ZkProof
+  }
 `;
 
-const getProofStatus = authorizeWrapper<
+const zkProofStatusDocument = authorizeWrapper<
   TDocumentProofRequest,
   EDocumentProofStatus
 >(
@@ -83,7 +91,7 @@ const getProofStatus = authorizeWrapper<
   }
 );
 
-const getProof = publicWrapper(
+const zkProof = publicWrapper(
   Joi.object({
     databaseName,
   }),
@@ -94,7 +102,7 @@ const getProof = publicWrapper(
   }
 );
 
-const getDatabaseProofStatus = publicWrapper(
+const zkProofStatusDatabase = publicWrapper(
   Joi.object({
     databaseName,
   }),
@@ -119,20 +127,11 @@ const getDatabaseProofStatus = publicWrapper(
   }
 );
 
-type TProofResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    getProofStatus: typeof getProofStatus;
-    getProof: typeof getProof;
-    getDatabaseProofStatus: typeof getDatabaseProofStatus;
-  };
-};
-
-export const resolversProof: TProofResolver = {
+export const resolversProof = {
   JSON: GraphQLJSON,
   Query: {
-    getProofStatus,
-    getProof,
-    getDatabaseProofStatus,
+    zkProof,
+    zkProofStatusDatabase,
+    zkProofStatusDocument,
   },
 };
