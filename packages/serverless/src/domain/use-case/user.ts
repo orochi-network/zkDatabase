@@ -20,8 +20,7 @@ export class User {
       user: { userName, email, userData },
       signature,
     } = paramSignUp;
-    console.log('🚀 ~ User ~ paramSignUp:', paramSignUp);
-    // console.log('🚀 ~ User ~ signature:', signature);
+
     // Init client mina-signer
     const client = new Client({
       // Since NETWORK_ID enum return {Testnet, Mainnet} so we need to lowercase and cast
@@ -69,7 +68,6 @@ export class User {
       });
       // Get user after inserted
       const user = await imUser.findOne({ _id: createResult.insertedId });
-      console.log('🚀 ~ User ~ user:', user);
 
       if (user) {
         return user;

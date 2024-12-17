@@ -237,10 +237,6 @@ export class Collection {
         session,
       }
     );
-    console.log(
-      '🚀 ~ Collection ~ resultInsertMetadata:',
-      resultInsertMetadata
-    );
 
     if (!resultInsertMetadata.acknowledged) {
       throw new Error(
@@ -250,7 +246,6 @@ export class Collection {
 
     // Create index by schema definition
     const collectionIndex = convertSchemaDefinitionToIndex(schema);
-    console.log('🚀 ~ Collection ~ collectionIndex:', collectionIndex);
 
     if (Object.keys(collectionIndex).length > 0) {
       const result = await Collection.indexCreate(
