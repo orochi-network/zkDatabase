@@ -163,9 +163,11 @@ const findDocument = authorizeWrapper<
 >(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
   const document = await withTransaction((session) =>
     Document.findDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query,
       session
     )
@@ -180,9 +182,11 @@ const listDocumentWithMetadata = authorizeWrapper<
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   const listDocument = await withTransaction(async (session) => {
     return Document.listDocumentWithMetadata(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query,
       args.pagination || DEFAULT_PAGINATION,
       session
@@ -256,11 +260,13 @@ const findDocumentHistory = authorizeWrapper<
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
-      DocumentHistory.findDocumentHistory(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.docId,
+      DocumentHistory.find(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+          docId: args.docId,
+        },
         session
       )
     );
@@ -272,11 +278,13 @@ const listDocumentHistory = authorizeWrapper<
   TDocumentHistoryListResponse
 >(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   return withTransaction(async (session) => {
-    const documents = await DocumentHistory.listDocumentHistory(
-      args.databaseName,
-      args.collectionName,
-      args.docId,
-      ctx.userName,
+    const documents = await DocumentHistory.list(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+        docId: args.docId,
+      },
       args.pagination || DEFAULT_PAGINATION,
       session
     );

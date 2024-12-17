@@ -9,6 +9,8 @@ import {
   TDocumentRecordNullable,
   TMetadataDocument,
   TPagination,
+  TParamDocument,
+  TPermissionSudo,
 } from '@zkdb/common';
 import { DATABASE_ENGINE, zkDatabaseConstant } from '@zkdb/storage';
 import assert from 'assert';
@@ -29,14 +31,13 @@ type TDocumentHistorySerialized = {
 
 export class DocumentHistory {
   // TODO: test this function
-  static async listDocumentHistory(
-    databaseName: string,
-    collectionName: string,
-    docId: string,
-    actor: string,
+  static async list(
+    permissionParam: TPermissionSudo<TParamDocument>,
     pagination: TPagination,
     session?: ClientSession
   ): Promise<TDocumentHistoryResponse[]> {
+    const { databaseName, collectionName, actor, docId } = permissionParam;
+
     const permission = await PermissionSecurity.collection(
       {
         databaseName,
@@ -130,13 +131,12 @@ MongoDB pipeline to already handle this case`
   // TODO: This does not work yet, need to refactor to remove duplicate logic and
   // add document metadata. Also catch up with UI designer to confirm the data
   // needed to display
-  static async findDocumentHistory(
-    databaseName: string,
-    collectionName: string,
-    actor: string,
-    docId: string,
+  static async find(
+    permissionParam: TPermissionSudo<TParamDocument>,
     session?: ClientSession
   ): Promise<TDocumentHistoryResponse | null> {
+    const { databaseName, collectionName, actor, docId } = permissionParam;
+
     const actorPermissionCollection = await PermissionSecurity.collection(
       {
         databaseName,

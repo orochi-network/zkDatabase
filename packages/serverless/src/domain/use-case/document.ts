@@ -61,12 +61,12 @@ export function fieldArrayToRecord(
 
 export class Document {
   static async findDocument(
-    databaseName: string,
-    collectionName: string,
-    actor: string,
+    permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
     session?: ClientSession
   ): Promise<TDocumentRecordNullable | null> {
+    const { databaseName, collectionName, actor } = permissionParam;
+
     const actorPermissionCollection = await PermissionSecurity.collection(
       {
         databaseName,
@@ -329,14 +329,13 @@ export class Document {
   }
 
   static async listDocumentWithMetadata(
-    databaseName: string,
-    collectionName: string,
-    actor: string,
+    permissionParam: TPermissionSudo<TParamCollection>,
     query?: FilterCriteria,
     pagination?: TPagination,
     session?: ClientSession
   ): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
     const { db: database } = new ModelDatabase();
+    const { databaseName, collectionName, actor } = permissionParam;
 
     const paginationInfo = pagination || DEFAULT_PAGINATION;
     const pipeline = [];
