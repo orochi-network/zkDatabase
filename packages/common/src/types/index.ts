@@ -6,7 +6,7 @@ export * from './environment';
 export * from './group';
 export * from './merkle-tree';
 export * from './metadata';
-export * from './ownership';
+export * from './permission-ownership';
 export * from './pagination';
 export * from './proof';
 export * from './rollup';

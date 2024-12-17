@@ -62,7 +62,7 @@ export const typeDefsCollection = gql`
       databaseName: String!
       collectionName: String!
       schema: [SchemaFieldInput!]!
-      groupName: String
+      group: String
       permission: Int
     ): Boolean
   }
@@ -104,7 +104,7 @@ const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
         },
         args.schema,
         args.group,
-        Permission.from(args.permission),
+        args.permission ? Permission.from(args.permission) : undefined,
         session
       )
     )

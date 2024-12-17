@@ -80,7 +80,7 @@ export class Database {
         await Group.create(
           {
             databaseName,
-            createdBy: databaseOwner,
+            createBy: databaseOwner,
             groupName: DEFAULT_GROUP_ADMIN,
             groupDescription: 'Default group for owner',
           },
@@ -90,7 +90,7 @@ export class Database {
         await Group.addListUser(
           {
             databaseName,
-            createdBy: databaseOwner,
+            createBy: databaseOwner,
             listUserName: [databaseOwner],
             groupName: DEFAULT_GROUP_ADMIN,
           },

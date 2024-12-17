@@ -3,7 +3,7 @@ import {
   databaseName,
   EDatabaseProofStatus,
   EDocumentProofStatus,
-  objectId,
+  docId,
   TDocumentProofRequest,
 } from '@zkdb/common';
 import { ModelProof, ModelQueueTask } from '@zkdb/storage';
@@ -59,7 +59,7 @@ const zkProofStatusDocument = authorizeWrapper<
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId: docId(false),
   }),
   async (_root, { databaseName, collectionName, docId }, ctx) => {
     const imProof = ModelQueueTask.getInstance();

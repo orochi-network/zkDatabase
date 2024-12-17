@@ -70,6 +70,7 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
   while (true) {
     const request = await redisQueue.dequeue();
+    console.log("🚀 ~ processQueue ~ request:", request);
     if (request) {
       const tx = await findTransaction(request.id);
 

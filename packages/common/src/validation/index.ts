@@ -17,17 +17,22 @@ export const O1JS_VALID_TYPE = [
   'MerkleMapWitness',
 ];
 
-export const ESortingSchema = (required: true) => {
+export const ESortingSchema = (required: boolean = true) => {
   const joiSorting = Joi.string().valid(ESorting.Asc, ESorting.Desc);
   return required ? joiSorting.required() : joiSorting.optional();
 };
 
-export const objectId = Joi.string()
-  .trim()
-  .min(36)
-  .max(36)
-  .required()
-  .pattern(/^[a-f0-9]+/i);
+export const docId = (required: boolean = true) => {
+  const joiDocId = Joi.string()
+    // docId is UUID type
+    // regex for docId (20-36 characters long, including dashes)
+    // @TODO: better check for ObjectId, for now MongoDB accepts both hexadecimal and dash-encoded string formats
+    .regex(/^[0-9a-fA-F\-]{20,36}$/)
+    .min(20)
+    .max(36);
+
+  return required ? joiDocId.required() : joiDocId.optional();
+};
 
 export const userName = Joi.string()
   .trim()

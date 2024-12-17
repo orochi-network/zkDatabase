@@ -8,7 +8,7 @@ export type TGroup = {
   groupName: string;
   groupDescription: string;
   // It's userName
-  createdBy: string;
+  createBy: string;
 };
 
 export type TUserGroup = {
@@ -37,7 +37,7 @@ export type TGroupParamIsParticipant = TGroupParam & {
 
 export type TGroupParamUpdateMetadata = Pick<
   TGroupParamCreate,
-  'databaseName' | 'groupName' | 'createdBy'
+  'databaseName' | 'groupName' | 'createBy'
 > & {
   newGroupName?: string;
   newGroupDescription?: string;
@@ -45,7 +45,7 @@ export type TGroupParamUpdateMetadata = Pick<
 
 export type TGroupParamListUser = Pick<
   TGroupParamCreate,
-  'databaseName' | 'groupName' | 'createdBy'
+  'databaseName' | 'groupName' | 'createBy'
 > & {
   listUserName: string[];
 };
