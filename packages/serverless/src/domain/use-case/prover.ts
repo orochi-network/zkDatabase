@@ -95,7 +95,7 @@ export class Prover {
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const oldDocument = await imDocument.findOne({ docId }, session);
+    const oldDocument = await imDocument.findOne({ docId }, { session });
 
     if (!oldDocument) {
       throw new Error(`Document ${docId} does not exist`);
@@ -165,7 +165,7 @@ export class Prover {
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const document = await imDocument.findOne({ docId }, session);
+    const document = await imDocument.findOne({ docId }, { session });
 
     if (!document) {
       throw new Error(`Document ${docId} does not exist to be proved`);
