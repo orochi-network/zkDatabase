@@ -225,14 +225,17 @@ const updateDocument = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentModificationResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return Document.updateDocument(
-    {
-      databaseName: args.databaseName,
-      collectionName: args.collectionName,
-      actor: ctx.userName,
-    },
-    args.query,
-    args.document
+  return withTransaction((session) =>
+    Document.updateDocument(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.query,
+      args.document,
+      session
+    )
   );
 });
 

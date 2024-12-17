@@ -40,11 +40,7 @@ import { ModelMetadataCollection } from '../../model/database/metadata-collectio
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { FilterCriteria, parseQuery } from '../utils/document.js';
 import { PermissionSecurity } from './permission-security.js';
-import {
-  proveCreateDocument,
-  proveDeleteDocument,
-  proveUpdateDocument,
-} from './prover.js';
+import { Prover } from './prover.js';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -117,11 +113,11 @@ export class Document {
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
     permission = PERMISSION_DEFAULT_VALUE,
-    compoundSession?: CompoundSession
+    compoundSession: CompoundSession
   ) {
     const actorPermissionCollection = await PermissionSecurity.collection(
       permissionParam,
-      compoundSession?.sessionService
+      compoundSession?.serverless
     );
 
     const { databaseName, collectionName, actor } = permissionParam;
@@ -144,14 +140,14 @@ export class Document {
     const [_, docId] = await imDocument.insertOneFromListField(
       fields,
       undefined,
-      compoundSession?.sessionService
+      compoundSession?.serverless
     );
 
     // 2. Create new sequence value
     const imSequencer = ModelSequencer.getInstance(databaseName);
     const merkleIndex = await imSequencer.nextValue(
       ESequencer.MerkleIndex,
-      compoundSession?.sessionService
+      compoundSession?.serverless
     );
 
     // 3. Create Metadata
@@ -163,7 +159,7 @@ export class Document {
     const documentSchema = await imCollectionMetadata.getMetadata(
       collectionName,
       {
-        session: compoundSession?.sessionService,
+        session: compoundSession?.serverless,
       }
     );
 
@@ -198,14 +194,16 @@ export class Document {
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
-      { session: compoundSession?.sessionService }
+      { session: compoundSession?.serverless }
     );
 
-    const witness = await proveCreateDocument(
-      databaseName,
-      collectionName,
-      docId,
-      Object.values(fields),
+    const witness = await Prover.create(
+      {
+        databaseName,
+        collectionName,
+        docId,
+        document: Object.values(fields),
+      },
       compoundSession
     );
 
@@ -215,7 +213,8 @@ export class Document {
   static async updateDocument(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
-    update: Record<string, TDocumentField>
+    update: Record<string, TDocumentField>,
+    session: ClientSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 
@@ -261,11 +260,14 @@ export class Document {
     });
 
     if (documentRecord) {
-      const witness = await proveUpdateDocument(
-        databaseName,
-        collectionName,
-        documentRecord.docId,
-        Object.values(update)
+      const witness = await Prover.update(
+        {
+          databaseName,
+          collectionName,
+          docId: documentRecord.docId,
+          newDocument: Object.values(update),
+        },
+        session
       );
       return witness;
     }
@@ -310,11 +312,11 @@ export class Document {
       return findResult;
     });
     if (result) {
-      const witness = await proveDeleteDocument(
+      const witness = await Prover.delete({
         databaseName,
         collectionName,
-        result.docId
-      );
+        docId: result.docId,
+      });
       return witness;
 
       // TODO: Should we remove document metadata ???????
