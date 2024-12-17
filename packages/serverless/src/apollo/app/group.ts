@@ -62,7 +62,7 @@ export const typeDefsGroup = gql`
 
     groupListByUser(databaseName: String!, userName: String!): [String]
 
-    groupInfoDetail(
+    groupDetail(
       databaseName: String!
       groupName: String!
     ): GroupInfoDetailResponse
