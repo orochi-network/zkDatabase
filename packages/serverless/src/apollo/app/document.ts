@@ -1,17 +1,8 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  createDocument as createDocumentImpl,
-  deleteDocument,
-  listDocumentWithMetadata as listDocumentWithMetadataImpl,
-  findDocument as findDocumentImpl,
-  updateDocument as updateDocumentImpl,
-} from '../../domain/use-case/document.js';
-import {
-  findDocumentHistory as findDocumentHistoryImpl,
-  listDocumentHistory as listDocumentHistoryImpl,
-} from '../../domain/use-case/document-history.js';
+import { Document } from '../../domain/use-case/document.js';
+import { DocumentHistory } from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import {
@@ -171,7 +162,7 @@ const findDocument = authorizeWrapper<
   TDocumentRecordNullable | null
 >(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
   const document = await withTransaction((session) =>
-    findDocumentImpl(
+    Document.findDocument(
       args.databaseName,
       args.collectionName,
       ctx.userName,
@@ -188,7 +179,7 @@ const listDocumentWithMetadata = authorizeWrapper<
   TWithProofStatus<TDocumentWithMetadataResponse>[]
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   const listDocument = await withTransaction(async (session) => {
-    return listDocumentWithMetadataImpl(
+    return Document.listDocumentWithMetadata(
       args.databaseName,
       args.collectionName,
       ctx.userName,
@@ -213,7 +204,7 @@ const createDocument = authorizeWrapper<
   JOI_DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
     withCompoundTransaction((compoundSession) =>
-      createDocumentImpl(
+      Document.createDocument(
         {
           databaseName: args.databaseName,
           collectionName: args.collectionName,
@@ -230,7 +221,7 @@ const updateDocument = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentModificationResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return updateDocumentImpl(
+  return Document.updateDocument(
     {
       databaseName: args.databaseName,
       collectionName: args.collectionName,
@@ -247,7 +238,7 @@ const dropDocument = authorizeWrapper<
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return deleteDocument(
+    return Document.deleteDocument(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -265,7 +256,7 @@ const findDocumentHistory = authorizeWrapper<
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
-      findDocumentHistoryImpl(
+      DocumentHistory.findDocumentHistory(
         args.databaseName,
         args.collectionName,
         ctx.userName,
@@ -281,7 +272,7 @@ const listDocumentHistory = authorizeWrapper<
   TDocumentHistoryListResponse
 >(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   return withTransaction(async (session) => {
-    const documents = await listDocumentHistoryImpl(
+    const documents = await DocumentHistory.listDocumentHistory(
       args.databaseName,
       args.collectionName,
       args.docId,
