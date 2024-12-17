@@ -1,6 +1,7 @@
 import { TRollUpHistory, TRollUpHistoryRecord } from '@zkdb/common';
 import {
   ClientSession,
+  OptionalId,
   ReplaceOptions,
   UpdateResult,
   WithoutId,
@@ -11,8 +12,11 @@ import { DATABASE_ENGINE } from '../../helper/db-instance.js';
 import logger from '../../helper/logger.js';
 import ModelBasic from '../base/basic.js';
 import ModelCollection from '../general/collection.js';
+import ModelGeneral from '../base/general.js';
 
-export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
+export class ModelRollup extends ModelGeneral<
+  OptionalId<TRollUpHistoryRecord>
+> {
   private static instance: ModelRollup;
 
   private constructor() {
@@ -28,39 +32,6 @@ export class ModelRollup extends ModelBasic<WithoutId<TRollUpHistoryRecord>> {
       this.instance = new ModelRollup();
     }
     return this.instance;
-  }
-
-  public async create(
-    args: WithoutId<TRollUpHistoryRecord>,
-    options?: ReplaceOptions
-  ): Promise<boolean> {
-    try {
-      await this.collection.insertOne(
-        {
-          ...args,
-          databaseName: args.databaseName,
-        },
-        options
-      );
-
-      return true;
-    } catch (error) {
-      logger.error('Error saving rollup:', error);
-      return false;
-    }
-  }
-
-  public async update(
-    databaseName: string,
-    updateRollup: Partial<TRollUpHistory>
-  ): Promise<UpdateResult<TRollUpHistoryRecord>> {
-    return this.collection.updateOne(
-      { databaseName },
-      { $set: updateRollup },
-      {
-        upsert: true,
-      }
-    );
   }
 
   public static async init(session?: ClientSession) {

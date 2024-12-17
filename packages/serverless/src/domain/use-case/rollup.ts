@@ -38,10 +38,10 @@ export default class Rollup {
       throw Error('No proof has been generated yet');
     }
 
-    const modelRollUp = ModelRollup.getInstance();
+    const imRollup = ModelRollup.getInstance();
     const modelTransaction = ModelTransaction.getInstance();
 
-    const rollUp = await modelRollUp.collection.findOne({
+    const rollUp = await imRollup.collection.findOne({
       proofId: latestProofForDb._id,
     });
 
@@ -74,12 +74,12 @@ export default class Rollup {
 
     const currentTime = getCurrentTime();
 
-    await modelRollUp.create(
+    await imRollup.insertOne(
       {
+        databaseName,
+        transactionObjectId,
         merkletreeRootCurrent: latestProofForDb.previousMerkleRoot,
         merkletreeRootPrevious: latestProofForDb.merkleRoot,
-        databaseName: databaseName,
-        transactionObjectId,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,

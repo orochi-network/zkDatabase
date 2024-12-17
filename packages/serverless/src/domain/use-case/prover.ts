@@ -130,8 +130,8 @@ export class Prover {
       session,
     });
 
-    const sequencer = ModelSequencer.getInstance(databaseName);
-    const operationNumber = await sequencer.nextValue(
+    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const operationNumber = await imSequencer.nextValue(
       ESequencer.Operation,
       session
     );
