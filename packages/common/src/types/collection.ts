@@ -1,6 +1,6 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import { IndexDirection } from 'mongodb';
-import { TDbRecord, TPickAlter } from './common.js';
+import { TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataCollection } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';

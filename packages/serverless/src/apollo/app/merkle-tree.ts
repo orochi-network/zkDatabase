@@ -69,9 +69,9 @@ type MerkleNode {
 }
 
 type MerkleNodeDetail {
-  hash: String!
-  level: Int!
   index: Int!
+  level: Int!
+  hash: String!
   witness: Boolean!
   target: Boolean!
 }

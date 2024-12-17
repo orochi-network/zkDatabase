@@ -46,6 +46,7 @@ type MetadataDocumentResponse {
   merkleIndex: String!
 }
 
+# @TODO Refactor after document
 extend type Query {
   getMetadataDocument(
     databaseName: String!

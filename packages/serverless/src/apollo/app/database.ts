@@ -24,9 +24,9 @@ import {
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
-
 import { Database } from '../../domain/use-case/database.js';
 import { gql } from '../../helper/common.js';
+import { config } from '../../helper/config.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
 
 export const typeDefsDatabase = gql`
@@ -35,20 +35,17 @@ export const typeDefsDatabase = gql`
   type Query
   type Mutation
 
-  type Database {
-    databaseName: String!
-    databaseOwner: String!
-    merkleHeight: Int!
-    appPublicKey: String!
-    deployStatus: TransactionStatus!
+  enum ENetworkId {
+    Testnet
+    Mainnet
   }
 
-  input PaginationInput {
-    limit: Int
-    offset: Int
+  type EnvironmentInfo {
+    networkId: ENetworkId!
+    networkUrl: String!
   }
 
-  type DatabaseMetadata {
+  type MetadataDatabase {
     databaseName: String!
     databaseOwner: String!
     merkleHeight: Int!
@@ -68,6 +65,7 @@ export const typeDefsDatabase = gql`
     dbStats(databaseName: String!): JSON
     dbInfo(databaseName: String!): Database!
     dbExist(databaseName: String!): Boolean!
+    dbEnvironment: EnvironmentInfo!
   }
 
   extend type Mutation {
@@ -207,6 +205,17 @@ const dbExist = publicWrapper<TDatabaseRequest, TDatabaseExistResponse>(
   }
 );
 
+// Query
+const dbEnvironment = publicWrapper(
+  Joi.object({}),
+  async (_root: unknown, _) => {
+    return {
+      networkId: config.NETWORK_ID,
+      networkUrl: config.MINA_URL,
+    };
+  }
+);
+
 export const resolversDatabase = {
   JSON: GraphQLJSON,
   Query: {
@@ -214,6 +223,7 @@ export const resolversDatabase = {
     dbList,
     dbInfo,
     dbExist,
+    dbEnvironment,
   },
   Mutation: {
     dbCreate,
