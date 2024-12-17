@@ -1,16 +1,9 @@
+import { zkDatabaseConstant } from '@common';
 import { TProofRecord } from '@zkdb/common';
-import {
-  ClientSession,
-  FindOptions,
-  InsertOneOptions,
-  WithoutId,
-} from 'mongodb';
-import { zkDatabaseConstant } from '../../common/const.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
+import { ClientSession, FindOptions, WithoutId } from 'mongodb';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
 export class ModelProof extends ModelGeneral<WithoutId<TProofRecord>> {
   public static instance: ModelProof;

@@ -1,10 +1,9 @@
 import { TSecureStorageRecord } from '@zkdb/common';
 import { ClientSession, WithoutId } from 'mongodb';
-import { zkDatabaseConstant } from '../../common/index.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
+import { zkDatabaseConstant } from '@common';
+import { DATABASE_ENGINE, addTimestampMongoDB } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
 export class ModelSecureStorage extends ModelGeneral<
   WithoutId<TSecureStorageRecord>
