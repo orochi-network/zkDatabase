@@ -81,25 +81,25 @@ export const typeDefsDocument = gql`
   type Query
   type Mutation
 
-  type TMerkleProof {
+  type MerkleProof {
     isLeft: Boolean!
     sibling: String!
   }
 
-  type TListDocumentWithMetadataResponse {
-    document: TDocumentResponse!
-    metadata: TMetadataDocument!
+  type ListDocumentWithMetadataResponse {
+    document: DocumentResponse!
+    metadata: MetadataDocumentResponse!
     proofStatus: String
   }
 
-  type TDocumentHistoryResponse {
+  type DocumentHistoryResponse {
     docId: String!
-    documentRevision: [TDocumentRecordNullable!]!
-    metadata: TMetadataDocument!
+    documentRevision: [DocumentResponse!]!
+    metadata: MetadataDocumentResponse!
     active: Boolean!
   }
 
-  type TDocumentResponse {
+  type DocumentResponse {
     docId: String!
     document: JSON
     createdAt: Date
@@ -110,27 +110,27 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       query: JSON!
-    ): TDocumentResponse
+    ): DocumentResponse
 
     listDocumentWithMetadata(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
-    ): [TListDocumentWithMetadataResponse]!
+    ): [ListDocumentWithMetadataResponse]!
 
     findDocumentHistory(
       databaseName: String!
       collectionName: String!
       docId: String
-    ): TDocumentHistoryResponse
+    ): DocumentHistoryResponse
 
     listDocumentHistory(
       databaseName: String!
       collectionName: String!
       docId: String
       pagination: PaginationInput
-    ): [TDocumentHistoryResponse]!
+    ): [DocumentHistoryResponse]!
   }
 
   extend type Mutation {
@@ -139,20 +139,20 @@ export const typeDefsDocument = gql`
       collectionName: String!
       document: [SchemaFieldInput!]!
       documentPermission: Int
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
 
     updateDocument(
       databaseName: String!
       collectionName: String!
       query: JSON!
       document: [SchemaFieldInput!]!
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
 
     dropDocument(
       databaseName: String!
       collectionName: String!
       query: JSON!
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
   }
 `;
 
