@@ -124,7 +124,7 @@ export async function createProof(taskId: string) {
       } else {
         const rollupProof = await modelProof.findOne({
           merkleRoot: onChainRootState.toString(),
-          database: databaseName,
+          databaseName,
         });
         if (rollupProof) {
           proof = await circuit.updateTransition(
