@@ -84,6 +84,7 @@
     "@zkdb/smart-contract": "^1.1.7",
     "@zkdb/storage": "^1.1.2",
     "axios": "^1.5.0",
+    "bullmq": "^5.34.2",
     "connect-redis": "^7.1.1",
     "cors": "^2.8.5",
     "express": "^4.21.0",

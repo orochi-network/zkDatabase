@@ -1,3 +1,11 @@
-import { zkDatabaseConstant, zkDatabaseMetadataCollections } from './const.js';
+import {
+  zkDatabaseConstant,
+  zkDatabaseMetadataCollections,
+  ZKDB_TRANSACTION_QUEUE,
+} from './const.js';
 
-export { zkDatabaseConstant, zkDatabaseMetadataCollections };
+export {
+  zkDatabaseConstant,
+  zkDatabaseMetadataCollections,
+  ZKDB_TRANSACTION_QUEUE,
+};
