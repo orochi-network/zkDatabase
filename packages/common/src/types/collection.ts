@@ -77,6 +77,8 @@ export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
   Omit<OwnershipAndPermission, 'owner'>;
 
+export type TCollectionCreateResponse = boolean;
+
 // Collection list
 export type TCollectionListRequest = TDatabaseRequest;
 
@@ -84,6 +86,8 @@ export type TCollectionListResponse = TMetadataCollection[];
 
 // Collection exist
 export type TCollectionExistRequest = TCollectionRequest;
+
+export type TCollectionExistResponse = boolean;
 
 // Index
 export type TIndexRequest = TCollectionRequest &
@@ -100,11 +104,17 @@ export type TIndexCreateRequest = TIndexRequest &
     index: TCollectionIndex;
   };
 
+export type TIndexCreateResponse = boolean;
+
 // Index exist
 export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
 
+export type TIndexExistReponse = boolean;
+
 // Index drop
 export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;
+
+export type TIndexDropReponse = boolean;
 
 // Index detail
 export type TIndexDetailRequest = TIndexRequest;

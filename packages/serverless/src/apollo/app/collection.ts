@@ -1,3 +1,5 @@
+import { Collection } from '@domain';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -6,6 +8,7 @@ import {
   O1JS_VALID_TYPE,
   TCollectionCreateRequest,
   TCollectionExistRequest,
+  TCollectionExistResponse,
   TCollectionListRequest,
   TCollectionListResponse,
 } from '@zkdb/common';
@@ -13,8 +16,6 @@ import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Collection } from '@domain';
-import { gql } from '@helper';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const schemaField = Joi.object({
@@ -82,7 +83,10 @@ const collectionList = authorizeWrapper<
     )
 );
 
-const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
+const collectionExist = publicWrapper<
+  TCollectionExistRequest,
+  TCollectionExistResponse
+>(
   Joi.object({
     databaseName,
     collectionName,

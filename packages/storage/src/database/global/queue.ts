@@ -1,4 +1,4 @@
-import { EDocumentProofStatus, TQueueRecord } from '@zkdb/common';
+import { EProofStatusDocument, TQueueRecord } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -43,7 +43,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     await this.collection.insertOne(
       {
         ...task,
-        status: EDocumentProofStatus.Queued,
+        status: EProofStatusDocument.Queued,
       },
       options
     );
@@ -61,7 +61,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         [
           {
             $match: {
-              status: EDocumentProofStatus.Proving,
+              status: EProofStatusDocument.Proving,
             },
           },
           {
@@ -81,7 +81,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         [
           {
             $match: {
-              status: EDocumentProofStatus.Queued,
+              status: EProofStatusDocument.Queued,
               database: { $nin: executingDatabaseList },
             },
           },
@@ -131,7 +131,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     return this.collection.findOne(
-      { status: EDocumentProofStatus.Queued },
+      { status: EProofStatusDocument.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
   }
@@ -144,7 +144,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       throw new Error('TaskQueue is not connected to the database.');
     }
     return this.collection.findOne(
-      { ...filter, status: EDocumentProofStatus.Queued },
+      { ...filter, status: EProofStatusDocument.Queued },
       { sort: { createdAt: 1 }, ...options }
     );
   }
@@ -158,7 +158,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     }
     return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: EDocumentProofStatus.Proving } },
+      { $set: { status: EProofStatusDocument.Proving } },
       options
     );
   }
@@ -172,7 +172,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     }
     return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: EDocumentProofStatus.Proved } },
+      { $set: { status: EProofStatusDocument.Proved } },
       options
     );
   }
@@ -187,7 +187,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     }
     return this.collection.updateOne(
       { _id: taskId },
-      { $set: { status: EDocumentProofStatus.Failed, error: errorMessage } },
+      { $set: { status: EProofStatusDocument.Failed, error: errorMessage } },
       options
     );
   }
@@ -202,7 +202,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       operationNumber: number;
       merkleIndex: bigint;
       hash: string;
-      status: EDocumentProofStatus;
+      status: EProofStatusDocument;
       database: string;
       collection: string;
       docId: string;
