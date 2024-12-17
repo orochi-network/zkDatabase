@@ -1,5 +1,5 @@
 import {
-  EDocumentProofStatus,
+  EProofStatusDocument,
   ESequencer,
   TParamProveCreate,
   TParamProveDelete,
@@ -68,7 +68,7 @@ export class Prover {
       {
         merkleIndex: BigInt(index),
         hash: hash.toString(),
-        status: EDocumentProofStatus.Queued,
+        status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,
         databaseName,
@@ -139,7 +139,7 @@ export class Prover {
       {
         merkleIndex,
         hash: hash.toString(),
-        status: EDocumentProofStatus.Queued,
+        status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,
         databaseName,
@@ -206,7 +206,7 @@ export class Prover {
       {
         merkleIndex,
         hash: Field(0).toString(),
-        status: EDocumentProofStatus.Queued,
+        status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,
         databaseName,

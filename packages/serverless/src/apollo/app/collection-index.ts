@@ -1,18 +1,21 @@
+import { Collection } from '@domain';
+import { convertToIndexSpecification, gql } from '@helper';
 import {
   CollectionIndex,
   collectionName,
   databaseName,
   indexName,
   TIndexCreateRequest,
+  TIndexCreateResponse,
+  TIndexDropReponse,
   TIndexDropRequest,
+  TIndexExistReponse,
   TIndexExistRequest,
   TIndexListRequest,
   TIndexListResponse,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Collection } from '@domain';
-import { convertToIndexSpecification, gql } from '@helper';
 import { authorizeWrapper } from '../validation';
 
 export const typeDefsCollectionIndex = gql`
@@ -71,7 +74,7 @@ const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
     })
 );
 
-const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(
+const indexExist = authorizeWrapper<TIndexExistRequest, TIndexExistReponse>(
   Joi.object({
     databaseName,
     collectionName,
@@ -89,7 +92,7 @@ const indexExist = authorizeWrapper<TIndexExistRequest, boolean>(
 );
 
 // Mutation
-const indexCreate = authorizeWrapper<TIndexCreateRequest, boolean>(
+const indexCreate = authorizeWrapper<TIndexCreateRequest, TIndexCreateResponse>(
   Joi.object({
     databaseName,
     collectionName,
@@ -106,7 +109,7 @@ const indexCreate = authorizeWrapper<TIndexCreateRequest, boolean>(
     )
 );
 
-const indexDrop = authorizeWrapper<TIndexDropRequest, boolean>(
+const indexDrop = authorizeWrapper<TIndexDropRequest, TIndexDropReponse>(
   Joi.object({
     databaseName,
     collectionName,

@@ -1,17 +1,22 @@
+import { PermissionSecurity } from '@domain';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
-  EDatabaseProofStatus,
-  EDocumentProofStatus,
   docId,
-  TDocumentProofRequest,
+  EProofDatabaseStatus,
+  EProofStatusDocument,
+  TProofStatusDatabaseRequest,
+  TProofStatusDatabaseResponse,
+  TProofStatusDocumentRequest,
+  TProofStatusDocumentResponse,
+  TZkProofResponse,
+  TZkProofRequest,
 } from '@zkdb/common';
 import { ModelProof, ModelQueueTask } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { PermissionSecurity } from '@domain';
 import { authorizeWrapper, publicWrapper } from '../validation';
-import { gql } from '@helper';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = gql`
@@ -27,14 +32,14 @@ export const typeDefsProof = gql`
     proof: String!
   }
 
-  enum ProofStatus {
+  enum ProofStatusDocument {
     Queued
     Proving
     Proved
     Failed
   }
 
-  enum DatabaseProofStatus {
+  enum ProofStatusDatabase {
     None
     Proving
     Proved
@@ -42,19 +47,19 @@ export const typeDefsProof = gql`
   }
 
   extend type Query {
-    zkProofStatusDocument(
+    proofStatusDocument(
       databaseName: String!
       collectionName: String!
       docId: String
-    ): ProofStatus!
-    zkProofStatusDatabase(databaseName: String!): DatabaseProofStatus!
-    zkProof(databaseName: String!): ZkProof
+    ): ProofStatusDocument!
+    proofStatusDatabase(databaseName: String!): ProofStatusDatabase!
+    proof(databaseName: String!): ZkProof
   }
 `;
 
-const zkProofStatusDocument = authorizeWrapper<
-  TDocumentProofRequest,
-  EDocumentProofStatus
+const proofStatusDocument = authorizeWrapper<
+  TProofStatusDocumentRequest,
+  TProofStatusDocumentResponse
 >(
   Joi.object({
     databaseName,
@@ -62,17 +67,14 @@ const zkProofStatusDocument = authorizeWrapper<
     docId: docId(false),
   }),
   async (_root, { databaseName, collectionName, docId }, ctx) => {
-    const imProof = ModelQueueTask.getInstance();
-    if (
-      (
-        await PermissionSecurity.document({
-          databaseName,
-          collectionName,
-          docId,
-          actor: ctx.userName,
-        })
-      ).read
-    ) {
+    const actorPermission = await PermissionSecurity.document({
+      databaseName,
+      collectionName,
+      docId,
+      actor: ctx.userName,
+    });
+    if (actorPermission.read) {
+      const imProof = ModelQueueTask.getInstance();
       const proof = await imProof.findOne({
         databaseName,
         docId,
@@ -82,7 +84,7 @@ const zkProofStatusDocument = authorizeWrapper<
         throw new Error('Proof has not been found');
       }
 
-      return proof.status as EDocumentProofStatus;
+      return proof.status;
     }
 
     throw new Error(
@@ -91,38 +93,40 @@ const zkProofStatusDocument = authorizeWrapper<
   }
 );
 
-const zkProof = publicWrapper(
+const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDocumentProofRequest) => {
+  async (_root, args) => {
     const modelProof = ModelProof.getInstance();
 
     return modelProof.getProof(args.databaseName);
   }
 );
 
-const zkProofStatusDatabase = publicWrapper(
+const proofStatusDatabase = publicWrapper<
+  TProofStatusDatabaseRequest,
+  TProofStatusDatabaseResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDocumentProofRequest) => {
+  async (_root, args) => {
     const modelTask = ModelQueueTask.getInstance();
 
     const task = await modelTask.findOne({
       database: args.databaseName,
       status: {
-        $in: [EDocumentProofStatus.Proving, EDocumentProofStatus.Queued],
+        $in: [EProofStatusDocument.Proving, EProofStatusDocument.Queued],
       },
     });
 
     if (task) {
-      return EDatabaseProofStatus.Proving;
+      return EProofDatabaseStatus.Proving;
     } else {
       const modelProof = ModelProof.getInstance();
       const proof = await modelProof.getProof(args.databaseName);
-
-      return proof ? EDatabaseProofStatus.Proved : EDatabaseProofStatus.None;
+      return proof ? EProofDatabaseStatus.Proved : EProofDatabaseStatus.None;
     }
   }
 );
@@ -130,8 +134,8 @@ const zkProofStatusDatabase = publicWrapper(
 export const resolversProof = {
   JSON: GraphQLJSON,
   Query: {
-    zkProof,
-    zkProofStatusDatabase,
-    zkProofStatusDocument,
+    proof,
+    proofStatusDatabase,
+    proofStatusDocument,
   },
 };

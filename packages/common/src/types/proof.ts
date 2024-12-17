@@ -1,17 +1,18 @@
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
+import { TDatabaseRequest } from './database.js';
 import { TDocumentField } from './document.js';
 
 /**
  * Ownership types
- * @typedef EDatabaseProofStatus
+ * @typedef EProofDatabaseStatus
  * @param {string} None - No proof status
  * @param {string} Proving - Proof is being proved
  * @param {string} Proved - Proof has been proved
  * @param {string} Failed - Proof has failed
  * @readonly
  */
-export enum EDatabaseProofStatus {
+export enum EProofDatabaseStatus {
   None = 'None',
   Proving = 'Proving',
   Proved = 'Proved',
@@ -27,14 +28,14 @@ export enum EDatabaseProofStatus {
  * @param {string} Failed - The proof has failed to be proved
  * @readonly
  */
-export enum EDocumentProofStatus {
+export enum EProofStatusDocument {
   Queued = 'Queued',
   Proving = 'Proving',
   Proved = 'Proved',
   Failed = 'Failed',
 }
 
-export type TWithProofStatus<T> = T & { proofStatus: EDocumentProofStatus };
+export type TWithProofStatus<T> = T & { proofStatus: EProofStatusDocument };
 
 export type TMinaSignature = {
   signature: {
@@ -45,16 +46,29 @@ export type TMinaSignature = {
   data: string;
 };
 
-export type TZKDatabaseProof = {
+export type TZkDatabaseProof = {
   publicInput: string[];
   publicOutput: string[];
   maxProofsVerified: 0 | 1 | 2;
   proof: string;
 };
 
-export type TDocumentProofRequest = TCollectionRequest & {
+// Document's proof status
+export type TProofStatusDocumentRequest = TCollectionRequest & {
   docId: string;
 };
+
+export type TProofStatusDocumentResponse = EProofStatusDocument;
+
+// Database's proof status
+export type TProofStatusDatabaseRequest = TDatabaseRequest;
+
+export type TProofStatusDatabaseResponse = EProofDatabaseStatus;
+
+// ZK Proof of Database
+export type TZkProofRequest = TDatabaseRequest;
+
+export type TZkProofResponse = TZkDatabaseProof | null;
 
 export type TQueue = {
   databaseName: string;
@@ -63,7 +77,7 @@ export type TQueue = {
   operationNumber: number;
   merkleIndex: bigint;
   hash: string;
-  status: EDocumentProofStatus;
+  status: EProofStatusDocument;
   merkleRoot: string;
   error?: string;
 };
@@ -77,7 +91,7 @@ export type TProof = {
   previousMerkleRoot: string;
 };
 
-export type TProofRecord = TDbRecord<TProof> & TZKDatabaseProof;
+export type TProofRecord = TDbRecord<TProof> & TZkDatabaseProof;
 
 // For prover param use-case
 export type TParamProve = {
