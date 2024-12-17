@@ -271,7 +271,7 @@ export class PermissionSecurity {
     session?: ClientSession
   ): Promise<TDocumentHistory[]> {
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listDoc;
     }
 

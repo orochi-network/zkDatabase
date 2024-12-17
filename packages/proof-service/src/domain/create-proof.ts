@@ -69,7 +69,7 @@ export async function createProof(taskId: string) {
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
-      await imMerkleTree.getWitness(
+      await imMerkleTree.getMerkleProof(
         merkleIndex,
         new Date(createdAt.getTime() - 1)
       )
