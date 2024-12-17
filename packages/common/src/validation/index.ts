@@ -198,5 +198,31 @@ export const merkleHeight = Joi.number().integer().positive().required();
 
 export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
 
-export * from './collection';
-export * from './common';
+export const pagination = Joi.object({
+  offset: Joi.number().integer().min(0).default(0).optional(),
+  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
+});
+
+export const proofTimestamp = Joi.number().custom((value, helper) => {
+  // 5 minutes is the timeout for signing up proof
+  const timeDiff = Math.floor(Date.now() / 1000) - value;
+  if (timeDiff >= 0 && timeDiff < 300) {
+    return value;
+  }
+  return helper.error(
+    'Proof timestamp is not within the 5-minute timeout period'
+  );
+});
+
+export const sortingOrder = Joi.string().valid(...Object.values(ESorting));
+
+export const indexName = Joi.string()
+  .trim()
+  .min(2)
+  .max(128)
+  .required()
+  .pattern(/^[_a-z]+[_a-z0-9]+/i);
+
+export const CollectionIndex = Joi.object()
+  .pattern(Joi.string(), ESortingSchema) // Keys are strings, values must be 'Asc' or 'Desc'
+  .required();
