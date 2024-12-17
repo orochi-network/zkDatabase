@@ -155,9 +155,10 @@ export async function createProof(taskId: string) {
       await modelProof.insertOne(
         {
           ...proof.toJSON(),
-          databaseName: databaseName,
-          collectionName: collectionName,
+          databaseName,
+          collectionName,
           previousMerkleRoot: onChainRootState.toString(),
+          // TODO: We should check newOffChainState exist or not, because publicOutput is `any`
           merkleRoot: proof.publicOutput.newOffChainState.toString(),
           createdAt: date,
           updatedAt: date,
