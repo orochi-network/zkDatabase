@@ -72,14 +72,115 @@ export const indexNumber = Joi.string()
 
 export const index = Joi.array().items(Joi.string().required());
 
-export const documentField = Joi.object<TDocumentField>({
-  name: Joi.string()
-    .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
-    .required(),
-  kind: Joi.string()
-    .valid(...O1JS_VALID_TYPE)
-    .required(),
-  value: Joi.string().raw().required(),
+// TODO: write tests
+export const documentField = Joi.object<TDocumentField, true>()
+  .custom((raw, helpers) => {
+    const { value: name, error: nameError } = Joi.string()
+      .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
+      .validate(raw.name);
+    if (nameError) {
+      return nameError;
+    }
+
+    const { value: kind, error: kindError } = Joi.string().validate(raw.kind);
+    if (kindError) {
+      return kindError;
+    }
+
+    let field: Omit<TDocumentField, 'name'>;
+
+    switch (kind) {
+      case 'PrivateKey':
+      case 'PublicKey':
+      case 'Signature': {
+        let { value, error } = Joi.string()
+          .max(256)
+          // Base58 string
+          // https://datatracker.ietf.org/doc/html/draft-msporny-base58-03#page-3
+          .pattern(
+            /^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/
+          )
+          .validate(raw.value);
+        if (error) {
+          return error;
+        }
+        field = { kind, value };
+        break;
+      }
+      case 'Field':
+      case 'CircuitString':
+      case 'Character': {
+        const { value, error } = Joi.string().validate(raw.value);
+        if (error) {
+          return error;
+        }
+        field = { kind, value };
+        break;
+      }
+      case 'UInt32':
+      case 'Int64':
+      case 'UInt64': {
+        if (typeof raw.value !== 'string' || typeof raw.value !== 'number') {
+          return helpers.error(
+            'Value must be a number or a string representing a number'
+          );
+        }
+
+        try {
+          const value = BigInt(raw.value);
+          field = { kind, value };
+          break;
+        } catch (e) {
+          if (e instanceof Error) {
+            return helpers.error(e.message);
+          }
+          throw e;
+        }
+      }
+      case 'Bool':
+      case 'Sign': {
+        const { value, error } = Joi.boolean().validate(raw.value);
+        if (error) {
+          return error;
+        }
+        field = { kind, value };
+        break;
+      }
+      default:
+        return helpers.error(`Unsupported kind: ${kind}`);
+    }
+
+    return { name, ...field };
+  })
+  .unknown(false);
+
+// TODO: write tests
+export const documentRecord = Joi.object<
+  Record<string, TDocumentField>,
+  true
+>().custom((raw, helpers) => {
+  if (typeof raw !== 'object' || raw === null) {
+    return helpers.error('Document must be an object');
+  }
+
+  const final: Record<string, TDocumentField> = {};
+
+  for (const [name, field] of Object.entries(raw)) {
+    const { value, error } = documentField.validate(field);
+    if (error) {
+      return error;
+    }
+
+    if (name !== value.name) {
+      return helpers.error(
+        `Field name mismatch: have key ${name} but field name is ${value.name}`
+      );
+    }
+
+    final[name] = value;
+  }
+
+  return final;
 });
 
 export const transactionType = Joi.string().valid(

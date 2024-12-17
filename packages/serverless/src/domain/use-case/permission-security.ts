@@ -1,4 +1,5 @@
 import {
+  TDocumentHistory,
   TDocumentRecord,
   TMetadataCollectionRecord,
   TMetadataDetailDocument,
@@ -242,6 +243,35 @@ export class PermissionSecurity {
   ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
     // If user is database owner then return all system permissions
     if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
+      return listDoc;
+    }
+
+    const listGroup = await PermissionSecurity.listGroupOfUser(
+      databaseName,
+      actor,
+      session
+    );
+
+    return listDoc.filter((currentDoc) =>
+      PermissionSecurity.requiredPermissionMatch(
+        actor,
+        listGroup,
+        currentDoc.metadata,
+        requiredPermission
+      )
+    );
+  }
+
+  /** Filter a list of history for multiple documents by required permission */
+  public static async filterListDocumentHistory<T>(
+    databaseName: string,
+    listDoc: TDocumentHistory[],
+    actor: string,
+    requiredPermission: PermissionBase,
+    session?: ClientSession
+  ): Promise<TDocumentHistory[]> {
+    // If user is database owner then return all system permissions
+    if (await isDatabaseOwner(databaseName, actor)) {
       return listDoc;
     }
 

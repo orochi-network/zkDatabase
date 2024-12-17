@@ -37,7 +37,7 @@ enum OwnershipGroup {
   Group
 }
 
-type TMetadataDocument {
+type MetadataDocumentResponse {
   owner: String!
   group: String!
   permission: Int!
@@ -51,13 +51,13 @@ extend type Query {
     databaseName: String!
     collectionName: String!
     docId: String!
-  ): TMetadataDocument
+  ): MetadataDocumentResponse
 
  # TODO: keep JSON for now since we have to make sure what it will return
   getMetadataCollection(
     databaseName: String!
     collectionName: String!
-  ): JSON 
+  ): JSON
 
   collectionSchema(
     databaseName: String!

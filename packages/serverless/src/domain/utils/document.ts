@@ -22,6 +22,8 @@ export interface FilterCriteria {
  *   'document.name.value': 'John',
  *   'document.age.value': 30,
  * }
+ * TODO: consider replacing FilterCriteria with a more specific type to provide
+ * better type checking and intellisense.
  * */
 export function parseQuery(input: FilterCriteria): FilterCriteria {
   const query: FilterCriteria = {};

@@ -1,23 +1,14 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  createDocument as createDocumentImpl,
-  deleteDocument,
-  findDocumentWithMetadata,
-  readDocument,
-  updateDocument,
-} from '../../domain/use-case/document.js';
-import {
-  findDocumentHistory as findDocumentHistoryImpl,
-  listDocumentHistory as listDocumentHistoryImpl,
-} from '../../domain/use-case/document-history.js';
+import { Document } from '../../domain/use-case/document.js';
+import { DocumentHistory } from '../../domain/use-case/document-history.js';
 import { gql } from '../../helper/common.js';
 import { authorizeWrapper } from '../validation.js';
 import {
   collectionName,
   databaseName,
-  documentField,
+  documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
   TDocumentListRequest,
@@ -25,66 +16,59 @@ import {
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
   TDocumentHistoryListRequest,
-  TDocumentFindResponse,
-  TPaginationReturn,
   TWithProofStatus,
   TDocumentWithMetadataResponse,
+  TDocumentRecordNullable,
   TDocumentHistoryListResponse,
-  TDocumentField,
-  TProvableTypeString,
+  TDocumentModificationResponse,
+  TDocumentHistoryResponse,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '../../common/const.js';
+import { Permission } from '@zkdb/permission';
 
-export const SCHEMA_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
 });
 
-export const SCHEMA_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
+export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
   pagination,
 });
 
-export const SCHEMA_DOCUMENT_CREATE_REQUEST =
-  Joi.object<TDocumentCreateRequest>({
-    databaseName,
-    collectionName,
-    documentPermission: Joi.number().min(0).max(0xffffff).required(),
+export const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<
+  TDocumentCreateRequest,
+  true
+>({
+  databaseName,
+  collectionName,
+  documentPermission: Joi.number().min(0).max(0xffffff).required(),
 
-    // TODO: CRITICAL: validate this since user could pass an arbitrary object
-    // and it will be stored in the database. Objectives:
-    // 1. Validate the object to conform to the schema type
-    // 2. Ensure no extra fields are present
-    // 3. Consider: detect duplicate fields and throw error to prevent mistakes
-    document: Joi.required(),
-  });
+  // TODO: need testing
+  document: schemaDocumentRecord,
+});
 
-export const SCHEMA_DOCUMENT_UPDATE_REQUEST =
-  Joi.object<TDocumentUpdateRequest>({
-    databaseName,
-    collectionName,
-    query: Joi.object(),
+export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
+  databaseName,
+  collectionName,
+  query: Joi.object(),
 
-    // TODO: CRITICAL: validate this since user could pass an arbitrary object
-    // and it will be stored in the database. Objectives:
-    // 1. Validate the object to conform to the schema type
-    // 2. Ensure no extra fields are present
-    // 3. Consider: detect duplicate fields and throw error to prevent mistakes
-    document: Joi.required(),
-  });
+  // TODO: need testing
+  document: schemaDocumentRecord,
+});
 
-export const SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST =
+export const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
     docId: Joi.string(),
   });
 
-export const SCHEMA_DOCUMENT_HISTORY_LIST_REQUEST =
+export const JOI_DOCUMENT_HISTORY_LIST_REQUEST =
   Joi.object<TDocumentHistoryListRequest>({
     databaseName,
     collectionName,
@@ -97,38 +81,28 @@ export const typeDefsDocument = gql`
   type Query
   type Mutation
 
-  type TMerkleProof {
+  type MerkleProof {
     isLeft: Boolean!
     sibling: String!
   }
 
-  type TListDocumentWithMetadata {
-    document: TDocumentReadResponse!
-    metadata: TMetadataDocument!
+  type ListDocumentWithMetadataResponse {
+    document: DocumentResponse!
+    metadata: MetadataDocumentResponse!
     proofStatus: String
   }
 
-  type TListDocumentResponse {
-    data: [TDocumentReadResponse]!
-    totalSize: Int!
-    offset: Int!
+  type DocumentHistoryResponse {
+    docId: String!
+    documentRevision: [DocumentResponse!]!
+    metadata: MetadataDocumentResponse!
+    active: Boolean!
   }
 
-  type TDocumentHistoryResponse {
+  type DocumentResponse {
     docId: String!
-    documents: [TDocumentReadResponse!]!
-  }
-
-  type TDocumentReadResponse {
-    docId: String!
-    document: [TDocumentField!]!
+    document: JSON
     createdAt: Date
-  }
-
-  type TDocumentField {
-    name: String!
-    kind: String!
-    value: String!
   }
 
   extend type Query {
@@ -136,34 +110,27 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       query: JSON!
-    ): TDocumentReadResponse
-
-    listDocument(
-      databaseName: String!
-      collectionName: String!
-      query: JSON!
-      pagination: PaginationInput
-    ): TListDocumentResponse!
+    ): DocumentResponse
 
     listDocumentWithMetadata(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
-    ): [TListDocumentWithMetadata]!
+    ): [ListDocumentWithMetadataResponse]!
 
     findDocumentHistory(
       databaseName: String!
       collectionName: String!
       docId: String
-    ): TDocumentHistoryResponse
+    ): DocumentHistoryResponse
 
     listDocumentHistory(
       databaseName: String!
       collectionName: String!
       docId: String
       pagination: PaginationInput
-    ): [TDocumentHistoryResponse]!
+    ): [DocumentHistoryResponse]!
   }
 
   extend type Mutation {
@@ -172,33 +139,35 @@ export const typeDefsDocument = gql`
       collectionName: String!
       document: [SchemaFieldInput!]!
       documentPermission: Int
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
 
     updateDocument(
       databaseName: String!
       collectionName: String!
       query: JSON!
       document: [SchemaFieldInput!]!
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
 
     dropDocument(
       databaseName: String!
       collectionName: String!
       query: JSON!
-    ): [TMerkleProof!]!
+    ): [MerkleProof!]!
   }
 `;
 
 // Query
 const findDocument = authorizeWrapper<
   TDocumentFindRequest,
-  TDocumentFindResponse | null
->(SCHEMA_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
+  TDocumentRecordNullable | null
+>(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
   const document = await withTransaction((session) =>
-    findDocumentImpl(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+    Document.findDocument(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query,
       session
     )
@@ -207,117 +176,97 @@ const findDocument = authorizeWrapper<
   return document;
 });
 
-const listDocument = authorizeWrapper<
-  TDocumentListRequest,
-  TPaginationReturn<Array<TDocumentFindResponse>>
->(
-  SCHEMA_DOCUMENT_LIST_REQUEST,
-  async (_root: unknown, args: TDocumentListRequest, ctx) => {
-    const result = await withTransaction(async (session) => {
-      const documents = await listDocumentImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.query,
-        args.pagination || DEFAULT_PAGINATION,
-        session
-      );
-
-      return documents;
-    });
-
-    if (result == null) {
-      throw new Error('Failed to list documents, transaction returned null');
-    }
-
-    return result;
-  }
-);
-
 const listDocumentWithMetadata = authorizeWrapper<
   TDocumentListRequest,
   TWithProofStatus<TDocumentWithMetadataResponse>[]
->(
-  // TODO: consider validating this
-  Joi.object().optional(),
-  async (_root: unknown, args, ctx) => {
-    const documents = await withTransaction(async (session) => {
-      return listDocumentWithMetadataImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.query,
-        args.pagination || DEFAULT_PAGINATION,
-        session
-      );
-    });
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
+  const listDocument = await withTransaction(async (session) => {
+    return Document.listDocumentWithMetadata(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.query,
+      args.pagination || DEFAULT_PAGINATION,
+      session
+    );
+  });
 
-    if (documents == null) {
-      throw new Error('Failed to list documents, transaction returned null');
-    }
-
-    return documents;
+  if (listDocument == null) {
+    throw new Error('Failed to list documents, transaction returned null');
   }
-);
+
+  return listDocument;
+});
 
 // Mutation
-const createDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_CREATE_REQUEST,
+const createDocument = authorizeWrapper<
+  TDocumentCreateRequest,
+  TDocumentModificationResponse
+>(
+  JOI_DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
     withCompoundTransaction((compoundSession) =>
-      createDocumentImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
+      Document.createDocument(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
         args.document,
-        args.documentPermission,
+        Permission.from(args.documentPermission),
         compoundSession
       )
     )
 );
 
-const updateDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_UPDATE_REQUEST,
-  async (_root: unknown, args: TDocumentUpdateRequest, ctx) => {
-    for (let i = 0; i < args.document.length; i += 1) {
-      const { error } = documentField.validate(args.document[i]);
-      if (error)
-        throw new Error(
-          `DocumentRecord ${args.document[i].name} is not valid ${error.message}`
-        );
-    }
+const updateDocument = authorizeWrapper<
+  TDocumentUpdateRequest,
+  TDocumentModificationResponse
+>(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
+  return Document.updateDocument(
+    {
+      databaseName: args.databaseName,
+      collectionName: args.collectionName,
+      actor: ctx.userName,
+    },
+    args.query,
+    args.document
+  );
+});
 
-    return updateDocumentImpl(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      args.query,
-      args.document as any
-    );
-  }
-);
-
-const dropDocument = authorizeWrapper(
-  SCHEMA_DOCUMENT_FIND_REQUEST,
+const dropDocument = authorizeWrapper<
+  TDocumentFindRequest,
+  TDocumentModificationResponse
+>(
+  JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return deleteDocument(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+    return Document.deleteDocument(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
       args.query
     );
   }
 );
 
-const findDocumentHistory = authorizeWrapper(
-  SCHEMA_DOCUMENT_HISTORY_FIND_REQUEST,
+const findDocumentHistory = authorizeWrapper<
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryResponse | null
+>(
+  JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
     return withTransaction((session) =>
-      findDocumentHistoryImpl(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.docId,
+      DocumentHistory.find(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+          docId: args.docId,
+        },
         session
       )
     );
@@ -327,12 +276,15 @@ const findDocumentHistory = authorizeWrapper(
 const listDocumentHistory = authorizeWrapper<
   TDocumentHistoryListRequest,
   TDocumentHistoryListResponse
->(Joi.object().optional(), async (_root: unknown, args, ctx) => {
+>(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
   return withTransaction(async (session) => {
-    const documents = await listDocumentHistoryImpl(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
+    const documents = await DocumentHistory.list(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+        docId: args.docId,
+      },
       args.pagination || DEFAULT_PAGINATION,
       session
     );
@@ -345,7 +297,6 @@ export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
     findDocument,
-    listDocument,
     listDocumentWithMetadata,
     findDocumentHistory,
     listDocumentHistory,

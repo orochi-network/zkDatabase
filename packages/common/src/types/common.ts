@@ -53,7 +53,7 @@ export type TPickAlter<T, P extends Partial<Record<keyof T, string>>> = {
 };
 
 export type TNullable<T, K extends keyof T> = {
-  [P in K]: T[P] | null;
+  [P in keyof T]: P extends K ? T[P] | null : T[P];
 };
 
 export type TPickOptional<T, K extends keyof T> = Omit<T, K> &
