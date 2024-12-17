@@ -33,6 +33,11 @@ export type TDocumentHistory = {
 
 export type TDocumentResponse = TDocumentRecordNullable;
 
+export type TDocumentResponseTake2 = TDocumentRecordNullable & {
+  metadata?: TMetadataDocument;
+  proofStatus?: string;
+};
+
 export type TDocumentWithMetadataResponse = TMetadataDetail<
   TDocumentResponse,
   TMetadataDocument

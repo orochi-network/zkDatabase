@@ -21,10 +21,14 @@ import {
   TDocumentHistoryListResponse,
   TDocumentModificationResponse,
   TDocumentHistoryResponse,
+  TDocumentResponse,
+  TPaginationReturn,
+  TDocumentResponseTake2,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '@common';
 import { Permission } from '@zkdb/permission';
+import { GraphqlHelper } from 'src/helper/graphql';
 
 export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -85,69 +89,63 @@ export const typeDefsDocument = gql`
     sibling: String!
   }
 
-  type ListDocumentWithMetadataResponse {
-    document: DocumentResponse!
-    metadata: MetadataDocumentResponse!
-    proofStatus: String
-  }
-
-  type DocumentHistoryResponse {
-    docId: String!
-    documentRevision: [DocumentResponse!]!
-    metadata: MetadataDocumentResponse!
-    active: Boolean!
-  }
-
   type DocumentResponse {
     docId: String!
     document: JSON
     createdAt: Date
+    updatedAt: Date
+    metadata: MetadataDocumentResponse!
+    proofStatus: String
+  }
+
+  type DocumentFindResponse {
+    data: [DocumentResponse!]!
+    total: Int
+    offset: Int
+  }
+
+  # History aka revisions of a document
+  type DocumentHistoryFindResponse {
+    docId: String!
+    documentRevision: [DocumentResponse!]!
+    metadata: MetadataDocumentResponse!
+    active: Boolean!
+    total: Int
+    offset: Int
   }
 
   extend type Query {
-    findDocument(
-      databaseName: String!
-      collectionName: String!
-      query: JSON!
-    ): DocumentResponse
-
-    listDocumentWithMetadata(
+    documentFind(
       databaseName: String!
       collectionName: String!
       query: JSON!
       pagination: PaginationInput
-    ): [ListDocumentWithMetadataResponse]!
+    ): DocumentFindResponse
 
-    findDocumentHistory(
+    documentHistoryFind(
       databaseName: String!
       collectionName: String!
-      docId: String
-    ): DocumentHistoryResponse
-
-    listDocumentHistory(
-      databaseName: String!
-      collectionName: String!
-      docId: String
+      docId: String!
       pagination: PaginationInput
-    ): [DocumentHistoryResponse]!
+    ): [DocumentHistoryFindResponse]!
   }
 
   extend type Mutation {
-    createDocument(
+    documentCreate(
       databaseName: String!
       collectionName: String!
       document: [SchemaFieldInput!]!
       documentPermission: Int
     ): [MerkleProof!]!
 
-    updateDocument(
+    documentUpdate(
       databaseName: String!
       collectionName: String!
       query: JSON!
       document: [SchemaFieldInput!]!
     ): [MerkleProof!]!
 
-    dropDocument(
+    documentDrop(
       databaseName: String!
       collectionName: String!
       query: JSON!
@@ -156,12 +154,12 @@ export const typeDefsDocument = gql`
 `;
 
 // Query
-const findDocument = authorizeWrapper<
+const documentFind = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentRecordNullable | null
->(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
+>(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx, info) => {
   const document = await withTransaction((session) =>
-    Document.findDocument(
+    Document.find(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -173,6 +171,51 @@ const findDocument = authorizeWrapper<
   );
 
   return document;
+});
+
+const queryDocument = authorizeWrapper<
+  TDocumentListRequest,
+  TPaginationReturn<TDocumentResponseTake2[]>
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
+  const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
+    'data',
+    'metadata',
+  ]);
+  const includesProofStatus = GraphqlHelper.checkRequestedFieldExist(info, [
+    'data',
+    'proofStatus',
+  ]);
+
+  return await withTransaction(async (session) => {
+    let listDocument = await Document.query(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.query,
+      args.pagination,
+      session
+    );
+
+    if (includesMetadata) {
+      listDocument = await Document.fillMetadata(listDocument);
+    }
+
+    if (includesProofStatus) {
+      listDocument = await Document.fillProofStatus(
+        listDocument,
+        args.collectionName
+      );
+    }
+
+    // TODO: properly paginate
+    return {
+      data: listDocument,
+      total: listDocument.length,
+      offset: 0,
+    };
+  });
 });
 
 const listDocumentWithMetadata = authorizeWrapper<
@@ -200,14 +243,14 @@ const listDocumentWithMetadata = authorizeWrapper<
 });
 
 // Mutation
-const createDocument = authorizeWrapper<
+const documentCreate = authorizeWrapper<
   TDocumentCreateRequest,
   TDocumentModificationResponse
 >(
   JOI_DOCUMENT_CREATE_REQUEST,
   async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
     withCompoundTransaction((compoundSession) =>
-      Document.createDocument(
+      Document.create(
         {
           databaseName: args.databaseName,
           collectionName: args.collectionName,
@@ -220,12 +263,12 @@ const createDocument = authorizeWrapper<
     )
 );
 
-const updateDocument = authorizeWrapper<
+const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentModificationResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
   return withTransaction((session) =>
-    Document.updateDocument(
+    Document.update(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -238,13 +281,13 @@ const updateDocument = authorizeWrapper<
   );
 });
 
-const dropDocument = authorizeWrapper<
+const documentDrop = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentModificationResponse
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return Document.deleteDocument(
+    return Document.drop(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -255,7 +298,7 @@ const dropDocument = authorizeWrapper<
   }
 );
 
-const findDocumentHistory = authorizeWrapper<
+const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
   TDocumentHistoryResponse | null
 >(
@@ -298,14 +341,12 @@ const listDocumentHistory = authorizeWrapper<
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
-    findDocument,
-    listDocumentWithMetadata,
-    findDocumentHistory,
-    listDocumentHistory,
+    documentFind: queryDocument,
+    documentHistoryFind,
   },
   Mutation: {
-    createDocument,
-    updateDocument,
-    dropDocument,
+    documentCreate,
+    documentUpdate,
+    documentDrop,
   },
 };

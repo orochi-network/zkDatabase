@@ -13,6 +13,7 @@ import {
   TDocumentRecordNullable,
   TMerkleProof,
   TMetadataDetailDocument,
+  TMetadataDocument,
   TPagination,
   TParamCollection,
   TPermissionSudo,
@@ -57,7 +58,7 @@ export function fieldArrayToRecord(
 }
 
 export class Document {
-  static async findDocument(
+  static async find(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
     session?: ClientSession
@@ -110,7 +111,7 @@ export class Document {
     return documentRecord;
   }
 
-  static async createDocument(
+  static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
     permission = PERMISSION_DEFAULT_VALUE,
@@ -211,7 +212,7 @@ export class Document {
     return witness;
   }
 
-  static async updateDocument(
+  static async update(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
     update: Record<string, TDocumentField>,
@@ -278,7 +279,7 @@ export class Document {
     );
   }
 
-  static async deleteDocument(
+  static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria
   ): Promise<TMerkleProof[]> {
@@ -382,6 +383,87 @@ export class Document {
     );
 
     return result.map((item) => {
+      return {
+        ...item,
+        proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
+      };
+    });
+  }
+
+  static async query(
+    permissionParam: TPermissionSudo<TParamCollection>,
+    query?: FilterCriteria,
+    pagination?: TPagination,
+    session?: ClientSession
+  ): Promise<TDocumentRecord[]> {
+    const { databaseName, collectionName, actor } = permissionParam;
+
+    const paginationInfo = pagination || DEFAULT_PAGINATION;
+
+    const pipeline = [];
+    if (query) {
+      pipeline.push({ $match: parseQuery(query) });
+    }
+    pipeline.push({ $skip: paginationInfo.offset });
+    pipeline.push({ $limit: paginationInfo.limit });
+
+    const { db: database } = new ModelDatabase(permissionParam.databaseName);
+
+    const listDocument = (await database
+      .collection(collectionName)
+      .aggregate(pipeline, { session })
+      .toArray()) as TDocumentRecord[];
+
+    return await PermissionSecurity.filterDocument(
+      databaseName,
+      collectionName,
+      listDocument,
+      actor,
+      PermissionBase.permissionRead()
+    );
+  }
+
+  static async fillMetadata(
+    listDocument: TDocumentRecord[]
+  ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
+    if (!listDocument.length) {
+      return [];
+    }
+
+    const { db: database } = new ModelDatabase();
+
+    const docIds = listDocument.map((doc) => doc.docId);
+
+    // Fetch all metadata records for the given document IDs
+    const metadataRecords = (await database
+      .collection(zkDatabaseConstant.databaseCollection.metadataDocument)
+      .find({ docId: { $in: docIds } })
+      .toArray()) as unknown as TMetadataDocument[]; // TODO: Fix type
+
+    // Create a map for quick metadata lookup
+    const metadataMap = new Map(
+      metadataRecords.map((metadata) => [metadata.docId, metadata])
+    );
+
+    // Combine documents with their metadata
+    return listDocument.map((doc) => ({
+      ...doc,
+      metadata: metadataMap.get(doc.docId)!!,
+    }));
+  }
+
+  static async fillProofStatus(
+    listDocument: TDocumentRecord[],
+    collectionName: string
+  ): Promise<TWithProofStatus<TDocumentRecord>[]> {
+    const listQueueTask =
+      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+
+    const taskMap = new Map(
+      listQueueTask?.map((task) => [task.docId, task.status]) || []
+    );
+
+    return listDocument.map((item) => {
       return {
         ...item,
         proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
