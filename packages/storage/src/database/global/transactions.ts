@@ -5,24 +5,18 @@ import {
 } from '@zkdb/common';
 import {
   ClientSession,
-  DeleteResult,
   Filter,
   FindOptions,
-  InsertOneResult,
-  ObjectId,
   OptionalId,
-  ReplaceOptions,
-  UpdateResult,
   WithId,
-  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '../../common/const.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
-import ModelCollection from '../general/collection.js';
 import { addTimestampMongoDB } from '../../helper/common.js';
+import { DATABASE_ENGINE } from '../../helper/db-instance.js';
+import ModelGeneral from '../base/general.js';
+import ModelCollection from '../general/collection.js';
 
-export class ModelTransaction extends ModelBasic<
+export class ModelTransaction extends ModelGeneral<
   OptionalId<TTransactionRecord>
 > {
   private static instance: ModelTransaction;
@@ -42,44 +36,7 @@ export class ModelTransaction extends ModelBasic<
     return this.instance;
   }
 
-  public async create(
-    args: WithoutId<TTransactionRecord>,
-    options?: ReplaceOptions
-  ): Promise<InsertOneResult<TTransactionRecord>> {
-    const result = await this.collection.insertOne(args, { ...options });
-
-    return result;
-  }
-
-  public async updateById(
-    id: ObjectId,
-    args: Partial<TTransaction>,
-    options?: ReplaceOptions
-  ): Promise<UpdateResult<TTransactionRecord>> {
-    const result = await this.collection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: args },
-      { ...options }
-    );
-
-    return result;
-  }
-
-  public async updateByTxHash(
-    txHash: string,
-    args: Partial<TTransaction>,
-    options?: ReplaceOptions
-  ): Promise<UpdateResult<TTransactionRecord>> {
-    const result = await this.collection.updateOne(
-      { txHash },
-      { $set: args },
-      { ...options }
-    );
-
-    return result;
-  }
-
-  public async getTxs(
+  public async list(
     databaseName: string,
     transactionType: ETransactionType,
     options?: FindOptions
@@ -87,29 +44,6 @@ export class ModelTransaction extends ModelBasic<
     return this.collection
       .find({ databaseName, transactionType }, options)
       .toArray();
-  }
-
-  public async findById(id: string, options?: FindOptions) {
-    const tx = await this.collection.findOne(
-      { _id: new ObjectId(id) },
-      options
-    );
-    // I must perform this type cast
-    return tx;
-  }
-
-  public async remove(
-    databaseName: string,
-    transactionType: ETransactionType,
-    session?: ClientSession
-  ): Promise<DeleteResult> {
-    return this.collection.deleteOne(
-      {
-        databaseName,
-        transactionType,
-      },
-      { session }
-    );
   }
 
   public async count(filter?: Filter<TTransaction>) {

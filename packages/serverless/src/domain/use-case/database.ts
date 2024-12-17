@@ -197,11 +197,11 @@ export class Database {
         { session }
       );
       // Remove data from deploy transaction
-      await ModelTransaction.getInstance().remove(
-        databaseName,
-        ETransactionType.Deploy,
-        session
+      await ModelTransaction.getInstance().deleteOne(
+        { databaseName, transactionType: ETransactionType.Deploy },
+        { session }
       );
+
       return true;
     } catch (error) {
       logger.debug(`Cannot deploy database ${error}`);

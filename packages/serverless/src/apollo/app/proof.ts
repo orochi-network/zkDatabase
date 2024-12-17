@@ -1,15 +1,16 @@
+import {
+  collectionName,
+  databaseName,
+  EDatabaseProofStatus,
+  EDocumentProofStatus,
+  objectId,
+  TDocumentProofRequest,
+} from '@zkdb/common';
 import { ModelProof, ModelQueueTask, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { hasDocumentPermission } from '../../domain/use-case/permission-security.js';
+import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
 import { authorizeWrapper, publicWrapper } from '../validation.js';
-import {
-  EDatabaseProofStatus,
-  TDocumentProofRequest,
-  collectionName,
-  databaseName,
-  objectId,
-} from '@zkdb/common';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = `#graphql
@@ -45,45 +46,40 @@ extend type Query {
 
 const getProofStatus = authorizeWrapper<
   TDocumentProofRequest,
-  EDatabaseProofStatus
+  EDocumentProofStatus
 >(
   Joi.object({
     databaseName,
     collectionName,
     docId: objectId.optional(),
   }),
-  async (_root, args, ctx) => {
-    const proof = await withTransaction(async (session) => {
-      const modelProof = ModelQueueTask.getInstance();
+  async (_root, { databaseName, collectionName, docId }, ctx) => {
+    const imProof = ModelQueueTask.getInstance();
+    if (
+      (
+        await PermissionSecurity.document({
+          databaseName,
+          collectionName,
+          docId,
+          actor: ctx.userName,
+        })
+      ).read
+    ) {
+      const proof = await imProof.findOne({
+        databaseName,
+        docId,
+      });
 
-      if (
-        await hasDocumentPermission(
-          args.databaseName,
-          args.collectionName,
-          ctx.userName,
-          args.docId,
-          'read',
-          session
-        )
-      ) {
-        const proof = await modelProof.findOne({
-          database: args.databaseName,
-          docId: args.docId,
-        });
-
-        return proof;
+      if (!proof) {
+        throw new Error('Proof has not been found');
       }
 
-      throw new Error(
-        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
-      );
-    });
-
-    if (!proof) {
-      throw Error('Proof has not been found');
+      return proof.status as EDocumentProofStatus;
     }
 
-    return proof.status as EDatabaseProofStatus;
+    throw new Error(
+      `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
+    );
   }
 );
 
@@ -107,7 +103,9 @@ const getDatabaseProofStatus = publicWrapper(
 
     const task = await modelTask.findOne({
       database: args.databaseName,
-      status: { $in: ['proving', 'queued'] },
+      status: {
+        $in: [EDocumentProofStatus.Proving, EDocumentProofStatus.Queued],
+      },
     });
 
     if (task) {

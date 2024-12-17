@@ -9,31 +9,29 @@ import {
   ModelSecureStorage,
   ModelTransaction,
 } from "@zkdb/storage";
+import { ObjectId } from "bson";
 import { PrivateKey, PublicKey } from "o1js";
 import { setTimeout } from "timers/promises";
 import { config } from "./helper/config";
 import { RedisQueueService } from "./message-queue";
 
-const TIMEOUT = 1000;
-
-export type TransactionType = "deploy" | "rollup";
+const QUEUE_TIMEOUT = 1000;
 
 export type DbTransactionQueue = {
   id: string;
   payerAddress: string;
 };
 
-async function findTransactionWithRetry(
-  modelTransaction: ModelTransaction,
+async function findTransaction(
   id: string,
   maxWaitTimeMs = 3000,
   intervalMs = 500
 ) {
   const startTime = Date.now();
   let tx = null;
-
+  const imTransaction = ModelTransaction.getInstance();
   while (Date.now() - startTime < maxWaitTimeMs) {
-    tx = await modelTransaction.findById(id);
+    tx = await imTransaction.findOne({ _id: new ObjectId(id) });
 
     if (tx) {
       return tx;
@@ -67,16 +65,16 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
     await proofDb.connect();
   }
 
-  const modelTransaction = ModelTransaction.getInstance();
-  const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
+  const imTransaction = ModelTransaction.getInstance();
+  const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
   while (true) {
     const request = await redisQueue.dequeue();
     if (request) {
-      const tx = await findTransactionWithRetry(modelTransaction, request.id);
+      const tx = await findTransaction(request.id);
 
       if (!request) {
-        await setTimeout(TIMEOUT); // Prevent busy looping when the queue is empty
+        await setTimeout(QUEUE_TIMEOUT); // Prevent busy looping when the queue is empty
         continue;
       }
 
@@ -85,7 +83,9 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
         continue;
       }
 
-      const database = await modelDatabaseMetadata.getDatabase(tx.databaseName);
+      const database = await imMetadataDatabase.findOne({
+        databaseName: tx.databaseName,
+      });
 
       // Make sure database must be existed first
       if (!database) {
@@ -123,6 +123,8 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
             {
               privateKey: encryptedZkAppPrivateKey,
               databaseName,
+              createdAt: new Date(),
+              updatedAt: new Date(),
             },
             { upsert: true }
           );
@@ -162,10 +164,13 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
           );
         }
 
-        await modelTransaction.updateById(tx._id, {
-          status: ETransactionStatus.Unsigned,
-          transactionRaw,
-        });
+        await imTransaction.updateOne(
+          { _id: tx._id },
+          {
+            status: ETransactionStatus.Unsigned,
+            transactionRaw,
+          }
+        );
 
         logger.info(
           `Successfully compiled: Database: ${databaseName}, Transaction Type: ${tx.transactionType}`
@@ -181,10 +186,13 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
         logger.error(errorMessage);
 
-        await modelTransaction.updateById(tx._id, {
-          status: ETransactionStatus.Failed,
-          error: (error as Error).message,
-        });
+        await imTransaction.updateOne(
+          { _id: tx._id },
+          {
+            status: ETransactionStatus.Failed,
+            error: (error as Error).message,
+          }
+        );
       }
     }
   }

@@ -45,8 +45,9 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecod>> {
   ): Promise<ModelMerkleTree> {
     if (!ModelMerkleTree.instances.has(databaseName)) {
       const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
-      const metadataDatabase =
-        await modelDatabaseMetadata.getDatabase(databaseName);
+      const metadataDatabase = await modelDatabaseMetadata.findOne({
+        databaseName,
+      });
       if (!metadataDatabase) {
         throw new Error(`Metadata of ${databaseName} has not been found.`);
       }

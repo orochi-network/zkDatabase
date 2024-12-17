@@ -1,15 +1,17 @@
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { TApplicationContext } from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
-  ModelTransaction,
-  ModelQueueTask,
-  ModelSecureStorage,
-  withCompoundTransaction,
   ModelMetadataDatabase,
   ModelProof,
+  ModelQueueTask,
   ModelRollup,
+  ModelSecureStorage,
+  ModelTransaction,
+  withCompoundTransaction,
 } from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
@@ -19,7 +21,10 @@ import fileupload from 'express-fileupload';
 import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
+import ModelOwnership from './model/global/ownership.js';
+import { NetworkId } from 'o1js';
 import { ResolversApp, TypedefsApp } from './apollo/index.js';
+import { nobodyContext } from './common/const.js';
 import { config } from './helper/config.js';
 import {
   calculateAccessTokenDigest,
@@ -28,13 +33,7 @@ import {
 } from './helper/jwt.js';
 import logger from './helper/logger.js';
 import RedisInstance from './helper/redis.js';
-import { NetworkId } from 'o1js';
-import { MinaNetwork } from '@zkdb/smart-contract';
-import { TApplicationContext } from '@zkdb/common';
-import { nobodyContext } from './common/const.js';
 import ModelUser from './model/global/user.js';
-import { setServers } from 'dns';
-import ModelOwnership from 'model/global/ownership.js';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -54,15 +53,15 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   // For global Model that need to init index first
   await withCompoundTransaction(async (session) => {
     // service db
-    await ModelTransaction.init(session.sessionService);
-    await ModelUser.init(session.sessionService);
-    await ModelMetadataDatabase.init(session.sessionService);
-    await ModelRollup.init(session.sessionService);
-    await ModelOwnership.init(session.sessionService);
+    await ModelTransaction.init(session.serverless);
+    await ModelUser.init(session.serverless);
+    await ModelMetadataDatabase.init(session.serverless);
+    await ModelRollup.init(session.serverless);
+    await ModelOwnership.init(session.serverless);
     // proof db
-    await ModelQueueTask.init(session.sessionProof);
-    await ModelSecureStorage.init(session.sessionProof);
-    await ModelProof.init(session.sessionProof);
+    await ModelQueueTask.init(session.proofService);
+    await ModelSecureStorage.init(session.proofService);
+    await ModelProof.init(session.proofService);
   });
 
   MinaNetwork.getInstance().connect(

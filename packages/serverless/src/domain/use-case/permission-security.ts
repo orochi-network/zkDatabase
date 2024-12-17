@@ -17,7 +17,7 @@ import { ClientSession } from 'mongodb';
 import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import ModelUserGroup from '../../model/database/user-group.js';
-import { isDatabaseOwner } from './database.js';
+import { Database } from './database.js';
 
 export class PermissionSecurity {
   // List all groups of a user
@@ -40,7 +40,9 @@ export class PermissionSecurity {
   ): Promise<PermissionBase> {
     const { databaseName, actor } = paramDatabase;
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor, session)) {
+    if (
+      await Database.isOwner({ databaseName, databaseOwner: actor }, session)
+    ) {
       return PermissionBase.permissionAll();
     }
     return PermissionBase.permissionNone();
@@ -53,7 +55,7 @@ export class PermissionSecurity {
   ): Promise<PermissionBase> {
     const { databaseName, collectionName, actor, sudo } = paramCollection;
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return PermissionBase.permissionAll();
     }
     const imMetadataCollection =
@@ -90,7 +92,7 @@ export class PermissionSecurity {
   ): Promise<PermissionBase> {
     const { databaseName, collectionName, docId, actor, sudo } = paramDocument;
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return PermissionBase.permissionAll();
     }
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
@@ -165,7 +167,7 @@ export class PermissionSecurity {
     session?: ClientSession
   ): Promise<TMetadataCollectionRecord[]> {
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listCollection;
     }
 
@@ -195,7 +197,7 @@ export class PermissionSecurity {
     session?: ClientSession
   ): Promise<TDocumentRecord[]> {
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listDoc;
     }
 
@@ -239,7 +241,7 @@ export class PermissionSecurity {
     session?: ClientSession
   ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
     // If user is database owner then return all system permissions
-    if (await isDatabaseOwner(databaseName, actor)) {
+    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listDoc;
     }
 

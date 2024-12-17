@@ -1,6 +1,3 @@
-import { ClientSession } from 'mongodb';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import {
   TMetadataCollection,
   TMetadataDocument,
@@ -9,9 +6,10 @@ import {
   TPermissionSudo,
 } from '@zkdb/common';
 import { DATABASE_ENGINE, ModelCollection } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import ModelMetadataDocument from '../../model/database/metadata-document.js';
 import { PermissionSecurity } from './permission-security.js';
-import { OwnershipAndPermission } from '@zkdb/permission';
-import { TPickOptional } from '@orochi-network/framework';
 
 export class Metadata {
   public static async collection(
@@ -32,14 +30,13 @@ export class Metadata {
         `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
       );
     }
-
     const actorPermission = await PermissionSecurity.collection(
       {
         databaseName,
         collectionName,
         actor,
         // We going to reuse metadata from above to minimize the number of queries.
-        sudo: sudo || metadata,
+        sudo: sudo || metadata.metadata,
       },
       session
     );

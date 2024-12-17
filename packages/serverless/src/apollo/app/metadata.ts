@@ -12,16 +12,12 @@ import {
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  readCollectionMetadata,
-  readDocumentMetadata,
-} from '../../domain/use-case/metadata.js';
-import {
-  changeCollectionOwnership,
-  changeDocumentOwnership,
-} from '../../domain/use-case/ownership.js';
+
+import { Metadata } from '../../domain/use-case/metadata.js';
+
 import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
 import { authorizeWrapper } from '../validation.js';
+import { Ownership } from '../../domain/use-case/ownership.js';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 
@@ -97,17 +93,16 @@ const getMetadataDocument = authorizeWrapper<
     collectionName,
     docId: objectId,
   }),
-  async (_root, args, ctx) => {
-    const documentMetadata = await readDocumentMetadata(
-      args.databaseName,
-      args.collectionName,
-      args.docId,
-      ctx.userName,
-      true
-    );
+  async (_root, { databaseName, collectionName, docId }, ctx) => {
+    const documentMetadata = await Metadata.document({
+      databaseName,
+      collectionName,
+      docId,
+      actor: ctx.userName,
+    });
 
     if (!documentMetadata) {
-      throw new Error(`Can't find metadata document: ${args.docId}`);
+      throw new Error(`Can't find metadata document: ${docId}`);
     }
 
     return documentMetadata;
@@ -122,16 +117,15 @@ const getMetadataCollection = authorizeWrapper<
     databaseName,
     collectionName,
   }),
-  async (_root, args, ctx) => {
-    const collectionMetadata = await readCollectionMetadata(
-      args.databaseName,
-      args.collectionName,
-      ctx.userName,
-      true
-    );
+  async (_root, { databaseName, collectionName }, ctx) => {
+    const collectionMetadata = await Metadata.collection({
+      databaseName,
+      collectionName,
+      actor: ctx.userName,
+    });
 
     if (!collectionMetadata) {
-      throw new Error(`Can't find metadata collection: ${args.collectionName}`);
+      throw new Error(`Can't find metadata collection: ${collectionName}`);
     }
 
     return collectionMetadata;
@@ -171,28 +165,36 @@ const permissionTransferOwnership = authorizeWrapper<
     grouping: ownershipGroup,
     newOwner: userName,
   }),
-  async (_root: unknown, args, context) => {
+  async (
+    _root: unknown,
+    { databaseName, collectionName, docId, groupType, newOwner },
+    context
+  ) => {
     return Boolean(
       await withTransaction((session) => {
-        if (args.docId) {
+        if (docId) {
           // Document case with docId
-          return changeDocumentOwnership(
-            args.databaseName,
-            args.collectionName,
-            args.docId,
-            context.userName,
-            args.groupType,
-            args.newOwner,
+          return Ownership.transferDocument(
+            {
+              databaseName,
+              collectionName,
+              docId,
+              groupType,
+              newOwner,
+              actor: context.userName,
+            },
             session
           );
         } else {
           // Collection case without docId
-          return changeCollectionOwnership(
-            args.databaseName,
-            args.collectionName,
-            context.userName,
-            args.groupType,
-            args.newOwner,
+          return Ownership.transferCollection(
+            {
+              databaseName,
+              collectionName,
+              groupType,
+              newOwner,
+              actor: context.userName,
+            },
             session
           );
         }
