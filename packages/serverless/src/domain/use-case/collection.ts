@@ -10,7 +10,7 @@ import {
 } from '@zkdb/common';
 import { PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
-import { ModelMetadataCollection } from 'model/database/metadata-collection.js';
+import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
 import { ClientSession } from 'mongodb';
 import { DEFAULT_GROUP_ADMIN } from '../../common/const.js';
 import {

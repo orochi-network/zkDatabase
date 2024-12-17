@@ -54,7 +54,7 @@ export async function createProof(taskId: string) {
       );
     }
 
-    const imMerkleTree = await ModelMerkleTree.load(databaseName);
+    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     if (!CircuitFactory.contains(circuitName)) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
