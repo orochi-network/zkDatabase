@@ -141,7 +141,7 @@ export class Document {
     }
 
     // Save the document to the database
-    const [_, docId] = await imDocument.insertOneFromFields(
+    const [_, docId] = await imDocument.insertOneFromListField(
       fields,
       undefined,
       compoundSession?.sessionService

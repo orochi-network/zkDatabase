@@ -54,8 +54,8 @@ export class ModelDocument extends ModelGeneral<
 
   /** Construct a document with fields and insert it to the collection, marking
    * it as active */
-  public async insertOneFromFields(
-    fields: Record<string, TContractSchemaField>,
+  public async insertOneFromListField(
+    listField: Record<string, TContractSchemaField>,
     docId?: string,
     session?: ClientSession
   ): Promise<[InsertOneResult<TDocumentRecordNullable>, string]> {
@@ -63,7 +63,7 @@ export class ModelDocument extends ModelGeneral<
     return [
       await this.insertOne(
         {
-          document: fields,
+          document: listField,
           docId: insertingDocId,
           active: true,
           createdAt: getCurrentTime(),
@@ -90,7 +90,7 @@ export class ModelDocument extends ModelGeneral<
 
     if (findDocument) {
       // Insert new document
-      const documentUpdated = await this.insertOneFromFields(
+      const documentUpdated = await this.insertOneFromListField(
         fields,
         findDocument.docId,
         session
