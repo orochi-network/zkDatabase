@@ -5,7 +5,9 @@ import {
   groupName,
   O1JS_VALID_TYPE,
   TCollectionCreateRequest,
+  TCollectionCreateResponse,
   TCollectionExistRequest,
+  TCollectionExistResponse,
   TCollectionListRequest,
   TCollectionListResponse,
 } from '@zkdb/common';
@@ -82,7 +84,10 @@ const collectionList = authorizeWrapper<
     )
 );
 
-const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
+const collectionExist = publicWrapper<
+  TCollectionExistRequest,
+  TCollectionExistResponse
+>(
   Joi.object({
     databaseName,
     collectionName,
@@ -92,22 +97,23 @@ const collectionExist = publicWrapper<TCollectionExistRequest, boolean>(
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
-  CollectionCreateRequest,
-  async (_root, args, ctx) =>
-    withTransaction((session) =>
-      Collection.create(
-        {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
-          actor: ctx.userName,
-        },
-        args.schema,
-        args.group,
-        Permission.from(args.permission),
-        session
-      )
+const collectionCreate = authorizeWrapper<
+  TCollectionCreateRequest,
+  TCollectionCreateResponse
+>(CollectionCreateRequest, async (_root, args, ctx) =>
+  withTransaction((session) =>
+    Collection.create(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.schema,
+      args.group,
+      Permission.from(args.permission),
+      session
     )
+  )
 );
 
 export const resolversCollection = {

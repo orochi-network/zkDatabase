@@ -19,7 +19,7 @@ import {
   PublicKey,
   ZkProgram,
 } from 'o1js';
-import { EDocumentProofStatus } from '../../../common/src/index.js';
+import { EProofStatusDocument } from '../../../common/src/index.js';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import logger from '../helper/logger.js';
 
@@ -33,7 +33,7 @@ export async function createProof(taskId: string) {
     throw Error('Task has not been found');
   }
 
-  if (status !== EDocumentProofStatus.Proving) {
+  if (status !== EProofStatusDocument.Proving) {
     logger.error('Task has not been marked as executing');
     throw Error('Task has not been marked as executing');
   }
