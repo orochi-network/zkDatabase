@@ -54,7 +54,7 @@ export async function createProof(taskId: string) {
       );
     }
 
-    const imMerkleTree = await ModelMerkleTree.load(databaseName);
+    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     if (!CircuitFactory.contains(circuitName)) {
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
@@ -69,7 +69,7 @@ export async function createProof(taskId: string) {
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
-      await imMerkleTree.getWitness(
+      await imMerkleTree.getMerkleProof(
         merkleIndex,
         new Date(createdAt.getTime() - 1)
       )
