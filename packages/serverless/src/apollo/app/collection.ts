@@ -13,9 +13,9 @@ import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Collection } from '../../domain/use-case/collection.js';
-import { gql } from '../../helper/common.js';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
+import { Collection } from '@domain';
+import { gql } from '@helper';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const schemaField = Joi.object({
   name: Joi.string()

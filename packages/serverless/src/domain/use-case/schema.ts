@@ -7,8 +7,8 @@ import {
 } from '@zkdb/common';
 import Joi from 'joi';
 import { ClientSession } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
+import { logger } from '@helper';
+import { ModelMetadataCollection } from '@model';
 
 const schemaVerification: Map<TProvableTypeString, Joi.Schema> = new Map();
 

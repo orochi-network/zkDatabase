@@ -24,7 +24,7 @@
   "main": "./build/src/index.js",
   "types": "./build/src/index.d.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "rm -rf ./build && rollup -c",
     "buildw": "tsc -p tsconfig.json --watch",
     "format": "prettier --write --ignore-unknown **/*",
     "dev": "tsx --watch ./src/index.ts",

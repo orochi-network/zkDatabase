@@ -13,6 +13,7 @@ export default {
     sourcemap: true,
   },
   plugins: [
+    json(),
     alias({
       entries: [
         { find: '@', replacement: 'src' },
@@ -26,5 +27,6 @@ export default {
     }),
     commonjs(),
     typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
+    nodeResolver(),
   ],
 };

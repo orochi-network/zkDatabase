@@ -11,9 +11,9 @@ import {
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Collection } from '../../domain/use-case/collection.js';
-import { convertToIndexSpecification, gql } from '../../helper/common.js';
-import { authorizeWrapper } from '../validation.js';
+import { Collection } from '@domain';
+import { convertToIndexSpecification, gql } from '@helper';
+import { authorizeWrapper } from '../validation';
 
 export const typeDefsCollectionIndex = gql`
   scalar JSON

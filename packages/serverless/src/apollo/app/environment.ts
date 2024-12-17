@@ -1,8 +1,7 @@
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { gql } from '../../helper/common.js';
-import config from '../../helper/config.js';
-import { publicWrapper } from '../validation.js';
+import { gql, config } from '@helper';
+import { publicWrapper } from '../validation';
 
 export const typeDefsEnvironment = gql`
   #graphql

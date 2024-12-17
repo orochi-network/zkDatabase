@@ -1,7 +1,7 @@
 import { JWTAuthentication } from '@orochi-network/framework';
 import { createHash } from 'crypto';
 import * as jose from 'jose';
-import { config } from './config.js';
+import { config } from './config';
 
 export const ACCESS_TOKEN_EXPIRE_DAY =
   config.NODE_ENV === 'development' ? 30 : 14;

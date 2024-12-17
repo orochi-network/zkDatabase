@@ -20,13 +20,11 @@ import {
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
-
 import Joi from 'joi';
-import { Group } from '../../domain/use-case/group.js';
-import { gql } from '../../helper/common.js';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
+import { Group } from '@domain';
+import { gql } from '@helper';
+import { ModelGroup, ModelUserGroup } from '@model';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsGroup = gql`
   #graphql

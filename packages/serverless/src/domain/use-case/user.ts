@@ -7,10 +7,9 @@ import {
 } from '@zkdb/common';
 import Client from 'mina-signer';
 import { ClientSession, WithoutId } from 'mongodb';
-import { DEFAULT_PAGINATION } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import config from '../../helper/config.js';
-import ModelUser from '../../model/global/user.js';
+import { DEFAULT_PAGINATION } from '@common';
+import { getCurrentTime, config } from '@helper';
+import { ModelUser } from '@model';
 
 export class User {
   public static async signUp(

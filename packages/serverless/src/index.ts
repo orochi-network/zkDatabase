@@ -21,34 +21,33 @@ import fileupload from 'express-fileupload';
 import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
-import ModelOwnership from './model/global/ownership.js';
 import { NetworkId } from 'o1js';
-import { ResolversApp, TypedefsApp } from './apollo/index.js';
-import { nobodyContext } from './common/const.js';
-import { config } from './helper/config.js';
+import { ResolversApp, TypedefsApp } from '@apollo-app';
+import { nobodyContext } from '@common';
 import {
   calculateAccessTokenDigest,
   headerToAccessToken,
   JwtAuthorization,
-} from './helper/jwt.js';
-import logger from './helper/logger.js';
-import RedisInstance from './helper/redis.js';
-import ModelUser from './model/global/user.js';
+  logger,
+  RedisInstance,
+  config,
+} from '@helper';
+import { ModelUser, ModelOwnership } from '@model';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
 (async () => {
   const app = express();
   // DB service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  const dbServerless = DatabaseEngine.getInstance(config.MONGODB_URL);
   // DB proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
+  const dbProof = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+  if (!dbServerless.isConnected()) {
+    await dbServerless.connect();
   }
 
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
+  if (!dbProof.isConnected()) {
+    await dbProof.connect();
   }
   // For global Model that need to init index first
   await withCompoundTransaction(async (session) => {

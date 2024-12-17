@@ -4,7 +4,7 @@ import {
   TCollectionIndexMap,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
-import logger from './logger.js';
+import { logger } from './logger';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
   try {

@@ -12,12 +12,8 @@ import {
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-
-import { Metadata } from '../../domain/use-case/metadata.js';
-
-import { PermissionSecurity } from '../../domain/use-case/permission-security.js';
-import { authorizeWrapper } from '../validation.js';
-import { Ownership } from '../../domain/use-case/ownership.js';
+import { Metadata, PermissionSecurity, Ownership } from '@domain';
+import { authorizeWrapper } from '../validation';
 
 const ownershipGroup = Joi.string().valid('User', 'Group').required();
 

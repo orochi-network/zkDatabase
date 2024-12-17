@@ -15,10 +15,12 @@ import {
   PermissionBase,
 } from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import { Database } from './database.js';
+import {
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUserGroup,
+} from '@model';
+import { Database } from './database';
 
 export class PermissionSecurity {
   // List all groups of a user

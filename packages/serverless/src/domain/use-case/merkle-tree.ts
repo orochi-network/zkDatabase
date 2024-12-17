@@ -8,7 +8,7 @@ import {
 import { ModelMerkleTree } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
+import { ModelMetadataDocument } from '@model';
 
 export class MerkleTree {
   public static async document(

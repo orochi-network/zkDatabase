@@ -7,9 +7,8 @@ import {
 } from '@zkdb/common';
 import { DATABASE_ENGINE, ModelCollection } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import { PermissionSecurity } from './permission-security.js';
+import { ModelMetadataCollection, ModelMetadataDocument } from '@model';
+import { PermissionSecurity } from './permission-security';
 
 export class Metadata {
   public static async collection(

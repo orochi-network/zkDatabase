@@ -1,4 +1,4 @@
-import { TUserGroup, TUserGroupRecord } from '@zkdb/common';
+import { TUserGroupRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
   DATABASE_ENGINE,
@@ -10,12 +10,10 @@ import {
   BulkWriteOptions,
   ClientSession,
   FindOptions,
-  InsertOneOptions,
-  InsertOneResult,
   ObjectId,
   WithoutId,
 } from 'mongodb';
-import ModelGroup from './group.js';
+import ModelGroup from './group';
 
 export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =

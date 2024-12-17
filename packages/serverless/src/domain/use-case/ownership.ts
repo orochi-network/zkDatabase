@@ -4,11 +4,13 @@ import {
   TParamDocumentOwnership,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
-import { ModelMetadataCollection } from '../../model/database/metadata-collection.js';
-import ModelMetadataDocument from '../../model/database/metadata-document.js';
-import ModelUser from '../../model/global/user.js';
-import { Group } from './group.js';
-import { PermissionSecurity } from './permission-security.js';
+import {
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUser,
+} from '@model';
+import { Group } from './group';
+import { PermissionSecurity } from './permission-security';
 
 export class Ownership {
   public static async transferCollection(

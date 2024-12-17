@@ -18,8 +18,8 @@ import {
 import { ModelMerkleTree } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { MerkleTree } from '../../domain/use-case/merkle-tree.js';
-import { publicWrapper } from '../validation.js';
+import { MerkleTree } from '@domain';
+import { publicWrapper } from '../validation';
 
 export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
   databaseName,

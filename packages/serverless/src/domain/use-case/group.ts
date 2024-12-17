@@ -8,11 +8,9 @@ import {
   groupName as joiGroupName,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
-import { getCurrentTime } from '../../helper/common.js';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup from '../../model/database/user-group.js';
-import ModelUser from '../../model/global/user.js';
-import { Database } from './database.js';
+import { getCurrentTime } from '@helper';
+import { ModelGroup, ModelUserGroup, ModelUser } from '@model';
+import { Database } from './database';
 
 /**
  * The `Group` class provides methods to manage groups, including creating groups,
