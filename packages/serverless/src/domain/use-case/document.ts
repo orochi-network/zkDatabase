@@ -3,13 +3,13 @@
 // TODO: pagination does not work properly since we fetch all documents with
 // the pagination filter first and then filter them by permission, which can
 // lead to less documents being returned than expected.
-// TODO: group all the functions into a static class to organize them better
 import {
   EProofStatusDocument,
   ESequencer,
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TDocumentRecord,
+  TDocumentRecordNullable,
   TMerkleProof,
   TMetadataDetailDocument,
   TPagination,
@@ -282,24 +282,30 @@ export class Document {
     query?: FilterCriteria,
     pagination?: TPagination,
     session?: ClientSession
-  ): Promise<TDocumentRecord[]> {
+  ): Promise<TDocumentRecordNullable[]> {
     const { databaseName, collectionName, actor } = permissionParam;
+
+    const userCollectionPermission = await PermissionSecurity.collection(
+      permissionParam,
+      session
+    );
+    if (!userCollectionPermission.read) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'read' permission for \
+collection '${collectionName}' in database '${databaseName}'.`
+      );
+    }
 
     const paginationInfo = pagination || DEFAULT_PAGINATION;
 
-    const pipeline = [];
-    if (query) {
-      pipeline.push({ $match: parseQuery(query) });
-    }
-    pipeline.push({ $skip: paginationInfo.offset });
-    pipeline.push({ $limit: paginationInfo.limit });
-
-    const { db: database } = new ModelDatabase(permissionParam.databaseName);
-
-    const listDocument = (await database
-      .collection(collectionName)
-      .aggregate(pipeline, { session })
-      .toArray()) as TDocumentRecord[];
+    const listDocument = await ModelDocument.getInstance(
+      databaseName,
+      collectionName
+    )
+      .find(parseQuery(query || {}), { session })
+      .limit(paginationInfo.limit)
+      .skip(paginationInfo.offset)
+      .toArray();
 
     return await PermissionSecurity.filterDocument(
       databaseName,

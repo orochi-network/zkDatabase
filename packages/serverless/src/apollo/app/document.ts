@@ -276,26 +276,6 @@ const documentHistoryFind = authorizeWrapper<
   }
 );
 
-const listDocumentHistory = authorizeWrapper<
-  TDocumentHistoryListRequest,
-  TDocumentHistoryListResponse
->(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  return withTransaction(async (session) => {
-    const documents = await DocumentHistory.list(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-        docId: args.docId,
-      },
-      args.pagination || DEFAULT_PAGINATION,
-      session
-    );
-
-    return documents;
-  });
-});
-
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
