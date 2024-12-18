@@ -70,11 +70,11 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
     return result
       .unwrap()
-      .map(({ groupName, description, createdAt, createBy }) => ({
+      .map(({ groupName, description, createdAt, createdBy }) => ({
         groupName,
         description,
         createdAt: new Date(createdAt),
-        createBy,
+        createdBy,
       }));
   }
 

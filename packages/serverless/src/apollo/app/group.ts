@@ -41,7 +41,7 @@ export const typeDefsGroup = gql`
   type GroupInfoDetailResponse {
     groupName: String!
     groupDescription: String!
-    createBy: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
     listUser: [GroupUserInfo]!
@@ -50,7 +50,7 @@ export const typeDefsGroup = gql`
   type GroupListAllResponse {
     groupName: String!
     groupDescription: String!
-    createBy: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
   }
@@ -170,7 +170,7 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
           groupName,
           newGroupName,
           newGroupDescription,
-          createBy: ctx.userName,
+          createdBy: ctx.userName,
         },
         session
       )
@@ -190,7 +190,7 @@ const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
             databaseName,
             groupName,
             groupDescription,
-            createBy: ctx.userName,
+            createdBy: ctx.userName,
           },
           session
         )
@@ -208,7 +208,7 @@ const groupAddUser = authorizeWrapper<
       databaseName,
       groupName,
       listUserName: listUser,
-      createBy: ctx.userName,
+      createdBy: ctx.userName,
     })
 );
 
@@ -222,7 +222,7 @@ const groupRemoveUser = authorizeWrapper<
       databaseName,
       groupName,
       listUserName: listUser,
-      createBy: ctx.userName,
+      createdBy: ctx.userName,
     })
 );
 
