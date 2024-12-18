@@ -25,7 +25,7 @@ import {
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
-import { GraphqlHelper } from 'src/helper/graphql';
+import { GraphqlHelper } from '@helper';
 
 const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
