@@ -1,3 +1,5 @@
+// TODO: consider validating the query object before passing to parseQuery
+
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -10,20 +12,15 @@ import {
   documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
-  TDocumentListRequest,
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
   TDocumentHistoryListRequest,
-  TWithProofStatus,
-  TDocumentWithMetadataResponse,
-  TDocumentRecordNullable,
   TDocumentHistoryListResponse,
   TDocumentModificationResponse,
   TDocumentHistoryResponse,
-  TDocumentResponse,
   TPaginationReturn,
-  TDocumentResponseTake2,
+  TDocumentFindResponse,
 } from '@zkdb/common';
 
 import { DEFAULT_PAGINATION } from '@common';
@@ -36,7 +33,7 @@ export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   query: Joi.object(),
 });
 
-export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
+export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -94,7 +91,7 @@ export const typeDefsDocument = gql`
     document: JSON
     createdAt: Date
     updatedAt: Date
-    metadata: MetadataDocumentResponse!
+    metadata: MetadataDocumentResponse
     proofStatus: String
   }
 
@@ -134,7 +131,7 @@ export const typeDefsDocument = gql`
     documentCreate(
       databaseName: String!
       collectionName: String!
-      document: [SchemaFieldInput!]!
+      document: JSON
       documentPermission: Int
     ): [MerkleProof!]!
 
@@ -153,29 +150,9 @@ export const typeDefsDocument = gql`
   }
 `;
 
-// Query
 const documentFind = authorizeWrapper<
   TDocumentFindRequest,
-  TDocumentRecordNullable | null
->(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx, info) => {
-  const document = await withTransaction((session) =>
-    Document.find(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query,
-      session
-    )
-  );
-
-  return document;
-});
-
-const queryDocument = authorizeWrapper<
-  TDocumentListRequest,
-  TPaginationReturn<TDocumentResponseTake2[]>
+  TPaginationReturn<TDocumentFindResponse[]>
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
   const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
     'data',
@@ -198,8 +175,13 @@ const queryDocument = authorizeWrapper<
       session
     );
 
+    // Lazily fill metadata and proof status if requested
+    // TODO: can we fill metadata and proof status in parallel?
     if (includesMetadata) {
-      listDocument = await Document.fillMetadata(listDocument);
+      listDocument = await Document.fillMetadata(
+        listDocument,
+        args.databaseName
+      );
     }
 
     if (includesProofStatus) {
@@ -216,30 +198,6 @@ const queryDocument = authorizeWrapper<
       offset: 0,
     };
   });
-});
-
-const listDocumentWithMetadata = authorizeWrapper<
-  TDocumentListRequest,
-  TWithProofStatus<TDocumentWithMetadataResponse>[]
->(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  const listDocument = await withTransaction(async (session) => {
-    return Document.listDocumentWithMetadata(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query,
-      args.pagination || DEFAULT_PAGINATION,
-      session
-    );
-  });
-
-  if (listDocument == null) {
-    throw new Error('Failed to list documents, transaction returned null');
-  }
-
-  return listDocument;
 });
 
 // Mutation
@@ -341,7 +299,7 @@ const listDocumentHistory = authorizeWrapper<
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
-    documentFind: queryDocument,
+    documentFind,
     documentHistoryFind,
   },
   Mutation: {

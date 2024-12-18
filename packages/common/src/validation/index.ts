@@ -73,6 +73,7 @@ export const indexNumber = Joi.string()
 export const index = Joi.array().items(Joi.string().required());
 
 // TODO: write tests
+// TODO: double check with the obsolete validators inside use-case/schema.ts
 export const documentField = Joi.object<TDocumentField, true>()
   .custom((raw, helpers) => {
     const { value: name, error: nameError } = Joi.string()
@@ -109,6 +110,7 @@ export const documentField = Joi.object<TDocumentField, true>()
       }
       case 'Field':
       case 'CircuitString':
+      // TODO: character should have a length of 1
       case 'Character': {
         const { value, error } = Joi.string().validate(raw.value);
         if (error) {

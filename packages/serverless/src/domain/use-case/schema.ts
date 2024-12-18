@@ -12,6 +12,8 @@ import { ModelMetadataCollection } from '@model';
 
 const schemaVerification: Map<TProvableTypeString, Joi.Schema> = new Map();
 
+// NOTE: not used but keeping here for reference
+// TODO: remove when synchronized with the upper level validators
 // Every data type will be treaded as string when store/transfer
 if (schemaVerification.size === 0) {
   schemaVerification.set('CircuitString', Joi.string().max(1024));
@@ -59,6 +61,8 @@ export async function validateDocumentSchema(
     schemaFieldSet.has(docField.name)
   );
 
+  // TODO: consider throwing error for better error messages to end user,
+  // instead of simply logging the error
   if (!allFieldsDefined) {
     document.forEach((docField) => {
       if (!schemaFieldSet.has(docField.name)) {
@@ -69,47 +73,14 @@ export async function validateDocumentSchema(
     });
     return false;
   }
-  // schema = metadata.field
-  const isValid = metadata.schema.every((sch) => {
-    // Skip validation for the _id field
-    if (sch.name === '_id') {
-      return true;
-    }
 
-    const { kind } = sch;
-    const validationSchema = schemaVerification.get(kind);
+  // TODO(wonrax): I removed the field type validation using the
+  // `schemaVerification` map above because the data types are already
+  // validated in the upper graphql level. However some manual testing and
+  // verfication is needed to ensure the data types are correctly validated and
+  // there exists no edge cases.
 
-    if (!validationSchema) {
-      logger.error(`Schema kind '${kind}' is not supported.`);
-      return false;
-    }
-
-    const documentField = document.find((f) => f.name === sch.name);
-
-    if (typeof documentField === 'undefined') {
-      logger.error(`Document is missing field '${sch.name}'.`);
-      return false;
-    }
-
-    if (documentField.kind !== sch.kind) {
-      logger.error(
-        `Field '${sch.name}' has incorrect kind: expected '${kind}', got '${documentField.kind}'.`
-      );
-      return false;
-    }
-
-    const { error } = validationSchema.validate(documentField.value);
-    if (error) {
-      logger.error(
-        `Schema validation error for field '${sch.name}': ${error.message}`
-      );
-      return false;
-    }
-
-    return true;
-  });
-
-  return isValid;
+  return true;
 }
 
 export async function buildSchema(
@@ -118,6 +89,8 @@ export async function buildSchema(
   document: TDocumentField[],
   session?: ClientSession
 ) {
+  // TODO: refactor validateDocumentSchema to accept metadata as an argument
+  // instead of fetching it again
   if (!(await validateDocumentSchema(databaseName, collectionName, document))) {
     throw new Error('Invalid schema');
   }

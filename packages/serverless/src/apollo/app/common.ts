@@ -1,6 +1,8 @@
 import { gql } from '@helper';
 
 export const typeDefsCommon = gql`
+  scalar Date
+
   enum TransactionType {
     Deploy
     Rollup
@@ -48,7 +50,7 @@ export const typeDefsCommon = gql`
     sorting: Sorting!
   }
 
-  type PaginationInput {
+  input PaginationInput {
     offset: Int
     limit: Int
   }

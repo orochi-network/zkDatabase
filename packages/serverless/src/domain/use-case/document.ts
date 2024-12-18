@@ -10,10 +10,8 @@ import {
   PERMISSION_DEFAULT_VALUE,
   TDocumentField,
   TDocumentRecord,
-  TDocumentRecordNullable,
   TMerkleProof,
   TMetadataDetailDocument,
-  TMetadataDocument,
   TPagination,
   TParamCollection,
   TPermissionSudo,
@@ -26,7 +24,6 @@ import {
   ModelQueueTask,
   ModelSequencer,
   withTransaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
@@ -58,59 +55,6 @@ export function fieldArrayToRecord(
 }
 
 export class Document {
-  static async find(
-    permissionParam: TPermissionSudo<TParamCollection>,
-    filter: FilterCriteria,
-    session?: ClientSession
-  ): Promise<TDocumentRecordNullable | null> {
-    const { databaseName, collectionName, actor } = permissionParam;
-
-    const actorPermissionCollection = await PermissionSecurity.collection(
-      {
-        databaseName,
-        collectionName,
-        actor,
-      },
-      session
-    );
-    if (!actorPermissionCollection.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-      );
-    }
-
-    const modelDocument = ModelDocument.getInstance(
-      databaseName,
-      collectionName
-    );
-
-    const documentRecord = await modelDocument.findOne(parseQuery(filter), {
-      session,
-    });
-
-    if (!documentRecord) {
-      return null;
-    }
-
-    const actorPermissionDocument = await PermissionSecurity.document(
-      {
-        databaseName,
-        collectionName,
-        actor,
-        docId: documentRecord.docId,
-      },
-      session
-    );
-
-    if (!actorPermissionDocument.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
-      );
-    }
-
-    return documentRecord;
-  }
-
   static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
@@ -173,7 +117,7 @@ export class Document {
       metadata: { permission: collectionPermission },
     } = documentSchema;
 
-    const permissionCombine = Permission.from(permission).combine(
+    const permissionCombine = permission.combine(
       Permission.from(collectionPermission)
     );
 
@@ -332,64 +276,7 @@ export class Document {
     throw Error('Document not found');
   }
 
-  static async listDocumentWithMetadata(
-    permissionParam: TPermissionSudo<TParamCollection>,
-    query?: FilterCriteria,
-    pagination?: TPagination,
-    session?: ClientSession
-  ): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
-    const { db: database } = new ModelDatabase();
-    const { databaseName, collectionName, actor } = permissionParam;
-
-    const paginationInfo = pagination || DEFAULT_PAGINATION;
-    const pipeline = [];
-    if (query) {
-      pipeline.push({ $match: parseQuery(query) });
-    }
-    pipeline.push({
-      $lookup: {
-        from: zkDatabaseConstant.databaseCollection.metadataDocument,
-        let: { docId: '$docId' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ['$docId', '$$docId'] },
-            },
-          },
-        ],
-        as: 'metadata',
-      },
-      $skip: paginationInfo.offset,
-      $limit: paginationInfo.limit,
-    });
-
-    const listDocumentWithMetadata = (await database
-      .collection(collectionName)
-      .aggregate(pipeline, { session })
-      .toArray()) as TMetadataDetailDocument<TDocumentRecord>[];
-
-    const listQueueTask =
-      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
-
-    const taskMap = new Map(
-      listQueueTask?.map((task) => [task.docId, task.status]) || []
-    );
-
-    const result = await PermissionSecurity.filterMetadataDocumentDetail(
-      databaseName,
-      listDocumentWithMetadata,
-      actor,
-      PermissionBase.permissionRead()
-    );
-
-    return result.map((item) => {
-      return {
-        ...item,
-        proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
-      };
-    });
-  }
-
+  /** Query for documents given a filter criteria. */
   static async query(
     permissionParam: TPermissionSudo<TParamCollection>,
     query?: FilterCriteria,
@@ -423,22 +310,24 @@ export class Document {
     );
   }
 
+  /** Fill document metadata for a list of documents. Note that this won't
+   * check for permission and will return all metadata records for the given
+   * documents. */
   static async fillMetadata(
-    listDocument: TDocumentRecord[]
+    listDocument: TDocumentRecord[],
+    databaseName: string
   ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
     if (!listDocument.length) {
       return [];
     }
 
-    const { db: database } = new ModelDatabase();
-
     const docIds = listDocument.map((doc) => doc.docId);
 
-    // Fetch all metadata records for the given document IDs
-    const metadataRecords = (await database
-      .collection(zkDatabaseConstant.databaseCollection.metadataDocument)
-      .find({ docId: { $in: docIds } })
-      .toArray()) as unknown as TMetadataDocument[]; // TODO: Fix type
+    const metadataRecords = await new ModelMetadataDocument(databaseName)
+      .find({
+        docId: { $in: docIds },
+      })
+      .toArray();
 
     // Create a map for quick metadata lookup
     const metadataMap = new Map(
@@ -452,6 +341,8 @@ export class Document {
     }));
   }
 
+  /** Fill proof status for a list of documents. Note that this won't check for
+   * permission and will return all proof status for the given documents. */
   static async fillProofStatus(
     listDocument: TDocumentRecord[],
     collectionName: string
