@@ -80,9 +80,9 @@ const collectionList = authorizeWrapper<
   Joi.object({
     databaseName,
   }),
-  async (_root, args, ctx) =>
+  async (_root, { databaseName }, ctx) =>
     withTransaction((session) =>
-      Collection.list(args.databaseName, ctx.userName, session)
+      Collection.list(databaseName, ctx.userName, session)
     )
 );
 
@@ -94,8 +94,8 @@ const collectionExist = publicWrapper<
     databaseName,
     collectionName,
   }),
-  async (_root, args) =>
-    Collection.exist(args.databaseName, args.collectionName)
+  async (_root, { databaseName, collectionName }) =>
+    Collection.exist(databaseName, collectionName)
 );
 
 // Mutation

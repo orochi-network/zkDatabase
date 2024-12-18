@@ -118,9 +118,9 @@ const dbStats = publicWrapper<TDatabaseRequest, Document>(
   Joi.object({
     databaseName,
   }),
-  async (_root, args, _ctx) =>
+  async (_root, { databaseName }, _ctx) =>
     // Using system database to get stats
-    ModelDatabase.getInstance(args.databaseName).stats()
+    ModelDatabase.getInstance(databaseName).stats()
 );
 
 const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(

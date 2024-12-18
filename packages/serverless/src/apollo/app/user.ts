@@ -135,9 +135,9 @@ export const JOI_SIGN_UP = Joi.object<TUserSignUpRequest>({
 
 export const JOI_USER_FIND = Joi.object<TUserFindRequest>({
   query: Joi.object<TUser>({
-    userName: userName.optional(),
+    userName: userName(false),
     email: Joi.string().email(),
-    publicKey: publicKey.optional(),
+    publicKey: publicKey(false),
   }),
   pagination,
 });
