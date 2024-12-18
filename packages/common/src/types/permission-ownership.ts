@@ -51,7 +51,6 @@ export type TOwnershipTransferRequest = TCollectionRequest & {
 export type TOwnershipTransferResponse = boolean;
 
 // Permission
-
 export type TPermissionSetRequest = TCollectionRequest & {
   // If docId existed means permission document request
   // Otherwise it's permission collection request
