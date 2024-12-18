@@ -1,4 +1,5 @@
-// TODO: consider validating the query object before passing to parseQuery
+// TODO: parseQuery already validates the query to some extent, but still,
+// consider validating the query object before passing to parseQuery
 
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -15,35 +16,29 @@ import {
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
-  TDocumentHistoryListRequest,
-  TDocumentHistoryListResponse,
   TDocumentModificationResponse,
   TDocumentHistoryResponse,
   TPaginationReturn,
   TDocumentFindResponse,
 } from '@zkdb/common';
 
-import { DEFAULT_PAGINATION } from '@common';
 import { Permission } from '@zkdb/permission';
 import { GraphqlHelper } from 'src/helper/graphql';
 
-export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
 });
 
-export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
+const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
   pagination,
 });
 
-export const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<
-  TDocumentCreateRequest,
-  true
->({
+const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest, true>({
   databaseName,
   collectionName,
   documentPermission: Joi.number().min(0).max(0xffffff).required(),
@@ -52,7 +47,7 @@ export const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<
   document: schemaDocumentRecord,
 });
 
-export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
+const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -61,18 +56,11 @@ export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   document: schemaDocumentRecord,
 });
 
-export const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
+const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
     docId: Joi.string(),
-  });
-
-export const JOI_DOCUMENT_HISTORY_LIST_REQUEST =
-  Joi.object<TDocumentHistoryListRequest>({
-    databaseName,
-    collectionName,
-    pagination,
   });
 
 export const typeDefsDocument = gql`
@@ -115,7 +103,7 @@ export const typeDefsDocument = gql`
     documentFind(
       databaseName: String!
       collectionName: String!
-      query: JSON!
+      query: JSON # If not provided, return all documents
       pagination: PaginationInput
     ): DocumentFindResponse
 
@@ -131,7 +119,7 @@ export const typeDefsDocument = gql`
     documentCreate(
       databaseName: String!
       collectionName: String!
-      document: JSON
+      document: JSON!
       documentPermission: Int
     ): [MerkleProof!]!
 
@@ -139,7 +127,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       query: JSON!
-      document: [SchemaFieldInput!]!
+      document: JSON!
     ): [MerkleProof!]!
 
     documentDrop(
@@ -164,7 +152,7 @@ const documentFind = authorizeWrapper<
   ]);
 
   return await withTransaction(async (session) => {
-    let listDocument = await Document.query(
+    let [listDocument, numTotalDocument] = await Document.query(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -191,11 +179,10 @@ const documentFind = authorizeWrapper<
       );
     }
 
-    // TODO: properly paginate
     return {
       data: listDocument,
-      total: listDocument.length,
-      offset: 0,
+      total: numTotalDocument,
+      offset: args.pagination.offset,
     };
   });
 });
@@ -225,7 +212,7 @@ const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentModificationResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return withTransaction((session) =>
+  return withCompoundTransaction(async (session) =>
     Document.update(
       {
         databaseName: args.databaseName,
@@ -245,14 +232,17 @@ const documentDrop = authorizeWrapper<
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return Document.drop(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query
-    );
+    return withCompoundTransaction(async (session) => {
+      return Document.drop(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
+        args.query,
+        session
+      );
+    });
   }
 );
 
