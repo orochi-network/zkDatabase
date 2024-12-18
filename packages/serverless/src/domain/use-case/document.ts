@@ -151,7 +151,11 @@ export class Document {
       compoundSession
     );
 
-    return witness;
+    return {
+      merkleProof: witness,
+      docId,
+      acknowledged: true,
+    };
   }
 
   static async update(

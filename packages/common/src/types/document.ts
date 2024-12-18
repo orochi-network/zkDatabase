@@ -51,11 +51,15 @@ export type TDocumentFindResponse = TDocumentResponse & {
   proofStatus?: EProofStatusDocument;
 };
 
-export type TDocumentMerkleProofResponse = TMerkleProof[];
-
 export type TDocumentCreateRequest = TDocumentNamespace & {
   document: Record<string, TDocumentField>;
   documentPermission?: number;
+};
+
+export type TDocumentCreateResponse = {
+  docId: string;
+  acknowledged: boolean;
+  merkleProof: TMerkleProof[];
 };
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {
@@ -67,7 +71,7 @@ export type TDocumentHistoryFindRequest = TDocumentNamespace & {
   docId: string;
 };
 
-export type TDocumentModificationResponse = TMerkleProof[] | null;
+export type TDocumentModificationResponse = TMerkleProof[];
 
 export type TDocumentHistoryListRequest = TDocumentNamespace & {
   docId: string;

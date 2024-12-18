@@ -21,6 +21,7 @@ import {
   TPaginationReturn,
   TDocumentFindResponse,
   PERMISSION_DEFAULT_VALUE,
+  TDocumentCreateResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -90,6 +91,12 @@ export const typeDefsDocument = gql`
     offset: Int
   }
 
+  type DocumentCreateResponse {
+    merkleProof: [MerkleProof!]!
+    docId: String!
+    acknowledged: Boolean!
+  }
+
   # History aka revisions of a document
   type DocumentHistoryFindResponse {
     docId: String!
@@ -122,7 +129,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       document: JSON!
       documentPermission: Int
-    ): [MerkleProof!]!
+    ): DocumentCreateResponse!
 
     documentUpdate(
       databaseName: String!
@@ -191,9 +198,9 @@ const documentFind = authorizeWrapper<
 // Mutation
 const documentCreate = authorizeWrapper<
   TDocumentCreateRequest,
-  TDocumentModificationResponse
+  TDocumentCreateResponse
 >(JOI_DOCUMENT_CREATE_REQUEST, async (_root: unknown, args, ctx) =>
-  withCompoundTransaction((compoundSession) =>
+  withCompoundTransaction(async (compoundSession) =>
     Document.create(
       {
         databaseName: args.databaseName,
