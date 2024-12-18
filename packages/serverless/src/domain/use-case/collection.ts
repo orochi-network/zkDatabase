@@ -10,7 +10,7 @@ import {
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
-import { ModelMetadataCollection } from '@model';
+import { ModelDocument, ModelMetadataCollection } from '@model';
 import { ClientSession } from 'mongodb';
 import { GROUP_DEFAULT_ADMIN } from '@common';
 import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
@@ -243,6 +243,9 @@ export class Collection {
         `Failed to insert metadata for collection ${collectionName}`
       );
     }
+
+    // Create built-in indexes
+    await ModelDocument.init(databaseName, collectionName, session);
 
     // Create index by schema definition
     const collectionIndex = convertSchemaDefinitionToIndex(schema);
