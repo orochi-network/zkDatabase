@@ -3808,6 +3808,11 @@ bser@2.1.1:
   dependencies:
     node-int64 "^0.4.0"
 
+bson@6.10.1:
+  version "6.10.1"
+  resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.1.tgz#dcd04703178f5ecf5b25de04edd2a95ec79385d3"
+  integrity sha512-P92xmHDQjSKPLHqFxefqMxASNq/aWJMEZugpCjf+AF/pgcUpMMQCg7t7+ewko0/u8AapvF3luf/FoehddEK+sA==
+
 bson@^5.5.0:
   version "5.5.1"
   resolved "https://registry.npmjs.org/bson/-/bson-5.5.1.tgz"
@@ -3817,11 +3822,6 @@ bson@^6.10.0, bson@^6.7.0:
   version "6.10.0"
   resolved "https://registry.npmjs.org/bson/-/bson-6.10.0.tgz"
   integrity sha512-ROchNosXMJD2cbQGm84KoP7vOGPO6/bOAW0veMMbzhXLqoZptcaYRVLitwvuhwhjjpU1qP4YZRWLhgETdgqUQw==
-
-bson@^6.10.1:
-  version "6.10.1"
-  resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.1.tgz#dcd04703178f5ecf5b25de04edd2a95ec79385d3"
-  integrity sha512-P92xmHDQjSKPLHqFxefqMxASNq/aWJMEZugpCjf+AF/pgcUpMMQCg7t7+ewko0/u8AapvF3luf/FoehddEK+sA==
 
 buffer-crc32@~0.2.3:
   version "0.2.13"
@@ -3838,7 +3838,7 @@ buffer-from@^1.0.0:
   resolved "https://registry.npmjs.org/buffer-from/-/buffer-from-1.1.2.tgz"
   integrity sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==
 
-bullmq@^5.34.2:
+bullmq@5.34.2, bullmq@^5.34.2:
   version "5.34.2"
   resolved "https://registry.yarnpkg.com/bullmq/-/bullmq-5.34.2.tgz#39dd848d5d82da029967b9383306eba7ed181f1b"
   integrity sha512-eUzeCswrKbQDE1WY8h4ZTBtynOzCU5qx9felFdYOmIJrsy0warDahHKUiCZ6dUCs6ZxYMGtcaciIMcAf1L54yw==
