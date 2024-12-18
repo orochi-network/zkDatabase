@@ -1,13 +1,13 @@
 import { ClientSession, MongoError } from 'mongodb';
 import { DATABASE_ENGINE, logger } from '@helper';
 
-export type CompoundSession = {
+export type TCompoundSession = {
   serverless: ClientSession;
   proofService: ClientSession;
 };
 
 export async function withCompoundTransaction<T>(
-  callback: (session: CompoundSession) => Promise<T>
+  callback: (session: TCompoundSession) => Promise<T>
 ): Promise<T | null> {
   const serverless = DATABASE_ENGINE.serverless.client.startSession();
   const proofService = DATABASE_ENGINE.proofService.client.startSession();

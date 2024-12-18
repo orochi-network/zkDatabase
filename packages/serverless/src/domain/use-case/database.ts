@@ -1,3 +1,12 @@
+import { GROUP_DEFAULT_ADMIN } from '@common';
+import { getCurrentTime, logger } from '@helper';
+import {
+  ModelGroup,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUser,
+  ModelUserGroup,
+} from '@model';
 import {
   ETransactionStatus,
   ETransactionType,
@@ -16,15 +25,6 @@ import {
   ModelTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { GROUP_DEFAULT_ADMIN } from '@common';
-import { getCurrentTime, logger } from '@helper';
-import {
-  ModelGroup,
-  ModelMetadataCollection,
-  ModelMetadataDocument,
-  ModelUserGroup,
-  ModelUser,
-} from '@model';
 import { Group } from './group';
 import Transaction from './transaction';
 
@@ -121,6 +121,18 @@ export class Database {
     }
 
     throw Error('Setting has not been found');
+  }
+
+  public static async ownershipCheck(
+    databaseName: string,
+    actor: string,
+    session?: ClientSession
+  ) {
+    if (
+      !(await Database.isOwner({ databaseName, databaseOwner: actor }, session))
+    ) {
+      throw Error('Only database owner can roll up the transaction');
+    }
   }
 
   public static async listDetail(

@@ -20,7 +20,7 @@ import {
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
-  CompoundSession,
+  TCompoundSession,
   ModelDatabase,
   ModelQueueTask,
   ModelSequencer,
@@ -114,7 +114,7 @@ export class Document {
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
     permission = PERMISSION_DEFAULT,
-    compoundSession: CompoundSession
+    compoundSession: TCompoundSession
   ) {
     const actorPermissionCollection = await PermissionSecurity.collection(
       permissionParam,

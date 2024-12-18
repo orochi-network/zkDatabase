@@ -1,13 +1,15 @@
+import { Rollup } from '@domain';
 import {
-  TDatabaseRequest,
   databaseName,
-  transactionType,
-  RollUpData,
+  TDatabaseRequest,
+  TRollUpCreateRequest,
+  TRollUpCreateResponse,
+  TRollupHistoryRequest,
+  TRollUpHistoryResponse,
 } from '@zkdb/common';
 import { withCompoundTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Rollup } from '@domain';
 import { authorizeWrapper } from '../validation.js';
 
 export const typeDefsRollUp = `#graphql
@@ -28,7 +30,7 @@ type RollUpHistoryItem {
   txHash: String
   transactionRaw: String!
   status: TransactionStatus!
-  merkletreeRootCurrent: String!
+  merkletreeRoot: String!
   merkletreeRootPrevious: String!
   error: String
   createdAt: Date!
@@ -43,39 +45,37 @@ type RollUpHistory {
 
 extend type Mutation {
   rollupCreate(databaseName: String!): Boolean
+  
   rollupHistory(databaseName: String!): RollUpHistory!
 }
 `;
 
-const rollupHistory = authorizeWrapper<TDatabaseRequest, RollUpData>(
+const rollupHistory = authorizeWrapper<
+  TRollupHistoryRequest,
+  TRollUpHistoryResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    Rollup.history(args.databaseName)
+  async (_root, { databaseName }) => Rollup.history(databaseName)
 );
 
-const rollupCreate = authorizeWrapper<TDatabaseRequest, boolean>(
+const rollupCreate = authorizeWrapper<
+  TRollUpCreateRequest,
+  TRollUpCreateResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) => {
+  async (_root, { databaseName }, ctx) => {
     const result = await withCompoundTransaction((compoundSession) =>
-      Rollup.create(args.databaseName, ctx.userName, compoundSession)
+      Rollup.create(databaseName, ctx.userName, compoundSession)
     );
     return result === null ? false : result;
   }
 );
 
-type TRollUpResolver = {
-  JSON: typeof GraphQLJSON;
-  Mutation: {
-    rollupHistory: typeof rollupHistory;
-    rollupCreate: typeof rollupCreate;
-  };
-};
-
-export const resolversRollUp: TRollUpResolver = {
+export const resolversRollUp = {
   JSON: GraphQLJSON,
   Mutation: {
     rollupHistory,

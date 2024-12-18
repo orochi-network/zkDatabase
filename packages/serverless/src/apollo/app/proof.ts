@@ -10,8 +10,8 @@ import {
   TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
-  TZkProofResponse,
   TZkProofRequest,
+  TZkProofResponse,
 } from '@zkdb/common';
 import { ModelProof, ModelQueueTask } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -52,7 +52,9 @@ export const typeDefsProof = gql`
       collectionName: String!
       docId: String
     ): ProofStatusDocument!
+
     proofStatusDatabase(databaseName: String!): ProofStatusDatabase!
+
     proof(databaseName: String!): ZkProof
   }
 `;
@@ -97,10 +99,10 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   Joi.object({
     databaseName,
   }),
-  async (_root, args) => {
+  async (_root, { databaseName }) => {
     const modelProof = ModelProof.getInstance();
 
-    return modelProof.getProof(args.databaseName);
+    return modelProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
   }
 );
 
@@ -111,11 +113,11 @@ const proofStatusDatabase = publicWrapper<
   Joi.object({
     databaseName,
   }),
-  async (_root, args) => {
+  async (_root, { databaseName }) => {
     const modelTask = ModelQueueTask.getInstance();
 
     const task = await modelTask.findOne({
-      database: args.databaseName,
+      databaseName,
       status: {
         $in: [EProofStatusDocument.Proving, EProofStatusDocument.Queued],
       },
@@ -125,7 +127,10 @@ const proofStatusDatabase = publicWrapper<
       return EProofDatabaseStatus.Proving;
     } else {
       const modelProof = ModelProof.getInstance();
-      const proof = await modelProof.getProof(args.databaseName);
+      const proof = await modelProof.findOne(
+        { databaseName },
+        { sort: { createdAt: -1 } }
+      );
       return proof ? EProofDatabaseStatus.Proved : EProofDatabaseStatus.None;
     }
   }

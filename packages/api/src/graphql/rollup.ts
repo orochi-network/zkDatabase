@@ -18,7 +18,7 @@ const ROLLUP_HISTORY = gql`
         transactionType
         txHash
         status
-        merkletreeRootCurrent
+        merkletreeRoot
         merkletreeRootPrevious
         createdAt
         updatedAt

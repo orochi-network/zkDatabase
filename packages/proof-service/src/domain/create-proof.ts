@@ -23,6 +23,7 @@ import { EProofStatusDocument } from '../../../common/src/index.js';
 import CircuitFactory from '../circuit/circuit-factory.js';
 import logger from '../helper/logger.js';
 
+// @TODO Think about apply session in this code
 export async function createProof(taskId: string) {
   const imQueue = ModelQueueTask.getInstance();
 
@@ -33,7 +34,7 @@ export async function createProof(taskId: string) {
     throw Error('Task has not been found');
   }
 
-  if (status !== EProofStatusDocument.Proving) {
+  if (task.status !== EProofStatusDocument.Proving) {
     logger.error('Task has not been marked as executing');
     throw Error('Task has not been marked as executing');
   }
@@ -65,7 +66,10 @@ export async function createProof(taskId: string) {
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const modelProof = ModelProof.getInstance();
-    const zkProof = await modelProof.getProof(databaseName);
+    const zkProof = await modelProof.findOne(
+      { databaseName },
+      { sort: { createdAt: -1 } }
+    );
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
@@ -157,7 +161,7 @@ export async function createProof(taskId: string) {
           ...proof.toJSON(),
           databaseName,
           collectionName,
-          previousMerkleRoot: onChainRootState.toString(),
+          merkleRootPrevious: onChainRootState.toString(),
           // TODO: We should check newOffChainState exist or not, because publicOutput is `any`
           merkleRoot: proof.publicOutput.newOffChainState.toString(),
           createdAt: date,

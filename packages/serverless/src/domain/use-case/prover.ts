@@ -6,7 +6,7 @@ import {
   TParamProveUpdate,
 } from '@zkdb/common';
 import {
-  CompoundSession,
+  TCompoundSession,
   ModelMerkleTree,
   ModelQueueTask,
   ModelSequencer,
@@ -20,7 +20,7 @@ import { buildSchema } from './schema';
 export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
-    session: CompoundSession
+    session: TCompoundSession
   ) {
     const { databaseName, docId, collectionName, document } = proveCreateParam;
     // Get document metadata

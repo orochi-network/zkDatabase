@@ -166,9 +166,15 @@ import { WorkerService } from "./service/worker";
 
           const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
 
-          const proof = await ModelProof.getInstance().getProof(databaseName, {
-            session: proofSession,
-          });
+          const proof = await ModelProof.getInstance().findOne(
+            { databaseName },
+            {
+              session: proofSession,
+              sort: {
+                createdAt: -1,
+              },
+            }
+          );
 
           if (!proof) {
             throw new Error(`Proof for ${databaseName} not found`);
