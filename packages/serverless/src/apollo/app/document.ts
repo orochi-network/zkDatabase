@@ -71,6 +71,13 @@ export const typeDefsDocument = gql`
   type Query
   type Mutation
 
+  enum ProofStatusDocument {
+    Queued
+    Proving
+    Proved
+    Failed
+  }
+
   type MerkleProof {
     isLeft: Boolean!
     sibling: String!
@@ -82,7 +89,7 @@ export const typeDefsDocument = gql`
     createdAt: Date
     updatedAt: Date
     metadata: MetadataDocumentResponse
-    proofStatus: String
+    proofStatus: ProofStatusDocument
   }
 
   type DocumentFindResponse {
