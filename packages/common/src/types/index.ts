@@ -14,7 +14,6 @@ export * from './schema';
 export * from './search';
 export * from './secure-storage';
 export * from './sequencer';
-export * from './setting';
 export * from './transaction';
 export * from './user';
 export * from './param';
