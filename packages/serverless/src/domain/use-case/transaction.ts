@@ -131,7 +131,7 @@ export class Transaction {
       { session }
     );
 
-    if (!payer || !payer?.publicKey) {
+    if (!payer || PublicKey.fromBase58(payer?.publicKey).isEmpty()) {
       throw new Error('User public key not found');
     }
 

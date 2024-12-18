@@ -163,7 +163,7 @@ export class Rollup {
       },
       {
         $lookup: {
-          ffrom: zkDatabaseConstant.globalCollection.transaction,
+          from: zkDatabaseConstant.globalCollection.transaction,
           localField: 'transactionObjectId',
           foreignField: '_id',
           as: 'transaction',
@@ -171,7 +171,7 @@ export class Rollup {
       },
       {
         $lookup: {
-          ffrom: zkDatabaseConstant.globalCollection.proof,
+          from: zkDatabaseConstant.globalCollection.proof,
           localField: 'proofObjectId',
           foreignField: '_id',
           as: 'proof',

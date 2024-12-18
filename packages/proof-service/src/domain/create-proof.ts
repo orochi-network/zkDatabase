@@ -65,8 +65,8 @@ export async function createProof(taskId: string) {
     class RollUpProof extends ZkProgram.Proof(circuit) {}
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
-    const modelProof = ModelProof.getInstance();
-    const zkProof = await modelProof.findOne(
+    const imProof = ModelProof.getInstance();
+    const zkProof = await imProof.findOne(
       { databaseName },
       { sort: { createdAt: -1 } }
     );
@@ -126,7 +126,7 @@ export async function createProof(taskId: string) {
           Field(hash)
         );
       } else {
-        const rollupProof = await modelProof.findOne({
+        const rollupProof = await imProof.findOne({
           merkleRoot: onChainRootState.toString(),
           databaseName,
         });
@@ -156,7 +156,7 @@ export async function createProof(taskId: string) {
 
     await withTransaction(async (session) => {
       const date = new Date();
-      await modelProof.insertOne(
+      await imProof.insertOne(
         {
           ...proof.toJSON(),
           databaseName,

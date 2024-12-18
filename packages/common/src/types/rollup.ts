@@ -1,8 +1,8 @@
 import { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common.js';
-import { TTransaction, TTransactionRecord } from './transaction.js';
-import { TDatabaseRequest } from './database.js';
-import { TProofRecord } from './proof.js';
+import { TDbRecord } from './common';
+import { TTransaction, TTransactionRecord } from './transaction';
+import { TDatabaseRequest } from './database';
+import { TProofRecord } from './proof';
 
 /**
  * Rollup state
