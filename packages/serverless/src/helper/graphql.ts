@@ -5,6 +5,23 @@ export class GraphqlHelper {
    * Get the index of the requested field in the GraphQL query by traversing
    * the path.
    *
+   * For example, given the following query:
+   * ```graphql
+   * query {
+   *  user {
+   *   name
+   *   age
+   *   address {
+   *    street
+   *    city
+   *   }
+   *  }
+   * }
+   * ```
+   * The path `['user', 'address', 'city']` will return 1, as it is the second
+   * field in the `address` object. The path `['user', 'gender']` will return
+   * -1, as the `gender` field does not exist.
+   *
    * @param info - The GraphQL resolve info that was passed to the resolver.
    * @param path - The path array to traverse and find the field.
    * @returns - The index of the requested field, or undefined if not found.
@@ -37,6 +54,22 @@ export class GraphqlHelper {
   /**
    * Check if the requested field exists in the GraphQL query by traversing the
    * path.
+   *
+   * For example, given the following query:
+   * ```graphql
+   * query {
+   *  user {
+   *   name
+   *   age
+   *   address {
+   *    street
+   *   }
+   *  }
+   * }
+   * ```
+   * The path `['user', 'address', 'street']` will return true, as it is the
+   * first field in the `address` object. The path `['user', 'gender']` will
+   * return false, as the `gender` field does not exist.
    *
    * @param info - The GraphQL resolve info that was passed to the resolver.
    * @param path - The path array to traverse and find the field.
