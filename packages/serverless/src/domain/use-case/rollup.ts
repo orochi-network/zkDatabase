@@ -1,37 +1,45 @@
+import { getCurrentTime, logger } from '@helper';
 import {
   ERollUpState,
   ETransactionStatus,
   ETransactionType,
-  RollUpData,
-  TRollUpHistoryRecord,
-  TRollUpTransactionHistory,
-  TTransactionRecord,
+  TRollUpDetail,
+  TRollUpHistoryDetail,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
-  CompoundSession,
   ModelMerkleTree,
   ModelMetadataDatabase,
   ModelProof,
   ModelQueueTask,
   ModelRollup,
   ModelTransaction,
+  TCompoundSession,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
-import { getCurrentTime, logger } from '@helper';
+import { Database } from './database';
 import Transaction from './transaction';
 
 export class Rollup {
   static async create(
     databaseName: string,
     actor: string,
-    compoundSession: CompoundSession
+    compoundSession: TCompoundSession
   ): Promise<boolean> {
+    await Database.ownershipCheck(databaseName, actor);
+
     const modelProof = ModelProof.getInstance();
-    const latestProofForDb = await modelProof.getProof(databaseName, {
-      session: compoundSession?.proofService,
-    });
+    const latestProofForDb = await modelProof.findOne(
+      { databaseName },
+      {
+        session: compoundSession?.proofService,
+        sort: {
+          createdAt: -1,
+        },
+      }
+    );
 
     if (!latestProofForDb) {
       throw Error('No proof has been generated yet');
@@ -77,8 +85,9 @@ export class Rollup {
       {
         databaseName,
         transactionObjectId,
-        merkletreeRootCurrent: latestProofForDb.previousMerkleRoot,
-        merkletreeRootPrevious: latestProofForDb.merkleRoot,
+        // @NOTICE Something possible wrong here
+        merkletreeRoot: latestProofForDb.merkleRoot,
+        merkletreeRootPrevious: latestProofForDb.merkleRootPrevious,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
@@ -92,11 +101,11 @@ export class Rollup {
   static async history(
     databaseName: string,
     session?: ClientSession
-  ): Promise<RollUpData> {
+  ): Promise<TRollUpDetail> {
     const modelRollUp = ModelRollup.getInstance();
-    const modelTransaction = ModelTransaction.getInstance();
     const minaNetwork = MinaNetwork.getInstance();
     const queue = ModelQueueTask.getInstance();
+
     const database = await ModelMetadataDatabase.getInstance().findOne(
       { databaseName },
       {
@@ -104,7 +113,10 @@ export class Rollup {
       }
     );
 
-    if (!database?.appPublicKey) {
+    if (
+      !database?.appPublicKey ||
+      PublicKey.fromBase58(database?.appPublicKey).isEmpty()
+    ) {
       throw Error('Database is not bound to zk app');
     }
 
@@ -145,6 +157,41 @@ export class Rollup {
       throw Error('Wrong zkapp state');
     }
 
+    const pipeline = [
+      {
+        $match: { databaseName },
+      },
+      {
+        $lookup: {
+          from: zkDatabaseConstant.globalCollection.transaction,
+          localField: 'transactionObjectId',
+          foreignField: '_id',
+          as: 'transaction',
+        },
+      },
+      {
+        $lookup: {
+          from: zkDatabaseConstant.globalCollection.proof,
+          localField: 'proofObjectId',
+          foreignField: '_id',
+          as: 'proof',
+        },
+      },
+      {
+        $sort: 'createdAt: -1',
+      },
+      {
+        $project: {
+          transactionObjectId: 0,
+          proofObjectId: 0,
+        },
+      },
+    ];
+
+    const listRollupHistoryDetail = (await modelRollUp.collection
+      .aggregate(pipeline)
+      .toArray()) as TRollUpHistoryDetail[];
+
     const latestTask = await queue.collection.findOne(
       {
         database: databaseName,
@@ -152,132 +199,28 @@ export class Rollup {
       { sort: { createdAt: -1 } }
     );
 
-    const diff = latestTask!.operationNumber - rolledUpTaskNumber;
+    if (!latestTask) {
+      throw new Error('Latest task not found');
+    }
 
-    const rollUpList = await modelRollUp.collection
-      .find({ databaseName })
-      .toArray();
+    const diff = latestTask.operationNumber - rolledUpTaskNumber;
 
-    const buildRollUpHistory = (
-      history: TRollUpHistoryRecord,
-      transaction: TTransactionRecord,
-      status: ETransactionStatus,
-      error: string
-    ): TRollUpTransactionHistory => ({
-      databaseName: history.databaseName,
-      merkletreeRootCurrent: history.merkletreeRootCurrent,
-      merkletreeRootPrevious: history.merkletreeRootPrevious,
-      transactionObjectId: history.transactionObjectId,
-      proofObjectId: history.proofObjectId,
-      transactionRaw: transaction.transactionRaw,
-      txHash: transaction?.txHash,
-      createdAt: transaction.createdAt,
-      updatedAt: transaction.updatedAt,
-      transactionType: transaction.transactionType,
-      status,
-      error,
-    });
+    let rollUpState: ERollUpState = ERollUpState.Failed;
 
-    const history = (
-      await Promise.all(
-        rollUpList.map(async (history) => {
-          const transaction = await modelTransaction.findOne({
-            _id: history.transactionObjectId,
-          });
-
-          if (!transaction) {
-            logger.error('Transaction for history not found. It is impossible');
-            return null;
-          }
-
-          if (transaction.status === ETransactionStatus.Confirming) {
-            if (!transaction.txHash) {
-              logger.error(
-                'Transaction hash not found for pending transaction'
-              );
-              return null;
-            }
-
-            const tx = await minaNetwork.getZkAppTransactionByTxHash(
-              transaction.txHash
-            );
-
-            if (tx) {
-              if (tx.txStatus === 'applied') {
-                await modelTransaction.updateOne(
-                  {
-                    _id: history.transactionObjectId,
-                  },
-                  {
-                    status: ETransactionStatus.Confirmed,
-                    error: undefined,
-                  },
-                  { session }
-                );
-                return buildRollUpHistory(
-                  history,
-                  transaction,
-                  ETransactionStatus.Signed,
-                  ''
-                );
-              } else if (tx.txStatus === 'failed') {
-                await modelTransaction.updateOne(
-                  {
-                    _id: history.transactionObjectId,
-                  },
-                  {
-                    status: ETransactionStatus.Failed,
-                    error: tx.failures.join(' '),
-                  },
-                  { session }
-                );
-                return buildRollUpHistory(
-                  history,
-                  transaction,
-                  ETransactionStatus.Failed,
-                  tx.failures.join(' ')
-                );
-              }
-            }
-          } else {
-            return buildRollUpHistory(
-              history,
-              transaction,
-              transaction.status,
-              transaction.error
-            );
-          }
-
-          logger.error('Transaction status could not be verified');
-          return buildRollUpHistory(
-            history,
-            transaction,
-            ETransactionStatus.Unknown,
-            transaction.error
-          );
-        })
-      )
-    )
-      .filter((item) => item !== null)
-      .sort((a, b) => {
-        return a.createdAt.getTime() - b.createdAt.getTime();
-      });
-
-    let rollUpState: ERollUpState = ERollUpState.Updated;
-
+    // @NOTICE transaction status must be updated in cron job.
     if (diff > 0) {
       rollUpState = ERollUpState.Outdated;
     } else if (
-      history[history.length - 1] &&
-      history[history.length - 1].status === ETransactionStatus.Failed
+      listRollupHistoryDetail[0].transaction.status ===
+      ETransactionStatus.Confirmed
     ) {
-      rollUpState = ERollUpState.Failed;
+      rollUpState = ERollUpState.Updated;
     }
 
     return {
-      history,
+      history: listRollupHistoryDetail,
       state: rollUpState,
-      extraData: diff,
+      rollUpDifferent: diff,
     };
   }
 }

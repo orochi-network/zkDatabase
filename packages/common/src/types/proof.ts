@@ -1,3 +1,4 @@
+import { JsonProof } from 'o1js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
@@ -46,12 +47,7 @@ export type TMinaSignature = {
   data: string;
 };
 
-export type TZkDatabaseProof = {
-  publicInput: string[];
-  publicOutput: string[];
-  maxProofsVerified: 0 | 1 | 2;
-  proof: string;
-};
+export type TZkDatabaseProof = JsonProof;
 
 // Document's proof status
 export type TProofStatusDocumentRequest = TCollectionRequest & {
@@ -84,14 +80,14 @@ export type TQueue = {
 
 export type TQueueRecord = TDbRecord<TQueue>;
 
-export type TProof = {
+export type TProof = TZkDatabaseProof & {
   databaseName: string;
   collectionName: string;
   merkleRoot: string;
-  previousMerkleRoot: string;
+  merkleRootPrevious: string;
 };
 
-export type TProofRecord = TDbRecord<TProof> & TZkDatabaseProof;
+export type TProofRecord = TDbRecord<TProof>;
 
 // For prover param use-case
 export type TParamProve = {

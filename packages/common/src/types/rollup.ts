@@ -1,6 +1,8 @@
 import { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common.js';
-import { TTransaction } from './transaction.js';
+import { TDbRecord } from './common';
+import { TTransaction, TTransactionRecord } from './transaction';
+import { TDatabaseRequest } from './database';
+import { TProofRecord } from './proof';
 
 /**
  * Rollup state
@@ -19,7 +21,7 @@ export enum ERollUpState {
 
 export type TRollUpHistory = {
   databaseName: string;
-  merkletreeRootCurrent: string;
+  merkletreeRoot: string;
   merkletreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
@@ -33,8 +35,27 @@ export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 export type TRollUpTransactionHistory = TRollUpHistory &
   WithoutId<TDbRecord<TTransaction>>;
 
-export type RollUpData = {
-  history: TRollUpHistory[];
-  state: ERollUpState;
-  extraData: number;
+export type TRollUpHistoryDetail = Pick<
+  TRollUpHistoryRecord,
+  'databaseName' | 'merkletreeRoot' | 'merkletreeRootPrevious'
+> & {
+  transaction: TTransactionRecord;
+  proof: TProofRecord;
 };
+
+export type TRollUpDetail = {
+  history: TRollUpHistoryDetail[];
+  state: ERollUpState;
+  // Number of merkle root transformatiion different to previous one
+  rollUpDifferent: number;
+};
+
+// RollUp history
+export type TRollupHistoryRequest = TDatabaseRequest;
+
+export type TRollUpHistoryResponse = TRollUpDetail;
+
+// Rolup create
+export type TRollUpCreateRequest = TDatabaseRequest;
+
+export type TRollUpCreateResponse = boolean;

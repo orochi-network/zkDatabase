@@ -35,17 +35,14 @@ export class ModelRollup extends ModelGeneral<
     );
     /*
       databaseName: string;
-      merkletreeRootCurrent: string;
+      merkletreeRoot: string;
       merkletreeRootPrevious: string;
       transactionObjectId: ObjectId;
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index(
-        { merkletreeRootCurrent: 1 },
-        { unique: true, session }
-      );
+      await collection.index({ merkletreeRoot: 1 }, { unique: true, session });
       await collection.index(
         { merkletreeRootPrevious: 1 },
         { unique: true, session }

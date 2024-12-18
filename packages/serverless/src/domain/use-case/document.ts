@@ -20,7 +20,14 @@ import {
   TWithProofStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
-import { CompoundSession, ModelQueueTask, ModelSequencer } from '@zkdb/storage';
+import {
+  TCompoundSession,
+  ModelDatabase,
+  ModelQueueTask,
+  ModelSequencer,
+  withTransaction,
+  zkDatabaseConstant,
+} from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
   DEFAULT_PAGINATION,
@@ -55,7 +62,7 @@ export class Document {
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
     permission = PERMISSION_DEFAULT,
-    compoundSession: CompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 

@@ -2111,6 +2111,14 @@
     graphql "16.9.0"
     safer-buffer "2.1.2"
 
+"@orochi-network/utilities@^0.2.41":
+  version "0.2.41"
+  resolved "https://registry.yarnpkg.com/@orochi-network/utilities/-/utilities-0.2.41.tgz#8bf7774a015c50f0e97c6bbca20f326e995342b7"
+  integrity sha512-/z91MofqHuvEXlsWLpvcgY82rzxjRfLG/htIIr0mGxKFSfuz9nGGLzH2Lyj6YkVA8DxtFR7cb8qjGfRFNwNzxA==
+  dependencies:
+    graphql "16.9.0"
+    safer-buffer "2.1.2"
+
 "@orochi-network/vault@^1.4.15":
   version "1.4.15"
   resolved "https://registry.yarnpkg.com/@orochi-network/vault/-/vault-1.4.15.tgz#bf6879bec69fb844f0c4ecd4860b2f2d672b1bc9"
@@ -10167,7 +10175,7 @@ stringify-entities@^4.0.0:
     character-entities-html4 "^2.0.0"
     character-entities-legacy "^3.0.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -11047,7 +11055,7 @@ wordwrap@^1.0.0:
   resolved "https://registry.yarnpkg.com/wordwrap/-/wordwrap-1.0.0.tgz#27584810891456a4171c8d0226441ade90cbcaeb"
   integrity sha512-gvVzJFlPycKc5dZN4yPkP8w7Dc37BtP1yczEneOb4uq34pXZcvrtRTmWV8W+Ume+XCxKgbjM+nevkyFPMybd4Q==
 
-"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0":
+"wrap-ansi-cjs@npm:wrap-ansi@^7.0.0", wrap-ansi@^7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/wrap-ansi/-/wrap-ansi-7.0.0.tgz#67e145cff510a6a6984bdf1152911d69d2eb9e43"
   integrity sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==

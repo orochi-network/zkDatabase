@@ -1,17 +1,7 @@
-import {
-  ETransactionType,
-  TTransaction,
-  TTransactionRecord,
-} from '@zkdb/common';
-import {
-  ClientSession,
-  Filter,
-  FindOptions,
-  OptionalId,
-  WithId,
-} from 'mongodb';
 import { zkDatabaseConstant } from '@common';
 import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { TTransaction, TTransactionRecord } from '@zkdb/common';
+import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -35,16 +25,6 @@ export class ModelTransaction extends ModelGeneral<
     return this.instance;
   }
 
-  public async list(
-    databaseName: string,
-    transactionType: ETransactionType,
-    options?: FindOptions
-  ): Promise<WithId<TTransactionRecord>[]> {
-    return this.collection
-      .find({ databaseName, transactionType }, options)
-      .toArray();
-  }
-
   public async count(filter?: Filter<TTransaction>) {
     return await this.collection.countDocuments(filter);
   }
@@ -55,14 +35,7 @@ export class ModelTransaction extends ModelGeneral<
       DATABASE_ENGINE.serverless,
       zkDatabaseConstant.globalCollection.transaction
     );
-    /*
-      transactionType: ETransactionType;
-      databaseName: string;
-      status: ETransactionStatus;
-      transactionRaw: string;
-      txHash: string;
-      error: string;
-    */
+
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { session });
       await collection.index(
