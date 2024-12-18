@@ -170,12 +170,10 @@ const dbCreate = authorizeWrapper<
   TDatabaseCreateRequest,
   TDatabaseCreateResponse
 >(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
-  Boolean(
-    withTransaction((session) =>
-      Database.create(
-        { databaseName, merkleHeight, databaseOwner: ctx.userName },
-        session
-      )
+  withTransaction((session) =>
+    Database.create(
+      { databaseName, merkleHeight, databaseOwner: ctx.userName },
+      session
     )
   )
 );
