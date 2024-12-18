@@ -48,12 +48,15 @@ export class Group {
     paramGroupCreate: TGroupParamCreate,
     session: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, groupDescription, createBy } =
+    const { databaseName, groupName, groupDescription, createdBy } =
       paramGroupCreate;
 
     // Checking actor is owner first
     if (
-      await Database.isOwner({ databaseName, databaseOwner: createBy }, session)
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
     ) {
       // Checking group existed before
       if (await Group.exist({ databaseName, groupName }, session)) {
@@ -67,7 +70,7 @@ export class Group {
       const imUser = new ModelUser();
 
       // Get user
-      const user = await imUser.findOne({ userName: createBy }, { session });
+      const user = await imUser.findOne({ userName: createdBy }, { session });
       // Checking user exist
       if (user) {
         // Create group instance
@@ -75,7 +78,7 @@ export class Group {
           {
             groupName,
             groupDescription: groupDescription || `Group ${groupName}`,
-            createBy,
+            createdBy,
             createdAt: getCurrentTime(),
             updatedAt: getCurrentTime(),
           },
@@ -158,7 +161,7 @@ export class Group {
     const {
       databaseName,
       groupName,
-      createBy,
+      createdBy,
       newGroupName,
       newGroupDescription,
     } = paramUpdateMetadata;
@@ -182,7 +185,10 @@ export class Group {
 
     // Check actor permission
     if (
-      await Database.isOwner({ databaseName, databaseOwner: createBy }, session)
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
     ) {
       // Initialize model
       const imGroup = new ModelGroup(databaseName);
@@ -193,7 +199,7 @@ export class Group {
         const groupUpdateResult = await imGroup.updateOne(
           {
             groupName,
-            createBy,
+            createdBy,
           },
           {
             // MongoDB will not update if value is 'undefined', no need checking
@@ -243,13 +249,13 @@ export class Group {
     paramListUser: TGroupParamListUser,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, createBy, listUserName } = paramListUser;
+    const { databaseName, groupName, createdBy, listUserName } = paramListUser;
     // Permission owner checking
     if (
       await Database.isOwner(
         {
           databaseName,
-          databaseOwner: createBy,
+          databaseOwner: createdBy,
         },
         session
       )
@@ -294,10 +300,13 @@ export class Group {
     paramListUser: TGroupParamListUser,
     session?: ClientSession
   ): Promise<boolean> {
-    const { databaseName, groupName, createBy, listUserName } = paramListUser;
+    const { databaseName, groupName, createdBy, listUserName } = paramListUser;
     // Permission owner checking
     if (
-      await Database.isOwner({ databaseName, databaseOwner: createBy }, session)
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
     ) {
       // Initialize group model
       const imGroup = new ModelGroup(databaseName);
