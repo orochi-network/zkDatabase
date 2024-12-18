@@ -90,7 +90,6 @@
     "express-fileupload": "1.4.0",
     "express-session": "1.18.0",
     "google-auth-library": "9.14.1",
-    "graphql": "16.9.0",
     "graphql-request": "7.1.0",
     "graphql-scalars": "1.22.4",
     "graphql-type-json": "0.3.2",
@@ -102,5 +101,8 @@
     "o1js": "1.9.0",
     "redis": "4.7.0",
     "spectaql": "3.0.2"
+  },
+  "resolutions": {
+    "graphql": "16.9.0"
   }
 }
