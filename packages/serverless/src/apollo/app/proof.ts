@@ -3,14 +3,14 @@ import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
+  docId,
   EProofDatabaseStatus,
   EProofStatusDocument,
-  objectId,
   TProofStatusDatabaseRequest,
   TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
-  TZkProofReponse,
+  TZkProofResponse,
   TZkProofRequest,
 } from '@zkdb/common';
 import { ModelProof, ModelQueueTask } from '@zkdb/storage';
@@ -64,7 +64,7 @@ const proofStatusDocument = authorizeWrapper<
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId: docId(false),
   }),
   async (_root, { databaseName, collectionName, docId }, ctx) => {
     const actorPermission = await PermissionSecurity.document({
@@ -93,7 +93,7 @@ const proofStatusDocument = authorizeWrapper<
   }
 );
 
-const proof = publicWrapper<TZkProofRequest, TZkProofReponse>(
+const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   Joi.object({
     databaseName,
   }),

@@ -50,11 +50,12 @@ export class Collection {
     // Actor must have write permission of collection to create index
     if (actorPermission.write) {
       // Validate that all keys in the index exist in the schema
+      const indexPossible = metadataCollection.schema.map(
+        (e) => `document.${e.name}.value`
+      );
+
       const invalidIndex = Object.keys(index).filter(
-        (fieldName) =>
-          !metadataCollection.schema.some(
-            (schemaField) => schemaField.name === fieldName
-          )
+        (i) => !indexPossible.includes(i)
       );
 
       if (invalidIndex.length > 0) {

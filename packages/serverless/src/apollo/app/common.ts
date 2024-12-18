@@ -48,7 +48,7 @@ export const typeDefsCommon = gql`
     sorting: Sorting!
   }
 
-  type PaginationInput {
+  input PaginationInput {
     offset: Int
     limit: Int
   }
@@ -84,5 +84,14 @@ export const typeDefsCommon = gql`
     index: Boolean
     # Default is ASC or 1
     sorting: Sorting
+  }
+
+  type MetadataCollection {
+    collectionName: String!
+    schema: [SchemaFieldOutput]!
+    metadata: OwnershipAndPermission!
+    sizeOnDisk: Int
+    createdAt: Date!
+    updatedAt: Date!
   }
 `;

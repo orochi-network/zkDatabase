@@ -1,3 +1,5 @@
+import { Collection } from '@domain';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -5,7 +7,6 @@ import {
   groupName,
   O1JS_VALID_TYPE,
   TCollectionCreateRequest,
-  TCollectionCreateResponse,
   TCollectionExistRequest,
   TCollectionExistResponse,
   TCollectionListRequest,
@@ -15,8 +16,6 @@ import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Collection } from '@domain';
-import { gql } from '@helper';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const schemaField = Joi.object({
@@ -64,7 +63,7 @@ export const typeDefsCollection = gql`
       databaseName: String!
       collectionName: String!
       schema: [SchemaFieldInput!]!
-      groupName: String
+      group: String
       permission: Int
     ): Boolean
   }
@@ -97,23 +96,22 @@ const collectionExist = publicWrapper<
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper<
-  TCollectionCreateRequest,
-  TCollectionCreateResponse
->(CollectionCreateRequest, async (_root, args, ctx) =>
-  withTransaction((session) =>
-    Collection.create(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.schema,
-      args.group,
-      Permission.from(args.permission),
-      session
+const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
+  CollectionCreateRequest,
+  async (_root, args, ctx) =>
+    withTransaction((session) =>
+      Collection.create(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
+        args.schema,
+        args.group,
+        args.permission ? Permission.from(args.permission) : undefined,
+        session
+      )
     )
-  )
 );
 
 export const resolversCollection = {

@@ -54,7 +54,7 @@ export const typeDefsDatabase = gql`
   }
 
   type DatabaseListResponse {
-    data: [DatabaseMetadata]!
+    data: [MetadataDatabase]!
     total: Int!
     offset: Int!
   }
@@ -62,7 +62,7 @@ export const typeDefsDatabase = gql`
   extend type Query {
     dbList(query: JSON, pagination: PaginationInput): DatabaseListResponse!
     dbStats(databaseName: String!): JSON
-    dbInfo(databaseName: String!): Database!
+    dbInfo(databaseName: String!): MetadataDatabase!
     dbExist(databaseName: String!): Boolean!
     dbEnvironment: EnvironmentInfo!
   }

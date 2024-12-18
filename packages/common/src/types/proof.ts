@@ -68,7 +68,7 @@ export type TProofStatusDatabaseResponse = EProofDatabaseStatus;
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;
 
-export type TZkProofReponse = TZkDatabaseProof | null;
+export type TZkProofResponse = TZkDatabaseProof | null;
 
 export type TQueue = {
   databaseName: string;

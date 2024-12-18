@@ -1,6 +1,17 @@
+import { ResolversApp, TypedefsApp } from '@apollo-app';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import { nobodyContext } from '@common';
+import {
+  calculateAccessTokenDigest,
+  config,
+  headerToAccessToken,
+  JwtAuthorization,
+  logger,
+  RedisInstance,
+} from '@helper';
+import { ModelOwnership, ModelUser } from '@model';
 import { TApplicationContext } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
@@ -22,17 +33,6 @@ import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
 import { NetworkId } from 'o1js';
-import { ResolversApp, TypedefsApp } from '@apollo-app';
-import { nobodyContext } from '@common';
-import {
-  calculateAccessTokenDigest,
-  headerToAccessToken,
-  JwtAuthorization,
-  logger,
-  RedisInstance,
-  config,
-} from '@helper';
-import { ModelUser, ModelOwnership } from '@model';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
@@ -64,7 +64,8 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   });
 
   MinaNetwork.getInstance().connect(
-    config.NETWORK_ID as NetworkId,
+    // Since NETWORK_ID enum return {Testnet, Mainnet} so we need to lowercase and cast
+    config.NETWORK_ID.toLocaleLowerCase() as NetworkId,
     config.MINA_URL,
     config.BLOCKBERRY_API_KEY
   );

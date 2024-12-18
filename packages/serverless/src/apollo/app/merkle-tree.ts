@@ -12,6 +12,7 @@ import {
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse,
   databaseName,
+  docId,
   indexNumber,
   pagination,
 } from '@zkdb/common';
@@ -38,11 +39,7 @@ export const JOI_MERKLE_TREE_PROOF_BY_INDEX = Joi.object({
 
 export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
   databaseName,
-  docId: Joi.string()
-    // regex for docId (20-36 characters long, including dashes)
-    // @TODO: better check for ObjectId, for now MongoDB accepts both hexadecimal and dash-encoded string formats
-    .regex(/^[0-9a-fA-F\-]{20,36}$/)
-    .required(),
+  docId,
 });
 
 export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({

@@ -30,6 +30,7 @@ import {
 } from '@helper';
 import { ModelUser } from '@model';
 import { authorizeWrapper, publicWrapper } from '../validation';
+import { NetworkId } from 'o1js';
 
 export const typeDefsUser = gql`
   #graphql
@@ -134,9 +135,9 @@ export const JOI_SIGN_UP = Joi.object<TUserSignUpRequest>({
 
 export const JOI_USER_FIND = Joi.object<TUserFindRequest>({
   query: Joi.object<TUser>({
-    userName,
+    userName: userName.optional(),
     email: Joi.string().email(),
-    publicKey,
+    publicKey: publicKey.optional(),
   }),
   pagination,
 });
@@ -175,7 +176,10 @@ const userSignIn = publicWrapper<TUserSignInRequest, TUserSignInResponse>(
       throw new Error('Invalid ECDSA challenge');
     }
 
-    const client = new Client({ network: config.NETWORK_ID });
+    const client = new Client({
+      // Since NETWORK_ID enum return {Testnet, Mainnet} so we need to lowercase and cast
+      network: config.NETWORK_ID.toLowerCase() as NetworkId,
+    });
 
     if (args.proof.data !== context.req.session.ecdsaChallenge) {
       throw new Error('Invalid challenge message');

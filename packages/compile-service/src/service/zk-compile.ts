@@ -59,10 +59,12 @@ export class ZkCompileService {
       });
 
       const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
-
-      await ModelMetadataDatabase.getInstance().updateDatabase(databaseName, {
-        appPublicKey: zkDbPublicKey.toBase58(),
-      });
+      await ModelMetadataDatabase.getInstance().updateOne(
+        { databaseName },
+        {
+          appPublicKey: zkDbPublicKey.toBase58(),
+        }
+      );
 
       const end = performance.now();
       logger.info(
@@ -71,10 +73,13 @@ export class ZkCompileService {
 
       return partialSignedTx.toJSON();
     } catch (error) {
-      logger.error(`Cannot compile & deploy: ${databaseName}`);
-      await ModelMetadataDatabase.getInstance().updateDatabase(databaseName, {
-        appPublicKey: undefined,
-      });
+      logger.error(`Can not compile & deploy: ${databaseName}`);
+      await ModelMetadataDatabase.getInstance().updateOne(
+        { databaseName },
+        {
+          appPublicKey: undefined,
+        }
+      );
       throw error;
     }
   }

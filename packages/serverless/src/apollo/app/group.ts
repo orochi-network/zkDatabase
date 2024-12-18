@@ -40,8 +40,8 @@ export const typeDefsGroup = gql`
 
   type GroupInfoDetailResponse {
     groupName: String!
-    description: String!
-    createBy: String!
+    groupDescription: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
     listUser: [GroupUserInfo]!
@@ -49,8 +49,8 @@ export const typeDefsGroup = gql`
 
   type GroupListAllResponse {
     groupName: String!
-    description: String!
-    createBy: String!
+    groupDescription: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
   }
