@@ -138,7 +138,7 @@ export const documentField = Joi.object<TDocumentField, true>()
       case 'Int64':
       case 'UInt64': {
         if (typeof raw.value !== 'string' || typeof raw.value !== 'number') {
-          throw Error(
+          throw new Error(
             `Field ${name} of kind ${kind}'s value must be a number or a string representing a number`
           );
         }
@@ -149,7 +149,7 @@ export const documentField = Joi.object<TDocumentField, true>()
           break;
         } catch (e) {
           if (e instanceof Error) {
-            throw Error(
+            throw new Error(
               `Field ${name} of kind ${kind} validation error: ${e.message}`
             );
           }
@@ -168,7 +168,7 @@ export const documentField = Joi.object<TDocumentField, true>()
         break;
       }
       default:
-        throw Error(`Unsupported kind: ${kind}`);
+        throw new Error(`Unsupported kind: ${kind}`);
     }
 
     return { name, ...field };
@@ -181,7 +181,7 @@ export const documentRecord = Joi.object<
   true
 >().custom((raw, helpers) => {
   if (typeof raw !== 'object' || raw === null) {
-    throw Error('Document must be an object');
+    throw new Error('Document must be an object');
   }
 
   const final: Record<string, TDocumentField> = {};
@@ -193,7 +193,7 @@ export const documentRecord = Joi.object<
     }
 
     if (name !== value.name) {
-      throw Error(
+      throw new Error(
         `Field name mismatch: have key ${name} but field name is ${value.name}`
       );
     }
