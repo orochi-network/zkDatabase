@@ -26,7 +26,7 @@ export class Rollup {
   static async create(
     databaseName: string,
     actor: string,
-    compoundSession?: CompoundSession
+    compoundSession: CompoundSession
   ): Promise<boolean> {
     const modelProof = ModelProof.getInstance();
     const latestProofForDb = await modelProof.getProof(databaseName, {
@@ -68,7 +68,7 @@ export class Rollup {
       databaseName,
       actor,
       ETransactionType.Rollup,
-      compoundSession?.serverless
+      compoundSession.serverless
     );
 
     const currentTime = getCurrentTime();

@@ -54,7 +54,7 @@ export const typeDefsDatabase = gql`
   }
 
   type DatabaseListResponse {
-    data: [DatabaseMetadata]!
+    data: [MetadataDatabase]!
     total: Int!
     offset: Int!
   }
@@ -62,7 +62,7 @@ export const typeDefsDatabase = gql`
   extend type Query {
     dbList(query: JSON, pagination: PaginationInput): DatabaseListResponse!
     dbStats(databaseName: String!): JSON
-    dbInfo(databaseName: String!): Database!
+    dbInfo(databaseName: String!): MetadataDatabase!
     dbExist(databaseName: String!): Boolean!
     dbEnvironment: EnvironmentInfo!
   }
@@ -118,9 +118,9 @@ const dbStats = publicWrapper<TDatabaseRequest, Document>(
   Joi.object({
     databaseName,
   }),
-  async (_root, args, _ctx) =>
+  async (_root, { databaseName }, _ctx) =>
     // Using system database to get stats
-    ModelDatabase.getInstance(args.databaseName).stats()
+    ModelDatabase.getInstance(databaseName).stats()
 );
 
 const dbList = authorizeWrapper<TDatabaseListRequest, TDatabaseListResponse>(
@@ -170,12 +170,10 @@ const dbCreate = authorizeWrapper<
   TDatabaseCreateRequest,
   TDatabaseCreateResponse
 >(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
-  Boolean(
-    withTransaction((session) =>
-      Database.create(
-        { databaseName, merkleHeight, databaseOwner: ctx.userName },
-        session
-      )
+  withTransaction((session) =>
+    Database.create(
+      { databaseName, merkleHeight, databaseOwner: ctx.userName },
+      session
     )
   )
 );

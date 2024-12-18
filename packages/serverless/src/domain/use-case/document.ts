@@ -9,7 +9,7 @@
 import {
   EProofStatusDocument,
   ESequencer,
-  PERMISSION_DEFAULT_VALUE,
+  PERMISSION_DEFAULT,
   TDocumentField,
   TDocumentRecordNullable,
   TMerkleProof,
@@ -54,7 +54,7 @@ export class Document {
   static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
-    permission = PERMISSION_DEFAULT_VALUE,
+    permission = PERMISSION_DEFAULT,
     compoundSession: CompoundSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;

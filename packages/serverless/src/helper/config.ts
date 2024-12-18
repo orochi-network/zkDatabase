@@ -1,8 +1,8 @@
 /* eslint-disable no-param-reassign */
 import { ConfigLoader, TLogLevel, TNodeEnv } from '@orochi-network/framework';
+import { ENetworkId } from '@zkdb/common';
 import { createHash } from 'crypto';
 import Joi from 'joi';
-import { NetworkId } from 'o1js';
 
 export type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
@@ -15,7 +15,7 @@ export type TApplicationConfig = {
   SERVICE_ORIGIN: Map<string, boolean>;
   OROCHI_LOG: TLogLevel;
   PROOF_MONGODB_URL: string;
-  NETWORK_ID: NetworkId;
+  NETWORK_ID: ENetworkId;
   BLOCKBERRY_API_KEY: string;
   MINA_URL: string;
 };
@@ -23,7 +23,8 @@ export type TApplicationConfig = {
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
     const result: any = { ...raw };
-    result.NETWORK_ID = raw.NODE_ENV === 'production' ? 'mainnet' : 'testnet';
+    result.NETWORK_ID =
+      raw.NODE_ENV === 'production' ? ENetworkId.Mainnet : ENetworkId.Testnet;
     result.MINA_URL =
       raw.NODE_ENV === 'production'
         ? 'https://api.minascan.io/node/mainnet/v1/graphql'

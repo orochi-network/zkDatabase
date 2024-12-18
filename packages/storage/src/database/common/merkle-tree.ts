@@ -7,12 +7,14 @@ import {
 } from '@zkdb/common';
 import { BulkWriteOptions, FindOptions, OptionalId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
-import { zkDatabaseConstant } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import createExtendedMerkleWitness from '../../helper/extended-merkle-witness.js';
-import ModelGeneral from '../base/general.js';
-import { ModelMetadataDatabase } from '../global/metadata-database.js';
+import { zkDatabaseConstant } from '@common';
+import {
+  getCurrentTime,
+  DATABASE_ENGINE,
+  createExtendedMerkleWitness,
+} from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelMetadataDatabase } from '../global';
 
 export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecod>> {
   private static instances = new Map<string, ModelMerkleTree>();

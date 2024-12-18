@@ -1,10 +1,9 @@
 import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import { ClientSession, Filter, FindOptions, OptionalId } from 'mongodb';
-import { zkDatabaseConstant } from '../../common/const.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
+import { zkDatabaseConstant } from '@common';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
 const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
 

@@ -10,6 +10,7 @@ import { ClientSession, WithoutId } from 'mongodb';
 import { DEFAULT_PAGINATION } from '@common';
 import { getCurrentTime, config } from '@helper';
 import { ModelUser } from '@model';
+import { NetworkId } from 'o1js';
 
 export class User {
   public static async signUp(
@@ -19,8 +20,12 @@ export class User {
       user: { userName, email, userData },
       signature,
     } = paramSignUp;
+
     // Init client mina-signer
-    const client = new Client({ network: config.NETWORK_ID });
+    const client = new Client({
+      // Since NETWORK_ID enum return {Testnet, Mainnet} so we need to lowercase and cast
+      network: config.NETWORK_ID.toLowerCase() as NetworkId,
+    });
     // Ensure the signature verified
     if (client.verifyMessage(signature)) {
       const jsonData: TUser = JSON.parse(signature.data);

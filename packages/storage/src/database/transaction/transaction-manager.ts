@@ -2,10 +2,10 @@ import { ClientSession, MongoError } from 'mongodb';
 import {
   DATABASE_ENGINE,
   TDatabaseEngineStaticInstance,
-} from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
+  logger,
+} from '@helper';
 
-export default async function withTransaction<T>(
+export async function withTransaction<T>(
   callback: (session: ClientSession) => Promise<T>,
   type: keyof TDatabaseEngineStaticInstance = 'serverless'
 ): Promise<T> {

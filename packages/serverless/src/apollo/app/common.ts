@@ -87,4 +87,13 @@ export const typeDefsCommon = gql`
     # Default is ASC or 1
     sorting: Sorting
   }
+
+  type MetadataCollection {
+    collectionName: String!
+    schema: [SchemaFieldOutput]!
+    metadata: OwnershipAndPermission!
+    sizeOnDisk: Int
+    createdAt: Date!
+    updatedAt: Date!
+  }
 `;

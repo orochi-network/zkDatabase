@@ -64,7 +64,7 @@ export class ZKGroupImpl implements ZKGroup {
       groupName: groupDescription.groupName,
       description: groupDescription.description,
       createdAt: new Date(groupDescription.createdAt),
-      createBy: groupDescription.createBy,
+      createdBy: groupDescription.createdBy,
     };
   }
 }

@@ -1,3 +1,3 @@
-export * from './helper/index.js';
-export * from './common/index.js';
-export * from './database/index.js';
+export * from './helper';
+export * from './common';
+export * from './database';

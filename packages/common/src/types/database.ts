@@ -2,6 +2,11 @@ import { TDbRecord, TPickOptional } from './common.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
+export enum ENetworkId {
+  Testnet = 'Testnet',
+  Mainnet = 'Mainnet',
+}
+
 // For model layer
 //@NOTE: This is for the whole metadata of the database
 export type TMetadataDatabase = {

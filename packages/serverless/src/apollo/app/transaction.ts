@@ -12,6 +12,7 @@ import Joi from 'joi';
 import { Transaction } from '@domain';
 import { gql } from '@helper';
 import { authorizeWrapper } from '../validation';
+import { withTransaction } from '@zkdb/storage';
 
 export const typeDefsTransaction = gql`
   #graphql
@@ -76,13 +77,16 @@ const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
     databaseName,
   }),
   async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    (
-      await Transaction.enqueue(
-        args.databaseName,
-        ctx.userName,
-        ETransactionType.Deploy
-      )
-    ).toString()
+    withTransaction(async (session) =>
+      (
+        await Transaction.enqueue(
+          args.databaseName,
+          ctx.userName,
+          ETransactionType.Deploy,
+          session
+        )
+      ).toString()
+    )
 );
 
 const transactionConfirm = authorizeWrapper<

@@ -75,7 +75,7 @@ export type TCollectionRequest = TDatabaseRequest &
  */
 export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
-  Omit<OwnershipAndPermission, 'owner'>;
+  Pick<OwnershipAndPermission, 'permission' | 'group'>;
 
 export type TCollectionCreateResponse = boolean;
 

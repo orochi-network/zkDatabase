@@ -59,10 +59,10 @@ export const convertToIndexSpecification = <T = TCollectionIndex>(
   for (const key in index) {
     if (index[key]) {
       const fieldKey = `document.${key}.value` as keyof TCollectionIndexMap<T>;
-      if (result[fieldKey] === ESorting.Asc) {
+      if (index[key] === ESorting.Asc) {
         result[fieldKey] =
           1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
-      } else if (result[fieldKey] === ESorting.Desc) {
+      } else if (index[key] === ESorting.Desc) {
         result[fieldKey] =
           -1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
       }

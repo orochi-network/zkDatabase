@@ -42,7 +42,20 @@ export type TOwnershipDocumentUpdateRequest = TOwnershipDocumentRequest & {
   permission: number;
 };
 
-export type TOwnershipDocumentOwnRequest = TOwnershipDocumentRequest & {
+export type TOwnershipTransferRequest = TCollectionRequest & {
   groupType: EOwnershipType;
   newOwner: string;
+  docId?: string;
 };
+
+export type TOwnershipTransferResponse = boolean;
+
+// Permission
+export type TPermissionSetRequest = TCollectionRequest & {
+  // If docId existed means permission document request
+  // Otherwise it's permission collection request
+  docId?: string;
+  permission: number;
+};
+
+export type TPermissionSetResponse = boolean;

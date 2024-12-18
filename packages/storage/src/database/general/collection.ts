@@ -5,11 +5,10 @@ import {
   DropIndexesOptions,
   IndexSpecification,
 } from 'mongodb';
-import { isOk } from '../../helper/common.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
-import { DatabaseEngine } from '../database-engine.js';
-import ModelMetadataDatabase from './database.js';
+import { isOk, logger } from '@helper';
+import { ModelBasic } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { ModelDatabase } from './database';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -19,7 +18,7 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelCollection<any>> = new Map();
 
   public get modelDatabase() {
-    return ModelMetadataDatabase.getInstance(this.databaseName);
+    return ModelDatabase.getInstance(this.databaseName);
   }
 
   public static getInstance<T extends Document>(

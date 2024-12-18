@@ -1,6 +1,6 @@
 import { ClientSession, Document } from 'mongodb';
-import { ModelCollection } from '../database/index.js';
-import logger from './logger.js';
+import { ModelCollection } from '@database';
+import { logger } from './logger';
 
 export interface AppContext {
   userName: string;

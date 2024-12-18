@@ -7,7 +7,7 @@ export const ZKDATABASE_USER_NOBODY = 'nobody';
 export const ZKDATABASE_USER_SYSTEM = 'system';
 export const ZKDATABASE_GROUP_NOBODY = 'nobody';
 export const ZKDATABASE_GROUP_SYSTEM = 'system';
-export const DEFAULT_GROUP_ADMIN = 'admin';
+export const GROUP_DEFAULT_ADMIN = 'admin';
 
 // @todo Have better validation for JWT
 // temporary solution to add { iat?: number; exp?: number }

@@ -1,5 +1,5 @@
 import { MongoClient, ServerApiVersion } from 'mongodb';
-import logger from '../helper/logger.js';
+import { logger } from '@helper';
 
 export class DatabaseEngine {
   private static instances: Record<string, DatabaseEngine> = {};

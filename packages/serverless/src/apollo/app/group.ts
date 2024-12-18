@@ -40,8 +40,8 @@ export const typeDefsGroup = gql`
 
   type GroupInfoDetailResponse {
     groupName: String!
-    description: String!
-    createBy: String!
+    groupDescription: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
     listUser: [GroupUserInfo]!
@@ -49,8 +49,8 @@ export const typeDefsGroup = gql`
 
   type GroupListAllResponse {
     groupName: String!
-    description: String!
-    createBy: String!
+    groupDescription: String!
+    createdBy: String!
     updatedAt: String!
     createdAt: String!
   }
@@ -137,10 +137,8 @@ export const JOI_GROUP_REMOVE_USER = Joi.object<TGroupRemoveUserListRequest>({
 // Query
 const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
   JOI_GROUP_LIST_ALL,
-  async (_root, args) => {
-    const groupList = await new ModelGroup(args.databaseName)
-      .find({})
-      .toArray();
+  async (_root, { databaseName }) => {
+    const groupList = await new ModelGroup(databaseName).find({}).toArray();
     return groupList;
   }
 );
@@ -148,8 +146,8 @@ const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
 const groupListByUser = publicWrapper<
   TGroupListByUserRequest,
   TGroupListByUserResponse
->(JOI_GROUP_LIST_USER, async (_root, args) =>
-  new ModelUserGroup(args.databaseName).listGroupByUserName(args.userName)
+>(JOI_GROUP_LIST_USER, async (_root, { databaseName, userName }) =>
+  new ModelUserGroup(databaseName).listGroupByUserName(userName)
 );
 
 const groupDetail = publicWrapper<
@@ -183,17 +181,15 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
 const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
   JOI_GROUP_CREATE,
   async (_root, { databaseName, groupDescription, groupName }, ctx) =>
-    Boolean(
-      withTransaction((session) =>
-        Group.create(
-          {
-            databaseName,
-            groupName,
-            groupDescription,
-            createdBy: ctx.userName,
-          },
-          session
-        )
+    withTransaction((session) =>
+      Group.create(
+        {
+          databaseName,
+          groupName,
+          groupDescription,
+          createdBy: ctx.userName,
+        },
+        session
       )
     )
 );
