@@ -12,7 +12,13 @@ import {
   ModelMetadataDatabase,
 } from '@zkdb/storage';
 import { randomUUID } from 'crypto';
-import { ClientSession, Filter, InsertOneResult, OptionalId } from 'mongodb';
+import {
+  ClientSession,
+  Filter,
+  InsertOneResult,
+  ObjectId,
+  OptionalId,
+} from 'mongodb';
 import { getCurrentTime, logger } from '@helper';
 
 /**
@@ -52,13 +58,17 @@ export class ModelDocument extends ModelGeneral<
   }
 
   /** Construct a document with fields and insert it to the collection, marking
-   * it as active */
+   * it as active. If `oldDocument` is provided, the docId will be reused and
+   * the new document will have reference to the old one. */
   public async insertOneFromListField(
     listField: Record<string, TContractSchemaField>,
-    docId?: string,
+    oldDocument?: {
+      docId: string;
+      _id: ObjectId;
+    },
     session?: ClientSession
   ): Promise<[InsertOneResult<TDocumentRecordNullable>, string]> {
-    const insertingDocId = docId || randomUUID();
+    const insertingDocId = oldDocument?.docId || randomUUID();
     return [
       await this.insertOne(
         {
@@ -67,7 +77,7 @@ export class ModelDocument extends ModelGeneral<
           active: true,
           createdAt: getCurrentTime(),
           updatedAt: getCurrentTime(),
-          previousObjectId: null,
+          previousObjectId: oldDocument?._id || null,
         },
         {
           session,
@@ -85,22 +95,25 @@ export class ModelDocument extends ModelGeneral<
     session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
-    const findDocument = await this.findOne({ docId });
+    const document = await this.findOne({ docId, active: true }, { session });
 
-    if (findDocument) {
+    if (document) {
       // Insert new document
       const documentUpdated = await this.insertOneFromListField(
         fields,
-        findDocument.docId,
+        {
+          docId: document.docId,
+          _id: document._id,
+        },
         session
       );
 
       // Set old document to active: false
       // Point the nextId to updated document to keep track history
       await this.collection.findOneAndUpdate(
-        { _id: findDocument._id },
+        { _id: document._id },
         {
-          $set: { active: false, nextId: documentUpdated[1] },
+          $set: { active: false },
         },
         {
           session,
@@ -110,50 +123,7 @@ export class ModelDocument extends ModelGeneral<
       return documentUpdated;
     }
 
-    throw new Error('No documents found to update');
-  }
-
-  public async dropOne(docId: string, session?: ClientSession) {
-    logger.debug(`ModelDocument::drop()`, { docId });
-    const findDocument = await this.find({ docId }, { session }).toArray();
-
-    const docIds = findDocument.map((doc) => doc.docId);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const bulkOps = docIds.map((docId) => ({
-      updateMany: {
-        filter: { docId },
-        update: {
-          $set: {
-            active: false,
-          },
-        },
-      },
-    }));
-
-    // Execute the bulk update
-    const result = await this.collection.bulkWrite(bulkOps, { session });
-
-    logger.debug(
-      `ModelDocument::drop() - All versions of documents soft deleted`,
-      { result }
-    );
-
-    return result;
-  }
-
-  public async findOneActive(
-    filter: Filter<TDocumentRecordNullable>,
-    session?: ClientSession
-  ) {
-    logger.debug(`ModelDocument::findOne()`, { filter });
-    return this.collection.findOne(
-      { ...filter, active: true },
-      {
-        sort: { updatedAt: -1 },
-        session,
-      }
-    );
+    throw new Error('No document found to update');
   }
 
   public async findHistoryOne(docId: string, session?: ClientSession) {

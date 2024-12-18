@@ -1,6 +1,8 @@
 import { gql } from '@helper';
 
 export const typeDefsCommon = gql`
+  scalar Date
+
   enum TransactionType {
     Deploy
     Rollup

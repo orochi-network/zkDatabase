@@ -2,14 +2,15 @@
 // TODO: debug types to annotate the actual correct types
 // TODO: pagination does not work properly since we fetch all documents with
 // the pagination filter first and then filter them by permission, which can
-// lead to less documents being returned than expected.
-// TODO: group all the functions into a static class to organize them better
+// lead to less documents being returned than expected. This also affects the
+// update and delete operations where we only allow one document to be updated
+// leaving the possibility of no documents being updated if the user does not
+// have permission to update the document.
 import {
   EProofStatusDocument,
   ESequencer,
   PERMISSION_DEFAULT,
   TDocumentField,
-  TDocumentRecord,
   TDocumentRecordNullable,
   TMerkleProof,
   TMetadataDetailDocument,
@@ -57,75 +58,24 @@ export function fieldArrayToRecord(
 }
 
 export class Document {
-  static async findDocument(
-    permissionParam: TPermissionSudo<TParamCollection>,
-    filter: FilterCriteria,
-    session?: ClientSession
-  ): Promise<TDocumentRecordNullable | null> {
-    const { databaseName, collectionName, actor } = permissionParam;
-
-    const actorPermissionCollection = await PermissionSecurity.collection(
-      {
-        databaseName,
-        collectionName,
-        actor,
-      },
-      session
-    );
-    if (!actorPermissionCollection.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for collection '${collectionName}'.`
-      );
-    }
-
-    const modelDocument = ModelDocument.getInstance(
-      databaseName,
-      collectionName
-    );
-
-    const documentRecord = await modelDocument.findOne(parseQuery(filter), {
-      session,
-    });
-
-    if (!documentRecord) {
-      return null;
-    }
-
-    const actorPermissionDocument = await PermissionSecurity.document(
-      {
-        databaseName,
-        collectionName,
-        actor,
-        docId: documentRecord.docId,
-      },
-      session
-    );
-
-    if (!actorPermissionDocument.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
-      );
-    }
-
-    return documentRecord;
-  }
-
-  static async createDocument(
+  static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
     permission = PERMISSION_DEFAULT,
     compoundSession: TCompoundSession
   ) {
-    const actorPermissionCollection = await PermissionSecurity.collection(
-      permissionParam,
-      compoundSession?.serverless
-    );
-
     const { databaseName, collectionName, actor } = permissionParam;
 
-    if (!actorPermissionCollection.write) {
+    if (
+      !(
+        await PermissionSecurity.collection(
+          permissionParam,
+          compoundSession.serverless
+        )
+      ).write
+    ) {
       throw new Error(
-        `Access denied: Actor '${actor}' does not have 'write' permission for collection '${collectionName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
       );
     }
 
@@ -172,7 +122,7 @@ export class Document {
       metadata: { permission: collectionPermission },
     } = documentSchema;
 
-    const permissionCombine = Permission.from(permission).combine(
+    const permissionCombine = permission.combine(
       Permission.from(collectionPermission)
     );
 
@@ -208,165 +158,246 @@ export class Document {
       compoundSession
     );
 
-    return witness;
+    return {
+      merkleProof: witness,
+      docId,
+      acknowledged: true,
+    };
   }
 
-  static async updateDocument(
+  static async update(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
     update: Record<string, TDocumentField>,
-    session: ClientSession
+    compoundSession: CompoundSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 
-    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
-    const documentRecord = await withTransaction(async (session) => {
-      const oldDocumentRecord = await imDocument.findOne(parseQuery(filter), {
-        session,
-      });
-
-      if (oldDocumentRecord) {
-        const actorPermissionDocument = await PermissionSecurity.document(
-          { ...permissionParam, docId: oldDocumentRecord.docId },
-          session
-        );
-        if (!actorPermissionDocument.write) {
-          throw new Error(
-            `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
-          );
-        }
-
-        if (Object.keys(update).length === 0) {
-          throw new Error(
-            'Document array is empty. At least one field is required.'
-          );
-        }
-
-        // TODO: shouldn't we create a new revision and set the old ones as
-        // inactive instead? i.e. Using ModelDocument.update()
-        await imDocument.updateOne(
-          { docId: oldDocumentRecord.docId },
-          {
-            $set: {
-              document: update,
-            },
-          },
-          {
-            session,
-          }
-        );
-
-        return oldDocumentRecord;
-      }
-    });
-
-    if (documentRecord) {
-      const witness = await Prover.update(
-        {
-          databaseName,
-          collectionName,
-          docId: documentRecord.docId,
-          newDocument: Object.values(update),
-        },
-        session
+    if (
+      !(
+        await PermissionSecurity.collection(
+          permissionParam,
+          compoundSession.serverless
+        )
+      ).write
+    ) {
+      throw new Error(
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
       );
-      return witness;
     }
 
-    throw Error(
-      'Invalid query, the amount of documents that satisfy filter must be only one'
+    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+    const listQualifiedDocument = await imDocument
+      .find(
+        { ...parseQuery(filter), active: true },
+        {
+          session: compoundSession.serverless,
+        }
+      )
+      .toArray();
+
+    if (listQualifiedDocument.length !== 1) {
+      throw new Error(
+        `Invalid query, the amount of documents that satisfy filter must be one \
+but found ${listQualifiedDocument.length}.`
+      );
+    }
+
+    const document = listQualifiedDocument[0];
+
+    const actorPermissionDocument = await PermissionSecurity.document(
+      { ...permissionParam, docId: document.docId },
+      compoundSession.serverless
     );
+    if (!actorPermissionDocument.write) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'write' permission for the specified document.`
+      );
+    }
+
+    if (Object.keys(update).length === 0) {
+      throw new Error(
+        'Document array is empty. At least one field is required.'
+      );
+    }
+
+    await imDocument.update(document.docId, update, compoundSession.serverless);
+
+    const witness = await Prover.update(
+      {
+        databaseName,
+        collectionName,
+        docId: document.docId,
+        newDocument: Object.values(update),
+      },
+      compoundSession
+    );
+
+    return witness;
   }
 
-  static async deleteDocument(
+  /** Drop documents that satisfy the filter criteria, setting them to
+   * inactive. */
+  static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
-    filter: FilterCriteria
+    filter: FilterCriteria,
+    compoundSession: CompoundSession
   ): Promise<TMerkleProof[]> {
     const { databaseName, collectionName, actor } = permissionParam;
 
-    const result = await withTransaction(async (session) => {
-      const imDocument = ModelDocument.getInstance(
-        databaseName,
-        collectionName
+    if (
+      !(
+        await PermissionSecurity.collection(
+          permissionParam,
+          compoundSession.serverless
+        )
+      ).write
+    ) {
+      throw new Error(
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
       );
-
-      const findResult = await imDocument.findOne(parseQuery(filter), {
-        session,
-      });
-
-      if (findResult) {
-        const actorPermissionDocument = await PermissionSecurity.document(
-          {
-            ...permissionParam,
-            docId: findResult.docId,
-          },
-          session
-        );
-        if (!actorPermissionDocument.write) {
-          throw new Error(
-            `Access denied: Actor '${actor}' does not have 'delete' permission for the specified document.`
-          );
-        }
-        await imDocument.dropOne(findResult.docId);
-      }
-
-      return findResult;
-    });
-    if (result) {
-      const witness = await Prover.delete({
-        databaseName,
-        collectionName,
-        docId: result.docId,
-      });
-      return witness;
-
-      // TODO: Should we remove document metadata ???????
-      // const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-      // await modelDocumentMetadata.deleteOne(
-      //   { docId: findResult[0].docId },
-      //   { session }
-      // );
     }
 
-    throw Error('Document not found');
+    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+    const listQualifiedDocument = await imDocument
+      .find(
+        { ...parseQuery(filter), active: true },
+        {
+          session: compoundSession.serverless,
+        }
+      )
+      .toArray();
+
+    if (listQualifiedDocument.length !== 1) {
+      throw new Error(
+        `Invalid query, the amount of documents that satisfy filter must be one \
+but found ${listQualifiedDocument.length}.`
+      );
+    }
+
+    const document = listQualifiedDocument[0];
+
+    const actorDocumentPermission = await PermissionSecurity.document(
+      {
+        databaseName,
+        collectionName,
+        actor,
+        docId: document.docId,
+      },
+      compoundSession.serverless
+    );
+
+    if (!actorDocumentPermission.write) {
+      throw new Error(
+        `Actor '${actor}' does not have 'write' permission for the specified document.`
+      );
+    }
+
+    await imDocument.updateMany(
+      {
+        docId: document.docId,
+        active: true,
+      },
+      {
+        $set: {
+          active: false,
+        },
+      }
+    );
+
+    const witness = await Prover.delete({
+      databaseName,
+      collectionName,
+      docId: document.docId,
+    });
+
+    return witness;
   }
 
-  static async listDocumentWithMetadata(
+  /** Query for documents given a filter criteria. Returns a list of documents
+   * and the total number of documents that satisfy the filter criteria. */
+  static async query(
     permissionParam: TPermissionSudo<TParamCollection>,
     query?: FilterCriteria,
     pagination?: TPagination,
     session?: ClientSession
-  ): Promise<TWithProofStatus<TMetadataDetailDocument<TDocumentRecord>>[]> {
-    const { db: database } = new ModelDatabase();
+  ): Promise<[TDocumentRecordNullable[], number]> {
     const { databaseName, collectionName, actor } = permissionParam;
 
-    const paginationInfo = pagination || DEFAULT_PAGINATION;
-    const pipeline = [];
-    if (query) {
-      pipeline.push({ $match: parseQuery(query) });
+    if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
+      throw new Error(
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+      );
     }
-    pipeline.push({
-      $lookup: {
-        from: zkDatabaseConstant.databaseCollection.metadataDocument,
-        let: { docId: '$docId' },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ['$docId', '$$docId'] },
-            },
-          },
-        ],
-        as: 'metadata',
-      },
-      $skip: paginationInfo.offset,
-      $limit: paginationInfo.limit,
-    });
 
-    const listDocumentWithMetadata = (await database
-      .collection(collectionName)
-      .aggregate(pipeline, { session })
-      .toArray()) as TMetadataDetailDocument<TDocumentRecord>[];
+    const paginationInfo = pagination || DEFAULT_PAGINATION;
 
+    const parsedQuery = parseQuery(query || {});
+
+    const [listDocument, totalDocument] = await Promise.all([
+      ModelDocument.getInstance(databaseName, collectionName)
+        .find({ ...parsedQuery, active: true }, { session })
+        .limit(paginationInfo.limit)
+        .skip(paginationInfo.offset)
+        .toArray(),
+
+      ModelDocument.getInstance(
+        databaseName,
+        collectionName
+      ).countActiveDocuments(parsedQuery),
+    ]);
+
+    return [
+      await PermissionSecurity.filterDocument(
+        databaseName,
+        collectionName,
+        listDocument,
+        actor,
+        PermissionBase.permissionRead()
+      ),
+      totalDocument,
+    ];
+  }
+
+  /** Fill document metadata for a list of documents. Note that this won't
+   * check for permission and will return all metadata records for the given
+   * documents. */
+  static async fillMetadata(
+    listDocument: TDocumentRecordNullable[],
+    databaseName: string
+  ): Promise<TMetadataDetailDocument<TDocumentRecordNullable>[]> {
+    if (!listDocument.length) {
+      return [];
+    }
+
+    const docIds = listDocument.map((doc) => doc.docId);
+
+    const metadataRecords = await new ModelMetadataDocument(databaseName)
+      .find({
+        docId: { $in: docIds },
+      })
+      .toArray();
+
+    // Create a map for quick metadata lookup
+    const metadataMap = new Map(
+      metadataRecords.map((metadata) => [metadata.docId, metadata])
+    );
+
+    // Combine documents with their metadata
+    return listDocument.map((doc) => ({
+      ...doc,
+      metadata: metadataMap.get(doc.docId)!!,
+    }));
+  }
+
+  /** Fill proof status for a list of documents. Note that this won't check for
+   * permission and will return all proof status for the given documents. */
+  static async fillProofStatus(
+    listDocument: TDocumentRecordNullable[],
+    collectionName: string
+  ): Promise<TWithProofStatus<TDocumentRecordNullable>[]> {
     const listQueueTask =
       await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
 
@@ -374,14 +405,7 @@ export class Document {
       listQueueTask?.map((task) => [task.docId, task.status]) || []
     );
 
-    const result = await PermissionSecurity.filterMetadataDocumentDetail(
-      databaseName,
-      listDocumentWithMetadata,
-      actor,
-      PermissionBase.permissionRead()
-    );
-
-    return result.map((item) => {
+    return listDocument.map((item) => {
       return {
         ...item,
         proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,

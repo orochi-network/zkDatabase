@@ -11,7 +11,7 @@ export async function withCompoundTransaction<T>(
 ): Promise<T | null> {
   const serverless = DATABASE_ENGINE.serverless.client.startSession();
   const proofService = DATABASE_ENGINE.proofService.client.startSession();
-  let result: T | null = null;
+  let result: T;
 
   try {
     serverless.startTransaction({

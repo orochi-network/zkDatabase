@@ -14,7 +14,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
-import { ModelDocument, ModelMetadataDocument } from '@model';
+import { ModelMetadataDocument } from '@model';
 import { buildSchema } from './schema';
 
 export class Prover {
@@ -34,7 +34,7 @@ export class Prover {
     );
 
     if (!metadataDocument) {
-      throw new Error(`Metadata of document ${docId} is missed`);
+      throw new Error(`No metadata found for docId ${docId}`);
     }
 
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
@@ -87,18 +87,10 @@ export class Prover {
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
-    session: ClientSession
+    session: CompoundSession
   ) {
     const { databaseName, collectionName, docId, newDocument } =
       proveUpdateParam;
-
-    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
-
-    const oldDocument = await imDocument.findOne({ docId }, { session });
-
-    if (!oldDocument) {
-      throw new Error(`Document ${docId} does not exist`);
-    }
 
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
@@ -107,18 +99,18 @@ export class Prover {
       {
         docId,
       },
-      { session }
+      { session: session.serverless }
     );
 
     if (!metadataDocument) {
-      throw new Error('Document metadata is empty');
+      throw new Error(`No metadata found for docId ${docId}`);
     }
 
     const schema = await buildSchema(
       databaseName,
       collectionName,
       newDocument,
-      session
+      session.serverless
     );
 
     const currDate = new Date();
@@ -126,13 +118,13 @@ export class Prover {
     const merkleIndex = BigInt(metadataDocument.merkleIndex);
 
     const newRoot = await imMerkleTree.setLeaf(merkleIndex, hash, currDate, {
-      session,
+      session: session.serverless,
     });
 
     const imSequencer = ModelSequencer.getInstance(databaseName);
     const operationNumber = await imSequencer.nextValue(
       ESequencer.Operation,
-      session
+      session.serverless
     );
 
     await ModelQueueTask.getInstance().queueTask(
@@ -148,11 +140,11 @@ export class Prover {
         operationNumber,
         merkleRoot: newRoot.toString(),
       },
-      { session }
+      { session: session.proofService }
     );
 
     return imMerkleTree.getMerkleProof(merkleIndex, currDate, {
-      session,
+      session: session.serverless,
     });
   }
 
@@ -162,16 +154,7 @@ export class Prover {
   ) {
     const { databaseName, collectionName, docId } = proveDeleteParam;
 
-    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
-
-    const document = await imDocument.findOne({ docId }, { session });
-
-    if (!document) {
-      throw new Error(`Document ${docId} does not exist to be proved`);
-    }
-
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
-
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
     const metadataDocument = await imMetadataDocument.findOne(
@@ -182,7 +165,7 @@ export class Prover {
     );
 
     if (!metadataDocument) {
-      throw new Error(`Document ${docId} metadata is empty`);
+      throw new Error(`No metadata found for docId ${docId}`);
     }
 
     const currDate = new Date();
