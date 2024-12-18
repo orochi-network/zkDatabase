@@ -54,6 +54,12 @@ import { WorkerService } from "./service/worker";
 
         const { transactionObjectId, payerAddress } = job.data;
 
+        if (!payerAddress) {
+          throw new Error(
+            `Payer not found with transaction ${transactionObjectId}`
+          );
+        }
+
         const transaction = await imTransaction.findOne(
           {
             _id: new ObjectId(transactionObjectId),
