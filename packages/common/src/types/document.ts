@@ -46,10 +46,14 @@ export type TDocumentFindRequest = TDocumentNamespace & {
 
 // metadata and proofStatus's presence depends on whether the graphql client
 // requests them or not
-export type TDocumentFindResponse = TDocumentResponse & {
-  metadata?: TMetadataDocument;
-  proofStatus?: EProofStatusDocument;
-};
+export type TDocumentFindResponse = TPaginationReturn<
+  Array<
+    TDocumentResponse & {
+      metadata?: TMetadataDocument;
+      proofStatus?: EProofStatusDocument;
+    }
+  >
+>;
 
 export type TDocumentCreateRequest = TDocumentNamespace & {
   document: Record<string, TDocumentField>;

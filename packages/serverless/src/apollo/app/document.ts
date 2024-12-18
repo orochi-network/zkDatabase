@@ -155,7 +155,7 @@ export const typeDefsDocument = gql`
 
 const documentFind = authorizeWrapper<
   TDocumentFindRequest,
-  TPaginationReturn<TDocumentFindResponse[]>
+  TDocumentFindResponse
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
   const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
     'data',
