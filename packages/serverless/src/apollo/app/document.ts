@@ -20,7 +20,7 @@ import {
   TDocumentHistoryResponse,
   TPaginationReturn,
   TDocumentFindResponse,
-  PERMISSION_DEFAULT_VALUE,
+  PERMISSION_DEFAULT,
   TDocumentCreateResponse,
 } from '@zkdb/common';
 
@@ -210,7 +210,7 @@ const documentCreate = authorizeWrapper<
       args.document,
       args.documentPermission
         ? Permission.from(args.documentPermission)
-        : PERMISSION_DEFAULT_VALUE,
+        : PERMISSION_DEFAULT,
       compoundSession
     )
   )
