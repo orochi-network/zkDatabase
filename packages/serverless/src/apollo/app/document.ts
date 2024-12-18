@@ -166,7 +166,7 @@ const documentFind = authorizeWrapper<
     'proofStatus',
   ]);
 
-  return await withTransaction(async (session) => {
+  return withTransaction(async (session) => {
     let [listDocument, numTotalDocument] = await Document.query(
       {
         databaseName: args.databaseName,
