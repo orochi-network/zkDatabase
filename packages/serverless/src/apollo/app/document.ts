@@ -1,3 +1,6 @@
+// TODO: parseQuery already validates the query to some extent, but still,
+// consider validating the query object before passing to parseQuery
+
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -10,48 +13,43 @@ import {
   documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
-  TDocumentListRequest,
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
-  TDocumentHistoryListRequest,
-  TWithProofStatus,
-  TDocumentWithMetadataResponse,
-  TDocumentRecordNullable,
-  TDocumentHistoryListResponse,
   TDocumentModificationResponse,
   TDocumentHistoryResponse,
+  TPaginationReturn,
+  TDocumentFindResponse,
+  PERMISSION_DEFAULT,
+  TDocumentCreateResponse,
 } from '@zkdb/common';
 
-import { DEFAULT_PAGINATION } from '@common';
 import { Permission } from '@zkdb/permission';
+import { GraphqlHelper } from '@helper';
 
-export const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
+const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
 });
 
-export const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentListRequest>({
+const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
   pagination,
 });
 
-export const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<
-  TDocumentCreateRequest,
-  true
->({
+const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: Joi.number().min(0).max(0xffffff).required(),
+  documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
   document: schemaDocumentRecord,
 });
 
-export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
+const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
   query: Joi.object(),
@@ -60,18 +58,11 @@ export const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   document: schemaDocumentRecord,
 });
 
-export const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
+const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
     docId: Joi.string(),
-  });
-
-export const JOI_DOCUMENT_HISTORY_LIST_REQUEST =
-  Joi.object<TDocumentHistoryListRequest>({
-    databaseName,
-    collectionName,
-    pagination,
   });
 
 export const typeDefsDocument = gql`
@@ -80,74 +71,81 @@ export const typeDefsDocument = gql`
   type Query
   type Mutation
 
+  enum ProofStatusDocument {
+    Queued
+    Proving
+    Proved
+    Failed
+  }
+
   type MerkleProof {
     isLeft: Boolean!
     sibling: String!
-  }
-
-  type ListDocumentWithMetadataResponse {
-    document: DocumentResponse!
-    metadata: MetadataDocumentResponse!
-    proofStatus: String
-  }
-
-  type DocumentHistoryResponse {
-    docId: String!
-    documentRevision: [DocumentResponse!]!
-    metadata: MetadataDocumentResponse!
-    active: Boolean!
   }
 
   type DocumentResponse {
     docId: String!
     document: JSON
     createdAt: Date
+    updatedAt: Date
+    metadata: MetadataDocumentResponse
+    proofStatus: ProofStatusDocument
+  }
+
+  type DocumentFindResponse {
+    data: [DocumentResponse!]!
+    total: Int
+    offset: Int
+  }
+
+  type DocumentCreateResponse {
+    merkleProof: [MerkleProof!]!
+    docId: String!
+    acknowledged: Boolean!
+  }
+
+  # History aka revisions of a document
+  type DocumentHistoryFindResponse {
+    docId: String!
+    documentRevision: [DocumentResponse!]!
+    metadata: MetadataDocumentResponse!
+    active: Boolean!
+    total: Int
+    offset: Int
   }
 
   extend type Query {
-    findDocument(
+    documentFind(
       databaseName: String!
       collectionName: String!
-      query: JSON!
-    ): DocumentResponse
-
-    listDocumentWithMetadata(
-      databaseName: String!
-      collectionName: String!
-      query: JSON!
+      query: JSON # If not provided, return all documents
       pagination: PaginationInput
-    ): [ListDocumentWithMetadataResponse]!
+    ): DocumentFindResponse
 
-    findDocumentHistory(
+    documentHistoryFind(
       databaseName: String!
       collectionName: String!
-      docId: String
-    ): DocumentHistoryResponse
-
-    listDocumentHistory(
-      databaseName: String!
-      collectionName: String!
-      docId: String
+      docId: String!
       pagination: PaginationInput
-    ): [DocumentHistoryResponse]!
+    ): [DocumentHistoryFindResponse]!
   }
 
   extend type Mutation {
-    createDocument(
+    documentCreate(
       databaseName: String!
       collectionName: String!
-      document: [SchemaFieldInput!]!
+      document: JSON!
       documentPermission: Int
-    ): [MerkleProof!]!
+    ): DocumentCreateResponse!
 
-    updateDocument(
+    documentUpdate(
       databaseName: String!
       collectionName: String!
       query: JSON!
-      document: [SchemaFieldInput!]!
+      document: JSON!
     ): [MerkleProof!]!
 
-    dropDocument(
+    documentDrop(
       databaseName: String!
       collectionName: String!
       query: JSON!
@@ -155,77 +153,82 @@ export const typeDefsDocument = gql`
   }
 `;
 
-// Query
-const findDocument = authorizeWrapper<
+const documentFind = authorizeWrapper<
   TDocumentFindRequest,
-  TDocumentRecordNullable | null
->(JOI_DOCUMENT_FIND_REQUEST, async (_root: unknown, args, ctx) => {
-  const document = await withTransaction((session) =>
-    Document.findDocument(
+  TDocumentFindResponse
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
+  const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
+    'data',
+    'metadata',
+  ]);
+  const includesProofStatus = GraphqlHelper.checkRequestedFieldExist(info, [
+    'data',
+    'proofStatus',
+  ]);
+
+  return withTransaction(async (session) => {
+    let [listDocument, numTotalDocument] = await Document.query(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
         actor: ctx.userName,
       },
       args.query,
-      session
-    )
-  );
-
-  return document;
-});
-
-const listDocumentWithMetadata = authorizeWrapper<
-  TDocumentListRequest,
-  TWithProofStatus<TDocumentWithMetadataResponse>[]
->(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  const listDocument = await withTransaction(async (session) => {
-    return Document.listDocumentWithMetadata(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query,
-      args.pagination || DEFAULT_PAGINATION,
+      args.pagination,
       session
     );
+
+    // Lazily fill metadata and proof status if requested
+    // TODO: can we fill metadata and proof status in parallel?
+    if (includesMetadata) {
+      listDocument = await Document.fillMetadata(
+        listDocument,
+        args.databaseName
+      );
+    }
+
+    if (includesProofStatus) {
+      listDocument = await Document.fillProofStatus(
+        listDocument,
+        args.collectionName
+      );
+    }
+
+    return {
+      data: listDocument,
+      total: numTotalDocument,
+      offset: args.pagination.offset,
+    };
   });
-
-  if (listDocument == null) {
-    throw new Error('Failed to list documents, transaction returned null');
-  }
-
-  return listDocument;
 });
 
 // Mutation
-const createDocument = authorizeWrapper<
+const documentCreate = authorizeWrapper<
   TDocumentCreateRequest,
-  TDocumentModificationResponse
->(
-  JOI_DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
-    withCompoundTransaction((compoundSession) =>
-      Document.createDocument(
-        {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
-          actor: ctx.userName,
-        },
-        args.document,
-        Permission.from(args.documentPermission),
-        compoundSession
-      )
+  TDocumentCreateResponse
+>(JOI_DOCUMENT_CREATE_REQUEST, async (_root: unknown, args, ctx) =>
+  withCompoundTransaction(async (compoundSession) =>
+    Document.create(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.document,
+      args.documentPermission
+        ? Permission.from(args.documentPermission)
+        : PERMISSION_DEFAULT,
+      compoundSession
     )
+  )
 );
 
-const updateDocument = authorizeWrapper<
+const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentModificationResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return withTransaction((session) =>
-    Document.updateDocument(
+  return withCompoundTransaction(async (session) =>
+    Document.update(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -238,24 +241,27 @@ const updateDocument = authorizeWrapper<
   );
 });
 
-const dropDocument = authorizeWrapper<
+const documentDrop = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentModificationResponse
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return Document.deleteDocument(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-      },
-      args.query
-    );
+    return withCompoundTransaction(async (session) => {
+      return Document.drop(
+        {
+          databaseName: args.databaseName,
+          collectionName: args.collectionName,
+          actor: ctx.userName,
+        },
+        args.query,
+        session
+      );
+    });
   }
 );
 
-const findDocumentHistory = authorizeWrapper<
+const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
   TDocumentHistoryResponse | null
 >(
@@ -275,37 +281,15 @@ const findDocumentHistory = authorizeWrapper<
   }
 );
 
-const listDocumentHistory = authorizeWrapper<
-  TDocumentHistoryListRequest,
-  TDocumentHistoryListResponse
->(JOI_DOCUMENT_HISTORY_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  return withTransaction(async (session) => {
-    const documents = await DocumentHistory.list(
-      {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
-        actor: ctx.userName,
-        docId: args.docId,
-      },
-      args.pagination || DEFAULT_PAGINATION,
-      session
-    );
-
-    return documents;
-  });
-});
-
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
-    findDocument,
-    listDocumentWithMetadata,
-    findDocumentHistory,
-    listDocumentHistory,
+    documentFind,
+    documentHistoryFind,
   },
   Mutation: {
-    createDocument,
-    updateDocument,
-    dropDocument,
+    documentCreate,
+    documentUpdate,
+    documentDrop,
   },
 };

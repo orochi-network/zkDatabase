@@ -8,10 +8,10 @@ export type CompoundSession = {
 
 export async function withCompoundTransaction<T>(
   callback: (session: CompoundSession) => Promise<T>
-): Promise<T | null> {
+): Promise<T> {
   const serverless = DATABASE_ENGINE.serverless.client.startSession();
   const proofService = DATABASE_ENGINE.proofService.client.startSession();
-  let result: T | null = null;
+  let result: T;
 
   try {
     serverless.startTransaction({

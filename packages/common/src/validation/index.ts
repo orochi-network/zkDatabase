@@ -84,18 +84,19 @@ export const indexNumber = Joi.string()
 export const index = Joi.array().items(Joi.string().required());
 
 // TODO: write tests
+// TODO: double check with the obsolete validators inside use-case/schema.ts
 export const documentField = Joi.object<TDocumentField, true>()
   .custom((raw, helpers) => {
     const { value: name, error: nameError } = Joi.string()
       .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
       .validate(raw.name);
     if (nameError) {
-      return nameError;
+      throw nameError;
     }
 
     const { value: kind, error: kindError } = Joi.string().validate(raw.kind);
     if (kindError) {
-      return kindError;
+      throw kindError;
     }
 
     let field: Omit<TDocumentField, 'name'>;
@@ -113,17 +114,22 @@ export const documentField = Joi.object<TDocumentField, true>()
           )
           .validate(raw.value);
         if (error) {
-          return error;
+          throw new Error(
+            `Field ${name} of kind ${kind} validation error: ${error}`
+          );
         }
         field = { kind, value };
         break;
       }
       case 'Field':
       case 'CircuitString':
+      // TODO: character should have a length of 1
       case 'Character': {
         const { value, error } = Joi.string().validate(raw.value);
         if (error) {
-          return error;
+          throw new Error(
+            `Field ${name} of kind ${kind} validation error: ${error}`
+          );
         }
         field = { kind, value };
         break;
@@ -132,8 +138,8 @@ export const documentField = Joi.object<TDocumentField, true>()
       case 'Int64':
       case 'UInt64': {
         if (typeof raw.value !== 'string' || typeof raw.value !== 'number') {
-          return helpers.error(
-            'Value must be a number or a string representing a number'
+          throw new Error(
+            `Field ${name} of kind ${kind}'s value must be a number or a string representing a number`
           );
         }
 
@@ -143,7 +149,9 @@ export const documentField = Joi.object<TDocumentField, true>()
           break;
         } catch (e) {
           if (e instanceof Error) {
-            return helpers.error(e.message);
+            throw new Error(
+              `Field ${name} of kind ${kind} validation error: ${e.message}`
+            );
           }
           throw e;
         }
@@ -152,13 +160,15 @@ export const documentField = Joi.object<TDocumentField, true>()
       case 'Sign': {
         const { value, error } = Joi.boolean().validate(raw.value);
         if (error) {
-          return error;
+          throw new Error(
+            `Field ${name} of kind ${kind} validation error: ${error}`
+          );
         }
         field = { kind, value };
         break;
       }
       default:
-        return helpers.error(`Unsupported kind: ${kind}`);
+        throw new Error(`Unsupported kind: ${kind}`);
     }
 
     return { name, ...field };
@@ -171,7 +181,7 @@ export const documentRecord = Joi.object<
   true
 >().custom((raw, helpers) => {
   if (typeof raw !== 'object' || raw === null) {
-    return helpers.error('Document must be an object');
+    throw new Error('Document must be an object');
   }
 
   const final: Record<string, TDocumentField> = {};
@@ -179,11 +189,11 @@ export const documentRecord = Joi.object<
   for (const [name, field] of Object.entries(raw)) {
     const { value, error } = documentField.validate(field);
     if (error) {
-      return error;
+      throw error;
     }
 
     if (name !== value.name) {
-      return helpers.error(
+      throw new Error(
         `Field name mismatch: have key ${name} but field name is ${value.name}`
       );
     }

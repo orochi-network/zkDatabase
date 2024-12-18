@@ -4,6 +4,7 @@ import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TMetadataDetail, TMetadataDocument } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
+import { EProofStatusDocument } from './proof.js';
 
 export type TDocumentField = TContractSchemaField;
 
@@ -33,33 +34,36 @@ export type TDocumentHistory = {
 
 export type TDocumentResponse = TDocumentRecordNullable;
 
-export type TDocumentWithMetadataResponse = TMetadataDetail<
-  TDocumentResponse,
-  TMetadataDocument
->;
-
 export type TDocumentNamespace = {
   databaseName: string;
   collectionName: string;
 };
 
-export type TDocumentListRequest = TDocumentNamespace & {
+export type TDocumentFindRequest = TDocumentNamespace & {
   query: { [key: string]: string };
   pagination: TPagination;
 };
 
-export type TDocumentMerkleProofResponse = TMerkleProof[];
-
-export type TDocumentListFindResponse =
-  TPaginationReturn<TDocumentMerkleProofResponse>;
-
-export type TDocumentFindRequest = TDocumentNamespace & {
-  query: { [key: string]: string };
-};
+// metadata and proofStatus's presence depends on whether the graphql client
+// requests them or not
+export type TDocumentFindResponse = TPaginationReturn<
+  Array<
+    TDocumentResponse & {
+      metadata?: TMetadataDocument;
+      proofStatus?: EProofStatusDocument;
+    }
+  >
+>;
 
 export type TDocumentCreateRequest = TDocumentNamespace & {
   document: Record<string, TDocumentField>;
-  documentPermission: number;
+  documentPermission?: number;
+};
+
+export type TDocumentCreateResponse = {
+  docId: string;
+  acknowledged: boolean;
+  merkleProof: TMerkleProof[];
 };
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {
@@ -71,7 +75,7 @@ export type TDocumentHistoryFindRequest = TDocumentNamespace & {
   docId: string;
 };
 
-export type TDocumentModificationResponse = TMerkleProof[] | null;
+export type TDocumentModificationResponse = TMerkleProof[];
 
 export type TDocumentHistoryListRequest = TDocumentNamespace & {
   docId: string;

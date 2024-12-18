@@ -1,8 +1,8 @@
 import {
   TDocumentHistory,
   TDocumentRecord,
+  TDocumentRecordNullable,
   TMetadataCollectionRecord,
-  TMetadataDetailDocument,
   TMetadataDocument,
   TParamCollection,
   TParamDatabase,
@@ -194,11 +194,11 @@ export class PermissionSecurity {
   public static async filterDocument(
     databaseName: string,
     collectionName: string,
-    listDoc: TDocumentRecord[],
+    listDoc: TDocumentRecordNullable[],
     actor: string,
     requirePermission: PermissionBase,
     session?: ClientSession
-  ): Promise<TDocumentRecord[]> {
+  ): Promise<TDocumentRecordNullable[]> {
     // If user is database owner then return all system permissions
     if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listDoc;
@@ -232,35 +232,6 @@ export class PermissionSecurity {
           metadataMap.get(currentDoc.docId),
           requirePermission
         )
-    );
-  }
-
-  // Filter a document list by required permission
-  public static async filterMetadataDocumentDetail(
-    databaseName: string,
-    listDoc: TMetadataDetailDocument<TDocumentRecord>[],
-    actor: string,
-    requiredPermission: PermissionBase,
-    session?: ClientSession
-  ): Promise<TMetadataDetailDocument<TDocumentRecord>[]> {
-    // If user is database owner then return all system permissions
-    if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
-      return listDoc;
-    }
-
-    const listGroup = await PermissionSecurity.listGroupOfUser(
-      databaseName,
-      actor,
-      session
-    );
-
-    return listDoc.filter((currentDoc) =>
-      PermissionSecurity.requiredPermissionMatch(
-        actor,
-        listGroup,
-        currentDoc.metadata,
-        requiredPermission
-      )
     );
   }
 
