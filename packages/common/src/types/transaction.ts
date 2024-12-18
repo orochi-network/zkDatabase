@@ -1,4 +1,4 @@
-import { WithoutId } from 'mongodb';
+import { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
@@ -105,4 +105,15 @@ export type TTransactionByIdRequest = TDatabaseRequest & {
  */
 export type TTransactionConfirmRequest = TTransactionByIdRequest & {
   txHash: string;
+};
+
+/**
+ * Transaction type for queue data
+ * @typedef TTransactionQueue
+ * @param {ObjectId} transactionObjectId - ObjectId of the transaction
+ * @param {string} payerAddress - Publickey of the user
+ */
+export type TTransactionQueue = {
+  transactionObjectId: ObjectId;
+  payerAddress: string;
 };

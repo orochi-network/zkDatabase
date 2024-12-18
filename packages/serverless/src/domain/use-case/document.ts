@@ -7,7 +7,7 @@
 import {
   EProofStatusDocument,
   ESequencer,
-  PERMISSION_DEFAULT_VALUE,
+  PERMISSION_DEFAULT,
   TDocumentField,
   TDocumentRecord,
   TDocumentRecordNullable,
@@ -113,7 +113,7 @@ export class Document {
   static async createDocument(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TDocumentField>,
-    permission = PERMISSION_DEFAULT_VALUE,
+    permission = PERMISSION_DEFAULT,
     compoundSession: CompoundSession
   ) {
     const actorPermissionCollection = await PermissionSecurity.collection(

@@ -1,6 +1,5 @@
 import { ClientSession, MongoError } from 'mongodb';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
+import { DATABASE_ENGINE, logger } from '@helper';
 
 export type CompoundSession = {
   serverless: ClientSession;

@@ -3,6 +3,7 @@ import {
   collectionName,
   databaseName,
   docId,
+  EOwnershipType,
   TOwnershipTransferRequest,
   TOwnershipTransferResponse,
   TPermissionSetRequest,
@@ -57,16 +58,14 @@ const permissionSet = authorizeWrapper<
     permission: Joi.number().min(0).required(),
   }),
   async (_root, { databaseName, collectionName, docId, permission }, context) =>
-    Boolean(
-      await withTransaction((session) =>
-        PermissionSecurity.setPermission(
-          databaseName,
-          collectionName,
-          docId,
-          context.userName,
-          PermissionBase.from(permission),
-          session
-        )
+    await withTransaction((session) =>
+      PermissionSecurity.setPermission(
+        databaseName,
+        collectionName,
+        docId,
+        context.userName,
+        PermissionBase.from(permission),
+        session
       )
     )
 );
@@ -79,7 +78,9 @@ const ownershipTransfer = authorizeWrapper<
     databaseName,
     collectionName,
     docId: docId(false),
-    groupType: Joi.string().valid('User', 'Group').required(),
+    groupType: Joi.string()
+      .valid(...Object.values(EOwnershipType))
+      .required(),
     newOwner: userName,
   }),
   async (
@@ -87,36 +88,34 @@ const ownershipTransfer = authorizeWrapper<
     { databaseName, collectionName, docId, groupType, newOwner },
     context
   ) =>
-    Boolean(
-      await withTransaction((session) => {
-        if (docId) {
-          // Document case with docId
-          return Ownership.transferDocument(
-            {
-              databaseName,
-              collectionName,
-              docId,
-              groupType,
-              newOwner,
-              actor: context.userName,
-            },
-            session
-          );
-        } else {
-          // Collection case without docId
-          return Ownership.transferCollection(
-            {
-              databaseName,
-              collectionName,
-              groupType,
-              newOwner,
-              actor: context.userName,
-            },
-            session
-          );
-        }
-      })
-    )
+    await withTransaction((session) => {
+      if (docId) {
+        // Document case with docId
+        return Ownership.transferDocument(
+          {
+            databaseName,
+            collectionName,
+            docId,
+            groupType,
+            newOwner,
+            actor: context.userName,
+          },
+          session
+        );
+      } else {
+        // Collection case without docId
+        return Ownership.transferCollection(
+          {
+            databaseName,
+            collectionName,
+            groupType,
+            newOwner,
+            actor: context.userName,
+          },
+          session
+        );
+      }
+    })
 );
 
 export const resolversPermission = {

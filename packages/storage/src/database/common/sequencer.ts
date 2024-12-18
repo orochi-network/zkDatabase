@@ -1,10 +1,9 @@
 import { ClientSession, WithoutId } from 'mongodb';
 import { ESequencer, TSequencedItem } from '@zkdb/common';
-import { zkDatabaseConstant } from '../../common/index.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
-import { addTimestampMongoDB, getCurrentTime } from '../../helper/common.js';
-import ModelCollection from '../general/collection.js';
+import { zkDatabaseConstant } from '@common';
+import { DATABASE_ENGINE, addTimestampMongoDB, getCurrentTime } from '@helper';
+import { ModelBasic } from '../base';
+import { ModelCollection } from '../general';
 
 export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   public static readonly INITIAL_SEQUENCE_VALUE = 1;

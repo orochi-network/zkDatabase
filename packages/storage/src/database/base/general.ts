@@ -18,8 +18,8 @@ import {
   WithId,
   WithoutId,
 } from 'mongodb';
-import logger from '../../helper/logger.js';
-import ModelBasic from './basic.js';
+import { logger } from '@helper';
+import { ModelBasic } from './basic';
 
 /**
  * ModelGeneral was build to handle global metadata, this is mongodb general model and it have nothing

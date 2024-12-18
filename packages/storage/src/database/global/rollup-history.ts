@@ -1,18 +1,9 @@
-import { TRollUpHistory, TRollUpHistoryRecord } from '@zkdb/common';
-import {
-  ClientSession,
-  OptionalId,
-  ReplaceOptions,
-  UpdateResult,
-  WithoutId,
-} from 'mongodb';
-import { zkDatabaseConstant } from '../../common/index.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
-import ModelCollection from '../general/collection.js';
-import ModelGeneral from '../base/general.js';
+import { TRollUpHistoryRecord } from '@zkdb/common';
+import { ClientSession, OptionalId, WithoutId } from 'mongodb';
+import { zkDatabaseConstant } from '@common';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
 export class ModelRollup extends ModelGeneral<
   OptionalId<TRollUpHistoryRecord>

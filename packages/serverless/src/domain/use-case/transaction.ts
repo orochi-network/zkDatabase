@@ -8,7 +8,7 @@ import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
 import { PublicKey } from 'o1js';
-import { getCurrentTime, redisQueue } from '@helper';
+import { getCurrentTime, transactionQueue } from '@helper';
 import { ModelUser } from '@model';
 import { Database } from './database';
 
@@ -24,7 +24,7 @@ export class Transaction {
     databaseName: string,
     actor: string,
     transactionType: ETransactionType,
-    session?: ClientSession
+    session: ClientSession
   ): Promise<ObjectId> {
     if (
       !(await Database.isOwner({ databaseName, databaseOwner: actor }, session))
@@ -143,13 +143,13 @@ export class Transaction {
       },
       { session }
     );
+    // Make sure it commit transaction now before push to the queue
+    await session.commitTransaction();
 
-    await redisQueue.enqueue(
-      JSON.stringify({
-        id: insertResult.insertedId.toString(),
-        payerAddress: payer?.publicKey,
-      })
-    );
+    await transactionQueue.add('transaction', {
+      transactionObjectId: insertResult.insertedId,
+      payerAddress: payer?.publicKey,
+    });
 
     return insertResult.insertedId;
   }

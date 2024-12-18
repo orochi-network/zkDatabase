@@ -1,4 +1,8 @@
 // Common constants for zkDatabase
+
+// Using for define message queue key for compile service and serverless
+export const ZKDB_TRANSACTION_QUEUE = 'transaction_queue';
+
 export const zkDatabaseConstant = {
   // Global database for system management
   globalDatabase: '_zkdatabase_metadata',

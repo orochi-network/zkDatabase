@@ -9,11 +9,10 @@ import {
   UpdateResult,
   WithoutId,
 } from 'mongodb';
-import { zkDatabaseConstant } from '../../common/const.js';
-import { addTimestampMongoDB } from '../../helper/common.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
+import { zkDatabaseConstant } from '@common';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
 export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   private static instance: ModelQueueTask | null = null;

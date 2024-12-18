@@ -1,3 +1,1 @@
-import { zkDatabaseConstant, zkDatabaseMetadataCollections } from './const.js';
-
-export { zkDatabaseConstant, zkDatabaseMetadataCollections };
+export * from './const';

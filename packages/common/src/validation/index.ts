@@ -34,19 +34,23 @@ export const docId = (required: boolean = true) => {
   return required ? joiDocId.required() : joiDocId.optional();
 };
 
-export const userName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[._a-z0-9]+/i);
+export const userName = (required: boolean = true) => {
+  const joiUserName = Joi.string()
+    .trim()
+    .min(4)
+    .max(128)
+    .pattern(/^[a-z]+[._a-z0-9]+/i);
+  return required ? joiUserName.required() : joiUserName.optional();
+};
 
-export const collectionName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+export const collectionName = (required: boolean = true) => {
+  const joiCollectionName = Joi.string()
+    .trim()
+    .min(4)
+    .max(128)
+    .pattern(/^[a-z]+[_a-z0-9]+/i);
+  return required ? joiCollectionName.required() : joiCollectionName.optional();
+};
 
 export const groupName = (required: boolean = true) => {
   const joiGroupName = Joi.string()
@@ -65,11 +69,13 @@ export const groupDescription = (required: boolean = true) => {
     : joiGroupDescription.min(0).optional();
 };
 
-export const publicKey = Joi.string()
-  .trim()
-  .length(55)
-  .required()
-  .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
+export const publicKey = (required: boolean = true) => {
+  const joiPublicKey = Joi.string()
+    .trim()
+    .length(55)
+    .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
+  return required ? joiPublicKey.required() : joiPublicKey.optional();
+};
 
 export const indexNumber = Joi.string()
   .regex(/^[0-9]+$/)
@@ -201,7 +207,7 @@ export const databaseName = Joi.string()
 
 export const merkleHeight = Joi.number().integer().positive().required();
 
-export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
+export const PERMISSION_DEFAULT = Permission.policyStrict();
 
 export const pagination = Joi.object({
   offset: Joi.number().integer().min(0).default(0).optional(),

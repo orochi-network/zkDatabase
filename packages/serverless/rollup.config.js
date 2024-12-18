@@ -16,7 +16,6 @@ export default {
     json(),
     alias({
       entries: [
-        { find: '@', replacement: 'src' },
         { find: '@apollo-app', replacement: 'src/apollo' },
         { find: '@domain', replacement: 'src/domain' },
         { find: '@helper', replacement: 'src/helper' },

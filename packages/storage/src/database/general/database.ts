@@ -4,18 +4,9 @@ import {
   ListDatabasesResult,
   ObjectId,
 } from 'mongodb';
-import {
-  zkDatabaseConstant,
-  zkDatabaseMetadataCollections,
-} from '../../common/index.js';
-import { DATABASE_ENGINE } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
-
-export type DocumentMetaIndex = {
-  collection: string;
-  docId: ObjectId;
-  index: number;
-};
+import { zkDatabaseConstant, zkDatabaseMetadataCollections } from '@common';
+import { DATABASE_ENGINE } from '@helper';
+import { ModelBasic } from '../base';
 
 /**
  * Handles database operations. Extends ModelBasic.
@@ -94,5 +85,3 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.client.db().admin().listDatabases();
   }
 }
-
-export default ModelDatabase;
