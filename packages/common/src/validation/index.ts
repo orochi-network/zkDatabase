@@ -201,7 +201,7 @@ export const databaseName = Joi.string()
 
 export const merkleHeight = Joi.number().integer().positive().required();
 
-export const PERMISSION_DEFAULT_VALUE = Permission.policyStrict();
+export const PERMISSION_DEFAULT = Permission.policyStrict();
 
 export const pagination = Joi.object({
   offset: Joi.number().integer().min(0).default(0).optional(),

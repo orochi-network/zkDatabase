@@ -16,7 +16,7 @@ import {
   ModelTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { DEFAULT_GROUP_ADMIN } from '@common';
+import { GROUP_DEFAULT_ADMIN } from '@common';
 import { getCurrentTime, logger } from '@helper';
 import {
   ModelGroup,
@@ -81,7 +81,7 @@ export class Database {
           {
             databaseName,
             createdBy: databaseOwner,
-            groupName: DEFAULT_GROUP_ADMIN,
+            groupName: GROUP_DEFAULT_ADMIN,
             groupDescription: 'Default group for owner',
           },
           session
@@ -92,7 +92,7 @@ export class Database {
             databaseName,
             createdBy: databaseOwner,
             listUserName: [databaseOwner],
-            groupName: DEFAULT_GROUP_ADMIN,
+            groupName: GROUP_DEFAULT_ADMIN,
           },
           session
         );

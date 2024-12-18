@@ -6,7 +6,9 @@ import {
   ESortingSchema,
   groupName,
   O1JS_VALID_TYPE,
+  PERMISSION_DEFAULT,
   TCollectionCreateRequest,
+  TCollectionCreateResponse,
   TCollectionExistRequest,
   TCollectionExistResponse,
   TCollectionListRequest,
@@ -17,6 +19,7 @@ import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
+import { GROUP_DEFAULT_ADMIN } from '@common';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -96,19 +99,26 @@ const collectionExist = publicWrapper<
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper<TCollectionCreateRequest, boolean>(
+const collectionCreate = authorizeWrapper<
+  TCollectionCreateRequest,
+  TCollectionCreateResponse
+>(
   CollectionCreateRequest,
-  async (_root, args, ctx) =>
+  async (
+    _root,
+    { databaseName, collectionName, schema, group, permission },
+    ctx
+  ) =>
     withTransaction((session) =>
       Collection.create(
         {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
+          databaseName,
+          collectionName,
           actor: ctx.userName,
         },
-        args.schema,
-        args.group,
-        args.permission ? Permission.from(args.permission) : undefined,
+        schema,
+        group || GROUP_DEFAULT_ADMIN,
+        permission ? Permission.from(permission) : PERMISSION_DEFAULT,
         session
       )
     )

@@ -1,6 +1,6 @@
 import {
   EProperty,
-  PERMISSION_DEFAULT_VALUE,
+  PERMISSION_DEFAULT,
   TCollectionIndexInfo,
   TCollectionIndexMap,
   TMetadataCollectionRecord,
@@ -8,11 +8,11 @@ import {
   TPermissionSudo,
   TSchemaFieldDefinition,
 } from '@zkdb/common';
-import { PermissionBase } from '@zkdb/permission';
+import { Permission, PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ModelMetadataCollection } from '@model';
 import { ClientSession } from 'mongodb';
-import { DEFAULT_GROUP_ADMIN } from '@common';
+import { GROUP_DEFAULT_ADMIN } from '@common';
 import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
 import { Group } from './group';
 import { PermissionSecurity } from './permission-security';
@@ -194,8 +194,8 @@ export class Collection {
   public static async create(
     paramCollection: TParamCollection,
     schema: TSchemaFieldDefinition[],
-    groupName = DEFAULT_GROUP_ADMIN,
-    permission = PERMISSION_DEFAULT_VALUE,
+    groupName: string,
+    permission: Permission,
     session?: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
