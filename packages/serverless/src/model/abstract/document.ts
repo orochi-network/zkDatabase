@@ -6,6 +6,7 @@ import {
   TDocumentRecordNullable,
 } from '@zkdb/common';
 import {
+  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -32,6 +33,25 @@ export class ModelDocument extends ModelGeneral<
 
   private constructor(databaseName: string, collectionName: string) {
     super(databaseName, DATABASE_ENGINE.serverless, collectionName);
+  }
+
+  // TODO: need manual testing to see if this is working
+  public static async init(
+    databaseName: string,
+    collectionName: string,
+    session?: ClientSession
+  ) {
+    const collection = new ModelCollection(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      collectionName
+    );
+
+    if (!(await collection.isExist())) {
+      await collection.index({ docId: 1, active: 1 }, { session });
+
+      await addTimestampMongoDB(collection, session);
+    }
   }
 
   get modelDatabase() {
