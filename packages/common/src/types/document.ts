@@ -55,7 +55,7 @@ export type TDocumentMerkleProofResponse = TMerkleProof[];
 
 export type TDocumentCreateRequest = TDocumentNamespace & {
   document: Record<string, TDocumentField>;
-  documentPermission: number;
+  documentPermission?: number;
 };
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {

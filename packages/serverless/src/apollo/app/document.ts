@@ -20,6 +20,7 @@ import {
   TDocumentHistoryResponse,
   TPaginationReturn,
   TDocumentFindResponse,
+  PERMISSION_DEFAULT_VALUE,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -38,10 +39,10 @@ const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   pagination,
 });
 
-const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest, true>({
+const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
   collectionName,
-  documentPermission: Joi.number().min(0).max(0xffffff).required(),
+  documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
   document: schemaDocumentRecord,
@@ -191,21 +192,21 @@ const documentFind = authorizeWrapper<
 const documentCreate = authorizeWrapper<
   TDocumentCreateRequest,
   TDocumentModificationResponse
->(
-  JOI_DOCUMENT_CREATE_REQUEST,
-  async (_root: unknown, args: TDocumentCreateRequest, ctx) =>
-    withCompoundTransaction((compoundSession) =>
-      Document.create(
-        {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
-          actor: ctx.userName,
-        },
-        args.document,
-        Permission.from(args.documentPermission),
-        compoundSession
-      )
+>(JOI_DOCUMENT_CREATE_REQUEST, async (_root: unknown, args, ctx) =>
+  withCompoundTransaction((compoundSession) =>
+    Document.create(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.document,
+      args.documentPermission
+        ? Permission.from(args.documentPermission)
+        : PERMISSION_DEFAULT_VALUE,
+      compoundSession
     )
+  )
 );
 
 const documentUpdate = authorizeWrapper<
