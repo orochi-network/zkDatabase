@@ -11,6 +11,7 @@ import {
   withTransaction,
 } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
+import { EProofStatusDocument } from '@zkdb/common';
 import {
   fetchAccount,
   Field,
@@ -19,7 +20,6 @@ import {
   PublicKey,
   ZkProgram,
 } from 'o1js';
-import { EProofStatusDocument } from '../../../common/src/index.js';
 import { CircuitFactory } from '@circuit';
 import { logger } from '@helper';
 
