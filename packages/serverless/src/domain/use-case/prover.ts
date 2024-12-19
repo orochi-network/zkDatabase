@@ -87,7 +87,7 @@ export class Prover {
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
-    session: CompoundSession
+    session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId, newDocument } =
       proveUpdateParam;
