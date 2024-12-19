@@ -9,7 +9,7 @@ cd ../..
 
 cd packages/serverless
 yarn link @zkdb/storage
-cd ../proof-service
+cd ../mina-service
 yarn link @zkdb/storage
 
 cd ../..

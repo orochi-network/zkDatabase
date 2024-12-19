@@ -96,8 +96,7 @@
     "jose": "5.9.3",
     "mina-signer": "3.0.7",
     "o1js": "1.9.0",
-    "redis": "4.7.0",
-    "spectaql": "3.0.2"
+    "redis": "4.7.0"
   },
   "resolutions": {
     "graphql": "16.9.0",

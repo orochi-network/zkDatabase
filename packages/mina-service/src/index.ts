@@ -1,7 +1,6 @@
 import { DatabaseEngine } from '@zkdb/storage';
-import TaskService from './service/task-service.js';
-import logger from './helper/logger.js';
-import { config } from './helper/config.js';
+import { TaskService } from '@service';
+import { logger, config } from '@helper';
 import { Mina } from 'o1js';
 
 (async () => {

@@ -33,7 +33,7 @@
       "path": "./packages/kubo"
     },
     {
-      "path": "./packages/proof-service"
+      "path": "./packages/mina-service"
     },
     {
       "path": "./packages/api"

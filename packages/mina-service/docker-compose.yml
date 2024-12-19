@@ -1,6 +1,6 @@
 services:
   app:
-    image: proof-service
+    image: mina-service
     env_file:
       - .env
     networks:
