@@ -1,7 +1,7 @@
-import logger from '../helper/logger.js';
-import { RollUpProxy, getDatabaseRollUpFunction } from './rollup-program.js';
+import { logger } from '@helper';
+import { RollUpProxy, getDatabaseRollUpFunction } from './rollup-program';
 
-export default class CircuitFactory {
+export class CircuitFactory {
   private static instance = new Map<string, RollUpProxy>();
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function

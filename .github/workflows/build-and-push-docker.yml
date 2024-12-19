@@ -1,4 +1,4 @@
-name: 'Build & Push All Docker Images to Docker Hub with Change Detection'
+name: "Build & Push All Docker Images to Docker Hub with Change Detection"
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Fetch full commit history
+          fetch-depth: 0 # Fetch full commit history
 
       - name: Detect last two merge commits and diff
         id: changed
@@ -25,10 +25,10 @@ jobs:
           MERGE_ARRAY=($LAST_MERGE)
           LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
           PREV_MERGE_COMMIT=${MERGE_ARRAY[1]}
-          
+
           echo "Last merge commit: $LAST_MERGE_COMMIT"
           echo "Previous merge commit: $PREV_MERGE_COMMIT"
-          
+
           CHANGED_PACKAGES=$(git diff --name-only $PREV_MERGE_COMMIT $LAST_MERGE_COMMIT -- packages/ | cut -d '/' -f 1-2 | sort -u)
           CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
           echo "Cleaned packages: $CLEANED_PACKAGES"
@@ -46,7 +46,7 @@ jobs:
             case $PACKAGE in
               "packages/serverless") FILTERED_PACKAGES="$FILTERED_PACKAGES 1" ;;
               "packages/broker-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 2" ;;
-              "packages/proof-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 3" ;;
+              "packages/mina-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 3" ;;
               "packages/ftp") FILTERED_PACKAGES="$FILTERED_PACKAGES 4" ;;
               "packages/compile-service ") FILTERED_PACKAGES="$FILTERED_PACKAGES 5" ;;
             esac
@@ -65,8 +65,8 @@ jobs:
     env:
       version: ${{ github.sha }}
       SERVICES: "serverless broker proof ftp compile"
-      SERVICES_BUILD:  "serverless broker-service proof-service ftp compile-service"
-      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-proof-service orochinetwork/zkdb-ftp orochinetwork/zkdb-compile-service"
+      SERVICES_BUILD: "serverless broker-service mina-service ftp compile-service"
+      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-mina-service orochinetwork/zkdb-ftp orochinetwork/zkdb-compile-service"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -82,12 +82,12 @@ jobs:
 
       - name: Build & Push Docker Images
         id: build
-        run: | 
+        run: |
           IFS=' ' read -r -a DOCKER_REPOS <<< "${{env.DOCKER_REPOS}}"
           IFS=' ' read -r -a SERVICES_BUILD <<< "${{env.SERVICES_BUILD}}"
           IFS=' ' read -r -a SERVICES <<< "${{env.SERVICES}}"
           CHANGED_SERVICES="${{ needs.detect-changes.outputs.filtered_packages }}"
-          
+
           for i in ${!SERVICES_BUILD[@]}; do
             SERVICE_BUILD="${SERVICES_BUILD[$i]}"
             SERVICE="${SERVICES[$i]}"

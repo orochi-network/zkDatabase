@@ -26,7 +26,7 @@ USER appuser
 # Build the necessary workspaces
 RUN yarn workspace @zkdb/smart-contract build && \
     yarn workspace @zkdb/storage build && \
-    yarn workspace @zkdb/proof-service build
+    yarn workspace @zkdb/mina-service build
 
 # Use our customized image based on Node.js 20 slim image as a runner
 FROM orochinetwork/node:20-alpine AS runner
@@ -40,7 +40,7 @@ WORKDIR /usr/src/app
 # Copy the built application and node_modules from the builder stage
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/storage /usr/src/app/packages/storage
-COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/proof-service /usr/src/app/packages/proof-service
+COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/mina-service /usr/src/app/packages/mina-service
 COPY --from=builder --chown=appuser:appuser /usr/src/app/node_modules /usr/src/app/node_modules
 COPY --from=builder --chown=appuser:appuser /usr/src/app/package.json /usr/src/app/package.json
 COPY --from=builder --chown=appuser:appuser /usr/src/app/yarn.lock /usr/src/app/yarn.lock
@@ -49,7 +49,7 @@ COPY --from=builder --chown=appuser:appuser /usr/src/app/yarn.lock /usr/src/app/
 USER appuser
 
 # Set the working directory for the proof service
-WORKDIR /usr/src/app/packages/proof-service
+WORKDIR /usr/src/app/packages/mina-service
 
 # Set the entrypoint to the application
 ENTRYPOINT ["node", "build/src/index.js"]

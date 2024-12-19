@@ -1622,7 +1622,7 @@
     tslib "^2.4.0"
     value-or-promise "1.0.11"
 
-"@graphql-tools/schema@^9.0.0", "@graphql-tools/schema@^9.0.1", "@graphql-tools/schema@^9.0.18":
+"@graphql-tools/schema@^9.0.0", "@graphql-tools/schema@^9.0.18":
   version "9.0.19"
   resolved "https://registry.yarnpkg.com/@graphql-tools/schema/-/schema-9.0.19.tgz#c4ad373b5e1b8a0cf365163435b7d236ebdd06e7"
   integrity sha512-oBRPoNBtCkk0zbUsyP4GaIzCt8C0aCI4ycIRUL67KK5pOHljKLBBtGT+Jr6hkzA74C8Gco8bpZPe7aWFjiaK2w==
@@ -1649,7 +1649,7 @@
     dset "^3.1.2"
     tslib "^2.4.0"
 
-"@graphql-tools/utils@^9.1.1", "@graphql-tools/utils@^9.2.1":
+"@graphql-tools/utils@^9.2.1":
   version "9.2.1"
   resolved "https://registry.yarnpkg.com/@graphql-tools/utils/-/utils-9.2.1.tgz#1b3df0ef166cfa3eae706e3518b17d5922721c57"
   integrity sha512-WUw506Ql6xzmOORlriNrD6Ugx+HjVgYxt9KCXD9mHAak+eaXSwuGGPyE60hy9xaDEoXKBsG7SkG69ybitaVl6A==
@@ -4070,6 +4070,19 @@ bullmq@5.34.2:
   version "5.34.2"
   resolved "https://registry.yarnpkg.com/bullmq/-/bullmq-5.34.2.tgz#39dd848d5d82da029967b9383306eba7ed181f1b"
   integrity sha512-eUzeCswrKbQDE1WY8h4ZTBtynOzCU5qx9felFdYOmIJrsy0warDahHKUiCZ6dUCs6ZxYMGtcaciIMcAf1L54yw==
+  dependencies:
+    cron-parser "^4.6.0"
+    ioredis "^5.4.1"
+    msgpackr "^1.11.2"
+    node-abort-controller "^3.1.1"
+    semver "^7.5.4"
+    tslib "^2.0.0"
+    uuid "^9.0.0"
+
+bullmq@^5.34.3:
+  version "5.34.3"
+  resolved "https://registry.yarnpkg.com/bullmq/-/bullmq-5.34.3.tgz#3fd69091c31b1139a119ecda59b4e7bc2d311638"
+  integrity sha512-S8/V11w7p6jYAGvv+00skLza/4inTOupWPe0uCD8mZSUiYKzvmW4/YEB+KVjZI2CC2oD3KJ3t7/KkUd31MxMig==
   dependencies:
     cron-parser "^4.6.0"
     ioredis "^5.4.1"
@@ -9795,47 +9808,6 @@ sparse-bitfield@^3.0.3:
   integrity sha512-kvzhi7vqKTfkh0PZU+2D2PIllw2ymqJKujUcyPMd9Y75Nv4nPbGJZXNhxsgdQab2BmlDct1YnfQCguEvHr7VsQ==
   dependencies:
     memory-pager "^1.0.2"
-
-spectaql@3.0.2:
-  version "3.0.2"
-  resolved "https://registry.yarnpkg.com/spectaql/-/spectaql-3.0.2.tgz#c7bed144037078b902e5fbf9be2e39697073e78a"
-  integrity sha512-d5LxhMW8tFGmctEUORe/Zz0dM7+SURowRs0TfgN/CTzeVeUcpwO+Bxzggzz7+abRxvIsd7yjN2h/4i3dMg9Mcw==
-  dependencies:
-    "@anvilco/apollo-server-plugin-introspection-metadata" "^2.2.3"
-    "@graphql-tools/load-files" "^6.3.2"
-    "@graphql-tools/merge" "^8.1.2"
-    "@graphql-tools/schema" "^9.0.1"
-    "@graphql-tools/utils" "^9.1.1"
-    cheerio "1.0.0-rc.12"
-    coffeescript "^2.6.1"
-    commander "^10.0.0"
-    fast-glob "^3.2.12"
-    graceful-fs "~4.2.10"
-    graphql "^16.3.0"
-    graphql-scalars "^1.15.0"
-    grunt "~1.5.3"
-    grunt-contrib-clean "^2.0.0"
-    grunt-contrib-concat "^2.1.0"
-    grunt-contrib-connect "^5.0.0"
-    grunt-contrib-copy "^1.0.0"
-    grunt-contrib-cssmin "^5.0.0"
-    grunt-contrib-uglify "^5.0.1"
-    grunt-contrib-watch "^1.1.0"
-    grunt-sass "^3.0.2"
-    handlebars "^4.7.7"
-    highlight.js "^11.4.0"
-    htmlparser2 "~9.0.0"
-    js-beautify "~1.14.7"
-    js-yaml "^4.1.0"
-    json-stringify-pretty-compact "^3.0.0"
-    json5 "^2.2.0"
-    lodash "^4.17.21"
-    marked "^4.0.12"
-    microfiber "^2.0.1"
-    postcss "^8.4.19"
-    sass "^1.32.13"
-    sync-request "^6.1.0"
-    tmp "0.2.1"
 
 spectaql@^3.0.2:
   version "3.0.3"

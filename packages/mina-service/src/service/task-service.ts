@@ -1,8 +1,7 @@
-import logger from '../helper/logger.js';
-import { getNextTaskId } from '../api/get-next-task.js';
-import { createProof } from '../domain/create-proof.js';
+import { logger } from '@helper';
+import { createProof } from '@domain';
 
-class TaskService {
+export class TaskService {
   private maxRetries: number;
   private initialDelay: number;
 
@@ -20,6 +19,7 @@ class TaskService {
     let delay = this.initialDelay;
 
     while (true) {
+      // TODO: Perform get next task. We don't call broker anymore
       const result = await getNextTaskId();
 
       if (result.type === 'success') {
@@ -54,5 +54,3 @@ class TaskService {
     logger.info('Max retries reached, stopping task fetching.');
   }
 }
-
-export default TaskService;
