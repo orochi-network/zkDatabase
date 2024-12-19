@@ -14,6 +14,7 @@ import gitignore from 'eslint-config-flat-gitignore';
  * config. We envision this as a necessary transitional step to allow the
  * ecosystem to slowly convert over to flat config.
  * https://eslint.org/blog/2022/08/new-config-system-part-2 */
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
