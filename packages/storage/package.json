@@ -27,7 +27,8 @@
   },
   "devDependencies": {},
   "peerDependencies": {
-    "o1js": "^1.9.*"
+    "o1js": "^1.9.*",
+    "@orochi-network/framework": "^2.3.22"
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.19",

@@ -20,7 +20,7 @@
   "dependencies": {
     "@apollo/client": "^3.10.6",
     "@zkdb/common": "^0.1.1",
-    "graphql": "^16.9.0"
+    "graphql": "^16.10.0"
   },
   "devDependencies": {}
 }
