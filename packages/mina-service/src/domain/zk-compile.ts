@@ -1,34 +1,45 @@
-import { logger } from "@helper";
-import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
-import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from "o1js";
+import { logger } from '@helper';
+import { ZKDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
+import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from 'o1js';
 
-const MAX_MERKLE_TREE_HEIGHT = 128;
+const MAX_MERKLE_TREE_HEIGHT = 256;
+const MIN_MERKLE_TREE_HEIGHT = 8;
 
-export class ZkCompileService {
-  private compiledSmartContracts: Array<ZKDatabaseSmartContractWrapper>;
+export class ZkCompile {
+  private smartContractMap: Map<number, ZKDatabaseSmartContractWrapper>;
 
   constructor(
     private readonly network: { networkId: NetworkId; mina: string }
   ) {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
-    this.compiledSmartContracts = new Array(MAX_MERKLE_TREE_HEIGHT);
+    // Smart contract map with key is merkleHeight and value is smart contract
+    this.smartContractMap = new Map<number, ZKDatabaseSmartContractWrapper>();
   }
 
   private async getSmartContract(
     merkleHeight: number
   ): Promise<ZKDatabaseSmartContractWrapper> {
-    if (!this.compiledSmartContracts[merkleHeight - 1]) {
+    if (
+      merkleHeight > MAX_MERKLE_TREE_HEIGHT ||
+      merkleHeight < MIN_MERKLE_TREE_HEIGHT
+    ) {
+      throw new Error(
+        `Invalid merkle height, ensure it between from ${MIN_MERKLE_TREE_HEIGHT} to ${MAX_MERKLE_TREE_HEIGHT}`
+      );
+    }
+    if (!this.smartContractMap.has(merkleHeight)) {
       const zkWrapper =
         ZKDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
       await zkWrapper.compile();
-      this.compiledSmartContracts[merkleHeight - 1] = zkWrapper;
+      // set ZKDatabaseSmartContractWrapper
+      this.smartContractMap.set(merkleHeight, zkWrapper);
     }
-
-    return this.compiledSmartContracts[merkleHeight - 1];
+    // Need to using null assertion since we already check if
+    return this.smartContractMap.get(merkleHeight)!;
   }
 
-  async compileAndCreateDeployUnsignTx(
+  async getDeployRawTx(
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number
@@ -40,9 +51,9 @@ export class ZkCompileService {
 
     const start = performance.now();
 
-    const zkWrapper = await this.getSmartContract(merkleHeight);
+    const smartContract = await this.getSmartContract(merkleHeight);
 
-    const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+    const unsignedTx = await smartContract.createAndProveDeployTransaction({
       sender: senderPublicKey,
       zkApp: zkDbPublicKey,
     });
@@ -57,7 +68,7 @@ export class ZkCompileService {
     return partialSignedTx.toJSON();
   }
 
-  async compileAndCreateRollUpUnsignTx(
+  async getRollupRawTx(
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number,
@@ -70,9 +81,9 @@ export class ZkCompileService {
 
     const start = performance.now();
 
-    const zkWrapper = await this.getSmartContract(merkleHeight);
+    const smartContract = await this.getSmartContract(merkleHeight);
 
-    const unsignedTx = await zkWrapper.createAndProveRollUpTransaction(
+    const rawTx = await smartContract.createAndProveRollUpTransaction(
       {
         sender: senderPublicKey,
         zkApp: zkDbPublicKey,
@@ -80,7 +91,8 @@ export class ZkCompileService {
       proof
     );
 
-    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const partialSignedTx = rawTx.sign([zkDbPrivateKey]);
+
     const end = performance.now();
     logger.info(
       `Roll-up ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
@@ -90,11 +102,12 @@ export class ZkCompileService {
   }
 
   private ensureTransaction() {
+    // Ensure 1 mina transaction can be process at time
     if (Mina.currentTransaction.has()) {
       logger.debug(
         `${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`
       );
-      throw Error("Transaction within transaction identified");
+      throw Error('Transaction within transaction identified');
     }
   }
 }

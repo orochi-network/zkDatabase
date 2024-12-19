@@ -9,10 +9,11 @@ import { NetworkId } from 'o1js';
 type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
-  BROKER_SERVICE: string;
   PROOF_MONGODB_URL: string;
   NETWORK_ID: NetworkId;
+  REDIS_URL: string;
   MINA_URL: string;
+  SERVICE_SECRET: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -38,9 +39,11 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .trim()
       .required()
       .regex(/^mongodb([+a-z]+|):\/\//),
-    BROKER_SERVICE: Joi.string()
-      .pattern(/^http(|s):\/\//)
-      .default('http://0.0.0.0:31337'),
+    REDIS_URL: Joi.string()
+      .trim()
+      .required()
+      .regex(/^redis([+a-z]+|):\/\//),
+    SERVICE_SECRET: Joi.string().base64().trim().required(),
   }
 );
 

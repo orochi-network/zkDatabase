@@ -52,7 +52,7 @@
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/utilities": "^0.2.42",
     "@zkdb/common": "^0.1.1",
-    "@zkdb/permission": "0.1.6",
+    "@zkdb/permission": "^0.1.6",
     "@zkdb/smart-contract": "^1.1.7",
     "@zkdb/storage": "^1.1.2",
     "axios": "1.7.9",
