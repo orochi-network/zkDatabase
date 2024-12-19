@@ -39,8 +39,8 @@ export class Transaction {
       );
 
       if (
-        typeof database?.appPublicKey === 'string' &&
-        !PublicKey.fromBase58(database?.appPublicKey).isEmpty()
+        database?.appPublicKey &&
+        !PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
       ) {
         throw Error('Smart contract is already bound to database');
       }
@@ -102,7 +102,9 @@ export class Transaction {
             await imTransaction.updateOne(
               { _id: pendingTx._id },
               {
-                status: ETransactionStatus.Confirmed,
+                $set: {
+                  status: ETransactionStatus.Confirmed,
+                },
               },
               { session }
             );
@@ -111,8 +113,10 @@ export class Transaction {
             await imTransaction.updateOne(
               { _id: pendingTx._id },
               {
-                status: ETransactionStatus.Failed,
-                error: onchainTx.failures.join(' '),
+                $set: {
+                  status: ETransactionStatus.Failed,
+                  error: onchainTx.failures.join(' '),
+                },
               },
               { session }
             );
@@ -131,7 +135,10 @@ export class Transaction {
       { session }
     );
 
-    if (!payer || PublicKey.fromBase58(payer?.publicKey).isEmpty()) {
+    if (
+      !payer ||
+      PublicKey.fromBase58(payer?.publicKey).isEmpty().toBoolean()
+    ) {
       throw new Error('User public key not found');
     }
 
@@ -227,9 +234,9 @@ export class Transaction {
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {
-    const modelTransaction = ModelTransaction.getInstance();
+    const imTransaction = ModelTransaction.getInstance();
 
-    const txList = await modelTransaction
+    const txList = await imTransaction
       .find({ databaseName, transactionType })
       .limit(1)
       .sort({ createdAt: -1 })
@@ -250,8 +257,10 @@ export class Transaction {
     await ModelTransaction.getInstance().updateOne(
       { _id: new ObjectId(transactionObjectId) },
       {
-        txHash,
-        status: ETransactionStatus.Confirming,
+        $set: {
+          txHash,
+          status: ETransactionStatus.Confirming,
+        },
       },
       { session }
     );
