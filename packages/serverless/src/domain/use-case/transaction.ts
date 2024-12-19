@@ -81,52 +81,6 @@ export class Transaction {
         throw Error('You have uncompleted transaction');
       }
 
-      const pendingTx = txList.find(
-        (tx: WithId<TTransaction>) =>
-          tx.status === ETransactionStatus.Confirming
-      );
-
-      if (pendingTx) {
-        if (pendingTx.txHash) {
-          // @TODO: Transaction status check need to be done in cronjob or task schedule
-          const onchainTx =
-            await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
-              pendingTx.txHash
-            );
-
-          if (!onchainTx) {
-            throw Error('Onchain transaction has not been found');
-          }
-
-          if (onchainTx.txStatus === 'applied') {
-            await imTransaction.updateOne(
-              { _id: pendingTx._id },
-              {
-                $set: {
-                  status: ETransactionStatus.Confirmed,
-                },
-              },
-              { session }
-            );
-            throw Error('You deploy transaction is already succeeded');
-          } else if (onchainTx.txStatus === 'failed') {
-            await imTransaction.updateOne(
-              { _id: pendingTx._id },
-              {
-                $set: {
-                  status: ETransactionStatus.Failed,
-                  error: onchainTx.failures.join(' '),
-                },
-              },
-              { session }
-            );
-            // Proceed and create new transaction
-          }
-        } else {
-          throw Error('Transaction hash has not been found');
-        }
-      }
-
       // @TODO: Recheck the logic and make sure it is correct and cover all cases.
     }
 
@@ -142,31 +96,26 @@ export class Transaction {
       throw new Error('User public key not found');
     }
 
-    const insertResult = await imTransaction.insertOne(
-      // @TODO: Make sure to check falsy don't just check typeof undefined or null.
-      // Since we using default value
-      // @TODO: Need refactor or allow nullable to insert empty transaction
-      {
-        transactionType,
-        databaseName,
-        status: ETransactionStatus.Unsigned,
-        transactionRaw: '',
-        txHash: '',
-        error: '',
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      { session }
-    );
-    // Make sure it commit transaction now before push to the queue
-    await session.commitTransaction();
+    /*
+    NOTE: we will get an race-condition bug if we insert transaction here,
+    First, if we insertOne transaction here, it actually not inserted since it in 'mongodb session'
+    It still return objectId but not insert to mongo yet
+    If we you session.commitTransaction(), we still get race-condition
+    The queue will run first and update transactionRaw before the insert does
+    So it will override the transaction and we got nothing
+    */
+    /*
+      My current solution is let the compile service create transaction
+      We will create objectId for it first 
+    */
+    const transactionObjectId = new ObjectId();
 
     await transactionQueue.add('transaction', {
-      transactionObjectId: insertResult.insertedId,
+      transactionObjectId,
       payerAddress: payer?.publicKey,
     });
 
-    return insertResult.insertedId;
+    return transactionObjectId;
   }
 
   static async draft(

@@ -11,9 +11,9 @@
     "mina-dapp",
     "zkapp"
   ],
-
   "scripts": {
     "build": "rm -rf ./build && rollup -c",
+    "dev:debug": "tsx --inspect ./src/index.ts",
     "start:prod": "yarn run build && node ./build/src/index.js",
     "dev": "tsx --watch ./src/index.ts",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
@@ -36,6 +36,7 @@
     "@shelf/jest-mongodb": "^4.2.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.6.1",
+    "@types/node-cron": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^8.9.0",
     "@typescript-eslint/parser": "^8.9.0",
     "babel-jest": "^29.7.0",
@@ -63,7 +64,8 @@
     "bullmq": "^5.34.3",
     "graphql": "16.9.0",
     "graphql-request": "7.1.0",
-    "mongodb": "6.11.0"
+    "mongodb": "6.11.0",
+    "node-cron": "^3.0.3"
   },
   "peerDependencies": {
     "o1js": "^1.9.*"
