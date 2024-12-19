@@ -128,7 +128,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       pagination: PaginationInput
-    ): [DocumentHistoryFindResponse]!
+    ): DocumentHistoryFindResponse
   }
 
   extend type Mutation {
@@ -264,7 +264,7 @@ const documentDrop = authorizeWrapper<
 
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
-  TDocumentHistoryFindResponse | null
+  TDocumentHistoryFindResponse
 >(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
