@@ -64,7 +64,9 @@
     "bullmq": "^5.34.3",
     "graphql": "16.9.0",
     "graphql-request": "7.1.0",
-    "mongodb": "6.11.0",
-    "o1js": "1.8.0"
+    "mongodb": "6.11.0"
+  },
+  "peerDependencies": {
+    "o1js": "^1.9.*"
   }
 }

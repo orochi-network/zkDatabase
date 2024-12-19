@@ -40,10 +40,9 @@ export const SERVICE_COMPILE = {
       await proofDb.connect();
     }
 
-    const transactionWorker = new QueueWorker<TTransactionQueue>(
-      ZKDB_TRANSACTION_QUEUE,
-      { connection: { url: config.REDIS_URL } }
-    );
+    const transactionWorker = new QueueWorker(ZKDB_TRANSACTION_QUEUE, {
+      connection: { url: config.REDIS_URL },
+    });
 
     transactionWorker.start(async (job: Job<TTransactionQueue>) =>
       withCompoundTransaction(
