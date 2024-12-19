@@ -8,7 +8,7 @@ export type TCompoundSession = {
 
 export async function withCompoundTransaction<T>(
   callback: (session: TCompoundSession) => Promise<T>
-): Promise<T | null> {
+): Promise<T> {
   const serverless = DATABASE_ENGINE.serverless.client.startSession();
   const proofService = DATABASE_ENGINE.proofService.client.startSession();
   let result: T;

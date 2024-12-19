@@ -16,12 +16,13 @@ import {
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
-  TDocumentModificationResponse,
-  TDocumentHistoryResponse,
-  TPaginationReturn,
+  TDocumentUpdateResponse,
+  TDocumentHistoryFindResponse,
   TDocumentFindResponse,
   PERMISSION_DEFAULT,
   TDocumentCreateResponse,
+  TDocumentDropRequest,
+  TDocumentDropResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -127,7 +128,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       pagination: PaginationInput
-    ): [DocumentHistoryFindResponse]!
+    ): DocumentHistoryFindResponse
   }
 
   extend type Mutation {
@@ -225,7 +226,7 @@ const documentCreate = authorizeWrapper<
 
 const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
-  TDocumentModificationResponse
+  TDocumentUpdateResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
   return withCompoundTransaction(async (session) =>
     Document.update(
@@ -242,8 +243,8 @@ const documentUpdate = authorizeWrapper<
 });
 
 const documentDrop = authorizeWrapper<
-  TDocumentFindRequest,
-  TDocumentModificationResponse
+  TDocumentDropRequest,
+  TDocumentDropResponse
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
@@ -263,7 +264,7 @@ const documentDrop = authorizeWrapper<
 
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
-  TDocumentHistoryResponse | null
+  TDocumentHistoryFindResponse
 >(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
