@@ -7,11 +7,9 @@ import {
 import { logger } from './logger';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
-  try {
-    await callback();
+  if (typeof callback === 'function') {
     return true;
-  } catch (e) {
-    logger.error(e);
+  } else {
     return false;
   }
 }

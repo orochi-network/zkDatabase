@@ -4,10 +4,7 @@
     "composite": true,
     "target": "ESNext",
     "module": "ESNext",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "outDir": "./build",
     "rootDir": ".",
     "declarationMap": false,
@@ -22,21 +19,10 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@types": [
-        "./src/types"
-      ],
-      "@validation": [
-        "./src/validation"
-      ]
+      "@types": ["./src/types"],
+      "@validation": ["./src/validation"]
     }
   },
-  "include": [
-    "./src"
-  ],
-  "exclude": [
-    "./node_modules",
-    "./build",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-  ]
+  "include": ["./src"],
+  "exclude": ["./node_modules", "./build", "**/*.spec.ts", "**/*.test.ts"]
 }

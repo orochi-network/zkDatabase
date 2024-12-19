@@ -112,7 +112,7 @@ export const SERVICE_COMPILE = {
               },
               {
                 $set: {
-                  status: ETransactionStatus.Unconfirmed,
+                  status: ETransactionStatus.Unsigned,
                   transactionRaw,
                   updatedAt: new Date(),
                 },
@@ -195,7 +195,7 @@ export const SERVICE_COMPILE = {
               },
               {
                 $set: {
-                  status: ETransactionStatus.Unconfirmed,
+                  status: ETransactionStatus.Unsigned,
                   transactionRaw,
                   updatedAt: new Date(),
                 },

@@ -1,6 +1,0 @@
-{
-  "entryPoints": ["./src"],
-  "entryPointStrategy": "expand",
-  "out": "docs",
-  "exclude": ["node_modules", "./src/**/index.ts"]
-}

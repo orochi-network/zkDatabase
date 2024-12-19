@@ -18,19 +18,10 @@
   "license": "Apache-2.0",
   "description": "",
   "dependencies": {
-    "@zkdb/common": "^0.1.1",
     "@apollo/client": "^3.10.6",
-    "@types/node": "^22.6.1",
-    "graphql": "^16.9.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "typescript": "^5.6.2"
+    "@zkdb/common": "^0.1.1"
   },
-  "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "^28.0.0",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@rollup/plugin-typescript": "^12.1.0",
-    "rollup": "^4.22.4"
+  "peerDependencies": {
+    "graphql": "^16.10.0"
   }
 }

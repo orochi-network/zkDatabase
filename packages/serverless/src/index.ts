@@ -24,7 +24,7 @@ import {
   ModelTransaction,
   withCompoundTransaction,
 } from '@zkdb/storage';
-import RedisStore from 'connect-redis';
+import { RedisStore } from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
 import express from 'express';

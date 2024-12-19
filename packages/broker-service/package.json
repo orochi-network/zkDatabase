@@ -6,15 +6,11 @@
   "dependencies": {
     "@zkdb/storage": "^1.1.0",
     "apollo-server": "^3.13.0",
-    "express": "^4.21.0",
-    "graphql": "^16.9.0",
-    "graphql-type-json": "^0.3.2"
+    "express": "^4.21.0"
   },
-  "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.6.1",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^5.6.2"
+  "peerDependencies": {
+    "graphql": "^16.10.0",
+    "graphql-type-json": "^0.3.2"
   },
   "scripts": {
     "start": "npm run build && node ./build/src/index.js",
