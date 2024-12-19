@@ -16,12 +16,13 @@ import {
   TDocumentFindRequest,
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
-  TDocumentModificationResponse,
+  TDocumentUpdateResponse,
   TDocumentHistoryResponse,
-  TPaginationReturn,
   TDocumentFindResponse,
   PERMISSION_DEFAULT,
   TDocumentCreateResponse,
+  TDocumentDropRequest,
+  TDocumentDropResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -225,7 +226,7 @@ const documentCreate = authorizeWrapper<
 
 const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
-  TDocumentModificationResponse
+  TDocumentUpdateResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
   return withCompoundTransaction(async (session) =>
     Document.update(
@@ -242,8 +243,8 @@ const documentUpdate = authorizeWrapper<
 });
 
 const documentDrop = authorizeWrapper<
-  TDocumentFindRequest,
-  TDocumentModificationResponse
+  TDocumentDropRequest,
+  TDocumentDropResponse
 >(
   JOI_DOCUMENT_FIND_REQUEST,
   async (_root: unknown, args: TDocumentFindRequest, ctx) => {
