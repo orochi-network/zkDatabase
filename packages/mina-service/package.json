@@ -11,12 +11,11 @@
     "mina-dapp",
     "zkapp"
   ],
-  "main": "build/src/index.js",
-  "types": "build/src/index.d.ts",
+
   "scripts": {
-    "build": "tsc",
-    "buildw": "tsc --watch",
-    "dev": "tsc && node ./build/src/index.js",
+    "build": "rm -rf ./build && rollup -c",
+    "start:prod": "yarn run build && node ./build/src/index.js",
+    "dev": "tsx --watch ./src/index.ts",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "test": "echo 'hello world'",
@@ -30,7 +29,8 @@
     "bullmq": "^5.34.3"
   },
   "dependencies": {
-    "@orochi-network/framework": "^2.3.19",
+    "@orochi-network/framework": "^2.3.22",
+    "@orochi-network/vault": "^1.4.15",
     "@zkdb/smart-contract": "^1.1.0",
     "@zkdb/storage": "^1.1.0",
     "graphql-request": "7.1.2"
