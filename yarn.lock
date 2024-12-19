@@ -2097,6 +2097,27 @@
     winston "3.14.2"
     winston-transport "4.7.1"
 
+"@orochi-network/framework@^2.3.22":
+  version "2.3.22"
+  resolved "https://registry.yarnpkg.com/@orochi-network/framework/-/framework-2.3.22.tgz#e0ae002a60c404a2770fc4db5e7a6092a6c0a9a5"
+  integrity sha512-6VcHL06hTC01IExVHPOpW+AvqlcO1+MalPGY2iDM96s71nGh/CRVrlwsR5VBrZP1sUArhVwYRdGjOdJnpLGwZA==
+  dependencies:
+    "@orochi-network/utilities" "^0.2.40"
+    "@orochi-network/vault" "^1.4.15"
+    change-case "5.4.4"
+    dotenv "16.4.5"
+    ethers "6.13.2"
+    joi "17.13.3"
+    jose "5.8.0"
+    knex "3.1.0"
+    logform "2.6.1"
+    object-hash "3.0.0"
+    pg "8.12.0"
+    picocolors "1.1.0"
+    redis "4.7.0"
+    winston "3.14.2"
+    winston-transport "4.7.1"
+
 "@orochi-network/queue@^0.1.9":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@orochi-network/queue/-/queue-0.1.11.tgz#c749704587a7a49e4808009def83058c9d871f0c"

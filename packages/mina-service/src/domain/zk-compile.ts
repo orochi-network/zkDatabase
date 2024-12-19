@@ -25,7 +25,7 @@ export class ZkCompile {
       merkleHeight < MIN_MERKLE_TREE_HEIGHT
     ) {
       throw new Error(
-        `Valid merkle height, ensure it between ${MIN_MERKLE_TREE_HEIGHT} to ${MAX_MERKLE_TREE_HEIGHT}`
+        `Valid merkle height, ensure it between from ${MIN_MERKLE_TREE_HEIGHT} to ${MAX_MERKLE_TREE_HEIGHT}`
       );
     }
     if (!this.smartContractMap.has(merkleHeight)) {
