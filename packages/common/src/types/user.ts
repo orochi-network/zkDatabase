@@ -51,3 +51,13 @@ export type TUserFindRequest = {
 };
 
 export type TUserFindResponse = TPaginationReturn<Omit<TUser, 'userData'>[]>;
+
+export type TUserMeRequest = void;
+
+// We need to use pick instead of Omit<TUser, 'activated'>
+// Because when we add on some field that need to hide like password
+// We will accidentally expose these field
+export type TUserMeResponse = Pick<
+  TUser,
+  'email' | 'publicKey' | 'userData' | 'userName'
+>;

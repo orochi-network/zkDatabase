@@ -68,14 +68,6 @@ export class Database {
         { session }
       );
       if (metadataDatabase) {
-        // Enqueue transaction
-        await Transaction.enqueue(
-          databaseName,
-          databaseOwner,
-          ETransactionType.Deploy,
-          session
-        );
-
         // Create default group
         await Group.create(
           {
@@ -96,6 +88,17 @@ export class Database {
           },
           session
         );
+
+        // Enqueue transaction
+        // NOTE: need to put this at last because it commit the session
+        // If we put it to before another we query that have session, it will not work, since
+        await Transaction.enqueue(
+          databaseName,
+          databaseOwner,
+          ETransactionType.Deploy,
+          session
+        );
+
         return true;
       }
       return false;

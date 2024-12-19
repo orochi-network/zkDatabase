@@ -6,6 +6,8 @@ import {
   TUser,
   TUserFindRequest,
   TUserFindResponse,
+  TUserMeRequest,
+  TUserMeResponse,
   TUserSignInRequest,
   TUserSignInResponse,
   TUserSignUpInput,
@@ -103,7 +105,6 @@ export const typeDefsUser = gql`
 `;
 
 // Joi validation
-
 export const JOI_SIGNATURE_PROOF = Joi.object<TMinaSignature>({
   signature: Joi.object({
     field: Joi.string()
@@ -143,15 +144,23 @@ export const JOI_USER_FIND = Joi.object<TUserFindRequest>({
 });
 
 // Query
-const userMe = authorizeWrapper(async (_root, _args, context) => {
-  const user = await new ModelUser().findOne({
-    userName: context.userName,
-  });
-  if (user) {
-    return user;
+const userMe = authorizeWrapper<TUserMeRequest, TUserMeResponse>(
+  async (_root, _args, context) => {
+    const user = await new ModelUser().findOne({
+      userName: context.userName,
+    });
+    if (user) {
+      return {
+        accessToken: context.req.headers.cookie,
+        email: user.email,
+        publicKey: user.publicKey,
+        userData: user.userData,
+        userName: user.userName,
+      };
+    }
+    throw new Error('User not found');
   }
-  throw new Error('User not found');
-});
+);
 
 const userFind = publicWrapper<TUserFindRequest, TUserFindResponse>(
   JOI_USER_FIND,
