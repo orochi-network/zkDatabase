@@ -50,6 +50,11 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "o1js": "1.9.*"
+    "bullmq": "5.34.3",
+    "graphql": "16.10.0",
+    "graphql-type-json": "0.3.2",
+    "joi": "17.13.3",
+    "mongodb": "6.12.0",
+    "o1js": "1.9.1"
   }
 }

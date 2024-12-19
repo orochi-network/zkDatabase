@@ -53,6 +53,5 @@
       "eslint ./src/**/*.ts --fix",
       "prettier --write --ignore-unknown"
     ]
-  },
-  "devDependencies": {}
+  }
 }
