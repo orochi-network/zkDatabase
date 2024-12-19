@@ -49,7 +49,6 @@
     "@rollup/plugin-commonjs": "28.0.0",
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-typescript": "12.1.0",
-    "@shelf/jest-mongodb": "4.2.0",
     "@types/cors": "2.8.14",
     "@types/express-fileupload": "1.4.1",
     "@types/express-session": "1.18.0",
@@ -77,7 +76,6 @@
   "dependencies": {
     "@apollo/server": "4.11.0",
     "@orochi-network/framework": "^2.3.19",
-    "@orochi-network/queue": "^0.1.11",
     "@orochi-network/utilities": "^0.2.41",
     "@zkdb/common": "^0.1.1",
     "@zkdb/permission": "0.1.6",
@@ -90,7 +88,6 @@
     "express": "4.21.0",
     "express-fileupload": "1.4.0",
     "express-session": "1.18.0",
-    "google-auth-library": "9.14.1",
     "graphql-request": "7.1.0",
     "graphql-scalars": "1.22.4",
     "graphql-type-json": "0.3.2",
@@ -98,12 +95,12 @@
     "joi": "17.13.3",
     "jose": "5.9.3",
     "mina-signer": "3.0.7",
-    "mongodb": "6.9.0",
     "o1js": "1.9.0",
     "redis": "4.7.0",
     "spectaql": "3.0.2"
   },
   "resolutions": {
-    "graphql": "16.9.0"
+    "graphql": "16.9.0",
+    "mongodb": "6.11.0"
   }
 }
