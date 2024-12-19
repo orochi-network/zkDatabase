@@ -25,14 +25,13 @@
     "testw": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --watch",
     "lint": "eslint ./src/**/*.ts --fix && prettier . --write"
   },
-  "devDependencies": {},
   "peerDependencies": {
-    "o1js": "^1.9.*",
-    "@orochi-network/framework": "^2.3.22"
+    "o1js": "^1.9.1",
+    "@orochi-network/framework": "^2.3.22",
+    "mongodb": "^6.12.0"
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.19",
-    "@zkdb/common": "^0.1.1",
-    "mongodb": "6.12.0"
+    "@zkdb/common": "^0.1.1"
   }
 }
