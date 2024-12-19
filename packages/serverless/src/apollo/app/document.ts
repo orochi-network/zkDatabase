@@ -271,16 +271,16 @@ const documentDrop = authorizeWrapper<
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
   TDocumentHistoryFindResponse
->(JOI_DOCUMENT_HISTORY_FIND_REQUEST, async (_root: unknown, args, ctx) => {
+>(JOI_DOCUMENT_HISTORY_FIND_REQUEST, async (_root: unknown,{ databaseName, collectionName, docId, pagination}, ctx) => {
   return withTransaction(async (session) => {
     const [listRevision, totalRevision] = await Document.history(
       {
-        databaseName: args.databaseName,
-        collectionName: args.collectionName,
+        databaseName,
+        collectionName,
+        docId,
         actor: ctx.userName,
-        docId: args.docId,
       },
-      args.pagination || DEFAULT_PAGINATION,
+     pagination || DEFAULT_PAGINATION,
       session
     );
 
