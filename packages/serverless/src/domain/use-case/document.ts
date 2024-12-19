@@ -22,11 +22,8 @@ import {
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
   TCompoundSession,
-  ModelDatabase,
   ModelQueueTask,
   ModelSequencer,
-  withTransaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import {
@@ -169,7 +166,7 @@ export class Document {
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
     update: Record<string, TDocumentField>,
-    compoundSession: CompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 
@@ -242,7 +239,7 @@ but found ${listQualifiedDocument.length}.`
   static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
     filter: FilterCriteria,
-    compoundSession: CompoundSession
+    compoundSession: TCompoundSession
   ): Promise<TMerkleProof[]> {
     const { databaseName, collectionName, actor } = permissionParam;
 
