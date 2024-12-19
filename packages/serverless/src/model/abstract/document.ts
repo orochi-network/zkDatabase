@@ -146,10 +146,6 @@ export class ModelDocument extends ModelGeneral<
     throw new Error('No document found to update');
   }
 
-  public async findHistoryOne(docId: string, session?: ClientSession) {
-    return this.find({ docId }, { session });
-  }
-
   public async countActiveDocuments(filter?: Filter<TDocumentRecordNullable>) {
     return this.collection.countDocuments({ ...filter, active: true });
   }

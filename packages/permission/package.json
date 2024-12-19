@@ -25,7 +25,6 @@
   "scripts": {
     "release": "rm -rf ./build && npm run build && npm publish --access public",
     "build": "rm -rf ./build && rollup -c",
-    "buildw": "tsc -p tsconfig.json --watch",
     "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "format": "prettier --write --ignore-unknown **/*",
     "test": "echo 'hello world'",
@@ -54,29 +53,5 @@
       "eslint ./src/**/*.ts --fix",
       "prettier --write --ignore-unknown"
     ]
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.1.0",
-    "@eslint/js": "^9.12.0",
-    "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "28.0.0",
-    "@rollup/plugin-typescript": "12.1.0",
-    "@types/node": "^22.6.1",
-    "@typescript-eslint/eslint-plugin": "^8.8.1",
-    "@typescript-eslint/parser": "^8.8.1",
-    "eslint": "^9.12.0",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-config-flat-gitignore": "^0.3.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-import-resolver-typescript": "^3.6.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-jest": "^27.6.3",
-    "eslint-plugin-o1js": "^0.4.0",
-    "lint-staged": "^15.2.10",
-    "prettier": "^3.0.3",
-    "rollup": "4.24.0",
-    "typedoc": "^0.26.7",
-    "typescript": "^5.6.2"
   }
 }

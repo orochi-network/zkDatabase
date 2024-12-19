@@ -32,7 +32,6 @@ export const SERVICE_COMPILE = {
               throw new Error('Transaction not found on Mina');
               // Transaction not found in Mina, which mean processing
             }
-            tx.txStatus === '';
 
             if (tx.txStatus === 'applied') {
               await imTransaction.updateOne(
