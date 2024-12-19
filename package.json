@@ -7,7 +7,7 @@
     "packages/storage",
     "packages/smart-contract",
     "packages/kubo",
-    "packages/proof-service",
+    "packages/mina-service",
     "packages/api",
     "packages/permission",
     "packages/zkdb",

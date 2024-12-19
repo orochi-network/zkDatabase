@@ -3379,6 +3379,19 @@ bullmq@5.34.2:
     tslib "^2.0.0"
     uuid "^9.0.0"
 
+bullmq@^5.34.3:
+  version "5.34.3"
+  resolved "https://registry.yarnpkg.com/bullmq/-/bullmq-5.34.3.tgz#3fd69091c31b1139a119ecda59b4e7bc2d311638"
+  integrity sha512-S8/V11w7p6jYAGvv+00skLza/4inTOupWPe0uCD8mZSUiYKzvmW4/YEB+KVjZI2CC2oD3KJ3t7/KkUd31MxMig==
+  dependencies:
+    cron-parser "^4.6.0"
+    ioredis "^5.4.1"
+    msgpackr "^1.11.2"
+    node-abort-controller "^3.1.1"
+    semver "^7.5.4"
+    tslib "^2.0.0"
+    uuid "^9.0.0"
+
 bunyan@^1.8.12:
   version "1.8.15"
   resolved "https://registry.yarnpkg.com/bunyan/-/bunyan-1.8.15.tgz#8ce34ca908a17d0776576ca1b2f6cbd916e93b46"

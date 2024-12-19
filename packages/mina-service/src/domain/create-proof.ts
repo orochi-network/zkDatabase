@@ -11,6 +11,7 @@ import {
   withTransaction,
 } from '@zkdb/storage';
 import { ObjectId } from 'mongodb';
+import { EProofStatusDocument } from '@zkdb/common';
 import {
   fetchAccount,
   Field,
@@ -19,9 +20,8 @@ import {
   PublicKey,
   ZkProgram,
 } from 'o1js';
-import { EProofStatusDocument } from '../../../common/src/index.js';
-import CircuitFactory from '../circuit/circuit-factory.js';
-import logger from '../helper/logger.js';
+import { CircuitFactory } from '@circuit';
+import { logger } from '@helper';
 
 // @TODO Think about apply session in this code
 export async function createProof(taskId: string) {

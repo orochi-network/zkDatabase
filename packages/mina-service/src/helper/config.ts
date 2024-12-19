@@ -4,13 +4,14 @@ import {
   TNodeEnv,
 } from '@orochi-network/framework';
 import Joi from 'joi';
+import { NetworkId } from 'o1js';
 
 type TApplicationConfig = {
   NODE_ENV: TNodeEnv;
   MONGODB_URL: string;
   BROKER_SERVICE: string;
   PROOF_MONGODB_URL: string;
-  NETWORK_ID: 'mainnet' | 'testnet';
+  NETWORK_ID: NetworkId;
   MINA_URL: string;
 };
 
