@@ -850,33 +850,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-<<<<<<< HEAD
-"@molt/command@^0.9.0":
-  version "0.9.0"
-  resolved "https://registry.yarnpkg.com/@molt/command/-/command-0.9.0.tgz#3c77efe435beb6062da8ba96097f8f82e9bee51c"
-  integrity sha512-1JI8dAlpqlZoXyKWVQggX7geFNPxBpocHIXQCsnxDjKy+3WX4SGyZVJXuLlqRRrX7FmQCuuMAfx642ovXmPA9g==
-  dependencies:
-    "@molt/types" "0.2.0"
-    alge "0.8.1"
-    chalk "^5.3.0"
-    lodash.camelcase "^4.3.0"
-    lodash.snakecase "^4.1.1"
-    readline-sync "^1.4.10"
-    string-length "^6.0.0"
-    strip-ansi "^7.1.0"
-    ts-toolbelt "^9.6.0"
-    type-fest "^4.3.1"
-    zod "^3.22.2"
-
-"@molt/types@0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@molt/types/-/types-0.2.0.tgz#be19a4c16d944deb93c3d8221170b88eeb9a3085"
-  integrity sha512-p6ChnEZDGjg9PYPec9BK6Yp5/DdSrYQvXTBAtgrnqX6N36cZy37ql1c8Tc5LclfIYBNG7EZp8NBcRTYJwyi84g==
-  dependencies:
-    ts-toolbelt "^9.6.0"
-
-=======
->>>>>>> bug/refactor_bullshit_code
 "@mongodb-js/saslprep@^1.1.9":
   version "1.1.9"
   resolved "https://registry.yarnpkg.com/@mongodb-js/saslprep/-/saslprep-1.1.9.tgz#e974bab8eca9faa88677d4ea4da8d09a52069004"
@@ -957,28 +930,7 @@
   resolved "https://registry.yarnpkg.com/@one-ini/wasm/-/wasm-0.1.1.tgz#6013659736c9dbfccc96e8a9c2b3de317df39323"
   integrity sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==
 
-"@orochi-network/framework@^2.3.19":
-  version "2.3.22"
-  resolved "https://registry.yarnpkg.com/@orochi-network/framework/-/framework-2.3.22.tgz#e0ae002a60c404a2770fc4db5e7a6092a6c0a9a5"
-  integrity sha512-6VcHL06hTC01IExVHPOpW+AvqlcO1+MalPGY2iDM96s71nGh/CRVrlwsR5VBrZP1sUArhVwYRdGjOdJnpLGwZA==
-  dependencies:
-    "@orochi-network/utilities" "^0.2.40"
-    "@orochi-network/vault" "^1.4.15"
-    change-case "5.4.4"
-    dotenv "16.4.5"
-    ethers "6.13.2"
-    joi "17.13.3"
-    jose "5.8.0"
-    knex "3.1.0"
-    logform "2.6.1"
-    object-hash "3.0.0"
-    pg "8.12.0"
-    picocolors "1.1.0"
-    redis "4.7.0"
-    winston "3.14.2"
-    winston-transport "4.7.1"
-
-"@orochi-network/framework@^2.3.22":
+"@orochi-network/framework@^2.3.19", "@orochi-network/framework@^2.3.22":
   version "2.3.22"
   resolved "https://registry.yarnpkg.com/@orochi-network/framework/-/framework-2.3.22.tgz#e0ae002a60c404a2770fc4db5e7a6092a6c0a9a5"
   integrity sha512-6VcHL06hTC01IExVHPOpW+AvqlcO1+MalPGY2iDM96s71nGh/CRVrlwsR5VBrZP1sUArhVwYRdGjOdJnpLGwZA==
@@ -1209,24 +1161,7 @@
   resolved "https://registry.yarnpkg.com/@rollup/plugin-alias/-/plugin-alias-5.1.1.tgz#53601d88cda8b1577aa130b4a6e452283605bf26"
   integrity sha512-PR9zDb+rOzkRb2VD+EuKB7UC41vU5DIwZ5qqCpk0KJudcWAyi8rvYOhS7+L5aZCspw1stTViLgN5v6FF1p5cgQ==
 
-<<<<<<< HEAD
-"@rollup/plugin-commonjs@28.0.0":
-  version "28.0.0"
-  resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-28.0.0.tgz#44b5e49cb5d5e6233f1e4996013a8649fdbb9557"
-  integrity sha512-BJcu+a+Mpq476DMXG+hevgPSl56bkUoi88dKT8t3RyUp8kGuOh+2bU8Gs7zXDlu+fyZggnJ+iOBGrb/O1SorYg==
-  dependencies:
-    "@rollup/pluginutils" "^5.0.1"
-    commondir "^1.0.1"
-    estree-walker "^2.0.2"
-    fdir "^6.1.1"
-    is-reference "1.2.1"
-    magic-string "^0.30.3"
-    picomatch "^2.3.1"
-
-"@rollup/plugin-commonjs@^28.0.0", "@rollup/plugin-commonjs@^28.0.2":
-=======
 "@rollup/plugin-commonjs@^28.0.2":
->>>>>>> bug/refactor_bullshit_code
   version "28.0.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-28.0.2.tgz#193d7a86470f112b56927c1d821ee45951a819ea"
   integrity sha512-BEFI2EDqzl+vA1rl97IDRZ61AIwGH093d9nz8+dThxJNH8oSoB7MjWvPCX3dkaK1/RCJ/1v/R1XB15FuSs0fQw==
@@ -1257,19 +1192,7 @@
     is-module "^1.0.0"
     resolve "^1.22.1"
 
-<<<<<<< HEAD
-"@rollup/plugin-typescript@12.1.0":
-  version "12.1.0"
-  resolved "https://registry.yarnpkg.com/@rollup/plugin-typescript/-/plugin-typescript-12.1.0.tgz#2b357972091d1a8f71b8c9ce5a6e95fe1473bf77"
-  integrity sha512-Kzs8KGJofe7cfTRODsnG1jNGxSvU8gVoNNd7Z/QaY25AYwe2LSSUpx/kPxqF38NYkpR8de3m51r9uwJpDlz6dg==
-  dependencies:
-    "@rollup/pluginutils" "^5.1.0"
-    resolve "^1.22.1"
-
-"@rollup/plugin-typescript@^12.1.0", "@rollup/plugin-typescript@^12.1.2":
-=======
 "@rollup/plugin-typescript@^12.1.2":
->>>>>>> bug/refactor_bullshit_code
   version "12.1.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-typescript/-/plugin-typescript-12.1.2.tgz#ebaeec2e7376faa889030ccd7cb485a649e63118"
   integrity sha512-cdtSp154H5sv637uMr1a8OTWB0L1SWDSm1rDGiyfcGcvQ6cuTs4MDk2BVEBGysUWago4OJN4EQZqOTl/QY3Jgg==
@@ -1675,11 +1598,7 @@
     "@types/node" "*"
     form-data "^4.0.0"
 
-<<<<<<< HEAD
-"@types/node@*", "@types/node@^22.6.1":
-=======
 "@types/node@*", "@types/node@^22.10.2":
->>>>>>> bug/refactor_bullshit_code
   version "22.10.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.10.2.tgz#a485426e6d1fdafc7b0d4c7b24e2c78182ddabb9"
   integrity sha512-Xxr6BBRCAOQixvonOye19wnzyDiUtTeqldOOmj3CkeblonbccA12PFwlufvRdrpjXxqnmUaeiU5EOA+7s5diUQ==
@@ -2389,23 +2308,11 @@ bser@2.1.1:
   dependencies:
     node-int64 "^0.4.0"
 
-<<<<<<< HEAD
-bson@^6.10.0:
-=======
 bson@6.10.1, bson@^6.10.1:
->>>>>>> bug/refactor_bullshit_code
   version "6.10.1"
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.1.tgz#dcd04703178f5ecf5b25de04edd2a95ec79385d3"
   integrity sha512-P92xmHDQjSKPLHqFxefqMxASNq/aWJMEZugpCjf+AF/pgcUpMMQCg7t7+ewko0/u8AapvF3luf/FoehddEK+sA==
 
-<<<<<<< HEAD
-buffer-crc32@~0.2.3:
-  version "0.2.13"
-  resolved "https://registry.yarnpkg.com/buffer-crc32/-/buffer-crc32-0.2.13.tgz#0d333e3f00eac50aa1454abd30ef8c2a5d9a7242"
-  integrity sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==
-
-=======
->>>>>>> bug/refactor_bullshit_code
 buffer-from@^1.0.0:
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/buffer-from/-/buffer-from-1.1.2.tgz#2b146a6fd72e80b4f55d255f35ed59a3a9a41bd5"
@@ -4055,16 +3962,12 @@ graphql-type-json@0.3.2:
   resolved "https://registry.yarnpkg.com/graphql-type-json/-/graphql-type-json-0.3.2.tgz#f53a851dbfe07bd1c8157d24150064baab41e115"
   integrity sha512-J+vjof74oMlCWXSvt0DOf2APEdZOCdubEvGDUAlqH//VBYcOYsGgRW7Xzorr44LvkjiuvecWc8fChxuZZbChtg==
 
-<<<<<<< HEAD
-graphql@16.9.0, graphql@^16.3.0, graphql@^16.9.0:
-=======
 graphql@16.10.0, graphql@^16.3.0:
   version "16.10.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.10.0.tgz#24c01ae0af6b11ea87bf55694429198aaa8e220c"
   integrity sha512-AjqGKbDGUFRKIRCP9tCKiIGHyriz2oHEbPIbEtcSLSs4YjReZOIPQQWek4+6hjw62H9QShXHyaGivGiYVLeYFQ==
 
 graphql@16.9.0:
->>>>>>> bug/refactor_bullshit_code
   version "16.9.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.9.0.tgz#1c310e63f16a49ce1fbb230bd0a000e99f6f115f"
   integrity sha512-GGTKBX4SD7Wdb8mqeDLni2oaRGYQWjWHGKPQ24ZMnUtKfcsVoiv4uX8+LJr1K6U5VW2Lu1BwJnj7uiori0YtRw==
@@ -5334,41 +5237,6 @@ mongodb-connection-string-url@^3.0.0:
     "@types/whatwg-url" "^11.0.2"
     whatwg-url "^13.0.0"
 
-<<<<<<< HEAD
-mongodb-memory-server-core@9.2.0:
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/mongodb-memory-server-core/-/mongodb-memory-server-core-9.2.0.tgz#d83e52633df910d8a48c1ff27de139fd4ab7f2d9"
-  integrity sha512-9SWZEy+dGj5Fvm5RY/mtqHZKS64o4heDwReD4SsfR7+uNgtYo+JN41kPCcJeIH3aJf04j25i5Dia2s52KmsMPA==
-  dependencies:
-    async-mutex "^0.4.0"
-    camelcase "^6.3.0"
-    debug "^4.3.4"
-    find-cache-dir "^3.3.2"
-    follow-redirects "^1.15.6"
-    https-proxy-agent "^7.0.4"
-    mongodb "^5.9.1"
-    new-find-package-json "^2.0.0"
-    semver "^7.6.0"
-    tar-stream "^3.1.7"
-    tslib "^2.6.2"
-    yauzl "^3.1.3"
-
-mongodb-memory-server@9.2.0:
-  version "9.2.0"
-  resolved "https://registry.yarnpkg.com/mongodb-memory-server/-/mongodb-memory-server-9.2.0.tgz#9fe8a0128f5b7409041895ce9e56ed28b2cf337d"
-  integrity sha512-w/usKdYtby5EALERxmA0+et+D0brP0InH3a26shNDgGefXA61hgl6U0P3IfwqZlEGRZdkbZig3n57AHZgDiwvg==
-  dependencies:
-    mongodb-memory-server-core "9.2.0"
-    tslib "^2.6.2"
-
-mongodb@6.11.0, mongodb@^5.9.1, mongodb@^6.11.0:
-  version "6.11.0"
-  resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-6.11.0.tgz#d09bc055e1e784849279dc41eb2cd1537a0488a0"
-  integrity sha512-yVbPw0qT268YKhG241vAMLaDQAPbRyTgo++odSgGc9kXnzOujQI60Iyj23B9sQQFPSvmNPvMZ3dsFz0aN55KgA==
-  dependencies:
-    "@mongodb-js/saslprep" "^1.1.9"
-    bson "^6.10.0"
-=======
 mongodb@6.12.0:
   version "6.12.0"
   resolved "https://registry.yarnpkg.com/mongodb/-/mongodb-6.12.0.tgz#8b0bda1b18cbb3f0aec8ab4119c5dc535a43c444"
@@ -5376,7 +5244,6 @@ mongodb@6.12.0:
   dependencies:
     "@mongodb-js/saslprep" "^1.1.9"
     bson "^6.10.1"
->>>>>>> bug/refactor_bullshit_code
     mongodb-connection-string-url "^3.0.0"
 
 morgan@^1.10.0:
@@ -5545,11 +5412,7 @@ nth-check@^2.0.1:
   dependencies:
     boolbase "^1.0.0"
 
-<<<<<<< HEAD
-o1js@1.9.*, o1js@1.9.1:
-=======
 o1js@1.9.1:
->>>>>>> bug/refactor_bullshit_code
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/o1js/-/o1js-1.9.1.tgz#c3df846c2857d18ebbf1958085a1d462ffe89091"
   integrity sha512-QbeFb2WU4YpCRIz/2hu3lhwioDntpmn8M7Zl6LrIh3fIPoHMQcN9OIqE8whN83ttcioV3HsJwszKtfkBC5vEYQ==
@@ -6578,25 +6441,6 @@ slash@^3.0.0:
   resolved "https://registry.yarnpkg.com/slash/-/slash-3.0.0.tgz#6539be870c165adbd5240220dbe361f1bc4d4634"
   integrity sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==
 
-<<<<<<< HEAD
-slice-ansi@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/slice-ansi/-/slice-ansi-5.0.0.tgz#b73063c57aa96f9cd881654b15294d95d285c42a"
-  integrity sha512-FC+lgizVPfie0kkhqUScwRu1O/lF6NOgJmlCgK+/LYxDCTk8sGelYaHDhFcDN+Sn3Cv+3VSa4Byeo+IMCzpMgQ==
-  dependencies:
-    ansi-styles "^6.0.0"
-    is-fullwidth-code-point "^4.0.0"
-
-slice-ansi@^7.1.0:
-  version "7.1.0"
-  resolved "https://registry.yarnpkg.com/slice-ansi/-/slice-ansi-7.1.0.tgz#cd6b4655e298a8d1bdeb04250a433094b347b9a9"
-  integrity sha512-bSiSngZ/jWeX93BqeIAbImyTbEihizcwNjFoRUIY/T1wWQsfsm2Vw1agPKylXvQTU7iASGdHhyqRlqQzfz+Htg==
-  dependencies:
-    ansi-styles "^6.2.1"
-    is-fullwidth-code-point "^5.0.0"
-
-=======
->>>>>>> bug/refactor_bullshit_code
 "source-map-js@>=0.6.2 <2.0.0", source-map-js@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/source-map-js/-/source-map-js-1.2.1.tgz#1ce5650fddd87abc099eda37dcff024c2667ae46"
@@ -6710,7 +6554,16 @@ string-template@~0.2.1:
   resolved "https://registry.yarnpkg.com/string-template/-/string-template-0.2.1.tgz#42932e598a352d01fc22ec3367d9d84eec6c9add"
   integrity sha512-Yptehjogou2xm4UJbxJ4CxgZx12HBfeystp0y3x7s4Dj32ltVVG1Gg8YhKjHZkHicuKpZX/ffilA8505VbUbpw==
 
-"string-width-cjs@npm:string-width@^4.2.0", string-width@^4.1.0, string-width@^4.2.0:
+"string-width-cjs@npm:string-width@^4.2.0":
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
+  integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
+  dependencies:
+    emoji-regex "^8.0.0"
+    is-fullwidth-code-point "^3.0.0"
+    strip-ansi "^6.0.1"
+
+string-width@^4.1.0, string-width@^4.2.0:
   version "4.2.3"
   resolved "https://registry.yarnpkg.com/string-width/-/string-width-4.2.3.tgz#269c7117d27b05ad2e536830a8ec895ef9c6d010"
   integrity sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==
@@ -6779,7 +6632,7 @@ string_decoder@~1.1.1:
   dependencies:
     safe-buffer "~5.1.0"
 
-"strip-ansi-cjs@npm:strip-ansi@^6.0.1", strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+"strip-ansi-cjs@npm:strip-ansi@^6.0.1":
   version "6.0.1"
   resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
   integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
@@ -6792,6 +6645,13 @@ strip-ansi@^3.0.0:
   integrity sha512-VhumSSbBqDTP8p2ZLKj40UjBCV4+v8bUSEpUb4KjRgWk9pbqGF4REFj6KEagidb2f/M6AzC0EmFyDNGaw9OCzg==
   dependencies:
     ansi-regex "^2.0.0"
+
+strip-ansi@^6.0.0, strip-ansi@^6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-6.0.1.tgz#9e26c63d30f53443e9489495b2105d37b67a85d9"
+  integrity sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==
+  dependencies:
+    ansi-regex "^5.0.1"
 
 strip-ansi@^7.0.1:
   version "7.1.0"

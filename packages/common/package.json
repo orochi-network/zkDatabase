@@ -60,13 +60,6 @@
     "joi": "^17.13.3"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "@zkdb/permission": "^0.1.6",
-    "joi": "^17.13.3",
-    "mongodb": "^6.11.0",
-    "o1js": "1.9.1"
-=======
     "@zkdb/permission": "^0.1.6"
->>>>>>> bug/refactor_bullshit_code
   }
 }
