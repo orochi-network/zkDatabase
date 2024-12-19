@@ -28,7 +28,6 @@
     // https://github.com/o1-labs/o1js/issues/1380#issuecomment-1902038952
     "useDefineForClassFields": false
   },
-  "references": [{ "path": "../storage" }, { "path": "../smart-contract" }],
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts", "test/**/*.test.ts"]
 }
