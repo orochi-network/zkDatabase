@@ -271,26 +271,33 @@ const documentDrop = authorizeWrapper<
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
   TDocumentHistoryFindResponse
->(JOI_DOCUMENT_HISTORY_FIND_REQUEST, async (_root: unknown,{ databaseName, collectionName, docId, pagination}, ctx) => {
-  return withTransaction(async (session) => {
-    const [listRevision, totalRevision] = await Document.history(
-      {
-        databaseName,
-        collectionName,
-        docId,
-        actor: ctx.userName,
-      },
-     pagination || DEFAULT_PAGINATION,
-      session
-    );
+>(
+  JOI_DOCUMENT_HISTORY_FIND_REQUEST,
+  async (
+    _root: unknown,
+    { databaseName, collectionName, docId, pagination },
+    ctx
+  ) => {
+    return withTransaction(async (session) => {
+      const [listRevision, totalRevision] = await Document.history(
+        {
+          databaseName,
+          collectionName,
+          docId,
+          actor: ctx.userName,
+        },
+        pagination || DEFAULT_PAGINATION,
+        session
+      );
 
-    return {
-      data: listRevision,
-      total: totalRevision,
-      offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
-    };
-  });
-});
+      return {
+        data: listRevision,
+        total: totalRevision,
+        offset: pagination?.offset || DEFAULT_PAGINATION.offset,
+      };
+    });
+  }
+);
 
 export const resolversDocument = {
   JSON: GraphQLJSON,

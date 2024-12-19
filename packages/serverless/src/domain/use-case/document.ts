@@ -425,7 +425,10 @@ but found ${listQualifiedDocument.length}.`
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const document = await imDocument.findOne({ docId, active: true });
+    const document = await imDocument.findOne(
+      { docId, active: true },
+      { session }
+    );
     if (!document) {
       throw new Error(`Document with docId '${docId}' not found.`);
     }
@@ -447,15 +450,21 @@ but found ${listQualifiedDocument.length}.`
 
     const [listRevision, totalRevision] = await Promise.all([
       imDocument
-        .find({
-          docId,
-          active: false,
-        })
+        .find(
+          {
+            docId,
+            active: false,
+          },
+          { session }
+        )
         .limit(pagination.limit)
         .skip(pagination.offset)
         .toArray(),
 
-      imDocument.collection.countDocuments({ docId, active: false }),
+      imDocument.collection.countDocuments(
+        { docId, active: false },
+        { session }
+      ),
     ]);
 
     return [listRevision, totalRevision];
