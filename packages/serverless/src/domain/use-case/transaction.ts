@@ -1,156 +1,199 @@
-import { isDatabaseOwner } from './database.js';
-import { redisQueue } from '../../helper/mq.js';
+import { getCurrentTime, transactionQueue } from '@helper';
+import { ModelUser } from '@model';
+import { FixedFloat } from '@orochi-network/utilities';
 import {
-  ModelDbTransaction,
-  ModelDbSetting,
-  DbTransaction,
-} from '@zkdb/storage';
-import ModelUser from '../../model/global/user.js';
+  ETransactionStatus,
+  ETransactionType,
+  TDbRecord,
+  TTransaction,
+} from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { PublicKey } from 'o1js';
+import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId, WithId } from 'mongodb';
+import { PublicKey } from 'o1js';
+import { Database } from './database';
 
-const MINA_DECIMAL = 1e9;
+export class Transaction {
+  static readonly MINA_DECIMAL = FixedFloat.from({
+    basedValue: 10n,
+    decimals: 9,
+  });
 
-export type TransactionType = 'deploy' | 'rollup';
+  static readonly MAP_MINIMAL_BALANCE = new Map<ETransactionType, FixedFloat>([
+    [ETransactionType.Deploy, Transaction.MINA_DECIMAL.mul(1.1)],
+    [ETransactionType.Rollup, Transaction.MINA_DECIMAL.mul(0.1)],
+  ]);
 
-export async function enqueueTransaction(
-  databaseName: string,
-  actor: string,
-  transactionType: TransactionType,
-  session?: ClientSession
-): Promise<ObjectId> {
-  if (!(await isDatabaseOwner(databaseName, actor, session))) {
-    throw Error('Only database owner can roll up the transaction');
-  }
+  static async enqueue(
+    databaseName: string,
+    actor: string,
+    transactionType: ETransactionType,
+    session: ClientSession
+  ): Promise<ObjectId> {
+    await Database.ownershipCheck(databaseName, actor, session);
+    // Check if smart contract is already bound to database
+    if (transactionType === ETransactionType.Deploy) {
+      const database = await ModelMetadataDatabase.getInstance().findOne(
+        { databaseName },
+        { session }
+      );
 
-  if (transactionType === 'deploy') {
-    const settings = await ModelDbSetting.getInstance().getSetting(
-      databaseName,
+      if (
+        typeof database?.appPublicKey === 'string' &&
+        !PublicKey.fromBase58(database?.appPublicKey).isEmpty()
+      ) {
+        throw Error('Smart contract is already bound to database');
+      }
+    }
+
+    const imTransaction = ModelTransaction.getInstance();
+
+    const txList = await imTransaction
+      .find(
+        { databaseName, transactionType },
+        {
+          session,
+        }
+      )
+      .toArray();
+
+    // Validate transactions
+    if (txList.length > 0) {
+      // This case database already deployed on chain before
+      if (
+        transactionType === ETransactionType.Deploy &&
+        txList.some((tx) => tx.status === ETransactionStatus.Confirmed)
+      ) {
+        // @QUESTION: Do we need to update status of Transaction and also
+        // deployment status of database?
+        throw new Error('You deploy transaction is already confirmed');
+      }
+
+      if (
+        // If we have uncompleted transaction, we should not allow to deploy new one.
+        // Un-completed transaction is mean that transaction is unsigned or signed without broadcast.
+        txList.some(
+          (tx) =>
+            tx.status === ETransactionStatus.Unsigned ||
+            tx.status === ETransactionStatus.Signed
+        )
+      ) {
+        throw Error('You have uncompleted transaction');
+      }
+
+      const pendingTx = txList.find(
+        (tx: WithId<TTransaction>) =>
+          tx.status === ETransactionStatus.Confirming
+      );
+
+      if (pendingTx) {
+        if (pendingTx.txHash) {
+          // @TODO: Transaction status check need to be done in cronjob or task schedule
+          const onchainTx =
+            await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
+              pendingTx.txHash
+            );
+
+          if (!onchainTx) {
+            throw Error('Onchain transaction has not been found');
+          }
+
+          if (onchainTx.txStatus === 'applied') {
+            await imTransaction.updateOne(
+              { _id: pendingTx._id },
+              {
+                status: ETransactionStatus.Confirmed,
+              },
+              { session }
+            );
+            throw Error('You deploy transaction is already succeeded');
+          } else if (onchainTx.txStatus === 'failed') {
+            await imTransaction.updateOne(
+              { _id: pendingTx._id },
+              {
+                status: ETransactionStatus.Failed,
+                error: onchainTx.failures.join(' '),
+              },
+              { session }
+            );
+            // Proceed and create new transaction
+          }
+        } else {
+          throw Error('Transaction hash has not been found');
+        }
+      }
+
+      // @TODO: Recheck the logic and make sure it is correct and cover all cases.
+    }
+
+    const payer = await new ModelUser().findOne(
+      { userName: actor },
       { session }
     );
 
-    if (settings?.appPublicKey) {
-      throw Error('Smart contract is already bound to database');
-    }
-  }
-
-  const modelTransaction = ModelDbTransaction.getInstance();
-
-  const txs = await modelTransaction.getTxs(databaseName, transactionType, {
-    session,
-  });
-
-  // Validate transactions
-  if (txs.length > 0) {
-    if (
-      transactionType === 'deploy' &&
-      txs.some((tx: WithId<DbTransaction>) => tx.status === 'success')
-    ) {
-      throw Error('You deploy transaction is already succeeded');
+    if (!payer || PublicKey.fromBase58(payer?.publicKey).isEmpty()) {
+      throw new Error('User public key not found');
     }
 
-    if (
-      txs.some(
-        (tx: WithId<DbTransaction>) =>
-          tx.status === 'start' || tx.status === 'ready'
-      )
-    ) {
-      throw Error('You have uncompleted transaction');
-    }
-
-    const pendingTx = txs.find(
-      (tx: WithId<DbTransaction>) => tx.status === 'pending'
+    const insertResult = await imTransaction.insertOne(
+      // @TODO: Make sure to check falsy don't just check typeof undefined or null.
+      // Since we using default value
+      // @TODO: Need refactor or allow nullable to insert empty transaction
+      {
+        transactionType,
+        databaseName,
+        status: ETransactionStatus.Unsigned,
+        transactionRaw: '',
+        txHash: '',
+        error: '',
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+      { session }
     );
+    // Make sure it commit transaction now before push to the queue
+    await session.commitTransaction();
 
-    if (pendingTx) {
-      if (pendingTx.txHash) {
-        const onchainTx =
-          await MinaNetwork.getInstance().getZkAppTransactionByTxHash(
-            pendingTx.txHash
-          );
-
-        if (!onchainTx) {
-          throw Error('Onchain transaction has not been found');
-        }
-
-        if (onchainTx.txStatus === 'applied') {
-          await modelTransaction.updateById(
-            pendingTx._id.toString(),
-            {
-              status: 'success',
-            },
-            { session }
-          );
-          throw Error('You deploy transaction is already succeeded');
-        } else if (onchainTx.txStatus === 'failed') {
-          await modelTransaction.updateById(
-            pendingTx._id.toString(),
-            {
-              status: 'failed',
-              error: onchainTx.failures.join(' '),
-            },
-            { session }
-          );
-          // Proceed and create new transaction
-        }
-      } else {
-        throw Error('Transaction hash has not been found');
-      }
-    }
-  }
-
-  const payer = await new ModelUser().findOne({ userName: actor }, { session });
-
-  const insertResult = await modelTransaction.create(
-    {
-      transactionType,
-      databaseName,
-      status: 'start',
-      createdAt: new Date(),
-    },
-    { session }
-  );
-
-  await redisQueue.enqueue(
-    JSON.stringify({
-      id: insertResult.insertedId.toString(),
+    await transactionQueue.add('transaction', {
+      transactionObjectId: insertResult.insertedId,
       payerAddress: payer?.publicKey,
-    })
-  );
+    });
 
-  return insertResult.insertedId;
-}
-
-export async function getTransactionForSigning(
-  databaseName: string,
-  actor: string,
-  transactionType: TransactionType
-) {
-  const modelUser = new ModelUser();
-
-  const user = await modelUser.findOne({ userName: actor });
-
-  if (!user) {
-    throw Error(`User ${actor} does not exist`);
+    return insertResult.insertedId;
   }
 
-  if (await isDatabaseOwner(databaseName, actor)) {
-    const dbSettings =
-      await ModelDbSetting.getInstance().getSetting(databaseName);
+  static async draft(
+    databaseName: string,
+    actor: string,
+    transactionType: ETransactionType,
+    session?: ClientSession
+  ): Promise<TDbRecord<TTransaction>> {
+    await Database.ownershipCheck(databaseName, actor, session);
 
-    if (!dbSettings) {
+    const imUser = new ModelUser();
+    const user = await imUser.findOne({ userName: actor }, { session });
+
+    if (!user) {
+      throw Error(`User ${actor} does not exist`);
+    }
+
+    const database = await ModelMetadataDatabase.getInstance().findOne({
+      databaseName,
+    });
+
+    if (!database) {
       throw Error(`Database ${databaseName} does not exist`);
     }
 
-    const transactions = await ModelDbTransaction.getInstance().getTxs(
-      databaseName,
-      transactionType
+    const transactionList = await ModelTransaction.getInstance()
+      .find({ databaseName, transactionType }, { session })
+      .toArray();
+
+    const unsignedTransaction = transactionList.find(
+      (tx) => tx.status === ETransactionStatus.Unsigned
     );
 
-    const readyTransaction = transactions.find((tx) => tx.status === 'ready');
-
-    if (readyTransaction) {
+    if (unsignedTransaction) {
       const { account, error } = await MinaNetwork.getInstance().getAccount(
         PublicKey.fromBase58(user.publicKey)
       );
@@ -160,52 +203,60 @@ export async function getTransactionForSigning(
       }
 
       if (account) {
-        const balance = account.balance.toBigInt();
+        const balance = FixedFloat.from({
+          basedValue: account.balance.toBigInt(),
+          decimals: 9,
+        });
 
-        if (balance < MINA_DECIMAL * 1.1) {
+        const minBalance =
+          Transaction.MAP_MINIMAL_BALANCE.get(transactionType)!;
+
+        if (balance.lt(minBalance)) {
           throw new Error(
-            'Your account need at least 1.1 Mina to create database'
+            `Your account need at least ${minBalance} balance unit for ${transactionType}`
           );
         }
 
-        return { ...readyTransaction, zkAppPublicKey: dbSettings.appPublicKey };
+        return unsignedTransaction;
       } else {
         throw Error('Account has not been found in Mina Network');
       }
     }
 
-    throw new Error('There is not any transaction for signing');
+    throw new Error('There is not any unsigned transaction');
   }
 
-  throw new Error('Only database owner can deploy database');
-}
+  static async latest(databaseName: string, transactionType: ETransactionType) {
+    const modelTransaction = ModelTransaction.getInstance();
 
-export async function getLatestTransaction(
-  databaseName: string,
-  transactionType: TransactionType
-) {
-  const modelTransaction = ModelDbTransaction.getInstance();
+    const txList = await modelTransaction
+      .find({ databaseName, transactionType })
+      .limit(1)
+      .sort({ createdAt: -1 })
+      .toArray();
 
-  const txs = await modelTransaction.getTxs(databaseName, transactionType, {
-    sort: {
-      createdAt: -1,
-    },
-  });
-
-  return txs.length === 0 ? null : txs[0];
-}
-export async function confirmTransaction(
-  databaseName: string,
-  actor: string,
-  id: string,
-  txHash: string
-) {
-  if (!(await isDatabaseOwner(databaseName, actor))) {
-    throw Error('Only database owner can confirm transactions');
+    return txList.length === 1 ? txList[0] : null;
   }
-  await ModelDbTransaction.getInstance().updateById(id, {
-    txHash,
-    status: 'pending',
-  });
-  return true;
+
+  static async confirm(
+    databaseName: string,
+    actor: string,
+    transactionObjectId: string,
+    txHash: string,
+    session?: ClientSession
+  ) {
+    await Database.ownershipCheck(databaseName, actor, session);
+
+    await ModelTransaction.getInstance().updateOne(
+      { _id: new ObjectId(transactionObjectId) },
+      {
+        txHash,
+        status: ETransactionStatus.Confirming,
+      },
+      { session }
+    );
+    return true;
+  }
 }
+
+export default Transaction;

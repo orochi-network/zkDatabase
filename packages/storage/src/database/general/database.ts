@@ -4,18 +4,9 @@ import {
   ListDatabasesResult,
   ObjectId,
 } from 'mongodb';
-import {
-  zkDatabaseConstants,
-  zkDatabaseMetadataCollections,
-} from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
-
-export type DocumentMetaIndex = {
-  collection: string;
-  docId: ObjectId;
-  index: number;
-};
+import { zkDatabaseConstant, zkDatabaseMetadataCollections } from '@common';
+import { DATABASE_ENGINE } from '@helper';
+import { ModelBasic } from '../base';
 
 /**
  * Handles database operations. Extends ModelBasic.
@@ -25,7 +16,10 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {
-    super(databaseName || zkDatabaseConstants.globalDatabase, DB.service);
+    super(
+      databaseName || zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.serverless
+    );
   }
 
   public static getInstance<T extends Document>(
@@ -58,11 +52,15 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   public async createCollection(
     collectionName: string,
     session?: ClientSession
-  ): Promise<void> {
+  ): Promise<boolean> {
     const isExist = await this.isCollectionExist(collectionName);
     if (!isExist) {
-      await this.db.createCollection(collectionName, { session });
+      const result = await this.db.createCollection(collectionName, {
+        session,
+      });
+      return typeof result === 'object' && result !== null;
     }
+    return false;
   }
 
   public async dropCollection(collectionName: string): Promise<boolean> {
@@ -87,5 +85,3 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return this.dbEngine.client.db().admin().listDatabases();
   }
 }
-
-export default ModelDatabase;

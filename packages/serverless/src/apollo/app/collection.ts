@@ -1,22 +1,25 @@
-import { ModelDatabase, withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
-import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
+import { Collection } from '@domain';
+import { gql } from '@helper';
 import {
-  createCollection,
-  createIndex,
-  listCollections,
-} from '../../domain/use-case/collection.js';
-import { TCollectionIndex } from '../types/collection-index.js';
-import { SchemaData } from '../types/schema.js';
-import publicWrapper, { authorizeWrapper } from '../validation.js';
-import {
-  collectionIndex,
   collectionName,
   databaseName,
+  ESortingSchema,
   groupName,
-} from './common.js';
-import { TDatabaseRequest } from './database.js';
+  O1JS_VALID_TYPE,
+  PERMISSION_DEFAULT,
+  TCollectionCreateRequest,
+  TCollectionCreateResponse,
+  TCollectionExistRequest,
+  TCollectionExistResponse,
+  TCollectionListRequest,
+  TCollectionListResponse,
+} from '@zkdb/common';
+import { Permission } from '@zkdb/permission';
+import { withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { authorizeWrapper, publicWrapper } from '../validation';
+import { GROUP_DEFAULT_ADMIN } from '@common';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -25,123 +28,103 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  indexed: Joi.boolean().optional(),
-});
-
-export const schemaFields = Joi.array().items(schemaField);
-
-export type TCollectionRequest = TDatabaseRequest & {
-  collectionName: string;
-};
-
-export type TCollectionCreateRequest = TCollectionRequest & {
-  schema: SchemaData;
-  index?: TCollectionIndex[];
-  permission?: number;
-  groupName?: string;
-};
-
-export const CollectionRequest = Joi.object<TCollectionRequest>({
-  collectionName,
-  databaseName,
+  index: Joi.boolean().optional(),
+  sorting: ESortingSchema(true),
 });
 
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
   collectionName,
   databaseName,
-  groupName: groupName.optional(),
-  index: Joi.array().items(collectionIndex.optional()),
-  schema: schemaFields,
-  permission: Joi.number().min(0).optional(),
+  group: groupName(false),
+  schema: Joi.array().items(schemaField).optional(),
+  permission: Joi.number().min(0).max(0xffffff).optional(),
 });
 
-export const typeDefsCollection = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsCollection = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-extend type Query {
-  collectionList(databaseName: String!): [CollectionDescriptionOutput]!
-  collectionExist(databaseName: String!, collectionName: String!): Boolean
-}
+  type MetadataCollection {
+    collectionName: String!
+    schema: [SchemaFieldOutput]!
+    metadata: OwnershipAndPermission!
+    sizeOnDisk: Int
+    createdAt: Date!
+    updatedAt: Date!
+  }
 
-extend type Mutation {
-  collectionCreate(
-    databaseName: String!, 
-    collectionName: String!,
-    groupName: String,
-    schema: [SchemaFieldInput!]!, 
-    index: [IndexInput],
-    permission: Int
-  ): Boolean
-}
+  extend type Query {
+    collectionList(databaseName: String!): [MetadataCollection]!
+
+    collectionExist(databaseName: String!, collectionName: String!): Boolean
+  }
+
+  extend type Mutation {
+    collectionCreate(
+      databaseName: String!
+      collectionName: String!
+      schema: [SchemaFieldInput!]!
+      group: String
+      permission: Int
+    ): Boolean
+  }
 `;
 
 // Query
-const collectionList = authorizeWrapper(
+const collectionList = authorizeWrapper<
+  TCollectionListRequest,
+  TCollectionListResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    listCollections(args.databaseName, ctx.userName)
+  async (_root, { databaseName }, ctx) =>
+    withTransaction((session) =>
+      Collection.list(databaseName, ctx.userName, session)
+    )
 );
 
-const collectionExist = publicWrapper(
+const collectionExist = publicWrapper<
+  TCollectionExistRequest,
+  TCollectionExistResponse
+>(
   Joi.object({
     databaseName,
     collectionName,
   }),
-  async (_root: unknown, args: TCollectionRequest) =>
-    (await ModelDatabase.getInstance(args.databaseName).listCollections()).some(
-      (collection) => collection === args.collectionName
-    )
+  async (_root, { databaseName, collectionName }) =>
+    Collection.exist(databaseName, collectionName)
 );
 
 // Mutation
-const collectionCreate = authorizeWrapper(
+const collectionCreate = authorizeWrapper<
+  TCollectionCreateRequest,
+  TCollectionCreateResponse
+>(
   CollectionCreateRequest,
-  async (_root: unknown, args: TCollectionCreateRequest, ctx) => {
-    const createCollectionResult = await withTransaction((session) =>
-      createCollection(
-        args.databaseName,
-        args.collectionName,
-        ctx.userName,
-        args.schema,
-        args.groupName,
-        args.permission,
+  async (
+    _root,
+    { databaseName, collectionName, schema, group, permission },
+    ctx
+  ) =>
+    withTransaction((session) =>
+      Collection.create(
+        {
+          databaseName,
+          collectionName,
+          actor: ctx.userName,
+        },
+        schema,
+        group || GROUP_DEFAULT_ADMIN,
+        permission ? Permission.from(permission) : PERMISSION_DEFAULT,
         session
       )
-    );
-
-    if (args.index && args.index.length > 0 && createCollectionResult) {
-      const indexResult = await createIndex(
-        args.databaseName,
-        ctx.userName,
-        args.collectionName,
-        args.index
-      );
-
-      if (!indexResult) {
-        throw Error('Failed to create index');
-      }
-    }
-
-    return createCollectionResult;
-  }
+    )
 );
 
-type TCollectionResolvers = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    collectionList: typeof collectionList;
-    collectionExist: typeof collectionExist;
-  };
-  Mutation: {
-    collectionCreate: typeof collectionCreate;
-  };
-};
-
-export const resolversCollection: TCollectionResolvers = {
+export const resolversCollection = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,

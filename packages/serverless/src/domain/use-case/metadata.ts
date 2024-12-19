@@ -1,64 +1,98 @@
-import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { CollectionMetadata } from '../types/metadata.js';
 import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+  TMetadataCollection,
+  TMetadataDocument,
+  TParamCollection,
+  TParamDocument,
+  TPermissionSudo,
+} from '@zkdb/common';
+import { DATABASE_ENGINE, ModelCollection } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
+import { ModelMetadataCollection, ModelMetadataDocument } from '@model';
+import { PermissionSecurity } from './permission-security';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function readMetadata(
-  databaseName: string,
-  collectionName: string,
-  docId: string | null,
-  actor: string,
-  // eslint-disable-next-line default-param-last
-  checkPermission: boolean = false,
-  session?: ClientSession
-): Promise<CollectionMetadata> {
-  if (checkPermission) {
-    const hasReadPermission = docId
-      ? await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          docId,
-          'read',
-          session
-        )
-      : await hasCollectionPermission(
-          databaseName,
-          collectionName,
-          actor,
-          'read'
-        );
+export class Metadata {
+  public static async collection(
+    paramCollection: TPermissionSudo<TParamCollection>,
+    session?: ClientSession
+  ): Promise<TMetadataCollection> {
+    const { sudo, databaseName, collectionName, actor } = paramCollection;
+    const modelCollectionMetadata =
+      ModelMetadataCollection.getInstance(databaseName);
 
-    if (!hasReadPermission) {
-      const targetDescription = docId ? 'document' : 'collection';
+    const metadata = await modelCollectionMetadata.findOne(
+      { collectionName },
+      { session }
+    );
+
+    if (!metadata) {
       throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified ${targetDescription}.`
+        `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
       );
     }
+    const actorPermission = await PermissionSecurity.collection(
+      {
+        databaseName,
+        collectionName,
+        actor,
+        // We going to reuse metadata from above to minimize the number of queries.
+        sudo: sudo || metadata.metadata,
+      },
+      session
+    );
+
+    if (!actorPermission.read) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'read' permission for the specified collection`
+      );
+    }
+
+    const modelCollection = ModelCollection.getInstance(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      collectionName
+    );
+
+    const sizeOnDisk = await modelCollection.size();
+    return {
+      ...metadata,
+      sizeOnDisk,
+    };
   }
 
-  const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+  public static async document(
+    paramDocument: TPermissionSudo<TParamDocument>,
+    session?: ClientSession
+  ): Promise<TMetadataDocument> {
+    const { sudo, databaseName, collectionName, docId, actor } = paramDocument;
 
-  const key = docId
-    ? { docId, collection: collectionName }
-    : { collection: collectionName };
+    const modelMetadata = new ModelMetadataDocument(databaseName);
 
-  const metadata = await modelMetadata.findOne(key);
+    const metadata = await modelMetadata.findOne(
+      { docId, collectionName },
+      { session }
+    );
 
-  if (!metadata) {
-    throw Error('Metadata has not been found');
+    if (!metadata) {
+      throw Error('Metadata has not been found');
+    }
+
+    const actorPermissions = await PermissionSecurity.document(
+      {
+        databaseName,
+        collectionName,
+        docId,
+        actor,
+        sudo: sudo || metadata,
+      },
+      session
+    );
+
+    if (!actorPermissions.read) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
+      );
+    }
+
+    return metadata;
   }
-
-  return {
-    owner: metadata.owner,
-    group: metadata.group,
-    permission: metadata.permission,
-  };
 }

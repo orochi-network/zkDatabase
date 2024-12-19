@@ -16,7 +16,6 @@ export default [
       commonjs(),
       alias({
         entries: [
-          { find: "@", replacement: "src" },
           { find: "@helper", replacement: "src/helper" },
           { find: "@service", replacement: "src/service" },
         ],

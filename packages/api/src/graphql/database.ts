@@ -1,16 +1,17 @@
 import { gql } from "@apollo/client";
 import {
+  TDatabaseChangeOwnerRequest,
+  TDatabaseCreateRequest,
+  TDatabaseListRequest,
+  TDatabaseListResponse,
+  TDatabaseRequest,
+  TMetadataDatabase,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common.js";
-import {
-  TDatabase,
-  TDatabaseSettings,
-  TDatabaseStatus,
-  TPagination,
-  TPaginationResponse,
-} from "./types";
 
 const DATABASE_CHANGE_OWNER = gql`
   mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
@@ -79,32 +80,32 @@ const DATABASE_EXIST = gql`
 export const database = <T>(client: TApolloClient<T>) => ({
   transferOwnership: createMutateFunction<
     boolean,
-    { databaseName: string; newOwner: string },
+    TDatabaseChangeOwnerRequest,
     { dbChangeOwner: boolean }
   >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
   create: createMutateFunction<
     boolean,
-    { databaseName: string; merkleHeight: number },
+    TDatabaseCreateRequest,
     { dbCreate: boolean }
   >(client, DATABASE_CREATE, (data) => data.dbCreate),
-  setting: createQueryFunction<
-    TDatabaseSettings,
-    { databaseName: string },
-    { dbSetting: TDatabaseSettings }
-  >(client, DATABASE_SETTING, (data) => data.dbSetting),
-  status: createQueryFunction<
-    TDatabaseStatus,
-    { databaseName: string },
-    { dbStats: TDatabaseStatus }
-  >(client, DATABASE_STATUS, (data) => data.dbStats),
+  metadata: createQueryFunction<
+    TMetadataDatabase,
+    TDatabaseRequest,
+    { metadata: TMetadataDatabase }
+  >(client, DATABASE_SETTING, (data) => data.metadata),
+  status: createQueryFunction<JSON, TDatabaseRequest, { dbStats: JSON }>(
+    client,
+    DATABASE_STATUS,
+    (data) => data.dbStats
+  ),
   list: createQueryFunction<
-    TDatabase[],
-    { query: any; pagination: TPagination },
-    { dbList: TPaginationResponse<TDatabase[]> }
+    TDatabaseListResponse,
+    TDatabaseListRequest,
+    { dbList: TDatabaseListResponse }
   >(client, DATABASE_LIST, (data) => data.dbList.data),
-  exist: createQueryFunction<
-    boolean,
-    { databaseName: string },
-    { dbExist: boolean }
-  >(client, DATABASE_EXIST, (data) => data.dbExist),
+  exist: createQueryFunction<boolean, TDatabaseRequest, { dbExist: boolean }>(
+    client,
+    DATABASE_EXIST,
+    (data) => data.dbExist
+  ),
 });

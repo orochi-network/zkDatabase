@@ -1,21 +1,14 @@
 import { logger } from "@helper";
-import {
-  MinaTransaction,
-  serializeTransaction,
-  ZKDatabaseSmartContractWrapper,
-} from "@zkdb/smart-contract";
-import { ModelDbSetting } from "@zkdb/storage";
-import { fetchAccount, JsonProof, Mina, PrivateKey, PublicKey } from "o1js";
+import { ZKDatabaseSmartContractWrapper } from "@zkdb/smart-contract";
+import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from "o1js";
 
 const MAX_MERKLE_TREE_HEIGHT = 128;
-
-export type UnsignedTransaction = string;
 
 export class ZkCompileService {
   private compiledSmartContracts: Array<ZKDatabaseSmartContractWrapper>;
 
   constructor(
-    private readonly network: { networkId: "testnet" | "mainnet"; mina: string }
+    private readonly network: { networkId: NetworkId; mina: string }
   ) {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
@@ -38,49 +31,30 @@ export class ZkCompileService {
   async compileAndCreateDeployUnsignTx(
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
-    merkleHeight: number,
-    databaseName: string
-  ): Promise<UnsignedTransaction> {
-    try {
-      this.ensureTransaction();
+    merkleHeight: number
+  ): Promise<string> {
+    this.ensureTransaction();
 
-      const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
-      const senderPublicKey = PublicKey.fromBase58(payerAddress);
+    const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
+    const senderPublicKey = PublicKey.fromBase58(payerAddress);
 
-      await Promise.all([
-        await fetchAccount({
-          publicKey: senderPublicKey,
-        }),
-      ]);
+    const start = performance.now();
 
-      const start = performance.now();
+    const zkWrapper = await this.getSmartContract(merkleHeight);
 
-      const zkWrapper = await this.getSmartContract(merkleHeight);
+    const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
+      sender: senderPublicKey,
+      zkApp: zkDbPublicKey,
+    });
 
-      const unsignedTx = await zkWrapper.createAndProveDeployTransaction({
-        sender: senderPublicKey,
-        zkApp: zkDbPublicKey,
-      });
+    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
 
-      const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const end = performance.now();
+    logger.info(
+      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+    );
 
-      await ModelDbSetting.getInstance().updateSetting(databaseName, {
-        appPublicKey: zkDbPublicKey.toBase58(),
-      });
-
-      const end = performance.now();
-      logger.info(
-        `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
-      );
-
-      return partialSignedTx.toJSON();
-    } catch (error) {
-      logger.error(`Cannot compile & deploy: ${databaseName}`);
-      await ModelDbSetting.getInstance().updateSetting(databaseName, {
-        appPublicKey: undefined,
-      });
-      throw error;
-    }
+    return partialSignedTx.toJSON();
   }
 
   async compileAndCreateRollUpUnsignTx(
@@ -88,20 +62,11 @@ export class ZkCompileService {
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number,
     proof: JsonProof
-  ): Promise<UnsignedTransaction> {
+  ): Promise<string> {
     this.ensureTransaction();
 
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
     const senderPublicKey = PublicKey.fromBase58(payerAddress);
-
-    await Promise.all([
-      await fetchAccount({
-        publicKey: zkDbPublicKey,
-      }),
-      await fetchAccount({
-        publicKey: senderPublicKey,
-      }),
-    ]);
 
     const start = performance.now();
 
@@ -126,8 +91,10 @@ export class ZkCompileService {
 
   private ensureTransaction() {
     if (Mina.currentTransaction.has()) {
-      logger.debug(`${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`)
-      throw Error('Transaction within transaction identified');
+      logger.debug(
+        `${Mina.currentTransaction.get()}, data: ${Mina.currentTransaction.data}`
+      );
+      throw Error("Transaction within transaction identified");
     }
   }
 }

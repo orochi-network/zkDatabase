@@ -1,67 +1,45 @@
-import { FindOptions, InsertOneOptions, WithId } from 'mongodb';
-import { zkDatabaseConstants } from '../../common/const.js';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelGeneral from '../base/general.js';
+import { zkDatabaseConstant } from '@common';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import { TProofRecord } from '@zkdb/common';
+import { ClientSession, OptionalId } from 'mongodb';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
-export type ZKProof = {
-  publicInput: string[];
-  publicOutput: string[];
-  maxProofsVerified: 0 | 1 | 2;
-  proof: string;
-};
-
-export type ProofMetadata = {
-  createdAt?: Date;
-  database: string;
-  collection: string;
-  merkleRoot: string;
-  prevMerkleRoot: string;
-};
-
-export type ProofDetails = ZKProof & ProofMetadata;
-
-export class ModelProof extends ModelGeneral<ProofDetails> {
+export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
   public static instance: ModelProof;
 
   public static getInstance(): ModelProof {
     if (!this.instance) {
       this.instance = new ModelProof(
-        zkDatabaseConstants.globalProofDatabase,
-        DB.proof,
-        zkDatabaseConstants.globalCollections.proof
+        zkDatabaseConstant.globalProofDatabase,
+        DATABASE_ENGINE.proofService,
+        zkDatabaseConstant.globalCollection.proof
       );
     }
     return this.instance;
   }
 
-  public async saveProof(
-    proofDetails: ProofDetails,
-    options?: InsertOneOptions
-  ): Promise<boolean> {
-    try {
-      await this.collection.insertOne(
-        {
-          ...proofDetails,
-          createdAt: new Date(),
-        },
-        options
-      );
-      return true;
-    } catch (error) {
-      logger.error('Error saving proof:', error);
-      return false;
-    }
-  }
-
-  public async getProof(
-    database: string,
-    options?: FindOptions
-  ): Promise<WithId<ProofDetails> | null> {
-    const proof = await this.collection.findOne(
-      { database },
-      { ...options, sort: { createdAt: -1 } }
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance<TProofRecord>(
+      zkDatabaseConstant.globalProofDatabase,
+      DATABASE_ENGINE.proofService,
+      zkDatabaseConstant.globalCollection.proof
     );
-    return proof as WithId<ProofDetails> | null;
+
+    if (!(await collection.isExist())) {
+      await collection.index({ proof: 1 }, { unique: true, session });
+      await collection.index({ databaseName: 1 }, { session });
+      await collection.index(
+        { databaseName: 1, collectionName: 1 },
+        { unique: true, session }
+      );
+      await collection.index({ merkleRoot: 1 }, { unique: true, session });
+      await collection.index(
+        { merkleRootPrevious: 1 },
+        { unique: true, session }
+      );
+
+      await addTimestampMongoDB(collection, session);
+    }
   }
 }

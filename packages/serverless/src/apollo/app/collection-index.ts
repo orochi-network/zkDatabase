@@ -1,76 +1,43 @@
+import { Collection } from '@domain';
+import { convertToIndexSpecification, gql } from '@helper';
+import {
+  CollectionIndex,
+  collectionName,
+  databaseName,
+  indexName,
+  TIndexCreateRequest,
+  TIndexCreateResponse,
+  TIndexDropReponse,
+  TIndexDropRequest,
+  TIndexExistReponse,
+  TIndexExistRequest,
+  TIndexListRequest,
+  TIndexListResponse,
+} from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import {
-  createIndex,
-  doesIndexExist,
-  dropIndex,
-  listIndexes,
-  listIndexesInfo as listIndexesInfoDomain,
-} from '../../domain/use-case/collection.js';
-import { TCollectionIndex } from '../types/collection-index.js';
-import { authorizeWrapper } from '../validation.js';
-import { CollectionRequest, TCollectionRequest } from './collection.js';
-import {
-  collectionIndex,
-  collectionName,
-  databaseName,
-  indexName,
-} from './common.js';
+import { authorizeWrapper } from '../validation';
 
-// Index request
-export type TIndexNameRequest = {
-  indexName: string;
-};
-
-export type TIndexListRequest = TCollectionRequest;
-
-export const IndexListRequest = CollectionRequest;
-
-export type TIndexRequest = TCollectionRequest;
-
-export type TIndexCreateRequest = TIndexRequest & {
-  index: TCollectionIndex[];
-};
-
-export type TIndexDetailRequest = TIndexRequest & TIndexNameRequest;
-
-export const IndexDetailRequest = Joi.object<TIndexDetailRequest>({
-  collectionName,
-  databaseName,
-  indexName,
-});
-
-export const IndexCreateRequest = Joi.object<TIndexCreateRequest>({
-  collectionName,
-  databaseName,
-  index: Joi.array().items(collectionIndex),
-});
-
-export type CollectionIndex = {
-  name: string;
-  size: number;
-  accesses: number;
-  since: Date;
-  properties: 'compound' | 'unique';
-};
-
-export const typeDefsCollectionIndex = `#graphql
+export const typeDefsCollectionIndex = gql`
   scalar JSON
   scalar Date
   type Query
   type Mutation
 
-  type CollectionIndex {
-    name: String!
+  type CollectionIndexInfo {
+    indexName: String!
     size: Int!
-    accesses: Int!
-    since: Date!
-    properties: String!
+    access: Int!
+    property: IndexProperty!
+    createdAt: Date!
   }
 
   extend type Query {
-    indexList(databaseName: String!, collectionName: String!): [String]!
-    indexListInfo(databaseName: String!, collectionName: String!): [CollectionIndex]!
+    indexList(
+      databaseName: String!
+      collectionName: String!
+    ): [CollectionIndexInfo]!
+
     indexExist(
       databaseName: String!
       collectionName: String!
@@ -82,8 +49,9 @@ export const typeDefsCollectionIndex = `#graphql
     indexCreate(
       databaseName: String!
       collectionName: String!
-      indexes: [IndexInput!]!
+      index: JSON!
     ): Boolean
+
     indexDrop(
       databaseName: String!
       collectionName: String!
@@ -93,71 +61,76 @@ export const typeDefsCollectionIndex = `#graphql
 `;
 
 // Query
-const indexList = authorizeWrapper(
-  IndexListRequest,
-  async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexes(args.databaseName, ctx.userName, args.collectionName)
+const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root, { databaseName, collectionName }, ctx) =>
+    Collection.indexList({
+      databaseName,
+      actor: ctx.userName,
+      collectionName,
+    })
 );
 
-const indexListInfo = authorizeWrapper(
-  IndexListRequest,
-  async (_root: unknown, args: TIndexListRequest, ctx) =>
-    listIndexesInfoDomain(args.databaseName, args.collectionName, ctx.userName)
-);
-
-const indexExist = authorizeWrapper(
-  IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
-    doesIndexExist(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      args.indexName
+const indexExist = authorizeWrapper<TIndexExistRequest, TIndexExistReponse>(
+  Joi.object({
+    databaseName,
+    collectionName,
+    indexName,
+  }),
+  async (_root, { databaseName, collectionName, indexName }, ctx) =>
+    Collection.indexExist(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      indexName
     )
 );
 
 // Mutation
-const indexCreate = authorizeWrapper(
-  IndexCreateRequest,
-  async (_root: unknown, args: TIndexCreateRequest, ctx) =>
-    createIndex(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      args.index
+const indexCreate = authorizeWrapper<TIndexCreateRequest, TIndexCreateResponse>(
+  Joi.object({
+    databaseName,
+    collectionName,
+    index: CollectionIndex,
+  }),
+  async (_root, { databaseName, collectionName, index }, ctx) =>
+    Collection.indexCreate(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      convertToIndexSpecification(index)
     )
 );
 
-const indexDrop = authorizeWrapper(
-  IndexDetailRequest,
-  async (_root: unknown, args: TIndexDetailRequest, ctx) =>
-    dropIndex(
-      args.databaseName,
-      ctx.userName,
-      args.collectionName,
-      args.indexName
+const indexDrop = authorizeWrapper<TIndexDropRequest, TIndexDropReponse>(
+  Joi.object({
+    databaseName,
+    collectionName,
+    indexName,
+  }),
+  async (_root, { databaseName, collectionName, indexName }, ctx) =>
+    Collection.indexDrop(
+      {
+        databaseName,
+        actor: ctx.userName,
+        collectionName,
+      },
+      indexName
     )
 );
 
-type TCollectionIndexResolvers = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    indexList: typeof indexList;
-    indexExist: typeof indexExist;
-    indexListInfo: typeof indexListInfo;
-  };
-  Mutation: {
-    indexCreate: typeof indexCreate;
-    indexDrop: typeof indexDrop;
-  };
-};
-
-export const resolversCollectionIndex: TCollectionIndexResolvers = {
+export const resolversCollectionIndex = {
   JSON: GraphQLJSON,
   Query: {
     indexList,
     indexExist,
-    indexListInfo,
   },
   Mutation: {
     indexCreate,

@@ -1,21 +1,20 @@
-import { zkDatabaseConstants } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
+import { TSecureStorageRecord } from '@zkdb/common';
+import { ClientSession, WithoutId } from 'mongodb';
+import { zkDatabaseConstant } from '@common';
+import { DATABASE_ENGINE, addTimestampMongoDB } from '@helper';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
-export type PrivateKey = {
-  privateKey: string;
-  databaseName: string;
-};
-
-export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
+export class ModelSecureStorage extends ModelGeneral<
+  WithoutId<TSecureStorageRecord>
+> {
   private static instance: ModelSecureStorage | null = null;
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
-      zkDatabaseConstants.globalCollections.secure
+      zkDatabaseConstant.globalProofDatabase,
+      DATABASE_ENGINE.proofService,
+      zkDatabaseConstant.globalCollection.secure
     );
   }
 
@@ -27,15 +26,21 @@ export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
     return ModelSecureStorage.instance;
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
-      zkDatabaseConstants.globalCollections.queue
+      zkDatabaseConstant.globalProofDatabase,
+      DATABASE_ENGINE.proofService,
+      zkDatabaseConstant.globalCollection.queue
     );
+    /*
+      privateKey: string;
+      databaseName: string;
+    */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true });
-      collection.index({ privateKey: 1 }, { unique: true });
+      await collection.index({ databaseName: 1 }, { unique: true, session });
+      await collection.index({ privateKey: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

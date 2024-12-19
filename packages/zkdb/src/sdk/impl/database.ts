@@ -1,11 +1,11 @@
 import { IApiClient } from '@zkdb/api';
 import { JsonProof } from 'o1js';
+import { ETransactionType, TTransactionWithId } from '@zkdb/common';
+
 import {
   DatabaseSetting,
   GroupDescription,
-  TDbTransaction,
   TGetRollUpHistory,
-  TTransactionType,
 } from '../../types';
 import {
   ZKCollection,
@@ -70,11 +70,11 @@ export class ZKDatabaseImpl implements ZKDatabase {
 
     return result
       .unwrap()
-      .map(({ groupName, description, createdAt, createBy }) => ({
+      .map(({ groupName, description, createdAt, createdBy }) => ({
         groupName,
         description,
         createdAt: new Date(createdAt),
-        createBy,
+        createdBy,
       }));
   }
 
@@ -102,34 +102,34 @@ export class ZKDatabaseImpl implements ZKDatabase {
     return result.unwrap();
   }
 
-  async getTransaction(
-    transactionType: TTransactionType
-  ): Promise<TDbTransaction> {
-    const result = await this.apiClient.transaction.getTransaction({
+  async transactionDraft(
+    transactionType: ETransactionType
+  ): Promise<TTransactionWithId> {
+    const result = await this.apiClient.transaction.transactionDraft({
       databaseName: this.databaseName,
       transactionType,
     });
     return result.unwrap();
   }
 
-  async confirmTransaction(id: string, txHash: string): Promise<boolean> {
-    const result = await this.apiClient.transaction.confirmTransaction({
+  async transactionConfirm(id: string, txHash: string): Promise<boolean> {
+    const result = await this.apiClient.transaction.transactionConfirm({
       databaseName: this.databaseName,
-      confirmTransactionId: id,
+      transactionObjectId: id,
       txHash,
     });
     return result.unwrap();
   }
 
-  async createRollup(): Promise<boolean> {
-    const result = await this.apiClient.rollup.createRollUp({
+  async rollupCreate(): Promise<boolean> {
+    const result = await this.apiClient.rollup.rollupCreate({
       databaseName: this.databaseName,
     });
     return result.unwrap();
   }
 
-  async getRollUpHistory(): Promise<TGetRollUpHistory> {
-    const result = await this.apiClient.rollup.getRollUpHistory({
+  async rollupHistory(): Promise<TGetRollUpHistory> {
+    const result = await this.apiClient.rollup.rollupHistory({
       databaseName: this.databaseName,
     });
     return result.unwrap();

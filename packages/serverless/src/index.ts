@@ -1,7 +1,29 @@
+import { ResolversApp, TypedefsApp } from '@apollo-app';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
-import { DatabaseEngine, ModelDbTransaction, ModelQueueTask, ModelSecureStorage } from '@zkdb/storage';
+import { nobodyContext } from '@common';
+import {
+  calculateAccessTokenDigest,
+  config,
+  headerToAccessToken,
+  JwtAuthorization,
+  logger,
+  RedisInstance,
+} from '@helper';
+import { ModelOwnership, ModelUser } from '@model';
+import { TApplicationContext } from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
+import {
+  DatabaseEngine,
+  ModelMetadataDatabase,
+  ModelProof,
+  ModelQueueTask,
+  ModelRollup,
+  ModelSecureStorage,
+  ModelTransaction,
+  withCompoundTransaction,
+} from '@zkdb/storage';
 import RedisStore from 'connect-redis';
 import cors from 'cors';
 import { randomUUID } from 'crypto';
@@ -10,41 +32,40 @@ import fileupload from 'express-fileupload';
 import session from 'express-session';
 import helmet from 'helmet';
 import http from 'http';
-import { ResolversApp, TypedefsApp } from './apollo/index.js';
-import { nobodyContext, TApplicationContext } from './common/types.js';
-import { config } from './helper/config.js';
-import {
-  calculateAccessTokenDigest,
-  headerToAccessToken,
-  JwtAuthorization,
-} from './helper/jwt.js';
-import logger from './helper/logger.js';
-import RedisInstance from './helper/redis.js';
 import { NetworkId } from 'o1js';
-import { MinaNetwork } from '@zkdb/smart-contract';
 
 const EXPRESS_SESSION_EXPIRE_TIME = 86400;
 
 (async () => {
   const app = express();
   // DB service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  const dbServerless = DatabaseEngine.getInstance(config.MONGODB_URL);
   // DB proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
+  const dbProof = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+  if (!dbServerless.isConnected()) {
+    await dbServerless.connect();
   }
 
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
+  if (!dbProof.isConnected()) {
+    await dbProof.connect();
   }
-
-  await ModelDbTransaction.init();
-  await ModelQueueTask.init();
-  await ModelSecureStorage.init()
+  // For global Model that need to init index first
+  await withCompoundTransaction(async (session) => {
+    // service db
+    await ModelTransaction.init(session.serverless);
+    await ModelUser.init(session.serverless);
+    await ModelMetadataDatabase.init(session.serverless);
+    await ModelRollup.init(session.serverless);
+    await ModelOwnership.init(session.serverless);
+    // proof db
+    await ModelQueueTask.init(session.proofService);
+    await ModelSecureStorage.init(session.proofService);
+    await ModelProof.init(session.proofService);
+  });
 
   MinaNetwork.getInstance().connect(
-    config.NETWORK_ID as NetworkId,
+    // Since NETWORK_ID enum return {Testnet, Mainnet} so we need to lowercase and cast
+    config.NETWORK_ID.toLocaleLowerCase() as NetworkId,
     config.MINA_URL,
     config.BLOCKBERRY_API_KEY
   );

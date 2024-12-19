@@ -1,27 +1,30 @@
+import { TUserGroupRecord } from '@zkdb/common';
 import {
-  DB,
+  addTimestampMongoDB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
-import { BulkWriteOptions, Document, FindOptions, ObjectId } from 'mongodb';
-import ModelGroup, { GroupSchema } from './group.js';
+import {
+  BulkWriteOptions,
+  ClientSession,
+  FindOptions,
+  ObjectId,
+  WithoutId,
+} from 'mongodb';
+import ModelGroup from './group';
 
-export interface DocumentUserGroup extends Document {
-  userName: string;
-  groupId: ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export type TGroupInfo = GroupSchema & { members: DocumentUserGroup[] };
-
-export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
+export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
   private static collectionName =
-    zkDatabaseConstants.databaseCollections.userGroup;
+    zkDatabaseConstant.databaseCollection.userGroup;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelUserGroup.collectionName);
+    super(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      ModelUserGroup.collectionName
+    );
   }
 
   public async checkMembership(
@@ -33,7 +36,10 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     if (!group) {
       return false;
     }
-    const matchedRecord = await this.count({ userName, groupId: group._id });
+    const matchedRecord = await this.count({
+      userName,
+      groupOjectId: group._id,
+    });
     return matchedRecord === 1;
   }
 
@@ -53,7 +59,7 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = await this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupId).toArray();
+    return userGroups.map((userGroup) => userGroup.groupOjectId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
@@ -75,9 +81,9 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
       (g) => !groupOfUser.includes(g)
     );
 
-    const operations = newGroupIdToAdd.map((groupId) => ({
+    const operations = newGroupIdToAdd.map((groupOjectId) => ({
       updateOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
         update: {
           $set: { updatedAt: new Date() },
           $setOnInsert: { createdAt: new Date() },
@@ -89,51 +95,64 @@ export class ModelUserGroup extends ModelGeneral<DocumentUserGroup> {
     return this.collection.bulkWrite(operations, options);
   }
 
-  public async addUsersToGroup(
-    userNames: string[],
+  public async addUserListToGroup(
+    listUserName: string[],
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
-    const operations = userNames.map((userName) => ({
+    const listOperation = listUserName.map((userName) => ({
       updateOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
         update: {
           $set: { updatedAt: new Date() },
-          $setOnInsert: { createdAt: new Date() },
         },
         upsert: true,
       },
     }));
 
-    return this.collection.bulkWrite(operations, options);
+    return this.collection.bulkWrite(listOperation, options);
   }
 
-  public async removeUsersFromGroup(
-    userNames: string[],
+  public async removeUserListFromGroup(
+    listUserName: string[],
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
 
-    const operations = userNames.map((userName) => ({
+    const listOperation = listUserName.map((userName) => ({
       deleteOne: {
-        filter: { userName, groupId },
+        filter: { userName, groupOjectId },
       },
     }));
 
-    return this.collection.bulkWrite(operations, options);
+    return this.collection.bulkWrite(listOperation, options);
   }
 
-  public static async init(databaseName: string) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.serverless,
       ModelUserGroup.collectionName
     );
+
+    /*
+      userName: string;
+      groupName: string;
+      groupOjectId: ObjectId
+      userObjectId: ObjectId
+      createdAt: Date
+      updatedAt: Date
+    */
     if (!(await collection.isExist())) {
-      await collection.index({ collection: 1 }, { unique: false });
+      await collection.index({ userName: 1 }, { unique: false, session });
+      await collection.index({ groupName: 1 }, { unique: false, session });
+      await collection.index({ groupOjectId: 1 }, { unique: true, session });
+      await collection.index({ userObjectId: 1 }, { unique: true, session });
+
+      await addTimestampMongoDB(collection, session);
     }
   }
 }

@@ -1,250 +1,228 @@
+import { getCurrentTime, logger } from '@helper';
 import {
-  CompoundSession,
-  DbTransaction,
-  ModelDbSetting,
-  ModelDbTransaction,
+  ERollUpState,
+  ETransactionStatus,
+  ETransactionType,
+  TRollUpDetail,
+  TRollUpHistoryDetail,
+} from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
+import {
   ModelMerkleTree,
+  ModelMetadataDatabase,
   ModelProof,
   ModelQueueTask,
   ModelRollup,
-  RollupHistory as RollupHistoryModel,
-  TransactionStatus,
+  ModelTransaction,
+  TCompoundSession,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { enqueueTransaction } from './transaction.js';
-import { MinaNetwork } from '@zkdb/smart-contract';
-import { RollUpData, RollUpState } from '../types/rollup.js';
-import logger from '../../helper/logger.js';
 import { PublicKey } from 'o1js';
+import { Database } from './database';
+import Transaction from './transaction';
 
-export async function createRollUp(
-  databaseName: string,
-  actor: string,
-  compoundSession?: CompoundSession
-) {
-  const modelProof = ModelProof.getInstance();
-  const latestProofForDb = await modelProof.getProof(databaseName, {
-    session: compoundSession?.sessionProof,
-  });
+export class Rollup {
+  static async create(
+    databaseName: string,
+    actor: string,
+    compoundSession: TCompoundSession
+  ): Promise<boolean> {
+    await Database.ownershipCheck(databaseName, actor);
 
-  if (!latestProofForDb) {
-    throw Error('No proof has been generated yet');
-  }
-
-  const modelRollUp = ModelRollup.getInstance();
-  const modelTransaction = ModelDbTransaction.getInstance();
-
-  const rollUp = await modelRollUp.collection.findOne({
-    proofId: latestProofForDb._id,
-  });
-
-  if (rollUp) {
-    logger.debug('Identified repeated proof');
-
-    const transaction = await modelTransaction.findById(rollUp.txId.toString());
-    if (transaction) {
-      if (transaction.status === 'success') {
-        throw Error('You cannot roll-up the same proof');
+    const modelProof = ModelProof.getInstance();
+    const latestProofForDb = await modelProof.findOne(
+      { databaseName },
+      {
+        session: compoundSession?.proofService,
+        sort: {
+          createdAt: -1,
+        },
       }
-
-      if (transaction.status === 'pending') {
-        throw Error(
-          'You already have uncompleted transaction with the same proof'
-        );
-      }
-    }
-  }
-
-  const txId = await enqueueTransaction(
-    databaseName,
-    actor,
-    'rollup',
-    compoundSession?.sessionService
-  );
-
-  await modelRollUp.create(
-    {
-      merkleRoot: latestProofForDb.prevMerkleRoot,
-      newMerkleRoot: latestProofForDb.merkleRoot,
-      databaseName: databaseName,
-      txId,
-      proofId: latestProofForDb._id,
-    },
-    { session: compoundSession?.sessionService }
-  );
-}
-
-export async function getRollUpHistory(
-  databaseName: string,
-  session?: ClientSession
-): Promise<RollUpData> {
-  const modelRollUp = ModelRollup.getInstance();
-  const modelTransaction = ModelDbTransaction.getInstance();
-  const minaNetwork = MinaNetwork.getInstance();
-  const queue = ModelQueueTask.getInstance();
-  const dbSetting = await ModelDbSetting.getInstance().getSetting(
-    databaseName,
-    { session }
-  );
-
-  if (!dbSetting?.appPublicKey) {
-    throw Error('Database is not bound to zk app');
-  }
-
-  const { account, error } = await minaNetwork.getAccount(
-    PublicKey.fromBase58(dbSetting.appPublicKey)
-  );
-
-  if (!account) {
-    throw Error(
-      `zk app with ${dbSetting.appPublicKey} is not exist in mina network. Error: ${error}`
     );
-  }
 
-  const zkApp = account.zkapp;
+    if (!latestProofForDb) {
+      throw Error('No proof has been generated yet');
+    }
 
-  if (!zkApp) {
-    throw Error('The account in not zk app');
-  }
+    const imRollup = ModelRollup.getInstance();
+    const modelTransaction = ModelTransaction.getInstance();
 
-  const merkleRoot = zkApp.appState[0];
-
-  let rolledUpTaskNumber: number;
-
-  const task = await queue.collection.findOne({
-    database: databaseName,
-    merkleRoot: merkleRoot.toString(),
-  });
-
-  if (
-    merkleRoot
-      .equals(ModelMerkleTree.getEmptyRoot(dbSetting.merkleHeight))
-      .toBoolean()
-  ) {
-    rolledUpTaskNumber = 0;
-  } else if (task) {
-    rolledUpTaskNumber = task.operationNumber;
-  } else {
-    throw Error('Wrong zkapp state');
-  }
-
-  const latestTask = await queue.collection.findOne(
-    {
-      database: databaseName,
-    },
-    { sort: { createdAt: -1 } }
-  );
-
-  const diff = latestTask!.operationNumber - rolledUpTaskNumber;
-
-  const rollUpList = await modelRollUp.collection
-    .find({ databaseName })
-    .toArray();
-
-  const buildRollUpHistory = (
-    history: RollupHistoryModel,
-    transaction: DbTransaction,
-    status: TransactionStatus,
-    error?: string
-  ) => ({
-    databaseName: history.databaseName,
-    currentMerkleTreeRoot: history.merkleRoot,
-    previousMerkleTreeRoot: history.newMerkleRoot,
-    createdAt: transaction.createdAt,
-    transactionHash: transaction?.txHash,
-    transactionType: 'rollup',
-    status,
-    error,
-  });
-
-  const history = (
-    await Promise.all(
-      rollUpList.map(async (history) => {
-        const transaction = await modelTransaction.findById(
-          history.txId.toString()
-        );
-
-        if (!transaction) {
-          logger.error('Transaction for history not found. It is impossible');
-          return null;
-        }
-
-        if (transaction.status === 'pending') {
-          if (!transaction.txHash) {
-            logger.error('Transaction hash not found for pending transaction');
-            return null;
-          }
-
-          const tx = await minaNetwork.getZkAppTransactionByTxHash(
-            transaction.txHash
-          );
-
-          if (tx) {
-            if (tx.txStatus === 'applied') {
-              await modelTransaction.updateById(
-                history.txId.toString(),
-                {
-                  status: 'success',
-                  error: undefined,
-                },
-                { session }
-              );
-              return buildRollUpHistory(history, transaction, 'success');
-            } else if (tx.txStatus === 'failed') {
-              await modelTransaction.updateById(
-                history.txId.toString(),
-                {
-                  status: 'failed',
-                  error: tx.failures.join(' '),
-                },
-                { session }
-              );
-              return buildRollUpHistory(
-                history,
-                transaction,
-                'failed',
-                tx.failures.join(' ')
-              );
-            }
-          }
-        } else {
-          return buildRollUpHistory(
-            history,
-            transaction,
-            transaction.status,
-            transaction.error
-          );
-        }
-
-        logger.error('Transaction status could not be verified');
-        return buildRollUpHistory(
-          history,
-          transaction,
-          'unknown',
-          transaction.error
-        );
-      })
-    )
-  )
-    .filter((item) => item !== null)
-    .sort((a, b) => {
-      return a.createdAt.getTime() - b.createdAt.getTime();
+    const rollUp = await imRollup.collection.findOne({
+      proofId: latestProofForDb._id,
     });
 
-  let rollUpState: RollUpState = 'updated';
+    if (rollUp) {
+      logger.debug('Identified repeated proof');
 
-  if (diff > 0) {
-    rollUpState = 'outdated';
-  } else if (
-    history[history.length - 1] &&
-    history[history.length - 1].status === 'failed'
-  ) {
-    rollUpState = 'failed';
+      const transaction = await modelTransaction.findOne({
+        _id: rollUp.transactionObjectId,
+      });
+
+      if (transaction) {
+        if (transaction.status === ETransactionStatus.Confirmed) {
+          throw Error('You cannot roll-up the same proof');
+        }
+
+        if (transaction.status === ETransactionStatus.Unsigned) {
+          throw Error(
+            'You already have uncompleted transaction with the same proof'
+          );
+        }
+      }
+    }
+
+    const transactionObjectId = await Transaction.enqueue(
+      databaseName,
+      actor,
+      ETransactionType.Rollup,
+      compoundSession.serverless
+    );
+
+    const currentTime = getCurrentTime();
+
+    await imRollup.insertOne(
+      {
+        databaseName,
+        transactionObjectId,
+        // @NOTICE Something possible wrong here
+        merkletreeRoot: latestProofForDb.merkleRoot,
+        merkletreeRootPrevious: latestProofForDb.merkleRootPrevious,
+        proofObjectId: latestProofForDb._id,
+        createdAt: currentTime,
+        updatedAt: currentTime,
+      },
+      { session: compoundSession?.serverless }
+    );
+
+    return true;
   }
 
-  return {
-    history,
-    state: rollUpState,
-    extraData: diff,
-  };
+  static async history(
+    databaseName: string,
+    session?: ClientSession
+  ): Promise<TRollUpDetail> {
+    const modelRollUp = ModelRollup.getInstance();
+    const minaNetwork = MinaNetwork.getInstance();
+    const queue = ModelQueueTask.getInstance();
+
+    const database = await ModelMetadataDatabase.getInstance().findOne(
+      { databaseName },
+      {
+        session,
+      }
+    );
+
+    if (
+      !database?.appPublicKey ||
+      PublicKey.fromBase58(database?.appPublicKey).isEmpty()
+    ) {
+      throw Error('Database is not bound to zk app');
+    }
+
+    const { account, error } = await minaNetwork.getAccount(
+      PublicKey.fromBase58(database.appPublicKey)
+    );
+
+    if (!account) {
+      throw Error(
+        `zk app with ${database.appPublicKey} is not exist in mina network. Error: ${error}`
+      );
+    }
+
+    const zkApp = account.zkapp;
+
+    if (!zkApp) {
+      throw Error('The account in not zk app');
+    }
+
+    const merkleRoot = zkApp.appState[0];
+
+    let rolledUpTaskNumber: number;
+
+    const task = await queue.collection.findOne({
+      database: databaseName,
+      merkleRoot: merkleRoot.toString(),
+    });
+
+    if (
+      merkleRoot
+        .equals(ModelMerkleTree.getEmptyRoot(database.merkleHeight))
+        .toBoolean()
+    ) {
+      rolledUpTaskNumber = 0;
+    } else if (task) {
+      rolledUpTaskNumber = task.operationNumber;
+    } else {
+      throw Error('Wrong zkapp state');
+    }
+
+    const pipeline = [
+      {
+        $match: { databaseName },
+      },
+      {
+        $lookup: {
+          from: zkDatabaseConstant.globalCollection.transaction,
+          localField: 'transactionObjectId',
+          foreignField: '_id',
+          as: 'transaction',
+        },
+      },
+      {
+        $lookup: {
+          from: zkDatabaseConstant.globalCollection.proof,
+          localField: 'proofObjectId',
+          foreignField: '_id',
+          as: 'proof',
+        },
+      },
+      {
+        $sort: 'createdAt: -1',
+      },
+      {
+        $project: {
+          transactionObjectId: 0,
+          proofObjectId: 0,
+        },
+      },
+    ];
+
+    const listRollupHistoryDetail = (await modelRollUp.collection
+      .aggregate(pipeline)
+      .toArray()) as TRollUpHistoryDetail[];
+
+    const latestTask = await queue.collection.findOne(
+      {
+        database: databaseName,
+      },
+      { sort: { createdAt: -1 } }
+    );
+
+    if (!latestTask) {
+      throw new Error('Latest task not found');
+    }
+
+    const diff = latestTask.operationNumber - rolledUpTaskNumber;
+
+    let rollUpState: ERollUpState = ERollUpState.Failed;
+
+    // @NOTICE transaction status must be updated in cron job.
+    if (diff > 0) {
+      rollUpState = ERollUpState.Outdated;
+    } else if (
+      listRollupHistoryDetail[0].transaction.status ===
+      ETransactionStatus.Confirmed
+    ) {
+      rollUpState = ERollUpState.Updated;
+    }
+
+    return {
+      history: listRollupHistoryDetail,
+      state: rollUpState,
+      rollUpDifferent: diff,
+    };
+  }
 }
+
+export default Rollup;

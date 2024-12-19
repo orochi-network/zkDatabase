@@ -1,7 +1,7 @@
 import { LoggerLoader } from '@orochi-network/framework';
-import { config } from './config.js';
+import { config } from './config';
 
-export default new LoggerLoader(
+export const logger = new LoggerLoader(
   'zkDatabase',
   config.OROCHI_LOG,
   config.NODE_ENV === 'production' ? 'json' : 'string'

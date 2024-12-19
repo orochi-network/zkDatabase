@@ -1,19 +1,16 @@
 import { gql } from "@apollo/client";
 import {
+  TUserFindRequest,
+  TUserFindResponse,
+  TUserSignInRequest,
+  TUserSignUpRequest,
+  TUserSignUpResponse,
+} from "@zkdb/common";
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-import {
-  TSignatureProofData,
-  TSignInInfo,
-  TSignUpData,
-  TUser,
-  TPagination,
-  TPaginationResponse,
-} from "./types";
-
-export type TUserSignUpRecord = TUser;
 
 /**
  * Represents the record of a user sign-in.
@@ -103,9 +100,9 @@ const ECDSA = gql`
 
 export const user = <T>(client: TApolloClient<T>) => ({
   signIn: createMutateFunction<
-    TSignInInfo,
-    { proof: TSignatureProofData },
-    { userSignIn: TSignInInfo }
+    TUserSignInResponse,
+    TUserSignInRequest,
+    { userSignIn: TUserSignInResponse }
   >(client, USER_SIGN_IN, (data) => data.userSignIn),
   signOut: createMutateFunction<boolean, undefined, { userSignOut: boolean }>(
     client,
@@ -113,9 +110,9 @@ export const user = <T>(client: TApolloClient<T>) => ({
     (data) => data.userSignOut
   ),
   signUp: createMutateFunction<
-    TUser,
-    { proof: TSignatureProofData; signUp: TSignUpData },
-    { userSignUp: TUserSignUpRecord }
+    TUserSignUpResponse,
+    TUserSignUpRequest,
+    { userSignUp: TUserSignUpResponse }
   >(client, USER_SIGN_UP, (data) => data.userSignUp),
   ecdsa: createMutateFunction<
     string,
@@ -123,10 +120,10 @@ export const user = <T>(client: TApolloClient<T>) => ({
     { userGetEcdsaChallenge: string }
   >(client, ECDSA, (data) => data.userGetEcdsaChallenge),
   findMany: createQueryFunction<
-    TUser[],
-    { query: Partial<TUser>; pagination?: TPagination },
-    { findUser: TPaginationResponse<TUser[]> }
-  >(client, USER_FIND, (data) => data.findUser.data),
+    TUserFindResponse,
+    TUserFindRequest,
+    { findUser: TUserFindResponse }
+  >(client, USER_FIND, (data) => data.findUser),
   userInfo: createQueryFunction<
     TUserSignInRecord,
     undefined,

@@ -1,95 +1,99 @@
-import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
-import { TDocumentField } from '../types/document.js';
+import { gql } from '@helper';
 
-export const objectId = Joi.string()
-  .trim()
-  .min(36)
-  .max(36)
-  .required()
-  .pattern(/^[a-f0-9]+/i);
+export const typeDefsCommon = gql`
+  scalar Date
 
-export const databaseName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum TransactionType {
+    Deploy
+    Rollup
+  }
 
-export const userName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[._a-z0-9]+/i);
+  # ETransactionStatus in TS
+  enum TransactionStatus {
+    Unsigned
+    Signed
+    Unconfirmed
+    Confirming
+    Failed
+    Confirmed
+    Unknown
+  }
 
-export const collectionName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum Sorting {
+    Asc
+    Desc
+  }
 
-export const groupName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum SchemaType {
+    CircuitString
+    UInt32
+    UInt64
+    Bool
+    Sign
+    Character
+    Int64
+    Field
+    PrivateKey
+    PublicKey
+    Signature
+    MerkleMapWitness
+  }
 
-export const groupDescription = Joi.string().trim().min(10).max(256).required();
+  # EProperty in TS
+  enum IndexProperty {
+    Compound
+    Unique
+  }
 
-export const groupOptionalDescription = Joi.string()
-  .allow('')
-  .optional()
-  .description(
-    'Optional description of the group, providing additional context.'
-  );
+  type IndexInput {
+    name: String!
+    sorting: Sorting!
+  }
 
-export const publicKey = Joi.string()
-  .trim()
-  .length(55)
-  .required()
-  .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
+  input PaginationInput {
+    offset: Int
+    limit: Int
+  }
 
-export const indexName = Joi.string()
-  .trim()
-  .min(2)
-  .max(128)
-  .required()
-  .pattern(/^[_a-z]+[_a-z0-9]+/i);
+  input MinaSignatureInput {
+    field: String!
+    scalar: String!
+  }
 
-export const indexNumber = Joi.string()
-  .regex(/^[0-9]+$/)
-  .required();
+  input ProofInput {
+    signature: MinaSignatureInput!
+    publicKey: String!
+    data: String!
+  }
 
-export const index = Joi.array().items(Joi.string().required());
+  input SchemaFieldInput {
+    name: String!
+    kind: SchemaType!
+    index: Boolean
+    # Default is Asc or 1
+    sorting: Sorting
+  }
 
-export const documentField = Joi.object<TDocumentField>({
-  name: Joi.string()
-    .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
-    .required(),
-  kind: Joi.string()
-    .valid(...O1JS_VALID_TYPE)
-    .required(),
-  value: Joi.string().raw().required(),
-});
+  type OwnershipAndPermission {
+    owner: String!
+    group: String!
+    permission: Int!
+  }
 
-export const pagination = Joi.object({
-  offset: Joi.number().integer().min(0).default(0).optional(),
-  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
-});
+  type SchemaFieldOutput {
+    name: String!
+    kind: SchemaType!
+    index: Boolean
+    # Default is ASC or 1
+    sorting: Sorting
+  }
 
-export const search = Joi.object({
-  search: Joi.optional(),
-  pagination,
-});
-
-export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']);
-
-export const collectionIndex = Joi.object({
-  name: indexName,
-  sorting: sortingOrder,
-});
-
-export const transactionType = Joi.string().valid(...['deploy', 'rollup']);
+  type MetadataCollection {
+    collectionName: String!
+    schema: [SchemaFieldOutput]!
+    metadata: OwnershipAndPermission!
+    sizeOnDisk: Int
+    createdAt: Date!
+    updatedAt: Date!
+  }
+`;

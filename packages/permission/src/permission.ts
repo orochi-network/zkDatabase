@@ -81,7 +81,6 @@ export class Permission {
       owner: {
         read: true,
         write: true,
-        create: true,
         delete: true,
         system: true,
       },
@@ -93,15 +92,13 @@ export class Permission {
       owner: {
         read: true,
         write: true,
-        create: true,
         delete: true,
         system: true,
       },
       group: {
         read: true,
-        write: true,
-        create: true,
-        delete: true,
+        write: false,
+        delete: false,
         system: false,
       },
     });
@@ -112,21 +109,18 @@ export class Permission {
       owner: {
         read: true,
         write: true,
-        create: true,
         delete: true,
         system: true,
       },
       group: {
         read: true,
         write: true,
-        create: true,
-        delete: true,
+        delete: false,
         system: false,
       },
       other: {
         read: true,
         write: false,
-        create: false,
         delete: false,
         system: false,
       },

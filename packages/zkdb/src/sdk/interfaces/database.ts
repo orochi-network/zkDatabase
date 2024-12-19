@@ -1,15 +1,14 @@
 /* eslint-disable no-unused-vars */
 import { JsonProof } from 'o1js';
+import { ETransactionType, TTransactionWithId } from '@zkdb/common';
+
 import {
   DatabaseSetting,
   GroupDescription,
-  TDbTransaction,
   TGetRollUpHistory,
-  TTransactionType,
 } from '../../types';
 import { ZKCollection } from './collection';
 import { ZKGroup } from './group';
-
 export interface ZKDatabaseConfig {
   merkleHeight: number;
 }
@@ -38,8 +37,8 @@ export interface ZKDatabase {
   getProof(): Promise<JsonProof>;
 
   // Transaction
-  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
-  confirmTransaction(id: string, txHash: string): Promise<boolean>;
+  transactionDraft(transactionType: ETransactionType): Promise<TTransactionWithId>;
+  transactionConfirm(id: string, txHash: string): Promise<boolean>;
 
   // Rollup
   createRollup(): Promise<boolean>;

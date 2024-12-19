@@ -1,53 +1,26 @@
-import { logger } from "@helper";
 import { EncryptionKey } from "@orochi-network/vault";
-import { UnsignedTransaction, ZkCompileService } from "@service";
+import { ZkCompileService } from "@service";
+import {
+  ETransactionStatus,
+  ETransactionType,
+  TTransactionQueue,
+} from "@zkdb/common";
 import {
   DatabaseEngine,
-  ModelDbSetting,
-  ModelDbTransaction,
+  ModelMetadataDatabase,
   ModelProof,
   ModelSecureStorage,
+  ModelTransaction,
+  withCompoundTransaction,
+  ZKDB_TRANSACTION_QUEUE,
 } from "@zkdb/storage";
-import { Mina, PrivateKey, PublicKey } from "o1js";
+import { ObjectId } from "bson";
+import { Job } from "bullmq";
+import { PrivateKey } from "o1js";
 import { config } from "./helper/config";
-import { RedisQueueService } from "./message-queue";
-import { setTimeout } from "timers/promises";
+import { WorkerService } from "./service/worker";
 
-const TIMEOUT = 1000;
-
-export type TransactionType = "deploy" | "rollup";
-
-export type DbTransactionQueue = {
-  id: string;
-  payerAddress: string;
-};
-
-async function findTransactionWithRetry(
-  modelTransaction: ModelDbTransaction,
-  id: string,
-  maxWaitTimeMs = 3000,
-  intervalMs = 500
-) {
-  const startTime = Date.now();
-  let tx = null;
-
-  while (Date.now() - startTime < maxWaitTimeMs) {
-    tx = await modelTransaction.findById(id);
-
-    if (tx) {
-      return tx;
-    }
-
-    await setTimeout(intervalMs);
-  }
-
-  logger.error(
-    `Transaction ${id} has not been found after ${maxWaitTimeMs} ms`
-  );
-  return null;
-}
-
-async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
+(async () => {
   // Init zkAppCompiler
   const zkAppCompiler = new ZkCompileService({
     networkId: config.NETWORK_ID,
@@ -55,80 +28,132 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
   });
 
   // Connect to db
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+  const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
   const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
 
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
+  if (!serverlessDb.isConnected()) {
+    await serverlessDb.connect();
   }
 
   if (!proofDb.isConnected()) {
     await proofDb.connect();
   }
 
-  const modelTransaction = ModelDbTransaction.getInstance();
-  const modelDbSettings = ModelDbSetting.getInstance();
+  const transactionWorker = new WorkerService<TTransactionQueue>(
+    ZKDB_TRANSACTION_QUEUE,
+    { connection: { url: config.REDIS_URL } }
+  );
 
-  while (true) {
-    const request = await redisQueue.dequeue();
-    if (request) {
-      const tx = await findTransactionWithRetry(modelTransaction, request.id);
+  transactionWorker.start(async (job: Job<TTransactionQueue>) =>
+    withCompoundTransaction(
+      async ({ serverless: session, proofService: proofSession }) => {
+        // Init model transaction to update status
+        const imTransaction = ModelTransaction.getInstance();
+        // Init model secure storage to store encrypted privatekey or get privatekey to rollup
+        const imSecureStorage = ModelSecureStorage.getInstance();
 
-      if (!request) {
-        await setTimeout(TIMEOUT); // Prevent busy looping when the queue is empty
-        continue;
-      }
+        const { transactionObjectId, payerAddress } = job.data;
 
-      if (!tx) {
-        logger.error(`Transaction ${request.id} has not been found`);
-        continue;
-      }
+        if (!payerAddress) {
+          throw new Error(
+            `Payer not found with transaction ${transactionObjectId}`
+          );
+        }
 
-      const dbSettings = await modelDbSettings.getSetting(tx.databaseName);
+        const transaction = await imTransaction.findOne(
+          {
+            _id: new ObjectId(transactionObjectId),
+          },
+          { session }
+        );
 
-      // Impossible case
-      if (!dbSettings) {
-        logger.error(`Settings for ${tx.databaseName} has not been found`);
-        continue;
-      }
+        if (!transaction) {
+          throw new Error("Can not found transaction");
+        }
 
-      logger.info(`Received ${tx.databaseName} to queue`);
+        const { transactionType, databaseName } = transaction;
 
-      try {
-        const secureStorage = ModelSecureStorage.getInstance();
+        const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
-        let transaction: UnsignedTransaction;
-        let zkAppPublicKey: string;
-        if (tx.transactionType === "deploy") {
+        const metadataDatabase = await imMetadataDatabase.findOne(
+          {
+            databaseName,
+          },
+          {
+            session,
+          }
+        );
+
+        if (!metadataDatabase) {
+          throw new Error("Metadata database not found");
+        }
+
+        // We need to use if..else-if..else to sure type MUST be Deploy/Rollup
+        if (transactionType === ETransactionType.Deploy) {
           const zkAppPrivateKey = PrivateKey.random();
-
-          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
 
           const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
             Buffer.from(zkAppPrivateKey.toBase58(), "utf-8"),
             Buffer.from(config.SERVICE_SECRET, "base64")
           ).toString("base64");
 
-          transaction = await zkAppCompiler.compileAndCreateDeployUnsignTx(
-            request.payerAddress,
-            zkAppPrivateKey,
-            dbSettings.merkleHeight,
-            dbSettings.databaseName
-          );
-          await secureStorage.replaceOne(
+          const transactionRaw =
+            await zkAppCompiler.compileAndCreateDeployUnsignTx(
+              payerAddress,
+              zkAppPrivateKey,
+              metadataDatabase.merkleHeight
+            );
+
+          // Update transaction status and add transaction raw
+          await imTransaction.updateOne(
             {
-              databaseName: dbSettings.databaseName,
+              _id: transactionObjectId,
+              databaseName,
+              transactionType: ETransactionType.Deploy,
             },
             {
-              privateKey: encryptedZkAppPrivateKey,
-              databaseName: dbSettings.databaseName,
+              $set: {
+                status: ETransactionStatus.Unconfirmed,
+                transactionRaw,
+                updatedAt: new Date(),
+              },
             },
-            { upsert: true }
+            { session }
           );
-        } else if (tx.transactionType === "rollup") {
-          const privateKey = await secureStorage.findOne({
-            databaseName: dbSettings.databaseName,
-          });
+          // Update publicKey for database metadata
+          await imMetadataDatabase.updateOne(
+            { databaseName },
+            {
+              $set: {
+                appPublicKey: zkAppPrivateKey.toPublicKey().toBase58(),
+              },
+            },
+            { session }
+          );
+          // Upsert to database when we have private key
+          await imSecureStorage.updateOne(
+            {
+              databaseName,
+            },
+            {
+              $set: {
+                privateKey: encryptedZkAppPrivateKey,
+                databaseName,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            },
+            { upsert: true, session: proofSession }
+          );
+        } else if (transactionType === ETransactionType.Rollup) {
+          const privateKey = await imSecureStorage.findOne(
+            {
+              databaseName,
+            },
+            {
+              session: proofSession,
+            }
+          );
 
           if (!privateKey) {
             throw Error("Private key has not been found");
@@ -141,61 +166,50 @@ async function processQueue(redisQueue: RedisQueueService<DbTransactionQueue>) {
 
           const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
 
-          zkAppPublicKey = PublicKey.fromPrivateKey(zkAppPrivateKey).toBase58();
-
-          const proof = await ModelProof.getInstance().getProof(
-            dbSettings.databaseName
+          const proof = await ModelProof.getInstance().findOne(
+            { databaseName },
+            {
+              session: proofSession,
+              sort: {
+                createdAt: -1,
+              },
+            }
           );
 
           if (!proof) {
-            throw new Error(`Proof for ${dbSettings.databaseName} not found`);
+            throw new Error(`Proof for ${databaseName} not found`);
           }
 
-          transaction = await zkAppCompiler.compileAndCreateRollUpUnsignTx(
-            request.payerAddress,
-            zkAppPrivateKey,
-            dbSettings.merkleHeight,
-            proof
+          const transactionRaw =
+            await zkAppCompiler.compileAndCreateRollUpUnsignTx(
+              payerAddress,
+              zkAppPrivateKey,
+              metadataDatabase.merkleHeight,
+              proof
+            );
+
+          // Update transaction status and add transaction raw
+          await imTransaction.updateOne(
+            {
+              _id: transactionObjectId,
+              databaseName,
+              transactionType: ETransactionType.Rollup,
+            },
+            {
+              $set: {
+                status: ETransactionStatus.Unconfirmed,
+                transactionRaw,
+                updatedAt: new Date(),
+              },
+            },
+            {
+              session,
+            }
           );
         } else {
-          throw new Error(
-            `Unsupported transaction type: ${tx.transactionType}`
-          );
+          throw new Error("Unsupported transaction");
         }
-
-        await modelTransaction.updateById(request.id, {
-          status: "ready",
-          tx: transaction,
-        });
-
-        logger.info(
-          `Successfully compiled: Database: ${dbSettings.databaseName}, Transaction Type: ${tx.transactionType}`
-        );
-      } catch (error) {
-        let errorMessage: string;
-
-        if (error instanceof Error) {
-          errorMessage = `Error processing queue: ${error.message}`;
-        } else {
-          errorMessage = `Unknown error occurred: ${error}`;
-        }
-
-        logger.error(errorMessage);
-
-        await modelTransaction.updateById(request.id, {
-          status: "failed",
-          error: (error as Error).message,
-        });
       }
-    }
-  }
-}
-
-(async () => {
-  const redisQueue = new RedisQueueService<DbTransactionQueue>(
-    "zkAppDeploymentQueue",
-    { url: config.REDIS_URL }
+    )
   );
-
-  await processQueue(redisQueue);
 })();

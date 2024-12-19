@@ -1,212 +1,103 @@
-import { withTransaction } from '@zkdb/storage';
+import { Metadata } from '@domain';
+import {
+  collectionName,
+  databaseName,
+  docId,
+  TMetadataCollection,
+  TMetadataCollectionRequest,
+  TMetadataDocument,
+  TMetadataDocumentRequest,
+} from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { readMetadata } from '../../domain/use-case/metadata.js';
-import {
-  changeCollectionOwnership,
-  changeDocumentOwnership,
-} from '../../domain/use-case/ownership.js';
-import { setPermission } from '../../domain/use-case/permission.js';
-import { getSchemaDefinition } from '../../domain/use-case/schema.js';
-import { TOwnershipGroup } from '../types/ownership.js';
-import { authorizeWrapper } from '../validation.js';
-import { TCollectionRequest } from './collection.js';
-import { collectionName, databaseName, objectId, userName } from './common.js';
+import { authorizeWrapper } from '../validation';
+import { gql } from '@helper';
 
-const ownershipGroup = Joi.string().valid('User', 'Group').required();
+export const typeDefsMetadata = gql`
+  #graphql
+  scalar JSON
+  type Query
+  type Mutation
 
-export type TPermissionRequest = TCollectionRequest & {
-  docId: string;
-};
-
-export type TPermissionUpdateRequest = TPermissionRequest & {
-  permission: number;
-};
-
-export type TPermissionOwnRequest = TPermissionRequest & {
-  grouping: TOwnershipGroup;
-  newOwner: string;
-};
-
-export const typeDefsPermission = `#graphql
-scalar JSON
-type Query
-type Mutation
-
-enum PermissionGroup {
-  User
-  Group
-  Other
-}
-
-enum OwnershipGroup {
-  User
-  Group
-}
-
-# If docId is not provided, it will return the permission of the collection
-extend type Query {
-  permissionList(
-    databaseName: String!
-    collectionName: String!
-    docId: String
-  ): CollectionMetadataOutput
-
-  collectionSchema(
-    databaseName: String!
-    collectionName: String!
-  ): [SchemaFieldOutput!]
-}
-
-extend type Mutation {
-  permissionSet(
-    databaseName: String!
-    collectionName: String!
-    docId: String
+  type MetadataDocumentResponse {
+    owner: String!
+    group: String!
     permission: Int!
-  ): CollectionMetadataOutput!
-
-  permissionOwn(
-    databaseName: String!
     collectionName: String!
-    docId: String
-    grouping: OwnershipGroup!
-    newOwner: String!
-  ): CollectionMetadataOutput
-}
+    docId: String!
+    merkleIndex: String!
+  }
 
+  # @TODO Refactor after document
+  extend type Query {
+    getMetadataDocument(
+      databaseName: String!
+      collectionName: String!
+      docId: String!
+    ): MetadataDocumentResponse
+
+    # TODO: keep JSON for now since we have to make sure what it will return
+    getMetadataCollection(
+      databaseName: String!
+      collectionName: String!
+    ): MetadataCollection!
+  }
 `;
 
 // Query
-const permissionList = authorizeWrapper(
+const getMetadataDocument = authorizeWrapper<
+  TMetadataDocumentRequest,
+  TMetadataDocument
+>(
   Joi.object({
     databaseName,
     collectionName,
-    docId: objectId.optional(),
+    docId,
   }),
-  async (_root: unknown, args: TPermissionRequest, ctx) => {
-    return withTransaction((session) =>
-      readMetadata(
-        args.databaseName,
-        args.collectionName,
-        args.docId,
-        ctx.userName,
-        true,
-        session
-      )
-    );
-  }
-);
+  async (_root, { databaseName, collectionName, docId }, ctx) => {
+    const documentMetadata = await Metadata.document({
+      databaseName,
+      collectionName,
+      docId,
+      actor: ctx.userName,
+    });
 
-const collectionSchema = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    collectionName,
-  }),
-  async (_root: unknown, args: TCollectionRequest, ctx) =>
-    getSchemaDefinition(args.databaseName, args.collectionName, ctx.userName)
-);
-
-// Mutation
-const permissionSet = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    collectionName,
-    permission: Joi.number().min(0).required(),
-    docId: objectId.optional(),
-  }),
-  async (_root: unknown, args: TPermissionUpdateRequest, context) => {
-    await withTransaction((session) =>
-      setPermission(
-        args.databaseName,
-        args.collectionName,
-        context.userName,
-        args.docId,
-        args.permission,
-        session
-      )
-    );
-
-    return withTransaction((session) =>
-      readMetadata(
-        args.databaseName,
-        args.collectionName,
-        args.docId,
-        context.userName,
-        true,
-        session
-      )
-    );
-  }
-);
-
-const permissionOwn = authorizeWrapper(
-  Joi.object({
-    databaseName,
-    collectionName,
-    docId: objectId.optional(),
-    grouping: ownershipGroup,
-    newOwner: userName,
-  }),
-  async (_root: unknown, args: TPermissionOwnRequest, context) => {
-    if (args.docId) {
-      await withTransaction((session) =>
-        changeDocumentOwnership(
-          args.databaseName,
-          args.collectionName,
-          args.docId,
-          context.userName,
-          args.grouping,
-          args.newOwner,
-          session
-        )
-      );
-    } else {
-      await withTransaction((session) =>
-        changeCollectionOwnership(
-          args.databaseName,
-          args.collectionName,
-          context.userName,
-          args.grouping,
-          args.newOwner,
-          session
-        )
-      );
+    if (!documentMetadata) {
+      throw new Error(`Can't find metadata document: ${docId}`);
     }
 
-    return withTransaction((session) =>
-      readMetadata(
-        args.databaseName,
-        args.collectionName,
-        args.docId,
-        context.userName,
-        true,
-        session
-      )
-    );
+    return documentMetadata;
   }
 );
 
-type TPermissionResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    permissionList: typeof permissionList;
-    collectionSchema: typeof collectionSchema;
-  };
-  Mutation: {
-    permissionSet: typeof permissionSet;
-    permissionOwn: typeof permissionOwn;
-  };
-};
+const getMetadataCollection = authorizeWrapper<
+  TMetadataCollectionRequest,
+  TMetadataCollection
+>(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root, { databaseName, collectionName }, ctx) => {
+    const collectionMetadata = await Metadata.collection({
+      databaseName,
+      collectionName,
+      actor: ctx.userName,
+    });
 
-export const resolversPermission: TPermissionResolver = {
+    if (!collectionMetadata) {
+      throw new Error(`Can't find metadata collection: ${collectionName}`);
+    }
+
+    return collectionMetadata;
+  }
+);
+
+export const resolversMetadata = {
   JSON: GraphQLJSON,
   Query: {
-    permissionList,
-    collectionSchema,
+    getMetadataCollection,
+    getMetadataDocument,
   },
-  Mutation: {
-    permissionSet,
-    permissionOwn,
-  },
+  Mutation: {},
 };

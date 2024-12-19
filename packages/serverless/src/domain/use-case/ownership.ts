@@ -1,134 +1,146 @@
-import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import ModelUser from '../../model/global/user.js';
-import { OwnershipGroup } from '../types/ownership.js';
-import { isGroupExist } from './group.js';
 import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+  EOwnershipType,
+  TParamCollectionOwnership,
+  TParamDocumentOwnership,
+} from '@zkdb/common';
+import { ClientSession } from 'mongodb';
+import {
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUser,
+} from '@model';
+import { Group } from './group';
+import { PermissionSecurity } from './permission-security';
 
-export async function changeDocumentOwnership(
-  databaseName: string,
-  collectionName: string,
-  docId: string,
-  actor: string,
-  group: OwnershipGroup,
-  newOwner: string,
-  session?: ClientSession
-) {
-  if (
-    !(await hasDocumentPermission(
-      databaseName,
-      collectionName,
-      actor,
-      docId,
-      'system',
-      session
-    ))
+export class Ownership {
+  public static async transferCollection(
+    paramTransfer: TParamCollectionOwnership,
+    session?: ClientSession
   ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'system' permission for the specified document.`
-    );
-  }
-
-  const modelMetadata = new ModelDocumentMetadata(databaseName);
-
-  if (group === 'User') {
-    const modelUser = new ModelUser();
-
-    if (
-      !(await modelUser.isUserExist({
-        userName: newOwner,
-      }))
-    ) {
-      throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
-    }
-
-    await modelMetadata.updateOne(
-      {
-        collection: collectionName,
-        docId,
-      },
-      {
-        $set: { owner: newOwner },
-      },
-      { session }
-    );
-  } else {
-    if (!isGroupExist(databaseName, newOwner, session)) {
-      throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
-    }
-    await modelMetadata.updateOne(
-      {
-        collection: collectionName,
-        docId,
-      },
-      {
-        $set: { group: newOwner },
-      },
-      { session }
-    );
-  }
-}
-
-export async function changeCollectionOwnership(
-  databaseName: string,
-  collectionName: string,
-  actor: string,
-  group: OwnershipGroup,
-  newOwner: string,
-  session?: ClientSession
-) {
-  if (
-    !(await hasCollectionPermission(
-      databaseName,
-      collectionName,
-      actor,
-      'system',
+    const { databaseName, collectionName, actor, groupType, newOwner } =
+      paramTransfer;
+    // Get actor permission
+    const actorPermission = await PermissionSecurity.collection(
+      { databaseName, collectionName, actor },
       session
-    ))
-  ) {
-    throw new Error(
-      `Access denied: Actor '${actor}' does not have 'system' permission for collection '${collectionName}'.`
     );
+    // Checking system permission
+    if (!actorPermission.system) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'system' permission for collection '${collectionName}'.`
+      );
+    }
+
+    if (groupType === EOwnershipType.User) {
+      const imUser = new ModelUser();
+      // Ensure the target user exist
+      if (
+        !(await imUser.isExist({
+          userName: newOwner,
+        }))
+      ) {
+        throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
+      }
+
+      const imMetadataCollection =
+        ModelMetadataCollection.getInstance(databaseName);
+
+      const result = await imMetadataCollection.updateOne(
+        {
+          collection: collectionName,
+        },
+        {
+          $set: { 'metadata.owner': newOwner },
+        },
+        { session }
+      );
+      return result.acknowledged;
+    } else {
+      // Case groupType is EOwnershipType.Group
+      if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
+        throw Error(
+          `Cannot change ownership, group ${newOwner} does not exist`
+        );
+      }
+
+      const imMetadataCollection =
+        ModelMetadataCollection.getInstance(databaseName);
+
+      const result = await imMetadataCollection.updateOne(
+        {
+          collectionName,
+        },
+        {
+          $set: { 'metadata.group': newOwner },
+        },
+        { session }
+      );
+
+      return result.acknowledged;
+    }
   }
+  public static async transferDocument(
+    paramTransfer: TParamDocumentOwnership,
+    session?: ClientSession
+  ) {
+    const { databaseName, collectionName, docId, groupType, actor, newOwner } =
+      paramTransfer;
 
-  const modelMetadata = ModelCollectionMetadata.getInstance(databaseName);
+    const actorPermission = await PermissionSecurity.document(
+      { databaseName, collectionName, docId, actor },
+      session
+    );
 
-  if (group === 'User') {
-    const modelUser = new ModelUser();
-
-    if (
-      !(await modelUser.isUserExist({
-        userName: newOwner,
-      }))
-    ) {
-      throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
+    if (!actorPermission.system) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'system' permission for the specified document.`
+      );
     }
 
-    await modelMetadata.updateOne(
-      {
-        collection: collectionName,
-      },
-      {
-        $set: { owner: newOwner },
-      },
-      { session }
-    );
-  } else {
-    if (!isGroupExist(databaseName, newOwner, session)) {
-      throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
+    if (groupType === EOwnershipType.User) {
+      const imUser = new ModelUser();
+
+      if (
+        !(await imUser.isExist({
+          userName: newOwner,
+        }))
+      ) {
+        throw Error(`Cannot change ownership, user ${newOwner} does not exist`);
+      }
+
+      const imMetadataDocument = new ModelMetadataDocument(databaseName);
+
+      const result = await imMetadataDocument.updateOne(
+        {
+          collection: collectionName,
+          docId,
+        },
+        {
+          $set: { 'metadata.owner': newOwner },
+        },
+        { session }
+      );
+      return result.acknowledged;
+    } else {
+      if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
+        throw Error(
+          `Cannot change ownership, group ${newOwner} does not exist`
+        );
+      }
+
+      const imMetadataDocument = new ModelMetadataDocument(databaseName);
+
+      const result = await imMetadataDocument.updateOne(
+        {
+          collection: collectionName,
+          docId,
+        },
+        {
+          $set: { 'metadata.group': newOwner },
+        },
+        { session }
+      );
+      return result.acknowledged;
     }
-    await modelMetadata.updateOne(
-      {
-        collection: collectionName,
-      },
-      {
-        $set: { group: newOwner },
-      },
-      { session }
-    );
   }
 }

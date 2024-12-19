@@ -1,75 +1,66 @@
 import { ClientSession, MongoError } from 'mongodb';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
+import { DATABASE_ENGINE, logger } from '@helper';
 
-export type CompoundSession = {
-  sessionService: ClientSession;
-  sessionProof: ClientSession;
+export type TCompoundSession = {
+  serverless: ClientSession;
+  proofService: ClientSession;
 };
 
 export async function withCompoundTransaction<T>(
-  callback: (session: CompoundSession) => Promise<T>
-): Promise<T | null> {
-  const sessionService = DB['service'].client.startSession();
-  const sessionProof = DB['proof'].client.startSession();
-  let result: T | null = null;
+  callback: (session: TCompoundSession) => Promise<T>
+): Promise<T> {
+  const serverless = DATABASE_ENGINE.serverless.client.startSession();
+  const proofService = DATABASE_ENGINE.proofService.client.startSession();
+  let result: T;
 
   try {
-    sessionService.startTransaction({
+    serverless.startTransaction({
       readPreference: 'primary',
       readConcern: { level: 'local' },
       writeConcern: { w: 'majority' },
     });
-    sessionProof.startTransaction({
+    proofService.startTransaction({
       readPreference: 'primary',
       readConcern: { level: 'local' },
       writeConcern: { w: 'majority' },
     });
 
-    result = await callback({ sessionService, sessionProof });
+    result = await callback({ serverless, proofService });
 
-    await sessionService.commitTransaction();
-    await sessionProof.commitTransaction();
+    await serverless.commitTransaction();
+    await proofService.commitTransaction();
   } catch (error) {
     logger.error('DatabaseEngine::withCompoundTransaction()', {
       message: (error as MongoError).message,
       code: (error as MongoError).code,
       stack: (error as Error).stack,
     });
-    if (sessionService.inTransaction()) {
+    if (serverless.inTransaction()) {
       try {
-        await sessionService.abortTransaction();
+        await serverless.abortTransaction();
       } catch (abortError) {
         logger.error(
           'DatabaseEngine::withCompoundTransaction() - Abort failed for service',
-          {
-            message: (abortError as MongoError).message,
-            code: (abortError as MongoError).code,
-            stack: (abortError as Error).stack,
-          }
+          abortError
         );
       }
     }
 
-    if (sessionProof.inTransaction()) {
+    if (proofService.inTransaction()) {
       try {
-        await sessionProof.abortTransaction();
+        await proofService.abortTransaction();
       } catch (abortError) {
         logger.error(
           'DatabaseEngine::withCompoundTransaction() - Abort failed for proof',
-          {
-            message: (abortError as MongoError).message,
-            code: (abortError as MongoError).code,
-            stack: (abortError as Error).stack,
-          }
+          abortError
         );
       }
     }
 
     throw error;
   } finally {
-    await sessionService.endSession();
-    await sessionProof.endSession();
+    await serverless.endSession();
+    await proofService.endSession();
   }
 
   return result;

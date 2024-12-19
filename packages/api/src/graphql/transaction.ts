@@ -1,55 +1,57 @@
 import { gql } from "@apollo/client";
 import {
+  TTransactionWithId,
+  TTransactionConfirmRequest,
+  TTransactionRequest,
+} from "@zkdb/common";
+
+import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common.js";
-import {
-  TDbTransaction,
-  TTransactionConfirmRequest,
-  TTransactionRequest,
-} from "./types/transaction.js";
 
-const TRANSACTION_GET = gql`
-  query GetTransaction(
+const TRANSACTION_DRAFT = gql`
+  query TransactionDraft(
     $databaseName: String!
     $transactionType: TransactionType!
   ) {
-    getTransaction(
+    transactionDraft(
       databaseName: $databaseName
       transactionType: $transactionType
     ) {
+      transactionObjectId
       databaseName
       transactionType
       status
-      id
-      tx
-      zkAppPublicKey
+      transactionRaw
+      txHash
+      error
     }
   }
 `;
 
 const TRANSACTION_CONFIRM = gql`
-  mutation ConfirmTransaction(
+  mutation TransactionConfirm(
     $databaseName: String!
-    $confirmTransactionId: String!
+    $transactionObjectId: String!
     $txHash: String!
   ) {
-    confirmTransaction(
+    transactionConfirm(
       databaseName: $databaseName
-      id: $confirmTransactionId
+      transactionObjectId: $transactionObjectId
       txHash: $txHash
     )
   }
 `;
 
 export const transaction = <T>(client: TApolloClient<T>) => ({
-  getTransaction: createQueryFunction<
-    TDbTransaction,
+  transactionDraft: createQueryFunction<
+    TTransactionWithId,
     TTransactionRequest,
-    { getTransaction: TDbTransaction }
-  >(client, TRANSACTION_GET, (data) => data.getTransaction),
-  confirmTransaction: createMutateFunction<
+    { transactionDraft: TTransactionWithId }
+  >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
+  transactionConfirm: createMutateFunction<
     boolean,
     TTransactionConfirmRequest,
     { confirmTransaction: boolean }

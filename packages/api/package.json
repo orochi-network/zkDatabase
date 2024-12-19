@@ -18,6 +18,7 @@
   "license": "Apache-2.0",
   "description": "",
   "dependencies": {
+    "@zkdb/common": "^0.1.1",
     "@apollo/client": "^3.10.6",
     "@types/node": "^22.6.1",
     "graphql": "^16.9.0",

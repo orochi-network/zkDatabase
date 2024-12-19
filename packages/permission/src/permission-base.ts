@@ -1,7 +1,6 @@
 import {
   PermissionRecord,
   PERMISSION_FIELD,
-  PERMISSION_ORDER_CREATE,
   PERMISSION_ORDER_DELETE,
   PERMISSION_ORDER_READ,
   PERMISSION_ORDER_SYSTEM,
@@ -48,16 +47,6 @@ export class PermissionBase {
     return this.getBit(PERMISSION_ORDER_READ);
   }
 
-  set create(value: boolean) {
-    value
-      ? this.bitTurnOn(PERMISSION_ORDER_CREATE)
-      : this.bitTurnOff(PERMISSION_ORDER_CREATE);
-  }
-
-  get create() {
-    return this.getBit(PERMISSION_ORDER_CREATE);
-  }
-
   set delete(value: boolean) {
     value
       ? this.bitTurnOn(PERMISSION_ORDER_DELETE)
@@ -86,14 +75,21 @@ export class PermissionBase {
     return {
       write: this.write,
       read: this.read,
-      create: this.create,
       delete: this.delete,
       system: this.system,
     };
   }
 
-  combine(permission: PermissionBase): PermissionBase {
-    return new PermissionBase(permission.value | this.value);
+  combine(other: PermissionBase): PermissionBase {
+    return new PermissionBase(other.value | this.value);
+  }
+
+  eq(other: PermissionBase): boolean {
+    return this.value === other.value;
+  }
+
+  contain(other: PermissionBase): boolean {
+    return (this.value & other.value) === other.value;
   }
 
   static from(json: Partial<PermissionRecord>): PermissionBase;
@@ -119,8 +115,16 @@ export class PermissionBase {
     return new PermissionBase(0);
   }
 
-  static permissionReadonly() {
+  static permissionRead() {
     return PermissionBase.from({ read: true });
+  }
+
+  static permissionWrite() {
+    return PermissionBase.from({ write: true });
+  }
+
+  static permissionDelete() {
+    return PermissionBase.from({ delete: true });
   }
 
   static permissionReadWrite() {
@@ -129,11 +133,12 @@ export class PermissionBase {
       write: true,
     });
   }
-  static permissionReadWriteCreate() {
+
+  static permissionReadWriteDelete() {
     return PermissionBase.from({
       read: true,
       write: true,
-      create: true,
+      delete: true,
     });
   }
 
@@ -141,16 +146,6 @@ export class PermissionBase {
     return PermissionBase.from({
       read: true,
       write: true,
-      create: true,
-      delete: true,
-    });
-  }
-
-  static permissionAllSystem() {
-    return PermissionBase.from({
-      read: true,
-      write: true,
-      create: true,
       delete: true,
       system: true,
     });
