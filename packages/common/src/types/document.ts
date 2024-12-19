@@ -25,13 +25,6 @@ export type TDocumentRecordNullable = TNullable<
   'previousObjectId'
 >;
 
-export type TDocumentHistory = {
-  docId: string;
-  documentRevision: TDocumentRecordNullable[];
-  metadata: TMetadataDocument;
-  active: boolean;
-};
-
 export type TDocumentResponse = TDocumentRecordNullable;
 
 export type TDocumentNamespace = {
@@ -40,8 +33,8 @@ export type TDocumentNamespace = {
 };
 
 export type TDocumentFindRequest = TDocumentNamespace & {
-  query: { [key: string]: string };
-  pagination: TPagination;
+  query?: { [key: string]: string };
+  pagination?: TPagination;
 };
 
 // metadata and proofStatus's presence depends on whether the graphql client
@@ -73,17 +66,13 @@ export type TDocumentUpdateRequest = TDocumentNamespace & {
 
 export type TDocumentUpdateResponse = TMerkleProof[];
 
-export type TDocumentHistoryFindRequest = TDocumentNamespace & {
-  docId: string;
-};
-
 export type TDocumentDropRequest = TDocumentFindRequest;
 export type TDocumentDropResponse = TMerkleProof[];
 
-export type TDocumentHistoryListRequest = TDocumentNamespace & {
+export type TDocumentHistoryFindRequest = TDocumentNamespace & {
   docId: string;
-  pagination: TPagination;
+  pagination?: TPagination;
 };
-
-export type TDocumentHistoryFindResponse = TDocumentHistory | null;
-export type TDocumentHistoryListResponse = TDocumentHistoryFindResponse[];
+export type TDocumentHistoryFindResponse = TPaginationReturn<
+  TDocumentResponse[]
+>;

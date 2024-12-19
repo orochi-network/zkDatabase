@@ -16,6 +16,7 @@ import {
   TMetadataDetailDocument,
   TPagination,
   TParamCollection,
+  TParamDocument,
   TPermissionSudo,
   TWithProofStatus,
 } from '@zkdb/common';
@@ -317,8 +318,8 @@ but found ${listQualifiedDocument.length}.`
    * and the total number of documents that satisfy the filter criteria. */
   static async query(
     permissionParam: TPermissionSudo<TParamCollection>,
-    query?: FilterCriteria,
-    pagination?: TPagination,
+    query: FilterCriteria,
+    pagination: TPagination,
     session?: ClientSession
   ): Promise<[TDocumentRecordNullable[], number]> {
     const { databaseName, collectionName, actor } = permissionParam;
@@ -329,15 +330,13 @@ but found ${listQualifiedDocument.length}.`
       );
     }
 
-    const paginationInfo = pagination || DEFAULT_PAGINATION;
-
-    const parsedQuery = parseQuery(query || {});
+    const parsedQuery = parseQuery(query);
 
     const [listDocument, totalDocument] = await Promise.all([
       ModelDocument.getInstance(databaseName, collectionName)
         .find({ ...parsedQuery, active: true }, { session })
-        .limit(paginationInfo.limit)
-        .skip(paginationInfo.offset)
+        .limit(pagination.limit)
+        .skip(pagination.offset)
         .toArray(),
 
       ModelDocument.getInstance(
@@ -408,5 +407,57 @@ but found ${listQualifiedDocument.length}.`
         proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
       };
     });
+  }
+
+  /** List an active document's revisions, not including the active one. */
+  static async history(
+    permissionParam: TPermissionSudo<TParamDocument>,
+    pagination: TPagination,
+    session?: ClientSession
+  ): Promise<[TDocumentRecordNullable[], number]> {
+    const { databaseName, collectionName, actor, docId } = permissionParam;
+
+    if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
+      throw new Error(
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+      );
+    }
+
+    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+
+    const document = await imDocument.findOne({ docId, active: true });
+    if (!document) {
+      throw new Error(`Document with docId '${docId}' not found.`);
+    }
+
+    const actorPermissionDocument = await PermissionSecurity.document(
+      {
+        databaseName,
+        collectionName,
+        actor,
+        docId,
+      },
+      session
+    );
+    if (!actorPermissionDocument.read) {
+      throw new Error(
+        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
+      );
+    }
+
+    const [listRevision, totalRevision] = await Promise.all([
+      imDocument
+        .find({
+          docId,
+          active: false,
+        })
+        .limit(pagination.limit)
+        .skip(pagination.offset)
+        .toArray(),
+
+      imDocument.collection.countDocuments({ docId, active: false }),
+    ]);
+
+    return [listRevision, totalRevision];
   }
 }

@@ -4,7 +4,7 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Document, DocumentHistory } from '@domain';
+import { Document } from '@domain';
 import { gql } from '@helper';
 import { authorizeWrapper } from '../validation';
 import {
@@ -23,10 +23,12 @@ import {
   TDocumentCreateResponse,
   TDocumentDropRequest,
   TDocumentDropResponse,
+  docId,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
 import { GraphqlHelper } from '@helper';
+import { DEFAULT_PAGINATION } from '@common';
 
 const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -63,7 +65,8 @@ const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
-    docId: Joi.string(),
+    docId,
+    pagination,
   });
 
 export const typeDefsDocument = gql`
@@ -86,17 +89,23 @@ export const typeDefsDocument = gql`
 
   type DocumentResponse {
     docId: String!
-    document: JSON
-    createdAt: Date
-    updatedAt: Date
+    document: JSON!
+    createdAt: Date!
+    updatedAt: Date!
     metadata: MetadataDocumentResponse
     proofStatus: ProofStatusDocument
   }
 
+  type DocumentRevisionResponse {
+    document: JSON!
+    createdAt: Date!
+    updatedAt: Date!
+  }
+
   type DocumentFindResponse {
     data: [DocumentResponse!]!
-    total: Int
-    offset: Int
+    total: Int!
+    offset: Int!
   }
 
   type DocumentCreateResponse {
@@ -107,12 +116,9 @@ export const typeDefsDocument = gql`
 
   # History aka revisions of a document
   type DocumentHistoryFindResponse {
-    docId: String!
-    documentRevision: [DocumentResponse!]!
-    metadata: MetadataDocumentResponse!
-    active: Boolean!
-    total: Int
-    offset: Int
+    data: [DocumentRevisionResponse!]!
+    total: Int!
+    offset: Int!
   }
 
   extend type Query {
@@ -174,8 +180,8 @@ const documentFind = authorizeWrapper<
         collectionName: args.collectionName,
         actor: ctx.userName,
       },
-      args.query,
-      args.pagination,
+      args.query || {},
+      args.pagination || DEFAULT_PAGINATION,
       session
     );
 
@@ -198,7 +204,7 @@ const documentFind = authorizeWrapper<
     return {
       data: listDocument,
       total: numTotalDocument,
-      offset: args.pagination.offset,
+      offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
     };
   });
 });
@@ -255,7 +261,7 @@ const documentDrop = authorizeWrapper<
           collectionName: args.collectionName,
           actor: ctx.userName,
         },
-        args.query,
+        args.query || {},
         session
       );
     });
@@ -265,22 +271,26 @@ const documentDrop = authorizeWrapper<
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
   TDocumentHistoryFindResponse
->(
-  JOI_DOCUMENT_HISTORY_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {
-    return withTransaction((session) =>
-      DocumentHistory.find(
-        {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
-          actor: ctx.userName,
-          docId: args.docId,
-        },
-        session
-      )
+>(JOI_DOCUMENT_HISTORY_FIND_REQUEST, async (_root: unknown, args, ctx) => {
+  return withTransaction(async (session) => {
+    const [listRevision, totalRevision] = await Document.history(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+        docId: args.docId,
+      },
+      args.pagination || DEFAULT_PAGINATION,
+      session
     );
-  }
-);
+
+    return {
+      data: listRevision,
+      total: totalRevision,
+      offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
+    };
+  });
+});
 
 export const resolversDocument = {
   JSON: GraphQLJSON,
