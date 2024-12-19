@@ -17,7 +17,7 @@ import {
   TDocumentUpdateRequest,
   TDocumentHistoryFindRequest,
   TDocumentUpdateResponse,
-  TDocumentHistoryResponse,
+  TDocumentHistoryFindResponse,
   TDocumentFindResponse,
   PERMISSION_DEFAULT,
   TDocumentCreateResponse,
@@ -264,7 +264,7 @@ const documentDrop = authorizeWrapper<
 
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,
-  TDocumentHistoryResponse | null
+  TDocumentHistoryFindResponse | null
 >(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (_root: unknown, args: TDocumentHistoryFindRequest, ctx) => {

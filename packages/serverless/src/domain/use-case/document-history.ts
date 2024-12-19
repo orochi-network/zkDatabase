@@ -5,7 +5,7 @@
 /* eslint-disable import/prefer-default-export */
 import {
   TDocumentHistory,
-  TDocumentHistoryResponse,
+  TDocumentHistoryFindResponse,
   TDocumentRecordNullable,
   TMetadataDocument,
   TPagination,
@@ -35,7 +35,7 @@ export class DocumentHistory {
     permissionParam: TPermissionSudo<TParamDocument>,
     pagination: TPagination,
     session?: ClientSession
-  ): Promise<TDocumentHistoryResponse[]> {
+  ): Promise<TDocumentHistoryFindResponse[]> {
     const { databaseName, collectionName, actor, docId } = permissionParam;
 
     const permission = await PermissionSecurity.collection(
@@ -134,7 +134,7 @@ MongoDB pipeline to already handle this case`
   static async find(
     permissionParam: TPermissionSudo<TParamDocument>,
     session?: ClientSession
-  ): Promise<TDocumentHistoryResponse | null> {
+  ): Promise<TDocumentHistoryFindResponse | null> {
     const { databaseName, collectionName, actor, docId } = permissionParam;
 
     const actorPermissionCollection = await PermissionSecurity.collection(

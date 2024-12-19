@@ -85,5 +85,5 @@ export type TDocumentHistoryListRequest = TDocumentNamespace & {
   pagination: TPagination;
 };
 
-export type TDocumentHistoryResponse = TDocumentHistory;
-export type TDocumentHistoryListResponse = TDocumentHistoryResponse[];
+export type TDocumentHistoryFindResponse = TDocumentHistory;
+export type TDocumentHistoryListResponse = TDocumentHistoryFindResponse[];
