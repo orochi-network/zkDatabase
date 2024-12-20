@@ -1,9 +1,9 @@
 import { gql } from "@apollo/client";
 import {
-  TMetadataCollection,
-  TMetadataCollectionRequest,
-  TMetadataDocument,
-  TMetadataDocumentRequest,
+  TCollectionMetadata,
+  TCollectionMetadataRequest,
+  TDocumentMetadata,
+  TDocumentMetadataRequest,
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
@@ -14,13 +14,13 @@ const METADATA_COLLECTION = gql``;
 
 export const metadata = <T>(client: TApolloClient<T>) => ({
   document: createQueryFunction<
-    TMetadataDocument,
-    TMetadataDocumentRequest,
-    { documentMetadata: TMetadataDocument }
+    TDocumentMetadata,
+    TDocumentMetadataRequest,
+    { documentMetadata: TDocumentMetadata }
   >(client, METADATA_DOCUMENT, (data) => data),
   collection: createQueryFunction<
-    TMetadataCollection,
-    TMetadataCollectionRequest,
-    { collectionMetadata: TMetadataCollection }
+    TCollectionMetadata,
+    TCollectionMetadataRequest,
+    { collectionMetadata: TCollectionMetadata }
   >(client, METADATA_COLLECTION, (data) => data),
 });

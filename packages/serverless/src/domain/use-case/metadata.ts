@@ -1,6 +1,6 @@
 import {
-  TMetadataCollection,
-  TMetadataDocument,
+  TCollectionMetadata,
+  TDocumentMetadata,
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
@@ -10,11 +10,13 @@ import { ClientSession } from 'mongodb';
 import { ModelMetadataCollection, ModelMetadataDocument } from '@model';
 import { PermissionSecurity } from './permission-security';
 
+// We create metadata class to manage all metadata of these model
+// In Graphql metadata stay on it model FE: graphql metadata of document will be on document.ts
 export class Metadata {
   public static async collection(
     paramCollection: TPermissionSudo<TParamCollection>,
     session?: ClientSession
-  ): Promise<TMetadataCollection> {
+  ): Promise<TCollectionMetadata> {
     const { sudo, databaseName, collectionName, actor } = paramCollection;
     const modelCollectionMetadata =
       ModelMetadataCollection.getInstance(databaseName);
@@ -62,7 +64,7 @@ export class Metadata {
   public static async document(
     paramDocument: TPermissionSudo<TParamDocument>,
     session?: ClientSession
-  ): Promise<TMetadataDocument> {
+  ): Promise<TDocumentMetadata> {
     const { sudo, databaseName, collectionName, docId, actor } = paramDocument;
 
     const modelMetadata = new ModelMetadataDocument(databaseName);

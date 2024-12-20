@@ -2,7 +2,7 @@ import { OwnershipAndPermission } from '@zkdb/permission';
 import { IndexDirection } from 'mongodb';
 import { TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { TMetadataCollection } from './metadata.js';
+import { TCollectionMetadata } from './metadata.js';
 import { TSchemaFieldDefinition } from './schema.js';
 
 /**
@@ -82,7 +82,7 @@ export type TCollectionCreateResponse = boolean;
 // Collection list
 export type TCollectionListRequest = TDatabaseRequest;
 
-export type TCollectionListResponse = TMetadataCollection[];
+export type TCollectionListResponse = TCollectionMetadata[];
 
 // Collection exist
 export type TCollectionExistRequest = TCollectionRequest;

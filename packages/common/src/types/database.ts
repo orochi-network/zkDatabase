@@ -88,11 +88,4 @@ export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
-// Database change owner
-export type TDatabaseChangeOwnerRequest = TDatabaseRequest & {
-  newOwner: string;
-};
-
-export type TDatabaseChangeOwnerResponse = boolean;
-
 export type TDatabaseExistResponse = boolean;
