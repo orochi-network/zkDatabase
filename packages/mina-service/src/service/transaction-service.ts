@@ -15,7 +15,7 @@ export const SERVICE_TRANSACTION = {
 
     schedule(CRON_SCHEDULE, async () => {
       if (isRunning) {
-        console.log('Task skipped to prevent overlap:', new Date());
+        logger.debug('Task skipped to prevent overlap:', new Date());
         return;
       }
 
