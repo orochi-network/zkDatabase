@@ -1,3 +1,4 @@
+import { logger } from '@helper';
 import { Fill } from '@orochi-network/queue';
 import { ETransactionStatus } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
@@ -10,7 +11,17 @@ const CRON_SCHEDULE = '*/2 * * * *'; // Cron expression to run every 2 minutes
 export const SERVICE_TRANSACTION = {
   clusterName: 'transaction',
   payload: async () => {
+    let isRunning = false;
+
     schedule(CRON_SCHEDULE, async () => {
+      if (isRunning) {
+        console.log('Task skipped to prevent overlap:', new Date());
+        return;
+      }
+
+      isRunning = true;
+
+      logger.info('Transaction service task started ', new Date());
       const imTransaction = ModelTransaction.getInstance();
       // Get list transaction that unconfirmed
       const transactionList = await imTransaction
@@ -115,6 +126,8 @@ export const SERVICE_TRANSACTION = {
           })
         );
       }
+
+      isRunning = false;
     });
   },
 };
