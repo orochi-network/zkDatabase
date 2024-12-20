@@ -24,7 +24,7 @@ export class TaskService {
         break;
       }
 
-      const noTaskFound = await withCompoundTransaction(async (session) => {
+      const backoff = await withCompoundTransaction(async (session) => {
         const task = await Proof.getNextTask(session);
         if (task === null) {
           return true;
@@ -34,14 +34,14 @@ export class TaskService {
 
         try {
           await Proof.create(task, session);
+          return false;
         } catch (error) {
           logger.error(`Error processing task with ID ${task._id}: ${error}`);
+          return true;
         }
-
-        return false;
       });
 
-      if (noTaskFound) {
+      if (backoff) {
         logger.debug('No task available, waiting...');
         await this.delay(delay);
         delay = Math.min(delay * 2, 32000); // Exponential backoff with cap
