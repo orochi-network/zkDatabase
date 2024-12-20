@@ -1,4 +1,4 @@
-import { TMetadataCollectionRecord } from '@zkdb/common';
+import { TCollectionMetadataRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
   DATABASE_ENGINE,
@@ -9,7 +9,7 @@ import {
 import { ClientSession, FindOptions, OptionalId } from 'mongodb';
 
 export class ModelMetadataCollection extends ModelGeneral<
-  OptionalId<TMetadataCollectionRecord>
+  OptionalId<TCollectionMetadataRecord>
 > {
   private static collectionName: string =
     zkDatabaseConstant.databaseCollection.metadataCollection;

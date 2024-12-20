@@ -1,1 +1,2 @@
-export * from './create-proof';
+export * from './proof';
+export * from './zk-compile';

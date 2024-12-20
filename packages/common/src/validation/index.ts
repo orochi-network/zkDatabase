@@ -134,7 +134,16 @@ export const documentField = Joi.object<TDocumentField, true>()
         field = { kind, value };
         break;
       }
-      case 'UInt32':
+      case 'UInt32': {
+        if (typeof raw.value !== 'number') {
+          throw new Error(
+            `Field ${name} of kind ${kind}'s value must be a number, got ${typeof raw.value}`
+          );
+        }
+
+        field = { kind, value: raw.value };
+        break;
+      }
       case 'Int64':
       case 'UInt64': {
         if (typeof raw.value !== 'string' && typeof raw.value !== 'number') {

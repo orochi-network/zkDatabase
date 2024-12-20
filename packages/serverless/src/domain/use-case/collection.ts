@@ -3,7 +3,7 @@ import {
   PERMISSION_DEFAULT,
   TCollectionIndexInfo,
   TCollectionIndexMap,
-  TMetadataCollectionRecord,
+  TCollectionMetadataRecord,
   TParamCollection,
   TPermissionSudo,
   TSchemaFieldDefinition,
@@ -266,8 +266,8 @@ export class Collection {
     databaseName: string,
     actor: string,
     session?: ClientSession
-  ): Promise<TMetadataCollectionRecord[]> {
-    const listMetadataCollection = await ModelMetadataCollection.getInstance(
+  ): Promise<TCollectionMetadataRecord[]> {
+    const lisTCollectionMetadata = await ModelMetadataCollection.getInstance(
       databaseName
     )
       .find()
@@ -275,7 +275,7 @@ export class Collection {
 
     return PermissionSecurity.filterMetadataCollection(
       databaseName,
-      listMetadataCollection,
+      lisTCollectionMetadata,
       actor,
       PermissionBase.permissionRead(),
       session

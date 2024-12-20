@@ -19,10 +19,10 @@
     "paths": {
       "@helper": ["./src/helper"],
       "@service": ["./src/service"],
-      "@circuit": ["src/circuit"],
-      "@domain": ["src/domain"]
+      "@circuit": ["./src/circuit"],
+      "@domain": ["./src/domain"]
     },
   },
   "include": ["**/*.ts"],
-  "exclude": ["build", "node_modules"]
+  "exclude": ["build", "node_modules", "test"]
 }

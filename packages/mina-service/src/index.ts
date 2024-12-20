@@ -1,31 +1,9 @@
-import { DatabaseEngine } from '@zkdb/storage';
-import { TaskService } from '@service';
-import { logger, config } from '@helper';
-import { Mina } from 'o1js';
+import { logger } from '@helper';
+import { ClusterApplication, LoggerSet } from '@orochi-network/framework';
+import { SERVICE_COMPILE, SERVICE_TRANSACTION, TASK_SERVICE } from '@service';
+// Set logger
+LoggerSet(logger);
+// Init cluster application
+const clusterApp = new ClusterApplication();
 
-(async () => {
-  const network = Mina.Network({
-    networkId: config.NETWORK_ID,
-    mina: config.MINA_URL,
-  });
-
-  Mina.setActiveInstance(network);
-
-  // db service
-  const serviceDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-  // db proof
-  const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
-  if (!serviceDb.isConnected()) {
-    await serviceDb.connect();
-  }
-
-  if (!proofDb.isConnected()) {
-    await proofDb.connect();
-  }
-
-  const taskService = new TaskService();
-
-  await taskService.fetchAndProcessTasks();
-
-  logger.info('Proof service stopped.');
-})();
+clusterApp.add(SERVICE_COMPILE).add(SERVICE_TRANSACTION).add(TASK_SERVICE).start();

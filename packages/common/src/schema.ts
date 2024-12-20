@@ -161,7 +161,7 @@ export class Schema {
               value = anyThis[name].toString();
               break;
             case 'UInt32':
-              value = (anyThis[name] as UInt32).toBigint();
+              value = Number((anyThis[name] as UInt32).toBigint());
               break;
             case 'Int64':
               value = (anyThis[name] as Int64).toBigint();
