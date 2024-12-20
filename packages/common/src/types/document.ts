@@ -60,13 +60,13 @@ export type TDocumentCreateResponse = {
 };
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {
-  query: { [key: string]: string };
+  docId: string;
   document: Record<string, TDocumentField>;
 };
 
 export type TDocumentUpdateResponse = TMerkleProof[];
 
-export type TDocumentDropRequest = TDocumentFindRequest;
+export type TDocumentDropRequest = TDocumentUpdateRequest;
 export type TDocumentDropResponse = TMerkleProof[];
 
 export type TDocumentHistoryFindRequest = TDocumentNamespace & {

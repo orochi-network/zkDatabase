@@ -30,12 +30,6 @@ import { Permission } from '@zkdb/permission';
 import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
 
-const JOI_DOCUMENT_FIND_REQUEST = Joi.object<TDocumentFindRequest>({
-  databaseName,
-  collectionName,
-  query: Joi.object(),
-});
-
 const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
@@ -55,7 +49,7 @@ const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
 const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
   collectionName,
-  query: Joi.object(),
+  docId: docId(true),
 
   // TODO: need testing
   document: schemaDocumentRecord,
@@ -65,7 +59,7 @@ const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
     collectionName,
-    docId,
+    docId: docId(true),
     pagination,
   });
 
@@ -148,14 +142,14 @@ export const typeDefsDocument = gql`
     documentUpdate(
       databaseName: String!
       collectionName: String!
-      query: JSON!
+      docId: String!
       document: JSON!
     ): [MerkleProof!]!
 
     documentDrop(
       databaseName: String!
       collectionName: String!
-      query: JSON!
+      docId: String!
     ): [MerkleProof!]!
   }
 `;
@@ -241,7 +235,7 @@ const documentUpdate = authorizeWrapper<
         collectionName: args.collectionName,
         actor: ctx.userName,
       },
-      args.query,
+      args.docId,
       args.document,
       session
     )
@@ -251,22 +245,19 @@ const documentUpdate = authorizeWrapper<
 const documentDrop = authorizeWrapper<
   TDocumentDropRequest,
   TDocumentDropResponse
->(
-  JOI_DOCUMENT_FIND_REQUEST,
-  async (_root: unknown, args: TDocumentFindRequest, ctx) => {
-    return withCompoundTransaction(async (session) => {
-      return Document.drop(
-        {
-          databaseName: args.databaseName,
-          collectionName: args.collectionName,
-          actor: ctx.userName,
-        },
-        args.query || {},
-        session
-      );
-    });
-  }
-);
+>(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
+  return withCompoundTransaction(async (session) => {
+    return Document.drop(
+      {
+        databaseName: args.databaseName,
+        collectionName: args.collectionName,
+        actor: ctx.userName,
+      },
+      args.docId,
+      session
+    );
+  });
+});
 
 const documentHistoryFind = authorizeWrapper<
   TDocumentHistoryFindRequest,

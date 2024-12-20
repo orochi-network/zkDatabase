@@ -165,7 +165,7 @@ export class Document {
 
   static async update(
     permissionParam: TPermissionSudo<TParamCollection>,
-    filter: FilterCriteria,
+    docId: string,
     update: Record<string, TDocumentField>,
     compoundSession: TCompoundSession
   ) {
@@ -186,23 +186,18 @@ export class Document {
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const listQualifiedDocument = await imDocument
-      .find(
-        { ...parseQuery(filter), active: true },
-        {
-          session: compoundSession.serverless,
-        }
-      )
-      .toArray();
+    const document = await imDocument.findOne(
+      { docId, active: true },
+      {
+        session: compoundSession.serverless,
+      }
+    );
 
-    if (listQualifiedDocument.length !== 1) {
+    if (document === null) {
       throw new Error(
-        `Invalid query, the amount of documents that satisfy filter must be one \
-but found ${listQualifiedDocument.length}.`
+        `Document with docId '${docId}' not found or is dropped.`
       );
     }
-
-    const document = listQualifiedDocument[0];
 
     const actorPermissionDocument = await PermissionSecurity.document(
       { ...permissionParam, docId: document.docId },
@@ -235,11 +230,9 @@ but found ${listQualifiedDocument.length}.`
     return witness;
   }
 
-  /** Drop documents that satisfy the filter criteria, setting them to
-   * inactive. */
   static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
-    filter: FilterCriteria,
+    docId: string,
     compoundSession: TCompoundSession
   ): Promise<TMerkleProof[]> {
     const { databaseName, collectionName, actor } = permissionParam;
@@ -259,23 +252,18 @@ but found ${listQualifiedDocument.length}.`
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const listQualifiedDocument = await imDocument
-      .find(
-        { ...parseQuery(filter), active: true },
-        {
-          session: compoundSession.serverless,
-        }
-      )
-      .toArray();
+    const document = await imDocument.findOne(
+      { docId, active: true },
+      {
+        session: compoundSession.serverless,
+      }
+    );
 
-    if (listQualifiedDocument.length !== 1) {
+    if (document === null) {
       throw new Error(
-        `Invalid query, the amount of documents that satisfy filter must be one \
-but found ${listQualifiedDocument.length}.`
+        `Document with docId '${docId}' not found or is dropped.`
       );
     }
-
-    const document = listQualifiedDocument[0];
 
     const actorDocumentPermission = await PermissionSecurity.document(
       {
