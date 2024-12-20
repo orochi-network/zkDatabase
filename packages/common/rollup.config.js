@@ -20,8 +20,8 @@ export default {
         { find: '@validation', replacement: 'src/validation' },
       ],
     }),
-    nodeResolve(),
     commonjs(),
+    nodeResolve({ resolveOnly: (module) => !module.includes('o1js') }),
     typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
   ],
 };
