@@ -1,5 +1,6 @@
-import { NetworkId } from 'o1js';
+import { ENetworkId } from './database';
+
 export type TEnvironment = {
-  networkId: NetworkId;
+  networkId: ENetworkId;
   networkUrl: string;
 };

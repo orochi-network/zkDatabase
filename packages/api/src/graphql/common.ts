@@ -1,23 +1,22 @@
-import * as pkg from "@apollo/client";
+import { OperationVariables, ApolloClient, DocumentNode } from "@apollo/client";
 import { GraphQLResult } from "@utils";
 
 export type TAsyncGraphQLResult<T> = Promise<GraphQLResult<T>>;
 
-export type TOperationVariables = pkg.OperationVariables;
+export type TOperationVariables = OperationVariables;
 
-export type TApolloClient<T> = pkg.ApolloClient<T>;
+export type TApolloClient<T> = ApolloClient<T>;
 
 /**
  * Creates a query function that executes a GraphQL query and processes the result.
  *
- * @template T - The type of the processed result.
  * @template Req - The type of the request variables. Defaults to `any`.
  * @template Res - The type of the response data. Defaults to `any`.
  *
  * @param {any} query - The GraphQL query to be executed.
- * @param {(data: Res) => T | any} postProcess - A function to process the result of the query.
+ * @param {(data: any) => Res} postProcess - A function to process the result of the query.
  *
- * @returns {TAsyncGraphQLResult<T>} A promise that resolves to a `GraphQLResult` containing the processed result.
+ * @returns {TAsyncGraphQLResult<Res>} A promise that resolves to a `GraphQLResult` containing the processed result.
  *
  * @example
  * ```typescript
@@ -43,12 +42,12 @@ export type TApolloClient<T> = pkg.ApolloClient<T>;
  * });
  * ```
  */
-export const createQueryFunction = <T, Req = any, Res = any>(
+export const createQueryFunction = <Req = any, Res = any>(
   client: TApolloClient<any>,
-  query: any,
-  postProcess: (data: Res) => T | any
+  query: DocumentNode,
+  postProcess: (data: any) => Res | any
 ) => {
-  return async (variables: Req | undefined): Promise<GraphQLResult<T>> => {
+  return async (variables: Req | undefined): TAsyncGraphQLResult<Res> => {
     try {
       const { data, errors } = await client.query<
         Res,
@@ -58,12 +57,11 @@ export const createQueryFunction = <T, Req = any, Res = any>(
         variables: variables as any,
       });
       if (!errors && data) {
-        return GraphQLResult.wrap(postProcess(data));
-      } else {
-        return GraphQLResult.wrap<T>(
-          errors ?? new Error("Unknown error, unable to perform query")
-        );
+        return GraphQLResult.wrap(postProcess(data as Res));
       }
+      return GraphQLResult.wrap<Res>(
+        errors ?? new Error("Unknown error, unable to perform query")
+      );
     } catch (error: any) {
       return GraphQLResult.wrap(error);
     }
@@ -73,21 +71,20 @@ export const createQueryFunction = <T, Req = any, Res = any>(
 /**
  * Creates a mutation function that executes a GraphQL mutation and processes the result.
  *
- * @template T - The type of the processed result.
  * @template Req - The type of the request variables. Defaults to `any`.
  * @template Res - The type of the response data. Defaults to `any`.
  *
  * @param {any} mutation - The GraphQL mutation to be executed.
- * @param {(data: Res) => T | any} postProcess - A function to process the result of the mutation.
+ * @param {(data: any) => Res } postProcess - A function to process the result of the mutation.
  *
- * @returns {TAsyncGraphQLResult<T>} - A promise that resolves to a wrapped GraphQL result.
+ * @returns {TAsyncGraphQLResult<Rs>} - A promise that resolves to a wrapped GraphQL result.
  */
-export const createMutateFunction = <T, Req = any, Res = any>(
+export const createMutateFunction = <Req = any, Res = any>(
   client: TApolloClient<any>,
-  mutation: any,
-  postProcess: (data: Res) => T | any
+  mutation: DocumentNode,
+  postProcess: (data: any) => Res | any
 ) => {
-  return async (variables: Req | undefined): Promise<GraphQLResult<T>> => {
+  return async (variables: Req | undefined): TAsyncGraphQLResult<Res> => {
     try {
       const { data, errors } = await client.mutate<
         Res,
@@ -99,7 +96,7 @@ export const createMutateFunction = <T, Req = any, Res = any>(
       if (!errors && data) {
         return GraphQLResult.wrap(postProcess(data));
       } else {
-        return GraphQLResult.wrap<T>(
+        return GraphQLResult.wrap<Res>(
           errors ?? new Error("Unknown error, unable to perform query")
         );
       }

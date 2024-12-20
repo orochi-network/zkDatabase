@@ -1,10 +1,13 @@
 import { gql } from "@apollo/client";
 import {
-  TCollection,
   TCollectionCreateRequest,
+  TCollectionCreateResponse,
+  TCollectionExistRequest,
+  TCollectionExistResponse,
   TCollectionListRequest,
   TCollectionListResponse,
-  TCollectionRequest,
+  TCollectionMetadataRequest,
+  TCollectionMetadataReponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -12,69 +15,96 @@ import {
   TApolloClient,
 } from "./common";
 
-const COLLECTION_CREATE = gql`
-  mutation CollectionCreate(
-    $databaseName: String!
-    $collectionName: String!
-    $schema: [SchemaFieldInput!]!
-    $groupName: String
-    $index: [IndexInput]
-    $permission: Number
-  ) {
-    collectionCreate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      groupName: $groupName
-      schema: $schema
-      index: $index
-      permission: $permission
-    )
-  }
-`;
-
-const COLLECTION_EXIST = gql`
-  query CollectionExist($databaseName: String!, $collectionName: String!) {
-    collectionExist(
-      databaseName: $databaseName
-      collectionName: $collectionName
-    )
-  }
-`;
-
-const COLLECTION_LIST = gql`
-  query CollectionList($databaseName: String!) {
-    collectionList(databaseName: $databaseName) {
-      name
-      index
-      schema {
-        order
-        name
-        kind
-        indexed
-      }
-      ownership {
-        userName
-        groupName
-        permission
-      }
-    }
-  }
-`;
-
 export const collection = <T>(client: TApolloClient<T>) => ({
-  create: createMutateFunction<
-    boolean,
+  collectionCreate: createMutateFunction<
     TCollectionCreateRequest,
-    { collectionCreate: boolean }
-  >(client, COLLECTION_CREATE, (data) => data.collectionCreate),
-  exist: createQueryFunction<
-    boolean,
-    TCollectionRequest,
-    { collectionExist: boolean }
-  >(client, COLLECTION_EXIST, (data) => data.collectionExist),
-  list: createQueryFunction<
-    TCollection[],
+    TCollectionCreateResponse
+  >(
+    client,
+    gql`
+      mutation collectionCreate(
+        $databaseName: String!
+        $collectionName: String!
+        $schema: [SchemaFieldInput!]!
+        $group: String
+        $permission: Int
+      ) {
+        collectionCreate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          schema: $schema
+          group: $group
+          permission: $permission
+        )
+      }
+    `,
+    (data) => data.collectionCreate
+  ),
+  collectionExist: createQueryFunction<
+    TCollectionExistRequest,
+    TCollectionExistResponse
+  >(
+    client,
+    gql`
+      query collectionExist($databaseName: String!, $collectionName: String!) {
+        collectionExist(
+          databaseName: $databaseName
+          collectionName: $collectionName
+        )
+      }
+    `,
+    (data) => data.collectionExist
+  ),
+  collectionList: createQueryFunction<
     TCollectionListRequest,
-    { collectionList: TCollectionListResponse }
-  >(client, COLLECTION_LIST, (data) => data.collectionList),
+    TCollectionListResponse
+  >(
+    client,
+    gql`
+      query collectionList($databaseName: String!) {
+        collectionList(databaseName: $databaseName) {
+          collectionName
+          schema {
+            ...SchemaFieldOutputFragment
+          }
+          metadata {
+            ...OwnershipAndPermissionFragment
+          }
+          sizeOnDisk
+          createdAt
+          updatedAt
+        }
+      }
+    `,
+    (data) => data.collectionList
+  ),
+  collectionMetadata: createQueryFunction<
+    TCollectionMetadataRequest,
+    TCollectionMetadataReponse
+  >(
+    client,
+    gql`
+      query collectionMetadata(
+        $databaseName: String!
+        $collectionName: String!
+      ) {
+        collectionMetadata(
+          databaseName: $databaseName
+          collectionName: $collectionName
+        ) {
+          collectionName
+          schema {
+            ...SchemaFieldOutputFragment
+          }
+          metadata {
+            ...OwnershipAndPermissionFragment
+          }
+          sizeOnDisk
+          createdAt
+          updatedAt
+        }
+      }
+    `,
+    (data) => data.collectionMetadata
+  ),
 });

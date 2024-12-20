@@ -1,11 +1,20 @@
 import { gql } from "@apollo/client";
 import {
   TDatabaseChangeOwnerRequest,
-  TDatabaseCreateRequest,
+  TDatabaseChangeOwnerResponse,
+  TDatabaseDeployRequest,
+  TDatabaseDeployResponse,
+  TDatabaseEnvironmentRequest,
+  TDatabaseEnvironmentResponse,
+  TDatabaseExistRequest,
+  TDatabaseExistResponse,
+  TDatabaseInfoRequest,
+  TDatabaseInfoResponse,
   TDatabaseListRequest,
   TDatabaseListResponse,
   TDatabaseRequest,
-  TMetadataDatabase,
+  TDatabaseStatsRequest,
+  TDatabaseStatsResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -13,99 +22,102 @@ import {
   TApolloClient,
 } from "./common.js";
 
-const DATABASE_CHANGE_OWNER = gql`
-  mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
-    dbChangeOwner(databaseName: $databaseName, newOwner: $newOwner)
-  }
-`;
-
-const DATABASE_CREATE = gql`
-  mutation DbCreate($databaseName: String!, $merkleHeight: Int!) {
-    dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
-  }
-`;
-
-const DATABASE_SETTING = gql`
-  query GetDbSetting($databaseName: String!) {
-    dbSetting(databaseName: $databaseName) {
-      merkleHeight
-      publicKey
-      databaseOwner
-    }
-  }
-`;
-
-const DATABASE_STATUS = gql`
-  query GetDbStats($databaseName: String!) {
-    dbStats(databaseName: $databaseName)
-  }
-`;
-
-const DATABASE_LIST = gql`
-  query GetDbList($query: JSON, $pagination: PaginationInput) {
-    dbList(query: $query, pagination: $pagination) {
-      totalSize
-      offset
-      data {
-        databaseName
-        databaseOwner
-        databaseSize
-        merkleHeight
-        appPublicKey
-        collection {
-          name
-          index
-          schema {
-            order
-            name
-            kind
-            indexed
-          }
-          ownership {
-            userName
-            groupName
-            permission
-          }
+export const database = <T>(client: TApolloClient<T>) => ({
+  dbTransferOwner: createMutateFunction<
+    TDatabaseChangeOwnerRequest,
+    TDatabaseChangeOwnerResponse
+  >(
+    client,
+    gql`
+      mutation dbTransferOwner($databaseName: String!, $newOwner: String!) {
+        dbTransferOwner(databaseName: $databaseName, newOwner: $newOwner)
+      }
+    `,
+    (data) => data.dbTransferOwner
+  ),
+  dbCreate: createQueryFunction<TDatabaseDeployRequest, TDatabaseRequest>(
+    client,
+    gql`
+      mutation dbCreate($databaseName: String!, $merkleHeight: Int!) {
+        dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
+      }
+    `,
+    (data) => data.dbCreate
+  ),
+  dbDeploy: createQueryFunction<
+    TDatabaseDeployRequest,
+    TDatabaseDeployResponse
+  >(
+    client,
+    gql`
+      mutation dbDeploy($databaseName: String!, $appPublicKey: String!) {
+        dbDeploy(databaseName: $databaseName, appPublicKey: $appPublicKey)
+      }
+    `,
+    (data) => data.dbDeploy
+  ),
+  dbEnvironment: createQueryFunction<
+    TDatabaseEnvironmentRequest,
+    TDatabaseEnvironmentResponse
+  >(
+    client,
+    gql`
+      query dbEnvironment {
+        dbEnvironment {
+          networkId
+          networkUrl
         }
       }
-    }
-  }
-`;
-
-const DATABASE_EXIST = gql`
-  query GetDbExisted($databaseName: String!) {
-    dbExist(databaseName: $databaseName)
-  }
-`;
-export const database = <T>(client: TApolloClient<T>) => ({
-  transferOwnership: createMutateFunction<
-    boolean,
-    TDatabaseChangeOwnerRequest,
-    { dbChangeOwner: boolean }
-  >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
-  create: createMutateFunction<
-    boolean,
-    TDatabaseCreateRequest,
-    { dbCreate: boolean }
-  >(client, DATABASE_CREATE, (data) => data.dbCreate),
-  metadata: createQueryFunction<
-    TMetadataDatabase,
-    TDatabaseRequest,
-    { metadata: TMetadataDatabase }
-  >(client, DATABASE_SETTING, (data) => data.metadata),
-  status: createQueryFunction<JSON, TDatabaseRequest, { dbStats: JSON }>(
-    client,
-    DATABASE_STATUS,
-    (data) => data.dbStats
+    `,
+    (data) => data.dbList.dbEnvironment
   ),
-  list: createQueryFunction<
-    TDatabaseListResponse,
-    TDatabaseListRequest,
-    { dbList: TDatabaseListResponse }
-  >(client, DATABASE_LIST, (data) => data.dbList.data),
-  exist: createQueryFunction<boolean, TDatabaseRequest, { dbExist: boolean }>(
+  dbExist: createQueryFunction<TDatabaseExistRequest, TDatabaseExistResponse>(
     client,
-    DATABASE_EXIST,
-    (data) => data.dbExist
+    gql`
+      query dbExist($databaseName: String!) {
+        dbExist(databaseName: $databaseName)
+      }
+    `,
+    (data) => data.dbList.dbExist
+  ),
+  dbInfo: createQueryFunction<TDatabaseInfoRequest, TDatabaseInfoResponse>(
+    client,
+    gql`
+      query dbInfo($databaseName: String!) {
+        dbInfo(databaseName: $databaseName) {
+          databaseName
+          databaseOwner
+          merkleHeight
+          appPublicKey
+          sizeOnDisk
+          deployStatus
+        }
+      }
+    `,
+    (data) => data.dbInfo
+  ),
+  dbList: createQueryFunction<TDatabaseListRequest, TDatabaseListResponse>(
+    client,
+    gql`
+      query dbList($query: JSON, $pagination: PaginationInput) {
+        dbList(query: $query, pagination: $pagination) {
+          data {
+            ...MetadataDatabaseFragment
+          }
+          total
+          offset
+        }
+      }
+    `,
+    (data) => data.dbList
+  ),
+  dbStats: createQueryFunction<TDatabaseStatsRequest, TDatabaseStatsResponse>(
+    client,
+    gql`
+      query dbStats($databaseName: String!) {
+        dbStats(databaseName: $databaseName)
+      }
+    `,
+    (data) => data.dbStats
   ),
 });

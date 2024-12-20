@@ -1,4 +1,4 @@
-import { ObjectId, WithoutId } from 'mongodb';
+import type { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 

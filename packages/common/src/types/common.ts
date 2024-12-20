@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { ObjectId } from 'mongodb';
+import type { ObjectId } from 'mongodb';
 import { TPagination } from './pagination';
 
 type TDbRecordBasic = {

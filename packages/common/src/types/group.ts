@@ -1,4 +1,4 @@
-import { ObjectId, WithoutId } from 'mongodb';
+import type { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest, TMetadataDatabase } from './database.js';
 import { TUser, TUserRecord } from './user.js';
@@ -74,9 +74,9 @@ export type TGroupListAllRequest = TDatabaseRequest;
 
 export type TGroupListAllResponse = WithoutId<TGroupRecord>[];
 
-export type TGroupInfoDetailRequest = TGroupRequest;
+export type TGroupDetailRequest = TGroupRequest;
 
-export type TGroupInfoDetailResponse = TGroupDetail;
+export type TGroupDetailResponse = TGroupDetail;
 
 export type TGroupCreateRequest = TDatabaseRequest &
   Pick<TGroup, 'groupName' | 'groupDescription'>;

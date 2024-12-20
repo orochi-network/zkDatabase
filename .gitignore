@@ -118,3 +118,4 @@ circuit-cache/
 npm-token
 .npmrc
 package-lock.json
+public/

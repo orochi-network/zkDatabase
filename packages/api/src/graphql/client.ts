@@ -11,7 +11,6 @@ import { collection } from "./collection";
 import { collectionIndex } from "./collection-index";
 import { database } from "./database";
 import { document } from "./document";
-import { environment } from "./environment";
 import { group } from "./group";
 import { merkle } from "./merkle";
 import { metadata } from "./metadata";
@@ -36,7 +35,6 @@ export interface IApiClient<T = any> {
   proof: ReturnType<typeof proof>;
   transaction: ReturnType<typeof transaction>;
   rollup: ReturnType<typeof rollup>;
-  environment: ReturnType<typeof environment>;
   metadata: ReturnType<typeof metadata>;
 }
 
@@ -124,7 +122,6 @@ export class ApiClient<T = any> {
       proof: proof(api.apollo),
       transaction: transaction(api.apollo),
       rollup: rollup(api.apollo),
-      environment: environment(api.apollo),
       metadata: metadata(api.#client),
     };
   }

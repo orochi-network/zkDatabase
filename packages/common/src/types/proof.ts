@@ -1,4 +1,4 @@
-import { JsonProof } from 'o1js';
+import type { JsonProof } from 'o1js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';

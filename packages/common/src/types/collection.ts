@@ -1,5 +1,5 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
-import { IndexDirection } from 'mongodb';
+import type { IndexDirection } from 'mongodb';
 import { TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TMetadataCollection } from './metadata.js';
@@ -115,6 +115,3 @@ export type TIndexExistReponse = boolean;
 export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;
 
 export type TIndexDropReponse = boolean;
-
-// Index detail
-export type TIndexDetailRequest = TIndexRequest;
