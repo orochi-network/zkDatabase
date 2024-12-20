@@ -11,11 +11,12 @@ import {
   ClientSession,
   FindOptions,
   ObjectId,
-  WithoutId,
+  OptionalId,
 } from 'mongodb';
 import ModelGroup from './group';
+import ModelUser from '../global/user';
 
-export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
+export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   private static collectionName =
     zkDatabaseConstant.databaseCollection.userGroup;
 
@@ -101,16 +102,30 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
     options?: BulkWriteOptions
   ) {
     const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
+    const imUser = new ModelUser();
 
-    const listOperation = listUserName.map((userName) => ({
-      updateOne: {
-        filter: { userName, groupOjectId },
-        update: {
-          $set: { updatedAt: new Date() },
+    const listUser = await imUser
+      .find({
+        userName: { $in: listUserName },
+      })
+      .toArray();
+
+    const listOperation = listUser.map(({ userName, _id }) => {
+      return {
+        updateOne: {
+          filter: { userName, groupOjectId },
+          update: {
+            $set: {
+              groupName,
+              updatedAt: new Date(),
+              createdAt: new Date(),
+              userObjectId: _id,
+            },
+          },
+          upsert: true,
         },
-        upsert: true,
-      },
-    }));
+      };
+    });
 
     return this.collection.bulkWrite(listOperation, options);
   }
@@ -147,10 +162,10 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { unique: false, session });
-      await collection.index({ groupName: 1 }, { unique: false, session });
-      await collection.index({ groupOjectId: 1 }, { unique: true, session });
-      await collection.index({ userObjectId: 1 }, { unique: true, session });
+      await collection.index({ userName: 1 }, { session });
+      await collection.index({ groupName: 1 }, { session });
+      await collection.index({ groupOjectId: 1 }, { session });
+      await collection.index({ userObjectId: 1 }, { session });
 
       await addTimestampMongoDB(collection, session);
     }
