@@ -55,9 +55,9 @@
     ]
   },
   "peerDependencies": {
+    "joi": "^17.13.3",
     "mongodb": "^6.12.0",
-    "o1js": "^1.9.1",
-    "joi": "^17.13.3"
+    "o1js": "^1.9.1"
   },
   "dependencies": {
     "@zkdb/permission": "^0.1.6"
