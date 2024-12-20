@@ -61,5 +61,6 @@
   },
   "dependencies": {
     "@zkdb/permission": "^0.1.6"
-  }
+  },
+  "devDependencies": {}
 }
