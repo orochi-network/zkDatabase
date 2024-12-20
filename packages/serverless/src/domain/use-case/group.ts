@@ -84,22 +84,8 @@ export class Group {
           },
           { session }
         );
-
-        // Create user-group instance
-        const userGroup = await imUserGroup.insertOne(
-          {
-            userName: user.userName,
-            groupOjectId: group.insertedId,
-            userObjectId: user._id,
-            createdAt: getCurrentTime(),
-            updatedAt: getCurrentTime(),
-            groupName: groupName,
-          },
-          { session }
-        );
-
-        // Make sure both group & userGroup inserted
-        return group.acknowledged && userGroup.acknowledged;
+        // Make sure both group
+        return group.acknowledged;
       }
     }
 
