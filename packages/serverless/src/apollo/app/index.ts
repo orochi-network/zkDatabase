@@ -5,7 +5,6 @@ export * from './database';
 export * from './document';
 export * from './group';
 export * from './merkle-tree';
-export * from './metadata';
 export * from './proof';
 export * from './rollup';
 export * from './transaction';

@@ -179,25 +179,6 @@ export class Database {
     };
   }
 
-  public static async transferOwnership(
-    paramTransferOwner: TDatabaseParamTransferOwner
-  ): Promise<boolean> {
-    const { databaseName, databaseOwner, newOwner } = paramTransferOwner;
-    const { collection } = new ModelMetadataDatabase();
-    if (await Database.isOwner({ databaseName, databaseOwner })) {
-      const result = await collection.findOneAndUpdate(
-        { databaseName, databaseOwner },
-        {
-          $set: { databaseOwner: newOwner },
-        }
-      );
-
-      return result != null;
-    }
-
-    return false;
-  }
-
   public static async deploy(
     paramDeploy: TDatabaseParamDeploy,
     session: ClientSession

@@ -1,4 +1,5 @@
-import { Collection } from '@domain';
+import { GROUP_DEFAULT_ADMIN } from '@common';
+import { Collection, Metadata } from '@domain';
 import { gql } from '@helper';
 import {
   collectionName,
@@ -13,13 +14,14 @@ import {
   TCollectionExistResponse,
   TCollectionListRequest,
   TCollectionListResponse,
+  TCollectionMetadataRequest,
+  TCollectionMetadataResponse,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
-import { GROUP_DEFAULT_ADMIN } from '@common';
 
 export const schemaField = Joi.object({
   name: Joi.string()
@@ -58,7 +60,12 @@ export const typeDefsCollection = gql`
   extend type Query {
     collectionList(databaseName: String!): [MetadataCollection]!
 
-    collectionExist(databaseName: String!, collectionName: String!): Boolean
+    collectionMetadata(
+      databaseName: String!
+      collectionName: String!
+    ): MetadataCollection!
+
+    collectionExist(databaseName: String!, collectionName: String!): Boolean!
   }
 
   extend type Mutation {
@@ -68,7 +75,7 @@ export const typeDefsCollection = gql`
       schema: [SchemaFieldInput!]!
       group: String
       permission: Int
-    ): Boolean
+    ): Boolean!
   }
 `;
 
@@ -124,11 +131,35 @@ const collectionCreate = authorizeWrapper<
     )
 );
 
+const collectionMetadata = authorizeWrapper<
+  TCollectionMetadataRequest,
+  TCollectionMetadataResponse
+>(
+  Joi.object({
+    databaseName,
+    collectionName,
+  }),
+  async (_root, { databaseName, collectionName }, ctx) => {
+    const collectionMetadata = await Metadata.collection({
+      databaseName,
+      collectionName,
+      actor: ctx.userName,
+    });
+
+    if (!collectionMetadata) {
+      throw new Error(`Can't find metadata collection: ${collectionName}`);
+    }
+
+    return collectionMetadata;
+  }
+);
+
 export const resolversCollection = {
   JSON: GraphQLJSON,
   Query: {
     collectionList,
     collectionExist,
+    collectionMetadata,
   },
   Mutation: {
     collectionCreate,

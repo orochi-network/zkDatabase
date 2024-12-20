@@ -7,26 +7,26 @@ import { TDocument } from './document.js';
 export type TMetadataBasic = OwnershipAndPermission;
 
 // Document metadata
-export type TMetadataDocument = TMetadataBasic & {
+export type TDocumentMetadata = TMetadataBasic & {
   collectionName: string;
   docId: string;
   merkleIndex: string;
 };
 
-export type TMetadataDocumentRecord = TDbRecord<TMetadataDocument>;
+export type TDocumentMetadataRecord = TDbRecord<TDocumentMetadata>;
 
 // Metadata from mongodb
-export type TMetadataCollectionMongo = {
+export type TCollectionMetadataMongo = {
   sizeOnDisk: number;
 };
 
 // Collection metadata
-export type TMetadataCollection = TMetadataDetail<
-  TCollection & Partial<TMetadataCollectionMongo>,
+export type TCollectionMetadata = TMetadataDetail<
+  TCollection & Partial<TCollectionMetadataMongo>,
   TMetadataBasic
 >;
 
-export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
+export type TCollectionMetadataRecord = TDbRecord<TCollectionMetadata>;
 
 /**
  * Not sure what this is for?
@@ -37,13 +37,17 @@ export type TMetadataCollectionRecord = TDbRecord<TMetadataCollection>;
  */
 export type TMetadataDetail<T, M> = T & { metadata: M };
 
-export type TMetadataDetailDocument<T> = TMetadataDetail<T, TMetadataDocument>;
+export type TMetadataDetailDocument<T> = TMetadataDetail<T, TDocumentMetadata>;
 
-export type TMetadataDocumentRequest = TDatabaseRequest &
+export type TDocumentMetadataRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'> &
   Pick<TDocument, 'docId'>;
 
-export type TMetadataCollectionRequest = Omit<
-  TMetadataDocumentRequest,
+export type TDocumentMetadataResponse = TDocumentMetadata;
+
+export type TCollectionMetadataRequest = Omit<
+  TDocumentMetadataRequest,
   'docId'
 >;
+
+export type TCollectionMetadataResponse = TCollectionMetadata;

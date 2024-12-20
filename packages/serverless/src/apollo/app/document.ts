@@ -4,7 +4,7 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
-import { Document } from '@domain';
+import { Document, Metadata } from '@domain';
 import { gql } from '@helper';
 import { authorizeWrapper } from '../validation';
 import {
@@ -24,6 +24,8 @@ import {
   TDocumentDropRequest,
   TDocumentDropResponse,
   docId,
+  TDocumentMetadataRequest,
+  TDocumentMetadataResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -115,6 +117,15 @@ export const typeDefsDocument = gql`
     offset: Int!
   }
 
+  type DocumentMetadataResponse {
+    owner: String!
+    group: String!
+    permission: Int!
+    collectionName: String!
+    docId: String!
+    merkleIndex: String!
+  }
+
   extend type Query {
     documentFind(
       databaseName: String!
@@ -122,6 +133,12 @@ export const typeDefsDocument = gql`
       query: JSON # If not provided, return all documents
       pagination: PaginationInput
     ): DocumentFindResponse
+
+    documentMetadata(
+      databaseName: String!
+      collectionName: String!
+      docId: String!
+    ): DocumentMetadataResponse
 
     documentHistoryFind(
       databaseName: String!
@@ -290,11 +307,37 @@ const documentHistoryFind = authorizeWrapper<
   }
 );
 
+const documentMetadata = authorizeWrapper<
+  TDocumentMetadataRequest,
+  TDocumentMetadataResponse
+>(
+  Joi.object({
+    databaseName,
+    collectionName,
+    docId,
+  }),
+  async (_root, { databaseName, collectionName, docId }, ctx) => {
+    const documentMetadata = await Metadata.document({
+      databaseName,
+      collectionName,
+      docId,
+      actor: ctx.userName,
+    });
+
+    if (!documentMetadata) {
+      throw new Error(`Can't find metadata document: ${docId}`);
+    }
+
+    return documentMetadata;
+  }
+);
+
 export const resolversDocument = {
   JSON: GraphQLJSON,
   Query: {
     documentFind,
     documentHistoryFind,
+    documentMetadata,
   },
   Mutation: {
     documentCreate,
