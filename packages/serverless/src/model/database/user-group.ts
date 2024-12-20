@@ -11,11 +11,11 @@ import {
   ClientSession,
   FindOptions,
   ObjectId,
-  WithoutId,
+  OptionalId,
 } from 'mongodb';
 import ModelGroup from './group';
 
-export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
+export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   private static collectionName =
     zkDatabaseConstant.databaseCollection.userGroup;
 
@@ -147,10 +147,10 @@ export class ModelUserGroup extends ModelGeneral<WithoutId<TUserGroupRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { unique: false, session });
-      await collection.index({ groupName: 1 }, { unique: false, session });
-      await collection.index({ groupOjectId: 1 }, { unique: true, session });
-      await collection.index({ userObjectId: 1 }, { unique: true, session });
+      await collection.index({ userName: 1 }, { session });
+      await collection.index({ groupName: 1 }, { session });
+      await collection.index({ groupOjectId: 1 }, { session });
+      await collection.index({ userObjectId: 1 }, { session });
 
       await addTimestampMongoDB(collection, session);
     }
