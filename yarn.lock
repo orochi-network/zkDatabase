@@ -951,7 +951,7 @@
     winston "3.14.2"
     winston-transport "4.7.1"
 
-"@orochi-network/queue@^0.1.9":
+"@orochi-network/queue@^0.1.11", "@orochi-network/queue@^0.1.9":
   version "0.1.11"
   resolved "https://registry.yarnpkg.com/@orochi-network/queue/-/queue-0.1.11.tgz#c749704587a7a49e4808009def83058c9d871f0c"
   integrity sha512-oey8T41oEfA3FvpHXpc5RrSro318ysPRAKHcWjd89TbCjjVlAPs/GjK9gy71ImeRaAL6FUCu+Bk/OxldMxJfAQ==
@@ -5352,7 +5352,7 @@ node-addon-api@^7.0.0:
   resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-7.1.1.tgz#1aba6693b0f255258a049d621329329322aad558"
   integrity sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==
 
-node-cron@^3.0.3:
+node-cron@3.0.3, node-cron@^3.0.3:
   version "3.0.3"
   resolved "https://registry.yarnpkg.com/node-cron/-/node-cron-3.0.3.tgz#c4bc7173dd96d96c50bdb51122c64415458caff2"
   integrity sha512-dOal67//nohNgYWb+nWmg5dkFdIwDm8EpeGYMekPMrngV3637lqnX0lbUcCtgibHTz6SEz7DAIjKvKDFYCnO1A==

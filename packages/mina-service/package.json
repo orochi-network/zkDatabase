@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.22",
+    "@orochi-network/queue": "^0.1.11",
     "@orochi-network/vault": "^1.4.15",
     "@zkdb/smart-contract": "^1.1.0",
     "@zkdb/storage": "^1.1.0",
