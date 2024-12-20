@@ -23,16 +23,17 @@
     "lint": "eslint ./src/**/*.ts --fix && prettier . --write"
   },
   "peerDependencies": {
-    "o1js": "^1.9.1",
+    "bullmq": "^5.34.3",
     "graphql": "^16.10.0",
     "mongodb": "^6.12.0",
-    "bullmq": "^5.34.3"
+    "o1js": "^1.9.1"
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.22",
     "@orochi-network/vault": "^1.4.15",
     "@zkdb/smart-contract": "^1.1.0",
     "@zkdb/storage": "^1.1.0",
-    "graphql-request": "7.1.2"
+    "graphql-request": "7.1.2",
+    "node-cron": "^3.0.3"
   }
 }

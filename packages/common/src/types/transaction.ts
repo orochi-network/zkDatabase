@@ -98,12 +98,12 @@ export type TTransactionByIdRequest = TDatabaseRequest & {
 
 /**
  * Transaction confirm request
- * @typedef TTransactionConfirmRequest
+ * @typedef TTransactionSignRequest
  * @param {string} TTransactionByIdRequest.databaseName - Database name
  * @param {string} TTransactionByIdRequest.objectId - Transaction object ID
  * @param {string} txHash - Transaction hash
  */
-export type TTransactionConfirmRequest = TTransactionByIdRequest & {
+export type TTransactionSignRequest = TTransactionByIdRequest & {
   txHash: string;
 };
 
@@ -113,7 +113,10 @@ export type TTransactionConfirmRequest = TTransactionByIdRequest & {
  * @param {ObjectId} transactionObjectId - ObjectId of the transaction
  * @param {string} payerAddress - Publickey of the user
  */
-export type TTransactionQueue = {
+export type TTransactionQueue = Pick<
+  TTransaction,
+  'databaseName' | 'transactionType'
+> & {
   transactionObjectId: ObjectId;
   payerAddress: string;
 };

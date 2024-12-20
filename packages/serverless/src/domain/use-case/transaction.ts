@@ -1,4 +1,4 @@
-import { getCurrentTime, transactionQueue } from '@helper';
+import { transactionQueue } from '@helper';
 import { ModelUser } from '@model';
 import { FixedFloat } from '@orochi-network/utilities';
 import {
@@ -9,7 +9,7 @@ import {
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
-import { ClientSession, ObjectId, WithId } from 'mongodb';
+import { ClientSession, ObjectId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { Database } from './database';
 
@@ -95,7 +95,7 @@ export class Transaction {
     ) {
       throw new Error('User public key not found');
     }
-
+    await session.commitTransaction();
     /*
     NOTE: we will get an race-condition bug if we insert transaction here,
     First, if we insertOne transaction here, it actually not inserted since it in 'mongodb session'
@@ -113,6 +113,8 @@ export class Transaction {
     await transactionQueue.add('transaction', {
       transactionObjectId,
       payerAddress: payer?.publicKey,
+      databaseName,
+      transactionType,
     });
 
     return transactionObjectId;
@@ -194,7 +196,7 @@ export class Transaction {
     return txList.length === 1 ? txList[0] : null;
   }
 
-  static async confirm(
+  static async sign(
     databaseName: string,
     actor: string,
     transactionObjectId: string,
@@ -208,7 +210,7 @@ export class Transaction {
       {
         $set: {
           txHash,
-          status: ETransactionStatus.Confirming,
+          status: ETransactionStatus.Signed,
         },
       },
       { session }

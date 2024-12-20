@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 import {
   TTransactionWithId,
-  TTransactionConfirmRequest,
+  TTransactionSignRequest,
   TTransactionRequest,
 } from "@zkdb/common";
 
@@ -53,7 +53,7 @@ export const transaction = <T>(client: TApolloClient<T>) => ({
   >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
   transactionConfirm: createMutateFunction<
     boolean,
-    TTransactionConfirmRequest,
+    TTransactionSignRequest,
     { confirmTransaction: boolean }
   >(client, TRANSACTION_CONFIRM, (data) => data.confirmTransaction),
 });

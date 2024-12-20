@@ -16,7 +16,6 @@ import {
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
-import { ObjectId } from 'mongodb';
 import { PrivateKey } from 'o1js';
 
 export const SERVICE_COMPILE = {
@@ -52,26 +51,18 @@ export const SERVICE_COMPILE = {
           // Init model secure storage to store encrypted privatekey or get privatekey to rollup
           const imSecureStorage = ModelSecureStorage.getInstance();
 
-          const { transactionObjectId, payerAddress } = job.data;
+          const {
+            transactionObjectId,
+            payerAddress,
+            databaseName,
+            transactionType,
+          } = job.data;
 
           if (!payerAddress) {
             throw new Error(
               `Payer not found with transaction ${transactionObjectId}`
             );
           }
-
-          const transaction = await imTransaction.findOne(
-            {
-              _id: new ObjectId(transactionObjectId),
-            },
-            { session }
-          );
-
-          if (!transaction) {
-            throw new Error('Can not found transaction');
-          }
-
-          const { transactionType, databaseName } = transaction;
 
           const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
@@ -117,7 +108,7 @@ export const SERVICE_COMPILE = {
                   updatedAt: new Date(),
                 },
               },
-              { session }
+              { session, upsert: true }
             );
             // Update publicKey for database metadata
             await imMetadataDatabase.updateOne(
@@ -202,6 +193,7 @@ export const SERVICE_COMPILE = {
               },
               {
                 session,
+                upsert: true,
               }
             );
           } else {

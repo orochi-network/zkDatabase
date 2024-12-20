@@ -2,10 +2,11 @@ import {
   ETransactionType,
   TDatabaseRequest,
   TTransactionRequest,
-  TTransactionConfirmRequest,
+  TTransactionSignRequest,
   databaseName,
   transactionType,
   TTransactionWithId,
+  TTransactionSignResponse,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -42,11 +43,11 @@ export const typeDefsTransaction = gql`
   extend type Mutation {
     transactionDeployEnqueue(databaseName: String!): String!
 
-    transactionConfirm(
+    transactionSign(
       databaseName: String!
       transactionObjectId: String!
       txHash: String!
-    ): Boolean
+    ): Boolean!
   }
 `;
 
@@ -89,17 +90,17 @@ const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
     )
 );
 
-const transactionConfirm = authorizeWrapper<
-  TTransactionConfirmRequest,
-  boolean
+const transactionSign = authorizeWrapper<
+  TTransactionSignRequest,
+  TTransactionSignResponse
 >(
   Joi.object({
     databaseName,
     transactionObjectId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
-  async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    Transaction.confirm(
+  async (_root: unknown, args, ctx) =>
+    Transaction.sign(
       args.databaseName,
       ctx.userName,
       args.transactionObjectId,
@@ -107,24 +108,13 @@ const transactionConfirm = authorizeWrapper<
     )
 );
 
-type TTransactionResolver = {
-  JSON: typeof GraphQLJSON;
-  Query: {
-    transactionDraft: typeof transactionDraft;
-  };
-  Mutation: {
-    transactionDeployEnqueue: typeof transactionDeployEnqueue;
-    transactionConfirm: typeof transactionConfirm;
-  };
-};
-
-export const resolversTransaction: TTransactionResolver = {
+export const resolversTransaction = {
   JSON: GraphQLJSON,
   Query: {
     transactionDraft,
   },
   Mutation: {
     transactionDeployEnqueue,
-    transactionConfirm,
+    transactionSign,
   },
 };

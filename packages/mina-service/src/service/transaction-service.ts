@@ -1,11 +1,12 @@
+import { ETransactionStatus } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelTransaction } from '@zkdb/storage';
 import { schedule } from 'node-cron';
-import { ETransactionStatus, ETransactionType } from '@zkdb/common';
 
-const CRON_SCHEDULE = '*/30 * * * *'; // Cron expression to run every 30 minutes
+// Base on Mina protocol blockscan we divide to 10
+const CRON_SCHEDULE = '*/2 * * * *'; // Cron expression to run every 30 minutes
 
-export const SERVICE_COMPILE = {
+export const SERVICE_TRANSACTION = {
   clusterName: 'transaction',
   payload: async () => {
     schedule(CRON_SCHEDULE, async () => {
@@ -14,7 +15,7 @@ export const SERVICE_COMPILE = {
       const transactionList = await imTransaction
         .find({
           status: {
-            $in: [ETransactionStatus.Unconfirmed],
+            $in: [ETransactionStatus.Signed, ETransactionStatus.Unconfirmed],
           },
         })
         .toArray();
@@ -24,30 +25,74 @@ export const SERVICE_COMPILE = {
           const minaNetwork = MinaNetwork.getInstance();
           // Ensure txHash existed
           if (transaction.txHash) {
-            const tx = await minaNetwork.getZkAppTransactionByTxHash(
+            const zkAppTx = await minaNetwork.getZkAppTransactionByTxHash(
               transaction.txHash
             );
 
-            if (!tx) {
-              throw new Error('Transaction not found on Mina');
-              // Transaction not found in Mina, which mean processing
-            }
-
-            if (tx.txStatus === 'applied') {
-              await imTransaction.updateOne(
+            if (!zkAppTx) {
+              // Transaction not found in Mina, which mean unconfirmed
+              return imTransaction.updateOne(
                 { _id: transaction._id },
                 {
                   $set: {
-                    transactionStatus: ETransactionStatus.Confirmed,
+                    status: ETransactionStatus.Unconfirmed,
                   },
                 }
               );
-            } else if (tx.txStatus === 'pending') {
+            }
+
+            if (zkAppTx.failures && zkAppTx.failures.length > 0) {
+              return imTransaction.updateOne(
+                { _id: transaction._id },
+                {
+                  $set: {
+                    status: ETransactionStatus.Failed,
+                    error: zkAppTx.failures.join(' '),
+                  },
+                }
+              );
+            }
+
+            if (zkAppTx.txStatus === 'applied') {
+              // Transaction is confirmed on Mina
+              return imTransaction.updateOne(
+                { _id: transaction._id },
+                {
+                  $set: {
+                    status: ETransactionStatus.Confirmed,
+                  },
+                }
+              );
+            } else if (zkAppTx.txStatus === 'pending') {
+              // Transaction is <= 1 confirmation, which still in mempool
+              return imTransaction.updateOne(
+                { _id: transaction._id },
+                {
+                  $set: {
+                    status: ETransactionStatus.Confirming,
+                  },
+                }
+              );
+            } else if (zkAppTx.txStatus === 'failed') {
+              // Transaction is failed
               await imTransaction.updateOne(
                 { _id: transaction._id },
                 {
                   $set: {
-                    transactionStatus: ETransactionStatus.Confirming,
+                    status: ETransactionStatus.Failed,
+                  },
+                }
+              );
+            } else {
+              // Unknown tx status case
+              await imTransaction.updateOne(
+                {
+                  _id: transaction._id,
+                },
+                {
+                  $set: {
+                    status: ETransactionStatus.Unknown,
+                    error: `An supported type of unknown transaction ${zkAppTx.txStatus}`,
                   },
                 }
               );
