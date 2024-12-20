@@ -21,7 +21,7 @@ import {
 } from "./common.js";
 
 export const database = <T>(client: TApolloClient<T>) => ({
-  dbCreate: createQueryFunction<TDatabaseDeployRequest, TDatabaseRequest>(
+  dbCreate: createMutateFunction<TDatabaseDeployRequest, TDatabaseRequest>(
     client,
     gql`
       mutation dbCreate($databaseName: String!, $merkleHeight: Int!) {
@@ -30,7 +30,7 @@ export const database = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.dbCreate
   ),
-  dbDeploy: createQueryFunction<
+  dbDeploy: createMutateFunction<
     TDatabaseDeployRequest,
     TDatabaseDeployResponse
   >(
