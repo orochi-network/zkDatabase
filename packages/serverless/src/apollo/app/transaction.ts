@@ -1,7 +1,7 @@
 import {
   ETransactionType,
   TDatabaseRequest,
-  TTransactionRequest,
+  TTransactionDraftRequest,
   TTransactionSignRequest,
   databaseName,
   transactionType,
@@ -52,14 +52,14 @@ export const typeDefsTransaction = gql`
 `;
 
 const transactionDraft = authorizeWrapper<
-  TTransactionRequest,
+  TTransactionDraftRequest,
   TTransactionWithId
 >(
   Joi.object({
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionRequest, ctx) => {
+  async (_root: unknown, args: TTransactionDraftRequest, ctx) => {
     const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,

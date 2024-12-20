@@ -1,41 +1,41 @@
 import { gql } from "@apollo/client";
-import { RollUpData, TDatabaseRequest } from "@zkdb/common";
+import {
+  TRollUpCreateRequest,
+  TRollUpCreateResponse,
+  TRollupHistoryRequest,
+  TRollUpHistoryResponse,
+} from "@zkdb/common";
 import { createMutateFunction, TApolloClient } from "./common.js";
 
-const ROLLUP_CREATE = gql`
-  mutation RollupCreate($databaseName: String!) {
-    rollupCreate(databaseName: $databaseName)
-  }
-`;
-
-const ROLLUP_HISTORY = gql`
-  mutation RollupHistory($databaseName: String!) {
-    rollupHistory(databaseName: $databaseName) {
-      state
-      extraData
-      history {
-        databaseName
-        transactionType
-        txHash
-        status
-        merkletreeRoot
-        merkletreeRootPrevious
-        createdAt
-        updatedAt
-        error
-      }
-    }
-  }
-`;
 export const rollup = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
-    boolean,
-    TDatabaseRequest,
-    { rollUpCreate: boolean }
-  >(client, ROLLUP_CREATE, (data) => data.rollUpCreate),
+    TRollUpCreateRequest,
+    TRollUpCreateResponse
+  >(
+    client,
+    gql`
+      mutation rollupCreate($databaseName: String!) {
+        rollupCreate(databaseName: $databaseName)
+      }
+    `,
+    (data) => data.rollupCreate
+  ),
   rollupHistory: createMutateFunction<
-    RollUpData,
-    TDatabaseRequest,
-    { rollUpHistory: RollUpData }
-  >(client, ROLLUP_HISTORY, (data) => data.rollUpHistory),
+    TRollupHistoryRequest,
+    TRollUpHistoryResponse
+  >(
+    client,
+    gql`
+      mutation rollupHistory($databaseName: String!) {
+        rollupHistory(databaseName: $databaseName) {
+          state
+          extraData
+          history {
+            ...RollUpHistoryItemFragment
+          }
+        }
+      }
+    `,
+    (data) => data.rollUpHistory
+  ),
 });

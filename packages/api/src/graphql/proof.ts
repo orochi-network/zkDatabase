@@ -1,43 +1,20 @@
 import { gql } from "@apollo/client";
 import {
-  EProofStatusDocument,
-  TDatabaseRequest,
-  TProofDocumentRequest,
-  TZKDatabaseProof,
+  TProofStatusDatabaseRequest,
+  TProofStatusDatabaseResponse,
+  TProofStatusDocumentRequest,
+  TProofStatusDocumentResponse,
+  TZkProofRequest,
+  TZkProofResponse,
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
 export const proof = <T>(client: TApolloClient<T>) => ({
-  status: createQueryFunction<
-    EProofStatusDocument,
-    TProofDocumentRequest,
-    { getProofStatus: EProofStatusDocument }
-  >(
+  proof: createQueryFunction<TZkProofRequest, TZkProofResponse>(
     client,
     gql`
-      query GetProofStatus(
-        $databaseName: String!
-        $collectionName: String!
-        $docId: String!
-      ) {
-        getProofStatus(
-          databaseName: $databaseName
-          collectionName: $collectionName
-          docId: $docId
-        )
-      }
-    `,
-    (data) => data.getProofStatus
-  ),
-  get: createQueryFunction<
-    TZKDatabaseProof,
-    TDatabaseRequest,
-    { getProof: TZKDatabaseProof }
-  >(
-    client,
-    gql`
-      query GetProof($databaseName: String!) {
-        getProof(databaseName: $databaseName) {
+      query proof($databaseName: String!) {
+        proof(databaseName: $databaseName) {
           publicInput
           publicOutput
           maxProofsVerified
@@ -45,6 +22,38 @@ export const proof = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.getProof
+    (data) => data.proof
+  ),
+  proofStatusDatabase: createQueryFunction<
+    TProofStatusDatabaseRequest,
+    TProofStatusDatabaseResponse
+  >(
+    client,
+    gql`
+      query proofStatusDatabase($databaseName: String!) {
+        proofStatusDatabase(databaseName: $databaseName)
+      }
+    `,
+    (data) => data.proofStatusDatabase
+  ),
+  proofStatusDocument: createQueryFunction<
+    TProofStatusDocumentRequest,
+    TProofStatusDocumentResponse
+  >(
+    client,
+    gql`
+      query proofStatusDocument(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String
+      ) {
+        proofStatusDocument(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        )
+      }
+    `,
+    (data) => data.proofStatusDocument
   ),
 });

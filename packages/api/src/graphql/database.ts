@@ -1,7 +1,5 @@
 import { gql } from "@apollo/client";
 import {
-  TDatabaseChangeOwnerRequest,
-  TDatabaseChangeOwnerResponse,
   TDatabaseDeployRequest,
   TDatabaseDeployResponse,
   TDatabaseEnvironmentRequest,
@@ -23,18 +21,6 @@ import {
 } from "./common.js";
 
 export const database = <T>(client: TApolloClient<T>) => ({
-  dbTransferOwner: createMutateFunction<
-    TDatabaseChangeOwnerRequest,
-    TDatabaseChangeOwnerResponse
-  >(
-    client,
-    gql`
-      mutation dbTransferOwner($databaseName: String!, $newOwner: String!) {
-        dbTransferOwner(databaseName: $databaseName, newOwner: $newOwner)
-      }
-    `,
-    (data) => data.dbTransferOwner
-  ),
   dbCreate: createQueryFunction<TDatabaseDeployRequest, TDatabaseRequest>(
     client,
     gql`

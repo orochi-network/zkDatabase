@@ -13,9 +13,6 @@ import { database } from "./database";
 import { document } from "./document";
 import { group } from "./group";
 import { merkle } from "./merkle";
-import { metadata } from "./metadata";
-import { ownership } from "./ownership";
-import { permission } from "./permission";
 import { proof } from "./proof";
 import { rollup } from "./rollup";
 import { transaction } from "./transaction";
@@ -29,13 +26,10 @@ export interface IApiClient<T = any> {
   doc: ReturnType<typeof document>;
   user: ReturnType<typeof user>;
   group: ReturnType<typeof group>;
-  ownership: ReturnType<typeof ownership>;
-  permission: ReturnType<typeof permission>;
   merkle: ReturnType<typeof merkle>;
   proof: ReturnType<typeof proof>;
   transaction: ReturnType<typeof transaction>;
   rollup: ReturnType<typeof rollup>;
-  metadata: ReturnType<typeof metadata>;
 }
 
 export class ApiClient<T = any> {
@@ -116,13 +110,10 @@ export class ApiClient<T = any> {
       doc: document(api.apollo),
       user: user(api.apollo),
       group: group(api.apollo),
-      ownership: ownership(api.apollo),
-      permission: permission(api.apollo),
       merkle: merkle(api.apollo),
       proof: proof(api.apollo),
       transaction: transaction(api.apollo),
       rollup: rollup(api.apollo),
-      metadata: metadata(api.#client),
     };
   }
 }

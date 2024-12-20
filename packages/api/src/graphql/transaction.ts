@@ -1,8 +1,11 @@
 import { gql } from "@apollo/client";
 import {
-  TTransactionWithId,
-  TTransactionSignRequest,
-  TTransactionRequest,
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse,
+  TTransactionDraftRequest,
+  TTransactionDraftResponse,
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse,
 } from "@zkdb/common";
 
 import {
@@ -11,49 +14,65 @@ import {
   TApolloClient,
 } from "./common.js";
 
-const TRANSACTION_DRAFT = gql`
-  query TransactionDraft(
-    $databaseName: String!
-    $transactionType: TransactionType!
-  ) {
-    transactionDraft(
-      databaseName: $databaseName
-      transactionType: $transactionType
-    ) {
-      transactionObjectId
-      databaseName
-      transactionType
-      status
-      transactionRaw
-      txHash
-      error
-    }
-  }
-`;
-
-const TRANSACTION_CONFIRM = gql`
-  mutation TransactionConfirm(
-    $databaseName: String!
-    $transactionObjectId: String!
-    $txHash: String!
-  ) {
-    transactionConfirm(
-      databaseName: $databaseName
-      transactionObjectId: $transactionObjectId
-      txHash: $txHash
-    )
-  }
-`;
-
 export const transaction = <T>(client: TApolloClient<T>) => ({
+  transactionSubmit: createMutateFunction<
+    TTransactionSubmitRequest,
+    TTransactionSubmitResponse
+  >(
+    client,
+    gql`
+      mutation transactionSubmit(
+        $databaseName: String!
+        $transactionObjectId: String!
+        $txHash: String!
+      ) {
+        transactionSubmit(
+          databaseName: $databaseName
+          transactionObjectId: $transactionObjectId
+          txHash: $txHash
+        )
+      }
+    `,
+    (data) => data.transactionSubmit
+  ),
+  transactionDeployEnqueue: createMutateFunction<
+    TTransactionDeployEnqueueRequest,
+    TTransactionDeployEnqueueResponse
+  >(
+    client,
+    gql`
+      mutation transactionDeployEnqueue($databaseName: String!) {
+        transactionDeployEnqueue(databaseName: $databaseName)
+      }
+    `,
+    (data) => data.transactionDeployEnqueue
+  ),
   transactionDraft: createQueryFunction<
-    TTransactionWithId,
-    TTransactionRequest,
-    { transactionDraft: TTransactionWithId }
-  >(client, TRANSACTION_DRAFT, (data) => data.transactionDraft),
-  transactionConfirm: createMutateFunction<
-    boolean,
-    TTransactionSignRequest,
-    { confirmTransaction: boolean }
-  >(client, TRANSACTION_CONFIRM, (data) => data.confirmTransaction),
+    TTransactionDraftRequest,
+    TTransactionDraftResponse
+  >(
+    client,
+    gql`
+      query transactionDraft(
+        $databaseName: String!
+        $transactionType: TransactionType!
+      ) {
+        transactionDraft(
+          databaseName: $databaseName
+          transactionType: $transactionType
+        ) {
+          transactionObjectId
+          databaseName
+          transactionType
+          status
+          transactionRaw
+          txHash
+          error
+          createdAt
+          updatedAt
+        }
+      }
+    `,
+    (data) => data.transactionDraft
+  ),
 });

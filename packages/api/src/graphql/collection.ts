@@ -7,7 +7,7 @@ import {
   TCollectionListRequest,
   TCollectionListResponse,
   TCollectionMetadataRequest,
-  TCollectionMetadataReponse,
+  TCollectionMetadataResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -80,7 +80,7 @@ export const collection = <T>(client: TApolloClient<T>) => ({
   ),
   collectionMetadata: createQueryFunction<
     TCollectionMetadataRequest,
-    TCollectionMetadataReponse
+    TCollectionMetadataResponse
   >(
     client,
     gql`
