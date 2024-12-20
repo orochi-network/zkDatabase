@@ -23,7 +23,7 @@ export default {
         { find: '@test', replacement: 'src/test' },
       ],
     }),
-    typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
     commonjs(),
+    typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
   ],
 };
