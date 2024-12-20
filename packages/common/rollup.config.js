@@ -16,7 +16,6 @@ export default {
     json(),
     alias({
       entries: [
-        { find: '@', replacement: 'src' },
         { find: '@types', replacement: 'src/types' },
         { find: '@validation', replacement: 'src/validation' },
       ],
