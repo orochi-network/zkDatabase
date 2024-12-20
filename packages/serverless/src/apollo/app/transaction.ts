@@ -3,12 +3,13 @@ import { gql } from '@helper';
 import {
   databaseName,
   ETransactionType,
-  TDatabaseRequest,
   transactionType,
-  TTransactionRequest,
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse,
+  TTransactionDraftRequest,
+  TTransactionDraftResponse,
   TTransactionSubmitRequest,
   TTransactionSubmitResponse,
-  TTransactionWithId,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -53,13 +54,13 @@ export const typeDefsTransaction = gql`
 
 const transactionDraft = authorizeWrapper<
   TTransactionDraftRequest,
-  TTransactionWithId
+  TTransactionDraftResponse
 >(
   Joi.object({
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionDraftRequest, ctx) => {
+  async (_root, args, ctx) => {
     const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,
@@ -73,11 +74,14 @@ const transactionDraft = authorizeWrapper<
   }
 );
 
-const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
+const transactionDeployEnqueue = authorizeWrapper<
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
+  async (_root, args, ctx) =>
     withTransaction(async (session) =>
       (
         await Transaction.enqueue(
@@ -99,7 +103,7 @@ const transactionSubmit = authorizeWrapper<
     transactionObjectId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
-  async (_root: unknown, args, ctx) =>
+  async (_root, args, ctx) =>
     Transaction.submit(
       args.databaseName,
       ctx.userName,

@@ -76,7 +76,9 @@ export type TTransactionDraftRequest = TDatabaseRequest & {
   transactionType: ETransactionType;
 };
 
-export type TTransactionDraftResponse = TTransactionRecord;
+export type TTransactionDraftResponse = WithoutId<TTransactionRecord> & {
+  _id: string;
+};
 
 /**
  * Transaction by ID request
