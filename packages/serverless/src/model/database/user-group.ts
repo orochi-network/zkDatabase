@@ -14,6 +14,7 @@ import {
   OptionalId,
 } from 'mongodb';
 import ModelGroup from './group';
+import ModelUser from '../global/user';
 
 export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   private static collectionName =
@@ -101,16 +102,30 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     options?: BulkWriteOptions
   ) {
     const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
+    const imUser = new ModelUser();
 
-    const listOperation = listUserName.map((userName) => ({
-      updateOne: {
-        filter: { userName, groupOjectId },
-        update: {
-          $set: { updatedAt: new Date() },
+    const listUser = await imUser
+      .find({
+        userName: { $in: listUserName },
+      })
+      .toArray();
+
+    const listOperation = listUser.map(({ userName, _id }) => {
+      return {
+        updateOne: {
+          filter: { userName, groupOjectId },
+          update: {
+            $set: {
+              groupName,
+              updatedAt: new Date(),
+              createdAt: new Date(),
+              userObjectId: _id,
+            },
+          },
+          upsert: true,
         },
-        upsert: true,
-      },
-    }));
+      };
+    });
 
     return this.collection.bulkWrite(listOperation, options);
   }
