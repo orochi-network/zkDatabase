@@ -16,11 +16,11 @@ export const metadata = <T>(client: TApolloClient<T>) => ({
   document: createQueryFunction<
     TMetadataDocument,
     TMetadataDocumentRequest,
-    { getMetadataDocument: TMetadataDocument }
+    { documentMetadata: TMetadataDocument }
   >(client, METADATA_DOCUMENT, (data) => data),
   collection: createQueryFunction<
     TMetadataCollection,
     TMetadataCollectionRequest,
-    { getMetadataCollection: TMetadataCollection }
+    { collectionMetadata: TMetadataCollection }
   >(client, METADATA_COLLECTION, (data) => data),
 });

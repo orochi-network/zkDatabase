@@ -30,14 +30,14 @@ export const typeDefsMetadata = gql`
 
   # @TODO Refactor after document
   extend type Query {
-    getMetadataDocument(
+    documentMetadata(
       databaseName: String!
       collectionName: String!
       docId: String!
     ): MetadataDocumentResponse
 
     # TODO: keep JSON for now since we have to make sure what it will return
-    getMetadataCollection(
+    collectionMetadata(
       databaseName: String!
       collectionName: String!
     ): MetadataCollection!
@@ -45,7 +45,7 @@ export const typeDefsMetadata = gql`
 `;
 
 // Query
-const getMetadataDocument = authorizeWrapper<
+const documentMetadata = authorizeWrapper<
   TMetadataDocumentRequest,
   TMetadataDocument
 >(
@@ -70,7 +70,7 @@ const getMetadataDocument = authorizeWrapper<
   }
 );
 
-const getMetadataCollection = authorizeWrapper<
+const collectionMetadata = authorizeWrapper<
   TMetadataCollectionRequest,
   TMetadataCollection
 >(
@@ -96,8 +96,8 @@ const getMetadataCollection = authorizeWrapper<
 export const resolversMetadata = {
   JSON: GraphQLJSON,
   Query: {
-    getMetadataCollection,
-    getMetadataDocument,
+    collectionMetadata,
+    documentMetadata,
   },
   Mutation: {},
 };
