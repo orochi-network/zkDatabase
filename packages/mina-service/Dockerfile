@@ -2,7 +2,8 @@
 FROM orochinetwork/node:22-bookworm AS builder
 
 # Create a non-root user and group early in the Dockerfile
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
+RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
+
 
 # Set the working directory
 WORKDIR /usr/src/app
@@ -34,7 +35,7 @@ RUN yarn workspace @zkdb/common build && \
 FROM orochinetwork/node:22-bookworm AS runner
 
 # Create a non-root user and group in the runner stage
-RUN groupadd -r appuser && useradd -r -g appuser -s /bin/bash -d /usr/src/app appuser
+RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
 
 # Set the working directory
 WORKDIR /usr/src/app
