@@ -107,6 +107,8 @@ export type TTransactionSignRequest = TTransactionByIdRequest & {
   txHash: string;
 };
 
+export type TTransactionSignResponse = boolean;
+
 /**
  * Transaction type for queue data
  * @typedef TTransactionQueue
