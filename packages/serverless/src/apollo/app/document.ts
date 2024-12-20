@@ -83,19 +83,19 @@ export const typeDefsDocument = gql`
     sibling: String!
   }
 
+  type DocumentRevisionResponse {
+    document: JSON!
+    createdAt: Date!
+    updatedAt: Date!
+  }
+
   type DocumentResponse {
     docId: String!
     document: JSON!
     createdAt: Date!
     updatedAt: Date!
-    metadata: MetadataDocumentResponse
+    metadata: DocumentMetadataResponse
     proofStatus: ProofStatusDocument
-  }
-
-  type DocumentRevisionResponse {
-    document: JSON!
-    createdAt: Date!
-    updatedAt: Date!
   }
 
   type DocumentFindResponse {
