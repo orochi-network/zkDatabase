@@ -1,4 +1,4 @@
-import { TMetadataDocumentRecord } from '@zkdb/common';
+import { TDocumentMetadataRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
   DATABASE_ENGINE,
@@ -9,7 +9,7 @@ import {
 import { ClientSession, WithoutId } from 'mongodb';
 
 export class ModelMetadataDocument extends ModelGeneral<
-  WithoutId<TMetadataDocumentRecord>
+  WithoutId<TDocumentMetadataRecord>
 > {
   static collectionName: string =
     zkDatabaseConstant.databaseCollection.metadataDocument;

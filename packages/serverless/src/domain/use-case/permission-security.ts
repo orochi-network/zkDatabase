@@ -1,7 +1,7 @@
 import {
   TDocumentRecordNullable,
-  TMetadataCollectionRecord,
-  TMetadataDocument,
+  TCollectionMetadataRecord,
+  TDocumentMetadata,
   TParamCollection,
   TParamDatabase,
   TParamDocument,
@@ -162,11 +162,11 @@ export class PermissionSecurity {
 
   public static async filterMetadataCollection(
     databaseName: string,
-    listCollection: TMetadataCollectionRecord[],
+    listCollection: TCollectionMetadataRecord[],
     actor: string,
     requiredPermission: PermissionBase,
     session?: ClientSession
-  ): Promise<TMetadataCollectionRecord[]> {
+  ): Promise<TCollectionMetadataRecord[]> {
     // If user is database owner then return all system permissions
     if (await Database.isOwner({ databaseName, databaseOwner: actor })) {
       return listCollection;
@@ -204,7 +204,7 @@ export class PermissionSecurity {
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
     const listDocId = listDoc.map((doc) => doc.docId);
-    const listMetadata: TMetadataDocument[] = await imMetadataDocument
+    const listMetadata: TDocumentMetadata[] = await imMetadataDocument
       .find(
         {
           $and: [{ collectionName }, { docId: { $in: listDocId } }],

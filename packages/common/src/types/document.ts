@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import { TContractSchemaField } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
-import { TMetadataDocument } from './metadata.js';
+import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { EProofStatusDocument } from './proof.js';
 
@@ -42,7 +42,7 @@ export type TDocumentFindRequest = TDocumentNamespace & {
 export type TDocumentFindResponse = TPaginationReturn<
   Array<
     TDocumentResponse & {
-      metadata?: TMetadataDocument;
+      metadata?: TDocumentMetadata;
       proofStatus?: EProofStatusDocument;
     }
   >
@@ -60,13 +60,13 @@ export type TDocumentCreateResponse = {
 };
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {
-  query: { [key: string]: string };
+  docId: string;
   document: Record<string, TDocumentField>;
 };
 
 export type TDocumentUpdateResponse = TMerkleProof[];
 
-export type TDocumentDropRequest = TDocumentFindRequest;
+export type TDocumentDropRequest = TDocumentUpdateRequest;
 export type TDocumentDropResponse = TMerkleProof[];
 
 export type TDocumentHistoryFindRequest = TDocumentNamespace & {

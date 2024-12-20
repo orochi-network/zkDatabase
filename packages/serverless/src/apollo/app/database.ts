@@ -1,6 +1,6 @@
+import { Database } from '@domain';
+import { config, gql } from '@helper';
 import {
-  TDatabaseChangeOwnerRequest,
-  TDatabaseChangeOwnerResponse,
   TDatabaseCreateRequest,
   TDatabaseCreateResponse,
   TDatabaseExistResponse,
@@ -14,7 +14,6 @@ import {
   merkleHeight,
   pagination,
   publicKey,
-  userName,
 } from '@zkdb/common';
 import {
   ModelDatabase,
@@ -24,8 +23,6 @@ import {
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
-import { Database } from '@domain';
-import { config, gql } from '@helper';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsDatabase = gql`
@@ -69,7 +66,6 @@ export const typeDefsDatabase = gql`
 
   extend type Mutation {
     dbCreate(databaseName: String!, merkleHeight: Int!): Boolean
-    dbTransferOwner(databaseName: String!, newOwner: String!): Boolean
     dbDeploy(databaseName: String!, appPublicKey: String!): Boolean
   }
 `;
@@ -105,12 +101,6 @@ export const JOI_DATABASE_UPDATE_DEPLOY =
   Joi.object<TDatabaseUpdateDeployedRequest>({
     databaseName,
     appPublicKey: publicKey,
-  });
-
-export const JOI_DATABASE_TRANSFER_OWNER =
-  Joi.object<TDatabaseChangeOwnerRequest>({
-    databaseName,
-    newOwner: userName,
   });
 
 // Query
@@ -178,17 +168,6 @@ const dbCreate = authorizeWrapper<
   )
 );
 
-const dbTransferOwner = authorizeWrapper<
-  TDatabaseChangeOwnerRequest,
-  TDatabaseChangeOwnerResponse
->(JOI_DATABASE_TRANSFER_OWNER, async (_root, { databaseName, newOwner }, ctx) =>
-  Database.transferOwnership({
-    databaseName,
-    newOwner,
-    databaseOwner: ctx.userName,
-  })
-);
-
 const dbExist = publicWrapper<TDatabaseRequest, TDatabaseExistResponse>(
   Joi.object({
     databaseName,
@@ -224,7 +203,6 @@ export const resolversDatabase = {
   },
   Mutation: {
     dbCreate,
-    dbTransferOwner,
     dbDeploy,
   },
 };
