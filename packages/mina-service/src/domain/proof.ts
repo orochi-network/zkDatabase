@@ -35,8 +35,8 @@ export class Proof {
   }
 
   static async create(task: TQueueRecord, session: TCompoundSession) {
-    if (task.status !== EProofStatusDocument.Proving) {
-      throw Error('Task status is not Proving');
+    if (task.status !== EProofStatusDocument.Queued) {
+      throw Error('Task status is not Queued');
     }
 
     const { databaseName, collectionName, createdAt, merkleIndex, hash, _id } =
@@ -45,6 +45,18 @@ export class Proof {
     const imQueue = ModelQueueTask.getInstance();
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
     const imProof = ModelProof.getInstance();
+
+    // NOTE: that this may not be visible to other transactions until the
+    // session is committed
+    await imQueue.updateOne(
+      {
+        _id,
+      },
+      {
+        status: EProofStatusDocument.Proving,
+      },
+      { session: session.proofService }
+    );
 
     try {
       const circuitName = `${databaseName}.${collectionName}`;

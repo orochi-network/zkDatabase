@@ -25,23 +25,24 @@ export class TaskService {
       }
 
       const noTaskFound = await withCompoundTransaction(async (session) => {
-        const result = await Proof.getNextTask(session);
-        logger.info('Task received with id:', result);
-        if (result === null) {
+        const task = await Proof.getNextTask(session);
+        if (task === null) {
           return true;
         }
 
+        logger.debug('Task received:', task);
+
         try {
-          await Proof.create(result, session);
+          await Proof.create(task, session);
         } catch (error) {
-          logger.error(`Error processing task with ID ${result._id}: ${error}`);
+          logger.error(`Error processing task with ID ${task._id}: ${error}`);
         }
 
         return false;
       });
 
       if (noTaskFound) {
-        logger.info('No task available, waiting...');
+        logger.debug('No task available, waiting...');
         await this.delay(delay);
         delay = Math.min(delay * 2, 32000); // Exponential backoff with cap
         delay += Math.floor(Math.random() * 1000); // Add jitter
