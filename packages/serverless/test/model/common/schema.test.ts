@@ -1,5 +1,7 @@
 /** This test ensures Schema class is compatible with zk app and has consistent
- * serialization and deserialization methods. */
+ * serialization and deserialization methods.
+ * NOTE: if you can't run this test, try removing the exclusion rule for this
+ * file in this package's tsconfig.json */
 
 /* eslint-disable max-classes-per-file */
 import {
