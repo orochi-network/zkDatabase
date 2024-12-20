@@ -1,8 +1,8 @@
-import { logger } from '@helper';
+import { config, logger } from '@helper';
 import { Fill } from '@orochi-network/queue';
 import { ETransactionStatus } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { ModelTransaction } from '@zkdb/storage';
+import { DatabaseEngine, ModelTransaction } from '@zkdb/storage';
 import { schedule } from 'node-cron';
 
 // Base on Mina protocol blockscan we divide to 10
@@ -12,6 +12,18 @@ export const SERVICE_TRANSACTION = {
   clusterName: 'transaction',
   payload: async () => {
     let isRunning = false;
+
+    // Connect to db
+    const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+    const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+
+    if (!serverlessDb.isConnected()) {
+      await serverlessDb.connect();
+    }
+
+    if (!proofDb.isConnected()) {
+      await proofDb.connect();
+    }
 
     schedule(CRON_SCHEDULE, async () => {
       if (isRunning) {
