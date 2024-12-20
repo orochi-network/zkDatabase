@@ -1,6 +1,6 @@
-import { logger } from '@helper';
+import { config, logger } from '@helper';
 import { Proof } from '@domain';
-import { withCompoundTransaction } from '@zkdb/storage';
+import { DatabaseEngine, withCompoundTransaction } from '@zkdb/storage';
 
 export class TaskService {
   private maxRetries: number;
@@ -58,5 +58,21 @@ export class TaskService {
 
 export const TASK_SERVICE = {
   clusterName: 'task',
-  payload: new TaskService().run,
+  payload: async () => {
+    // Connect to db
+    const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+    const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+
+    if (!serverlessDb.isConnected()) {
+      await serverlessDb.connect();
+    }
+
+    if (!proofDb.isConnected()) {
+      await proofDb.connect();
+    }
+
+    const taskService = new TaskService();
+
+    await taskService.run();
+  },
 };
