@@ -29,7 +29,7 @@ export const schemaField = Joi.object({
     .valid(...O1JS_VALID_TYPE)
     .required(),
   index: Joi.boolean().optional(),
-  sorting: ESortingSchema(true),
+  sorting: ESortingSchema(false),
 });
 
 export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({

@@ -53,7 +53,7 @@ export class BlockberryApi {
         return undefined;
       }
       const result = await response.json();
-      return result as TBlockConfirmationTransaction;
+      return result;
     } catch (err) {
       logger.error('Cannot getBlockConfirmationByTransactionHash ', err);
       return undefined;
