@@ -98,16 +98,16 @@ export type TTransactionByIdRequest = TDatabaseRequest & {
 
 /**
  * Transaction confirm request
- * @typedef TTransactionSignRequest
+ * @typedef TTransactionSubmitRequest
  * @param {string} TTransactionByIdRequest.databaseName - Database name
  * @param {string} TTransactionByIdRequest.objectId - Transaction object ID
  * @param {string} txHash - Transaction hash
  */
-export type TTransactionSignRequest = TTransactionByIdRequest & {
+export type TTransactionSubmitRequest = TTransactionByIdRequest & {
   txHash: string;
 };
 
-export type TTransactionSignResponse = boolean;
+export type TTransactionSubmitResponse = boolean;
 
 /**
  * Transaction type for queue data
