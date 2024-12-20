@@ -196,7 +196,7 @@ export class Transaction {
     return txList.length === 1 ? txList[0] : null;
   }
 
-  static async sign(
+  static async submit(
     databaseName: string,
     actor: string,
     transactionObjectId: string,
@@ -210,7 +210,7 @@ export class Transaction {
       {
         $set: {
           txHash,
-          status: ETransactionStatus.Signed,
+          status: ETransactionStatus.Confirming,
         },
       },
       { session }

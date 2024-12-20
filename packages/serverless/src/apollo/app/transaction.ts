@@ -1,19 +1,19 @@
-import {
-  ETransactionType,
-  TDatabaseRequest,
-  TTransactionRequest,
-  TTransactionSignRequest,
-  databaseName,
-  transactionType,
-  TTransactionWithId,
-  TTransactionSignResponse,
-} from '@zkdb/common';
-import GraphQLJSON from 'graphql-type-json';
-import Joi from 'joi';
 import { Transaction } from '@domain';
 import { gql } from '@helper';
-import { authorizeWrapper } from '../validation';
+import {
+  databaseName,
+  ETransactionType,
+  TDatabaseRequest,
+  transactionType,
+  TTransactionRequest,
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse,
+  TTransactionWithId,
+} from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
+import GraphQLJSON from 'graphql-type-json';
+import Joi from 'joi';
+import { authorizeWrapper } from '../validation';
 
 export const typeDefsTransaction = gql`
   #graphql
@@ -43,7 +43,7 @@ export const typeDefsTransaction = gql`
   extend type Mutation {
     transactionDeployEnqueue(databaseName: String!): String!
 
-    transactionSign(
+    transactionSubmit(
       databaseName: String!
       transactionObjectId: String!
       txHash: String!
@@ -90,9 +90,9 @@ const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
     )
 );
 
-const transactionSign = authorizeWrapper<
-  TTransactionSignRequest,
-  TTransactionSignResponse
+const transactionSubmit = authorizeWrapper<
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse
 >(
   Joi.object({
     databaseName,
@@ -100,7 +100,7 @@ const transactionSign = authorizeWrapper<
     txHash: Joi.string().required(),
   }),
   async (_root: unknown, args, ctx) =>
-    Transaction.sign(
+    Transaction.submit(
       args.databaseName,
       ctx.userName,
       args.transactionObjectId,
@@ -115,6 +115,6 @@ export const resolversTransaction = {
   },
   Mutation: {
     transactionDeployEnqueue,
-    transactionSign,
+    transactionSubmit,
   },
 };
