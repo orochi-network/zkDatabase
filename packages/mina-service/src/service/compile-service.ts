@@ -120,6 +120,14 @@ export const SERVICE_COMPILE = {
               },
               { session }
             );
+
+            if (
+              zkAppPrivateKey.toPublicKey().toBase58() !==
+              metadataDatabase.appPublicKey
+            ) {
+              throw new Error('Mismatch between privateKey and publicKey');
+            }
+
             // Upsert to database when we have private key
             await imSecureStorage.updateOne(
               {
@@ -128,6 +136,7 @@ export const SERVICE_COMPILE = {
               {
                 $set: {
                   privateKey: encryptedZkAppPrivateKey,
+                  publicKey: metadataDatabase.appPublicKey,
                   databaseName,
                   createdAt: new Date(),
                   updatedAt: new Date(),
@@ -155,6 +164,13 @@ export const SERVICE_COMPILE = {
             ).toString();
 
             const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
+
+            if (
+              zkAppPrivateKey.toPublicKey().toBase58() !==
+              metadataDatabase.appPublicKey
+            ) {
+              throw new Error('Mismatch between privateKey and publicKey');
+            }
 
             const proof = await ModelProof.getInstance().findOne(
               { databaseName },

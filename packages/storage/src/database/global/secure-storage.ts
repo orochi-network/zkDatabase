@@ -1,12 +1,12 @@
-import { TSecureStorageRecord } from '@zkdb/common';
-import { ClientSession, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE, addTimestampMongoDB } from '@helper';
+import { TSecureStorageRecord } from '@zkdb/common';
+import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelSecureStorage extends ModelGeneral<
-  WithoutId<TSecureStorageRecord>
+  OptionalId<TSecureStorageRecord>
 > {
   private static instance: ModelSecureStorage | null = null;
 
@@ -39,6 +39,7 @@ export class ModelSecureStorage extends ModelGeneral<
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { unique: true, session });
       await collection.index({ privateKey: 1 }, { unique: true, session });
+      await collection.index({ publicKey: 1 }, { unique: true, session });
 
       await addTimestampMongoDB(collection, session);
     }
