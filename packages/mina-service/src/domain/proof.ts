@@ -27,6 +27,9 @@ export class Proof {
     session: TCompoundSession
   ): Promise<TQueueRecord | null> {
     const modelQueueTask = ModelQueueTask.getInstance();
+
+    // TODO: important: aquire tasks in a way that is safe for concurrent
+    // processing by multiple workers
     const task = await modelQueueTask.getLatestQueuedTaskByDatabase(
       session.proofService
     );
@@ -95,18 +98,18 @@ export class Proof {
         await imMerkleTree.getMerkleProof(
           merkleIndex,
           new Date(createdAt.getTime() - 1),
-          { session: session.proofService }
+          { session: session.serverless }
         )
       );
       const merkleRoot = await imMerkleTree.getRoot(
         new Date(createdAt.getTime() - 1),
-        { session: session.proofService }
+        { session: session.serverless }
       );
       const oldLeaf = await imMerkleTree.getNode(
         0,
         merkleIndex,
         new Date(createdAt.getTime() - 1),
-        { session: session.proofService }
+        { session: session.serverless }
       );
 
       // Default values
