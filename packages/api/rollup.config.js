@@ -14,7 +14,6 @@ export default {
   plugins: [
     alias({
       entries: [
-        { find: "@", replacement: "src" },
         { find: "@authentication", replacement: "src/authentication" },
         { find: "@graphql", replacement: "src/graphql" },
         { find: "@utils", replacement: "src/utils" },

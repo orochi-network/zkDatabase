@@ -1,4 +1,4 @@
-import { WithoutId } from 'mongodb';
+import type { WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { TMinaSignature } from './proof.js';
@@ -61,3 +61,13 @@ export type TUserMeResponse = Pick<
   TUser,
   'email' | 'publicKey' | 'userData' | 'userName'
 >;
+
+// User sign out
+export type TUserSignOutRequest = void;
+
+export type TUserSignOutResponse = boolean;
+
+// User ECDSA challenge
+export type TUserEcdsaChallengeRequest = void;
+
+export type TUserEcdsaChallengeResponse = string;

@@ -1,4 +1,4 @@
-import { Field } from 'o1js';
+import type { Field } from 'o1js';
 import { TDatabaseRequest } from './database.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { TDbRecord } from './common.js';

@@ -8,8 +8,8 @@ import {
   TDatabaseListResponse,
   TDatabaseRequest,
   TDatabaseResponse,
-  TDatabaseUpdateDeployedRequest,
-  TDatabaseUpdateDeployedResponse,
+  TDatabaseDeployRequest,
+  TDatabaseDeployResponse,
   databaseName,
   merkleHeight,
   pagination,
@@ -46,7 +46,7 @@ export const typeDefsDatabase = gql`
     databaseOwner: String!
     merkleHeight: Int!
     appPublicKey: String!
-    databaseSize: Int
+    sizeOnDisk: Int
     deployStatus: TransactionStatus!
   }
 
@@ -97,11 +97,10 @@ export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
   merkleHeight,
 });
 
-export const JOI_DATABASE_UPDATE_DEPLOY =
-  Joi.object<TDatabaseUpdateDeployedRequest>({
-    databaseName,
-    appPublicKey: publicKey,
-  });
+export const JOI_DATABASE_UPDATE_DEPLOY = Joi.object<TDatabaseDeployRequest>({
+  databaseName,
+  appPublicKey: publicKey,
+});
 
 // Query
 const dbStats = publicWrapper<TDatabaseRequest, Document>(
@@ -146,8 +145,8 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
 );
 
 const dbDeploy = authorizeWrapper<
-  TDatabaseUpdateDeployedRequest,
-  TDatabaseUpdateDeployedResponse
+  TDatabaseDeployRequest,
+  TDatabaseDeployResponse
 >(
   JOI_DATABASE_UPDATE_DEPLOY,
   async (_root, { databaseName, appPublicKey }, _) =>

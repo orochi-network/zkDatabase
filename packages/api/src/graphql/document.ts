@@ -1,14 +1,15 @@
 import { gql } from "@apollo/client";
 import {
   TDocumentCreateRequest,
+  TDocumentCreateResponse,
+  TDocumentDropRequest,
+  TDocumentDropResponse,
   TDocumentFindRequest,
-  TDocumentHistoryGetRequest,
-  TDocumentListFindRequest,
-  TDocumentListFindResponse,
-  TDocumentReadResponse,
-  TDocumentResponse,
+  TDocumentFindResponse,
   TDocumentUpdateRequest,
-  TSingleDocumentHistory,
+  TDocumentUpdateResponse,
+  TDocumentMetadataRequest,
+  TDocumentMetadataResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -16,171 +17,164 @@ import {
   TApolloClient,
 } from "./common";
 
-const DOCUMENT_DELETE = gql`
-  mutation DocumentDrop(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentDrop(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_CREATE = gql`
-  input DocumentRecordInput {
-    name: String!
-    kind: String!
-    value: String!
-  }
-
-  mutation DocumentCreate(
-    $databaseName: String!
-    $collectionName: String!
-    $documentRecord: [DocumentRecordInput!]!
-    $documentPermission: Number
-  ) {
-    documentCreate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentRecord: $documentRecord
-      documentPermission: $documentPermission
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_UPDATE = gql`
-  mutation DocumentUpdate(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $documentRecord: [DocumentRecordInput!]!
-  ) {
-    documentUpdate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      documentRecord: $documentRecord
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_FIND_ONE = gql`
-  query DocumentFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-    ) {
-      docId
-      field {
-        name
-        kind
-        value
-      }
-      createdAt
-    }
-  }
-`;
-
-const DOCUMENT_FIND_MANY = gql`
-  query DocumentsFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $pagination: PaginationInput
-  ) {
-    documentsFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      pagination: $pagination
-    ) {
-      totalSize
-      offset
-      data {
-        docId
-        field {
-          name
-          kind
-          value
-        }
-        createdAt
-      }
-    }
-  }
-`;
-
-const DOCUMENT_HISTORY = gql`
-  query HistoryDocumentGet(
-    $databaseName: String!
-    $collectionName: String!
-    $docId: String!
-  ) {
-    historyDocumentGet(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      docId: $docId
-    ) {
-      docId
-      documents {
-        docId
-        fields {
-          name
-          kind
-          value
-        }
-        createdAt
-      }
-    }
-  }
-`;
-
 export const document = <T>(client: TApolloClient<T>) => ({
-  drop: createMutateFunction<
-    TDocumentResponse,
-    TDocumentFindRequest,
-    { documentDrop: TDocumentResponse }
-  >(client, DOCUMENT_DELETE, (data) => data.documentDrop),
-  create: createMutateFunction<
-    TDocumentResponse,
+  documentCreate: createMutateFunction<
     TDocumentCreateRequest,
-    { documentCreate: TDocumentResponse }
-  >(client, DOCUMENT_CREATE, (data) => data.documentCreate),
-  update: createMutateFunction<
-    TDocumentResponse,
+    TDocumentCreateResponse
+  >(
+    client,
+    gql`
+      mutation documentCreate(
+        $databaseName: String!
+        $collectionName: String!
+        $document: JSON!
+        $documentPermission: Int
+      ) {
+        documentCreate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          document: $document
+          documentPermission: $documentPermission
+        ) {
+          merkleProof {
+            ...MerkleProofFragment
+          }
+          docId
+          acknowledged
+        }
+      }
+    `,
+    (data) => data.documentCreate
+  ),
+  documentDrop: createMutateFunction<
+    TDocumentDropRequest,
+    TDocumentDropResponse
+  >(
+    client,
+    gql`
+      mutation documentDrop(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentDrop(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        ) {
+          isLeft
+          sibling
+        }
+      }
+    `,
+    (data) => data.documentDrop
+  ),
+  documentUpdate: createMutateFunction<
     TDocumentUpdateRequest,
-    { documentUpdate: TDocumentResponse }
-  >(client, DOCUMENT_UPDATE, (data) => data.documentUpdate),
-  findOne: createQueryFunction<
-    TDocumentReadResponse | null,
-    { databaseName: string; collectionName: string; documentQuery: any },
-    { documentFind: TDocumentReadResponse | null }
-  >(client, DOCUMENT_FIND_ONE, (data) => data.documentFind),
-  findMany: createQueryFunction<
-    TDocumentListFindResponse,
-    TDocumentListFindRequest,
-    { documentsFind: TDocumentListFindResponse }
-  >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind.data),
-  history: createQueryFunction<
-    TSingleDocumentHistory,
-    TDocumentHistoryGetRequest,
-    { historyDocumentGet: TSingleDocumentHistory }
-  >(client, DOCUMENT_HISTORY, (data) => data.historyDocumentGet),
+    TDocumentUpdateResponse
+  >(
+    client,
+    gql`
+      mutation documentUpdate(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+        $document: JSON!
+      ) {
+        documentUpdate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+          document: $document
+        ) {
+          isLeft
+          sibling
+        }
+      }
+    `,
+    (data) => data.documentUpdate
+  ),
+  documentFind: createQueryFunction<
+    TDocumentFindRequest,
+    TDocumentFindResponse
+  >(
+    client,
+    gql`
+      query documentFind(
+        $databaseName: String!
+        $collectionName: String!
+        $query: JSON
+        $pagination: PaginationInput
+      ) {
+        documentFind(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          query: $query
+          pagination: $pagination
+        ) {
+          data {
+            ...DocumentResponseFragment
+          }
+          total
+          offset
+        }
+      }
+    `,
+    (data) => data.documentFind
+  ),
+  documentHistoryFind: createQueryFunction<
+    TDocumentFindRequest,
+    TDocumentFindResponse
+  >(
+    client,
+    gql`
+      query documentHistoryFind(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+        $pagination: PaginationInput
+      ) {
+        documentHistoryFind(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+          pagination: $pagination
+        ) {
+          data {
+            ...DocumentRevisionResponseFragment
+          }
+          total
+          offset
+        }
+      }
+    `,
+    (data) => data.documentHistoryFind
+  ),
+  documentMetadata: createQueryFunction<
+    TDocumentMetadataRequest,
+    TDocumentMetadataResponse
+  >(
+    client,
+    gql`
+      query documentMetadata(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentMetadata(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        ) {
+          owner
+          group
+          permission
+          collectionName
+          docId
+          merkleIndex
+        }
+      }
+    `,
+    (data) => data.documentMetadata
+  ),
 });
