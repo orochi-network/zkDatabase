@@ -199,6 +199,13 @@ export class Collection {
     session?: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
+
+    if (!(await PermissionSecurity.database({ databaseName, actor })).system) {
+      throw new Error(
+        `Access denied: Actor '${actor}' lacks 'system' permission to create collections in the '${databaseName}' database.`
+      );
+    }
+
     // Get system database
     const modelDatabase = ModelDatabase.getInstance(databaseName);
 
