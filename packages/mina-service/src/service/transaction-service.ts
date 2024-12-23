@@ -79,12 +79,23 @@ export const SERVICE_TRANSACTION = {
                     transaction.txHash
                   );
 
+                  logger.debug(
+                    `zkApp transaction: ${transaction.txHash}: `,
+                    zkAppTx
+                  );
+
                   if (!zkAppTx) {
                     // Transaction not found in Mina, which mean unconfirmed
                     const updatedTransaction =
                       await imTransaction.collection.findOneAndUpdate(
                         {
                           _id: transaction._id,
+                          status: {
+                            // We skip the confirming
+                            // Sometime the rpc Mina chain won't stable that throw 404
+                            // That lead to confirming status back to unconfirmed
+                            $not: { $eq: ETransactionStatus.Confirming },
+                          },
                         },
                         {
                           $set: {
