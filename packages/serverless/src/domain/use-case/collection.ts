@@ -221,6 +221,17 @@ export class Collection {
       );
     }
 
+    // Check for duplicate field names in the schema
+    const fieldNames = schema.map((field) => field.name);
+    const duplicateFields = fieldNames.filter(
+      (name, index) => fieldNames.indexOf(name) !== index
+    );
+    if (duplicateFields.length > 0) {
+      throw new Error(
+        `Schema contains duplicate field names: ${duplicateFields.join(', ')}`
+      );
+    }
+
     if (!(await modelDatabase.createCollection(collectionName, session))) {
       throw new Error(`Failed to create collection ${collectionName}`);
     }
