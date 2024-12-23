@@ -53,7 +53,9 @@ export class Proof {
         _id,
       },
       {
-        status: EProofStatusDocument.Proving,
+        $set: {
+          status: EProofStatusDocument.Proving,
+        },
       },
       { session: session.proofService }
     );

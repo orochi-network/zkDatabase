@@ -1,13 +1,19 @@
 import { gql } from "@apollo/client";
 import {
   TGroupAddUserListRequest,
+  TGroupAddUserListResponse,
   TGroupCreateRequest,
-  TGroupInfoDetailRequest,
-  TGroupInfoDetailResponse,
+  TGroupCreateResponse,
+  TGroupDetailRequest,
+  TGroupDetailResponse,
   TGroupListAllRequest,
   TGroupListAllResponse,
-  TGroupRemoveUsersRequest,
+  TGroupListByUserRequest,
+  TGroupListByUserResponse,
+  TGroupRemoveUserListRequest,
+  TGroupRemoveUserListResponse,
   TGroupUpdateRequest,
+  TGroupUpdateResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -16,56 +22,30 @@ import {
 } from "./common";
 
 export const group = <T>(client: TApolloClient<T>) => ({
-  addUser: createMutateFunction<
-    boolean,
+  groupAddUser: createMutateFunction<
     TGroupAddUserListRequest,
-    { groupAddUsers: boolean }
+    TGroupAddUserListResponse
   >(
     client,
     gql`
-      mutation GroupAddUsers(
+      mutation groupAddUser(
         $databaseName: String!
         $groupName: String!
-        $userNames: [String!]!
+        $listUser: [String!]!
       ) {
-        groupAddUsers(
+        groupAddUser(
           databaseName: $databaseName
           groupName: $groupName
-          userNames: $userNames
+          listUser: $listUser
         )
       }
     `,
-    (data) => data.groupAddUsers
+    (data) => data.groupAddUser
   ),
-  update: createMutateFunction<
-    boolean,
-    TGroupUpdateRequest,
-    { groupUpdate: boolean }
-  >(
+  groupCreate: createMutateFunction<TGroupCreateRequest, TGroupCreateResponse>(
     client,
     gql`
-      mutation GroupChangeDescription(
-        $databaseName: String!
-        $groupName: String!
-        $groupDescription: String!
-      ) {
-        groupChangeDescription(
-          databaseName: $databaseName
-          groupName: $groupName
-          groupDescription: $groupDescription
-        )
-      }
-    `,
-    (data) => data.groupUpdate
-  ),
-  create: createMutateFunction<
-    boolean,
-    TGroupCreateRequest,
-    { groupCreate: boolean }
-  >(
-    client,
-    gql`
-      mutation GroupCreate(
+      mutation groupCreate(
         $databaseName: String!
         $groupName: String!
         $groupDescription: String
@@ -79,61 +59,88 @@ export const group = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.groupCreate
   ),
-  removeUser: createMutateFunction<
-    boolean,
-    TGroupRemoveUsersRequest,
-    { groupRemoveUsers: boolean }
+  groupRemoveUser: createMutateFunction<
+    TGroupRemoveUserListRequest,
+    TGroupRemoveUserListResponse
   >(
     client,
     gql`
-      mutation GroupRemoveUsers(
+      mutation groupRemoveUser(
         $databaseName: String!
         $groupName: String!
-        $userNames: [String!]!
+        $listUser: [String!]!
       ) {
-        groupRemoveUsers(
+        groupRemoveUser(
           databaseName: $databaseName
           groupName: $groupName
-          userNames: $userNames
+          listUser: $listUser
         )
       }
     `,
-    (data) => data.groupRemoveUsers
+    (data) => data.groupRemoveUser
   ),
-  info: createQueryFunction<
-    TGroupInfoDetailRequest,
-    { databaseName: string; groupName: string },
-    { groupInfo: TGroupInfoDetailResponse }
-  >(
+  groupUpdate: createMutateFunction<TGroupUpdateRequest, TGroupUpdateResponse>(
     client,
     gql`
-      mutation GroupInfo($databaseName: String!, $groupName: String!) {
-        groupInfo(databaseName: $databaseName, groupName: $groupName)
+      mutation groupUpdate(
+        $databaseName: String!
+        $groupName: String!
+        $newGroupName: String
+        $newGroupDescription: String
+      ) {
+        groupUpdate(
+          databaseName: $databaseName
+          groupName: $groupName
+          newGroupName: $newGroupName
+          newGroupDescription: $newGroupDescription
+        )
       }
     `,
-    (data) => data.groupInfo
+    (data) => data.groupUpdate
   ),
-  list: createQueryFunction<
-    TGroupListAllResponse,
+  groupDetail: createQueryFunction<TGroupDetailRequest, TGroupDetailResponse>(
+    client,
+    gql`
+      query groupDetail($databaseName: String!, $groupName: String!) {
+        groupDetail(databaseName: $databaseName, groupName: $groupName) {
+          groupName
+          groupDescription
+          createdBy
+          updatedAt
+          createdAt
+          listUser {
+            ...GroupUserInfoFragment
+          }
+        }
+      }
+    `,
+    (data) => data.groupDetail
+  ),
+  groupListAll: createQueryFunction<
     TGroupListAllRequest,
-    { groupListAll: TGroupListAllResponse }
+    TGroupListAllResponse
   >(
     client,
     gql`
-      query GroupListAll($databaseName: String!) {
-        groupListAll(databaseName: $databaseName)
+      query groupListAll($databaseName: String!) {
+        groupListAll(databaseName: $databaseName) {
+          groupName
+          groupDescription
+          createdBy
+          updatedAt
+          createdAt
+        }
       }
     `,
     (data) => data.groupListAll
   ),
-  listUser: createQueryFunction<
-    string[],
-    { databaseName: string; userName: string },
-    { groupListByUser: string[] }
+  groupListByUser: createQueryFunction<
+    TGroupListByUserRequest,
+    TGroupListByUserResponse
   >(
     client,
     gql`
-      query GroupListByUser($databaseName: String!, $userName: String!) {
+      query groupListByUser($databaseName: String!, $userName: String!) {
         groupListByUser(databaseName: $databaseName, userName: $userName)
       }
     `,

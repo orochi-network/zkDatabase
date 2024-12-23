@@ -4,10 +4,8 @@ import { FixedFloat } from '@orochi-network/utilities';
 import {
   ETransactionStatus,
   ETransactionType,
-  TDbRecord,
-  TTransaction,
+  TTransactionRecord,
 } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -125,7 +123,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session?: ClientSession
-  ): Promise<TDbRecord<TTransaction> | undefined> {
+  ): Promise<TTransactionRecord | undefined> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();

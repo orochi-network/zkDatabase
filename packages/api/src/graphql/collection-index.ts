@@ -1,7 +1,10 @@
 import { gql } from "@apollo/client";
 import {
   TIndexCreateRequest,
+  TIndexCreateResponse,
+  TIndexDropReponse,
   TIndexDropRequest,
+  TIndexExistReponse,
   TIndexExistRequest,
   TIndexListRequest,
   TIndexListResponse,
@@ -12,73 +15,74 @@ import {
   TApolloClient,
 } from "./common";
 
-const COLLECTION_INDEX_CREATE = gql`
-  mutation IndexCreate(
-    $databaseName: String!
-    $collectionName: String!
-    $index: [IndexInput!]!
-  ) {
-    indexCreate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      index: $index
-    )
-  }
-`;
-
-const COLLECTION_INDEX_DELETE = gql`
-  mutation IndexDrop(
-    $databaseName: String!
-    $collectionName: String!
-    $indexName: String!
-  ) {
-    indexDrop(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      indexName: $indexName
-    )
-  }
-`;
-
-const COLLECTION_INDEX_EXIST = gql`
-  query IndexExist(
-    $databaseName: String!
-    $collectionName: String!
-    $indexName: String!
-  ) {
-    indexExist(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      indexName: $indexName
-    )
-  }
-`;
-
-const COLLECTION_INDEX_LIST = gql`
-  query IndexList($databaseName: String!, $collectionName: String!) {
-    indexList(databaseName: $databaseName, collectionName: $collectionName)
-  }
-`;
-
 export const collectionIndex = <T>(client: TApolloClient<T>) => ({
-  create: createMutateFunction<
-    boolean,
-    TIndexCreateRequest,
-    { indexCreate: boolean }
-  >(client, COLLECTION_INDEX_CREATE, (data) => data.indexCreate),
-  drop: createMutateFunction<
-    boolean,
-    TIndexDropRequest,
-    { indexDrop: boolean }
-  >(client, COLLECTION_INDEX_DELETE, (data) => data.indexDrop),
-  exist: createQueryFunction<
-    boolean,
-    TIndexExistRequest,
-    { indexExist: boolean }
-  >(client, COLLECTION_INDEX_EXIST, (data) => data.indexExist),
-  list: createQueryFunction<
-    string[],
-    TIndexListRequest,
-    { indexList: TIndexListResponse }
-  >(client, COLLECTION_INDEX_LIST, (data) => data.indexList),
+  indexCreate: createMutateFunction<TIndexCreateRequest, TIndexCreateResponse>(
+    client,
+    gql`
+      mutation indexCreate(
+        $databaseName: String!
+        $collectionName: String!
+        $index: JSON!
+      ) {
+        indexCreate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          index: $index
+        )
+      }
+    `,
+    (data) => data.indexCreate
+  ),
+  indexDrop: createMutateFunction<TIndexDropRequest, TIndexDropReponse>(
+    client,
+    gql`
+      mutation indexDrop(
+        $databaseName: String!
+        $collectionName: String!
+        $indexName: String!
+      ) {
+        indexDrop(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          indexName: $indexName
+        )
+      }
+    `,
+    (data) => data.indexDrop
+  ),
+  indexExist: createQueryFunction<TIndexExistRequest, TIndexExistReponse>(
+    client,
+    gql`
+      query indexExist(
+        $databaseName: String!
+        $collectionName: String!
+        $indexName: String!
+      ) {
+        indexExist(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          indexName: $indexName
+        )
+      }
+    `,
+    (data) => data.indexExist
+  ),
+  indexList: createQueryFunction<TIndexListRequest, TIndexListResponse>(
+    client,
+    gql`
+      query indexList($databaseName: String!, $collectionName: String!) {
+        indexList(
+          databaseName: $databaseName
+          collectionName: $collectionName
+        ) {
+          indexName
+          size
+          access
+          property
+          createdAt
+        }
+      }
+    `,
+    (data) => data.indexList
+  ),
 });

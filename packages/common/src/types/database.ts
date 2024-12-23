@@ -1,4 +1,5 @@
 import { TDbRecord, TPickOptional } from './common.js';
+import { TEnvironment } from './environment.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { ETransactionStatus } from './transaction.js';
 
@@ -61,10 +62,10 @@ export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
 export type TDatabaseResponse = TMetadataDatabase;
 
 // Database update deploy
-export type TDatabaseUpdateDeployedRequest = TDatabaseRequest &
+export type TDatabaseDeployRequest = TDatabaseRequest &
   Pick<TMetadataDatabase, 'appPublicKey'>;
 
-export type TDatabaseUpdateDeployedResponse = boolean;
+export type TDatabaseDeployResponse = boolean;
 
 // Database list
 export type TDatabaseListRequest = {
@@ -88,4 +89,22 @@ export type TDatabaseFindByIndexRequest = TDatabaseRequest & {
   index: number;
 };
 
+// Database exist
+export type TDatabaseEnvironmentRequest = void;
+
+export type TDatabaseEnvironmentResponse = TEnvironment;
+
+// Database exist
+export type TDatabaseExistRequest = TDatabaseRequest;
+
 export type TDatabaseExistResponse = boolean;
+
+// Database info
+export type TDatabaseInfoRequest = TDatabaseRequest;
+
+export type TDatabaseInfoResponse = TMetadataDatabaseDetail;
+
+// Database stats
+export type TDatabaseStatsRequest = TDatabaseRequest;
+
+export type TDatabaseStatsResponse = unknown;

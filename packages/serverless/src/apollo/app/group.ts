@@ -6,8 +6,8 @@ import {
   TGroupAddUserListResponse,
   TGroupCreateRequest,
   TGroupCreateResponse,
-  TGroupInfoDetailRequest,
-  TGroupInfoDetailResponse,
+  TGroupDetailRequest,
+  TGroupDetailResponse,
   TGroupListAllRequest,
   TGroupListAllResponse,
   TGroupListByUserRequest,
@@ -108,7 +108,7 @@ export const JOI_GROUP_UPDATE = Joi.object<TGroupUpdateRequest>({
   newGroupDescription: groupDescription(false),
 });
 
-export const JOI_GROUP_DETAIL = Joi.object<TGroupInfoDetailRequest>({
+export const JOI_GROUP_DETAIL = Joi.object<TGroupDetailRequest>({
   databaseName,
   groupName,
 });
@@ -150,11 +150,10 @@ const groupListByUser = publicWrapper<
   new ModelUserGroup(databaseName).listGroupByUserName(userName)
 );
 
-const groupDetail = publicWrapper<
-  TGroupInfoDetailRequest,
-  TGroupInfoDetailResponse
->(JOI_GROUP_DETAIL, async (_root, { databaseName, groupName }) =>
-  Group.detail({ databaseName, groupName })
+const groupDetail = publicWrapper<TGroupDetailRequest, TGroupDetailResponse>(
+  JOI_GROUP_DETAIL,
+  async (_root, { databaseName, groupName }) =>
+    Group.detail({ databaseName, groupName })
 );
 
 const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(

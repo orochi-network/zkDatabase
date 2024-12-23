@@ -11,7 +11,8 @@
     "emitDecoratorMetadata": true,
     "strictPropertyInitialization": false,
     "noFallthroughCasesInSwitch": true,
-    "types": ["node", "jest"],
+    // Removed types jest
+    "types": ["node"],
     "composite": true,
     "declarationMap": false,
     "preserveSymlinks": true,
@@ -26,7 +27,7 @@
     }, 
     // For jest + o1js Schema to work
     // https://github.com/o1-labs/o1js/issues/1380#issuecomment-1902038952
-    "useDefineForClassFields": false
+    // "useDefineForClassFields": false
   },
   "include": ["**/*.ts"],
   "exclude": ["build", "node_modules", "typechain/**/*.ts", "test/**/*.test.ts"]

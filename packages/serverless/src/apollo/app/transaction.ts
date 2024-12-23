@@ -3,8 +3,9 @@ import { gql } from '@helper';
 import {
   databaseName,
   ETransactionType,
-  TDatabaseRequest,
   transactionType,
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse,
   TTransactionDraftRequest,
   TTransactionDraftResponse,
   TTransactionSubmitRequest,
@@ -59,22 +60,32 @@ const transactionDraft = authorizeWrapper<
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args, ctx) => {
+  async (_root, args, ctx) => {
     const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,
       args.transactionType
     );
 
-    return transaction;
+    if (!transaction) {
+      return null;
+    }
+
+    return {
+      ...transaction,
+      _id: transaction._id.toString(),
+    };
   }
 );
 
-const transactionDeployEnqueue = authorizeWrapper<TDatabaseRequest, string>(
+const transactionDeployEnqueue = authorizeWrapper<
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse
+>(
   Joi.object({
     databaseName,
   }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
+  async (_root, args, ctx) =>
     withTransaction(async (session) =>
       (
         await Transaction.enqueue(
@@ -96,7 +107,7 @@ const transactionSubmit = authorizeWrapper<
     transactionObjectId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
-  async (_root: unknown, args, ctx) =>
+  async (_root, args, ctx) =>
     Transaction.submit(
       args.databaseName,
       ctx.userName,

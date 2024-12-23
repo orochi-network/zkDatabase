@@ -1,4 +1,4 @@
-import { ObjectId, WithoutId } from 'mongodb';
+import type { ObjectId, WithoutId } from 'mongodb';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
@@ -68,23 +68,19 @@ export type TTransactionRecord = TDbRecord<TTransaction>;
 
 /**
  * Transaction request
- * @typedef TTransactionRequest
+ * @typedef TTransactionDraftRequest
  * @param {string} TDatabaseRequest.databaseName - Database name
  * @param {ETransactionType} transactionType - Transaction type
  */
-export type TTransactionRequest = TDatabaseRequest & {
+export type TTransactionDraftRequest = TDatabaseRequest & {
   transactionType: ETransactionType;
 };
 
-/**
- * Transaction response
- * @typedef TTransactionResponse
- * @property {TTransaction} transaction (Rollup or Deploy)
- * @property {string} _id - Primary key of the transaction
- */
-export type TTransactionWithId = WithoutId<TTransactionRecord> & {
-  _id: string;
-};
+export type TTransactionDraftResponse =
+  | (WithoutId<TTransactionRecord> & {
+      _id: string;
+    })
+  | null;
 
 /**
  * Transaction by ID request
@@ -123,6 +119,7 @@ export type TTransactionQueue = Pick<
   payerAddress: string;
 };
 
-export type TTransactionDraftRequest = TTransactionRequest;
+// Transaction deploy enqueue
+export type TTransactionDeployEnqueueRequest = TDatabaseRequest;
 
-export type TTransactionDraftResponse = TTransactionRecord | undefined;
+export type TTransactionDeployEnqueueResponse = string;

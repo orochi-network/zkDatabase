@@ -121,6 +121,7 @@ export const SERVICE_COMPILE = {
               {
                 $set: {
                   appPublicKey: zkAppPrivateKey.toPublicKey().toBase58(),
+                  deployStatus: ETransactionStatus.Unsigned,
                 },
               },
               { session }

@@ -63,7 +63,7 @@ export class Database {
           appPublicKey: '',
           createdAt: getCurrentTime(),
           updatedAt: getCurrentTime(),
-          deployStatus: ETransactionStatus.Unsigned,
+          deployStatus: ETransactionStatus.Unknown,
         },
         { session }
       );
