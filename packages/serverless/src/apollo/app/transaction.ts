@@ -22,7 +22,7 @@ export const typeDefsTransaction = gql`
   type Mutation
 
   type Transaction {
-    transactionObjectId: String!
+    _id: String!
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
@@ -59,7 +59,7 @@ const transactionDraft = authorizeWrapper<
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionRequest, ctx) => {
+  async (_root: unknown, args, ctx) => {
     const transaction = await Transaction.draft(
       args.databaseName,
       ctx.userName,
