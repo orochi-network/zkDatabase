@@ -76,9 +76,11 @@ export type TTransactionDraftRequest = TDatabaseRequest & {
   transactionType: ETransactionType;
 };
 
-export type TTransactionDraftResponse = WithoutId<TTransactionRecord> & {
-  _id: string;
-};
+export type TTransactionDraftResponse =
+  | (WithoutId<TTransactionRecord> & {
+      _id: string;
+    })
+  | null;
 
 /**
  * Transaction by ID request

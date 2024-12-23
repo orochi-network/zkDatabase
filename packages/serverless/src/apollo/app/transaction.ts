@@ -23,7 +23,7 @@ export const typeDefsTransaction = gql`
   type Mutation
 
   type Transaction {
-    transactionObjectId: String!
+    _id: String!
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
@@ -38,7 +38,7 @@ export const typeDefsTransaction = gql`
     transactionDraft(
       databaseName: String!
       transactionType: TransactionType!
-    ): Transaction!
+    ): Transaction
   }
 
   extend type Mutation {
@@ -66,6 +66,10 @@ const transactionDraft = authorizeWrapper<
       ctx.userName,
       args.transactionType
     );
+
+    if (!transaction) {
+      return null;
+    }
 
     return {
       ...transaction,
