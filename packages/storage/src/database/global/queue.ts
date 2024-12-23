@@ -104,7 +104,9 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       )
       .toArray();
 
-    return latestQueuedTasks[0] as TQueueRecord;
+    return latestQueuedTasks.length >= 1
+      ? (latestQueuedTasks[0] as TQueueRecord)
+      : null;
   }
 
   public async getTasksByCollection(
