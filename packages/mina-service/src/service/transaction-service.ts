@@ -52,7 +52,11 @@ export const SERVICE_TRANSACTION = {
         const transactionList = await imTransaction
           .find({
             status: {
-              $in: [ETransactionStatus.Signed, ETransactionStatus.Unconfirmed],
+              $in: [
+                ETransactionStatus.Signed,
+                ETransactionStatus.Unconfirmed,
+                ETransactionStatus.Confirming,
+              ],
             },
           })
           .toArray();
