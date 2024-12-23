@@ -209,7 +209,7 @@ export class Transaction {
       {
         $set: {
           txHash,
-          status: ETransactionStatus.Confirming,
+          status: ETransactionStatus.Signed,
         },
       },
       { session }
