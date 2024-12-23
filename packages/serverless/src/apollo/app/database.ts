@@ -14,6 +14,7 @@ import {
   merkleHeight,
   pagination,
   publicKey,
+  TDatabaseExistRequest,
 } from '@zkdb/common';
 import {
   ModelDatabase,
@@ -167,7 +168,7 @@ const dbCreate = authorizeWrapper<
   )
 );
 
-const dbExist = publicWrapper<TDatabaseRequest, TDatabaseExistResponse>(
+const dbExist = publicWrapper<TDatabaseExistRequest, TDatabaseExistResponse>(
   Joi.object({
     databaseName,
   }),
