@@ -212,7 +212,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     */
     if (!(await collection.isExist())) {
       await collection.index(
-        { database: 1, operationNumber: 1 },
+        { databaseName: 1, operationNumber: 1 },
         { unique: true, session }
       );
       await collection.index({ merkleRoot: 1 }, { unique: false, session });

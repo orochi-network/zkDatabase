@@ -199,6 +199,13 @@ export class Collection {
     session?: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
+
+    if (!(await PermissionSecurity.database({ databaseName, actor })).system) {
+      throw new Error(
+        `Access denied: Actor '${actor}' lacks 'system' permission to create collections in the '${databaseName}' database.`
+      );
+    }
+
     // Get system database
     const modelDatabase = ModelDatabase.getInstance(databaseName);
 
@@ -211,6 +218,17 @@ export class Collection {
     if (!(await Group.exist({ databaseName, groupName }, session))) {
       throw Error(
         `Group ${groupName} does not exist in database ${databaseName}`
+      );
+    }
+
+    // Check for duplicate field names in the schema
+    const fieldNames = schema.map((field) => field.name);
+    const duplicateFields = fieldNames.filter(
+      (name, index) => fieldNames.indexOf(name) !== index
+    );
+    if (duplicateFields.length > 0) {
+      throw new Error(
+        `Schema contains duplicate field names: ${duplicateFields.join(', ')}`
       );
     }
 
