@@ -5,10 +5,10 @@ import {
   ETransactionType,
   TDatabaseRequest,
   transactionType,
-  TTransactionRequest,
+  TTransactionDraftRequest,
+  TTransactionDraftResponse,
   TTransactionSubmitRequest,
   TTransactionSubmitResponse,
-  TTransactionWithId,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -37,7 +37,7 @@ export const typeDefsTransaction = gql`
     transactionDraft(
       databaseName: String!
       transactionType: TransactionType!
-    ): Transaction!
+    ): Transaction
   }
 
   extend type Mutation {
@@ -52,8 +52,8 @@ export const typeDefsTransaction = gql`
 `;
 
 const transactionDraft = authorizeWrapper<
-  TTransactionRequest,
-  TTransactionWithId
+  TTransactionDraftRequest,
+  TTransactionDraftResponse
 >(
   Joi.object({
     databaseName,
@@ -66,10 +66,7 @@ const transactionDraft = authorizeWrapper<
       args.transactionType
     );
 
-    return {
-      ...transaction,
-      _id: transaction._id.toString(),
-    };
+    return transaction;
   }
 );
 

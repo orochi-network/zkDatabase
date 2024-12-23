@@ -125,7 +125,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session?: ClientSession
-  ): Promise<TDbRecord<TTransaction>> {
+  ): Promise<TDbRecord<TTransaction> | undefined> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();
@@ -147,41 +147,9 @@ export class Transaction {
       .find({ databaseName, transactionType }, { session })
       .toArray();
 
-    const unsignedTransaction = transactionList.find(
+    return transactionList.find(
       (tx) => tx.status === ETransactionStatus.Unsigned
     );
-
-    if (unsignedTransaction) {
-      const { account, error } = await MinaNetwork.getInstance().getAccount(
-        PublicKey.fromBase58(user.publicKey)
-      );
-
-      if (error) {
-        throw Error(`${error.statusCode}: ${error.statusText}`);
-      }
-
-      if (account) {
-        const balance = FixedFloat.from({
-          basedValue: account.balance.toBigInt(),
-          decimals: 9,
-        });
-
-        const minBalance =
-          Transaction.MAP_MINIMAL_BALANCE.get(transactionType)!;
-
-        if (balance.lt(minBalance)) {
-          throw new Error(
-            `Your account need at least ${minBalance} balance unit for ${transactionType}`
-          );
-        }
-
-        return unsignedTransaction;
-      } else {
-        throw Error('Account has not been found in Mina Network');
-      }
-    }
-
-    throw new Error('There is not any unsigned transaction');
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {

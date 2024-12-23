@@ -16,6 +16,7 @@ import {
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
+import { ObjectId } from 'mongodb';
 import { PrivateKey } from 'o1js';
 
 export const SERVICE_COMPILE = {
@@ -97,7 +98,7 @@ export const SERVICE_COMPILE = {
             // Update transaction status and add transaction raw
             await imTransaction.updateOne(
               {
-                _id: transactionObjectId,
+                _id: new ObjectId(transactionObjectId),
                 databaseName,
                 transactionType: ETransactionType.Deploy,
               },
@@ -106,6 +107,10 @@ export const SERVICE_COMPILE = {
                   status: ETransactionStatus.Unsigned,
                   transactionRaw,
                   updatedAt: new Date(),
+                  createdAt: new Date(),
+                  // TODO: We will redesign the transaction later and default should be undefined/null
+                  txHash: '',
+                  error: '',
                 },
               },
               { session, upsert: true }

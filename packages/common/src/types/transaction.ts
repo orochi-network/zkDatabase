@@ -122,3 +122,7 @@ export type TTransactionQueue = Pick<
   transactionObjectId: ObjectId;
   payerAddress: string;
 };
+
+export type TTransactionDraftRequest = TTransactionRequest;
+
+export type TTransactionDraftResponse = TTransactionRecord | undefined;
