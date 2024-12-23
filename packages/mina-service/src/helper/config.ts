@@ -14,6 +14,7 @@ type TApplicationConfig = {
   REDIS_URL: string;
   MINA_URL: string;
   SERVICE_SECRET: string;
+  BLOCKBERRY_API_KEY: string;
 };
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
@@ -44,6 +45,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
       .required()
       .regex(/^redis([+a-z]+|):\/\//),
     SERVICE_SECRET: Joi.string().base64().trim().required(),
+    BLOCKBERRY_API_KEY: Joi.string().trim().required(),
   }
 );
 

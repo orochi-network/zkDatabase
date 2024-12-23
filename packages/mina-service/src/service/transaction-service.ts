@@ -62,6 +62,13 @@ export const SERVICE_TRANSACTION = {
             transactionList.map((transaction) => async () => {
               withTransaction(async (session) => {
                 const minaNetwork = MinaNetwork.getInstance();
+
+                minaNetwork.connect(
+                  config.NETWORK_ID,
+                  config.MINA_URL,
+                  config.BLOCKBERRY_API_KEY
+                );
+
                 // Ensure txHash existed
                 if (transaction.txHash) {
                   const zkAppTx = await minaNetwork.getZkAppTransactionByTxHash(
