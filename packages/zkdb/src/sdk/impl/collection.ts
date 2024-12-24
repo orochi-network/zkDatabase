@@ -19,7 +19,7 @@ import {
 import {
   DocumentEncoded,
   ProvableTypeString,
-  SchemaExtend,
+  ISchemaExtend,
   SchemaInterface,
 } from '../schema';
 import { CollectionIndexImpl } from './collection-index';
@@ -281,7 +281,7 @@ export class CollectionImpl implements ZKCollection {
       serialize: () => DocumentEncoded;
     },
   >(
-    model: InstanceType<T> & SchemaExtend,
+    model: InstanceType<T> & ISchemaExtend,
     permission?: Permission
   ): Promise<MerkleWitness> {
     const result = await this.apiClient.doc.create({
