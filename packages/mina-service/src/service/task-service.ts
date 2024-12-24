@@ -1,3 +1,12 @@
+// TODO: We have implemented a robust task acquisition mechanism that allows
+// concurrent processing of multiple tasks through multiple workers. The
+// mechanism's built-in constraint ensures only one database is processed at a
+// time, making it safe to process multiple tasks from different database
+// queues simultaneously. However, the optimal approach depends on whether the
+// task (prover) is CPU-bound or I/O-bound. If I/O-bound, we can utilize
+// Node.js's default event loop for concurrent processing. If CPU-bound, we'll
+// need to implement multiple process workers to achieve true parallelism.
+
 import { config, logger } from '@helper';
 import { Proof } from '@domain';
 import {
