@@ -1,6 +1,21 @@
+// TODO: We have implemented a robust task acquisition mechanism that allows
+// concurrent processing of multiple tasks through multiple workers. The
+// mechanism's built-in constraint ensures only one database is processed at a
+// time, making it safe to process multiple tasks from different database
+// queues simultaneously. However, the optimal approach depends on whether the
+// task (prover) is CPU-bound or I/O-bound. If I/O-bound, we can utilize
+// Node.js's default event loop for concurrent processing. If CPU-bound, we'll
+// need to implement multiple process workers to achieve true parallelism.
+
 import { config, logger } from '@helper';
 import { Proof } from '@domain';
-import { DatabaseEngine, withCompoundTransaction } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelQueueTask,
+  withCompoundTransaction,
+  withTransaction,
+} from '@zkdb/storage';
+import { EProofStatusDocument } from '@zkdb/common';
 
 // The duration to wait before exiting the service after a crash to prevent a
 // tight loop of restarts.
@@ -28,29 +43,55 @@ export class TaskService {
         break;
       }
 
-      const backoff = await withCompoundTransaction(async (session) => {
-        const task = await Proof.getNextTask(session);
-        if (task === null) {
-          return true;
-        }
+      let backoff = true;
 
-        logger.debug('Task received:', task);
+      const task = await withTransaction(
+        async (session) =>
+          ModelQueueTask.getInstance().acquireNextTaskInQueue(session),
+        'proofService'
+      );
 
-        try {
-          await Proof.create(task, session);
-          return false;
-        } catch (error) {
-          logger.error(`Error processing task with ID ${task._id}: ${error}`);
-          return true;
-        }
-      });
+      if (task !== null) {
+        backoff = await withCompoundTransaction(async (session) => {
+          logger.debug('Task received:', task);
+
+          try {
+            await Proof.create(task, session);
+            return false;
+          } catch (error) {
+            logger.error(`Error processing task with ID ${task._id}: ${error}`);
+            return true;
+          } finally {
+            const processedTask = await ModelQueueTask.getInstance().findOne(
+              {
+                _id: task._id,
+              },
+              { session: session.proofService }
+            );
+
+            if (processedTask === null) {
+              logger.error(
+                `Task with ID ${task._id} is no longer present after processing`
+              );
+            } else if (processedTask.status === EProofStatusDocument.Proving) {
+              await ModelQueueTask.getInstance().markTaskAsError(
+                task._id,
+                `Unexpected error while processing task, check server logs
+for this task's object ID for more information`,
+                { session: session.proofService }
+              );
+            }
+          }
+        });
+      }
 
       if (backoff) {
-        logger.debug('No task available, waiting...');
         await this.delay(delay);
         delay = Math.min(delay * 2, 32000); // Exponential backoff with cap
         delay += Math.floor(Math.random() * 1000); // Add jitter
         retries++;
+
+        logger.debug(`Task service backing off for ${delay}ms`);
       } else {
         delay = this.initialDelay;
         retries = 0;
