@@ -2,6 +2,10 @@ import { config, logger } from '@helper';
 import { Proof } from '@domain';
 import { DatabaseEngine, withCompoundTransaction } from '@zkdb/storage';
 
+// The duration to wait before exiting the service after a crash to prevent a
+// tight loop of restarts.
+const CRASH_TIMEOUT = 60000;
+
 export class TaskService {
   private maxRetries: number;
   private initialDelay: number;
@@ -57,23 +61,35 @@ export class TaskService {
   }
 }
 
-export const TASK_SERVICE = {
+export const SERVICE_TASK = {
   clusterName: 'task',
   payload: async () => {
-    // Connect to db
-    const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-    const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+    try {
+      // Connect to db
+      const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+      const proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
 
-    if (!serverlessDb.isConnected()) {
-      await serverlessDb.connect();
+      if (!serverlessDb.isConnected()) {
+        await serverlessDb.connect();
+      }
+
+      if (!proofDb.isConnected()) {
+        await proofDb.connect();
+      }
+
+      const taskService = new TaskService();
+
+      await taskService.run();
+    } catch (error) {
+      logger.error(
+        'Task service crashed, waiting for 1 minute before exiting. Error:',
+        error
+      );
+      // Sleep for CRASH_TIMEOUT before exiting to prevent the cluster from
+      // immediately restarting this service, which could cause a tight loop if
+      // the error is persistent.
+      await new Promise((resolve) => setTimeout(resolve, CRASH_TIMEOUT));
+      throw error;
     }
-
-    if (!proofDb.isConnected()) {
-      await proofDb.connect();
-    }
-
-    const taskService = new TaskService();
-
-    await taskService.run();
   },
 };
