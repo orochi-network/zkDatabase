@@ -94,9 +94,7 @@ export const SERVICE_TRANSACTION = {
                             // We skip the confirming
                             // Sometime the rpc Mina chain won't stable that throw 404
                             // That lead to confirming status back to unconfirmed
-                            $not: {
-                              $in: [ETransactionStatus.Confirming],
-                            },
+                            $not: { $eq: ETransactionStatus.Confirming },
                           },
                         },
                         {

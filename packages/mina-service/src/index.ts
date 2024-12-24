@@ -9,5 +9,5 @@ const clusterApp = new ClusterApplication();
 clusterApp
   .add(SERVICE_COMPILE)
   .add(SERVICE_TRANSACTION)
-  // .add(SERVICE_TASK)
+  .add(SERVICE_TASK)
   .start();
