@@ -23,20 +23,6 @@ import { CircuitFactory } from '@circuit';
 import { logger } from '@helper';
 
 export class Proof {
-  static async getNextTask(
-    session: TCompoundSession
-  ): Promise<TQueueRecord | null> {
-    const modelQueueTask = ModelQueueTask.getInstance();
-
-    // TODO: important: aquire tasks in a way that is safe for concurrent
-    // processing by multiple workers
-    const task = await modelQueueTask.getLatestQueuedTaskByDatabase(
-      session.proofService
-    );
-
-    return task;
-  }
-
   static async create(task: TQueueRecord, session: TCompoundSession) {
     if (task.status !== EProofStatusDocument.Queued) {
       throw Error('Task status is not Queued');
@@ -48,20 +34,6 @@ export class Proof {
     const imQueue = ModelQueueTask.getInstance();
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
     const imProof = ModelProof.getInstance();
-
-    // NOTE: that this may not be visible to other transactions until the
-    // session is committed
-    await imQueue.updateOne(
-      {
-        _id,
-      },
-      {
-        $set: {
-          status: EProofStatusDocument.Proving,
-        },
-      },
-      { session: session.proofService }
-    );
 
     try {
       const circuitName = `${databaseName}.${collectionName}`;

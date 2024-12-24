@@ -48,65 +48,42 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
     );
   }
 
-  public async getLatestQueuedTaskByDatabase(
+  /** Acquires the next qualified task from the queue. The task is immediately
+   * marked as 'Proving', which prevents other workers from processing it. The
+   * calling process must ensure complete task processing and appropriate
+   * status updates (e.g., to 'Failed' or 'Proved'). A task left in 'Proving'
+   * status will remain stuck in the queue indefinitely until retry mechanism
+   * is implemented (e.g. a processing timeout). */
+  public async acquireNextTaskInQueue(
     session?: ClientSession
   ): Promise<TQueueRecord | null> {
-    if (!this.collection) {
-      throw new Error('TaskQueue is not connected to the database.');
-    }
-
-    const executingDatabases = await this.collection
-      .aggregate(
-        [
-          {
-            $match: {
+    // The intent is to:
+    // - Not allow parallel processing of tasks from the same database
+    // - Take the oldest queued task from each available database
+    // TODO: Possible edge cases:
+    // - A task stuck at Proving status will block all other tasks from the
+    // same database. Maybe consider a timeout?
+    return this.collection.findOneAndUpdate(
+      {
+        status: EProofStatusDocument.Queued,
+        databaseName: {
+          $nin: await this.collection.distinct(
+            'databaseName',
+            {
               status: EProofStatusDocument.Proving,
             },
-          },
-          {
-            $group: {
-              _id: '$database',
-            },
-          },
-        ],
-        { session }
-      )
-      .toArray();
-
-    const executingDatabaseList = executingDatabases.map((db) => db._id);
-
-    const latestQueuedTasks = await this.collection
-      .aggregate(
-        [
-          {
-            $match: {
-              status: EProofStatusDocument.Queued,
-              database: { $nin: executingDatabaseList },
-            },
-          },
-          {
-            $sort: {
-              database: 1,
-              createdAt: 1,
-            },
-          },
-          {
-            $group: {
-              _id: '$database',
-              latestTask: { $first: '$$ROOT' },
-            },
-          },
-          {
-            $replaceRoot: { newRoot: '$latestTask' },
-          },
-        ],
-        { session }
-      )
-      .toArray();
-
-    return latestQueuedTasks.length >= 1
-      ? (latestQueuedTasks[0] as TQueueRecord)
-      : null;
+            { session }
+          ),
+        },
+      },
+      {
+        $set: { status: EProofStatusDocument.Proving },
+      },
+      {
+        sort: { createdAt: 1 },
+        session,
+      }
+    );
   }
 
   public async getTasksByCollection(
@@ -218,6 +195,12 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       await collection.index({ merkleRoot: 1 }, { unique: false, session });
       await collection.index({ merkleIndex: 1 }, { unique: false, session });
       await collection.index({ hash: 1 }, { unique: true, session });
+
+      // Index for acquiring the next task from the queue
+      await collection.index(
+        { status: 1, databaseName: 1, createdAt: 1 },
+        { unique: false, session }
+      );
 
       await addTimestampMongoDB(collection, session);
     }
