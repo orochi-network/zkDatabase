@@ -68,7 +68,5 @@
     "node-cron": "^3.0.3",
     "redis": "4.7.0"
   },
-  "devDependencies": {
-    "@types/node-cron": "^3.0.11"
-  }
+  "devDependencies": {}
 }

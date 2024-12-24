@@ -16,11 +16,13 @@ import {
   indexNumber,
   pagination,
 } from '@zkdb/common';
+import { ScalarType } from '@orochi-network/utilities';
 import { ModelMerkleTree } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { MerkleTree } from '@domain';
 import { publicWrapper } from '../validation';
+import { GraphQLScalarType } from 'graphql';
 
 export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
   databaseName,
@@ -50,6 +52,7 @@ export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
 
 export const typeDefsMerkleTree = `#graphql
 scalar JSON
+scalar BigInt
 type Query
 type Mutation
 
@@ -59,14 +62,14 @@ type MerkleProof {
 }
 
 type MerkleNode {
-  index: Int!
+  index: BigInt!
   level: Int!
   hash: String!
   empty: Boolean!
 }
 
 type MerkleNodeDetail {
-  index: Int!
+  index: BigInt!
   level: Int!
   hash: String!
   witness: Boolean!
@@ -164,7 +167,12 @@ const merkleNodePath = publicWrapper<
   MerkleTree.nodePath(databaseName, docId)
 );
 
+const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 export const resolversMerkleTree = {
+  // If we put directly BigInt: ScalarType.BigInt() you will got
+  // The inferred type of cannot be named without a reference
+  // We need to have a temp variable that hold the function and explicit the type
+  BigInt: BigIntScalar,
   JSON: GraphQLJSON,
   Query: {
     merkleProof,
