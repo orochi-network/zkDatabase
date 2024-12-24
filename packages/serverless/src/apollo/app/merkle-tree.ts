@@ -91,7 +91,7 @@ extend type Query {
 
   merkleTreeInfo(databaseName: String!): MerkleTreeInfo!
   
-  merkleProof(databaseName: String!, index: String!): [MerkleProof]!
+  merkleProof(databaseName: String!, index: BigInt!): [MerkleProof]!
   
   merkleProofDocId(databaseName: String!, docId: String!): [MerkleProof]!
 
@@ -99,7 +99,7 @@ extend type Query {
   
   merkleNodePath(databaseName: String!, docId: String!): [MerkleNodeDetail]!
 
-  merkleNodeChildren(databaseName: String!, level: Int!, index: String!): [MerkleNode!]!
+  merkleNodeChildren(databaseName: String!, level: Int!, index: BigInt!): [MerkleNode!]!
 }
 `;
 
