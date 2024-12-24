@@ -89,38 +89,39 @@ export type TContractSchemaFieldDefinition = Omit<
   'value'
 >;
 
-export interface SchemaExtend {
+export interface ISchemaExtend {
   serialize(): TContractSchemaField[];
   hash(): Field;
 }
-export interface SchemaStaticExtend<A> {
+
+export type TSchemaExtendable<A> = Struct<InferProvable<A> & ISchemaExtend> &
+  ISchemaStaticExtend<A>;
+
+export interface ISchemaStaticExtend<A> {
   // eslint-disable-next-line no-use-before-define
-  deserialize(_doc: TContractSchemaField[]): InstanceType<SchemaExtendable<A>>;
+  deserialize(_doc: TContractSchemaField[]): InstanceType<TSchemaExtendable<A>>;
   getSchema(): TContractSchemaFieldDefinition[];
 }
 
-export type SchemaExtendable<A> = Struct<InferProvable<A> & SchemaExtend> &
-  SchemaStaticExtend<A>;
-
-export type ProvableMapped<T extends TContractSchemaFieldDefinition[]> = {
+export type TProvableMapped<T extends TContractSchemaFieldDefinition[]> = {
   [Property in T[number]['name']]?: (typeof ProvableTypeMap)[TProvableTypeString];
 };
 
 export function toInnerStructure<T extends TContractSchemaFieldDefinition[]>(
   schema: T
-): ProvableMapped<T> {
-  const result: Partial<ProvableMapped<T>> = {};
+): TProvableMapped<T> {
+  const result: Partial<TProvableMapped<T>> = {};
   schema.forEach(({ name, kind }) => {
-    const key = name as keyof ProvableMapped<T>;
+    const key = name as keyof TProvableMapped<T>;
     result[key] = ProvableTypeMap[kind];
   });
-  return result as ProvableMapped<T>;
+  return result as TProvableMapped<T>;
 }
 
 export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
     type: A
-  ): SchemaExtendable<A> & (new (..._args: T[]) => T) {
+  ): TSchemaExtendable<A> & (new (..._args: T[]) => T) {
     class Document extends Struct(type) {
       private static schemaEntries: TContractSchemaFieldDefinition[] =
         Object.entries(type as any).map(

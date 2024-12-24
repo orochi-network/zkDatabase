@@ -77,9 +77,13 @@ export const publicKey = (required: boolean = true) => {
   return required ? joiPublicKey.required() : joiPublicKey.optional();
 };
 
-export const indexNumber = Joi.string()
-  .regex(/^[0-9]+$/)
-  .required();
+export const merkleIndex = (required: boolean = true) => {
+  const joiMerkleIndex = Joi.number()
+    .integer()
+    .min(0)
+    .max(Number.MAX_SAFE_INTEGER);
+  return required ? joiMerkleIndex.required() : joiMerkleIndex.optional();
+};
 
 export const index = Joi.array().items(Joi.string().required());
 

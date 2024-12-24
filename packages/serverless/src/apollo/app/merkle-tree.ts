@@ -13,7 +13,7 @@ import {
   TMerkleTreeProofByIndexResponse,
   databaseName,
   docId,
-  indexNumber,
+  merkleIndex,
   pagination,
 } from '@zkdb/common';
 import { ScalarType } from '@orochi-network/utilities';
@@ -36,7 +36,7 @@ export const JOI_MERKLE_TREE_INFO = Joi.object({
 
 export const JOI_MERKLE_TREE_PROOF_BY_INDEX = Joi.object({
   databaseName,
-  index: indexNumber,
+  index: merkleIndex,
 });
 
 export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
@@ -46,7 +46,7 @@ export const JOI_MERKLE_TREE_PROOF_BY_DOCID = Joi.object({
 
 export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
   databaseName,
-  index: indexNumber,
+  index: merkleIndex,
   level: Joi.number().required(),
 });
 
