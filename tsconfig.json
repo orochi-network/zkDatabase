@@ -42,9 +42,6 @@
       "path": "./packages/zkdb"
     },
     {
-      "path": "./packages/compile-service"
-    },
-    {
       "path": "./packages/serverless"
     },
     {
