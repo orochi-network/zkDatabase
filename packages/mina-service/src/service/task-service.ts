@@ -44,11 +44,11 @@ export class TaskService {
 
       let backoff = true;
 
-      const task = await withCompoundTransaction(async (session) =>
+      const task = await withTransaction(async (session) =>
         ModelQueueTask.getInstance().acquireNextTaskInQueue(
-          session.proofService
+          session
         )
-      );
+      , "proofService");
 
       if (task !== null) {
         backoff = await withCompoundTransaction(async (session) => {
