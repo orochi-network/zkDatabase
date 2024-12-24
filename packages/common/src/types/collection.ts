@@ -24,9 +24,10 @@ export enum ESorting {
  * @property {string} Compound - Compound index
  * @property {string} Unique - Unique index
  */
-export enum EProperty {
-  Compound = 'compound',
-  Unique = 'unique',
+export enum EIndexProperty {
+  // Pascal case to consist with Graphql Enum type
+  Compound = 'Compound',
+  Unique = 'Unique',
 }
 
 export type TCollectionIndex<T = Record<string, any>> = Partial<
@@ -50,7 +51,7 @@ export type TCollectionIndexInfoMongo = {
   size: number;
   access: number;
   since: Date;
-  property: EProperty;
+  property: EIndexProperty;
 };
 
 // Mapped collection index info

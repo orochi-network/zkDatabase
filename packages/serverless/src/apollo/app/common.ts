@@ -39,7 +39,7 @@ export const typeDefsCommon = gql`
     MerkleMapWitness
   }
 
-  # EProperty in TS
+  # EIndexProperty in TS
   enum IndexProperty {
     Compound
     Unique

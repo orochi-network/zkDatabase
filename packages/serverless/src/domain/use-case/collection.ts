@@ -1,5 +1,5 @@
 import {
-  EProperty,
+  EIndexProperty,
   PERMISSION_DEFAULT,
   TCollectionIndexInfo,
   TCollectionIndexMap,
@@ -123,7 +123,9 @@ export class Collection {
           ? new Date(usageStats.accesses.since)
           : new Date(0);
         const property =
-          Object.keys(key).length > 1 ? EProperty.Compound : EProperty.Unique;
+          Object.keys(key).length > 1
+            ? EIndexProperty.Compound
+            : EIndexProperty.Unique;
         return {
           indexName: name,
           size,
