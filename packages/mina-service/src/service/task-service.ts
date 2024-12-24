@@ -13,6 +13,7 @@ import {
   DatabaseEngine,
   ModelQueueTask,
   withCompoundTransaction,
+  withTransaction,
 } from '@zkdb/storage';
 import { EProofStatusDocument } from '@zkdb/common';
 
@@ -44,11 +45,11 @@ export class TaskService {
 
       let backoff = true;
 
-      const task = await withTransaction(async (session) =>
-        ModelQueueTask.getInstance().acquireNextTaskInQueue(
-          session
-        )
-      , "proofService");
+      const task = await withTransaction(
+        async (session) =>
+          ModelQueueTask.getInstance().acquireNextTaskInQueue(session),
+        'proofService'
+      );
 
       if (task !== null) {
         backoff = await withCompoundTransaction(async (session) => {
@@ -61,9 +62,12 @@ export class TaskService {
             logger.error(`Error processing task with ID ${task._id}: ${error}`);
             return true;
           } finally {
-            const processedTask = await ModelQueueTask.getInstance().findOne({
-              _id: task._id,
-            });
+            const processedTask = await ModelQueueTask.getInstance().findOne(
+              {
+                _id: task._id,
+              },
+              { session: session.proofService }
+            );
 
             if (processedTask === null) {
               logger.error(
