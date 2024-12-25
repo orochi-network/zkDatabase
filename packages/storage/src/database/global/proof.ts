@@ -27,16 +27,14 @@ export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
     );
 
     if (!(await collection.isExist())) {
-      await collection.index({ proof: 1 }, { unique: true, session });
-      await collection.index({ databaseName: 1 }, { session });
       await collection.index(
         { databaseName: 1, collectionName: 1 },
         { unique: true, session }
       );
-      await collection.index({ merkleRoot: 1 }, { unique: true, session });
+      await collection.index({ merkleRoot: 1 }, { unique: false, session });
       await collection.index(
         { merkleRootPrevious: 1 },
-        { unique: true, session }
+        { unique: false, session }
       );
 
       await addTimestampMongoDB(collection, session);
