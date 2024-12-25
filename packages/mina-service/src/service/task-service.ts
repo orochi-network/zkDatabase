@@ -45,44 +45,54 @@ export class TaskService {
 
       let backoff = true;
 
+      const imQueue = ModelQueueTask.getInstance();
+
       const task = await withTransaction(
-        async (session) =>
-          ModelQueueTask.getInstance().acquireNextTaskInQueue(session),
+        async (session) => imQueue.acquireNextTaskInQueue(session),
         'proofService'
       );
 
       if (task !== null) {
-        backoff = await withCompoundTransaction(async (session) => {
-          logger.debug('Task received:', task);
-
-          try {
+        try {
+          await withCompoundTransaction(async (session) => {
+            logger.debug('Task received:', task);
             await Proof.create(task, session);
-            return false;
-          } catch (error) {
-            logger.error(`Error processing task with ID ${task._id}: ${error}`);
-            return true;
-          } finally {
-            const processedTask = await ModelQueueTask.getInstance().findOne(
-              {
-                _id: task._id,
-              },
-              { session: session.proofService }
-            );
+            await imQueue.markTaskProcessed(task._id, {
+              session: session.proofService,
+            });
+          });
 
-            if (processedTask === null) {
-              logger.error(
-                `Task with ID ${task._id} is no longer present after processing`
-              );
-            } else if (processedTask.status === EProofStatusDocument.Proving) {
-              await ModelQueueTask.getInstance().markTaskAsError(
-                task._id,
-                `Unexpected error while processing task, check server logs
-for this task's object ID for more information`,
-                { session: session.proofService }
-              );
-            }
+          backoff = false;
+        } catch (error) {
+          logger.error(`Error processing task with ID ${task._id}:`, error);
+          let errorMessage;
+
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          } else {
+            errorMessage = 'Unknown error: ' + String(error);
           }
-        });
+
+          await imQueue.markTaskAsError(task._id, errorMessage);
+
+          backoff = true;
+        } finally {
+          const processedTask = await ModelQueueTask.getInstance().findOne({
+            _id: task._id,
+          });
+
+          if (processedTask === null) {
+            logger.error(
+              `Task with ID ${task._id} is no longer present after processing`
+            );
+          } else if (processedTask.status === EProofStatusDocument.Proving) {
+            await ModelQueueTask.getInstance().markTaskAsError(
+              task._id,
+              `Task status has not been updated properly, check server logs
+for this task's object ID for more information`
+            );
+          }
+        }
       }
 
       if (backoff) {
