@@ -1,12 +1,12 @@
 import type { ObjectId } from 'mongodb';
-import { TContractSchemaField } from '../schema.js';
+import { TSchemaSerializedField } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { EProofStatusDocument } from './proof.js';
 
-export type TDocumentField = TContractSchemaField;
+export type TDocumentField = TSchemaSerializedField;
 
 export type TDocument = {
   docId: string;
