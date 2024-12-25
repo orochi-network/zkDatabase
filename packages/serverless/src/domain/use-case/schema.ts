@@ -1,7 +1,7 @@
 import {
-  ProvableTypeMap,
+  PROVABLE_TYPE_MAP,
   Schema,
-  TContractSchemaField,
+  TSchemaSerializedField,
   TDocumentField,
   TProvableTypeString,
 } from '@zkdb/common';
@@ -105,7 +105,7 @@ export async function buildSchema(
     throw new Error(`Metadata not found for collection ${collectionName}`);
   }
 
-  const encodedDocument: TContractSchemaField[] = [];
+  const encodedDocument: TSchemaSerializedField[] = [];
   const structType: { [key: string]: any } = {};
 
   metadata.schema.forEach((sch) => {
@@ -116,7 +116,7 @@ export async function buildSchema(
     }
 
     const { name, kind } = documentField;
-    structType[name] = ProvableTypeMap[kind as TProvableTypeString];
+    structType[name] = PROVABLE_TYPE_MAP[kind as TProvableTypeString];
     encodedDocument.push(documentField);
   });
 

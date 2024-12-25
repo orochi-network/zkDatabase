@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
 import {
-  TContractSchemaField,
+  TSchemaSerializedField,
   TDocumentField,
   TDocumentRecordNullable,
 } from '@zkdb/common';
@@ -81,7 +81,7 @@ export class ModelDocument extends ModelGeneral<
    * it as active. If `oldDocument` is provided, the docId will be reused and
    * the new document will have reference to the old one. */
   public async insertOneFromListField(
-    listField: Record<string, TContractSchemaField>,
+    listField: Record<string, TSchemaSerializedField>,
     oldDocument?: {
       docId: string;
       _id: ObjectId;

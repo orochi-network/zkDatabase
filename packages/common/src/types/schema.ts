@@ -1,7 +1,7 @@
-import { TContractSchemaFieldDefinition } from '../schema.js';
+import { TSchemaSerializedFieldDefinition } from '../schema.js';
 import { ESorting } from './collection.js';
 
-export type TSchemaFieldDefinition = TContractSchemaFieldDefinition & {
+export type TSchemaFieldDefinition = TSchemaSerializedFieldDefinition & {
   order: number;
   index: boolean;
   sorting: ESorting;
