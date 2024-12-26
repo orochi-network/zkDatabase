@@ -12,7 +12,7 @@ import {
   ModelMetadataDatabase,
   ModelProof,
   ModelQueueTask,
-  ModelRollup,
+  ModelRollupHistory,
   ModelTransaction,
   TCompoundSession,
   zkDatabaseConstant,
@@ -45,7 +45,7 @@ export class Rollup {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollup = ModelRollup.getInstance();
+    const imRollup = ModelRollupHistory.getInstance();
     const modelTransaction = ModelTransaction.getInstance();
 
     const rollUp = await imRollup.collection.findOne({
@@ -102,9 +102,9 @@ export class Rollup {
     databaseName: string,
     session?: ClientSession
   ): Promise<TRollUpDetail> {
-    const modelRollUp = ModelRollup.getInstance();
+    const ModelRollupHistory = ModelRollupHistory.getInstance();
     const minaNetwork = MinaNetwork.getInstance();
-    const queue = ModelQueueTask.getInstance();
+    const imQueue = ModelQueueTask.getInstance();
 
     const database = await ModelMetadataDatabase.getInstance().findOne(
       { databaseName },
@@ -115,7 +115,7 @@ export class Rollup {
 
     if (
       !database?.appPublicKey ||
-      PublicKey.fromBase58(database?.appPublicKey).isEmpty()
+      PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
     ) {
       throw Error('Database is not bound to zk app');
     }
@@ -140,7 +140,7 @@ export class Rollup {
 
     let rolledUpTaskNumber: number;
 
-    const task = await queue.collection.findOne({
+    const task = await imQueue.findOne({
       database: databaseName,
       merkleRoot: merkleRoot.toString(),
     });
@@ -178,7 +178,7 @@ export class Rollup {
         },
       },
       {
-        $sort: 'createdAt: -1',
+        $sort: { createdAt: -1 },
       },
       {
         $project: {
@@ -188,11 +188,11 @@ export class Rollup {
       },
     ];
 
-    const listRollupHistoryDetail = (await modelRollUp.collection
+    const listRollupHistoryDetail = (await ModelRollupHistory.collection
       .aggregate(pipeline)
       .toArray()) as TRollUpHistoryDetail[];
 
-    const latestTask = await queue.collection.findOne(
+    const latestTask = await imQueue.findOne(
       {
         database: databaseName,
       },
@@ -224,5 +224,3 @@ export class Rollup {
     };
   }
 }
-
-export default Rollup;

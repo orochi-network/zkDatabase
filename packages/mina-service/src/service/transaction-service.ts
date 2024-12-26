@@ -94,7 +94,7 @@ export const SERVICE_TRANSACTION = {
                             // We skip the confirming
                             // Sometime the rpc Mina chain won't stable that throw 404
                             // That lead to confirming status back to unconfirmed
-                            $not: { $eq: ETransactionStatus.Confirming },
+                            $nin: [ETransactionStatus.Confirming],
                           },
                         },
                         {
@@ -106,7 +106,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -115,7 +115,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Unconfirmed,
                         },
                       },
                       {
@@ -144,7 +144,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -153,7 +153,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Failed,
                         },
                       },
                       { session }
@@ -181,7 +181,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -190,7 +190,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Confirmed,
                         },
                       },
                       {
@@ -217,7 +217,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -226,7 +226,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Confirming,
                         },
                       },
                       {
@@ -255,7 +255,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -264,7 +264,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Failed,
                         },
                       },
                       {
@@ -293,7 +293,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                      throw new Error('Can not found transaction');
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -302,7 +302,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Unknown,
                         },
                       },
                       {

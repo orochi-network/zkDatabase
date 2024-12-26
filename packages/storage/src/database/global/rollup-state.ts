@@ -1,26 +1,26 @@
-import { zkDatabaseConstant } from '@common';
-import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
 import { TRollUpHistoryRecord } from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
+import { zkDatabaseConstant } from '@common';
+import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export class ModelRollupHistory extends ModelGeneral<
+export class ModelRollupStatus extends ModelGeneral<
   OptionalId<TRollUpHistoryRecord>
 > {
-  private static instance: ModelRollupHistory;
+  private static instance: ModelRollupStatus;
 
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.databaseCollection.rollupState
     );
   }
 
   public static getInstance() {
-    if (!ModelRollupHistory.instance) {
-      this.instance = new ModelRollupHistory();
+    if (!ModelRollupStatus.instance) {
+      this.instance = new ModelRollupStatus();
     }
     return this.instance;
   }
@@ -31,7 +31,7 @@ export class ModelRollupHistory extends ModelGeneral<
     >(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.databaseCollection.rollupState
     );
     /*
       databaseName: string;
@@ -42,18 +42,8 @@ export class ModelRollupHistory extends ModelGeneral<
     */
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ merkletreeRoot: 1 }, { unique: true, session });
-      await collection.index(
-        { merkletreeRootPrevious: 1 },
-        { unique: true, session }
-      );
-      await collection.index({ proofObjectId: 1 }, { unique: true, session });
-      await collection.index(
-        { transactionObjectId: 1 },
-        { unique: true, session }
-      );
 
       await addTimestampMongoDB(collection, session);
-    }
+
   }
 }

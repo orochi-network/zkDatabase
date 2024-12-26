@@ -30,7 +30,7 @@ export class ModelSecureStorage extends ModelGeneral<
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
       DATABASE_ENGINE.proofService,
-      zkDatabaseConstant.globalCollection.queue
+      zkDatabaseConstant.globalCollection.secure
     );
     /*
       privateKey: string;

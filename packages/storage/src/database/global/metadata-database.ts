@@ -16,7 +16,7 @@ export class ModelMetadataDatabase extends ModelGeneral<
     super(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.metadata_database
+      zkDatabaseConstant.globalCollection.metadataDatabase
     );
   }
 
