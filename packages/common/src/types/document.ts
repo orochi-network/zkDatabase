@@ -5,6 +5,7 @@ import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { EProofStatusDocument } from './proof.js';
+import { TCollectionRequest } from './collection.js';
 
 export type TDocumentField = TSchemaSerializedField;
 
@@ -27,12 +28,7 @@ export type TDocumentRecordNullable = TNullable<
 
 export type TDocumentResponse = TDocumentRecordNullable;
 
-export type TDocumentNamespace = {
-  databaseName: string;
-  collectionName: string;
-};
-
-export type TDocumentFindRequest = TDocumentNamespace & {
+export type TDocumentFindRequest = TCollectionRequest & {
   query?: { [key: string]: string };
   pagination?: TPagination;
 };
@@ -48,7 +44,7 @@ export type TDocumentFindResponse = TPaginationReturn<
   >
 >;
 
-export type TDocumentCreateRequest = TDocumentNamespace & {
+export type TDocumentCreateRequest = TCollectionRequest & {
   document: Record<string, TDocumentField>;
   documentPermission?: number;
 };
@@ -59,7 +55,7 @@ export type TDocumentCreateResponse = {
   merkleProof: TMerkleProof[];
 };
 
-export type TDocumentUpdateRequest = TDocumentNamespace & {
+export type TDocumentUpdateRequest = TCollectionRequest & {
   docId: string;
   document: Record<string, TDocumentField>;
 };
@@ -69,8 +65,11 @@ export type TDocumentUpdateResponse = TMerkleProof[];
 export type TDocumentDropRequest = TDocumentUpdateRequest;
 export type TDocumentDropResponse = TMerkleProof[];
 
-export type TDocumentHistoryRequest = TDocumentNamespace & {
+export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;
   pagination?: TPagination;
 };
-export type TDocumentHistoryResponse = TPaginationReturn<TDocumentResponse[]>;
+
+export type TDocumentHistoryFindResponse = TPaginationReturn<
+  TDocumentResponse[]
+>;

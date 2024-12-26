@@ -1,46 +1,92 @@
 /* eslint-disable no-unused-vars */
-import { JsonProof } from 'o1js';
-import { ETransactionType, TTransactionWithId } from '@zkdb/common';
-
 import {
-  DatabaseSetting,
-  GroupDescription,
-  TGetRollUpHistory,
-} from '../../types';
-import { ZKCollection } from './collection';
-import { ZKGroup } from './group';
-export interface ZKDatabaseConfig {
-  merkleHeight: number;
-}
+  ETransactionType,
+  Schema,
+  TDatabaseCreateRequest,
+  TGroupRecord,
+  TProofStatusDatabaseResponse,
+  TRollUpHistoryResponse,
+  TSchemaExtendable,
+  TTransactionDraftResponse,
+  TUser,
+  TUserRecord,
+  TZkProofResponse,
+} from '@zkdb/common';
+import { ICollection } from './collection';
+import { IGroup } from './group';
+import { IUser } from './user';
+import { CircuitString, UInt32 } from 'o1js';
 
-export interface ZKDatabase {
+export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
+
+export interface IDatabase {
   // Database
-  create(config: ZKDatabaseConfig): Promise<boolean>;
+  create(config: TDatabaseConfig): Promise<boolean>;
 
   exist(): Promise<boolean>;
 
   // Collection
-  collection(name: string): ZKCollection;
-  listCollection(): Promise<string[]>;
+  collection<T extends TSchemaExtendable<any>>(
+    collectionName: string
+  ): ICollection<T>;
+
+  collectionList(): Promise<string[]>;
 
   // Group
-  group(groupName: string): ZKGroup;
-  listGroup(): Promise<GroupDescription[]>;
+  group(groupName: string): IGroup;
 
-  // Settings
-  setting(): Promise<DatabaseSetting>;
+  groupList(): Promise<TGroupRecord[]>;
 
-  // Ownership
-  changeOwner(newOwner: string): Promise<boolean>;
+  // User
+  user(
+    userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
+  ): IUser;
 
-  // Proof
-  getProof(): Promise<JsonProof>;
+  userList(): Promise<TUserRecord[]>;
+
+  // ZK Proof
+  proofZk(): Promise<TZkProofResponse>;
+
+  proofStatus(): Promise<TProofStatusDatabaseResponse>;
 
   // Transaction
-  transactionDraft(transactionType: ETransactionType): Promise<TTransactionWithId>;
-  transactionConfirm(id: string, txHash: string): Promise<boolean>;
+  transactionDraft(
+    transactionType: ETransactionType
+  ): Promise<TTransactionDraftResponse>;
+
+  transactionSubmit(id: string, txHash: string): Promise<boolean>;
 
   // Rollup
-  createRollup(): Promise<boolean>;
-  getRollUpHistory(): Promise<TGetRollUpHistory>;
+  rollUpStart(): Promise<boolean>;
+
+  rollUpHistory(): Promise<TRollUpHistoryResponse>;
 }
+
+const zkdb: IDatabase = {} as any;
+
+zkdb.create({ merkleHeight: 10 });
+
+zkdb.user({ userName: 'test' }).info();
+
+zkdb.collection('users').index.list();
+
+const MySchema = Schema.create({
+  name: CircuitString,
+  age: UInt32,
+});
+
+type TMySchema = typeof MySchema;
+
+zkdb.collection('test').create(MySchema);
+
+const col = zkdb.collection<TMySchema>('test');
+
+col.insert({ name: 'John', age: 30 });
+
+const doc = await zkdb.collection<TMySchema>('test').findOne({ name: 'John' });
+
+const a = await col.metadata.info();
+
+const b = doc?.metadata;
+
+const c = await b?.info();

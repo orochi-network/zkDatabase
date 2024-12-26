@@ -128,6 +128,8 @@ export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
 export type TIndexExistResponse = boolean;
 
 // Index drop
-export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;
+export type TIndexDropRequest = TCollectionRequest & {
+  indexName: string;
+};
 
 export type TIndexDropReponse = boolean;

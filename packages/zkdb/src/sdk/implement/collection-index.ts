@@ -1,12 +1,47 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-dupe-class-members */
 import { IApiClient } from '@zkdb/api';
-import { IndexField } from '../../types/collection-index';
-import { ZKCollectionIndex } from '../interfaces';
+import { TCollectionIndex } from '@zkdb/common';
+import { ICollectionIndex } from '../interfaces';
 
-export class CollectionIndexImpl implements ZKCollectionIndex {
+export class CollectionIndex implements ICollectionIndex {
   private databaseName: string;
+
   private collectionName: string;
+
+  private apiClient: IApiClient;
+
+  async list(): Promise<TCollectionIndex[]> {
+    const result = (
+      await this.apiClient.index.indexList({
+        databaseName: this.databaseName,
+        collectionName: this.collectionName,
+      })
+    ).unwrap();
+  }
+
+  async create(index: TCollectionIndex): Promise<boolean> {
+    return (
+      await this.apiClient.index.indexCreate({
+        databaseName: this.databaseName,
+        collectionName: this.collectionName,
+        index,
+      })
+    ).unwrap();
+  }
+
+  async drop(indexName: string): Promise<boolean> {
+    return (
+      await this.apiClient.index.indexDrop({
+        databaseName: this.databaseName,
+        collectionName: this.collectionName,
+        indexName,
+      })
+    ).unwrap();
+  }
+  /*
+  private databaseName: string;
+
+  private collectionName: string;
+
   private apiClient: IApiClient;
 
   constructor(
@@ -55,5 +90,5 @@ export class CollectionIndexImpl implements ZKCollectionIndex {
     });
 
     return result.unwrap();
-  }
+  }*/
 }

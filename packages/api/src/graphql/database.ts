@@ -1,5 +1,7 @@
 import { gql } from "@apollo/client";
 import {
+  TDatabaseCreateRequest,
+  TDatabaseCreateResponse,
   TDatabaseDeployRequest,
   TDatabaseDeployResponse,
   TDatabaseEnvironmentRequest,
@@ -10,7 +12,6 @@ import {
   TDatabaseInfoResponse,
   TDatabaseListRequest,
   TDatabaseListResponse,
-  TDatabaseRequest,
   TDatabaseStatsRequest,
   TDatabaseStatsResponse,
 } from "@zkdb/common";
@@ -21,7 +22,10 @@ import {
 } from "./common.js";
 
 export const database = <T>(client: TApolloClient<T>) => ({
-  dbCreate: createMutateFunction<TDatabaseDeployRequest, TDatabaseRequest>(
+  dbCreate: createMutateFunction<
+    TDatabaseCreateRequest,
+    TDatabaseCreateResponse
+  >(
     client,
     gql`
       mutation dbCreate($databaseName: String!, $merkleHeight: Int!) {

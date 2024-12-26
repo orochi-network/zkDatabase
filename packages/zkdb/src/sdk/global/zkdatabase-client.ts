@@ -1,4 +1,4 @@
-import { ApiClient, getNetworkEnvironment, IApiClient } from '@zkdb/api';
+import { ApiClient, IApiClient } from '@zkdb/api';
 import { NetworkId, PrivateKey } from 'o1js';
 import { isBrowser, isNetwork } from '@utils';
 import { Authenticator } from '../authentication';
@@ -6,6 +6,8 @@ import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
 import { ZKDatabase, ZKSystem } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 import InMemoryStorage from '../storage/memory';
+import { database } from '@zkdb/api/src/graphql/database';
+import { ENetworkId } from '@zkdb/common/build/src';
 
 type MinaConfig = {
   networkUrl: string;
@@ -55,10 +57,13 @@ export class ZKDatabaseClient {
       throw new Error('Invalid protocol');
     }
     const apiURL = `${abstract}://${host}${pathname}`;
+    const tmpClient = ApiClient.newInstance(apiURL, globalThis.localStorage);
 
     // Get environment variables
 
-    const { networkId, networkUrl } = await getNetworkEnvironment(apiURL);
+    const { networkId, networkUrl } = (
+      await tmpClient.db.dbEnvironment()
+    ).unwrap();
 
     if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
       // Browser environment
@@ -82,12 +87,15 @@ export class ZKDatabaseClient {
       // Nodejs environment
       const storage = new InMemoryStorage();
       const apiClient = ApiClient.newInstance(apiURL, storage);
-      const signer = new NodeSigner(PrivateKey.fromBase58(password), networkId);
+      const signer = new NodeSigner(
+        PrivateKey.fromBase58(password),
+        networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet'
+      );
       return new ZKDatabaseClient(
         apiClient,
         new Authenticator(signer, apiClient, storage),
         {
-          networkId,
+          networkId: networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet',
           networkUrl,
         }
       );

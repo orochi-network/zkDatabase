@@ -1,32 +1,38 @@
 /* eslint-disable no-unused-vars */
+import {
+  TDocumentHistoryFindResponse,
+  TDocumentMetadata,
+  TDocumentRecord,
+  TDocumentUpdateResponse,
+  TMerkleProof,
+  TPagination,
+  TProofStatusDocumentRequest,
+  TSchemaExtendable,
+} from '@zkdb/common';
+import { IMetadata } from './metadata';
 
-import { MerkleWitness, ProofStatus } from '../../types';
-import { DocumentEncoded } from '../schema';
-import { Ownable } from './ownable';
+export type TDocument<T> = Pick<
+  TDocumentRecord,
+  'docId' | 'createdAt' | 'updatedAt'
+> &
+  T;
 
-export interface ZKDocument {
-  get id(): string;
+export interface IDocument<T extends TSchemaExtendable<any>> {
+  get document(): TDocument<T['innerStructure']>;
 
-  get encoded(): DocumentEncoded;
+  get metadata(): IMetadata<TDocumentMetadata>;
 
-  get createdAt(): Date;
+  drop(): Promise<TMerkleProof>;
 
-  get ownership(): Ownable;
+  update(
+    document: Partial<T['innerStructure']>
+  ): Promise<TDocumentUpdateResponse>;
 
-  drop(): Promise<MerkleWitness>;
+  toProvable(type: T): InstanceType<T>;
 
-  toSchema<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-      deserialize: (_doc: DocumentEncoded) => any;
-    },
-  >(
-    type: T
-  ): InstanceType<T>;
+  proofMerkle(): Promise<TMerkleProof[]>;
 
-  getWitness(): Promise<MerkleWitness>;
+  proofStatus(): Promise<TProofStatusDocumentRequest>;
 
-  getProofStatus(): Promise<ProofStatus>;
-
-  getDocumentHistory(): Promise<ZKDocument[]>;
+  history(pagination?: TPagination): Promise<TDocumentHistoryFindResponse[]>;
 }

@@ -1,31 +1,25 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-dupe-class-members */
-import { IApiClient } from '@zkdb/api';
+import {
+  EIndexProperty,
+  ESorting,
+  Schema,
+  TCollectionMetadata,
+  TMerkleProof,
+  TPagination,
+  TPaginationReturn,
+  TSchemaExtendable,
+} from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { Field } from 'o1js';
+import { CircuitString, UInt32 } from 'o1js';
 import {
-  Filter,
-  IndexField,
-  MerkleWitness,
-  OwnershipAndPermission,
-  Pagination,
-} from '../../types';
-import {
-  Ownable,
-  ZKCollection,
-  ZKCollectionIndex,
-  ZKDocument,
+  ICollection,
+  ICollectionIndex,
+  IDocument,
+  IMetadata,
 } from '../interfaces';
-import {
-  DocumentEncoded,
-  ProvableTypeString,
-  ISchemaExtend,
-  SchemaInterface,
-} from '../schema';
-import { CollectionIndexImpl } from './collection-index';
-import { ZKDocumentImpl } from './document';
+import { IApiClient } from '@zkdb/api';
 
-class CollectionOwnership implements Ownable {
+class CollectionMetadata implements IMetadata<TCollectionMetadata> {
+  /*
   private databaseName: string;
   private collectionName: string;
   private apiClient: IApiClient;
@@ -101,10 +95,57 @@ class CollectionOwnership implements Ownable {
       userName,
       ...Permission.from(permissionDetail).toJSON(),
     };
-  }
+  }*/
 }
 
-export class CollectionImpl implements ZKCollection {
+export class Collection<T extends TSchemaExtendable<any>>
+  implements ICollection<T>
+{
+  private databaseName: string;
+  private collectionName: string;
+  private apiClient: IApiClient;
+
+  constructor(
+    apiClient: IApiClient,
+    databaseName: string,
+    collectionName: string
+  ) {
+    this.databaseName = databaseName;
+    this.collectionName = collectionName;
+    this.apiClient = apiClient;
+  }
+
+  get index(): ICollectionIndex {
+    throw new Error('Method not implemented.');
+  }
+  get metadata(): IMetadata<TCollectionMetadata> {
+    throw new Error('Method not implemented.');
+  }
+  exist(): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+  create(
+    schema: T,
+    index?: string[] | Partial<Record<keyof T, ESorting>>[] | undefined,
+    permission?: Permission,
+    groupName?: string
+  ): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+  findOne(filter: Partial<T['innerStructure']>): Promise<IDocument<T> | null> {
+    throw new Error('Method not implemented.');
+  }
+  findMany(
+    filter?: Partial<T['innerStructure']> | undefined,
+    pagination?: TPagination
+  ): Promise<TPaginationReturn<IDocument<T>[]>> {
+    throw new Error('Method not implemented.');
+  }
+  insert(document: T['innerStructure']): Promise<TMerkleProof> {
+    throw new Error('Method not implemented.');
+  }
+
+  /*
   private databaseName: string;
   private collectionName: string;
   private apiClient: IApiClient;
@@ -127,7 +168,7 @@ export class CollectionImpl implements ZKCollection {
     );
   }
 
-  get index(): ZKCollectionIndex {
+  get index(): ICollectionIndex {
     return new CollectionIndexImpl(
       this.databaseName,
       this.collectionName,
@@ -297,5 +338,18 @@ export class CollectionImpl implements ZKCollection {
       isLeft: node.isLeft,
       sibling: Field(node.sibling),
     }));
-  }
+  }*/
 }
+
+const MySchema = Schema.create({
+  name: CircuitString,
+  age: UInt32,
+});
+
+export type MySchemaType = typeof MySchema;
+
+let col = new Collection<MySchemaType>();
+
+col.create(MySchema, ['name'], Permission.policyPrivate());
+
+await col.findOne({ name: 'John', age: 3 });
