@@ -256,7 +256,3 @@ export const indexName = Joi.string()
   .max(128)
   .required()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
-
-export const CollectionIndex = Joi.object()
-  .pattern(Joi.string(), ESortingSchema) // Keys are strings, values must be 'Asc' or 'Desc'
-  .required();

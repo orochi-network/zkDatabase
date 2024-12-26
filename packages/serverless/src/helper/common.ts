@@ -50,7 +50,7 @@ export const convertIndexToMongoFormat = <T = any>(
 ): TCollectionIndexMap<T> =>
   Object.entries(index).reduce((acc, [key, value]) => {
     let val = value === EIndexType.Asc ? 1 : -1;
-    return { ...acc, [`database.${key}.value`]: val };
+    return { ...acc, [`document.${key}.value`]: val };
   }, {});
 
 export const convertIndexToGraphqlFormat = (

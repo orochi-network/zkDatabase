@@ -5,7 +5,6 @@ import {
   collectionName,
   databaseName,
   EIndexType,
-  ESortingSchema,
   groupName,
   O1JS_VALID_TYPE,
   PERMISSION_DEFAULT,

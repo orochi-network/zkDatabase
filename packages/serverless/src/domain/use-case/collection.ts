@@ -8,7 +8,6 @@ import {
   EIndexProperty,
   TCollectionIndex,
   TCollectionIndexInfo,
-  TCollectionIndexMap,
   TCollectionMetadataRecord,
   TParamCollection,
   TPermissionSudo,
@@ -19,16 +18,15 @@ import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Group } from './group';
 import { PermissionSecurity } from './permission-security';
-import { Fill } from '@orochi-network/queue';
 
 export class Collection {
   public static async indexCreate(
     paramCollection: TPermissionSudo<TParamCollection>,
-    collectionIndex: TCollectionIndex[],
+    collectionIndexList: TCollectionIndex[],
     session?: ClientSession
   ): Promise<boolean> {
     // Validate input parameters
-    if (!collectionIndex || collectionIndex.length === 0) {
+    if (!collectionIndexList || collectionIndexList.length === 0) {
       throw new Error('Index is required and cannot be empty.');
     }
     const { databaseName, collectionName, sudo, actor } = paramCollection;
@@ -55,11 +53,13 @@ export class Collection {
     // Actor must have write permission of collection to create index
     if (actorPermission.write) {
       // Validate that all keys in the index exist in the schema
-      const indexPossible = metadataCollection.schema.map((sc) => sc.name);
+      const indexPossible = metadataCollection.schema.map(
+        (schema) => schema.name
+      );
 
       // CAUTION: Array.prototype.flat() required target es2020
 
-      const flatCollectionIndexName = collectionIndex
+      const flatCollectionIndexName = collectionIndexList
         .map((i) => Object.keys(i.index))
         .flat();
 
@@ -80,29 +80,29 @@ export class Collection {
         );
       }
 
-      // Perform concurrency task create
-      const indexFillResult = await Fill(
-        collectionIndex.map(({ index, unique }) => async () => {
-          // Format the index to `document.${field}.value`: 1/-1
-          /* For example
-            [
-              { 'database.name.value': -1, 'database.old.value': 1 },
-              { 'database.name.value': 1 }
-            ]
-           */
-          const indexFormat = convertIndexToMongoFormat(index);
-
-          const result = await ModelCollection.getInstance(
-            databaseName,
-            DATABASE_ENGINE.serverless,
-            collectionName
-          ).index(indexFormat, { session, unique });
-
-          return result;
-        })
+      const imCollection = ModelCollection.getInstance(
+        databaseName,
+        DATABASE_ENGINE.serverless,
+        collectionName
       );
+      // Need to perform a sequentially with traditional for..of loop
+      // If you using Promise.all/allSettled or Fill
+      // You will get race condition even if create a session transaction in it inner function scope
+      // for..of loop for reader friendly code, index list small so the performance not different compare to old school for
+      for (const { index, unique } of collectionIndexList) {
+        const indexFormat = convertIndexToMongoFormat(index);
 
-      return indexFillResult.every(({ success }) => success);
+        const indexResult = await imCollection.index(indexFormat, {
+          session,
+          unique,
+        });
+
+        if (!indexResult) {
+          throw new Error(`Cannot create index ${indexFormat}`);
+        }
+      }
+
+      return true;
     }
 
     throw new Error(
