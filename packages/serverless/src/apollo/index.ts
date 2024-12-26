@@ -20,6 +20,8 @@ import {
   typeDefsRollUp,
   typeDefsTransaction,
   typeDefsUser,
+  resolversPermission,
+  typeDefsPermission,
 } from './app';
 
 export const TypedefsApp = [
@@ -34,6 +36,7 @@ export const TypedefsApp = [
   typeDefsProof,
   typeDefsTransaction,
   typeDefsRollUp,
+  typeDefsPermission,
 ];
 
 export const ResolversApp = [
@@ -47,6 +50,7 @@ export const ResolversApp = [
   resolversProof,
   resolversTransaction,
   resolversRollUp,
+  resolversPermission,
 ];
 
 export * from './validation';

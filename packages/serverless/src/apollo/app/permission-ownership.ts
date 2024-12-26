@@ -34,7 +34,7 @@ export const typeDefsPermission = gql`
       collectionName: String!
       docId: String
       permission: Int!
-    ): CollectionMetadata!
+    ): Boolean!
 
     ownershipTransfer(
       databaseName: String!
