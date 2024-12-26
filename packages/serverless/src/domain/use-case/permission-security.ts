@@ -251,16 +251,14 @@ export class PermissionSecurity {
         docId,
       });
       if (actor !== documentMetadata?.owner) {
-        throw new Error(
-          `Permission ${actor} is not owner of document ${docId}`
-        );
+        throw new Error(`Actor ${actor} is not owner of document ${docId}`);
       }
       const result = await imMetadataDocument.updateOne(
         {
           collectionName,
           docId,
         },
-        { $set: { permission } },
+        { $set: { permission: permission.value } },
         { session }
       );
       return result.acknowledged;
@@ -272,14 +270,14 @@ export class PermissionSecurity {
       });
       if (actor !== collectionMetadata?.owner) {
         throw new Error(
-          `Permission ${actor} is not owner of collection ${collectionName}`
+          `Actor ${actor} is not owner of collection ${collectionName}`
         );
       }
       const result = await imMetadataCollection.updateOne(
         {
           collectionName,
         },
-        { $set: { permission } },
+        { $set: { permission: permission.value } },
         { session }
       );
       return result.acknowledged;
