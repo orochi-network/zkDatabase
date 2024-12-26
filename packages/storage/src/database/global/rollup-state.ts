@@ -35,15 +35,11 @@ export class ModelRollupStatus extends ModelGeneral<
     );
     /*
       databaseName: string;
-      merkletreeRoot: string;
-      merkletreeRootPrevious: string;
-      transactionObjectId: ObjectId;
-      proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
       await collection.index({ databaseName: 1 }, { unique: true, session });
 
       await addTimestampMongoDB(collection, session);
-
+    }
   }
 }

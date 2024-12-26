@@ -102,7 +102,7 @@ export class Rollup {
     databaseName: string,
     session?: ClientSession
   ): Promise<TRollUpDetail> {
-    const ModelRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupHistory = ModelRollupHistory.getInstance();
     const minaNetwork = MinaNetwork.getInstance();
     const imQueue = ModelQueueTask.getInstance();
 
@@ -188,7 +188,7 @@ export class Rollup {
       },
     ];
 
-    const listRollupHistoryDetail = (await ModelRollupHistory.collection
+    const listRollupHistoryDetail = (await imRollupHistory.collection
       .aggregate(pipeline)
       .toArray()) as TRollUpHistoryDetail[];
 
