@@ -1,7 +1,12 @@
 import {
-  TDocumentRecordNullable,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUserGroup,
+} from '@model';
+import {
   TCollectionMetadataRecord,
   TDocumentMetadata,
+  TDocumentRecordNullable,
   TParamCollection,
   TParamDatabase,
   TParamDocument,
@@ -13,11 +18,6 @@ import {
   PermissionBase,
 } from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import {
-  ModelMetadataCollection,
-  ModelMetadataDocument,
-  ModelUserGroup,
-} from '@model';
 import { Database } from './database';
 
 export class PermissionSecurity {
@@ -64,14 +64,12 @@ export class PermissionSecurity {
     // If ownership and permission is not provided then fetch from metadata collection
     const metadata =
       sudo ||
-      (
-        await imMetadataCollection.findOne(
-          {
-            collectionName,
-          },
-          { session }
-        )
-      )?.metadata;
+      (await imMetadataCollection.findOne(
+        {
+          collectionName,
+        },
+        { session }
+      ));
 
     const listGroup = await PermissionSecurity.listGroupOfUser(
       databaseName,
@@ -182,7 +180,11 @@ export class PermissionSecurity {
       PermissionSecurity.requiredPermissionMatch(
         actor,
         listGroup,
-        currentCollection.metadata,
+        {
+          permission: currentCollection.permission,
+          owner: currentCollection.owner,
+          group: currentCollection.group,
+        },
         requiredPermission
       )
     );
@@ -268,7 +270,7 @@ export class PermissionSecurity {
       const collectionMetadata = await imMetadataCollection.findOne({
         collectionName,
       });
-      if (actor !== collectionMetadata?.metadata?.owner) {
+      if (actor !== collectionMetadata?.owner) {
         throw new Error(
           `Permission ${actor} is not owner of collection ${collectionName}`
         );
