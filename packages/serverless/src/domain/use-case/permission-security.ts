@@ -241,7 +241,7 @@ export class PermissionSecurity {
     collectionName: string,
     docId: string | undefined,
     actor: string,
-    permission: PermissionBase,
+    permission: Permission,
     session?: ClientSession
   ): Promise<boolean> {
     if (docId) {
