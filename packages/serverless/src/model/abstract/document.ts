@@ -7,6 +7,7 @@ import {
 } from '@zkdb/common';
 import {
   addTimestampMongoDB,
+  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -48,7 +49,7 @@ export class ModelDocument extends ModelGeneral<
     );
 
     if (!(await collection.isExist())) {
-      await collection.index({ docId: 1, active: 1 }, { session });
+      await createSystemIndex(collection, { docId: 1, active: 1 }, { session });
 
       await addTimestampMongoDB(collection, session);
     }

@@ -50,6 +50,7 @@
   "dependencies": {
     "@apollo/server": "4.11.0",
     "@orochi-network/framework": "^2.3.19",
+    "@orochi-network/queue": "^0.1.11",
     "@orochi-network/utilities": "^0.2.42",
     "@zkdb/common": "^0.1.1",
     "@zkdb/permission": "^0.1.7",

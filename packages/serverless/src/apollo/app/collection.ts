@@ -4,6 +4,7 @@ import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
+  EIndexType,
   ESortingSchema,
   groupName,
   O1JS_VALID_TYPE,
@@ -12,6 +13,7 @@ import {
   TCollectionCreateResponse,
   TCollectionExistRequest,
   TCollectionExistResponse,
+  TCollectionIndex,
   TCollectionListRequest,
   TCollectionListResponse,
   TCollectionMetadataRequest,
@@ -30,17 +32,30 @@ export const schemaField = Joi.object({
   kind: Joi.string()
     .valid(...O1JS_VALID_TYPE)
     .required(),
-  index: Joi.boolean().optional(),
-  sorting: ESortingSchema(false),
 });
 
-export const CollectionCreateRequest = Joi.object<TCollectionCreateRequest>({
-  collectionName,
-  databaseName,
-  group: groupName(false),
-  schema: Joi.array().items(schemaField).optional(),
-  permission: Joi.number().min(0).max(0xffffff).optional(),
+export const JOI_COLLECTION_INDEX = Joi.object<TCollectionIndex>({
+  // Using pattern for Record<string, EIndexType>
+  index: Joi.object()
+    .pattern(
+      Joi.string().required(),
+      Joi.any()
+        .valid(...Object.values(EIndexType))
+        .required()
+    )
+    .required(),
+  unique: Joi.bool().required(),
 });
+
+export const JOI_COLLECTION_CREATE_REQUEST =
+  Joi.object<TCollectionCreateRequest>({
+    collectionName,
+    databaseName,
+    group: groupName(false),
+    schema: Joi.array().items(schemaField).optional(),
+    permission: Joi.number().min(0).max(0xffffff).optional(),
+    collectionIndex: Joi.array().items(JOI_COLLECTION_INDEX).optional(),
+  });
 
 export const typeDefsCollection = gql`
   #graphql
@@ -48,7 +63,7 @@ export const typeDefsCollection = gql`
   type Query
   type Mutation
 
-  type MetadataCollection {
+  type CollectionMetadata {
     collectionName: String!
     schema: [SchemaFieldOutput]!
     metadata: OwnershipAndPermission!
@@ -58,12 +73,12 @@ export const typeDefsCollection = gql`
   }
 
   extend type Query {
-    collectionList(databaseName: String!): [MetadataCollection]!
+    collectionList(databaseName: String!): [CollectionMetadata]!
 
     collectionMetadata(
       databaseName: String!
       collectionName: String!
-    ): MetadataCollection!
+    ): CollectionMetadata!
 
     collectionExist(databaseName: String!, collectionName: String!): Boolean!
   }
@@ -110,10 +125,17 @@ const collectionCreate = authorizeWrapper<
   TCollectionCreateRequest,
   TCollectionCreateResponse
 >(
-  CollectionCreateRequest,
+  JOI_COLLECTION_CREATE_REQUEST,
   async (
     _root,
-    { databaseName, collectionName, schema, group, permission },
+    {
+      databaseName,
+      collectionName,
+      schema,
+      group,
+      permission,
+      collectionIndex,
+    },
     ctx
   ) =>
     withTransaction((session) =>
@@ -126,6 +148,7 @@ const collectionCreate = authorizeWrapper<
         schema,
         group || GROUP_DEFAULT_ADMIN,
         permission ? Permission.from(permission) : PERMISSION_DEFAULT,
+        collectionIndex,
         session
       )
     )

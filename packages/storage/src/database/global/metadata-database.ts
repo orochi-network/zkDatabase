@@ -1,7 +1,12 @@
+import { zkDatabaseConstant } from '@common';
+import {
+  addTimestampMongoDB,
+  createSystemIndex,
+  DATABASE_ENGINE,
+  ZkDbMongoIndex,
+} from '@helper';
 import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import { ClientSession, Filter, FindOptions, OptionalId } from 'mongodb';
-import { zkDatabaseConstant } from '@common';
-import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -58,17 +63,30 @@ export class ModelMetadataDatabase extends ModelGeneral<
         merkleHeight: number;
         appPublicKey: string;
       */
-      await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ merkleHeight: 1 }, { unique: false, session });
-      await collection.index({ appPublicKey: 1 }, { unique: false, session });
-      // Compound index
-      await collection.index(
-        { databaseName: 1, databaseOwner: 1 },
+      await createSystemIndex(
+        collection,
+        { databaseName: 1 },
         { unique: true, session }
       );
-      await collection.index(
+      await createSystemIndex(collection, { merkleHeight: 1 }, { session });
+      await createSystemIndex(collection, { appPublicKey: 1 }, { session });
+
+      // Compound index
+      await createSystemIndex(
+        collection,
+        { databaseName: 1, databaseOwner: 1 },
+        {
+          unique: true,
+          session,
+        }
+      );
+      await createSystemIndex(
+        collection,
         { databaseOwner: 1, merkleHeight: 1 },
-        { unique: false, session }
+
+        {
+          session,
+        }
       );
       // Timestamp index
       await addTimestampMongoDB(collection, session);

@@ -10,7 +10,11 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
-import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import {
+  addTimestampMongoDB,
+  createSystemIndex,
+  DATABASE_ENGINE,
+} from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -84,24 +88,6 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         session,
       }
     );
-  }
-
-  public async getTasksByCollection(
-    collectionName: string
-  ): Promise<TQueueRecord[] | null> {
-    if (!this.collection) {
-      throw new Error('TaskQueue is not connected to the database.');
-    }
-
-    try {
-      const result = await this.collection
-        .find({ collection: collectionName })
-        .toArray();
-      return result;
-    } catch (error) {
-      console.error('Failed to fetch tasks', error);
-      return null;
-    }
   }
 
   public async getNewTask(options?: FindOptions): Promise<TQueueRecord | null> {
@@ -188,18 +174,24 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       error?: string;
     */
     if (!(await collection.isExist())) {
-      await collection.index(
+      await createSystemIndex(
+        collection,
         { databaseName: 1, operationNumber: 1 },
         { unique: true, session }
       );
-      await collection.index({ merkleRoot: 1 }, { unique: false, session });
-      await collection.index({ merkleIndex: 1 }, { unique: false, session });
-      await collection.index({ hash: 1 }, { unique: true, session });
+      await createSystemIndex(collection, { merkleRoot: 1 }, { session });
+      await createSystemIndex(collection, { merkleIndex: 1 }, { session });
+      await createSystemIndex(
+        collection,
+        { hash: 1 },
+        { unique: true, session }
+      );
 
       // Index for acquiring the next task from the queue
-      await collection.index(
+      await createSystemIndex(
+        collection,
         { status: 1, databaseName: 1, createdAt: 1 },
-        { unique: false, session }
+        { session }
       );
 
       await addTimestampMongoDB(collection, session);

@@ -1,6 +1,7 @@
 import { TUserGroupRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
+  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -162,10 +163,10 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { session });
-      await collection.index({ groupName: 1 }, { session });
-      await collection.index({ groupOjectId: 1 }, { session });
-      await collection.index({ userObjectId: 1 }, { session });
+      await createSystemIndex(collection, { userName: 1 }, { session });
+      await createSystemIndex(collection, { groupName: 1 }, { session });
+      await createSystemIndex(collection, { groupOjectId: 1 }, { session });
+      await createSystemIndex(collection, { userObjectId: 1 }, { session });
 
       await addTimestampMongoDB(collection, session);
     }

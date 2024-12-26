@@ -1,6 +1,7 @@
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
+  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -94,9 +95,21 @@ export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { unique: true, session });
-      await collection.index({ publicKey: 1 }, { unique: true, session });
-      await collection.index({ email: 1 }, { unique: true, session });
+      await createSystemIndex(
+        collection,
+        { userName: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
+        { publicKey: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
+        { email: 1 },
+        { unique: true, session }
+      );
 
       await addTimestampMongoDB(collection, session);
     }

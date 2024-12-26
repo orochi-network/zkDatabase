@@ -1,9 +1,9 @@
 import { OwnershipAndPermission } from '@zkdb/permission';
 import type { IndexDirection } from 'mongodb';
+import { TSchemaSerializedFieldDefinition } from '../schema.js';
 import { TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
 import { TCollectionMetadata } from './metadata.js';
-import { TSchemaFieldDefinition } from './schema.js';
 
 /**
  * Sorting type
@@ -11,7 +11,7 @@ import { TSchemaFieldDefinition } from './schema.js';
  * @property {string} Asc - Ascending -1
  * @property {string} Desc - Descending 1
  */
-export enum ESorting {
+export enum EIndexType {
   Asc = 'Asc',
   Desc = 'Desc',
 }
@@ -19,20 +19,22 @@ export enum ESorting {
 /**
  * Property type
  * The value must compatible with MongoDB
+ * This enum is for response type/showing data, not for input
  * @enum
  * @readonly
  * @property {string} Compound - Compound index
- * @property {string} Unique - Unique index
+ * @property {string} Single - Single index
  */
 export enum EIndexProperty {
   // Pascal case to consist with Graphql Enum type
   Compound = 'Compound',
-  Unique = 'Unique',
+  Single = 'Single',
 }
 
-export type TCollectionIndex<T = Record<string, any>> = Partial<
-  Record<keyof T, ESorting>
->;
+export type TCollectionIndex = {
+  index: Record<string, EIndexType>;
+  unique: boolean;
+};
 
 /** Mapping type of index on server side */
 export type TCollectionIndexMap<T = any> = {
@@ -42,7 +44,7 @@ export type TCollectionIndexMap<T = any> = {
 // It's base type of collection, it isn't how it will be store in mongodb
 export type TCollection = {
   collectionName: string;
-  schema: TSchemaFieldDefinition[];
+  schema: TSchemaSerializedFieldDefinition[];
 };
 
 // Collection index info in MongoDB
@@ -55,13 +57,18 @@ export type TCollectionIndexInfoMongo = {
 };
 
 // Mapped collection index info
-export type TCollectionIndexInfo = TPickAlter<
+export type TCollectionIndexInfo = Pick<
   TCollectionIndexInfoMongo,
-  {
-    name: 'indexName';
-    since: 'createdAt';
-  }
->;
+  'access' | 'property' | 'size'
+> &
+  TPickAlter<
+    TCollectionIndexInfoMongo,
+    {
+      name: 'indexName';
+      since: 'createdAt';
+    }
+  > &
+  TCollectionIndex;
 
 export type TCollectionRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'>;
@@ -76,7 +83,9 @@ export type TCollectionRequest = TDatabaseRequest &
  */
 export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
-  Pick<OwnershipAndPermission, 'permission' | 'group'>;
+  Pick<OwnershipAndPermission, 'permission' | 'group'> & {
+    collectionIndex?: TCollectionIndex[];
+  };
 
 export type TCollectionCreateResponse = boolean;
 
@@ -102,7 +111,7 @@ export type TIndexListResponse = TCollectionIndexInfo[];
 // Index create
 export type TIndexCreateRequest = TIndexRequest &
   TCollectionRequest & {
-    index: TCollectionIndex;
+    index: TCollectionIndex[];
   };
 
 export type TIndexCreateResponse = boolean;
@@ -110,7 +119,7 @@ export type TIndexCreateResponse = boolean;
 // Index exist
 export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
 
-export type TIndexExistReponse = boolean;
+export type TIndexExistResponse = boolean;
 
 // Index drop
 export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;

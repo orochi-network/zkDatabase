@@ -1,28 +1,34 @@
-import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
+import {
+  convertIndexToGraphqlFormat,
+  convertIndexToMongoFormat,
+  getCurrentTime,
+} from '@helper';
 import { ModelDocument, ModelMetadataCollection } from '@model';
 import {
   EIndexProperty,
+  TCollectionIndex,
   TCollectionIndexInfo,
   TCollectionIndexMap,
   TCollectionMetadataRecord,
   TParamCollection,
   TPermissionSudo,
-  TSchemaFieldDefinition,
+  TSchemaSerializedFieldDefinition,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Group } from './group';
 import { PermissionSecurity } from './permission-security';
+import { Fill } from '@orochi-network/queue';
 
 export class Collection {
   public static async indexCreate(
     paramCollection: TPermissionSudo<TParamCollection>,
-    index: TCollectionIndexMap,
+    collectionIndex: TCollectionIndex[],
     session?: ClientSession
   ): Promise<boolean> {
     // Validate input parameters
-    if (!index || Object.keys(index).length === 0) {
+    if (!collectionIndex || collectionIndex.length === 0) {
       throw new Error('Index is required and cannot be empty.');
     }
     const { databaseName, collectionName, sudo, actor } = paramCollection;
@@ -49,11 +55,21 @@ export class Collection {
     // Actor must have write permission of collection to create index
     if (actorPermission.write) {
       // Validate that all keys in the index exist in the schema
-      const indexPossible = metadataCollection.schema.map(
-        (e) => `document.${e.name}.value`
-      );
+      const indexPossible = metadataCollection.schema.map((sc) => sc.name);
 
-      const invalidIndex = Object.keys(index).filter(
+      // CAUTION: Array.prototype.flat() required target es2020
+
+      const flatCollectionIndexName = collectionIndex
+        .map((i) => Object.keys(i.index))
+        .flat();
+
+      // Using set to filter out duplicate
+      // For example:
+      /* 
+         { index: { name: "Desc", old: "Asc" }, unique: true },
+         { index: { name: "Asc" }, unique: false },
+      */
+      const invalidIndex = [...new Set(flatCollectionIndexName)].filter(
         (i) => !indexPossible.includes(i)
       );
 
@@ -64,14 +80,29 @@ export class Collection {
         );
       }
 
-      // Create the index using ModelCollection
-      const result = ModelCollection.getInstance(
-        databaseName,
-        DATABASE_ENGINE.serverless,
-        collectionName
-      ).index(index, { session });
+      // Perform concurrency task create
+      const indexFillResult = await Fill(
+        collectionIndex.map(({ index, unique }) => async () => {
+          // Format the index to `document.${field}.value`: 1/-1
+          /* For example
+            [
+              { 'database.name.value': -1, 'database.old.value': 1 },
+              { 'database.name.value': 1 }
+            ]
+           */
+          const indexFormat = convertIndexToMongoFormat(index);
 
-      return result;
+          const result = await ModelCollection.getInstance(
+            databaseName,
+            DATABASE_ENGINE.serverless,
+            collectionName
+          ).index(indexFormat, { session, unique });
+
+          return result;
+        })
+      );
+
+      return indexFillResult.every(({ success }) => success);
     }
 
     throw new Error(
@@ -86,16 +117,16 @@ export class Collection {
     const actorPermission =
       await PermissionSecurity.collection(paramCollection);
     if (actorPermission.read) {
-      const modelCollection = ModelCollection.getInstance(
+      const imCollection = ModelCollection.getInstance(
         databaseName,
         DATABASE_ENGINE.serverless,
         collectionName
       );
 
-      const stats = await modelCollection.info();
+      const stats = await imCollection.info();
       const indexSizes = stats.indexSizes || {};
 
-      const indexUsageStats = await modelCollection.collection
+      const indexUsageStats = await imCollection.collection
         .aggregate([{ $indexStats: {} }])
         .toArray();
 
@@ -106,31 +137,37 @@ export class Collection {
         }
       });
 
-      const indexes = await modelCollection.collection.indexes();
-      await modelCollection.collection.indexInformation();
+      const indexes = await imCollection.collection.indexes();
+
+      // const x = await imCollection.collection.listIndexes();
       const validIndexes = indexes.filter(
         (indexDef): indexDef is typeof indexDef & { name: string } =>
           indexDef.name !== undefined
       );
 
       const indexList: TCollectionIndexInfo[] = validIndexes.map((indexDef) => {
-        const { name, key } = indexDef;
+        const { name, key, unique } = indexDef;
+
         const size = indexSizes[name] || 0;
         const usageStats = indexUsageMap[name] || {};
         const access = usageStats.accesses?.ops || 0;
         const createdAt = usageStats.accesses?.since
           ? new Date(usageStats.accesses.since)
           : new Date(0);
+
         const property =
           Object.keys(key).length > 1
             ? EIndexProperty.Compound
-            : EIndexProperty.Unique;
+            : EIndexProperty.Single;
+
         return {
           indexName: name,
           size,
           access,
           createdAt,
           property,
+          index: convertIndexToGraphqlFormat(key),
+          unique: unique || false,
         };
       });
 
@@ -194,9 +231,10 @@ export class Collection {
 
   public static async create(
     paramCollection: TParamCollection,
-    schema: TSchemaFieldDefinition[],
+    schema: TSchemaSerializedFieldDefinition[],
     groupName: string,
     permission: Permission,
+    collectionIndex?: TCollectionIndex[],
     session?: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
@@ -264,15 +302,13 @@ export class Collection {
     // Create built-in indexes
     await ModelDocument.init(databaseName, collectionName, session);
 
-    // Create index by schema definition
-    const collectionIndex = convertSchemaDefinitionToIndex(schema);
-
-    if (Object.keys(collectionIndex).length > 0) {
+    if (collectionIndex && collectionIndex.length > 0) {
       const result = await Collection.indexCreate(
         { databaseName, actor, collectionName },
         collectionIndex,
         session
       );
+
       return result;
     }
 

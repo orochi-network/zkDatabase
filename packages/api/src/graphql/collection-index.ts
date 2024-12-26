@@ -4,7 +4,7 @@ import {
   TIndexCreateResponse,
   TIndexDropReponse,
   TIndexDropRequest,
-  TIndexExistReponse,
+  TIndexExistResponse,
   TIndexExistRequest,
   TIndexListRequest,
   TIndexListResponse,
@@ -50,7 +50,7 @@ export const collectionIndex = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.indexDrop
   ),
-  indexExist: createQueryFunction<TIndexExistRequest, TIndexExistReponse>(
+  indexExist: createQueryFunction<TIndexExistRequest, TIndexExistResponse>(
     client,
     gql`
       query indexExist(

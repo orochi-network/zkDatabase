@@ -1,4 +1,4 @@
-import { ESorting, ETransactionType, TDocumentField } from '@types';
+import { EIndexType, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
 import Joi from 'joi';
 
@@ -18,7 +18,7 @@ export const O1JS_VALID_TYPE = [
 ];
 
 export const ESortingSchema = (required: boolean = true) => {
-  const joiSorting = Joi.string().valid(ESorting.Asc, ESorting.Desc);
+  const joiSorting = Joi.string().valid(EIndexType.Asc, EIndexType.Desc);
   return required ? joiSorting.required() : joiSorting.optional();
 };
 
@@ -248,7 +248,7 @@ export const proofTimestamp = Joi.number().custom((value, helper) => {
   );
 });
 
-export const sortingOrder = Joi.string().valid(...Object.values(ESorting));
+export const sortingOrder = Joi.string().valid(...Object.values(EIndexType));
 
 export const indexName = Joi.string()
   .trim()

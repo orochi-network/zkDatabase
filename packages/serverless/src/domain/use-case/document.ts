@@ -376,8 +376,9 @@ export class Document {
     listDocument: TDocumentRecordNullable[],
     collectionName: string
   ): Promise<TWithProofStatus<TDocumentRecordNullable>[]> {
-    const listQueueTask =
-      await ModelQueueTask.getInstance().getTasksByCollection(collectionName);
+    const listQueueTask = await ModelQueueTask.getInstance()
+      .find({ collectionName })
+      .toArray();
 
     const taskMap = new Map(
       listQueueTask?.map((task) => [task.docId, task.status]) || []

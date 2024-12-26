@@ -1,5 +1,9 @@
 import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE, addTimestampMongoDB } from '@helper';
+import {
+  DATABASE_ENGINE,
+  addTimestampMongoDB,
+  createSystemIndex,
+} from '@helper';
 import { TSecureStorageRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
@@ -37,9 +41,21 @@ export class ModelSecureStorage extends ModelGeneral<
       databaseName: string;
     */
     if (!(await collection.isExist())) {
-      await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ privateKey: 1 }, { unique: true, session });
-      await collection.index({ publicKey: 1 }, { unique: true, session });
+      await createSystemIndex(
+        collection,
+        { databaseName: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
+        { privateKey: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
+        { publicKey: 1 },
+        { unique: true, session }
+      );
 
       await addTimestampMongoDB(collection, session);
     }

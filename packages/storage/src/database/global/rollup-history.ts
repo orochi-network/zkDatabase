@@ -1,7 +1,11 @@
 import { TRollUpHistoryRecord } from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
-import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
+import {
+  addTimestampMongoDB,
+  createSystemIndex,
+  DATABASE_ENGINE,
+} from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -41,14 +45,28 @@ export class ModelRollup extends ModelGeneral<
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
-      await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ merkletreeRoot: 1 }, { unique: true, session });
-      await collection.index(
+      await createSystemIndex(
+        collection,
+        { databaseName: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
+        { merkletreeRoot: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
         { merkletreeRootPrevious: 1 },
         { unique: true, session }
       );
-      await collection.index({ proofObjectId: 1 }, { unique: true, session });
-      await collection.index(
+      await createSystemIndex(
+        collection,
+        { proofObjectId: 1 },
+        { unique: true, session }
+      );
+      await createSystemIndex(
+        collection,
         { transactionObjectId: 1 },
         { unique: true, session }
       );
