@@ -27,11 +27,7 @@ import {
   ModelSequencer,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import {
-  DEFAULT_PAGINATION,
-  ZKDATABASE_GROUP_SYSTEM,
-  ZKDATABASE_USER_SYSTEM,
-} from '@common';
+import { ZKDATABASE_GROUP_SYSTEM, ZKDATABASE_USER_SYSTEM } from '@common';
 import { getCurrentTime } from '@helper';
 import {
   ModelDocument,
@@ -116,9 +112,7 @@ export class Document {
       throw new Error('Cannot get documentSchema');
     }
 
-    const {
-      metadata: { permission: collectionPermission },
-    } = documentSchema;
+    const { permission: collectionPermission } = documentSchema;
 
     const permissionCombine = permission.combine(
       Permission.from(collectionPermission)
@@ -139,7 +133,7 @@ export class Document {
         // Overwrite inherited permission with the new one
         permission: permissionCombine.value,
         owner: actor,
-        group: documentSchema.metadata.group,
+        group: documentSchema.group,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
