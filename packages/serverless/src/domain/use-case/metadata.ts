@@ -37,7 +37,7 @@ export class Metadata {
         collectionName,
         actor,
         // We going to reuse metadata from above to minimize the number of queries.
-        sudo: sudo || metadata.metadata,
+        sudo: sudo || metadata,
       },
       session
     );

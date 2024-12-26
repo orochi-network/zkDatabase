@@ -1,6 +1,7 @@
+import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
+import { ModelDocument, ModelMetadataCollection } from '@model';
 import {
   EIndexProperty,
-  PERMISSION_DEFAULT,
   TCollectionIndexInfo,
   TCollectionIndexMap,
   TCollectionMetadataRecord,
@@ -10,10 +11,7 @@ import {
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
-import { ModelDocument, ModelMetadataCollection } from '@model';
 import { ClientSession } from 'mongodb';
-import { GROUP_DEFAULT_ADMIN } from '@common';
-import { convertSchemaDefinitionToIndex, getCurrentTime } from '@helper';
 import { Group } from './group';
 import { PermissionSecurity } from './permission-security';
 
@@ -34,15 +32,16 @@ export class Collection {
       databaseName
     ).getMetadata(collectionName, { session });
 
-    if (!metadataCollection?.metadata) {
+    if (!metadataCollection) {
       throw new Error(`Metadata not found for collection ${collectionName}`);
     }
+
     const actorPermission = await PermissionSecurity.collection(
       {
         databaseName,
         collectionName,
         actor,
-        sudo: sudo || metadataCollection.metadata,
+        sudo: sudo || metadataCollection,
       },
       session
     );
@@ -245,11 +244,9 @@ export class Collection {
       {
         collectionName,
         schema,
-        metadata: {
-          owner: actor,
-          group: groupName,
-          permission: permission.value,
-        },
+        owner: actor,
+        group: groupName,
+        permission: permission.value,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },

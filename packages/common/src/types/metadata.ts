@@ -21,10 +21,9 @@ export type TCollectionMetadataMongo = {
 };
 
 // Collection metadata
-export type TCollectionMetadata = TMetadataDetail<
-  TCollection & Partial<TCollectionMetadataMongo>,
-  TMetadataBasic
->;
+export type TCollectionMetadata = TCollection &
+  Partial<TCollectionMetadataMongo> &
+  TMetadataBasic;
 
 export type TCollectionMetadataRecord = TDbRecord<TCollectionMetadata>;
 
