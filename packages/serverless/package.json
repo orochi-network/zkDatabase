@@ -58,7 +58,7 @@
     "axios": "1.7.9",
     "connect-redis": "8.0.1",
     "cors": "2.8.5",
-    "express": "4.21.1",
+    "express": "4.21.2",
     "express-fileupload": "1.5.1",
     "express-session": "1.18.0",
     "graphql-scalars": "1.24.0",

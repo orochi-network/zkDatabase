@@ -32,7 +32,7 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/cors": "^2.8.17",
     "@types/express-fileupload": "1.5.1",
-    "@types/express-session": "1.18.0",
+    "@types/express-session": "1.18.1",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^8.18.1",

@@ -18,7 +18,7 @@ import {
 } from 'o1js';
 import { TMerkleNodeJson } from './types/merkle-tree';
 
-export const ProvableTypeMap = {
+export const PROVABLE_TYPE_MAP = {
   CircuitString,
   UInt32,
   UInt64,
@@ -33,10 +33,29 @@ export const ProvableTypeMap = {
   MerkleMapWitness,
 } as const;
 
-export type TProvableTypeString = keyof typeof ProvableTypeMap;
+export type TProvableType =
+  (typeof PROVABLE_TYPE_MAP)[keyof typeof PROVABLE_TYPE_MAP];
+
+export type TProvableTypeString = keyof typeof PROVABLE_TYPE_MAP;
+
+export type TSchemaQueryMap<T> = {
+  [K in keyof T]: T[K] extends typeof UInt64
+    ? bigint
+    : T[K] extends typeof Int64
+      ? bigint
+      : T[K] extends typeof Sign
+        ? boolean
+        : T[K] extends typeof Bool
+          ? boolean
+          : T[K] extends typeof UInt32
+            ? number
+            : T[K] extends MerkleMapWitness
+              ? TMerkleNodeJson[]
+              : string; // Fallback to `any` if the type is not recognized
+};
 
 /** Map of Provable types to their corresponding JavaScript types. */
-type TProvableSerializationMap = {
+type TProvableToSerializedMap = {
   CircuitString: string;
   UInt32: number;
   Int64: bigint;
@@ -53,16 +72,16 @@ type TProvableSerializationMap = {
 
 /**
  * Represents all possible serialized values that can be stored in a provable
- * field. This is a union type of all values in the TProvableSerializationMap.
+ * field. This is a union type of all values in the TProvableToSerializedMap.
  */
-export type TProvableSerializationValue =
-  TProvableSerializationMap[keyof TProvableSerializationMap];
+export type TSerializedValue =
+  TProvableToSerializedMap[keyof TProvableToSerializedMap];
 
 /**
  * Represents a field with a name, kind, and the actual value.
  * Rendered as a union of all possible field types.
  * ```ts
- * type TContractSchemaField = {
+ * type TSchemaSerializedField = {
  *     name: string;
  *     kind: "CircuitString";
  *     value: string;
@@ -76,44 +95,47 @@ export type TProvableSerializationValue =
  * }
  * ```
  */
-export type TContractSchemaField = {
+export type TSchemaSerializedField = {
   [K in TProvableTypeString]: {
     name: string;
     kind: K;
-    value: TProvableSerializationMap[K];
+    value: TProvableToSerializedMap[K];
   };
 }[TProvableTypeString];
 
-export type TContractSchemaFieldDefinition = Omit<
-  TContractSchemaField,
+export type TSchemaSerializedFieldDefinition = Omit<
+  TSchemaSerializedField,
   'value'
 >;
 
 export interface ISchemaExtend {
-  serialize(): TContractSchemaField[];
+  serialize(): TSchemaSerializedField[];
   hash(): Field;
 }
 
 export type TSchemaExtendable<A> = Struct<InferProvable<A> & ISchemaExtend> &
-  ISchemaStaticExtend<A>;
+  ISchemaStatic<A>;
 
-export interface ISchemaStaticExtend<A> {
+export interface ISchemaStatic<A> {
+  innerStructure: TSchemaQueryMap<A>;
   // eslint-disable-next-line no-use-before-define
-  deserialize(_doc: TContractSchemaField[]): InstanceType<TSchemaExtendable<A>>;
-  getSchema(): TContractSchemaFieldDefinition[];
+  deserialize(
+    doc: TSchemaSerializedField[]
+  ): InstanceType<TSchemaExtendable<A>>;
+  getSchemaDefinition(): TSchemaSerializedFieldDefinition[];
 }
 
-export type TProvableMapped<T extends TContractSchemaFieldDefinition[]> = {
-  [Property in T[number]['name']]?: (typeof ProvableTypeMap)[TProvableTypeString];
+export type TProvableMapped<T extends TSchemaSerializedFieldDefinition[]> = {
+  [Property in T[number]['name']]?: (typeof PROVABLE_TYPE_MAP)[TProvableTypeString];
 };
 
-export function toInnerStructure<T extends TContractSchemaFieldDefinition[]>(
+function toInnerStructure<T extends TSchemaSerializedFieldDefinition[]>(
   schema: T
 ): TProvableMapped<T> {
   const result: Partial<TProvableMapped<T>> = {};
   schema.forEach(({ name, kind }) => {
     const key = name as keyof TProvableMapped<T>;
-    result[key] = ProvableTypeMap[kind];
+    result[key] = PROVABLE_TYPE_MAP[kind];
   });
   return result as TProvableMapped<T>;
 }
@@ -122,10 +144,12 @@ export class Schema {
   public static create<A, T extends InferProvable<A> = InferProvable<A>>(
     type: A
   ): TSchemaExtendable<A> & (new (..._args: T[]) => T) {
-    class Document extends Struct(type) {
-      private static schemaEntries: TContractSchemaFieldDefinition[] =
+    class SchemaProvable extends Struct(type) {
+      public innerStructure: TSchemaQueryMap<A> = type as any;
+
+      private static schemaEntries: TSchemaSerializedFieldDefinition[] =
         Object.entries(type as any).map(
-          ([name, kind]): TContractSchemaFieldDefinition => {
+          ([name, kind]): TSchemaSerializedFieldDefinition => {
             return {
               name,
               kind: (kind as any).name.replace(/^_/, ''),
@@ -133,20 +157,20 @@ export class Schema {
           }
         );
 
-      public static getSchema(): TContractSchemaFieldDefinition[] {
-        return Document.schemaEntries.map(({ name, kind }) => ({
+      public static getSchemaDefinition(): TSchemaSerializedFieldDefinition[] {
+        return SchemaProvable.schemaEntries.map(({ name, kind }) => ({
           name,
           kind,
         }));
       }
 
       // Serialize the document to a Uint8Array
-      serialize(): TContractSchemaField[] {
+      serialize(): TSchemaSerializedField[] {
         const anyThis = <any>this;
         const result: any = [];
-        for (let i = 0; i < Document.schemaEntries.length; i += 1) {
-          const { name, kind } = Document.schemaEntries[i];
-          let value: TProvableSerializationValue;
+        for (let i = 0; i < SchemaProvable.schemaEntries.length; i += 1) {
+          const { name, kind } = SchemaProvable.schemaEntries[i];
+          let value: TSerializedValue;
           switch (kind) {
             case 'PrivateKey':
             case 'PublicKey':
@@ -183,10 +207,10 @@ export class Schema {
 
       // Returns the hash of the document
       hash(): Field {
-        return Poseidon.hash(Document.toFields(<any>this));
+        return Poseidon.hash(SchemaProvable.toFields(<any>this));
       }
 
-      static deserialize(doc: TContractSchemaField[]): Document {
+      static deserialize(doc: TSchemaSerializedField[]): SchemaProvable {
         const result: any = {};
 
         for (let i = 0; i < doc.length; i += 1) {
@@ -196,7 +220,7 @@ export class Schema {
             case 'PrivateKey':
             case 'PublicKey':
             case 'Signature':
-              result[name] = ProvableTypeMap[kind].fromBase58(value);
+              result[name] = PROVABLE_TYPE_MAP[kind].fromBase58(value);
               break;
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
@@ -204,7 +228,7 @@ export class Schema {
             case 'Field':
             case 'UInt32':
             case 'Int64':
-              result[name] = ProvableTypeMap[kind].from(value);
+              result[name] = PROVABLE_TYPE_MAP[kind].from(value);
               break;
             case 'Bool':
               result[name] = new Bool(value);
@@ -215,17 +239,17 @@ export class Schema {
               result[name] = value ? Sign.one : Sign.minusOne;
               break;
             default:
-              result[name] = ProvableTypeMap[kind].fromString(value);
+              result[name] = PROVABLE_TYPE_MAP[kind].fromString(value);
           }
         }
-        return new Document(result);
+        return new SchemaProvable(result);
       }
     }
 
-    return Document as any;
+    return SchemaProvable as any;
   }
 
-  public static fromRecord(record: string[][]) {
+  public static fromEntries(record: string[][]) {
     return this.fromSchema(
       record.map(([name, kind]) => ({
         name,
@@ -234,7 +258,7 @@ export class Schema {
     );
   }
 
-  public static fromSchema(schema: TContractSchemaFieldDefinition[]) {
+  public static fromSchema(schema: TSchemaSerializedFieldDefinition[]) {
     return Schema.create(toInnerStructure(schema));
   }
 }
