@@ -148,6 +148,20 @@ export class ModelDocument extends ModelGeneral<
   public async countActiveDocuments(filter?: Filter<TDocumentRecordNullable>) {
     return this.collection.countDocuments({ ...filter, active: true });
   }
+
+  public static indexKeyFormat(key: string) {
+    if (!key) {
+      throw new Error('Field name cannot be empty.');
+    }
+    if (key.startsWith('$')) {
+      throw new Error(`Field name '${key}' cannot start with '$'.`);
+    }
+    if (key.includes('\0')) {
+      throw new Error(`Field name '${key}' cannot contain null characters.`);
+    }
+
+    return `document.${key}.value`;
+  }
 }
 
 export default ModelDocument;

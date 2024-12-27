@@ -1,3 +1,4 @@
+import { ModelDocument } from '@model';
 import { EIndexType, TCollectionIndexMap } from '@zkdb/common';
 import { IndexDirection } from 'mongodb';
 
@@ -50,7 +51,7 @@ export const convertIndexToMongoFormat = <T = any>(
 ): TCollectionIndexMap<T> =>
   Object.entries(index).reduce((acc, [key, value]) => {
     let val = value === EIndexType.Asc ? 1 : -1;
-    return { ...acc, [`document.${key}.value`]: val };
+    return { ...acc, [ModelDocument.indexKeyFormat(key)]: val };
   }, {});
 
 export const convertIndexToGraphqlFormat = (

@@ -1,3 +1,5 @@
+import { ModelDocument } from '@model';
+
 export interface FilterCriteria {
   [key: string]: any;
 }
@@ -35,7 +37,7 @@ export function parseQuery(input: FilterCriteria): FilterCriteria {
       if (key.includes('$zkdb::')) {
         query[key.replace('$zkdb::', '')] = String(value);
       } else {
-        query[`document.${key}.value`] = value;
+        query[ModelDocument.indexKeyFormat(key)] = value;
       }
     }
   }
