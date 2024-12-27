@@ -1,4 +1,4 @@
-import { TUserGroupRecord, TUserRecord } from '@zkdb/common';
+import { TGroupRecord, TUserGroupRecord, TUserRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
   DATABASE_ENGINE,
@@ -52,7 +52,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
       Pick<TUserRecord, 'userName' | 'publicKey' | 'email' | '_id'>
     >,
     options?: FindOptions
-  ): Promise<string[]> {
+  ): Promise<TGroupRecord[]> {
     const imUser = new ModelUser();
     const user = await imUser.findOne(userQuery, options);
     if (!user) {
@@ -60,14 +60,14 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     }
 
     const imGroup = new ModelGroup(this.databaseName);
-    const groupsList = imGroup.find(
+    const listGroup = imGroup.find(
       {
         _id: { $in: await this.listGroupId(user.userName) },
       },
       options
     );
 
-    return groupsList.map((group) => group.groupName).toArray();
+    return listGroup.toArray();
   }
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
@@ -77,10 +77,10 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
     const modelGroup = new ModelGroup(this.databaseName);
-    const availableGroups = modelGroup.find({
+    const listAvailableGroup = modelGroup.find({
       groupName: { $in: groupName },
     });
-    return availableGroups.map((group) => group._id).toArray();
+    return listAvailableGroup.map((group) => group._id).toArray();
   }
 
   public async addUserToGroup(
