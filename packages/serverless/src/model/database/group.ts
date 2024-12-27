@@ -41,8 +41,8 @@ export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
   public async dropGroup(groupObjectId: ObjectId, session: ClientSession) {
     const imUserGroup = new ModelUserGroup(this.databaseName);
 
-    await imUserGroup.deleteMany({ groupObjectId }, session);
-    await this.deleteOne({ _id: groupObjectId }, session);
+    await imUserGroup.deleteMany({ groupObjectId }, { session });
+    await this.deleteOne({ _id: groupObjectId }, { session });
   }
 }
 
