@@ -75,9 +75,9 @@ export const convertIndexToGraphqlFormat = (
  * @example
  * ```typescript
  * const schema: TSchemaSerializedFieldDefinition[] = [
- *   { order: 1, index: true, sorting: EIndexType.Asc, name: "field1", kind: "CircuitString" },
- *   { order: 2, index: false, sorting: EIndexType.Desc, name: "field2", kind: "CircuitString" },
- *   { order: 3, index: true, sorting: EIndexType.Desc, name: "field3", kind: "CircuitString" },
+ *   { name: "field1", kind: "CircuitString" },
+ *   { name: "field2", kind: "CircuitString" },
+ *   { name: "field3", kind: "CircuitString" },
  * ];
  *
  * const result = getIndexCollectionBySchemaDefinition(schema);
