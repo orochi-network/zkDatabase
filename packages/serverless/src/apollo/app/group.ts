@@ -2,6 +2,7 @@ import {
   databaseName,
   groupDescription,
   groupName,
+  publicKey,
   TGroupAddUserListRequest,
   TGroupAddUserListResponse,
   TGroupCreateRequest,
@@ -55,10 +56,19 @@ export const typeDefsGroup = gql`
     createdAt: String!
   }
 
+  input GroupListByUserRequest {
+    userName: String
+    email: String
+    publicKey: String
+  }
+
   extend type Query {
     groupListAll(databaseName: String!): [GroupListAllResponse]!
 
-    groupListByUser(databaseName: String!, userName: String!): [String]
+    groupListByUser(
+      databaseName: String!
+      userQuery: GroupListByUserRequest!
+    ): [String]
 
     groupDetail(
       databaseName: String!
@@ -115,7 +125,11 @@ export const JOI_GROUP_DETAIL = Joi.object<TGroupDetailRequest>({
 
 export const JOI_GROUP_LIST_USER = Joi.object<TGroupListByUserRequest>({
   databaseName,
-  userName,
+  userQuery: Joi.object({
+    userName: userName(false),
+    email: Joi.string().email().optional(),
+    publicKey: publicKey(false),
+  }),
 });
 
 export const JOI_GROUP_LIST_ALL = Joi.object<TGroupListAllRequest>({
@@ -146,8 +160,10 @@ const groupListAll = publicWrapper<TGroupListAllRequest, TGroupListAllResponse>(
 const groupListByUser = publicWrapper<
   TGroupListByUserRequest,
   TGroupListByUserResponse
->(JOI_GROUP_LIST_USER, async (_root, { databaseName, userName }) =>
-  new ModelUserGroup(databaseName).listGroupByUserName(userName)
+>(JOI_GROUP_LIST_USER, async (_root, { databaseName, userQuery }) =>
+  (await new ModelUserGroup(databaseName).listGroupByUserQuery(userQuery)).map(
+    ({ groupName }) => groupName
+  )
 );
 
 const groupDetail = publicWrapper<TGroupDetailRequest, TGroupDetailResponse>(

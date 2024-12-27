@@ -1,4 +1,4 @@
-import { TUserGroupRecord } from '@zkdb/common';
+import { TGroupRecord, TUserGroupRecord, TUserRecord } from '@zkdb/common';
 import {
   addTimestampMongoDB,
   DATABASE_ENGINE,
@@ -44,31 +44,43 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     return matchedRecord === 1;
   }
 
-  public async listGroupByUserName(
-    userName: string,
+  /** List all groups of a user in this database given a user query. */
+  public async listGroupByUserQuery(
+    // Only allow filter by indexed fields to prevent implicit performance
+    // issues
+    userQuery: Partial<
+      Pick<TUserRecord, 'userName' | 'publicKey' | 'email' | '_id'>
+    >,
     options?: FindOptions
-  ): Promise<string[]> {
-    const modelGroup = new ModelGroup(this.databaseName);
-    const groupsList = await modelGroup.find(
+  ): Promise<TGroupRecord[]> {
+    const imUser = new ModelUser();
+    const user = await imUser.findOne(userQuery, options);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const imGroup = new ModelGroup(this.databaseName);
+    const listGroup = imGroup.find(
       {
-        _id: { $in: await this.listGroupId(userName) },
+        _id: { $in: await this.listGroupId(user.userName) },
       },
       options
     );
-    return groupsList.map((group) => group.groupName).toArray();
+
+    return listGroup.toArray();
   }
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
-    const userGroups = await this.find({ userName });
+    const userGroups = this.find({ userName });
     return userGroups.map((userGroup) => userGroup.groupObjectId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
     const modelGroup = new ModelGroup(this.databaseName);
-    const availableGroups = await modelGroup.find({
+    const listAvailableGroup = modelGroup.find({
       groupName: { $in: groupName },
     });
-    return availableGroups.map((group) => group._id).toArray();
+    return listAvailableGroup.map((group) => group._id).toArray();
   }
 
   public async addUserToGroup(

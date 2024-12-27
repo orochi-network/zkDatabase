@@ -26,12 +26,15 @@ export class PermissionSecurity {
     databaseName: string,
     userName: string,
     session?: ClientSession
-  ) {
+  ): Promise<string[]> {
     const imUserGroup = new ModelUserGroup(databaseName);
-    const userGroup = await imUserGroup.listGroupByUserName(userName, {
-      session,
-    });
-    return userGroup;
+    const userGroup = await imUserGroup.listGroupByUserQuery(
+      { userName },
+      {
+        session,
+      }
+    );
+    return userGroup.map((group) => group.groupName);
   }
 
   // Get permission of a database
