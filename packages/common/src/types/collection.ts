@@ -83,7 +83,13 @@ export type TCollectionRequest = TDatabaseRequest &
  */
 export type TCollectionCreateRequest = TCollectionRequest &
   Pick<TCollection, 'schema'> &
-  Pick<OwnershipAndPermission, 'permission' | 'group'> & {
+  TPickAlter<
+    OwnershipAndPermission,
+    {
+      group: 'groupName';
+      permission: 'permission';
+    }
+  > & {
     collectionIndex?: TCollectionIndex[];
   };
 

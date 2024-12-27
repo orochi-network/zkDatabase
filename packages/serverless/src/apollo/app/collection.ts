@@ -50,7 +50,7 @@ export const JOI_COLLECTION_CREATE_REQUEST =
   Joi.object<TCollectionCreateRequest>({
     collectionName,
     databaseName,
-    group: groupName(false),
+    groupName: groupName(false),
     schema: Joi.array().items(schemaField).optional(),
     permission: Joi.number().min(0).max(0xffffff).optional(),
     collectionIndex: Joi.array().items(JOI_COLLECTION_INDEX).optional(),
@@ -131,7 +131,7 @@ const collectionCreate = authorizeWrapper<
       databaseName,
       collectionName,
       schema,
-      group,
+      groupName,
       permission,
       collectionIndex,
     },
@@ -145,7 +145,7 @@ const collectionCreate = authorizeWrapper<
           actor: ctx.userName,
         },
         schema,
-        group || GROUP_DEFAULT_ADMIN,
+        groupName || GROUP_DEFAULT_ADMIN,
         permission ? Permission.from(permission) : PERMISSION_DEFAULT,
         collectionIndex,
         session
