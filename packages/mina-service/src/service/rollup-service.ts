@@ -1,7 +1,11 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
 import { MinaNetwork } from '@zkdb/smart-contract';
-import { DatabaseEngine, ModelMetadataDatabase, ModelQueueTask } from '@zkdb/storage';
+import {
+  DatabaseEngine,
+  ModelMetadataDatabase,
+  ModelQueueTask,
+} from '@zkdb/storage';
 import { PublicKey } from 'o1js';
 // Time duration is equal 1/10 time on chain
 const PADDING_TIME = TimeDuration.fromMinute(1);
@@ -43,14 +47,14 @@ export const SERVICE_ROLLUP = {
         logger.info('Transaction service task started ', new Date());
 
         const minaNetwork = MinaNetwork.getInstance();
-        const imQueue = ModelQueueTask.getInstance().
+        const imQueue = ModelQueueTask.getInstance();
         // List all database that have publicKey and not empty
         const databaseList = await ModelMetadataDatabase.getInstance().list({
           appPublicKey: { $exists: true, $ne: '' },
         });
         // Using fill/atSettled like to handle task concurrency
         await Fill(
-          databaseList.map(({ appPublicKey }) => async () => {
+          databaseList.map(({ appPublicKey, databaseName }) => async () => {
             const zkAppPublicKey = PublicKey.fromBase58(appPublicKey);
             // Check if appPublicKey is valid
             if (zkAppPublicKey.isEmpty().toBoolean()) {
@@ -70,16 +74,22 @@ export const SERVICE_ROLLUP = {
             const zkApp = account.zkapp;
 
             if (!zkApp) {
-                throw new Error(`This account is not a zkApp`)
+              throw new Error(`This account is not a zkApp`);
             }
 
             // Get the merkle root
-            const merkleRoot = zkApp.appState.at(0)
+            const merkleRoot = zkApp.appState.at(0);
 
-            // Get task
+            // Initalize rollup number
+            let rollupNumber: number = 0;
 
+            // Get task queue with databaseName and merkleRoot
+            const taskQueue = await imQueue.findOne({
+              databaseName,
+              merkleRoot,
+            });
 
-
+            if ()
           })
         );
 
