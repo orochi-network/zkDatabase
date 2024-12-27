@@ -1,7 +1,5 @@
 import { TOwnershipRecord } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
-  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -33,21 +31,19 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { databaseName: 1 },
         { unique: true, session }
       );
-      await createSystemIndex(collection, { owner: 1 }, { session });
+      await collection.createSystemIndex({ owner: 1 }, { session });
 
       // Compound index
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { databaseName: 1, owner: 1 },
         { unique: true, session }
       );
       // Timestamp index
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

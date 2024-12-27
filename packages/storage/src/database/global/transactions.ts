@@ -1,9 +1,5 @@
 import { zkDatabaseConstant } from '@common';
-import {
-  addTimestampMongoDB,
-  createSystemIndex,
-  DATABASE_ENGINE,
-} from '@helper';
+import { DATABASE_ENGINE } from '@helper';
 import { TTransaction, TTransactionRecord } from '@zkdb/common';
 import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
@@ -41,14 +37,13 @@ export class ModelTransaction extends ModelGeneral<
     );
 
     if (!(await collection.isExist())) {
-      await createSystemIndex(collection, { databaseName: 1 }, { session });
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex({ databaseName: 1 }, { session });
+      await collection.createSystemIndex(
         { databaseName: 1, transactionType: 1, txHash: 1 },
         { session }
       );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

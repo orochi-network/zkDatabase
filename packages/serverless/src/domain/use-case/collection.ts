@@ -85,24 +85,27 @@ export class Collection {
         DATABASE_ENGINE.serverless,
         collectionName
       );
-      // Need to perform a sequentially with traditional for..of loop
-      // If you using Promise.all/allSettled or Fill
-      // You will get race condition even if create a session transaction in it inner function scope
-      // for..of loop for reader friendly code, index list small so the performance not different compare to old school for
-      for (const { index, unique } of collectionIndexList) {
-        const indexFormat = convertIndexToMongoFormat(index);
 
-        const indexResult = await imCollection.index(indexFormat, {
-          session,
-          unique,
-        });
+      const listIndexPromise = collectionIndexList.map(
+        async ({ index, unique }) => {
+          const indexFormat = convertIndexToMongoFormat(index);
+          const indexResult = await imCollection.index(indexFormat, {
+            session,
+            unique,
+          });
 
-        if (!indexResult) {
-          throw new Error(`Cannot create index ${indexFormat}`);
+          if (!indexResult) {
+            throw new Error(
+              `Cannot create index ${JSON.stringify(indexFormat)}`
+            );
+          }
+          return indexResult;
         }
-      }
+      );
 
-      return true;
+      const result = await Promise.all(listIndexPromise);
+
+      return result.every(Boolean);
     }
 
     throw new Error(

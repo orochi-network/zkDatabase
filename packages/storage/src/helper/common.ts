@@ -49,26 +49,3 @@ export function objectToLookupPattern(obj: {
   }
   return result;
 }
-
-// This function auto map the field
-// name with zkdatabase index prefix instead of manually define name
-export async function createSystemIndex<T extends Document>(
-  collection: ModelCollection<T>,
-  indexSpec: IndexSpecification,
-  indexOptions?: Omit<CreateIndexesOptions, 'name'>
-) {
-  await collection.index(indexSpec, {
-    ...indexOptions,
-    name: ZkDbMongoIndex.create(...Object.keys(indexSpec)),
-  });
-}
-
-export async function addTimestampMongoDB<T extends Document>(
-  collection: ModelCollection<T>,
-  session?: ClientSession
-) {
-  // We need to use `await` to ensures each collection.index() operation complete
-  // If an error occurs, it will immediately throw an exception, which can be caught and handled rollback
-  await createSystemIndex(collection, { createdAt: 1 }, { session });
-  await createSystemIndex(collection, { updatedAt: 1 }, { session });
-}

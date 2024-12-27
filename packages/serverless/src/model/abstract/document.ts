@@ -6,8 +6,6 @@ import {
   TDocumentRecordNullable,
 } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
-  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -49,9 +47,9 @@ export class ModelDocument extends ModelGeneral<
     );
 
     if (!(await collection.isExist())) {
-      await createSystemIndex(collection, { docId: 1, active: 1 }, { session });
+      await collection.createSystemIndex({ docId: 1, active: 1 }, { session });
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 

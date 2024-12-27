@@ -1,7 +1,5 @@
 import { TGroupRecord } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
-  createSystemIndex,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -31,13 +29,12 @@ export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { groupName: 1 },
         { unique: true, session }
       );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

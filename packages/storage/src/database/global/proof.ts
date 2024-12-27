@@ -1,9 +1,5 @@
 import { zkDatabaseConstant } from '@common';
-import {
-  addTimestampMongoDB,
-  createSystemIndex,
-  DATABASE_ENGINE,
-} from '@helper';
+import { DATABASE_ENGINE } from '@helper';
 import { TProofRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
@@ -32,33 +28,28 @@ export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
     );
 
     if (!(await collection.isExist())) {
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { proof: 1 },
         { unique: true, session }
       );
 
-      await createSystemIndex(collection, { databaseName: 1 }, { session });
-
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex({ databaseName: 1 }, { session });
+      await collection.createSystemIndex(
         { databaseName: 1, collectionName: 1 },
         { unique: true, session }
       );
 
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { merkleRoot: 1 },
         { unique: true, session }
       );
 
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { merkleRootPrevious: 1 },
         { unique: true, session }
       );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

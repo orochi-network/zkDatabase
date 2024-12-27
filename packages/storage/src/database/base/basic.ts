@@ -1,5 +1,11 @@
-import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import { logger } from '@helper';
+import {
+  ClientSession,
+  CreateCollectionOptions,
+  CreateIndexesOptions,
+  Document,
+  IndexSpecification,
+} from 'mongodb';
+import { logger, ZkDbMongoIndex } from '@helper';
 import { DatabaseEngine } from '../database-engine';
 
 /**
@@ -57,5 +63,22 @@ export abstract class ModelBasic<T extends Document> {
       await session.abortTransaction();
     }
     return result;
+  }
+
+  public async createSystemIndex(
+    indexSpec: IndexSpecification,
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ): Promise<void> {
+    await this.collection.createIndex(indexSpec, {
+      ...indexOptions,
+      name: ZkDbMongoIndex.create(...Object.keys(indexSpec)),
+    });
+  }
+
+  public async addTimestampMongoDb(
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ) {
+    await this.createSystemIndex({ createdAt: 1 }, indexOptions);
+    await this.createSystemIndex({ updatedAt: 1 }, indexOptions);
   }
 }

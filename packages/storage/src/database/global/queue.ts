@@ -10,11 +10,7 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
-import {
-  addTimestampMongoDB,
-  createSystemIndex,
-  DATABASE_ENGINE,
-} from '@helper';
+import { DATABASE_ENGINE } from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -174,27 +170,24 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       error?: string;
     */
     if (!(await collection.isExist())) {
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { databaseName: 1, operationNumber: 1 },
         { unique: true, session }
       );
-      await createSystemIndex(collection, { merkleRoot: 1 }, { session });
-      await createSystemIndex(collection, { merkleIndex: 1 }, { session });
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex({ merkleRoot: 1 }, { session });
+      await collection.createSystemIndex({ merkleIndex: 1 }, { session });
+      await collection.createSystemIndex(
         { hash: 1 },
         { unique: true, session }
       );
 
       // Index for acquiring the next task from the queue
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { status: 1, databaseName: 1, createdAt: 1 },
         { session }
       );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

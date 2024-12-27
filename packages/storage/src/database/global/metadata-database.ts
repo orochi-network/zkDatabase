@@ -1,10 +1,5 @@
 import { zkDatabaseConstant } from '@common';
-import {
-  addTimestampMongoDB,
-  createSystemIndex,
-  DATABASE_ENGINE,
-  ZkDbMongoIndex,
-} from '@helper';
+import { DATABASE_ENGINE } from '@helper';
 import { TMetadataDatabase, TMetadataDatabaseRecord } from '@zkdb/common';
 import { ClientSession, Filter, FindOptions, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
@@ -63,25 +58,24 @@ export class ModelMetadataDatabase extends ModelGeneral<
         merkleHeight: number;
         appPublicKey: string;
       */
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { databaseName: 1 },
         { unique: true, session }
       );
-      await createSystemIndex(collection, { merkleHeight: 1 }, { session });
-      await createSystemIndex(collection, { appPublicKey: 1 }, { session });
+
+      await collection.createSystemIndex({ merkleHeight: 1 }, { session });
+      await collection.createSystemIndex({ appPublicKey: 1 }, { session });
 
       // Compound index
-      await createSystemIndex(
-        collection,
+      await collection.createSystemIndex(
         { databaseName: 1, databaseOwner: 1 },
         {
           unique: true,
           session,
         }
       );
-      await createSystemIndex(
-        collection,
+
+      await collection.createSystemIndex(
         { databaseOwner: 1, merkleHeight: 1 },
 
         {
@@ -89,7 +83,7 @@ export class ModelMetadataDatabase extends ModelGeneral<
         }
       );
       // Timestamp index
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }
