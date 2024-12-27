@@ -1,7 +1,12 @@
 import {
-  TDocumentRecordNullable,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+  ModelUserGroup,
+} from '@model';
+import {
   TCollectionMetadataRecord,
   TDocumentMetadata,
+  TDocumentRecordNullable,
   TParamCollection,
   TParamDatabase,
   TParamDocument,
@@ -13,11 +18,6 @@ import {
   PermissionBase,
 } from '@zkdb/permission';
 import { ClientSession } from 'mongodb';
-import {
-  ModelMetadataCollection,
-  ModelMetadataDocument,
-  ModelUserGroup,
-} from '@model';
 import { Database } from './database';
 
 export class PermissionSecurity {
@@ -26,12 +26,15 @@ export class PermissionSecurity {
     databaseName: string,
     userName: string,
     session?: ClientSession
-  ) {
+  ): Promise<string[]> {
     const imUserGroup = new ModelUserGroup(databaseName);
-    const userGroup = await imUserGroup.listGroupByUserName(userName, {
-      session,
-    });
-    return userGroup;
+    const userGroup = await imUserGroup.listGroupByUserQuery(
+      { userName },
+      {
+        session,
+      }
+    );
+    return userGroup.map((group) => group.groupName);
   }
 
   // Get permission of a database
@@ -64,14 +67,12 @@ export class PermissionSecurity {
     // If ownership and permission is not provided then fetch from metadata collection
     const metadata =
       sudo ||
-      (
-        await imMetadataCollection.findOne(
-          {
-            collectionName,
-          },
-          { session }
-        )
-      )?.metadata;
+      (await imMetadataCollection.findOne(
+        {
+          collectionName,
+        },
+        { session }
+      ));
 
     const listGroup = await PermissionSecurity.listGroupOfUser(
       databaseName,
@@ -182,7 +183,11 @@ export class PermissionSecurity {
       PermissionSecurity.requiredPermissionMatch(
         actor,
         listGroup,
-        currentCollection.metadata,
+        {
+          permission: currentCollection.permission,
+          owner: currentCollection.owner,
+          group: currentCollection.group,
+        },
         requiredPermission
       )
     );
@@ -239,7 +244,7 @@ export class PermissionSecurity {
     collectionName: string,
     docId: string | undefined,
     actor: string,
-    permission: PermissionBase,
+    permission: Permission,
     session?: ClientSession
   ): Promise<boolean> {
     if (docId) {
@@ -249,16 +254,14 @@ export class PermissionSecurity {
         docId,
       });
       if (actor !== documentMetadata?.owner) {
-        throw new Error(
-          `Permission ${actor} is not owner of document ${docId}`
-        );
+        throw new Error(`Actor ${actor} is not owner of document ${docId}`);
       }
       const result = await imMetadataDocument.updateOne(
         {
           collectionName,
           docId,
         },
-        { $set: { permission } },
+        { $set: { permission: permission.value } },
         { session }
       );
       return result.acknowledged;
@@ -268,16 +271,16 @@ export class PermissionSecurity {
       const collectionMetadata = await imMetadataCollection.findOne({
         collectionName,
       });
-      if (actor !== collectionMetadata?.metadata?.owner) {
+      if (actor !== collectionMetadata?.owner) {
         throw new Error(
-          `Permission ${actor} is not owner of collection ${collectionName}`
+          `Actor ${actor} is not owner of collection ${collectionName}`
         );
       }
       const result = await imMetadataCollection.updateOne(
         {
           collectionName,
         },
-        { $set: { permission } },
+        { $set: { permission: permission.value } },
         { session }
       );
       return result.acknowledged;

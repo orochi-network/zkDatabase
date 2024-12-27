@@ -1,12 +1,15 @@
 import { zkDatabaseConstant } from '@common';
-import { addTimestampMongoDB, DATABASE_ENGINE } from '@helper';
-import { TRollUpHistoryRecord } from '@zkdb/common';
+import { DATABASE_ENGINE } from '@helper';
+import {
+  TRollUpHistoryRecord,
+  TRollUpHistoryRecordNullable,
+} from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelRollupHistory extends ModelGeneral<
-  OptionalId<TRollUpHistoryRecord>
+  OptionalId<TRollUpHistoryRecordNullable>
 > {
   private static instance: ModelRollupHistory;
 
@@ -41,19 +44,28 @@ export class ModelRollupHistory extends ModelGeneral<
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
-      await collection.index({ databaseName: 1 }, { unique: true, session });
-      await collection.index({ merkletreeRoot: 1 }, { unique: true, session });
-      await collection.index(
+      await collection.createSystemIndex(
+        { databaseName: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { merkletreeRoot: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
         { merkletreeRootPrevious: 1 },
         { unique: true, session }
       );
-      await collection.index({ proofObjectId: 1 }, { unique: true, session });
-      await collection.index(
+      await collection.createSystemIndex(
+        { proofObjectId: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
         { transactionObjectId: 1 },
         { unique: true, session }
       );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

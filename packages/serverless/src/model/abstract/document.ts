@@ -4,9 +4,9 @@ import {
   TSchemaSerializedField,
   TDocumentField,
   TDocumentRecordNullable,
+  JOI_ZKDB_FIELD_NAME,
 } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -48,9 +48,9 @@ export class ModelDocument extends ModelGeneral<
     );
 
     if (!(await collection.isExist())) {
-      await collection.index({ docId: 1, active: 1 }, { session });
+      await collection.createSystemIndex({ docId: 1, active: 1 }, { session });
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 
@@ -148,6 +148,16 @@ export class ModelDocument extends ModelGeneral<
 
   public async countActiveDocuments(filter?: Filter<TDocumentRecordNullable>) {
     return this.collection.countDocuments({ ...filter, active: true });
+  }
+
+  public static indexKeyFormat(field: string) {
+    const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
+
+    if (error) {
+      throw error;
+    }
+
+    return `document.${field}.value`;
   }
 }
 

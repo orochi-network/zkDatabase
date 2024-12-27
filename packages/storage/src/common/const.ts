@@ -9,6 +9,8 @@ export const zkDatabaseConstant = {
 
   globalProofDatabase: '_zkdatabase_proof_service',
 
+  systemIndex: '_zkdatabase_system_index',
+
   // Global collections within the global database
   globalCollection: {
     // Global settings

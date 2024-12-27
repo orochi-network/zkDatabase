@@ -86,11 +86,14 @@ export class Rollup {
         databaseName,
         transactionObjectId,
         // @NOTICE Something possible wrong here
-        merkletreeRoot: latestProofForDb.merkleRoot,
-        merkletreeRootPrevious: latestProofForDb.merkleRootPrevious,
+        merkleTreeRoot: latestProofForDb.merkleRoot,
+        merkleTreeRootPrevious: latestProofForDb.merkleRootPrevious,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
+        error: null,
+        rollUpDifferent: null,
+        rollUpStatus: null,
       },
       { session: compoundSession?.serverless }
     );

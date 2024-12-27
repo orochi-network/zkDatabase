@@ -69,10 +69,8 @@ export type TDocumentUpdateResponse = TMerkleProof[];
 export type TDocumentDropRequest = TDocumentUpdateRequest;
 export type TDocumentDropResponse = TMerkleProof[];
 
-export type TDocumentHistoryFindRequest = TDocumentNamespace & {
+export type TDocumentHistoryRequest = TDocumentNamespace & {
   docId: string;
   pagination?: TPagination;
 };
-export type TDocumentHistoryFindResponse = TPaginationReturn<
-  TDocumentResponse[]
->;
+export type TDocumentHistoryResponse = TPaginationReturn<TDocumentResponse[]>;

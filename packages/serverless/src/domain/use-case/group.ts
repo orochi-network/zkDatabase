@@ -120,7 +120,7 @@ export class Group {
     if (group) {
       const listParticipant = await imUserGroup
         .find({
-          groupOjectId: group._id,
+          groupObjectId: group._id,
         })
         .toArray();
 
@@ -203,7 +203,7 @@ export class Group {
 
           const userGroupUpdateResult = await imUserGroup.updateOne(
             {
-              groupOjectId: group._id,
+              groupObjectId: group._id,
             },
             {
               $set: { groupName: newGroupName },

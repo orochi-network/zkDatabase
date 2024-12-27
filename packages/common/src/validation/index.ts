@@ -1,4 +1,4 @@
-import { ESorting, ETransactionType, TDocumentField } from '@types';
+import { EIndexType, ETransactionType, TDocumentField } from '@types';
 import { Permission } from '@zkdb/permission';
 import Joi from 'joi';
 
@@ -18,7 +18,7 @@ export const O1JS_VALID_TYPE = [
 ];
 
 export const ESortingSchema = (required: boolean = true) => {
-  const joiSorting = Joi.string().valid(ESorting.Asc, ESorting.Desc);
+  const joiSorting = Joi.string().valid(EIndexType.Asc, EIndexType.Desc);
   return required ? joiSorting.required() : joiSorting.optional();
 };
 
@@ -248,7 +248,7 @@ export const proofTimestamp = Joi.number().custom((value, helper) => {
   );
 });
 
-export const sortingOrder = Joi.string().valid(...Object.values(ESorting));
+export const sortingOrder = Joi.string().valid(...Object.values(EIndexType));
 
 export const indexName = Joi.string()
   .trim()
@@ -257,6 +257,7 @@ export const indexName = Joi.string()
   .required()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
 
-export const CollectionIndex = Joi.object()
-  .pattern(Joi.string(), ESortingSchema) // Keys are strings, values must be 'Asc' or 'Desc'
+export const JOI_ZKDB_FIELD_NAME = Joi.string()
+  .regex(/^[a-zA-Z][a-zA-Z0-9\_]{1,128}$/)
+  .trim()
   .required();

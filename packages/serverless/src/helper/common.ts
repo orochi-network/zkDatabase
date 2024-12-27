@@ -1,10 +1,6 @@
-import {
-  ESorting,
-  TCollectionIndex,
-  TCollectionIndexMap,
-  TSchemaFieldDefinition,
-} from '@zkdb/common';
-import { logger } from './logger';
+import { ModelDocument } from '@model';
+import { EIndexType, TCollectionIndexMap } from '@zkdb/common';
+import { IndexDirection } from 'mongodb';
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
   if (typeof callback === 'function') {
@@ -50,40 +46,38 @@ export function objectToLookupPattern(
 
 export const gql = (...args: any[]): string => args.join('\n');
 
-export const convertToIndexSpecification = <T = TCollectionIndex>(
-  index: TCollectionIndex
-): TCollectionIndexMap<T> => {
-  const result: TCollectionIndexMap<T> = {};
-  for (const key in index) {
-    if (index[key]) {
-      const fieldKey = `document.${key}.value` as keyof TCollectionIndexMap<T>;
-      if (index[key] === ESorting.Asc) {
-        result[fieldKey] =
-          1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
-      } else if (index[key] === ESorting.Desc) {
-        result[fieldKey] =
-          -1 as TCollectionIndexMap<T>[keyof TCollectionIndexMap<T>];
-      }
-    }
-  }
-  return result;
-};
+export const convertIndexToMongoFormat = <T = any>(
+  index: Record<string, EIndexType>
+): TCollectionIndexMap<T> =>
+  Object.entries(index).reduce((acc, [key, value]) => {
+    let val = value === EIndexType.Asc ? 1 : -1;
+    return { ...acc, [ModelDocument.indexKeyFormat(key)]: val };
+  }, {});
+
+export const convertIndexToGraphqlFormat = (
+  index: Record<string, IndexDirection>
+): Record<string, EIndexType> =>
+  Object.entries(index).reduce((acc, [key, value]) => {
+    let val = value ? EIndexType.Asc : EIndexType.Desc;
+    return { ...acc, [key]: val };
+  }, {});
+
 /**
  * Generates an array of indexed field definitions based on a schema.
  *
  * @param schema - An array of schema field definitions, where each field includes
  * properties such as `order`, `index`, `sorting`, and `name`.
  *
- * @returns An array of objects, where each object is of type `Partial<Record<string, ESorting>>`.
- * Each object contains a single field name as the key and its sorting order (`ESorting`)
+ * @returns An array of objects, where each object is of type `Partial<Record<string, EIndexType>>`.
+ * Each object contains a single field name as the key and its sorting order (`EIndexType`)
  * as the value.
  *
  * @example
  * ```typescript
- * const schema: TSchemaFieldDefinition[] = [
- *   { order: 1, index: true, sorting: ESorting.Asc, name: "field1", kind: "CircuitString" },
- *   { order: 2, index: false, sorting: ESorting.Desc, name: "field2", kind: "CircuitString" },
- *   { order: 3, index: true, sorting: ESorting.Desc, name: "field3", kind: "CircuitString" },
+ * const schema: TSchemaSerializedFieldDefinition[] = [
+ *   { name: "field1", kind: "CircuitString" },
+ *   { name: "field2", kind: "CircuitString" },
+ *   { name: "field3", kind: "CircuitString" },
  * ];
  *
  * const result = getIndexCollectionBySchemaDefinition(schema);
@@ -94,16 +88,3 @@ export const convertToIndexSpecification = <T = TCollectionIndex>(
  * //
  * ```
  */
-
-export const convertSchemaDefinitionToIndex = <T = TCollectionIndex>(
-  schema: TSchemaFieldDefinition[]
-): TCollectionIndexMap<T> => {
-  const indexTmp: TCollectionIndex = schema
-    .filter((field) => field.index && field.sorting) // Filter out fields that aren't indexed or sorted
-    .reduce<TCollectionIndex<T>>((acc, field) => {
-      acc[field.name as keyof T] = field.sorting;
-      return acc;
-    }, {});
-
-  return convertToIndexSpecification(indexTmp);
-};

@@ -9,3 +9,4 @@ export * from './proof';
 export * from './rollup';
 export * from './transaction';
 export * from './user';
+export * from './permission-ownership';

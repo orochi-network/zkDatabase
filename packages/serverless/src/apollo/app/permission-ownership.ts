@@ -10,7 +10,7 @@ import {
   TPermissionSetResponse,
   userName,
 } from '@zkdb/common';
-import { PermissionBase } from '@zkdb/permission';
+import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
@@ -34,7 +34,7 @@ export const typeDefsPermission = gql`
       collectionName: String!
       docId: String
       permission: Int!
-    ): CollectionMetadata!
+    ): Boolean!
 
     ownershipTransfer(
       databaseName: String!
@@ -64,7 +64,7 @@ const permissionSet = authorizeWrapper<
         collectionName,
         docId,
         context.userName,
-        PermissionBase.from(permission),
+        Permission.from(permission),
         session
       )
     )

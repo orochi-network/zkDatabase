@@ -56,10 +56,15 @@ export class TaskService {
         try {
           await withCompoundTransaction(async (session) => {
             logger.debug('Task received:', task);
+            const start = performance.now();
+
             await Proof.create(task, session);
             await imQueue.markTaskProcessed(task._id, {
               session: session.proofService,
             });
+
+            const end = performance.now();
+            logger.debug(`Proof create take ${end - start}`);
           });
 
           backoff = false;

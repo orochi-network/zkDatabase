@@ -1,5 +1,5 @@
 import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common';
+import { TDbRecord, TNullable } from './common';
 import { TTransaction, TTransactionRecord } from './transaction';
 import { TDatabaseRequest } from './database';
 import { TProofRecord } from './proof';
@@ -21,13 +21,21 @@ export enum ERollUpState {
 
 export type TRollUpHistory = {
   databaseName: string;
-  merkletreeRoot: string;
-  merkletreeRootPrevious: string;
+  merkleTreeRoot: string;
+  merkleTreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
+  // From transactionObjectId we can track the transaction status
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
+  rollUpState: ERollUpState;
+  rollUpDifferent: number;
+  error: string;
 };
+
+export type TRollUpHistoryRecordNullable = TDbRecord<
+  TNullable<TRollUpHistory, 'error' | 'rollUpDifferent' | 'rollUpState'>
+>;
 
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
@@ -37,7 +45,7 @@ export type TRollUpTransactionHistory = TRollUpHistory &
 
 export type TRollUpHistoryDetail = Pick<
   TRollUpHistoryRecord,
-  'databaseName' | 'merkletreeRoot' | 'merkletreeRootPrevious'
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
 > & {
   transaction: TTransactionRecord;
   proof: TProofRecord;

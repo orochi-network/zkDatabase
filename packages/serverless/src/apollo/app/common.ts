@@ -42,7 +42,7 @@ export const typeDefsCommon = gql`
   # EIndexProperty in TS
   enum IndexProperty {
     Compound
-    Unique
+    Single
   }
 
   type IndexInput {
@@ -74,26 +74,11 @@ export const typeDefsCommon = gql`
     sorting: Sorting
   }
 
-  type OwnershipAndPermission {
-    owner: String!
-    group: String!
-    permission: Int!
-  }
-
   type SchemaFieldOutput {
     name: String!
     kind: SchemaType!
     index: Boolean
     # Default is ASC or 1
     sorting: Sorting
-  }
-
-  type MetadataCollection {
-    collectionName: String!
-    schema: [SchemaFieldOutput]!
-    metadata: OwnershipAndPermission!
-    sizeOnDisk: Int
-    createdAt: Date!
-    updatedAt: Date!
   }
 `;

@@ -1,14 +1,13 @@
+import { ZKDATABASE_USER_NOBODY, ZKDATABASE_USER_SYSTEM } from '@common';
+import { objectToLookupPattern } from '@helper';
 import { TUser, TUserRecord } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession, OptionalId } from 'mongodb';
-import { ZKDATABASE_USER_NOBODY, ZKDATABASE_USER_SYSTEM } from '@common';
-import { objectToLookupPattern } from '@helper';
 
 export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   private static collectionName: string =
@@ -94,11 +93,20 @@ export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { unique: true, session });
-      await collection.index({ publicKey: 1 }, { unique: true, session });
-      await collection.index({ email: 1 }, { unique: true, session });
+      await collection.createSystemIndex(
+        { userName: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { publicKey: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { email: 1 },
+        { unique: true, session }
+      );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

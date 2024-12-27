@@ -68,7 +68,7 @@ export const SERVICE_ROLLUP = {
                 const zkAppPublicKey = PublicKey.fromBase58(appPublicKey);
                 // Check if appPublicKey is valid
                 if (zkAppPublicKey.isEmpty().toBoolean()) {
-                  throw new Error('Invalid public key');
+                  throw new Error('Invalid public key ');
                 }
 
                 // Get zkApp account from Mina network
@@ -90,8 +90,8 @@ export const SERVICE_ROLLUP = {
                 // Get the merkle root
                 const merkleRoot = zkApp.appState[0];
 
-                // Initalize rollup number
-                let rollupNumber: number = 0;
+                // Initialize rollup number
+                let rollupTaskNumber: number = 0;
 
                 // Get task queue with databaseName and merkleRoot
                 const taskQueue = await imQueue.findOne({
@@ -103,11 +103,11 @@ export const SERVICE_ROLLUP = {
                   merkleRoot.equals(ModelMerkleTree.getEmptyRoot(merkleHeight))
                 ) {
                   // Check empty root first
-                  rollupNumber = 0;
+                  rollupTaskNumber = 0;
                 } else if (taskQueue?.operationNumber) {
                   // Check taskQueue && taskQueue.operation existed
 
-                  rollupNumber = taskQueue.operationNumber;
+                  rollupTaskNumber = taskQueue.operationNumber;
                 } else {
                   throw new Error('Cannot calculate rollup task number');
                 }
@@ -138,13 +138,7 @@ export const SERVICE_ROLLUP = {
                   {
                     $sort: { createdAt: -1 },
                   },
-                  // Step 4: Remove 'transactionObjectId' & 'proofObjectId'
-                  {
-                    $project: {
-                      transactionObjectId: 0,
-                      proofObjectId: 0,
-                    },
-                  },
+                  { $limit: 1 },
                 ];
 
                 const imRollupHistory = ModelRollupHistory.getInstance();
@@ -153,138 +147,74 @@ export const SERVICE_ROLLUP = {
                   .aggregate<TRollUpHistoryDetail>(pipeline)
                   .toArray();
 
-                const latestTask = await imQueue.findOne(
-                  {
-                    databaseName,
-                  },
-                  { sort: { createdAt: -1 } }
+                const latestRollUpHistory = listRollupHistoryDetail[0];
+
+                logger.info(
+                  `latest rollup history ${latestRollUpHistory.databaseName} found`
                 );
 
-                if (!latestTask) {
-                  throw new Error(
-                    `Cannot find latest task with database ${databaseName}`
+                if (latestRollUpHistory) {
+                  const latestTask = await imQueue.findOne(
+                    {
+                      databaseName,
+                    },
+                    { sort: { createdAt: -1 } }
+                  );
+
+                  if (!latestTask) {
+                    throw new Error(
+                      `Cannot find latest task with database ${databaseName}`
+                    );
+                  }
+
+                  const rollUpDifferent =
+                    latestTask.operationNumber - rollupTaskNumber;
+
+                  let rollupState: ERollUpState = ERollUpState.Failed;
+
+                  if (rollUpDifferent > 0) {
+                    // Outdated case
+                    rollupState = ERollUpState.Outdated;
+                  } else if (
+                    latestRollUpHistory.transaction.status ===
+                    ETransactionStatus.Confirmed
+                  ) {
+                    rollupState = ERollUpState.Updated;
+                  }
+
+                  await imRollupHistory.updateOne(
+                    {
+                      databaseName,
+                      proofObjectId: latestRollUpHistory.proof._id,
+                      merkleTreeRoot: latestRollUpHistory.merkleTreeRoot,
+                      transactionObjectId: latestRollUpHistory.transaction._id,
+                      merkleTreeRootPrevious:
+                        latestRollUpHistory.merkleTreeRootPrevious,
+                    },
+                    {
+                      $set: {
+                        updatedAt: new Date(),
+                        rollUpStatus: rollupState,
+                        rollUpDifferent: rollUpDifferent,
+                        error: latestRollUpHistory.transaction.error,
+                      },
+                    }
                   );
                 }
 
-                const rollUpDifferent =
-                  latestTask.operationNumber - rolledUpTaskNumber;
-
-                let rollupState: ERollUpState = ERollUpState.Failed;
-
-                if (rollUpDifferent > 0) {
-                  // Outdated case
-                  rollUpState = ERollUpState.Outdated;
-                } else if (
-                  listRollupHistoryDetail[0]?.transaction.status ===
-                  ETransactionStatus.Confirmed
-                ) {
-                  rollUpState = ERollUpState.Updated;
-                }
-
-
-                const imRollupState =
+                /*
+                    databaseName: string;
+                     merkleTreeRoot: string;
+                     merkleTreeRootPrevious: string;
+                     transactionObjectId: ObjectId;
+                     proofObjectId: ObjectId;
+                     rollUpStatus: ERollUpState;
+                     rollUpDifferent: number;
+                     error: string;
+                */
               }
           )
         );
-
-        if (!account) {
-          throw Error(
-            `zk app with ${database.appPublicKey} is not exist in mina network. Error: ${error}`
-          );
-        }
-
-        const zkApp = account.zkapp;
-
-        if (!zkApp) {
-          throw Error('The account in not zk app');
-        }
-
-        const merkleRoot = zkApp.appState[0];
-
-        let rolledUpTaskNumber: number;
-
-        const task = await imQueue.findOne({
-          database: databaseName,
-          merkleRoot: merkleRoot.toString(),
-        });
-
-        if (
-          merkleRoot
-            .equals(ModelMerkleTree.getEmptyRoot(database.merkleHeight))
-            .toBoolean()
-        ) {
-          rolledUpTaskNumber = 0;
-        } else if (task) {
-          rolledUpTaskNumber = task.operationNumber;
-        } else {
-          throw Error('Wrong zkapp state');
-        }
-
-        const pipeline = [
-          {
-            $match: { databaseName },
-          },
-          {
-            $lookup: {
-              from: zkDatabaseConstant.globalCollection.transaction,
-              localField: 'transactionObjectId',
-              foreignField: '_id',
-              as: 'transaction',
-            },
-          },
-          {
-            $lookup: {
-              from: zkDatabaseConstant.globalCollection.proof,
-              localField: 'proofObjectId',
-              foreignField: '_id',
-              as: 'proof',
-            },
-          },
-          {
-            $sort: { createdAt: -1 },
-          },
-          {
-            $project: {
-              transactionObjectId: 0,
-              proofObjectId: 0,
-            },
-          },
-        ];
-
-        const listRollupHistoryDetail = (await imRollupHistory.collection
-          .aggregate(pipeline)
-          .toArray()) as TRollUpHistoryDetail[];
-
-        const latestTask = await imQueue.findOne(
-          {
-            database: databaseName,
-          },
-          { sort: { createdAt: -1 } }
-        );
-
-        if (!latestTask) {
-          throw new Error('Latest task not found');
-        }
-
-        const diff = latestTask.operationNumber - rolledUpTaskNumber;
-
-        let rollUpState: ERollUpState = ERollUpState.Failed;
-
-        // @NOTICE transaction status must be updated in cron job.
-        if (diff > 0) {
-          rollUpState = ERollUpState.Outdated;
-        } else if (
-          listRollupHistoryDetail[0].transaction.status ===
-          ETransactionStatus.Confirmed
-        ) {
-          rollUpState = ERollUpState.Updated;
-        }
-
-        //   return {
-        //     history: listRollupHistoryDetail,
-        //     state: rollUpState,
-        //     rollUpDifferent: diff,
-        //   };
 
         isRunning = false;
       },

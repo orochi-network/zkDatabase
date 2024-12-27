@@ -1,7 +1,6 @@
 import { Collection } from '@domain';
-import { convertToIndexSpecification, gql } from '@helper';
+import { gql } from '@helper';
 import {
-  CollectionIndex,
   collectionName,
   databaseName,
   indexName,
@@ -9,14 +8,15 @@ import {
   TIndexCreateResponse,
   TIndexDropReponse,
   TIndexDropRequest,
-  TIndexExistReponse,
   TIndexExistRequest,
+  TIndexExistResponse,
   TIndexListRequest,
   TIndexListResponse,
 } from '@zkdb/common';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
+import { JOI_COLLECTION_INDEX } from './collection';
 
 export const typeDefsCollectionIndex = gql`
   scalar JSON
@@ -24,12 +24,20 @@ export const typeDefsCollectionIndex = gql`
   type Query
   type Mutation
 
+  input CollectionIndex {
+    # index: Record<string, EIndexType>;
+    index: JSON!
+    unique: Boolean!
+  }
+
   type CollectionIndexInfo {
     indexName: String!
     size: Int!
     access: Int!
     property: IndexProperty!
     createdAt: Date!
+    index: JSON!
+    unique: Boolean!
   }
 
   extend type Query {
@@ -49,7 +57,7 @@ export const typeDefsCollectionIndex = gql`
     indexCreate(
       databaseName: String!
       collectionName: String!
-      index: JSON!
+      index: [CollectionIndex!]!
     ): Boolean
 
     indexDrop(
@@ -74,7 +82,7 @@ const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
     })
 );
 
-const indexExist = authorizeWrapper<TIndexExistRequest, TIndexExistReponse>(
+const indexExist = authorizeWrapper<TIndexExistRequest, TIndexExistResponse>(
   Joi.object({
     databaseName,
     collectionName,
@@ -96,7 +104,7 @@ const indexCreate = authorizeWrapper<TIndexCreateRequest, TIndexCreateResponse>(
   Joi.object({
     databaseName,
     collectionName,
-    index: CollectionIndex,
+    index: Joi.array().items(JOI_COLLECTION_INDEX).required(),
   }),
   async (_root, { databaseName, collectionName, index }, ctx) =>
     Collection.indexCreate(
@@ -105,7 +113,7 @@ const indexCreate = authorizeWrapper<TIndexCreateRequest, TIndexCreateResponse>(
         actor: ctx.userName,
         collectionName,
       },
-      convertToIndexSpecification(index)
+      index
     )
 );
 
