@@ -14,7 +14,7 @@ export type TGroup = {
 export type TUserGroup = {
   userName: string;
   groupName: string;
-  groupOjectId: ObjectId;
+  groupObjectId: ObjectId;
   userObjectId: ObjectId;
 };
 
