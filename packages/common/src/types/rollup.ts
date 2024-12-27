@@ -46,7 +46,7 @@ export type TRollUpHistoryDetail = Pick<
 export type TRollUpDetail = {
   history: TRollUpHistoryDetail[];
   state: ERollUpState;
-  // Number of merkle root transformatiion different to previous one
+  // Number of merkle root transformation different to previous one
   rollUpDifferent: number;
 };
 
@@ -55,7 +55,7 @@ export type TRollupHistoryRequest = TDatabaseRequest;
 
 export type TRollUpHistoryResponse = TRollUpDetail;
 
-// Rolup create
+// Rollup create
 export type TRollUpCreateRequest = TDatabaseRequest;
 
 export type TRollUpCreateResponse = boolean;

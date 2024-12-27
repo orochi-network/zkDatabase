@@ -1,10 +1,18 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
+import {
+  ERollUpState,
+  ETransactionStatus,
+  TRollUpHistoryDetail,
+} from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
+  ModelMerkleTree,
   ModelMetadataDatabase,
   ModelQueueTask,
+  ModelRollupHistory,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { PublicKey } from 'o1js';
 // Time duration is equal 1/10 time on chain
@@ -54,43 +62,129 @@ export const SERVICE_ROLLUP = {
         });
         // Using fill/atSettled like to handle task concurrency
         await Fill(
-          databaseList.map(({ appPublicKey, databaseName }) => async () => {
-            const zkAppPublicKey = PublicKey.fromBase58(appPublicKey);
-            // Check if appPublicKey is valid
-            if (zkAppPublicKey.isEmpty().toBoolean()) {
-              throw new Error('Invalid public key');
-            }
+          databaseList.map(
+            ({ appPublicKey, databaseName, merkleHeight }) =>
+              async () => {
+                const zkAppPublicKey = PublicKey.fromBase58(appPublicKey);
+                // Check if appPublicKey is valid
+                if (zkAppPublicKey.isEmpty().toBoolean()) {
+                  throw new Error('Invalid public key');
+                }
 
-            // Get zkApp account from Mina network
-            const { account, error } =
-              await minaNetwork.getAccount(zkAppPublicKey);
+                // Get zkApp account from Mina network
+                const { account, error } =
+                  await minaNetwork.getAccount(zkAppPublicKey);
 
-            if (!account) {
-              throw new Error(
-                `zk app with ${appPublicKey} is not exist in mina network. Error: ${error}`
-              );
-            }
+                if (!account) {
+                  throw new Error(
+                    `zk app with ${appPublicKey} is not exist in mina network. Error: ${error}`
+                  );
+                }
 
-            const zkApp = account.zkapp;
+                const zkApp = account.zkapp;
 
-            if (!zkApp) {
-              throw new Error(`This account is not a zkApp`);
-            }
+                if (!zkApp) {
+                  throw new Error('This account is not a zkApp');
+                }
 
-            // Get the merkle root
-            const merkleRoot = zkApp.appState.at(0);
+                // Get the merkle root
+                const merkleRoot = zkApp.appState[0];
 
-            // Initalize rollup number
-            let rollupNumber: number = 0;
+                // Initalize rollup number
+                let rollupNumber: number = 0;
 
-            // Get task queue with databaseName and merkleRoot
-            const taskQueue = await imQueue.findOne({
-              databaseName,
-              merkleRoot,
-            });
+                // Get task queue with databaseName and merkleRoot
+                const taskQueue = await imQueue.findOne({
+                  databaseName,
+                  merkleRoot,
+                });
 
-            if ()
-          })
+                if (
+                  merkleRoot.equals(ModelMerkleTree.getEmptyRoot(merkleHeight))
+                ) {
+                  // Check empty root first
+                  rollupNumber = 0;
+                } else if (taskQueue?.operationNumber) {
+                  // Check taskQueue && taskQueue.operation existed
+
+                  rollupNumber = taskQueue.operationNumber;
+                } else {
+                  throw new Error('Cannot calculate rollup task number');
+                }
+
+                const pipeline = [
+                  // Step 1: Match documents that have a specific 'databaseName'
+                  {
+                    $match: { databaseName },
+                  },
+                  // Step 2: Join this 'rollup' with 'transaction' & 'proof' collection
+                  {
+                    $lookup: {
+                      from: zkDatabaseConstant.globalCollection.transaction,
+                      localField: 'transactionObjectId',
+                      foreignField: '_id',
+                      as: 'transaction',
+                    },
+                  },
+                  {
+                    $lookup: {
+                      from: zkDatabaseConstant.globalCollection.proof,
+                      localField: 'proofObjectId',
+                      foreignField: '_id',
+                      as: 'proof',
+                    },
+                  },
+                  // Step 3: Sort by latest
+                  {
+                    $sort: { createdAt: -1 },
+                  },
+                  // Step 4: Remove 'transactionObjectId' & 'proofObjectId'
+                  {
+                    $project: {
+                      transactionObjectId: 0,
+                      proofObjectId: 0,
+                    },
+                  },
+                ];
+
+                const imRollupHistory = ModelRollupHistory.getInstance();
+
+                const listRollupHistoryDetail = await imRollupHistory.collection
+                  .aggregate<TRollUpHistoryDetail>(pipeline)
+                  .toArray();
+
+                const latestTask = await imQueue.findOne(
+                  {
+                    databaseName,
+                  },
+                  { sort: { createdAt: -1 } }
+                );
+
+                if (!latestTask) {
+                  throw new Error(
+                    `Cannot find latest task with database ${databaseName}`
+                  );
+                }
+
+                const rollUpDifferent =
+                  latestTask.operationNumber - rolledUpTaskNumber;
+
+                let rollupState: ERollUpState = ERollUpState.Failed;
+
+                if (rollUpDifferent > 0) {
+                  // Outdated case
+                  rollUpState = ERollUpState.Outdated;
+                } else if (
+                  listRollupHistoryDetail[0]?.transaction.status ===
+                  ETransactionStatus.Confirmed
+                ) {
+                  rollUpState = ERollUpState.Updated;
+                }
+
+
+                const imRollupState =
+              }
+          )
         );
 
         if (!account) {

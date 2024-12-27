@@ -10,26 +10,26 @@ export class ModelRollupStatus extends ModelGeneral<
 > {
   private static instance: ModelRollupStatus;
 
-  private constructor() {
+  private constructor(databaseName: string) {
     super(
-      zkDatabaseConstant.globalDatabase,
+      databaseName,
       DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.rollupState
     );
   }
 
-  public static getInstance() {
+  public static getInstance(databaseName: string) {
     if (!ModelRollupStatus.instance) {
-      this.instance = new ModelRollupStatus();
+      this.instance = new ModelRollupStatus(databaseName);
     }
     return this.instance;
   }
 
-  public static async init(session?: ClientSession) {
+  public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance<
       WithoutId<TRollUpHistoryRecord>
     >(
-      zkDatabaseConstant.globalDatabase,
+      databaseName,
       DATABASE_ENGINE.serverless,
       zkDatabaseConstant.databaseCollection.rollupState
     );
