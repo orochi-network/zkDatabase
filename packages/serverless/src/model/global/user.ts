@@ -95,7 +95,7 @@ export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
     );
     if (!(await collection.isExist())) {
       await collection.index({ userName: 1 }, { unique: true, session });
-      await collection.index({ publicKey: 1 }, { unique: false, session });
+      await collection.index({ publicKey: 1 }, { session });
       await collection.index({ email: 1 }, { unique: true, session });
 
       await addTimestampMongoDB(collection, session);
