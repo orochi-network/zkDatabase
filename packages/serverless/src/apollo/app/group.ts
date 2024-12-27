@@ -147,7 +147,9 @@ const groupListByUser = publicWrapper<
   TGroupListByUserRequest,
   TGroupListByUserResponse
 >(JOI_GROUP_LIST_USER, async (_root, { databaseName, userName }) =>
-  new ModelUserGroup(databaseName).listGroupByUserQuery({ userName })
+  (
+    await new ModelUserGroup(databaseName).listGroupByUserQuery({ userName })
+  ).map(({ groupName }) => groupName)
 );
 
 const groupDetail = publicWrapper<TGroupDetailRequest, TGroupDetailResponse>(
