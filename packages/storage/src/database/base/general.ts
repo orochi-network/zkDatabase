@@ -1,14 +1,13 @@
+import { logger } from '@helper';
 import {
   BulkWriteOptions,
   CountDocumentsOptions,
-  CreateIndexesOptions,
   DeleteOptions,
   DeleteResult,
   Document,
   Filter,
   FindCursor,
   FindOptions,
-  IndexSpecification,
   InsertManyResult,
   InsertOneOptions,
   InsertOneResult,
@@ -20,7 +19,6 @@ import {
   WithId,
   WithoutId,
 } from 'mongodb';
-import { logger, ZkDbMongoIndex } from '@helper';
 import { ModelBasic } from './basic';
 
 /**

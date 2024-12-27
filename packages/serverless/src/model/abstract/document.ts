@@ -4,6 +4,7 @@ import {
   TSchemaSerializedField,
   TDocumentField,
   TDocumentRecordNullable,
+  JOI_MONGO_FIELD,
 } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
@@ -149,18 +150,14 @@ export class ModelDocument extends ModelGeneral<
     return this.collection.countDocuments({ ...filter, active: true });
   }
 
-  public static indexKeyFormat(key: string) {
-    if (!key) {
-      throw new Error('Field name cannot be empty.');
-    }
-    if (key.startsWith('$')) {
-      throw new Error(`Field name '${key}' cannot start with '$'.`);
-    }
-    if (key.includes('\0')) {
-      throw new Error(`Field name '${key}' cannot contain null characters.`);
+  public static indexKeyFormat(field: string) {
+    const { error } = JOI_MONGO_FIELD.validate(field);
+
+    if (error) {
+      throw error;
     }
 
-    return `document.${key}.value`;
+    return `document.${field}.value`;
   }
 }
 

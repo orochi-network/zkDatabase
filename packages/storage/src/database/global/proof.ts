@@ -4,7 +4,6 @@ import { TProofRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-import { ZkDbMongoIndex } from '../../helper/system-index';
 
 export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
   public static instance: ModelProof;

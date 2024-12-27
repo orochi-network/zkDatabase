@@ -3,4 +3,3 @@ export * from './config';
 export * from './db-instance';
 export * from './extended-merkle-witness';
 export * from './logger';
-export * from './system-index';

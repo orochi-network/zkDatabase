@@ -1,18 +1,5 @@
-import {
-  ClientSession,
-  CreateIndexesOptions,
-  Document,
-  IndexSpecification,
-} from 'mongodb';
-import { ModelCollection } from '@database';
+import Joi from 'joi';
 import { logger } from './logger';
-import { ZkDbMongoIndex } from './system-index';
-
-export interface AppContext {
-  userName: string;
-  email: string;
-  sessionId: string;
-}
 
 export async function isOk(callback: () => Promise<any>): Promise<boolean> {
   try {
@@ -37,15 +24,4 @@ export function getCurrentTime(): Date {
     }, 2000);
   }
   return cache.timestamp;
-}
-
-export function objectToLookupPattern(obj: {
-  [key: string]: any;
-}): { [key: string]: any }[] {
-  const entries = Object.entries(obj);
-  const result = [];
-  for (let i = 0; i < entries.length; i += 1) {
-    result.push({ [entries[i][0]]: entries[i][1] });
-  }
-  return result;
 }

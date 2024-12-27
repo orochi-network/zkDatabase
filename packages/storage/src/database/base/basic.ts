@@ -1,3 +1,6 @@
+import { zkDatabaseConstant } from '@common';
+import { logger } from '@helper';
+import { JOI_MONGO_FIELD } from '@zkdb/common';
 import {
   ClientSession,
   CreateCollectionOptions,
@@ -5,7 +8,6 @@ import {
   Document,
   IndexSpecification,
 } from 'mongodb';
-import { logger, ZkDbMongoIndex } from '@helper';
 import { DatabaseEngine } from '../database-engine';
 
 /**
@@ -69,9 +71,17 @@ export abstract class ModelBasic<T extends Document> {
     indexSpec: IndexSpecification,
     indexOptions?: Omit<CreateIndexesOptions, 'name'>
   ): Promise<void> {
+    const fieldName = `${zkDatabaseConstant.systemIndex}_${Object.keys(indexSpec).join('_')}`;
+
+    const { error } = JOI_MONGO_FIELD.validate(fieldName);
+
+    if (error) {
+      throw error;
+    }
+
     await this.collection.createIndex(indexSpec, {
       ...indexOptions,
-      name: ZkDbMongoIndex.create(...Object.keys(indexSpec)),
+      name: fieldName,
     });
   }
 

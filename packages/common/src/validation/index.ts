@@ -256,3 +256,8 @@ export const indexName = Joi.string()
   .max(128)
   .required()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
+
+export const JOI_MONGO_FIELD = Joi.string()
+  .regex(/^(?!.*\$|\0).+$/)
+  .trim()
+  .required();
