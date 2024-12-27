@@ -39,7 +39,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     }
     const matchedRecord = await this.count({
       userName,
-      groupOjectId: group._id,
+      groupObjectId: group._id,
     });
     return matchedRecord === 1;
   }
@@ -72,7 +72,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
 
   public async listGroupId(userName: string): Promise<ObjectId[]> {
     const userGroups = this.find({ userName });
-    return userGroups.map((userGroup) => userGroup.groupOjectId).toArray();
+    return userGroups.map((userGroup) => userGroup.groupObjectId).toArray();
   }
 
   public async groupNameToGroupId(groupName: string[]): Promise<ObjectId[]> {
@@ -94,9 +94,9 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
       (g) => !groupOfUser.includes(g)
     );
 
-    const operations = newGroupIdToAdd.map((groupOjectId) => ({
+    const operations = newGroupIdToAdd.map((groupObjectId) => ({
       updateOne: {
-        filter: { userName, groupOjectId },
+        filter: { userName, groupObjectId },
         update: {
           $set: { updatedAt: new Date() },
           $setOnInsert: { createdAt: new Date() },
@@ -113,7 +113,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupObjectId = (await this.groupNameToGroupId([groupName]))[0];
     const imUser = new ModelUser();
 
     const listUser = await imUser
@@ -125,7 +125,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     const listOperation = listUser.map(({ userName, _id }) => {
       return {
         updateOne: {
-          filter: { userName, groupOjectId },
+          filter: { userName, groupObjectId },
           update: {
             $set: {
               groupName,
@@ -147,11 +147,11 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     groupName: string,
     options?: BulkWriteOptions
   ) {
-    const groupOjectId = (await this.groupNameToGroupId([groupName]))[0];
+    const groupObjectId = (await this.groupNameToGroupId([groupName]))[0];
 
     const listOperation = listUserName.map((userName) => ({
       deleteOne: {
-        filter: { userName, groupOjectId },
+        filter: { userName, groupObjectId },
       },
     }));
 
@@ -168,7 +168,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     /*
       userName: string;
       groupName: string;
-      groupOjectId: ObjectId
+      groupObjectId: ObjectId
       userObjectId: ObjectId
       createdAt: Date
       updatedAt: Date
@@ -176,7 +176,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
     if (!(await collection.isExist())) {
       await collection.index({ userName: 1 }, { session });
       await collection.index({ groupName: 1 }, { session });
-      await collection.index({ groupOjectId: 1 }, { session });
+      await collection.index({ groupObjectId: 1 }, { session });
       await collection.index({ userObjectId: 1 }, { session });
 
       await addTimestampMongoDB(collection, session);
