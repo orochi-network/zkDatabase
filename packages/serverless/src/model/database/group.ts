@@ -37,7 +37,7 @@ export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
     }
   }
 
-  /** Drop group and all user in group. */
+  /** Drop group and all relations of user in group. */
   public async dropGroup(groupObjectId: ObjectId, session: ClientSession) {
     const imUserGroup = new ModelUserGroup(this.databaseName);
 
