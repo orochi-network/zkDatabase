@@ -1,6 +1,6 @@
 import { zkDatabaseConstant } from '@common';
 import { logger } from '@helper';
-import { JOI_MONGO_FIELD } from '@zkdb/common';
+import { JOI_ZKDB_FIELD_NAME } from '@zkdb/common';
 import {
   ClientSession,
   CreateCollectionOptions,
@@ -73,7 +73,7 @@ export abstract class ModelBasic<T extends Document> {
   ): Promise<void> {
     const fieldName = `${zkDatabaseConstant.systemIndex}_${Object.keys(indexSpec).join('_')}`;
 
-    const { error } = JOI_MONGO_FIELD.validate(fieldName);
+    const { error } = JOI_ZKDB_FIELD_NAME.validate(fieldName);
 
     if (error) {
       throw error;

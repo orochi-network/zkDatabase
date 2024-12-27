@@ -257,7 +257,7 @@ export const indexName = Joi.string()
   .required()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
 
-export const JOI_MONGO_FIELD = Joi.string()
-  .regex(/^(?!.*\$|\0).+$/)
+export const JOI_ZKDB_FIELD_NAME = Joi.string()
+  .regex(/^[a-zA-Z][a-zA-Z0-9\_]{1,128}$/)
   .trim()
   .required();

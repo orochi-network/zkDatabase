@@ -4,7 +4,7 @@ import {
   TSchemaSerializedField,
   TDocumentField,
   TDocumentRecordNullable,
-  JOI_MONGO_FIELD,
+  JOI_ZKDB_FIELD_NAME,
 } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
@@ -151,7 +151,7 @@ export class ModelDocument extends ModelGeneral<
   }
 
   public static indexKeyFormat(field: string) {
-    const { error } = JOI_MONGO_FIELD.validate(field);
+    const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
 
     if (error) {
       throw error;
