@@ -65,8 +65,9 @@ export type TGroupUserInfo = Pick<
   'userName' | 'createdAt' | 'updatedAt'
 >;
 
-export type TGroupListByUserRequest = TDatabaseRequest &
-  Pick<TUser, 'userName'>;
+export type TGroupListByUserRequest = TDatabaseRequest & {
+  userQuery: Partial<Pick<TUser, 'userName' | 'email' | 'publicKey'>>;
+};
 
 export type TGroupListByUserResponse = string[];
 
