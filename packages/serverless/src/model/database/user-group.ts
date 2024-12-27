@@ -1,6 +1,5 @@
 import { TGroupRecord, TUserGroupRecord, TUserRecord } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -13,8 +12,8 @@ import {
   ObjectId,
   OptionalId,
 } from 'mongodb';
-import ModelGroup from './group';
 import ModelUser from '../global/user';
+import ModelGroup from './group';
 
 export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   private static collectionName =
@@ -174,12 +173,12 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
       updatedAt: Date
     */
     if (!(await collection.isExist())) {
-      await collection.index({ userName: 1 }, { session });
-      await collection.index({ groupName: 1 }, { session });
-      await collection.index({ groupObjectId: 1 }, { session });
-      await collection.index({ userObjectId: 1 }, { session });
+      await collection.createSystemIndex({ userName: 1 }, { session });
+      await collection.createSystemIndex({ groupName: 1 }, { session });
+      await collection.createSystemIndex({ groupOjectId: 1 }, { session });
+      await collection.createSystemIndex({ userObjectId: 1 }, { session });
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

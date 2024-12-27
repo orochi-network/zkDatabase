@@ -1,3 +1,4 @@
+import { logger } from '@helper';
 import {
   BulkWriteOptions,
   CountDocumentsOptions,
@@ -18,7 +19,6 @@ import {
   WithId,
   WithoutId,
 } from 'mongodb';
-import { logger } from '@helper';
 import { ModelBasic } from './basic';
 
 /**

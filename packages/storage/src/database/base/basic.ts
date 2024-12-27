@@ -1,5 +1,13 @@
-import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
+import { zkDatabaseConstant } from '@common';
 import { logger } from '@helper';
+import { JOI_ZKDB_FIELD_NAME } from '@zkdb/common';
+import {
+  ClientSession,
+  CreateCollectionOptions,
+  CreateIndexesOptions,
+  Document,
+  IndexSpecification,
+} from 'mongodb';
 import { DatabaseEngine } from '../database-engine';
 
 /**
@@ -57,5 +65,30 @@ export abstract class ModelBasic<T extends Document> {
       await session.abortTransaction();
     }
     return result;
+  }
+
+  public async createSystemIndex(
+    indexSpec: IndexSpecification,
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ): Promise<void> {
+    const fieldName = `${zkDatabaseConstant.systemIndex}_${Object.keys(indexSpec).join('_')}`;
+
+    const { error } = JOI_ZKDB_FIELD_NAME.validate(fieldName);
+
+    if (error) {
+      throw error;
+    }
+
+    await this.collection.createIndex(indexSpec, {
+      ...indexOptions,
+      name: fieldName,
+    });
+  }
+
+  public async addTimestampMongoDb(
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ) {
+    await this.createSystemIndex({ createdAt: 1 }, indexOptions);
+    await this.createSystemIndex({ updatedAt: 1 }, indexOptions);
   }
 }

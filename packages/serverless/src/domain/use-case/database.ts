@@ -14,7 +14,6 @@ import {
   TDatabaseParamDeploy,
   TDatabaseParamIsOwner,
   TDatabaseParamListDetail,
-  TDatabaseParamTransferOwner,
   TMetadataDatabaseDetail,
   TPaginationReturn,
 } from '@zkdb/common';

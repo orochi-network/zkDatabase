@@ -1,6 +1,5 @@
 import { TCollectionMetadataRecord } from '@zkdb/common';
 import {
-  addTimestampMongoDB,
   DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
@@ -60,9 +59,12 @@ export class ModelMetadataCollection extends ModelGeneral<
       updatedAt: Date;
     */
     if (!(await collection.isExist())) {
-      await collection.index({ collectionName: 1 }, { unique: true, session });
+      await collection.createSystemIndex(
+        { collectionName: 1 },
+        { unique: true, session }
+      );
 
-      await addTimestampMongoDB(collection, session);
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

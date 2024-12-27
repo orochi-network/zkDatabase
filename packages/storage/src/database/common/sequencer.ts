@@ -1,7 +1,7 @@
-import { ClientSession, WithoutId } from 'mongodb';
-import { ESequencer, TSequencedItem } from '@zkdb/common';
 import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE, addTimestampMongoDB, getCurrentTime } from '@helper';
+import { DATABASE_ENGINE, getCurrentTime } from '@helper';
+import { ESequencer, TSequencedItem } from '@zkdb/common';
+import { ClientSession, WithoutId } from 'mongodb';
 import { ModelBasic } from '../base';
 import { ModelCollection } from '../general';
 
@@ -80,8 +80,11 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {
-      await collection.index({ type: 1 }, { unique: true });
-      await addTimestampMongoDB(collection, session);
+      await collection.createSystemIndex(
+        { type: 1 },
+        { unique: true, session }
+      );
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

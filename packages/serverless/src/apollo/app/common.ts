@@ -42,7 +42,7 @@ export const typeDefsCommon = gql`
   # EIndexProperty in TS
   enum IndexProperty {
     Compound
-    Unique
+    Single
   }
 
   type IndexInput {

@@ -46,7 +46,7 @@ export type TUserSignUpRequest = {
 export type TUserSignUpResponse = WithoutId<TUserRecord>;
 
 export type TUserFindRequest = {
-  query: { [key: string]: string };
+  query: Partial<Pick<TUser, 'email' | 'userName' | 'publicKey'>>;
   pagination: TPagination;
 };
 
