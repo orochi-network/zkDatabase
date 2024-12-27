@@ -28,9 +28,12 @@ export class PermissionSecurity {
     session?: ClientSession
   ) {
     const imUserGroup = new ModelUserGroup(databaseName);
-    const userGroup = await imUserGroup.listGroupByUserName(userName, {
-      session,
-    });
+    const userGroup = await imUserGroup.listGroupByUserQuery(
+      { userName },
+      {
+        session,
+      }
+    );
     return userGroup;
   }
 
