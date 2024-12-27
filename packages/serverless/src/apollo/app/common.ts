@@ -74,12 +74,6 @@ export const typeDefsCommon = gql`
     sorting: Sorting
   }
 
-  type OwnershipAndPermission {
-    owner: String!
-    group: String!
-    permission: Int!
-  }
-
   type SchemaFieldOutput {
     name: String!
     kind: SchemaType!

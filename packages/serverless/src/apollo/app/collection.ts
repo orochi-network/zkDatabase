@@ -65,7 +65,9 @@ export const typeDefsCollection = gql`
   type CollectionMetadata {
     collectionName: String!
     schema: [SchemaFieldOutput]!
-    metadata: OwnershipAndPermission!
+    owner: String!
+    group: String!
+    permission: Int!
     sizeOnDisk: Int
     createdAt: Date!
     updatedAt: Date!

@@ -1,3 +1,4 @@
+import { ModelUserGroup } from '@model';
 import { TGroupRecord } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
@@ -5,7 +6,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, OptionalId } from 'mongodb';
+import { ClientSession, ObjectId, OptionalId } from 'mongodb';
 
 export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
   private static collectionName: string =
@@ -36,6 +37,14 @@ export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
 
       await collection.addTimestampMongoDb({ session });
     }
+  }
+
+  /** Drop group and all relations of user in group. */
+  public async dropGroup(groupObjectId: ObjectId, session: ClientSession) {
+    const imUserGroup = new ModelUserGroup(this.databaseName);
+
+    await imUserGroup.deleteMany({ groupObjectId }, { session });
+    await this.deleteOne({ _id: groupObjectId }, { session });
   }
 }
 

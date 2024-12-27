@@ -54,7 +54,7 @@ export class ModelMetadataCollection extends ModelGeneral<
       owner: string;
       group: string;
       permission: number;
-      schema: Object; 
+      schema: Object;
       createdAt: Date;
       updatedAt: Date;
     */

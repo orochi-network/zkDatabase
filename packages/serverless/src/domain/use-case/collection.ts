@@ -105,7 +105,7 @@ export class Collection {
 
       const result = await Promise.all(listIndexPromise);
 
-      return result.every(Boolean);
+      return result.every((e) => e === true);
     }
 
     throw new Error(
