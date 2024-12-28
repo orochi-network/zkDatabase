@@ -1,6 +1,6 @@
-import { ApiClient, IApiClient } from '@zkdb/api';
+import { IApiClient } from '@zkdb/api';
 import { TGroupDetail } from '@zkdb/common';
-import { TGroupConfig, IGroup } from '../interfaces';
+import { IGroup, TGroupConfig } from '../interfaces';
 
 /**
  * This class is an implementation of the IGroup interface.
@@ -9,11 +9,18 @@ import { TGroupConfig, IGroup } from '../interfaces';
  * @implements {IGroup}
  */
 export class Group implements IGroup {
+  private apiClient: IApiClient;
+
   private databaseName: string;
 
   private groupName: string;
 
-  private apiClient: IApiClient;
+  private get basicQuery() {
+    return {
+      databaseName: this.databaseName,
+      groupName: this.groupName,
+    };
+  }
 
   constructor(apiClient: IApiClient, databaseName: string, groupName: string) {
     this.databaseName = databaseName;
@@ -22,19 +29,13 @@ export class Group implements IGroup {
   }
 
   async info(): Promise<TGroupDetail> {
-    return (
-      await this.apiClient.group.groupDetail({
-        databaseName: this.databaseName,
-        groupName: this.groupName,
-      })
-    ).unwrap();
+    return (await this.apiClient.group.groupDetail(this.basicQuery)).unwrap();
   }
 
   async create(groupConfig: TGroupConfig): Promise<boolean> {
     return (
       await this.apiClient.group.groupCreate({
-        databaseName: this.databaseName,
-        groupName: this.groupName,
+        ...this.basicQuery,
         groupDescription: groupConfig.groupDescription,
       })
     ).unwrap();
@@ -43,8 +44,7 @@ export class Group implements IGroup {
   async update(groupConfig: TGroupConfig): Promise<boolean> {
     return (
       await this.apiClient.group.groupUpdate({
-        databaseName: this.databaseName,
-        groupName: this.groupName,
+        ...this.basicQuery,
         newGroupDescription: groupConfig.groupDescription,
         newGroupName: groupConfig.groupName,
       })
@@ -54,8 +54,7 @@ export class Group implements IGroup {
   async userAdd(listUser: string[]): Promise<boolean> {
     return (
       await this.apiClient.group.groupAddUser({
-        databaseName: this.databaseName,
-        groupName: this.groupName,
+        ...this.basicQuery,
         listUser,
       })
     ).unwrap();
@@ -64,8 +63,7 @@ export class Group implements IGroup {
   async userRemove(listUser: string[]): Promise<boolean> {
     return (
       await this.apiClient.group.groupRemoveUser({
-        databaseName: this.databaseName,
-        groupName: this.groupName,
+        ...this.basicQuery,
         listUser,
       })
     ).unwrap();

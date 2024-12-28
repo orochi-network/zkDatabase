@@ -10,5 +10,5 @@ export interface IMetadata<T> {
 
   permissionSet(permission: Permission): Promise<boolean>;
 
-  permissionGet(): Promise<T>;
+  permissionGet(): Promise<OwnershipAndPermission | null>;
 }

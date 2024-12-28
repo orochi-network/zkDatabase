@@ -14,7 +14,7 @@ import {
   TApolloClient,
 } from "./common.js";
 
-export const transaction = <T>(client: TApolloClient<T>) => ({
+export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
   transactionSubmit: createMutateFunction<
     TTransactionSubmitRequest,
     TTransactionSubmitResponse

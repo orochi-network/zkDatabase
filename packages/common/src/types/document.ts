@@ -1,5 +1,5 @@
 import type { ObjectId } from 'mongodb';
-import { TSchemaSerializedField } from '../schema.js';
+import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
@@ -29,7 +29,7 @@ export type TDocumentRecordNullable = TNullable<
 export type TDocumentResponse = TDocumentRecordNullable;
 
 export type TDocumentFindRequest = TCollectionRequest & {
-  query?: { [key: string]: string };
+  query?: Record<string, TSerializedValue>;
   pagination?: TPagination;
 };
 
@@ -45,7 +45,7 @@ export type TDocumentFindResponse = TPaginationReturn<
 >;
 
 export type TDocumentCreateRequest = TCollectionRequest & {
-  document: Record<string, TDocumentField>;
+  document: Record<string, TSerializedValue>;
   documentPermission?: number;
 };
 
@@ -57,12 +57,15 @@ export type TDocumentCreateResponse = {
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
   docId: string;
-  document: Record<string, TDocumentField>;
+  document: Record<string, TSerializedValue>;
 };
 
 export type TDocumentUpdateResponse = TMerkleProof[];
 
-export type TDocumentDropRequest = TDocumentUpdateRequest;
+export type TDocumentDropRequest = TCollectionRequest & {
+  docId: string;
+};
+
 export type TDocumentDropResponse = TMerkleProof[];
 
 export type TDocumentHistoryFindRequest = TCollectionRequest & {

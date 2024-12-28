@@ -21,7 +21,7 @@ import {
   TApolloClient,
 } from "./common.js";
 
-export const database = <T>(client: TApolloClient<T>) => ({
+export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
   dbCreate: createMutateFunction<
     TDatabaseCreateRequest,
     TDatabaseCreateResponse

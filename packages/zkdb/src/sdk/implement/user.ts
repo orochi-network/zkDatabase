@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-dupe-class-members */
 import { IApiClient } from '@zkdb/api';
-import { TUser } from '@zkdb/common';
+import { TGroupListByUserResponse, TUser } from '@zkdb/common';
 import { IUser } from '../interfaces/user';
 
 /**
@@ -12,14 +12,28 @@ import { IUser } from '../interfaces/user';
 export class User implements IUser {
   private apiClient: IApiClient;
 
+  private databaseName: string;
+
   private userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>;
 
   constructor(
     apiClient: IApiClient,
+    databaseName: string,
     userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
   ) {
     this.apiClient = apiClient;
+    this.databaseName = databaseName;
     this.userFilter = userFilter;
+  }
+
+  async listGroup(): Promise<TGroupListByUserResponse> {
+    const result = (
+      await this.apiClient.group.groupListByUser({
+        databaseName: this.databaseName,
+        userQuery: this.userFilter,
+      })
+    ).unwrap();
+    return result;
   }
 
   async info(): Promise<Omit<TUser, 'userData'> | null> {

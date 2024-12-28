@@ -1,38 +1,38 @@
 /* eslint-disable no-unused-vars */
 import {
+  TDocumentDropResponse,
   TDocumentHistoryFindResponse,
   TDocumentMetadata,
   TDocumentRecord,
   TDocumentUpdateResponse,
-  TMerkleProof,
+  TMerkleTreeProofByDocIdResponse,
   TPagination,
-  TProofStatusDocumentRequest,
+  TProofStatusDocumentResponse,
   TSchemaExtendable,
 } from '@zkdb/common';
 import { IMetadata } from './metadata';
 
-export type TDocument<T> = Pick<
+export type TDocument = Pick<
   TDocumentRecord,
   'docId' | 'createdAt' | 'updatedAt'
-> &
-  T;
+>;
 
 export interface IDocument<T extends TSchemaExtendable<any>> {
-  get document(): TDocument<T['innerStructure']>;
+  get document(): TDocument & T['innerStructure'];
 
   get metadata(): IMetadata<TDocumentMetadata>;
 
-  drop(): Promise<TMerkleProof>;
+  drop(): Promise<TDocumentDropResponse>;
 
   update(
     document: Partial<T['innerStructure']>
   ): Promise<TDocumentUpdateResponse>;
 
-  toProvable(type: T): InstanceType<T>;
+  toProvable(schema: T): InstanceType<T>;
 
-  proofMerkle(): Promise<TMerkleProof[]>;
+  proofMerkle(): Promise<TMerkleTreeProofByDocIdResponse>;
 
-  proofStatus(): Promise<TProofStatusDocumentRequest>;
+  proofStatus(): Promise<TProofStatusDocumentResponse>;
 
-  history(pagination?: TPagination): Promise<TDocumentHistoryFindResponse[]>;
+  history(pagination?: TPagination): Promise<TDocumentHistoryFindResponse>;
 }

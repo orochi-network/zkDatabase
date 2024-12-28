@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import {
   ETransactionType,
-  Schema,
   TDatabaseCreateRequest,
   TGroupRecord,
   TProofStatusDatabaseResponse,
@@ -15,7 +14,6 @@ import {
 import { ICollection } from './collection';
 import { IGroup } from './group';
 import { IUser } from './user';
-import { CircuitString, UInt32 } from 'o1js';
 
 export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
 
@@ -61,32 +59,3 @@ export interface IDatabase {
 
   rollUpHistory(): Promise<TRollUpHistoryResponse>;
 }
-
-const zkdb: IDatabase = {} as any;
-
-zkdb.create({ merkleHeight: 10 });
-
-zkdb.user({ userName: 'test' }).info();
-
-zkdb.collection('users').index.list();
-
-const MySchema = Schema.create({
-  name: CircuitString,
-  age: UInt32,
-});
-
-type TMySchema = typeof MySchema;
-
-zkdb.collection('test').create(MySchema);
-
-const col = zkdb.collection<TMySchema>('test');
-
-col.insert({ name: 'John', age: 30 });
-
-const doc = await zkdb.collection<TMySchema>('test').findOne({ name: 'John' });
-
-const a = await col.metadata.info();
-
-const b = doc?.metadata;
-
-const c = await b?.info();

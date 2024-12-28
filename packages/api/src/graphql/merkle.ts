@@ -17,7 +17,7 @@ import {
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
-export const merkle = <T>(client: TApolloClient<T>) => ({
+export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
   merkleNodeByLevel: createQueryFunction<
     TMerkleTreeNodeListByLevelRequest,
     TMerkleTreeNodeListByLevelResponse

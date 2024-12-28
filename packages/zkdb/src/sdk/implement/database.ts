@@ -19,6 +19,7 @@ import {
   TDatabaseConfig,
 } from '../interfaces';
 import { Collection } from './collection';
+import { Group } from './group';
 
 // TODO: Implement transactions endpoints
 export class ZKDatabaseImpl implements IDatabase {
@@ -57,16 +58,19 @@ export class ZKDatabaseImpl implements IDatabase {
   }
 
   group(groupName: string): IGroup {
-    throw new Error('Method not implemented.');
+    return new Group(this.apiClient, this.databaseName, groupName);
   }
+
   groupList(): Promise<TGroupRecord[]> {
     throw new Error('Method not implemented.');
   }
+
   user(
     userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
   ): IUser {
     throw new Error('Method not implemented.');
   }
+
   userList(): Promise<TUserRecord[]> {
     throw new Error('Method not implemented.');
   }

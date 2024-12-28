@@ -2,8 +2,7 @@
 import {
   TCollectionIndex,
   TCollectionMetadata,
-  TCollectionMetadataResponse,
-  TMerkleProof,
+  TDocumentCreateResponse,
   TPagination,
   TPaginationReturn,
   TSchemaExtendable,
@@ -28,7 +27,7 @@ export interface ICollectionIndex {
    * @param index
    * @returns {Promise<boolean>} A promise that resolves to a boolean indicating success or failure.
    */
-  create(index: TCollectionIndex): Promise<boolean>;
+  create(index: TCollectionIndex[]): Promise<boolean>;
 
   /**
    * Drops an existing index in the collection.
@@ -47,7 +46,7 @@ export interface ICollection<T extends TSchemaExtendable<any>> {
 
   create(
     schema: T,
-    index?: string[] | TCollectionIndex<T>[],
+    index?: string[] | TCollectionIndex[],
     permission?: Permission,
     groupName?: string
   ): Promise<boolean>;
@@ -59,5 +58,5 @@ export interface ICollection<T extends TSchemaExtendable<any>> {
     pagination?: TPagination
   ): Promise<TPaginationReturn<IDocument<T>[]>>;
 
-  insert(document: T['innerStructure']): Promise<TMerkleProof>;
+  insert(document: T['innerStructure']): Promise<TDocumentCreateResponse>;
 }
