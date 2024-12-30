@@ -89,7 +89,7 @@ export const typeDefsCollection = gql`
       databaseName: String!
       collectionName: String!
       schema: [SchemaFieldInput!]!
-      group: String
+      groupName: String
       permission: Int
     ): Boolean!
   }

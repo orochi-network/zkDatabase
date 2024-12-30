@@ -69,9 +69,6 @@ export const typeDefsCommon = gql`
   input SchemaFieldInput {
     name: String!
     kind: SchemaType!
-    index: Boolean
-    # Default is Asc or 1
-    sorting: Sorting
   }
 
   type SchemaFieldOutput {
