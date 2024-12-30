@@ -40,13 +40,9 @@ export type TRollUpHistoryRecordNullable = TDbRecord<
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
 // Compound Type
-export type TRollUpTransactionHistory = TRollUpHistory &
-  WithoutId<TDbRecord<TTransaction>>;
 
-export type TRollUpHistoryDetail = Pick<
-  TRollUpHistoryRecord,
-  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
-> & {
+// This type using for aggregate
+export type TRollUpHistoryDetail = TRollUpHistoryRecord & {
   transaction: TTransactionRecord;
   proof: TProofRecord;
 };
@@ -56,12 +52,13 @@ export type TRollUpDetail = {
   state: ERollUpState;
   // Number of merkle root transformation different to previous one
   rollUpDifferent: number;
+  latestRollUpSuccess: Date | null;
 };
 
 // RollUp history
 export type TRollupHistoryRequest = TDatabaseRequest;
 
-export type TRollUpHistoryResponse = TRollUpDetail;
+export type TRollUpHistoryResponse = TRollUpDetail | null;
 
 // Rollup create
 export type TRollUpCreateRequest = TDatabaseRequest;

@@ -38,8 +38,9 @@ type RollUpHistoryItem {
 
 type RollUpHistory {
   state: RollUpState!,
-  extraData: Int,
-  history: [RollUpHistoryItem]!
+  rollUpDifferent: Int,
+  history: [RollUpHistoryItem!]
+  latestRollUpSuccess: Date
 }
 
 extend type Mutation {
