@@ -1,12 +1,7 @@
 #!/usr/bin/env bash
 
-ROOT_DIR=`pwd`
-find `pwd` -name "node_modules" -exec rm -rf {} \;
-rm -rf yarn.lock
-yarn
-cd $ROOT_DIR/packages/permission && yarn build
-cd $ROOT_DIR/packages/common && yarn build
-cd $ROOT_DIR/packages/storage && yarn build
-cd $ROOT_DIR/packages/serverless && yarn build
-cd $ROOT_DIR/packages/api && yarn build
-cd $ROOT_DIR/packages/zkdb && yarn build
+tmux new-session 'cd packages/permission && npx rollup -c -w' \; \
+    split-window -h 'cd packages/common && npx rollup -c -w' \; \
+    split-window -h 'cd packages/api && npx rollup -c -w' \; \
+    split-window -h  'cd packages/storage && npx rollup -c -w' \; \
+    select-layout 'tiled'

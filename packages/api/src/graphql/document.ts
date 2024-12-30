@@ -17,7 +17,7 @@ import {
   TApolloClient,
 } from "./common";
 
-export const document = <T>(client: TApolloClient<T>) => ({
+export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
   documentCreate: createMutateFunction<
     TDocumentCreateRequest,
     TDocumentCreateResponse

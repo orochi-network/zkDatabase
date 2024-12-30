@@ -93,19 +93,7 @@ export class Transaction {
     ) {
       throw new Error('User public key not found');
     }
-    await session.commitTransaction();
-    /*
-    NOTE: we will get an race-condition bug if we insert transaction here,
-    First, if we insertOne transaction here, it actually not inserted since it in 'mongodb session'
-    It still return objectId but not insert to mongo yet
-    If we you session.commitTransaction(), we still get race-condition
-    The queue will run first and update transactionRaw before the insert does
-    So it will override the transaction and we got nothing
-    */
-    /*
-      My current solution is let the compile service create transaction
-      We will create objectId for it first 
-    */
+
     const transactionObjectId = new ObjectId();
 
     await transactionQueue.add('transaction', {

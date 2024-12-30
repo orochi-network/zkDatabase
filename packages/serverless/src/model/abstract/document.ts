@@ -34,7 +34,6 @@ export class ModelDocument extends ModelGeneral<
     super(databaseName, DATABASE_ENGINE.serverless, collectionName);
   }
 
-  // TODO: need manual testing to see if this is working
   public static async init(
     databaseName: string,
     collectionName: string,

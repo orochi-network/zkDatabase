@@ -44,22 +44,13 @@ export class ModelRollupHistory extends ModelGeneral<
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
-      await collection.createSystemIndex(
-        { databaseName: 1 },
-        { unique: true, session }
-      );
-      await collection.createSystemIndex(
-        { merkletreeRoot: 1 },
-        { unique: true, session }
-      );
+      await collection.createSystemIndex({ databaseName: 1 }, { session });
+      await collection.createSystemIndex({ merkletreeRoot: 1 }, { session });
       await collection.createSystemIndex(
         { merkletreeRootPrevious: 1 },
-        { unique: true, session }
+        { session }
       );
-      await collection.createSystemIndex(
-        { proofObjectId: 1 },
-        { unique: true, session }
-      );
+      await collection.createSystemIndex({ proofObjectId: 1 }, { session });
       await collection.createSystemIndex(
         { transactionObjectId: 1 },
         { unique: true, session }

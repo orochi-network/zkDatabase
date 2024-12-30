@@ -106,7 +106,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -144,7 +144,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -181,7 +181,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -217,7 +217,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -255,7 +255,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -293,7 +293,7 @@ export const SERVICE_TRANSACTION = {
                       );
 
                     if (!updatedTransaction) {
-                      throw new Error('Can not found transaction');
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(

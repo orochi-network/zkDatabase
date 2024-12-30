@@ -24,13 +24,18 @@ export class Rollup {
     actor: string,
     compoundSession: TCompoundSession
   ): Promise<boolean> {
-    await Database.ownershipCheck(databaseName, actor);
+    console.log('🚀 ~ Rollup ~ compoundSession:', compoundSession);
+    await Database.ownershipCheck(
+      databaseName,
+      actor,
+      compoundSession.serverless
+    );
 
     const modelProof = ModelProof.getInstance();
     const latestProofForDb = await modelProof.findOne(
       { databaseName },
       {
-        session: compoundSession?.proofService,
+        session: compoundSession.proofService,
         sort: {
           createdAt: -1,
         },
@@ -44,16 +49,22 @@ export class Rollup {
     const imRollup = ModelRollupHistory.getInstance();
     const modelTransaction = ModelTransaction.getInstance();
 
-    const rollUp = await imRollup.collection.findOne({
-      proofId: latestProofForDb._id,
-    });
+    const rollUp = await imRollup.findOne(
+      {
+        proofId: latestProofForDb._id,
+      },
+      { session: compoundSession.serverless }
+    );
 
     if (rollUp) {
       logger.debug('Identified repeated proof');
 
-      const transaction = await modelTransaction.findOne({
-        _id: rollUp.transactionObjectId,
-      });
+      const transaction = await modelTransaction.findOne(
+        {
+          _id: rollUp.transactionObjectId,
+        },
+        { session: compoundSession.serverless }
+      );
 
       if (transaction) {
         if (transaction.status === ETransactionStatus.Confirmed) {
@@ -76,7 +87,6 @@ export class Rollup {
     );
 
     const currentTime = getCurrentTime();
-
     await imRollup.insertOne(
       {
         databaseName,
@@ -123,21 +133,13 @@ export class Rollup {
       {
         $match: { databaseName },
       },
-      // Step 2: Join this 'rollup' with 'transaction' & 'proof' collection
+      // Step 2: Join this 'rollup' with 'transaction'
       {
         $lookup: {
           from: zkDatabaseConstant.globalCollection.transaction,
           localField: 'transactionObjectId',
           foreignField: '_id',
           as: 'transaction',
-        },
-      },
-      {
-        $lookup: {
-          from: zkDatabaseConstant.globalCollection.proof,
-          localField: 'proofObjectId',
-          foreignField: '_id',
-          as: 'proof',
         },
       },
       // Step 3: Sort by latest
@@ -151,6 +153,10 @@ export class Rollup {
       .toArray();
 
     const [latestRollup, ..._] = listRollupHistoryDetail;
+    console.log(
+      '🚀 ~ Rollup ~ listRollupHistoryDetail:',
+      listRollupHistoryDetail
+    );
 
     if (listRollupHistoryDetail.length > 0) {
       return {

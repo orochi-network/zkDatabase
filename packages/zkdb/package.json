@@ -57,14 +57,14 @@
   },
   "devDependencies": {},
   "peerDependencies": {
-    "o1js": "^1.9.1",
-    "graphql": "^16.10.0"
+    "graphql": "^16.10.0",
+    "o1js": "^1.9.1"
   },
   "dependencies": {
     "@zkdb/api": "^1.1.14",
-    "@zkdb/common": "^0.1.1",
-    "@zkdb/permission": "0.1.6",
-    "@zkdb/smart-contract": "1.1.7",
+    "@zkdb/common": "^0.1.2",
+    "@zkdb/permission": "^0.1.7",
+    "@zkdb/smart-contract": "^1.1.7",
     "graphql-request": "7.1.2",
     "mina-signer": "3.0.7"
   }

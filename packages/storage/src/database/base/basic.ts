@@ -5,9 +5,14 @@ import {
   CreateCollectionOptions,
   CreateIndexesOptions,
   Document,
-  IndexSpecification,
+  IndexDirection,
 } from 'mongodb';
 import { DatabaseEngine } from '../database-engine';
+import { JOI_ZKDB_FIELD_NAME } from '@zkdb/common';
+
+type TIndexSpec = {
+  [key: string]: IndexDirection;
+};
 
 /**
  * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine
@@ -67,16 +72,18 @@ export abstract class ModelBasic<T extends Document> {
   }
 
   public async createSystemIndex(
-    indexSpec: IndexSpecification,
+    indexSpec: TIndexSpec,
     indexOptions?: Omit<CreateIndexesOptions, 'name'>
   ): Promise<void> {
+    const listIndexedField = Object.keys(indexSpec);
+    listIndexedField.forEach((field) => {
+      const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
+      if (error) {
+        throw new Error(`Invalid field name ${field}: ${error}`);
+      }
+    });
+
     const fieldName = `${zkDatabaseConstant.systemIndex}_${Object.keys(indexSpec).join('_')}`;
-
-    // const { error } = JOI_ZKDB_FIELD_NAME.validate(fieldName);
-
-    // if (error) {
-    //   throw error;
-    // }
 
     await this.collection.createIndex(indexSpec, {
       ...indexOptions,

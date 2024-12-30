@@ -52,14 +52,27 @@ export const SERVICE_ROLLUP = {
 
         isRunning = true;
 
-        logger.info('Transaction service task started ', new Date());
+        logger.info('Rollup service task started ', new Date());
 
         const minaNetwork = MinaNetwork.getInstance();
+
+        minaNetwork.connect(
+          config.NETWORK_ID,
+          config.MINA_URL,
+          config.BLOCKBERRY_API_KEY
+        );
+
         const imQueue = ModelQueueTask.getInstance();
+
         // List all database that have publicKey and not empty
         const databaseList = await ModelMetadataDatabase.getInstance().list({
-          appPublicKey: { $exists: true, $ne: '' },
+          appPublicKey: {
+            $exists: true,
+            $ne: '',
+          },
+          deployStatus: ETransactionStatus.Confirmed,
         });
+
         // Using fill/atSettled like to handle task concurrency
         await Fill(
           databaseList.map(
@@ -75,7 +88,7 @@ export const SERVICE_ROLLUP = {
                 const { account, error } =
                   await minaNetwork.getAccount(zkAppPublicKey);
 
-                if (!account) {
+                if (!account || error) {
                   throw new Error(
                     `zk app with ${appPublicKey} is not exist in mina network. Error: ${error}`
                   );
@@ -126,14 +139,14 @@ export const SERVICE_ROLLUP = {
                       as: 'transaction',
                     },
                   },
-                  {
-                    $lookup: {
-                      from: zkDatabaseConstant.globalCollection.proof,
-                      localField: 'proofObjectId',
-                      foreignField: '_id',
-                      as: 'proof',
-                    },
-                  },
+                  // {
+                  //   $lookup: {
+                  //     from: zkDatabaseConstant.globalCollection.proof,
+                  //     localField: 'proofObjectId',
+                  //     foreignField: '_id',
+                  //     as: 'proof',
+                  //   },
+                  // },
                   // Step 3: Sort by latest
                   {
                     $sort: { createdAt: -1 },
@@ -147,7 +160,11 @@ export const SERVICE_ROLLUP = {
                   .aggregate<TRollUpHistoryDetail>(pipeline)
                   .toArray();
 
-                const latestRollUpHistory = listRollupHistoryDetail[0];
+                const latestRollUpHistory = listRollupHistoryDetail.at(0);
+
+                if (!latestRollUpHistory) {
+                  return;
+                }
 
                 logger.info(
                   `latest rollup history ${latestRollUpHistory.databaseName} found`

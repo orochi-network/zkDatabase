@@ -8,6 +8,7 @@ import {
 } from '@zkdb/common';
 import {
   DatabaseEngine,
+  getCurrentTime,
   ModelMetadataDatabase,
   ModelProof,
   ModelSecureStorage,
@@ -193,9 +194,10 @@ export const SERVICE_COMPILE = {
             );
 
             // Update transaction status and add transaction raw
+            const date = getCurrentTime();
             await imTransaction.updateOne(
               {
-                _id: transactionObjectId,
+                _id: new ObjectId(transactionObjectId),
                 databaseName,
                 transactionType: ETransactionType.Rollup,
               },
@@ -203,7 +205,10 @@ export const SERVICE_COMPILE = {
                 $set: {
                   status: ETransactionStatus.Unsigned,
                   transactionRaw,
-                  updatedAt: new Date(),
+                  updatedAt: date,
+                  createdAt: date,
+                  txHash: '',
+                  error: '',
                 },
               },
               {
