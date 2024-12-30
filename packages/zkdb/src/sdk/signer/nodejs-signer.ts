@@ -1,20 +1,16 @@
-import { SignedData } from '@types';
-import { MinaNetwork, sendTransaction } from '@zkdb/smart-contract';
+import { sendTransaction } from '@zkdb/smart-contract';
 import Client from 'mina-signer';
-import { fetchAccount, NetworkId, PrivateKey } from 'o1js';
-import { TransactionParams } from '../../types/transaction-params';
-import { MinaTransaction } from '../types/o1js';
-import { Signer } from './interface/signer';
+import { fetchAccount, NetworkId, PrivateKey, Transaction } from 'o1js';
+import { SignedLegacy } from 'o1js/dist/node/mina-signer/src/types';
+import { Signer, TransactionParams } from './interface/signer';
 
 export class NodeSigner implements Signer {
   private privateKey: PrivateKey;
   private client: Client;
   private endpoint: string;
 
-  private network: NetworkId;
   constructor(privateKey: PrivateKey, network: NetworkId) {
     this.privateKey = privateKey;
-    this.network = network;
     if (network === 'testnet') {
       this.client = new Client({ network: 'testnet' });
       this.endpoint = 'https://api.minascan.io/node/devnet/v1/graphql';
@@ -70,14 +66,14 @@ export class NodeSigner implements Signer {
   }
 
   async signTransaction(
-    transaction: MinaTransaction,
+    transaction: Transaction<false, false>,
     otherKeys: PrivateKey[]
-  ): Promise<MinaTransaction> {
+  ): Promise<Transaction<false, true>> {
     transaction.sign(otherKeys.concat(this.privateKey));
     return transaction;
   }
 
-  async signMessage(message: string): Promise<SignedData> {
+  async signMessage(message: string): Promise<SignedLegacy<string>> {
     return this.client.signMessage(message, this.privateKey.toBase58());
   }
 }

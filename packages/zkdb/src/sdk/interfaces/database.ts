@@ -2,12 +2,13 @@
 import {
   ETransactionType,
   TDatabaseCreateRequest,
-  TGroupRecord,
+  TGroupListAllResponse,
   TProofStatusDatabaseResponse,
   TRollUpHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
+  TUserFindResponse,
   TUserRecord,
   TZkProofResponse,
 } from '@zkdb/common';
@@ -33,14 +34,14 @@ export interface IDatabase {
   // Group
   group(groupName: string): IGroup;
 
-  groupList(): Promise<TGroupRecord[]>;
+  groupList(): Promise<TGroupListAllResponse>;
 
   // User
   user(
     userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
   ): IUser;
 
-  userList(): Promise<TUserRecord[]>;
+  userList(): Promise<TUserFindResponse>;
 
   // ZK Proof
   proofZk(): Promise<TZkProofResponse>;
@@ -52,7 +53,10 @@ export interface IDatabase {
     transactionType: ETransactionType
   ): Promise<TTransactionDraftResponse>;
 
-  transactionSubmit(id: string, txHash: string): Promise<boolean>;
+  transactionSubmit(
+    transactionObjectId: string,
+    txHash: string
+  ): Promise<boolean>;
 
   // Rollup
   rollUpStart(): Promise<boolean>;

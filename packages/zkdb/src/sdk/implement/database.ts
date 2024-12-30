@@ -1,13 +1,13 @@
 import { IApiClient } from '@zkdb/api';
 import {
   ETransactionType,
-  TGroupRecord,
+  TGroupListAllResponse,
   TProofStatusDatabaseResponse,
   TRollUpHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
-  TUserRecord,
+  TUserFindResponse,
   TZkProofResponse,
 } from '@zkdb/common';
 
@@ -20,11 +20,22 @@ import {
 } from '../interfaces';
 import { Collection } from './collection';
 import { Group } from './group';
+import { User } from './user';
 
 // TODO: Implement transactions endpoints
-export class ZKDatabaseImpl implements IDatabase {
+export class Database implements IDatabase {
   private databaseName: string;
+
   private apiClient: IApiClient;
+
+  constructor(apiClient: IApiClient, databaseName: string) {
+    this.apiClient = apiClient;
+    this.databaseName = databaseName;
+  }
+
+  private get basicQuery() {
+    return { databaseName: this.databaseName };
+  }
 
   async create(config: TDatabaseConfig): Promise<boolean> {
     return (
@@ -36,9 +47,7 @@ export class ZKDatabaseImpl implements IDatabase {
   }
 
   async exist(): Promise<boolean> {
-    return (
-      await this.apiClient.db.dbExist({ databaseName: this.databaseName })
-    ).unwrap();
+    return (await this.apiClient.db.dbExist(this.basicQuery)).unwrap();
   }
 
   collection<T extends TSchemaExtendable<any>>(
@@ -48,11 +57,7 @@ export class ZKDatabaseImpl implements IDatabase {
   }
 
   async collectionList(): Promise<string[]> {
-    return (
-      await this.apiClient.collection.collectionList({
-        databaseName: this.databaseName,
-      })
-    )
+    return (await this.apiClient.collection.collectionList(this.basicQuery))
       .unwrap()
       .map((e) => e.collectionName);
   }
@@ -61,37 +66,66 @@ export class ZKDatabaseImpl implements IDatabase {
     return new Group(this.apiClient, this.databaseName, groupName);
   }
 
-  groupList(): Promise<TGroupRecord[]> {
-    throw new Error('Method not implemented.');
+  async groupList(): Promise<TGroupListAllResponse> {
+    return (await this.apiClient.group.groupListAll(this.basicQuery)).unwrap();
   }
 
   user(
     userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
   ): IUser {
-    throw new Error('Method not implemented.');
+    return new User(this.apiClient, this.databaseName, userFilter);
   }
 
-  userList(): Promise<TUserRecord[]> {
-    throw new Error('Method not implemented.');
+  async userList(offset?: number): Promise<TUserFindResponse> {
+    return (
+      await this.apiClient.user.userFind({
+        query: {},
+        pagination: { limit: 100, offset: offset || 0 },
+      })
+    ).unwrap();
   }
-  proofZk(): Promise<TZkProofResponse> {
-    throw new Error('Method not implemented.');
+
+  async proofZk(): Promise<TZkProofResponse> {
+    return (await this.apiClient.proof.proof(this.basicQuery)).unwrap();
   }
-  proofStatus(): Promise<TProofStatusDatabaseResponse> {
-    throw new Error('Method not implemented.');
+
+  async proofStatus(): Promise<TProofStatusDatabaseResponse> {
+    return (
+      await this.apiClient.proof.proofStatusDatabase(this.basicQuery)
+    ).unwrap();
   }
-  transactionDraft(
+
+  async transactionDraft(
     transactionType: ETransactionType
   ): Promise<TTransactionDraftResponse> {
-    throw new Error('Method not implemented.');
+    return (
+      await this.apiClient.transaction.transactionDraft({
+        ...this.basicQuery,
+        transactionType,
+      })
+    ).unwrap();
   }
-  transactionSubmit(id: string, txHash: string): Promise<boolean> {
-    throw new Error('Method not implemented.');
+
+  async transactionSubmit(
+    transactionObjectId: string,
+    txHash: string
+  ): Promise<boolean> {
+    return (
+      await this.apiClient.transaction.transactionSubmit({
+        ...this.basicQuery,
+        transactionObjectId,
+        txHash,
+      })
+    ).unwrap();
   }
-  rollUpStart(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+
+  async rollUpStart(): Promise<boolean> {
+    return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
-  rollUpHistory(): Promise<TRollUpHistoryResponse> {
-    throw new Error('Method not implemented.');
+
+  async rollUpHistory(): Promise<TRollUpHistoryResponse> {
+    return (
+      await this.apiClient.rollup.rollupHistory(this.basicQuery)
+    ).unwrap();
   }
 }
