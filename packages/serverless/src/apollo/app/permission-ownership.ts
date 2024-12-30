@@ -23,7 +23,7 @@ export const typeDefsPermission = gql`
   type Query
   type Mutation
 
-  enum OwnershipGroup {
+  enum OwnershipType {
     User
     Group
   }
@@ -40,7 +40,7 @@ export const typeDefsPermission = gql`
       databaseName: String!
       collectionName: String!
       docId: String
-      groupType: OwnershipGroup!
+      groupType: OwnershipType!
       newOwner: String!
     ): Boolean!
   }

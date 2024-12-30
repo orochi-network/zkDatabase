@@ -15,7 +15,7 @@ import {
   TApolloClient,
 } from "./common";
 
-export const collection = <T>(client: TApolloClient<T>) => ({
+export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
   collectionCreate: createMutateFunction<
     TCollectionCreateRequest,
     TCollectionCreateResponse

@@ -1,9 +1,10 @@
-import { ApiClient, getNetworkEnvironment, IApiClient } from '@zkdb/api';
-import { NetworkId, PrivateKey } from 'o1js';
 import { isBrowser, isNetwork } from '@utils';
+import { ApiClient, IApiClient } from '@zkdb/api';
+import { ENetworkId } from '@zkdb/common';
+import { NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
-import { ZKDatabaseImpl, ZKSystemImpl } from '../impl';
-import { ZKDatabase, ZKSystem } from '../interfaces';
+import { Database } from '../implement';
+import { IDatabase } from '../interfaces';
 import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
 import InMemoryStorage from '../storage/memory';
 
@@ -13,11 +14,11 @@ type MinaConfig = {
 };
 
 /**
- * The ZKDatabaseClient class provides methods to interact with the ZKDatabase.
+ * The ZKDatabase Client class provides methods to interact with the ZKDatabase.
  * It allows connecting to the database using different authentication methods
  * and provides access to database and system functionalities.
  */
-export class ZKDatabaseClient {
+export class ZKDatabase {
   public apiClient: IApiClient;
 
   public authenticator: Authenticator;
@@ -47,18 +48,17 @@ export class ZKDatabaseClient {
    * @param url
    * @returns
    */
-  public static async connect(url: string): Promise<ZKDatabaseClient> {
+  public static async connect(url: string): Promise<ZKDatabase> {
     const urlInstance = new URL(url);
     const { password, protocol, host, pathname } = urlInstance;
-    const [base, abstract] = protocol.replace(':', '').split('+');
-    if (base != 'zkdb') {
-      throw new Error('Invalid protocol');
-    }
+    const [abstract] = protocol.replace(':', '').split('+');
     const apiURL = `${abstract}://${host}${pathname}`;
+    const tmpClient = ApiClient.newInstance(apiURL, globalThis.localStorage);
 
     // Get environment variables
-
-    const { networkId, networkUrl } = await getNetworkEnvironment(apiURL);
+    const { networkId, networkUrl } = (
+      await tmpClient.db.dbEnvironment()
+    ).unwrap();
 
     if (isBrowser() && isNetwork(networkId) && typeof networkUrl === 'string') {
       // Browser environment
@@ -73,8 +73,8 @@ export class ZKDatabaseClient {
           apiClient,
           globalThis.localStorage
         );
-        return new ZKDatabaseClient(apiClient, authenticator, {
-          networkId,
+        return new ZKDatabase(apiClient, authenticator, {
+          networkId: networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet',
           networkUrl,
         });
       }
@@ -82,12 +82,15 @@ export class ZKDatabaseClient {
       // Nodejs environment
       const storage = new InMemoryStorage();
       const apiClient = ApiClient.newInstance(apiURL, storage);
-      const signer = new NodeSigner(PrivateKey.fromBase58(password), networkId);
-      return new ZKDatabaseClient(
+      const signer = new NodeSigner(
+        PrivateKey.fromBase58(password),
+        networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet'
+      );
+      return new ZKDatabase(
         apiClient,
         new Authenticator(signer, apiClient, storage),
         {
-          networkId,
+          networkId: networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet',
           networkUrl,
         }
       );
@@ -120,30 +123,14 @@ export class ZKDatabaseClient {
    * @returns An instance of `ZKDatabase`.
    * @throws Will throw an error if the server URL is not set and `connect()` has not been called.
    */
-  db(name: string): ZKDatabase {
+  db(databaseName: string): IDatabase {
     if (this.apiClient) {
-      return new ZKDatabaseImpl(name, this.apiClient);
+      return new Database(this.apiClient, databaseName);
     }
     throw new Error(
       'Database access failed: Server URL is not set. Please call connect() first.'
     );
   }
-
-  /**
-   * Provides access to the system instance.
-   *
-   * @throws {Error} Throws an error if the server URL is not set and `connect()` has not been called.
-   * @returns {ZKSystem} An instance of ZKSystemImpl if the apiClient is available.
-   */
-  get system(): ZKSystem {
-    if (this.apiClient) {
-      return new ZKSystemImpl(this.apiClient);
-    }
-
-    throw new Error(
-      'System access failed: Server URL is not set, please connect() first.'
-    );
-  }
 }
 
-export default ZKDatabaseClient;
+export default ZKDatabase;

@@ -7,7 +7,7 @@ import {
 } from "@zkdb/common";
 import { createMutateFunction, TApolloClient } from "./common.js";
 
-export const rollup = <T>(client: TApolloClient<T>) => ({
+export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
     TRollUpCreateRequest,
     TRollUpCreateResponse

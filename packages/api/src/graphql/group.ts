@@ -21,7 +21,7 @@ import {
   TApolloClient,
 } from "./common";
 
-export const group = <T>(client: TApolloClient<T>) => ({
+export const API_GROUP = <T>(client: TApolloClient<T>) => ({
   groupAddUser: createMutateFunction<
     TGroupAddUserListRequest,
     TGroupAddUserListResponse
@@ -140,8 +140,16 @@ export const group = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query groupListByUser($databaseName: String!, $userName: String!) {
-        groupListByUser(databaseName: $databaseName, userName: $userName)
+      query indexExist(
+        $databaseName: String!
+        $collectionName: String!
+        $indexName: String!
+      ) {
+        indexExist(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          indexName: $indexName
+        )
       }
     `,
     (data) => data.groupListByUser

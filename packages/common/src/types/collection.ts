@@ -82,16 +82,18 @@ export type TCollectionRequest = TDatabaseRequest &
  * @param {string} group - Collection permission
  */
 export type TCollectionCreateRequest = TCollectionRequest &
-  Pick<TCollection, 'schema'> &
-  TPickAlter<
-    OwnershipAndPermission,
-    {
-      group: 'groupName';
-      permission: 'permission';
-    }
-  > & {
-    collectionIndex?: TCollectionIndex[];
-  };
+  Partial<
+    Pick<TCollection, 'schema'> &
+      TPickAlter<
+        OwnershipAndPermission,
+        {
+          group: 'groupName';
+          permission: 'permission';
+        }
+      > & {
+        collectionIndex: TCollectionIndex[];
+      }
+  >;
 
 export type TCollectionCreateResponse = boolean;
 
@@ -115,10 +117,9 @@ export type TIndexListRequest = TCollectionRequest;
 export type TIndexListResponse = TCollectionIndexInfo[];
 
 // Index create
-export type TIndexCreateRequest = TIndexRequest &
-  TCollectionRequest & {
-    index: TCollectionIndex[];
-  };
+export type TIndexCreateRequest = TCollectionRequest & {
+  index: TCollectionIndex[];
+};
 
 export type TIndexCreateResponse = boolean;
 
@@ -128,6 +129,8 @@ export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
 export type TIndexExistResponse = boolean;
 
 // Index drop
-export type TIndexDropRequest = Omit<TIndexCreateRequest, 'index'>;
+export type TIndexDropRequest = TCollectionRequest & {
+  indexName: string;
+};
 
-export type TIndexDropReponse = boolean;
+export type TIndexDropResponse = boolean;

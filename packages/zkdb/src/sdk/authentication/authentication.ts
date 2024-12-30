@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
-import { IApiClient, TSignInInfo } from '@zkdb/api';
+import { IApiClient } from '@zkdb/api';
 import { Signer } from '../signer';
 import InMemoryStorage from '../storage/memory';
+import { TUserSignInResponse } from '@zkdb/common';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 
@@ -48,9 +49,9 @@ export class Authenticator {
   }
 
   public async signIn() {
-    const ecdsa = (await this.user.ecdsa(undefined)).unwrap();
+    const ecdsa = (await this.user.userEcdsaChallenge()).unwrap();
     const proof = await this.signer.signMessage(ecdsa);
-    const userData = (await this.user.signIn({ proof })).unwrap();
+    const userData = (await this.user.userSignIn({ proof })).unwrap();
     this.#storage.setItem(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
 
     this.#storage.setItem(
@@ -74,9 +75,9 @@ export class Authenticator {
     );
 
     return (
-      await this.user.signUp({
+      await this.user.userSignUp({
         proof,
-        signUp: {
+        newUser: {
           userName,
           email,
           timestamp: this.timestamp(),
@@ -87,12 +88,14 @@ export class Authenticator {
   }
 
   public async signOut(): Promise<void> {
-    if ((await this.user.signOut(undefined)).unwrap()) {
+    if ((await this.user.userSignOut()).unwrap()) {
       this.#storage.clear();
     }
   }
 
-  public getUser(): Omit<TSignInInfo, 'userData' | 'accessToken'> | undefined {
+  public getUser():
+    | Omit<TUserSignInResponse, 'userData' | 'accessToken'>
+    | undefined {
     try {
       return JSON.parse(
         this.#storage.getItem(ZKDB_KEY_USER_INFO) || 'undefined'

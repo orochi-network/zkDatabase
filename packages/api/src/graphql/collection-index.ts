@@ -2,7 +2,7 @@ import { gql } from "@apollo/client";
 import {
   TIndexCreateRequest,
   TIndexCreateResponse,
-  TIndexDropReponse,
+  TIndexDropResponse,
   TIndexDropRequest,
   TIndexExistResponse,
   TIndexExistRequest,
@@ -15,7 +15,7 @@ import {
   TApolloClient,
 } from "./common";
 
-export const collectionIndex = <T>(client: TApolloClient<T>) => ({
+export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
   indexCreate: createMutateFunction<TIndexCreateRequest, TIndexCreateResponse>(
     client,
     gql`
@@ -33,7 +33,7 @@ export const collectionIndex = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.indexCreate
   ),
-  indexDrop: createMutateFunction<TIndexDropRequest, TIndexDropReponse>(
+  indexDrop: createMutateFunction<TIndexDropRequest, TIndexDropResponse>(
     client,
     gql`
       mutation indexDrop(

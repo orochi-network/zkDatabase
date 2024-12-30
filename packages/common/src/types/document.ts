@@ -1,10 +1,11 @@
 import type { ObjectId } from 'mongodb';
-import { TSchemaSerializedField } from '../schema.js';
+import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { EProofStatusDocument } from './proof.js';
+import { TCollectionRequest } from './collection.js';
 
 export type TDocumentField = TSchemaSerializedField;
 
@@ -27,13 +28,8 @@ export type TDocumentRecordNullable = TNullable<
 
 export type TDocumentResponse = TDocumentRecordNullable;
 
-export type TDocumentNamespace = {
-  databaseName: string;
-  collectionName: string;
-};
-
-export type TDocumentFindRequest = TDocumentNamespace & {
-  query?: { [key: string]: string };
+export type TDocumentFindRequest = TCollectionRequest & {
+  query?: Record<string, TSerializedValue>;
   pagination?: TPagination;
 };
 
@@ -48,8 +44,8 @@ export type TDocumentFindResponse = TPaginationReturn<
   >
 >;
 
-export type TDocumentCreateRequest = TDocumentNamespace & {
-  document: Record<string, TDocumentField>;
+export type TDocumentCreateRequest = TCollectionRequest & {
+  document: Record<string, TSerializedValue>;
   documentPermission?: number;
 };
 
@@ -59,18 +55,24 @@ export type TDocumentCreateResponse = {
   merkleProof: TMerkleProof[];
 };
 
-export type TDocumentUpdateRequest = TDocumentNamespace & {
+export type TDocumentUpdateRequest = TCollectionRequest & {
   docId: string;
-  document: Record<string, TDocumentField>;
+  document: Record<string, TSerializedValue>;
 };
 
 export type TDocumentUpdateResponse = TMerkleProof[];
 
-export type TDocumentDropRequest = TDocumentUpdateRequest;
+export type TDocumentDropRequest = TCollectionRequest & {
+  docId: string;
+};
+
 export type TDocumentDropResponse = TMerkleProof[];
 
-export type TDocumentHistoryRequest = TDocumentNamespace & {
+export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;
   pagination?: TPagination;
 };
-export type TDocumentHistoryResponse = TPaginationReturn<TDocumentResponse[]>;
+
+export type TDocumentHistoryFindResponse = TPaginationReturn<
+  TDocumentResponse[]
+>;
