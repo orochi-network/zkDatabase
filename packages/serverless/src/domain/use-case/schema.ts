@@ -105,7 +105,7 @@ export class Schema {
 
   static buildSchema(document: TValidatedDocument) {
     const encodedDocument: TSchemaSerializedField[] = [];
-    const structType: { [key: string]: any } = {};
+    const structType: Record<string, unknown> = {};
 
     document.forEach((field) => {
       const documentField = document.find((f) => f.name === field.name);
