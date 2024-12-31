@@ -36,14 +36,14 @@ const JOI_DOCUMENT_CREATE = Joi.object().pattern(Joi.string(), Joi.any());
 
 const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
-  collectionName,
+  collectionName: collectionName(),
   query: Joi.object(),
   pagination,
 });
 
 const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
-  collectionName,
+  collectionName: collectionName(),
   documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
@@ -52,8 +52,8 @@ const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
 
 const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
-  collectionName,
-  docId: docId(true),
+  collectionName: collectionName(),
+  docId: docId(),
 
   // TODO: need testing
   document: JOI_DOCUMENT_CREATE.required(),
@@ -62,8 +62,8 @@ const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
 const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
-    collectionName,
-    docId: docId(true),
+    collectionName: collectionName(),
+    docId: docId(),
     pagination,
   });
 
