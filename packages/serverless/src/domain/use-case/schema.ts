@@ -85,7 +85,7 @@ export class Schema {
     // Validate the value of each field
     return collectionMetadata.schema.map((schemaField) => {
       const { error, value } = schemaVerification
-        .get(schemaField.kind)!!
+        .get(schemaField.kind)!
         .validate(document[schemaField.name]);
 
       if (error) {
