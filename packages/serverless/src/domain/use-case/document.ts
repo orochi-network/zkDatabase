@@ -38,7 +38,7 @@ import {
 import { FilterCriteria, parseQuery } from '../utils';
 import { PermissionSecurity } from './permission-security';
 import { Prover } from './prover';
-import { Schema } from './schema';
+import { DocumentSchema } from './schema';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -87,7 +87,7 @@ export class Document {
       );
     }
 
-    const validatedDocument = Schema.validateDocumentSchema(
+    const validatedDocument = DocumentSchema.validateDocumentSchema(
       collectionMetadata,
       fields
     );
@@ -204,7 +204,7 @@ export class Document {
       );
     }
 
-    const validatedDocument = Schema.validateDocumentSchema(
+    const validatedDocument = DocumentSchema.validateDocumentSchema(
       collectionMetadata,
       update
     );

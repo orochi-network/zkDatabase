@@ -1,6 +1,6 @@
 import {
   PROVABLE_TYPE_MAP,
-  Schema as O1Schema,
+  Schema,
   TSchemaSerializedField,
   TDocumentField,
   TProvableTypeString,
@@ -56,7 +56,7 @@ export type TValidatedDocument = Array<
   }
 >;
 
-export class Schema {
+export class DocumentSchema {
   /** Validates the document against the metadata schema, returning a validated
    * document that has been checked for data types and field ordering. */
   static validateDocumentSchema(
@@ -69,7 +69,7 @@ export class Schema {
         .filter((name) => name !== '_id')
     );
 
-    Object.entries(document).forEach(([fieldName, fieldValue]) => {
+    Object.entries(document).forEach(([fieldName]) => {
       if (!schemaFieldSet.has(fieldName)) {
         throw new Error(`Field ${fieldName} not found in schema`);
       }
@@ -119,7 +119,7 @@ export class Schema {
       encodedDocument.push(documentField);
     });
 
-    const structuredSchema = O1Schema.create(structType);
+    const structuredSchema = Schema.create(structType);
 
     return structuredSchema.deserialize(encodedDocument);
   }
