@@ -10,7 +10,6 @@ import { authorizeWrapper } from '../validation';
 import {
   collectionName,
   databaseName,
-  documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
   TDocumentFindRequest,
@@ -32,6 +31,9 @@ import { Permission } from '@zkdb/permission';
 import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
 
+// The value will be validated against the schema type in the database later
+const JOI_DOCUMENT_CREATE = Joi.object().pattern(Joi.string(), Joi.any());
+
 const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
   collectionName,
@@ -45,7 +47,7 @@ const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
-  document: schemaDocumentRecord,
+  document: JOI_DOCUMENT_CREATE.required(),
 });
 
 const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
@@ -54,7 +56,7 @@ const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   docId: docId(true),
 
   // TODO: need testing
-  document: schemaDocumentRecord,
+  document: JOI_DOCUMENT_CREATE.required(),
 });
 
 const JOI_DOCUMENT_HISTORY_FIND_REQUEST = Joi.object<TDocumentHistoryRequest>({

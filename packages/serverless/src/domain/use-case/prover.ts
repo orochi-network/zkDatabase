@@ -1,10 +1,4 @@
-import {
-  EProofStatusDocument,
-  ESequencer,
-  TParamProveCreate,
-  TParamProveDelete,
-  TParamProveUpdate,
-} from '@zkdb/common';
+import { EProofStatusDocument, ESequencer } from '@zkdb/common';
 import {
   TCompoundSession,
   ModelMerkleTree,
@@ -15,7 +9,24 @@ import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
 import { ModelMetadataDocument } from '@model';
-import { buildSchema } from './schema';
+import { Schema, TValidatedDocument } from './schema';
+
+// For prover param use-case
+export type TParamProve = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+};
+
+export type TParamProveCreate = TParamProve & {
+  document: TValidatedDocument;
+};
+
+export type TParamProveUpdate = TParamProve & {
+  newDocument: TValidatedDocument;
+};
+
+export type TParamProveDelete = TParamProve;
 
 export class Prover {
   public static async create(
@@ -40,12 +51,7 @@ export class Prover {
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     // Building schema
-    const schema = await buildSchema(
-      databaseName,
-      collectionName,
-      document,
-      session.serverless
-    );
+    const schema = Schema.buildSchema(document);
 
     const currDate = new Date();
 
@@ -106,12 +112,7 @@ export class Prover {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const schema = await buildSchema(
-      databaseName,
-      collectionName,
-      newDocument,
-      session.serverless
-    );
+    const schema = Schema.buildSchema(newDocument);
 
     const currDate = new Date();
     const hash = schema.hash();

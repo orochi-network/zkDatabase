@@ -1,5 +1,5 @@
 import type { ObjectId } from 'mongodb';
-import { TSchemaSerializedField } from '../schema.js';
+import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
@@ -49,7 +49,7 @@ export type TDocumentFindResponse = TPaginationReturn<
 >;
 
 export type TDocumentCreateRequest = TDocumentNamespace & {
-  document: Record<string, TDocumentField>;
+  document: Record<string, TSerializedValue>;
   documentPermission?: number;
 };
 
@@ -61,7 +61,7 @@ export type TDocumentCreateResponse = {
 
 export type TDocumentUpdateRequest = TDocumentNamespace & {
   docId: string;
-  document: Record<string, TDocumentField>;
+  document: Record<string, TSerializedValue>;
 };
 
 export type TDocumentUpdateResponse = TMerkleProof[];

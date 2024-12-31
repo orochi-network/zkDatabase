@@ -2,7 +2,6 @@ import type { JsonProof } from 'o1js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest } from './database.js';
-import { TDocumentField } from './document.js';
 
 /**
  * Ownership types
@@ -88,17 +87,3 @@ export type TProof = TZkDatabaseProof & {
 };
 
 export type TProofRecord = TDbRecord<TProof>;
-
-// For prover param use-case
-export type TParamProve = {
-  databaseName: string;
-  collectionName: string;
-  docId: string;
-};
-export type TParamProveCreate = TParamProve & { document: TDocumentField[] };
-
-export type TParamProveUpdate = TParamProve & {
-  newDocument: TDocumentField[];
-};
-
-export type TParamProveDelete = TParamProve;
