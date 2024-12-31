@@ -14,8 +14,8 @@ import {
   TDocumentCreateRequest,
   TDocumentFindRequest,
   TDocumentUpdateRequest,
-  TDocumentHistoryRequest,
-  TDocumentHistoryResponse,
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryFindResponse,
   TDocumentUpdateResponse,
   TDocumentFindResponse,
   PERMISSION_DEFAULT,
@@ -59,12 +59,13 @@ const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   document: JOI_DOCUMENT_CREATE.required(),
 });
 
-const JOI_DOCUMENT_HISTORY_FIND_REQUEST = Joi.object<TDocumentHistoryRequest>({
-  databaseName,
-  collectionName,
-  docId: docId(true),
-  pagination,
-});
+const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
+  Joi.object<TDocumentHistoryFindRequest>({
+    databaseName,
+    collectionName,
+    docId: docId(true),
+    pagination,
+  });
 
 export const typeDefsDocument = gql`
   #graphql
@@ -278,8 +279,8 @@ const documentDrop = authorizeWrapper<
 });
 
 const documentHistoryFind = authorizeWrapper<
-  TDocumentHistoryRequest,
-  TDocumentHistoryResponse
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryFindResponse
 >(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (

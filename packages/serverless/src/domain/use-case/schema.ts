@@ -21,23 +21,28 @@ if (schemaVerification.size === 0) {
     // https://datatracker.ietf.org/doc/html/draft-msporny-base58-03#page-3
     .pattern(/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/);
 
+  function validateBigInt(value: unknown) {
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      throw new Error(
+        `Value should be a string or number, got ${typeof value}`
+      );
+    }
+
+    return BigInt(value);
+  }
+
   schemaVerification.set('CircuitString', Joi.string().max(1024));
   schemaVerification.set('UInt32', Joi.number().positive());
-  schemaVerification.set('UInt64', Joi.string().pattern(/^[0-9]{1,20}$/));
+  schemaVerification.set('Int64', Joi.custom(validateBigInt));
+  schemaVerification.set('UInt64', Joi.custom(validateBigInt));
   schemaVerification.set('Bool', Joi.boolean());
-  schemaVerification.set('Sign', Joi.boolean());
-  // O1js don't support UTF-8 or Unicode
-  schemaVerification.set('Character', Joi.string().length(1));
-  schemaVerification.set(
-    'Int64',
-    Joi.string()
-      .pattern(/^(-|)[0-9]{1,20}$/)
-      .max(64)
-  );
-  schemaVerification.set('Field', Joi.string().max(256));
   schemaVerification.set('PrivateKey', base58String);
   schemaVerification.set('PublicKey', base58String);
   schemaVerification.set('Signature', base58String);
+  // O1js don't support UTF-8 or Unicode
+  schemaVerification.set('Character', Joi.string().length(1));
+  schemaVerification.set('Sign', Joi.boolean());
+  schemaVerification.set('Field', Joi.string().max(256));
   schemaVerification.set('MerkleMapWitness', Joi.string());
 }
 
@@ -96,20 +101,6 @@ export class Schema {
         validated: true,
       };
     });
-
-    // TODO(wonrax): I removed the field type validation using the
-    // `schemaVerification` map above because the data types are already
-    // validated in the upper graphql level. However some manual testing and
-    // verfication is needed to ensure the data types are correctly validated and
-    // there exists no edge cases.
-    //
-    // TODO(wonrax): Update - I was wrong, we need to validate that the data
-    // types in the document match the corresponding data types defined in the
-    // metadata schema. The fix is to:
-    // 1. Remove the kind field when creating or updating documents. This forces
-    // us to rely on the metadata schema for the data type.
-    // 2. Validate that the serialized data type of each field in the document
-    // matches the data type defined in the metadata schema, e.g. using Joi.
   }
 
   static buildSchema(document: TValidatedDocument) {
