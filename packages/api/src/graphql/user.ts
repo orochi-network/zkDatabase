@@ -19,7 +19,7 @@ import {
   TApolloClient,
 } from "./common";
 
-export const user = <T>(client: TApolloClient<T>) => ({
+export const API_USER = <T>(client: TApolloClient<T>) => ({
   userSignIn: createMutateFunction<TUserSignInRequest, TUserSignInResponse>(
     client,
     gql`

@@ -9,7 +9,7 @@ import {
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
-export const proof = <T>(client: TApolloClient<T>) => ({
+export const API_PROOF = <T>(client: TApolloClient<T>) => ({
   proof: createQueryFunction<TZkProofRequest, TZkProofResponse>(
     client,
     gql`

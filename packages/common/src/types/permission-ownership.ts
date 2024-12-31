@@ -34,14 +34,6 @@ export type TParamDocumentOwnership = TParamCollectionOwnership & {
   docId: string;
 };
 
-export type TOwnershipDocumentRequest = TCollectionRequest & {
-  docId: string;
-};
-
-export type TOwnershipDocumentUpdateRequest = TOwnershipDocumentRequest & {
-  permission: number;
-};
-
 export type TOwnershipTransferRequest = TCollectionRequest & {
   groupType: EOwnershipType;
   newOwner: string;

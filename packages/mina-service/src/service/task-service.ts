@@ -1,11 +1,14 @@
-// TODO: We have implemented a robust task acquisition mechanism that allows
+// NOTE: We have implemented a robust task acquisition mechanism that enables
 // concurrent processing of multiple tasks through multiple workers. The
 // mechanism's built-in constraint ensures only one database is processed at a
-// time, making it safe to process multiple tasks from different database
-// queues simultaneously. However, the optimal approach depends on whether the
-// task (prover) is CPU-bound or I/O-bound. If I/O-bound, we can utilize
-// Node.js's default event loop for concurrent processing. If CPU-bound, we'll
-// need to implement multiple process workers to achieve true parallelism.
+// time, enabling safe concurrent processing of tasks from different database
+// queues. As task processing utilizes a CPU-bound Rust backend rather than an
+// I/O-bound one, effective parallelization requires spawning multiple workers
+// instead of running multiple promises concurrently, since the latter would
+// not improve processing performance. Furthermore, since the Rust backend
+// already employs multiple threads for parallelization, the primary benefit of
+// spawning multiple workers is achieving fair task distribution across
+// database queues, rather than improving overall processing speed.
 
 import { config, logger } from '@helper';
 import { Proof } from '@domain';

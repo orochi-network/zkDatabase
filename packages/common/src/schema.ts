@@ -177,6 +177,7 @@ export class Schema {
             case 'Signature':
               value = anyThis[name].toBase58();
               break;
+            // @TODO How can we serialize a MerkleMapWitness?
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
             case 'UInt64':
@@ -222,6 +223,7 @@ export class Schema {
             case 'Signature':
               result[name] = PROVABLE_TYPE_MAP[kind].fromBase58(value);
               break;
+            // @TODO How can we deserialize a MerkleMapWitness?
             case 'MerkleMapWitness':
               throw new Error('MerkleMapWitness is not supported');
             case 'UInt64':
