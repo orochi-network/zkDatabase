@@ -19,7 +19,7 @@ if (schemaVerification.size === 0) {
     .max(256)
     // Base58 string
     // https://datatracker.ietf.org/doc/html/draft-msporny-base58-03#page-3
-    .pattern(/^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/);
+    .pattern(/^[1-9A-Za-z][^OIl]+$/);
 
   function validateBigInt(value: unknown) {
     if (typeof value !== 'string' && typeof value !== 'number') {
