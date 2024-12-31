@@ -38,7 +38,7 @@ import {
 import { FilterCriteria, parseQuery } from '../utils';
 import { PermissionSecurity } from './permission-security';
 import { Prover } from './prover';
-import { DocumentSchema } from './schema';
+import { DocumentSchema } from './document-schema';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(

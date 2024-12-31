@@ -8,6 +8,6 @@ export * from './ownership';
 export * from './permission-security';
 export * from './prover';
 export * from './rollup';
-export * from './schema';
+export * from './document-schema';
 export * from './transaction';
 export * from './user';

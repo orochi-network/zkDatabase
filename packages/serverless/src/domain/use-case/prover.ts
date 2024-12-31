@@ -9,7 +9,7 @@ import { ClientSession } from 'mongodb';
 import { Field } from 'o1js';
 
 import { ModelMetadataDocument } from '@model';
-import { DocumentSchema, TValidatedDocument } from './schema';
+import { DocumentSchema, TValidatedDocument } from './document-schema';
 
 // For prover param use-case
 export type TParamProve = {

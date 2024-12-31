@@ -6,7 +6,7 @@ import {
   indexName,
   TIndexCreateRequest,
   TIndexCreateResponse,
-  TIndexDropReponse,
+  TIndexDropResponse,
   TIndexDropRequest,
   TIndexExistRequest,
   TIndexExistResponse,
@@ -117,7 +117,7 @@ const indexCreate = authorizeWrapper<TIndexCreateRequest, TIndexCreateResponse>(
     )
 );
 
-const indexDrop = authorizeWrapper<TIndexDropRequest, TIndexDropReponse>(
+const indexDrop = authorizeWrapper<TIndexDropRequest, TIndexDropResponse>(
   Joi.object({
     databaseName,
     collectionName,
