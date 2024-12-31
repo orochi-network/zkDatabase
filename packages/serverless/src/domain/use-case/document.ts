@@ -18,6 +18,7 @@ import {
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
+  TSerializedValue,
   TWithProofStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
@@ -37,6 +38,7 @@ import {
 import { FilterCriteria, parseQuery } from '../utils';
 import { PermissionSecurity } from './permission-security';
 import { Prover } from './prover';
+import { DocumentSchema } from './schema';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -54,7 +56,7 @@ export function fieldArrayToRecord(
 export class Document {
   static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
-    fields: Record<string, TDocumentField>,
+    fields: Record<string, TSerializedValue>,
     permission = PERMISSION_DEFAULT,
     compoundSession: TCompoundSession
   ) {
@@ -73,17 +75,28 @@ export class Document {
       );
     }
 
-    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+    const collectionMetadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    ).getMetadata(collectionName, {
+      session: compoundSession?.serverless,
+    });
 
-    if (Object.keys(fields).length === 0) {
+    if (!collectionMetadata) {
       throw new Error(
-        'Document array is empty. At least one field is required.'
+        `Metadata not found for collection '${collectionName}' from database '${databaseName}'.`
       );
     }
 
+    const validatedDocument = DocumentSchema.validateDocumentSchema(
+      collectionMetadata,
+      fields
+    );
+
+    const imDocument = ModelDocument.getInstance(databaseName, collectionName);
+
     // Save the document to the database
     const [_, docId] = await imDocument.insertOneFromListField(
-      fields,
+      fieldArrayToRecord(validatedDocument),
       undefined,
       compoundSession?.serverless
     );
@@ -98,21 +111,7 @@ export class Document {
     // 3. Create Metadata
     const imDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-    const imCollectionMetadata =
-      ModelMetadataCollection.getInstance(databaseName);
-
-    const documentSchema = await imCollectionMetadata.getMetadata(
-      collectionName,
-      {
-        session: compoundSession?.serverless,
-      }
-    );
-
-    if (!documentSchema) {
-      throw new Error('Cannot get documentSchema');
-    }
-
-    const { permission: collectionPermission } = documentSchema;
+    const { permission: collectionPermission } = collectionMetadata;
 
     const permissionCombine = permission.combine(
       Permission.from(collectionPermission)
@@ -133,7 +132,7 @@ export class Document {
         // Overwrite inherited permission with the new one
         permission: permissionCombine.value,
         owner: actor,
-        group: documentSchema.group,
+        group: collectionMetadata.group,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
@@ -145,7 +144,7 @@ export class Document {
         databaseName,
         collectionName,
         docId,
-        document: Object.values(fields),
+        document: validatedDocument,
       },
       compoundSession
     );
@@ -160,7 +159,7 @@ export class Document {
   static async update(
     permissionParam: TPermissionSudo<TParamCollection>,
     docId: string,
-    update: Record<string, TDocumentField>,
+    update: Record<string, TSerializedValue>,
     compoundSession: TCompoundSession
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
@@ -193,6 +192,23 @@ export class Document {
       );
     }
 
+    const collectionMetadata = await ModelMetadataCollection.getInstance(
+      databaseName
+    ).getMetadata(collectionName, {
+      session: compoundSession?.serverless,
+    });
+
+    if (!collectionMetadata) {
+      throw new Error(
+        `Metadata not found for collection '${collectionName}' from database '${databaseName}'.`
+      );
+    }
+
+    const validatedDocument = DocumentSchema.validateDocumentSchema(
+      collectionMetadata,
+      update
+    );
+
     const actorPermissionDocument = await PermissionSecurity.document(
       { ...permissionParam, docId: document.docId },
       compoundSession.serverless
@@ -209,14 +225,18 @@ export class Document {
       );
     }
 
-    await imDocument.update(document.docId, update, compoundSession.serverless);
+    await imDocument.update(
+      document.docId,
+      fieldArrayToRecord(validatedDocument),
+      compoundSession.serverless
+    );
 
     const witness = await Prover.update(
       {
         databaseName,
         collectionName,
         docId: document.docId,
-        newDocument: Object.values(update),
+        newDocument: validatedDocument,
       },
       compoundSession
     );
