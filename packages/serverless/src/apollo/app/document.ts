@@ -32,7 +32,10 @@ import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
 
 // The value will be validated against the schema type in the database later
-const JOI_DOCUMENT_CREATE = Joi.object().pattern(Joi.string(), Joi.any());
+const JOI_DOCUMENT_CREATE = (required?: boolean) =>
+  required !== false
+    ? Joi.object().pattern(Joi.string(), Joi.any()).required()
+    : Joi.object().pattern(Joi.string(), Joi.any()).optional();
 
 const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
@@ -47,7 +50,7 @@ const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
-  document: JOI_DOCUMENT_CREATE.required(),
+  document: JOI_DOCUMENT_CREATE(true),
 });
 
 const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
@@ -56,7 +59,7 @@ const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   docId: docId(),
 
   // TODO: need testing
-  document: JOI_DOCUMENT_CREATE.required(),
+  document: JOI_DOCUMENT_CREATE(true),
 });
 
 const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
