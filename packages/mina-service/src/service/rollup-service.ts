@@ -109,7 +109,7 @@ export const SERVICE_ROLLUP = {
                 // Get task queue with databaseName and merkleRoot
                 const taskQueue = await imQueue.findOne({
                   databaseName,
-                  merkleRoot,
+                  merkleRoot: merkleRoot.toString(),
                 });
 
                 if (

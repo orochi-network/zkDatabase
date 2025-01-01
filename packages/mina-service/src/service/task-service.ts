@@ -62,6 +62,7 @@ export class TaskService {
             const start = performance.now();
 
             await Proof.create(task, session);
+
             await imQueue.markTaskProcessed(task._id, {
               session: session.proofService,
             });

@@ -16,7 +16,7 @@ export type TMerkleNode = Pick<
   'hash' | 'level' | 'index'
 >;
 
-export type TMerkleRecod = TDbRecord<TMerkle>;
+export type TMerkleRecord = TDbRecord<TMerkle>;
 
 export type TMerkleProof = {
   sibling: Field;

@@ -2594,11 +2594,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/permission@0.1.6":
-  version "0.1.6"
-  resolved "https://registry.yarnpkg.com/@zkdb/permission/-/permission-0.1.6.tgz#bf8cbd3510db6f7c6490e6baaafd81d63f272dd9"
-  integrity sha512-vuVMpqDOfIXwi+jYlNWjoQeclW8af5w35z5/48tIl8ktmP7PNY+Jh0N+6r3sJ1yAPWM5/Xo3fnmD7Ts1uWQpmg==
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz"
