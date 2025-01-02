@@ -33,7 +33,14 @@ async function run() {
     'my-test-document-group'
   );
 
-  // TODO: example for document transfer ownership
+  await collection.insert({
+    name: 'zkDatabase merch',
+    price: 100n,
+  });
+
+  const doc = (await collection.findOne({ name: 'zkDatabase merch' }))!;
+
+  await doc.metadata.ownerSet(NEW_OWNER);
 
   await zkdb.authenticator.signOut();
 }
