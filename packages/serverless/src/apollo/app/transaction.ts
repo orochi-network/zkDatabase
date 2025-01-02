@@ -28,8 +28,8 @@ export const typeDefsTransaction = gql`
     transactionType: TransactionType!
     status: TransactionStatus!
     transactionRaw: String!
-    txHash: String!
-    error: String!
+    txHash: String
+    error: String
     createdAt: Date!
     updatedAt: Date!
   }

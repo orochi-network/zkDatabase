@@ -1,5 +1,5 @@
 import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common.js';
+import { TDbRecord, TNullable } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
 /**
@@ -66,6 +66,11 @@ export type TTransaction = {
  */
 export type TTransactionRecord = TDbRecord<TTransaction>;
 
+export type TTransactionRecordNullable = TNullable<
+  TTransactionRecord,
+  'error' | 'txHash'
+>;
+
 /**
  * Transaction request
  * @typedef TTransactionDraftRequest
@@ -77,7 +82,7 @@ export type TTransactionDraftRequest = TDatabaseRequest & {
 };
 
 export type TTransactionDraftResponse =
-  | (WithoutId<TTransactionRecord> & {
+  | (WithoutId<TTransactionRecordNullable> & {
       _id: string;
     })
   | null;

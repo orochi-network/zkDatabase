@@ -1,8 +1,7 @@
-import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common';
-import { TTransaction, TTransactionRecord } from './transaction';
+import type { ObjectId } from 'mongodb';
+import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest } from './database';
-import { TProofRecord } from './proof';
+import { TTransactionRecord } from './transaction';
 
 /**
  * Rollup state
@@ -21,41 +20,52 @@ export enum ERollUpState {
 
 export type TRollUpHistory = {
   databaseName: string;
-  merkletreeRoot: string;
-  merkletreeRootPrevious: string;
+  merkleTreeRoot: string;
+  merkleTreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
+  // From transactionObjectId we can track the transaction status
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
+  error: string;
 };
+
+export type TRollUpState = Pick<
+  TRollUpHistory,
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+> & {
+  // Number of merkle root transformation different to previous one
+  rollUpDifferent: number;
+  rollUpState: ERollUpState;
+  latestRollUpSuccess: Date;
+};
+
+export type TRollUpHistoryRecordNullable = TDbRecord<
+  TNullable<TRollUpHistory, 'error'>
+>;
 
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
-// Compound Type
-export type TRollUpTransactionHistory = TRollUpHistory &
-  WithoutId<TDbRecord<TTransaction>>;
+export type TRollUpStateRecordNullable = TDbRecord<
+  TNullable<TRollUpState, 'error' | 'latestRollUpSuccess'>
+>;
 
-export type TRollUpHistoryDetail = Pick<
-  TRollUpHistoryRecord,
-  'databaseName' | 'merkletreeRoot' | 'merkletreeRootPrevious'
-> & {
+// Compound Type
+
+export type TRollUpHistoryTransactionAggregate = TRollUpHistoryRecord & {
   transaction: TTransactionRecord;
-  proof: TProofRecord;
 };
 
-export type TRollUpDetail = {
-  history: TRollUpHistoryDetail[];
-  state: ERollUpState;
-  // Number of merkle root transformatiion different to previous one
-  rollUpDifferent: number;
+export type TRollUpDetail = TRollUpStateRecordNullable & {
+  history: TRollUpHistoryRecordNullable[];
 };
 
 // RollUp history
 export type TRollupHistoryRequest = TDatabaseRequest;
 
-export type TRollUpHistoryResponse = TRollUpDetail;
+export type TRollUpHistoryResponse = TRollUpDetail | null;
 
-// Rolup create
+// Rollup create
 export type TRollUpCreateRequest = TDatabaseRequest;
 
 export type TRollUpCreateResponse = boolean;

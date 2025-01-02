@@ -14,7 +14,7 @@ export const zkDatabaseConstant = {
   // Global collections within the global database
   globalCollection: {
     // Global settings
-    metadata_database: 'metadata_database',
+    metadataDatabase: 'metadata_database',
 
     // Session
     session: 'session',
@@ -33,7 +33,8 @@ export const zkDatabaseConstant = {
 
     secure: 'secure_storage',
 
-    rollup: 'rollup',
+    // Rollup history
+    rollupHistory: 'rollup_history',
   },
 
   // Collections that are common across different databases
@@ -54,6 +55,9 @@ export const zkDatabaseConstant = {
 
     // Sequencer
     sequencer: '_zkdatabase_sequencer',
+
+    // Rollup state 1 - 1 with database
+    rollUpState: '_zkdatabase_rollup_state',
   },
 };
 

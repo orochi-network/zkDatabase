@@ -1,10 +1,10 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
+import { getCurrentTime, logger } from '@helper';
 import {
-  TSchemaSerializedField,
   TDocumentField,
   TDocumentRecordNullable,
-  JOI_ZKDB_FIELD_NAME,
+  TSchemaSerializedField,
 } from '@zkdb/common';
 import {
   DATABASE_ENGINE,
@@ -20,7 +20,6 @@ import {
   ObjectId,
   OptionalId,
 } from 'mongodb';
-import { getCurrentTime, logger } from '@helper';
 
 /**
  * ModelDocument is a class that extends ModelBasic.
@@ -150,11 +149,11 @@ export class ModelDocument extends ModelGeneral<
   }
 
   public static indexKeyFormat(field: string) {
-    const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
+    // const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
 
-    if (error) {
-      throw error;
-    }
+    // if (error) {
+    //   throw error;
+    // }
 
     return `document.${field}.value`;
   }

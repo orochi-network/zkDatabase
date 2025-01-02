@@ -62,6 +62,7 @@ export class Proof {
       { databaseName },
       { sort: { createdAt: -1 }, session: session.proofService }
     );
+
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
 
     const witness = new DatabaseMerkleWitness(
@@ -71,10 +72,12 @@ export class Proof {
         { session: session.serverless }
       )
     );
+
     const merkleRoot = await imMerkleTree.getRoot(
       new Date(createdAt.getTime() - 1),
       { session: session.serverless }
     );
+
     const oldLeaf = await imMerkleTree.getNode(
       0,
       merkleIndex,

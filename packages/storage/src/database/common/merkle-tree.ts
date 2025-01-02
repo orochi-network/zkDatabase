@@ -1,22 +1,22 @@
+import { zkDatabaseConstant } from '@common';
+import {
+  DATABASE_ENGINE,
+  createExtendedMerkleWitness,
+  getCurrentTime,
+} from '@helper';
 import {
   TMerkleJson,
   TMerkleNode,
   TMerkleNodeDetailJson,
   TMerkleProof,
-  TMerkleRecod,
+  TMerkleRecord,
 } from '@zkdb/common';
 import { BulkWriteOptions, FindOptions, OptionalId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
-import { zkDatabaseConstant } from '@common';
-import {
-  getCurrentTime,
-  DATABASE_ENGINE,
-  createExtendedMerkleWitness,
-} from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelMetadataDatabase } from '../global';
 
-export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecod>> {
+export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   private static instances = new Map<string, ModelMerkleTree>();
 
   private zeroes: Field[] = [];
@@ -89,13 +89,13 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecod>> {
     const inserts = [];
 
     for (let level = 0; level < this._height; level += 1) {
-      const dataToInsert: OptionalId<TMerkleRecod> = {
+      const dataToInsert: OptionalId<TMerkleRecord> = {
         leaf: leaf.toString(),
         hash: path[level].toString(),
         level,
         index: currIndex,
-        updatedAt: getCurrentTime(),
-        createdAt: getCurrentTime(),
+        updatedAt: before,
+        createdAt: before,
       };
 
       inserts.push(dataToInsert);

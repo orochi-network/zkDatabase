@@ -32,12 +32,10 @@ export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
         { unique: true, session }
       );
 
-      await collection.createSystemIndex({ databaseName: 1 }, { session });
       await collection.createSystemIndex(
         { databaseName: 1, collectionName: 1 },
-        { unique: true, session }
+        { session }
       );
-
       await collection.createSystemIndex(
         { merkleRoot: 1 },
         { unique: true, session }
