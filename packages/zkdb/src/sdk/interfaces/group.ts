@@ -7,7 +7,7 @@ import { TGroup, TGroupDetail } from '@zkdb/common';
  * @property {string} groupDescription - Group description
  * @property {string} groupName - Group name
  */
-export type TGroupConfig = Pick<TGroup, 'groupName' | 'groupDescription'>;
+export type TGroupConfig = Pick<TGroup, 'groupDescription' | 'groupName'>;
 
 /**
  * Group Interface for group operations
