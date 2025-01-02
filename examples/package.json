@@ -29,23 +29,10 @@
       "prettier --write --ignore-unknown"
     ]
   },
-  "devDependencies": {
-    "@babel/preset-env": "^7.16.4",
-    "@babel/preset-typescript": "^7.16.0",
-    "@types/jest": "^27.0.3",
-    "@typescript-eslint/eslint-plugin": "^5.5.0",
-    "@typescript-eslint/parser": "^5.5.0",
-    "eslint": "^8.7.0",
-    "eslint-plugin-snarkyjs": "^0.1.0",
-    "jest": "^27.3.1",
-    "lint-staged": "^11.0.1",
-    "prettier": "^2.3.2",
-    "ts-jest": "^27.0.7",
-    "typescript": "^5.6.2"
-  },
   "dependencies": {
-    "@faker-js/faker": "^9.2.0",
-    "o1js": "^2.1.0",
-    "zkdb": "^1.2.12"
+    "zkdb": "file:../packages/zkdb"
+  },
+  "peerDependencies": {
+    "o1js": "^1.9.1"
   }
 }

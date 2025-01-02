@@ -1,27 +1,15 @@
-import { ZKDatabaseClient } from 'zkdb';
-import { faker } from '@faker-js/faker';
+import { ZKDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
 async function run() {
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZKDatabase.connect(ZKDB_URL);
 
-  const fakeUser = {
-    username: faker.internet.username().toLowerCase(),
-    email: faker.internet.email().toLowerCase(),
-  };
-
-  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
-
+  await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();
 
   await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
 
-  const dbList = await zkdb.system.listDatabase({ databaseName: DB_NAME });
-
-  if (
-    (await zkdb.db(DB_NAME).exist()) &&
-    dbList.find((db) => db.databaseName === DB_NAME)
-  ) {
+  if (await zkdb.db(DB_NAME).exist()) {
     console.log(`${DB_NAME} created successfully`);
   }
 

@@ -1,12 +1,13 @@
 import { Mina } from 'o1js';
-import { ZKDatabaseClient } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { ZKDatabase } from 'zkdb';
+import { ERollUpState, ETransactionType } from '@zkdb/common';
 
 const MINA_DECIMAL = 1e9;
 
 async function run() {
   // This is On-chain action. Need to set Mina network
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZKDatabase.connect(ZKDB_URL);
 
   await zkdb.authenticator.signIn();
 
@@ -17,22 +18,34 @@ async function run() {
 
   Mina.setActiveInstance(Network);
 
-  const history = await zkdb.db(DB_NAME).getRollUpHistory();
+  const history = await zkdb.db(DB_NAME).rollUpHistory();
 
-  if (history.state === 'outdated') {
+  if (history.state === ERollUpState.Outdated) {
     // Create a rollup, this time will take time in background so need to write a polling function
-    await zkdb.db(DB_NAME).createRollup();
+    await zkdb.db(DB_NAME).rollUpStart();
   }
 
-  const { tx, id } = await zkdb.db(DB_NAME).getTransaction('rollup');
+  const draftTransaction = await zkdb
+    .db(DB_NAME)
+    .transactionDraft(ETransactionType.Rollup)
+    .then((tx) => {
+      if (tx === null) {
+        throw new Error('No transaction draft found');
+      }
+
+      return tx;
+    });
 
   // Signed the transaction
-  const txHash = await zkdb.getSigner().signAndSendTransaction(tx, {
-    fee: MINA_DECIMAL,
-    memo: '',
-  });
+  const txHash = await zkdb
+    .getSigner()
+    .signAndSendTransaction(draftTransaction.txHash, {
+      fee: MINA_DECIMAL,
+      memo: '',
+    });
+
   // Confirm the transaction
-  await zkdb.db(DB_NAME).confirmTransaction(id, txHash);
+  await zkdb.db(DB_NAME).transactionSubmit(draftTransaction._id, txHash);
 
   await zkdb.authenticator.signOut();
 }

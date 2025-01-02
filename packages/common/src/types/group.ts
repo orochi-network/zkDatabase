@@ -1,5 +1,5 @@
 import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common.js';
+import { TDbRecord, TPickOptional } from './common.js';
 import { TDatabaseRequest, TMetadataDatabase } from './database.js';
 import { TUser, TUserRecord } from './user.js';
 
@@ -54,8 +54,8 @@ export type TGroupParamListUser = Pick<
 export type TGroupRequest = TDatabaseRequest & Pick<TGroup, 'groupName'>;
 
 export type TGroupUpdateRequest = TGroupRequest & {
-  newGroupName: string;
-  newGroupDescription: string;
+  newGroupName?: string;
+  newGroupDescription?: string;
 };
 
 export type TGroupUpdateResponse = boolean;
@@ -80,7 +80,10 @@ export type TGroupDetailRequest = TGroupRequest;
 export type TGroupDetailResponse = TGroupDetail;
 
 export type TGroupCreateRequest = TDatabaseRequest &
-  Pick<TGroup, 'groupName' | 'groupDescription'>;
+  TPickOptional<
+    Pick<TGroup, 'groupName' | 'groupDescription'>,
+    'groupDescription'
+  >;
 
 export type TGroupCreateResponse = boolean;
 

@@ -1,7 +1,8 @@
 import { CircuitString, UInt64 } from 'o1js';
-import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
-import { faker } from '@faker-js/faker';
+import { ZKDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { EProofStatusDocument, Schema } from '@zkdb/common';
+import { Permission } from '@zkdb/permission';
 
 const COLLECTION_NAME = 'my-test-document-collection';
 const GROUP_NAME = 'my-test-document-group';
@@ -12,15 +13,9 @@ class TShirt extends Schema.create({
 }) {}
 
 async function run() {
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZKDatabase.connect(ZKDB_URL);
 
-  const fakeUser = {
-    username: faker.internet.username().toLowerCase(),
-    email: faker.internet.email().toLowerCase(),
-  };
-
-  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
-
+  await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();
 
   await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
@@ -28,64 +23,33 @@ async function run() {
   await zkdb
     .db(DB_NAME)
     .group(GROUP_NAME)
-    .create({ description: 'default description' });
+    .create({ groupDescription: 'My group description' });
 
   await zkdb
     .db(DB_NAME)
     .collection(COLLECTION_NAME)
-    .create(GROUP_NAME, TShirt, [], {
-      permissionOwner: AccessPermissions.fullAdminPermissions,
-      permissionGroup: AccessPermissions.fullAccessPermissions,
-      permissionOther: AccessPermissions.noPermissions,
-    });
+    .create(TShirt, ['name'], Permission.policyPrivate(), GROUP_NAME);
 
-  const shirt = new TShirt({
-    name: CircuitString.fromString('Guchi'),
-    price: UInt64.from(12),
+  await zkdb.db(DB_NAME).collection<typeof TShirt>(COLLECTION_NAME).insert({
+    name: 'zkDatabase',
+    price: 15n,
   });
-
-  await zkdb
-    .db(DB_NAME)
-    .collection(COLLECTION_NAME)
-    .insert(shirt, {
-      permissionOwner: {
-        read: true,
-        write: true,
-        delete: true,
-        create: true,
-        system: true,
-      },
-      permissionGroup: {
-        read: true,
-        write: true,
-        delete: true,
-        create: true,
-        system: true,
-      },
-      permissionOther: {
-        read: true,
-        write: true,
-        delete: true,
-        create: true,
-        system: true,
-      },
-    });
 
   const database = zkdb.db(DB_NAME);
 
   const collection = database.collection(COLLECTION_NAME);
 
-  const document = await collection.findOne({ name: shirt.name.toString() });
+  const document = await collection.findOne({ name: 'zkDatabase' });
 
   // Polling each 5000ms to check proof status
   const checkStatus = async () => {
     // Need to be signIn because closure is another scope
     await zkdb.authenticator.signIn();
 
-    const status = await document?.getProofStatus();
+    const status = await document?.proofStatus();
     console.log('Proof status:', status);
 
-    if (status === 'proved') {
+    if (status === EProofStatusDocument.Proved) {
       console.log('Proof completed!');
       clearInterval(intervalId);
     }

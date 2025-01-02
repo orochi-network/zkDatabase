@@ -1,7 +1,8 @@
 import { CircuitString, UInt64 } from 'o1js';
-import { AccessPermissions, Schema, ZKDatabaseClient } from 'zkdb';
-import { faker } from '@faker-js/faker';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { ZKDatabase } from 'zkdb';
+import { EIndexType, Schema } from '@zkdb/common';
+import { Permission } from '@zkdb/permission';
 
 const COLLECTION_NAME = 'my-collection';
 const GROUP_NAME = 'my-group';
@@ -12,53 +13,62 @@ class TShirt extends Schema.create({
 }) {}
 
 async function run() {
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZKDatabase.connect(ZKDB_URL);
 
-  const fakeUser = {
-    username: faker.internet.username().toLowerCase(),
-    email: faker.internet.email().toLowerCase(),
-  };
-
-  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
-
+  await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();
 
   await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
 
-  await zkdb.db(DB_NAME).group(GROUP_NAME).create({ description: '' });
+  await zkdb.db(DB_NAME).group(GROUP_NAME).create();
 
-  await zkdb
-    .db(DB_NAME)
-    .collection(COLLECTION_NAME)
-    .create(GROUP_NAME, TShirt, [{ name: 'name', sorting: 'desc' }], {
-      permissionOwner: AccessPermissions.fullAdminPermissions,
-      permissionGroup: AccessPermissions.fullAccessPermissions,
-      permissionOther: AccessPermissions.noPermissions,
-    });
+  const collection = zkdb.db(DB_NAME).collection(COLLECTION_NAME);
 
-  console.log(
-    'Index: ',
-    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
+  await collection.create(
+    TShirt,
+    Permission.from({
+      owner: {
+        read: true,
+        write: true,
+        delete: true,
+        system: true,
+      },
+      group: {
+        read: true,
+      },
+    }),
+    GROUP_NAME
   );
 
-  await zkdb
-    .db(DB_NAME)
-    .collection(COLLECTION_NAME)
-    .index.create([{ name: 'price', sorting: 'asc' }]);
+  // This creates a composite index over the fields `name` and `price` and a
+  // single index over the field `price`
+  await collection.index.create([
+    {
+      index: {
+        name: EIndexType.Asc,
+        price: EIndexType.Asc,
+      },
+      unique: false,
+    },
+    {
+      index: {
+        price: EIndexType.Desc,
+      },
+      unique: false,
+    },
+  ]);
+
+  const indexes = await collection.index.list();
+  console.log('Index: ', indexes);
+
+  const [firstIndex] = Object.keys(indexes[0]);
+
+  await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.drop(firstIndex);
 
   console.log(
-    'Index after insert "price": ',
+    'List indexes after drop one: ',
     await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
   );
-
-  await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.drop('name_-1');
-
-  console.log(
-    'Index after remove drop "name": ',
-    await zkdb.db(DB_NAME).collection(COLLECTION_NAME).index.list()
-  );
-
-  zkdb.authenticator.getUser();
 
   await zkdb.authenticator.signOut();
 }
