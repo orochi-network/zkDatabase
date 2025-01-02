@@ -53,7 +53,6 @@ export const JOI_COLLECTION_CREATE_REQUEST =
     groupName: groupName(false),
     schema: Joi.array().items(schemaField).optional(),
     permission: Joi.number().min(0).max(0xffffff).optional(),
-    collectionIndex: Joi.array().items(JOI_COLLECTION_INDEX).optional(),
   });
 
 export const typeDefsCollection = gql`
@@ -129,14 +128,7 @@ const collectionCreate = authorizeWrapper<
   JOI_COLLECTION_CREATE_REQUEST,
   async (
     _root,
-    {
-      databaseName,
-      collectionName,
-      schema,
-      groupName,
-      permission,
-      collectionIndex,
-    },
+    { databaseName, collectionName, schema, groupName, permission },
     ctx
   ) =>
     withTransaction((session) =>
@@ -149,7 +141,7 @@ const collectionCreate = authorizeWrapper<
         schema,
         groupName || GROUP_DEFAULT_ADMIN,
         permission ? Permission.from(permission) : PERMISSION_DEFAULT,
-        collectionIndex,
+        undefined,
         session
       )
     )
