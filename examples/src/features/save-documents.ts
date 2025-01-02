@@ -25,19 +25,16 @@ async function run() {
     .group(GROUP_NAME)
     .create({ groupDescription: 'My group description' });
 
-  await zkdb
+  const collection = zkdb
     .db(DB_NAME)
-    .collection(COLLECTION_NAME)
-    .create(TShirt, ['name'], Permission.policyPrivate(), GROUP_NAME);
+    .collection<typeof TShirt>(COLLECTION_NAME);
 
-  await zkdb.db(DB_NAME).collection<typeof TShirt>(COLLECTION_NAME).insert({
+  await collection.create(TShirt, Permission.policyPrivate(), GROUP_NAME);
+
+  await collection.insert({
     name: 'zkDatabase',
     price: 15n,
   });
-
-  const database = zkdb.db(DB_NAME);
-
-  const collection = database.collection(COLLECTION_NAME);
 
   const document = await collection.findOne({ name: 'zkDatabase' });
 

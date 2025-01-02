@@ -1,7 +1,7 @@
-import { CircuitString, UInt64 } from 'o1js';
+import { ZKDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { Schema } from '@zkdb/common';
-import { ZKDatabase } from 'zkdb';
+import { CircuitString, UInt64 } from 'o1js';
 import { Permission } from '@zkdb/permission';
 
 class TShirt extends Schema.create({
@@ -9,9 +9,7 @@ class TShirt extends Schema.create({
   price: UInt64,
 }) {}
 
-const COLLECTION_NAME = 'my-test-document-collection';
-const GROUP_NAME = 'my-test-document-group';
-
+const NEW_OWNER = 'adrianna.bednar';
 async function run() {
   const zkdb = await ZKDatabase.connect(ZKDB_URL);
 
@@ -20,20 +18,22 @@ async function run() {
 
   await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
 
-  await zkdb.db(DB_NAME).group(GROUP_NAME).create();
+  zkdb
+    .db(DB_NAME)
+    .collection('my-test-document-collection')
+    .metadata.ownerSet(NEW_OWNER);
 
   const collection = zkdb
     .db(DB_NAME)
-    .collection<typeof TShirt>(COLLECTION_NAME);
+    .collection<typeof TShirt>('my-test-document-collection');
 
-  await collection.create(TShirt, Permission.policyPrivate(), GROUP_NAME);
+  await collection.create(
+    TShirt,
+    Permission.policyPrivate(),
+    'my-test-document-group'
+  );
 
-  for (let i = 0; i < 10; i++) {
-    await collection.insert({
-      name: `zkDatabase Merch ${i}`,
-      price: BigInt(15 + i),
-    });
-  }
+  // TODO: example for document transfer ownership
 
   await zkdb.authenticator.signOut();
 }
