@@ -3,7 +3,7 @@ import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
 import {
   ERollUpState,
   ETransactionStatus,
-  TRollUpHistoryDetail,
+  TRollUpHistoryTransactionAggregate,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
@@ -12,12 +12,17 @@ import {
   ModelMetadataDatabase,
   ModelQueueTask,
   ModelRollupHistory,
+  ModelRollUpState,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { PublicKey } from 'o1js';
+
 // Time duration is equal 1/10 time on chain
 const PADDING_TIME = TimeDuration.fromMinute(1);
 
+/*
+  TODO: We need to implement off-chain verification
+*/
 export const SERVICE_ROLLUP = {
   clusterName: 'rollup-queue',
   payload: async () => {
@@ -83,7 +88,6 @@ export const SERVICE_ROLLUP = {
                 if (zkAppPublicKey.isEmpty().toBoolean()) {
                   throw new Error('Invalid public key ');
                 }
-
                 // Get zkApp account from Mina network
                 const { account, error } =
                   await minaNetwork.getAccount(zkAppPublicKey);
@@ -112,25 +116,30 @@ export const SERVICE_ROLLUP = {
                   merkleRoot: merkleRoot.toString(),
                 });
 
+                if (!taskQueue) {
+                  return;
+                }
+
                 if (
-                  merkleRoot.equals(ModelMerkleTree.getEmptyRoot(merkleHeight))
+                  merkleRoot
+                    .equals(ModelMerkleTree.getEmptyRoot(merkleHeight))
+                    .toBoolean()
                 ) {
                   // Check empty root first
                   rollupTaskNumber = 0;
-                } else if (taskQueue?.operationNumber) {
+                } else if (taskQueue.operationNumber) {
                   // Check taskQueue && taskQueue.operation existed
 
                   rollupTaskNumber = taskQueue.operationNumber;
                 } else {
                   throw new Error('Cannot calculate rollup task number');
                 }
-
                 const pipeline = [
                   // Step 1: Match documents that have a specific 'databaseName'
                   {
                     $match: { databaseName },
                   },
-                  // Step 2: Join this 'rollup' with 'transaction' & 'proof' collection
+                  // Step 2: Join this 'rollup' with 'transaction' collection
                   {
                     $lookup: {
                       from: zkDatabaseConstant.globalCollection.transaction,
@@ -139,14 +148,9 @@ export const SERVICE_ROLLUP = {
                       as: 'transaction',
                     },
                   },
-                  // {
-                  //   $lookup: {
-                  //     from: zkDatabaseConstant.globalCollection.proof,
-                  //     localField: 'proofObjectId',
-                  //     foreignField: '_id',
-                  //     as: 'proof',
-                  //   },
-                  // },
+
+                  { $unwind: '$transaction' },
+
                   // Step 3: Sort by latest
                   {
                     $sort: { createdAt: -1 },
@@ -157,7 +161,7 @@ export const SERVICE_ROLLUP = {
                 const imRollupHistory = ModelRollupHistory.getInstance();
 
                 const listRollupHistoryDetail = await imRollupHistory.collection
-                  .aggregate<TRollUpHistoryDetail>(pipeline)
+                  .aggregate<TRollUpHistoryTransactionAggregate>(pipeline)
                   .toArray();
 
                 const latestRollUpHistory = listRollupHistoryDetail.at(0);
@@ -167,72 +171,71 @@ export const SERVICE_ROLLUP = {
                 }
 
                 logger.info(
-                  `latest rollup history ${latestRollUpHistory.databaseName} found`
+                  `Latest rollup history ${latestRollUpHistory.databaseName} found`
                 );
 
-                if (latestRollUpHistory) {
-                  const latestTask = await imQueue.findOne(
-                    {
-                      databaseName,
-                    },
-                    { sort: { createdAt: -1 } }
-                  );
+                const latestTask = await imQueue.findOne(
+                  {
+                    databaseName,
+                  },
+                  { sort: { createdAt: -1 } }
+                );
 
-                  if (!latestTask) {
-                    throw new Error(
-                      `Cannot find latest task with database ${databaseName}`
-                    );
-                  }
-
-                  const rollUpDifferent =
-                    latestTask.operationNumber - rollupTaskNumber;
-
-                  let rollupState: ERollUpState = ERollUpState.Failed;
-
-                  if (rollUpDifferent > 0) {
-                    // Outdated case
-                    rollupState = ERollUpState.Outdated;
-                  } else if (
-                    latestRollUpHistory.transaction.status ===
-                    ETransactionStatus.Confirmed
-                  ) {
-                    rollupState = ERollUpState.Updated;
-                  }
-
-                  await imRollupHistory.updateOne(
-                    {
-                      databaseName,
-                      proofObjectId: latestRollUpHistory.proof._id,
-                      merkleTreeRoot: latestRollUpHistory.merkleTreeRoot,
-                      transactionObjectId: latestRollUpHistory.transaction._id,
-                      merkleTreeRootPrevious:
-                        latestRollUpHistory.merkleTreeRootPrevious,
-                    },
-                    {
-                      $set: {
-                        updatedAt: new Date(),
-                        rollUpStatus: rollupState,
-                        rollUpDifferent: rollUpDifferent,
-                        error: latestRollUpHistory.transaction.error,
-                      },
-                    }
+                if (!latestTask) {
+                  throw new Error(
+                    `Cannot find latest task with database ${databaseName}`
                   );
                 }
 
-                /*
-                    databaseName: string;
-                     merkleTreeRoot: string;
-                     merkleTreeRootPrevious: string;
-                     transactionObjectId: ObjectId;
-                     proofObjectId: ObjectId;
-                     rollUpStatus: ERollUpState;
-                     rollUpDifferent: number;
-                     error: string;
-                */
+                const rollUpDifferent =
+                  latestTask.operationNumber - rollupTaskNumber;
+
+                let rollUpState: ERollUpState = ERollUpState.Failed;
+
+                if (rollUpDifferent > 0) {
+                  // Outdated case
+                  rollUpState = ERollUpState.Outdated;
+                } else if (
+                  latestRollUpHistory.transaction.status ===
+                  ETransactionStatus.Confirmed
+                ) {
+                  rollUpState = ERollUpState.Updated;
+                }
+
+                const imRollUpState =
+                  await ModelRollUpState.getInstance(databaseName);
+
+                const stateUpdateResult = await imRollUpState.updateOne(
+                  { databaseName },
+                  {
+                    $set: {
+                      // Update Merkle root
+                      merkleTreeRoot: latestRollUpHistory.merkleTreeRoot,
+                      merkleTreeRootPrevious:
+                        latestRollUpHistory.merkleTreeRootPrevious,
+                      // State
+                      rollUpDifferent: rollUpDifferent,
+                      rollUpState,
+                      error: latestRollUpHistory.transaction.error,
+                      updatedAt: new Date(),
+                      latestRollUpSuccess: listRollupHistoryDetail.find(
+                        (history) =>
+                          history.transaction.status ===
+                          ETransactionStatus.Confirmed
+                      )?.updatedAt,
+                    },
+                  },
+                  {
+                    upsert: true,
+                  }
+                );
+
+                logger.debug(
+                  `Updated rollup history ${databaseName} success: ${stateUpdateResult}`
+                );
               }
           )
         );
-
         isRunning = false;
       },
       PADDING_TIME

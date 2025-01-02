@@ -22,14 +22,13 @@ enum RollUpState {
   Failed
 }
 
-# @TODO: Refactor rollup
 type RollUpHistoryItem {
   databaseName: String!
   txHash: String
   transactionRaw: String!
   status: TransactionStatus!
-  merkletreeRoot: String!
-  merkletreeRootPrevious: String!
+  merkleTreeRoot: String!
+  merkleTreeRootPrevious: String!
   error: String
   createdAt: Date!
   updatedAt: Date!
@@ -37,8 +36,10 @@ type RollUpHistoryItem {
 
 type RollUpHistory {
   state: RollUpState,
+  merkleTreeRoot: String!
+  merkleTreeRootPrevious: String!
   rollUpDifferent: Int,
-  history: [RollUpHistoryItem!]
+  history: [RollUpHistoryItem]
   latestRollUpSuccess: Date
 }
 

@@ -4,7 +4,7 @@ import { FixedFloat } from '@orochi-network/utilities';
 import {
   ETransactionStatus,
   ETransactionType,
-  TTransactionRecord,
+  TTransactionRecordNullable,
 } from '@zkdb/common';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
@@ -111,7 +111,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session?: ClientSession
-  ): Promise<TTransactionRecord | undefined> {
+  ): Promise<TTransactionRecordNullable | undefined> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();

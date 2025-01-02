@@ -1,8 +1,7 @@
-import type { ObjectId, WithoutId } from 'mongodb';
+import type { ObjectId } from 'mongodb';
 import { TDbRecord, TNullable } from './common';
-import { TTransaction, TTransactionRecord } from './transaction';
 import { TDatabaseRequest } from './database';
-import { TProofRecord } from './proof';
+import { TTransactionRecord } from './transaction';
 
 /**
  * Rollup state
@@ -28,31 +27,37 @@ export type TRollUpHistory = {
   // From transactionObjectId we can track the transaction status
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
-  rollUpState: ERollUpState;
-  rollUpDifferent: number;
   error: string;
 };
 
+export type TRollUpState = Pick<
+  TRollUpHistory,
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+> & {
+  // Number of merkle root transformation different to previous one
+  rollUpDifferent: number;
+  rollUpState: ERollUpState;
+  latestRollUpSuccess: Date;
+};
+
 export type TRollUpHistoryRecordNullable = TDbRecord<
-  TNullable<TRollUpHistory, 'error' | 'rollUpDifferent' | 'rollUpState'>
+  TNullable<TRollUpHistory, 'error'>
 >;
 
 export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
 
+export type TRollUpStateRecordNullable = TDbRecord<
+  TNullable<TRollUpState, 'error' | 'latestRollUpSuccess'>
+>;
+
 // Compound Type
 
-// This type using for aggregate
-export type TRollUpHistoryDetail = TRollUpHistoryRecord & {
+export type TRollUpHistoryTransactionAggregate = TRollUpHistoryRecord & {
   transaction: TTransactionRecord;
-  proof: TProofRecord;
 };
 
-export type TRollUpDetail = {
-  history: TRollUpHistoryDetail[];
-  state: ERollUpState;
-  // Number of merkle root transformation different to previous one
-  rollUpDifferent: number;
-  latestRollUpSuccess: Date | null;
+export type TRollUpDetail = TRollUpStateRecordNullable & {
+  history: TRollUpHistoryRecordNullable[];
 };
 
 // RollUp history

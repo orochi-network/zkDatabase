@@ -57,7 +57,7 @@ export const zkDatabaseConstant = {
     sequencer: '_zkdatabase_sequencer',
 
     // Rollup state 1 - 1 with database
-    rollupState: '_zkdatabase_rollup_state',
+    rollUpState: '_zkdatabase_rollup_state',
   },
 };
 

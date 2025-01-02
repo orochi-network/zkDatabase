@@ -38,16 +38,16 @@ export class ModelRollupHistory extends ModelGeneral<
     );
     /*
       databaseName: string;
-      merkletreeRoot: string;
-      merkletreeRootPrevious: string;
+      merkleTreeRoot: string;
+      merkleTreeRootPrevious: string;
       transactionObjectId: ObjectId;
       proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
       await collection.createSystemIndex({ databaseName: 1 }, { session });
-      await collection.createSystemIndex({ merkletreeRoot: 1 }, { session });
+      await collection.createSystemIndex({ merkleTreeRoot: 1 }, { session });
       await collection.createSystemIndex(
-        { merkletreeRootPrevious: 1 },
+        { merkleTreeRootPrevious: 1 },
         { session }
       );
       await collection.createSystemIndex({ proofObjectId: 1 }, { session });

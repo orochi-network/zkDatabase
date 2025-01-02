@@ -1,6 +1,6 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
-import { ETransactionStatus } from '@zkdb/common';
+import { ETransactionStatus, ETransactionType } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
@@ -39,7 +39,7 @@ export const SERVICE_TRANSACTION = {
       'get-transaction',
       async () => {
         if (isRunning) {
-          logger.debug('Task skipped to prevent overlap:', new Date());
+          logger.debug('Task skipped to prevent overlap: ', new Date());
           return;
         }
 
@@ -104,8 +104,12 @@ export const SERVICE_TRANSACTION = {
                         },
                         { session }
                       );
-
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 
@@ -143,7 +147,12 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 
@@ -180,7 +189,12 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 
@@ -216,7 +230,12 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 
@@ -246,7 +265,7 @@ export const SERVICE_TRANSACTION = {
                         {
                           $set: {
                             status: ETransactionStatus.Failed,
-                            error: '',
+                            error: `zk transaction ${transaction.txHash} is failed`,
                           },
                         },
                         {
@@ -254,7 +273,12 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 
@@ -292,7 +316,12 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
                       return;
                     }
 

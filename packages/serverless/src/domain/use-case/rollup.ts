@@ -3,15 +3,14 @@ import {
   ETransactionStatus,
   ETransactionType,
   TRollUpDetail,
-  TRollUpHistoryDetail,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
   ModelProof,
   ModelRollupHistory,
+  ModelRollUpState,
   ModelTransaction,
   TCompoundSession,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -24,7 +23,6 @@ export class Rollup {
     actor: string,
     compoundSession: TCompoundSession
   ): Promise<boolean> {
-    console.log('🚀 ~ Rollup ~ compoundSession:', compoundSession);
     await Database.ownershipCheck(
       databaseName,
       actor,
@@ -97,10 +95,7 @@ export class Rollup {
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        // Initialize nullable value for rollup history
-        error: null,
-        rollUpDifferent: null,
-        rollUpState: null,
+        error: '',
       },
       { session: compoundSession?.serverless }
     );
@@ -112,8 +107,6 @@ export class Rollup {
     databaseName: string,
     session?: ClientSession
   ): Promise<TRollUpDetail | null> {
-    const imRollupHistory = ModelRollupHistory.getInstance();
-
     const database = await ModelMetadataDatabase.getInstance().findOne(
       { databaseName },
       {
@@ -128,48 +121,18 @@ export class Rollup {
       throw Error('Database is not bound to zk app');
     }
 
-    const pipeline = [
-      // Step 1: Match documents that have a specific 'databaseName'
-      {
-        $match: { databaseName },
-      },
-      // Step 2: Join this 'rollup' with 'transaction'
-      {
-        $lookup: {
-          from: zkDatabaseConstant.globalCollection.transaction,
-          localField: 'transactionObjectId',
-          foreignField: '_id',
-          as: 'transaction',
-        },
-      },
-      // Step 3: Sort by latest
-      {
-        $sort: { updatedAt: -1, createdAt: -1 },
-      },
-    ];
-
-    const listRollupHistoryDetail = await imRollupHistory.collection
-      .aggregate<TRollUpHistoryDetail>(pipeline)
+    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupState = await ModelRollUpState.getInstance(databaseName);
+    const rollupHistory = await imRollupHistory
+      .find({ databaseName })
+      .sort({ createdAt: -1, updatedAt: -1 })
       .toArray();
-
-    const [latestRollup, ..._] = listRollupHistoryDetail;
-    console.log(
-      '🚀 ~ Rollup ~ listRollupHistoryDetail:',
-      listRollupHistoryDetail
-    );
-
-    if (listRollupHistoryDetail.length > 0) {
+    const rollupState = await imRollupState.findOne({ databaseName });
+    // state.roll
+    if (rollupHistory.length > 0 && rollupState) {
       return {
-        state: latestRollup.rollUpState,
-        rollUpDifferent: latestRollup.rollUpDifferent || 0,
-        history: listRollupHistoryDetail,
-        latestRollUpSuccess:
-          listRollupHistoryDetail
-            .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
-            .find(
-              (rollup) =>
-                rollup.transaction.status === ETransactionStatus.Confirmed
-            )?.updatedAt || null,
+        ...rollupState,
+        history: rollupHistory,
       };
     }
 
