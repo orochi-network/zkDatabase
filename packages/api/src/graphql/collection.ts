@@ -65,11 +65,12 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
         collectionList(databaseName: $databaseName) {
           collectionName
           schema {
-            ...SchemaFieldOutputFragment
+            name
+            kind
           }
-          metadata {
-            ...OwnershipAndPermissionFragment
-          }
+          owner
+          group
+          permission
           sizeOnDisk
           createdAt
           updatedAt
@@ -94,11 +95,12 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
         ) {
           collectionName
           schema {
-            ...SchemaFieldOutputFragment
+            name
+            kind
           }
-          metadata {
-            ...OwnershipAndPermissionFragment
-          }
+          owner
+          group
+          permission
           sizeOnDisk
           createdAt
           updatedAt

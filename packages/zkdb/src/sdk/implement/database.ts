@@ -1,6 +1,7 @@
 import { IApiClient } from '@zkdb/api';
 import {
   ETransactionType,
+  TDatabaseInfoResponse,
   TGroupListAllResponse,
   TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
@@ -127,5 +128,9 @@ export class Database implements IDatabase {
     return (
       await this.apiClient.rollup.rollupHistory(this.basicQuery)
     ).unwrap();
+  }
+
+  async info(): Promise<TDatabaseInfoResponse> {
+    return (await this.apiClient.db.dbInfo(this.basicQuery)).unwrap();
   }
 }

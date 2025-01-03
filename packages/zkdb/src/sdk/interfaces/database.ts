@@ -2,7 +2,9 @@
 import {
   ETransactionType,
   TDatabaseCreateRequest,
+  TDatabaseInfoResponse,
   TGroupListAllResponse,
+  TMetadataDatabaseMongo,
   TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
   TSchemaExtendable,
@@ -15,6 +17,7 @@ import {
 import { ICollection } from './collection';
 import { IGroup } from './group';
 import { IUser } from './user';
+import { info } from 'console';
 
 export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
 
@@ -23,6 +26,8 @@ export interface IDatabase {
   create(config: TDatabaseConfig): Promise<boolean>;
 
   exist(): Promise<boolean>;
+
+  info(): Promise<TDatabaseInfoResponse>;
 
   // Collection
   collection<T extends TSchemaExtendable<any>>(

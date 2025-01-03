@@ -59,7 +59,7 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.dbList.dbEnvironment
+    (data) => data.dbEnvironment
   ),
   dbExist: createQueryFunction<TDatabaseExistRequest, TDatabaseExistResponse>(
     client,
@@ -68,7 +68,7 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
         dbExist(databaseName: $databaseName)
       }
     `,
-    (data) => data.dbList.dbExist
+    (data) => data.dbExist
   ),
   dbInfo: createQueryFunction<TDatabaseInfoRequest, TDatabaseInfoResponse>(
     client,
@@ -92,7 +92,12 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
       query dbList($query: JSON, $pagination: PaginationInput) {
         dbList(query: $query, pagination: $pagination) {
           data {
-            ...MetadataDatabaseFragment
+            databaseName
+            databaseOwner
+            merkleHeight
+            appPublicKey
+            sizeOnDisk
+            deployStatus
           }
           total
           offset

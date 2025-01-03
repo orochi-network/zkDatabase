@@ -13,16 +13,20 @@ export class Authenticator {
 
   #storage: Storage;
 
+  #userName: string;
+
   private apiClient: IApiClient;
 
   constructor(
     signer: Signer,
     apiClient: IApiClient,
+    userName: string,
     storage: Storage = new InMemoryStorage()
   ) {
     this.#signer = signer;
     this.apiClient = apiClient;
     this.#storage = storage;
+    this.#userName = userName;
   }
 
   private get user() {
@@ -48,6 +52,16 @@ export class Authenticator {
     return typeof this.#storage.getItem(ZKDB_KEY_ACCESS_TOKEN) === 'string';
   }
 
+  public async isUserExist(userName: string): Promise<boolean> {
+    const { total } = (
+      await this.apiClient.user.userFind({
+        query: { userName },
+        pagination: { limit: 10, offset: 0 },
+      })
+    ).unwrap();
+    return typeof total === 'number' && total > 0;
+  }
+
   public async signIn() {
     const ecdsa = (await this.user.userEcdsaChallenge()).unwrap();
     const proof = await this.signer.signMessage(ecdsa);
@@ -66,10 +80,10 @@ export class Authenticator {
     return userData;
   }
 
-  public async signUp(userName: string, email: string) {
+  public async signUp(email: string) {
     const proof = await this.signer.signMessage(
       JSON.stringify({
-        userName,
+        userName: this.#userName,
         email,
       })
     );
@@ -78,7 +92,7 @@ export class Authenticator {
       await this.user.userSignUp({
         proof,
         newUser: {
-          userName,
+          userName: this.#userName,
           email,
           timestamp: this.timestamp(),
           userData: {},
