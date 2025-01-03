@@ -16,7 +16,7 @@ import {
 import { fetchAccount, Field, MerkleWitness, PublicKey, ZkProgram } from 'o1js';
 import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree';
 
-class Proof2 {
+class Proof {
   static async create(
     {
       databaseName,
