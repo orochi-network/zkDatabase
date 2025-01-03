@@ -23,34 +23,44 @@ import { CircuitFactory } from '@circuit';
 import { logger } from '@helper';
 
 export class Proof {
-  static async create(task: TQueueRecord, session: TCompoundSession) {
-    if (task.status !== EProofStatusDocument.Queued) {
+  static async create(
+    {
+      databaseName,
+      collectionName,
+      createdAt,
+      merkleIndex,
+      status,
+      hash,
+      _id,
+    }: TQueueRecord,
+    session: TCompoundSession
+  ) {
+    if (status !== EProofStatusDocument.Queued) {
       throw Error('Task status is not Queued');
     }
-
-    const { databaseName, collectionName, createdAt, merkleIndex, hash, _id } =
-      task;
-
+    // Model initialize
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
     const imProof = ModelProof.getInstance();
-
-    const circuitName = `${databaseName}.${collectionName}`;
-    const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
+    const imMetadataDatabase = ModelMetadataDatabase.getInstance();
+    // Get appPublicKey to check on-chain/off-chain, merkleHeight for calculate
     const { merkleHeight, appPublicKey } =
-      (await modelDatabaseMetadata.findOne(
+      (await imMetadataDatabase.findOne(
         {
           databaseName,
         },
         { session: session.serverless }
       )) || {};
-
+    // Ensure valid merkle Height
     if (!merkleHeight) {
       throw new Error(
         `Merkle height metadata for database ${databaseName} is not found`
       );
     }
 
+    const circuitName = `${databaseName}.${collectionName}`;
+    // Check Circuit existed
     if (!CircuitFactory.contains(circuitName)) {
+      // Create & compile Circuit if does not have
       await CircuitFactory.createCircuit(circuitName, merkleHeight);
     }
 
@@ -64,6 +74,8 @@ export class Proof {
     );
 
     let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
+
+    const rollupProof = await RollUpProof.fromJSON(zkProof);
 
     const witness = new DatabaseMerkleWitness(
       await imMerkleTree.getMerkleProof(

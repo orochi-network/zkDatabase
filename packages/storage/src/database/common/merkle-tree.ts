@@ -102,10 +102,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
       currIndex /= 2n;
     }
 
-    await this.collection.insertMany(
-      inserts,
-      typeof options !== 'undefined' ? { session: options.session } : undefined
-    );
+    await this.collection.insertMany(inserts, options);
 
     return path[this.height - 1];
   }

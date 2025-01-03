@@ -92,7 +92,7 @@ export class Document {
     const imSequencer = ModelSequencer.getInstance(databaseName);
     const merkleIndex = await imSequencer.nextValue(
       ESequencer.MerkleIndex,
-      compoundSession?.serverless
+      compoundSession.serverless
     );
 
     // 3. Create Metadata
@@ -104,7 +104,7 @@ export class Document {
     const documentSchema = await imCollectionMetadata.getMetadata(
       collectionName,
       {
-        session: compoundSession?.serverless,
+        session: compoundSession.serverless,
       }
     );
 
@@ -137,7 +137,7 @@ export class Document {
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
-      { session: compoundSession?.serverless }
+      { session: compoundSession.serverless }
     );
 
     const witness = await Prover.create(
