@@ -3,6 +3,7 @@ import {
   FeatureFlags,
   Field,
   MerkleWitness,
+  Provable,
   SelfProof,
   Struct,
   ZkProgram,
@@ -11,17 +12,17 @@ import {
 export type ZkDbRollup = ReturnType<typeof ZkDbRollupFactory>;
 
 export class ZkDbRollupInput extends Struct({
-  merkleRootOnChain: Field,
+  step: Field,
   merkleRootOld: Field,
   merkleRootNew: Field,
 }) {}
 
 export class ZkDbRollupOutput extends Struct({
-  merkleRootOnChain: Field,
+  step: Field,
   merkleRoot: Field,
 }) {}
 
-export class ZkDbRollupProof extends DynamicProof<
+export class ZkDbRollupDynamicProof extends DynamicProof<
   ZkDbRollupInput,
   ZkDbRollupOutput
 > {
@@ -56,11 +57,11 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
             .calculateRoot(Field(0))
             .assertEquals(stateInput.merkleRootNew);
 
-          stateInput.merkleRootOnChain.assertEquals(stateInput.merkleRootNew);
+          stateInput.step.assertEquals(Field(0));
 
           return {
             publicOutput: new ZkDbRollupOutput({
-              merkleRootOnChain: stateInput.merkleRootOnChain,
+              step: stateInput.step.add(1),
               merkleRoot: stateInput.merkleRootNew,
             }),
           };
@@ -79,10 +80,12 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
         ) {
           previousProof.verify();
 
-          previousProof.publicOutput.merkleRootOnChain.assertEquals(
-            stateInput.merkleRootOnChain,
-            'Merkle root on chain must be equal for all proofs.'
-          );
+          previousProof.publicInput.step
+            .add(1)
+            .assertEquals(
+              previousProof.publicOutput.step,
+              'Step must increase by one'
+            );
 
           // It happened since state will create a chain
           // prevProof.publicOutput.merkleRoot === currentProof.publicInput.merkleRootOld
@@ -109,7 +112,7 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
 
           return {
             publicOutput: new ZkDbRollupOutput({
-              merkleRootOnChain: stateInput.merkleRootOnChain,
+              step: stateInput.step.add(1),
               merkleRoot: stateInput.merkleRootNew,
             }),
           };

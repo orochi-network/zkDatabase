@@ -23,6 +23,7 @@ export function ZkDbContractFactory(
 
   class ZkDbSmartContract extends SmartContract {
     @state(Field) merkleRoot = State<Field>();
+    @state(Field) step = State<Field>();
 
     init() {
       super.init();
@@ -33,17 +34,24 @@ export function ZkDbContractFactory(
       });
 
       this.merkleRoot.set(merkleTree.getRoot());
+
+      this.step.set(Field(0));
     }
 
     @method async rollUp(zkRollupProof: ZkDbRollupProof) {
       zkRollupProof.verify();
 
-      const merkleRoot = this.merkleRoot.getAndRequireEquals();
+      this.merkleRoot.getAndRequireEquals();
 
-      merkleRoot.assertEquals(zkRollupProof.publicOutput.merkleRootOnChain);
+      const step = this.step.getAndRequireEquals();
+
+      step.assertLessThan(zkRollupProof.publicOutput.step);
 
       this.merkleRoot.set(zkRollupProof.publicOutput.merkleRoot);
 
+      this.step.set(zkRollupProof.publicOutput.step);
+
+      // TODO: Why do we need this?
       AccountUpdate.createSigned(this.address);
     }
   }

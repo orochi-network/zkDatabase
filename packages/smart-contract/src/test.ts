@@ -22,15 +22,6 @@ const merkleHeight = 3;
 // Extend Merkle witness at the same height as the Merkle Tree
 class MyMerkleWitness extends MerkleWitness(merkleHeight) {}
 
-// Define the schema of the document
-class Account extends Struct({
-  accountName: CircuitString,
-  balance: UInt32,
-}) {}
-
-type TNames = 'Bob' | 'Alice' | 'Charlie' | 'Olivia';
-const accountNameList: TNames[] = ['Bob', 'Alice', 'Charlie', 'Olivia'];
-
 const Local = await Mina.LocalBlockchain({ proofsEnabled: doProofs });
 Mina.setActiveInstance(Local);
 const initialBalance = 100_000_000_000;
@@ -93,9 +84,9 @@ console.log(merkleTree.getWitness(0n));
 
 const proof1 = await zkDBRollup.init(
   new ZkDbRollupInput({
+    step: Field(0),
     merkleRootNew: root1,
     merkleRootOld: root1,
-    merkleRootOnChain: root1,
   }),
   new MyMerkleWitness(merkleTree.getWitness(0n))
 );
@@ -110,9 +101,9 @@ const root2 = merkleTree.getRoot();
 console.log('Prove root2:', root2.toString());
 const proof2 = await zkDBRollup.update(
   new ZkDbRollupInput({
+    step: Field(1),
     merkleRootNew: root2,
     merkleRootOld: root1,
-    merkleRootOnChain: root1,
   }),
   proof1.proof,
   new MyMerkleWitness(merkleTree.getWitness(1n)),
@@ -127,9 +118,9 @@ console.log(proof2);
 
 const proof3 = await zkDBRollup.update(
   new ZkDbRollupInput({
+    step: Field(2),
     merkleRootNew: root3,
     merkleRootOld: root2,
-    merkleRootOnChain: root1,
   }),
   proof2.proof,
   new MyMerkleWitness(merkleTree.getWitness(2n)),

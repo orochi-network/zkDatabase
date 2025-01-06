@@ -107,3 +107,28 @@ console.log(
   'Check the rollup state of the proof:',
   proof3.proof.publicOutput.merkleRoot.toString()
 );
+
+merkleTree.setLeaf(2n, Field(7n));
+
+const proof4 = await zkdbProcessor.update(proof3, {
+  merkleRootNew: merkleTree.getRoot(),
+  merkleProof: merkleTree.getWitness(2n),
+  leafOld: Field(5n),
+  leafNew: Field(7n),
+});
+
+// Perform the transaction
+/*
+let tx3 = await Mina.transaction(feePayer, async () => {
+  await zkApp.rollUp(proof4.proof);
+});
+await tx3.prove();
+await tx3.sign([feePayerKey, zkappKey]).send();
+*/
+console.log('On-chain state:', zkApp.merkleRoot.get().toString());
+console.log(
+  'Check the rollup state of the proof:',
+  proof4.proof.publicOutput.merkleRoot.toString()
+);
+
+console.log('Onchain step:', zkApp.step.get().toString());

@@ -18,16 +18,14 @@ import {
 } from './zkdb-rollup.js';
 
 export type TRollupProof = {
-  step: bigint;
+  step: Field;
   proof: Proof<ZkDbRollupInput, ZkDbRollupOutput>;
-  merkleRootOnChain: Field;
   merkleRootOld: Field;
 };
 
 export type TRollupSerializedProof = {
   step: string;
   proof: JsonProof;
-  merkleRootOnChain: string;
   merkleRootOld: string;
 };
 
@@ -110,21 +108,20 @@ export class ZkDbProcessor {
 
     const zkProof = await this.zkdbRollup.init(
       new ZkDbRollupInput({
+        step: Field(0),
         merkleRootNew: initialRoot,
         merkleRootOld: initialRoot,
-        merkleRootOnChain: initialRoot,
       }),
       new MerkleProof(merkleProof)
     );
 
     logger.debug(
-      `Prove complete of step 0 in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
+      `Prove step 0 to 1 in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
     );
 
     return {
-      step: 0n,
+      step: zkProof.proof.publicOutput.step,
       proof: zkProof.proof,
-      merkleRootOnChain: initialRoot,
       merkleRootOld: initialRoot,
     };
   }
@@ -143,9 +140,9 @@ export class ZkDbProcessor {
 
     const proof = await this.zkdbRollup.update(
       new ZkDbRollupInput({
+        step: proofPrevious.step,
         merkleRootNew: transition.merkleRootNew,
         merkleRootOld: proofPrevious.merkleRootOld,
-        merkleRootOnChain: proofPrevious.merkleRootOnChain,
       }),
       proofPrevious.proof,
       new MerkleProof(transition.merkleProof),
@@ -157,22 +154,13 @@ export class ZkDbProcessor {
       throw new Error('Proof does not match the new Merkle Root');
     }
 
-    if (
-      !proof.proof.publicOutput.merkleRootOnChain.equals(
-        proofPrevious.merkleRootOnChain
-      )
-    ) {
-      throw new Error('Merkle Root on chain does not match');
-    }
-
     logger.debug(
-      `Prove complete of step ${(proofPrevious.step + 1n).toString()} in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
+      `Prove step ${proofPrevious.step.toString()} to ${proofPrevious.step.add(1).toString()} in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
     );
 
     return {
-      step: proofPrevious.step + 1n,
+      step: proofPrevious.step.add(1),
       proof: proof.proof,
-      merkleRootOnChain: proofPrevious.merkleRootOnChain,
       merkleRootOld: proof.proof.publicOutput.merkleRoot,
     };
   }
@@ -181,7 +169,6 @@ export class ZkDbProcessor {
     return {
       step: proof.step.toString(),
       proof: proof.proof.toJSON(),
-      merkleRootOnChain: proof.merkleRootOnChain.toString(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };
   }
@@ -189,13 +176,11 @@ export class ZkDbProcessor {
   async deserialize(proofStr: string): Promise<TRollupProof> {
     class ZkDbRollupProof extends ZkProgram.Proof(this.zkdbRollup) {}
 
-    const { step, proof, merkleRootOnChain, merkleRootOld } =
-      JSON.parse(proofStr);
+    const { step, proof, merkleRootOld } = JSON.parse(proofStr);
 
     return {
-      step: BigInt(step),
+      step: Field(step),
       proof: await ZkDbRollupProof.fromJSON(proof),
-      merkleRootOnChain: Field(merkleRootOnChain),
       merkleRootOld: Field(merkleRootOld),
     };
   }
