@@ -1,6 +1,6 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TRollUpStateRecordNullable } from '@zkdb/common';
+import { TRollupStateRecordNullable } from '@zkdb/common';
 import { OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelMetadataDatabase } from '../global';
@@ -12,10 +12,10 @@ import { ModelMetadataDatabase } from '../global';
     And we still modify that, it lead to misunderstanding and conflict state in the feature
     Separate Rollup state will help us manage and easy to perform the state and easy to maintain
 */
-export class ModelRollUpState extends ModelGeneral<
-  OptionalId<TRollUpStateRecordNullable>
+export class ModelRollupState extends ModelGeneral<
+  OptionalId<TRollupStateRecordNullable>
 > {
-  private static instances = new Map<string, ModelRollUpState>();
+  private static instances = new Map<string, ModelRollupState>();
 
   private constructor(databaseName: string) {
     super(
@@ -27,8 +27,8 @@ export class ModelRollUpState extends ModelGeneral<
 
   public static async getInstance(
     databaseName: string
-  ): Promise<ModelRollUpState> {
-    if (!ModelRollUpState.instances.has(databaseName)) {
+  ): Promise<ModelRollupState> {
+    if (!ModelRollupState.instances.has(databaseName)) {
       const imMetadataDatabase = ModelMetadataDatabase.getInstance();
       const metadataDatabase = await imMetadataDatabase.findOne({
         databaseName,
@@ -36,11 +36,11 @@ export class ModelRollUpState extends ModelGeneral<
       if (!metadataDatabase) {
         throw new Error(`Metadata of ${databaseName} has not been found.`);
       }
-      ModelRollUpState.instances.set(
+      ModelRollupState.instances.set(
         databaseName,
-        new ModelRollUpState(databaseName)
+        new ModelRollupState(databaseName)
       );
     }
-    return ModelRollUpState.instances.get(databaseName)!;
+    return ModelRollupState.instances.get(databaseName)!;
   }
 }

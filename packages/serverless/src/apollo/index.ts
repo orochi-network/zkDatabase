@@ -6,7 +6,7 @@ import {
   resolversGroup,
   resolversMerkleTree,
   resolversProof,
-  resolversRollUp,
+  resolversRollup,
   resolversTransaction,
   resolversUser,
   typeDefsCollection,
@@ -17,7 +17,7 @@ import {
   typeDefsGroup,
   typeDefsMerkleTree,
   typeDefsProof,
-  typeDefsRollUp,
+  typeDefsRollup,
   typeDefsTransaction,
   typeDefsUser,
   resolversPermission,
@@ -35,7 +35,7 @@ export const TypedefsApp = [
   typeDefsMerkleTree,
   typeDefsProof,
   typeDefsTransaction,
-  typeDefsRollUp,
+  typeDefsRollup,
   typeDefsPermission,
 ];
 
@@ -49,7 +49,7 @@ export const ResolversApp = [
   resolversMerkleTree,
   resolversProof,
   resolversTransaction,
-  resolversRollUp,
+  resolversRollup,
   resolversPermission,
 ];
 

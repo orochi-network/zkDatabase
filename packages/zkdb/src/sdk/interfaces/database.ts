@@ -4,7 +4,7 @@ import {
   TDatabaseCreateRequest,
   TGroupListAllResponse,
   TProofStatusDatabaseResponse,
-  TRollUpHistoryResponse,
+  TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
@@ -61,5 +61,5 @@ export interface IDatabase {
   // Rollup
   rollUpStart(): Promise<boolean>;
 
-  rollUpHistory(): Promise<TRollUpHistoryResponse>;
+  rollUpHistory(): Promise<TRollupHistoryResponse>;
 }

@@ -1,9 +1,9 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
 import {
-  ERollUpState,
+  ERollupState,
   ETransactionStatus,
-  TRollUpHistoryTransactionAggregate,
+  TRollupHistoryTransactionAggregate,
 } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
@@ -12,7 +12,7 @@ import {
   ModelMetadataDatabase,
   ModelQueueTask,
   ModelRollupHistory,
-  ModelRollUpState,
+  ModelRollupState,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { PublicKey } from 'o1js';
@@ -161,17 +161,17 @@ export const SERVICE_ROLLUP = {
                 const imRollupHistory = ModelRollupHistory.getInstance();
 
                 const listRollupHistoryDetail = await imRollupHistory.collection
-                  .aggregate<TRollUpHistoryTransactionAggregate>(pipeline)
+                  .aggregate<TRollupHistoryTransactionAggregate>(pipeline)
                   .toArray();
 
-                const latestRollUpHistory = listRollupHistoryDetail.at(0);
+                const latestRollupHistory = listRollupHistoryDetail.at(0);
 
-                if (!latestRollUpHistory) {
+                if (!latestRollupHistory) {
                   return;
                 }
 
                 logger.info(
-                  `Latest rollup history ${latestRollUpHistory.databaseName} found`
+                  `Latest rollup history ${latestRollupHistory.databaseName} found`
                 );
 
                 const latestTask = await imQueue.findOne(
@@ -190,35 +190,35 @@ export const SERVICE_ROLLUP = {
                 const rollUpDifferent =
                   latestTask.operationNumber - rollupTaskNumber;
 
-                let rollUpState: ERollUpState = ERollUpState.Failed;
+                let rollUpState: ERollupState = ERollupState.Failed;
 
                 if (rollUpDifferent > 0) {
                   // Outdated case
-                  rollUpState = ERollUpState.Outdated;
+                  rollUpState = ERollupState.Outdated;
                 } else if (
-                  latestRollUpHistory.transaction.status ===
+                  latestRollupHistory.transaction.status ===
                   ETransactionStatus.Confirmed
                 ) {
-                  rollUpState = ERollUpState.Updated;
+                  rollUpState = ERollupState.Updated;
                 }
 
-                const imRollUpState =
-                  await ModelRollUpState.getInstance(databaseName);
+                const imRollupState =
+                  await ModelRollupState.getInstance(databaseName);
 
-                const stateUpdateResult = await imRollUpState.updateOne(
+                const stateUpdateResult = await imRollupState.updateOne(
                   { databaseName },
                   {
                     $set: {
                       // Update Merkle root
-                      merkleTreeRoot: latestRollUpHistory.merkleTreeRoot,
+                      merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
                       merkleTreeRootPrevious:
-                        latestRollUpHistory.merkleTreeRootPrevious,
+                        latestRollupHistory.merkleTreeRootPrevious,
                       // State
                       rollUpDifferent: rollUpDifferent,
                       rollUpState,
-                      error: latestRollUpHistory.transaction.error,
+                      error: latestRollupHistory.transaction.error,
                       updatedAt: new Date(),
-                      latestRollUpSuccess: listRollupHistoryDetail.find(
+                      latestRollupSuccess: listRollupHistoryDetail.find(
                         (history) =>
                           history.transaction.status ===
                           ETransactionStatus.Confirmed
