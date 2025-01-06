@@ -24,7 +24,7 @@ export type TRollupProof = {
 };
 
 export type TRollupSerializedProof = {
-  step: string;
+  step: bigint;
   proof: JsonProof;
   merkleRootOld: string;
 };
@@ -165,9 +165,9 @@ export class ZkDbProcessor {
     };
   }
 
-  serialize(proof: TRollupProof) {
+  serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
-      step: proof.step.toString(),
+      step: proof.step.toBigInt(),
       proof: proof.proof.toJSON(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };
