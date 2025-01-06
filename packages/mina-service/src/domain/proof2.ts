@@ -13,7 +13,7 @@ import {
   ModelProof,
   TCompoundSession,
 } from '@zkdb/storage';
-import { fetchAccount, Field, MerkleWitness, PublicKey, ZkProgram } from 'o1js';
+import { fetchAccount, Field, MerkleWitness, Mina, PublicKey, ZkProgram } from 'o1js';
 import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree';
 
 class Proof {
@@ -84,7 +84,7 @@ class Proof {
   }) {
     // Convert base58 string to PublicKey o1js type
     const databasePublicKey = PublicKey.fromBase58(appPublicKey);
-
+    
     const { account, error } = await fetchAccount({
       publicKey: databasePublicKey,
     });

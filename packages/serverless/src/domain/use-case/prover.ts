@@ -51,11 +51,16 @@ export class Prover {
 
     const index = metadataDocument.merkleIndex;
 
-    const hash = schema.hash();
+    const documentHash = schema.hash();
 
-    const newRoot = await imMerkleTree.setLeaf(BigInt(index), hash, currDate, {
-      session: session.serverless,
-    });
+    const newRoot = await imMerkleTree.setLeaf(
+      BigInt(index),
+      documentHash,
+      currDate,
+      {
+        session: session.serverless,
+      }
+    );
 
     const imSequencer = ModelSequencer.getInstance(databaseName);
 
@@ -67,7 +72,7 @@ export class Prover {
     await ModelQueueTask.getInstance().queueTask(
       {
         merkleIndex: BigInt(index),
-        hash: hash.toString(),
+        documentHash: documentHash.toString(),
         status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,
@@ -130,7 +135,7 @@ export class Prover {
     await ModelQueueTask.getInstance().queueTask(
       {
         merkleIndex,
-        hash: hash.toString(),
+        documentHash: hash.toString(),
         status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,
@@ -188,7 +193,7 @@ export class Prover {
     await ModelQueueTask.getInstance().queueTask(
       {
         merkleIndex,
-        hash: Field(0).toString(),
+        documentHash: Field(0).toString(),
         status: EProofStatusDocument.Queued,
         createdAt: currDate,
         updatedAt: currDate,

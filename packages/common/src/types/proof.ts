@@ -72,7 +72,7 @@ export type TQueue = {
   docId: string;
   operationNumber: number;
   merkleIndex: bigint;
-  hash: string;
+  documentHash: string;
   status: EProofStatusDocument;
   merkleRoot: string;
   error?: string;
