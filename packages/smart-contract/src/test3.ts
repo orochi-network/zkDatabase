@@ -48,7 +48,7 @@ const zkApp = zkdbProcessor.getInstanceZkDBContract(zkappAddress);
 
 // Fund new account
 const tx = await Mina.transaction(feePayer, async () => {
-  AccountUpdate.fundNewAccount(feePayer).send({
+  await AccountUpdate.fundNewAccount(feePayer).send({
     to: zkappAddress,
     amount: initialBalance,
   });
@@ -81,16 +81,23 @@ const proof2 = await zkdbProcessor.update(proof1, {
 
 merkleTree.setLeaf(2n, Field(5n));
 
-const proof3 = await zkdbProcessor.update(proof2, {
-  merkleRootNew: merkleTree.getRoot(),
-  merkleProof: merkleTree.getWitness(2n),
-  leafOld: Field(0n),
-  leafNew: Field(5n),
-});
+const serializedProof2 = zkdbProcessor.serialize(proof2);
+
+console.log('Proof2>', serializedProof2);
+
+const proof3 = await zkdbProcessor.update(
+  await zkdbProcessor.deserialize(JSON.stringify(serializedProof2)),
+  {
+    merkleRootNew: merkleTree.getRoot(),
+    merkleProof: merkleTree.getWitness(2n),
+    leafOld: Field(0n),
+    leafNew: Field(5n),
+  }
+);
 
 // Perform the transaction
 let tx2 = await Mina.transaction(feePayer, async () => {
-  zkApp.rollUp(proof3.proof);
+  await zkApp.rollUp(proof3.proof);
 });
 await tx2.prove();
 await tx2.sign([feePayerKey, zkappKey]).send();

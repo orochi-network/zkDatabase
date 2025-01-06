@@ -1,4 +1,12 @@
-import { Cache, Field, MerkleWitness, Proof, PublicKey } from 'o1js';
+import {
+  Cache,
+  Field,
+  JsonProof,
+  MerkleWitness,
+  Proof,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
 import { logger, LoggerSet } from './helper/logger.js';
 import { ZkDbContract, ZkDbContractFactory } from './zkdb-contract.js';
@@ -14,6 +22,13 @@ export type TRollupProof = {
   proof: Proof<ZkDbRollupInput, ZkDbRollupOutput>;
   merkleRootOnChain: Field;
   merkleRootOld: Field;
+};
+
+export type TRollupSerializedProof = {
+  step: string;
+  proof: JsonProof;
+  merkleRootOnChain: string;
+  merkleRootOld: string;
 };
 
 export type TRollupTransition = {
@@ -159,6 +174,29 @@ export class ZkDbProcessor {
       proof: proof.proof,
       merkleRootOnChain: proofPrevious.merkleRootOnChain,
       merkleRootOld: proof.proof.publicOutput.merkleRoot,
+    };
+  }
+
+  serialize(proof: TRollupProof) {
+    return {
+      step: proof.step.toString(),
+      proof: proof.proof.toJSON(),
+      merkleRootOnChain: proof.merkleRootOnChain.toString(),
+      merkleRootOld: proof.merkleRootOld.toString(),
+    };
+  }
+
+  async deserialize(proofStr: string): Promise<TRollupProof> {
+    class ZkDbRollupProof extends ZkProgram.Proof(this.zkdbRollup) {}
+
+    const { step, proof, merkleRootOnChain, merkleRootOld } =
+      JSON.parse(proofStr);
+
+    return {
+      step: BigInt(step),
+      proof: await ZkDbRollupProof.fromJSON(proof),
+      merkleRootOnChain: Field(merkleRootOnChain),
+      merkleRootOld: Field(merkleRootOld),
     };
   }
 }

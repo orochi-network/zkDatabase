@@ -85,7 +85,7 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
           );
 
           // It happened since state will create a chain
-          // prevProof.publicOutput <- currentProof.publicInput.merkleRootOld
+          // prevProof.publicOutput.merkleRoot === currentProof.publicInput.merkleRootOld
           previousProof.publicOutput.merkleRoot.assertEquals(
             stateInput.merkleRootOld,
             'Out put of previous proof must be equal to old merkle root.'
