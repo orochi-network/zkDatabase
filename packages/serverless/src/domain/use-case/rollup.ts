@@ -2,13 +2,13 @@ import { getCurrentTime, logger } from '@helper';
 import {
   ETransactionStatus,
   ETransactionType,
-  TRollUpDetail,
+  TRollupDetail,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
   ModelProof,
   ModelRollupHistory,
-  ModelRollUpState,
+  ModelRollupState,
   ModelTransaction,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -106,7 +106,7 @@ export class Rollup {
   static async history(
     databaseName: string,
     session?: ClientSession
-  ): Promise<TRollUpDetail | null> {
+  ): Promise<TRollupDetail | null> {
     const database = await ModelMetadataDatabase.getInstance().findOne(
       { databaseName },
       {
@@ -122,7 +122,7 @@ export class Rollup {
     }
 
     const imRollupHistory = ModelRollupHistory.getInstance();
-    const imRollupState = await ModelRollUpState.getInstance(databaseName);
+    const imRollupState = await ModelRollupState.getInstance(databaseName);
     const rollupHistory = await imRollupHistory
       .find({ databaseName })
       .sort({ createdAt: -1, updatedAt: -1 })

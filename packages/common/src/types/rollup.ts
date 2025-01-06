@@ -11,14 +11,14 @@ import { TTransactionRecord } from './transaction';
  * @property {string} Outdated - Rollup is outdated
  * @property {string} Failed - Rollup is errored
  */
-export enum ERollUpState {
+export enum ERollupState {
   Updated = 'Updated',
   Updating = 'Updating',
   Outdated = 'Outdated',
   Failed = 'Failed',
 }
 
-export type TRollUpHistory = {
+export type TRollupHistory = {
   databaseName: string;
   merkleTreeRoot: string;
   merkleTreeRootPrevious: string;
@@ -30,42 +30,42 @@ export type TRollUpHistory = {
   error: string;
 };
 
-export type TRollUpState = Pick<
-  TRollUpHistory,
+export type TRollupState = Pick<
+  TRollupHistory,
   'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
 > & {
   // Number of merkle root transformation different to previous one
   rollUpDifferent: number;
-  rollUpState: ERollUpState;
-  latestRollUpSuccess: Date;
+  rollUpState: ERollupState;
+  latestRollupSuccess: Date;
 };
 
-export type TRollUpHistoryRecordNullable = TDbRecord<
-  TNullable<TRollUpHistory, 'error'>
+export type TRollupHistoryRecordNullable = TDbRecord<
+  TNullable<TRollupHistory, 'error'>
 >;
 
-export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
+export type TRollupHistoryRecord = TDbRecord<TRollupHistory>;
 
-export type TRollUpStateRecordNullable = TDbRecord<
-  TNullable<TRollUpState, 'error' | 'latestRollUpSuccess'>
+export type TRollupStateRecordNullable = TDbRecord<
+  TNullable<TRollupState, 'error' | 'latestRollupSuccess'>
 >;
 
 // Compound Type
 
-export type TRollUpHistoryTransactionAggregate = TRollUpHistoryRecord & {
+export type TRollupHistoryTransactionAggregate = TRollupHistoryRecord & {
   transaction: TTransactionRecord;
 };
 
-export type TRollUpDetail = TRollUpStateRecordNullable & {
-  history: TRollUpHistoryRecordNullable[];
+export type TRollupDetail = TRollupStateRecordNullable & {
+  history: TRollupHistoryRecordNullable[];
 };
 
-// RollUp history
+// Rollup history
 export type TRollupHistoryRequest = TDatabaseRequest;
 
-export type TRollUpHistoryResponse = TRollUpDetail | null;
+export type TRollupHistoryResponse = TRollupDetail | null;
 
 // Rollup create
-export type TRollUpCreateRequest = TDatabaseRequest;
+export type TRollupCreateRequest = TDatabaseRequest;
 
-export type TRollUpCreateResponse = boolean;
+export type TRollupCreateResponse = boolean;

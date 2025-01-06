@@ -1,19 +1,19 @@
 import { Field, MerkleTree, MerkleWitness, Poseidon } from 'o1js';
 import {
-  DatabaseRollUp,
-  RollUpProgram,
+  DatabaseRollup,
+  RollupProgram,
 } from '../../src/proof/proof-program.js';
-import { ProofStateInput } from '../../src/proof/proof-state.js';
+import { ZkDatabaseStateInput } from '../../src/proof/proof-state.js';
 
 const HEIGHT = 12;
 
 class MyWitness extends MerkleWitness(HEIGHT) {}
 
-describe('RollUpProgram', () => {
-  let rollUpProgram: DatabaseRollUp;
+describe('RollupProgram', () => {
+  let rollUpProgram: DatabaseRollup;
 
   beforeAll(async () => {
-    rollUpProgram = RollUpProgram(HEIGHT);
+    rollUpProgram = RollupProgram(HEIGHT);
     await rollUpProgram.analyzeMethods();
     await rollUpProgram.compile();
   });
@@ -23,10 +23,10 @@ describe('RollUpProgram', () => {
     const currRoot = merkleTree.getRoot();
     merkleTree.setLeaf(1n, Field(1));
 
-    const proofState = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: currRoot,
-      currentOffChainState: currRoot,
+    const proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: currRoot,
+      offChainStateCurrent: currRoot,
     });
     const proof = await rollUpProgram.init(
       proofState,
@@ -43,10 +43,10 @@ describe('RollUpProgram', () => {
     const currRoot = merkleTree.getRoot();
     merkleTree.setLeaf(1n, Field(1));
 
-    let proofState = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: currRoot,
-      currentOffChainState: currRoot,
+    let proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: currRoot,
+      offChainStateCurrent: currRoot,
     });
 
     const proofInit = await rollUpProgram.init(
@@ -56,10 +56,10 @@ describe('RollUpProgram', () => {
       Field(1)
     );
 
-    proofState = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: currRoot,
-      currentOffChainState: merkleTree.getRoot(),
+    proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: currRoot,
+      offChainStateCurrent: merkleTree.getRoot(),
     });
 
     merkleTree.setLeaf(2n, Field(2));
@@ -82,10 +82,10 @@ describe('RollUpProgram', () => {
     const currRoot = merkleTree.getRoot();
     merkleTree.setLeaf(1n, Field(1));
 
-    let proofState = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: currRoot,
-      currentOffChainState: currRoot,
+    let proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: currRoot,
+      offChainStateCurrent: currRoot,
     });
 
     const proofInit = await rollUpProgram.init(
@@ -95,10 +95,10 @@ describe('RollUpProgram', () => {
       Field(1)
     );
 
-    proofState = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: currRoot,
-      currentOffChainState: merkleTree.getRoot(),
+    proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: currRoot,
+      offChainStateCurrent: merkleTree.getRoot(),
     });
 
     merkleTree.setLeaf(2n, Field(2));
@@ -111,10 +111,10 @@ describe('RollUpProgram', () => {
       Field(2)
     );
 
-    proofState = new ProofStateInput({
-      previousOnChainState: currRoot,
-      currentOnChainState: proofInit.publicOutput.newOffChainState,
-      currentOffChainState: merkleTree.getRoot(),
+    proofState = new ZkDatabaseStateInput({
+      onChainStatePervious: currRoot,
+      onChainStateCurrent: proofInit.publicOutput.newOffChainState,
+      offChainStateCurrent: merkleTree.getRoot(),
     });
 
     merkleTree.setLeaf(3n, Field(3));

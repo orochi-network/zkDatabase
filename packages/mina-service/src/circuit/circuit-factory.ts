@@ -1,13 +1,13 @@
 import { logger } from '@helper';
-import { RollUpProxy, getDatabaseRollUpFunction } from './rollup-program';
+import { RollupProxy, getDatabaseRollupFunction } from './rollup-program';
 
 export class CircuitFactory {
-  private static instance = new Map<string, RollUpProxy>();
+  private static instance = new Map<string, RollupProxy>();
 
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
-  static getCircuit(name: string): RollUpProxy {
+  static getCircuit(name: string): RollupProxy {
     try {
       return this.instance.get(name)!;
     } catch (e) {
@@ -19,12 +19,12 @@ export class CircuitFactory {
   static async createCircuit(
     name: string,
     merkleHeight: number
-  ): Promise<RollUpProxy> {
+  ): Promise<RollupProxy> {
     if (this.instance.has(name)) {
       return this.instance.get(name)!;
     }
 
-    const newCircuit = getDatabaseRollUpFunction(merkleHeight);
+    const newCircuit = getDatabaseRollupFunction(merkleHeight);
     await newCircuit.compile();
 
     this.instance.set(name, newCircuit);

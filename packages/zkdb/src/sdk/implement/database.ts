@@ -3,7 +3,7 @@ import {
   ETransactionType,
   TGroupListAllResponse,
   TProofStatusDatabaseResponse,
-  TRollUpHistoryResponse,
+  TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
@@ -123,7 +123,7 @@ export class Database implements IDatabase {
     return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
 
-  async rollUpHistory(): Promise<TRollUpHistoryResponse> {
+  async rollUpHistory(): Promise<TRollupHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupHistory(this.basicQuery)
     ).unwrap();

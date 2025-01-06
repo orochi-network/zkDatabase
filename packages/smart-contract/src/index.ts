@@ -1,7 +1,12 @@
-export * from './proof';
-export * from './contracts';
-export * from './archive-node';
-export * from './types';
-export * from './cache';
-export * from './network';
-export * from './utils';
+export * from './network/index.js';
+export {
+  TRollupProof,
+  TRollupTransition,
+  ZkDbProcessor,
+} from './zkdb-processor.js';
+export { ZkDbContract } from './zkdb-contract.js';
+export {
+  ZkDbRollup,
+  ZkDbRollupInput,
+  ZkDbRollupOutput,
+} from './zkdb-rollup.js';

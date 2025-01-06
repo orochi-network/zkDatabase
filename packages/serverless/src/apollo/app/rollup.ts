@@ -1,28 +1,28 @@
 import { Rollup } from '@domain';
 import {
   databaseName,
-  TRollUpCreateRequest,
-  TRollUpCreateResponse,
+  TRollupCreateRequest,
+  TRollupCreateResponse,
   TRollupHistoryRequest,
-  TRollUpHistoryResponse,
+  TRollupHistoryResponse,
 } from '@zkdb/common';
 import { withCompoundTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
-export const typeDefsRollUp = `#graphql
+export const typeDefsRollup = `#graphql
 scalar Date
 type Mutation
 
-enum RollUpState {
+enum RollupState {
   Updated
   Updating
   Outdated
   Failed
 }
 
-type RollUpHistoryItem {
+type RollupHistoryItem {
   databaseName: String!
   txHash: String
   transactionRaw: String!
@@ -34,17 +34,17 @@ type RollUpHistoryItem {
   updatedAt: Date!
 }
 
-type RollUpHistory {
-  state: RollUpState,
+type RollupHistory {
+  state: RollupState,
   merkleTreeRoot: String!
   merkleTreeRootPrevious: String!
   rollUpDifferent: Int,
-  history: [RollUpHistoryItem]
-  latestRollUpSuccess: Date
+  history: [RollupHistoryItem]
+  latestRollupSuccess: Date
 }
 
 extend type Query {
-  rollupHistory(databaseName: String!): RollUpHistory
+  rollupHistory(databaseName: String!): RollupHistory
 }
 
 extend type Mutation {
@@ -54,7 +54,7 @@ extend type Mutation {
 
 const rollupHistory = authorizeWrapper<
   TRollupHistoryRequest,
-  TRollUpHistoryResponse
+  TRollupHistoryResponse
 >(
   Joi.object({
     databaseName,
@@ -63,8 +63,8 @@ const rollupHistory = authorizeWrapper<
 );
 
 const rollupCreate = authorizeWrapper<
-  TRollUpCreateRequest,
-  TRollUpCreateResponse
+  TRollupCreateRequest,
+  TRollupCreateResponse
 >(
   Joi.object({
     databaseName,
@@ -77,7 +77,7 @@ const rollupCreate = authorizeWrapper<
   }
 );
 
-export const resolversRollUp = {
+export const resolversRollup = {
   JSON: GraphQLJSON,
   Query: {
     rollupHistory,

@@ -1,9 +1,9 @@
-import { ZKDatabaseClient } from 'zkdb';
+import { ZkDatabaseClient } from 'zkdb';
 import { faker } from '@faker-js/faker';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 
 async function run() {
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZkDatabaseClient.connect(ZKDB_URL);
 
   const fakeUser = {
     username: faker.internet.username().toLowerCase(),

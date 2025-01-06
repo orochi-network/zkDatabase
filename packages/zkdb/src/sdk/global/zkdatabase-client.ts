@@ -14,11 +14,11 @@ type MinaConfig = {
 };
 
 /**
- * The ZKDatabase Client class provides methods to interact with the ZKDatabase.
+ * The ZkDatabase Client class provides methods to interact with the ZkDatabase.
  * It allows connecting to the database using different authentication methods
  * and provides access to database and system functionalities.
  */
-export class ZKDatabase {
+export class ZkDatabase {
   public apiClient: IApiClient;
 
   public authenticator: Authenticator;
@@ -36,19 +36,19 @@ export class ZKDatabase {
   }
 
   /**
-   * Create new instance of ZKDatabaseClient by url
+   * Create new instance of ZkDatabaseClient by url
    * Connect from NodeJS using a private key
    * ```ts
-   * const client = await ZKDatabaseClient.connect('zkdb+https://username:EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU@test-serverless.zkdatabase.org/graphql?db=my-db');
+   * const client = await ZkDatabaseClient.connect('zkdb+https://username:EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU@test-serverless.zkdatabase.org/graphql?db=my-db');
    * ```
    * Connect from browser using Auro Wallet
    * ```ts
-   * const client = await ZKDatabaseClient.connect('zkdb+https://username@test-serverless.zkdatabase.org/graphql?db=my-db');
+   * const client = await ZkDatabaseClient.connect('zkdb+https://username@test-serverless.zkdatabase.org/graphql?db=my-db');
    * ```
    * @param url
    * @returns
    */
-  public static async connect(url: string): Promise<ZKDatabase> {
+  public static async connect(url: string): Promise<ZkDatabase> {
     const urlInstance = new URL(url);
     const { password, protocol, host, pathname } = urlInstance;
     const [abstract] = protocol.replace(':', '').split('+');
@@ -73,7 +73,7 @@ export class ZKDatabase {
           apiClient,
           globalThis.localStorage
         );
-        return new ZKDatabase(apiClient, authenticator, {
+        return new ZkDatabase(apiClient, authenticator, {
           networkId: networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet',
           networkUrl,
         });
@@ -86,7 +86,7 @@ export class ZKDatabase {
         PrivateKey.fromBase58(password),
         networkId === ENetworkId.Mainnet ? 'mainnet' : 'testnet'
       );
-      return new ZKDatabase(
+      return new ZkDatabase(
         apiClient,
         new Authenticator(signer, apiClient, storage),
         {
@@ -117,10 +117,10 @@ export class ZKDatabase {
   }
 
   /**
-   * Retrieves an instance of `ZKDatabase` with the specified name.
+   * Retrieves an instance of `ZkDatabase` with the specified name.
    *
    * @param name - The name of the database to access.
-   * @returns An instance of `ZKDatabase`.
+   * @returns An instance of `ZkDatabase`.
    * @throws Will throw an error if the server URL is not set and `connect()` has not been called.
    */
   db(databaseName: string): IDatabase {
@@ -133,4 +133,4 @@ export class ZKDatabase {
   }
 }
 
-export default ZKDatabase;
+export default ZkDatabase;

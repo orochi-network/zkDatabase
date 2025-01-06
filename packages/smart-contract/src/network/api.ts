@@ -1,4 +1,4 @@
-import { logger } from '../utils';
+import { logger } from '../helper/logger.js';
 
 export type TChain = 'mainnet' | 'devnet';
 
