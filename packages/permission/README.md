@@ -32,7 +32,7 @@ import {
   CircuitString,
   SmartContract,
 } from 'o1js';
-import { Schema, ZKDatabaseStorage } from 'zkdb';
+import { Schema, ZkDatabaseStorage } from 'zkdb';
 
 // Enable this to generate proofs
 const doProofs = false;
@@ -144,7 +144,7 @@ class PigletBank extends SmartContract {
 
   // we now need "wrap" the Merkle tree around our off-chain storage
   // we initialize a new Merkle Tree with height 8
-  const zkdb = await ZKDatabaseStorage.getInstance('zkdb-test', {
+  const zkdb = await ZkDatabaseStorage.getInstance('zkdb-test', {
     storageEngine: 'local',
     merkleHeight,
     storageEngineCfg: {

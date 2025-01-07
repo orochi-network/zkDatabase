@@ -90,9 +90,7 @@ export type TCollectionCreateRequest = TCollectionRequest &
           group: 'groupName';
           permission: 'permission';
         }
-      > & {
-        collectionIndex: TCollectionIndex[];
-      }
+      >
   >;
 
 export type TCollectionCreateResponse = boolean;

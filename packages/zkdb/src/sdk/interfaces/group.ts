@@ -24,14 +24,14 @@ export interface IGroup {
    * @param groupConfig - Group configuration object
    * @returns {Promise<boolean>} - True if group creation is successful, false otherwise
    */
-  create(groupConfig: TGroupConfig): Promise<boolean>;
+  create(groupConfig?: Omit<TGroupConfig, 'groupName'>): Promise<boolean>;
 
   /**
    * Update an existing group
    * @param groupConfig - Group configuration object
    * @returns {Promise<boolean>} - True if group update is successful, false otherwise
    */
-  update(groupConfig: TGroupConfig): Promise<boolean>;
+  update(groupConfig: Partial<TGroupConfig>): Promise<boolean>;
 
   /**
    * Add a list of users to a group

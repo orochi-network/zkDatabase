@@ -79,7 +79,10 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
       query userFind($query: UserFindQueryInput, $pagination: PaginationInput) {
         userFind(query: $query, pagination: $pagination) {
           data {
-            ...UserFragment
+            activated
+            email
+            publicKey
+            userName
           }
           total
           offset

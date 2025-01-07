@@ -74,8 +74,5 @@ export const typeDefsCommon = gql`
   type SchemaFieldOutput {
     name: String!
     kind: SchemaType!
-    index: Boolean
-    # Default is ASC or 1
-    sorting: Sorting
   }
 `;

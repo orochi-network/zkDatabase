@@ -69,25 +69,13 @@ export class Collection<T extends TSchemaExtendable<any>>
 
   async create(
     schema: T,
-    index?: string[] | TCollectionIndex[] | undefined,
     permission?: Permission,
     groupName?: string
   ): Promise<boolean> {
-    let collectionIndex: TCollectionIndex[] | undefined = undefined;
-    if (Array.isArray(index)) {
-      if (index.every((e) => typeof e === 'string')) {
-        collectionIndex = index.map((name) => {
-          return { index: { [name]: EIndexType.Asc }, unique: false };
-        });
-      } else {
-        collectionIndex = index;
-      }
-    }
     return (
       await this.apiClient.collection.collectionCreate({
         ...this.basicRequest,
         schema: schema ? schema.getSchemaDefinition() : undefined,
-        collectionIndex,
         permission: permission ? permission.value : undefined,
         groupName,
       })

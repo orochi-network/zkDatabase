@@ -46,7 +46,6 @@ export interface ICollection<T extends TSchemaExtendable<any>> {
 
   create(
     schema: T,
-    index?: string[] | TCollectionIndex[],
     permission?: Permission,
     groupName?: string
   ): Promise<boolean>;
