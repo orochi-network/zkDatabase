@@ -2,6 +2,7 @@
 import {
   ETransactionType,
   TDatabaseCreateRequest,
+  TDatabaseInfoResponse,
   TGroupListAllResponse,
   TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
@@ -9,7 +10,6 @@ import {
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
-  TUserRecord,
   TZkProofResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
@@ -23,6 +23,8 @@ export interface IDatabase {
   create(config: TDatabaseConfig): Promise<boolean>;
 
   exist(): Promise<boolean>;
+
+  info(): Promise<TDatabaseInfoResponse>;
 
   // Collection
   collection<T extends TSchemaExtendable<any>>(

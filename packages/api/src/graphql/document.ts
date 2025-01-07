@@ -37,7 +37,8 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           documentPermission: $documentPermission
         ) {
           merkleProof {
-            ...MerkleProofFragment
+            isLeft
+            sibling
           }
           docId
           acknowledged
@@ -113,7 +114,19 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           pagination: $pagination
         ) {
           data {
-            ...DocumentResponseFragment
+            docId
+            document
+            createdAt
+            updatedAt
+            metadata {
+              owner
+              group
+              permission
+              collectionName
+              docId
+              merkleIndex
+            }
+            proofStatus
           }
           total
           offset
@@ -141,7 +154,9 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           pagination: $pagination
         ) {
           data {
-            ...DocumentRevisionResponseFragment
+            createdAt
+            document
+            updatedAt
           }
           total
           offset

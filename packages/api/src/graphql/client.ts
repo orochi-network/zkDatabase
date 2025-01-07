@@ -19,8 +19,8 @@ import { API_ROLLUP } from "./rollup";
 import { API_TRANSACTION } from "./transaction";
 import { API_USER } from "./user";
 
-export interface IApiClient<T = any> {
-  api: ApiClient<T>;
+export interface IApiClient {
+  api: ApiClient;
   db: ReturnType<typeof API_DATABASE>;
   collection: ReturnType<typeof API_COLLECTION>;
   index: ReturnType<typeof API_COLLECTION_INDEX>;
@@ -34,7 +34,7 @@ export interface IApiClient<T = any> {
   permissionOwnership: ReturnType<typeof API_PERMISSION_OWNERSHIP>;
 }
 
-export class ApiClient<T = any> {
+export class ApiClient {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   public get apollo() {
@@ -99,11 +99,8 @@ export class ApiClient<T = any> {
       },
     });
   }
-  public static newInstance<T = any>(
-    url: string,
-    storage: Storage
-  ): IApiClient<T> {
-    const api = new ApiClient<T>(url, storage);
+  public static newInstance(url: string, storage: Storage): IApiClient {
+    const api = new ApiClient(url, storage);
     return {
       api,
       db: API_DATABASE(api.apollo),
