@@ -1,19 +1,18 @@
 import { isBrowser, isNetwork } from '@utils';
 import { ApiClient, IApiClient } from '@zkdb/api';
-import { ENetworkId } from '@zkdb/common';
-import { NetworkId, PrivateKey } from 'o1js';
+import { ENetworkId, MinaProvider, NodeProvider } from '@zkdb/common';
+import { Mina, NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
 import { Database } from '../implement';
 import { IDatabase } from '../interfaces';
-import { MinaProvider, NodeProvider, IMinaProvider } from '@zkdb/common';
 import InMemoryStorage from '../storage/memory';
 
-type MinaConfig = {
+type TMinaConfig = {
   networkUrl: string;
   networkId: NetworkId;
 };
 
-type ZKDatabaseConfig =
+type TZkDatabaseConfig =
   | {
       userName: string;
       environment: 'browser';
@@ -36,21 +35,21 @@ export class ZkDatabase {
 
   public auth: Authenticator;
 
-  public mina: MinaConfig;
+  public mina: TMinaConfig;
 
   private constructor(
     apiClient: IApiClient,
     authenticator: Authenticator,
-    minaConfig: MinaConfig
+    TMinaConfig: TMinaConfig
   ) {
     this.apiClient = apiClient;
     this.auth = authenticator;
-    this.mina = minaConfig;
+    this.mina = TMinaConfig;
   }
 
   private static parseConfig(
-    config: string | ZKDatabaseConfig
-  ): ZKDatabaseConfig {
+    config: string | TZkDatabaseConfig
+  ): TZkDatabaseConfig {
     if (typeof config === 'string') {
       const urlInstance = new URL(config);
       const {
@@ -78,19 +77,27 @@ export class ZkDatabase {
       return config;
     }
     throw new Error(
-      'Invalid configuration type. Expected string or ZKDatabaseConfig.'
+      'Invalid configuration type. Expected string or TZkDatabaseConfig.'
     );
   }
 
+  public getNetwork(option: Parameters<typeof Mina.Network>[number]) {
+    return Mina.Network({
+      ...option,
+      mina: option?.mina ?? this.mina.networkUrl,
+      networkId: option?.networkId ?? this.mina.networkId,
+    });
+  }
+
   /**
-   * Create new instance of ZKDatabase by url
+   * Create new instance of ZkDatabase by url
    * Connect from NodeJS using a private key
    *```ts
-   * const client = await ZKDatabase.connect('zkdb+https://username:EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU@test-serverless.zkdatabase.org/graphql');
+   * const client = await ZkDatabase.connect('zkdb+https://username:EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU@test-serverless.zkdatabase.org/graphql');
    *```
    * Connect from browser using Auro Wallet
    *```ts
-   * const client = await ZKDatabase.connect('zkdb+https://username@test-serverless.zkdatabase.org/graphql');
+   * const client = await ZkDatabase.connect('zkdb+https://username@test-serverless.zkdatabase.org/graphql');
    *```
    * @param url
    * @returns
@@ -98,10 +105,10 @@ export class ZkDatabase {
   public static async connect(url: string): Promise<ZkDatabase>;
 
   /**
-   * Create new instance of ZKDatabase by config object
+   * Create new instance of ZkDatabase by config object
    * Connect from NodeJS using a private key
    *```ts
-   * const client = await ZKDatabase.connect({
+   * const client = await ZkDatabase.connect({
    *  userName: 'username',
    *  environment: 'node',
    *  privateKey: 'EKEGu8rTZbfWE1HWLxWtDnjt8gchvGxYM4s5q3KvNRRfdHBVe6UU',
@@ -110,7 +117,7 @@ export class ZkDatabase {
    *```
    * Connect from NodeJS using Auro Wallet
    *```ts
-   * const client = await ZKDatabase.connect({
+   * const client = await ZkDatabase.connect({
    *  userName: 'username',
    *  environment: 'browser',
    *  url: 'https://test-serverless.zkdatabase.org/graphql',
@@ -118,10 +125,10 @@ export class ZkDatabase {
    *```
    * @param config
    */
-  public static async connect(config: ZKDatabaseConfig): Promise<ZkDatabase>;
+  public static async connect(config: TZkDatabaseConfig): Promise<ZkDatabase>;
 
   public static async connect(
-    config: string | ZKDatabaseConfig
+    config: string | TZkDatabaseConfig
   ): Promise<ZkDatabase> {
     const cfg = ZkDatabase.parseConfig(config);
     const tmpClient = ApiClient.newInstance(cfg.url, new InMemoryStorage());
@@ -153,7 +160,7 @@ export class ZkDatabase {
         });
       }
     } else if (cfg.environment === 'node') {
-      // Nodejs environment
+      // Node environment
       const storage = new InMemoryStorage();
       const apiClient = ApiClient.newInstance(cfg.url, storage);
       const signer = new NodeProvider(
@@ -173,7 +180,7 @@ export class ZkDatabase {
   }
 
   /**
-   * Retrieves an instance of `ZKDatabase` with the specified name.
+   * Retrieves an instance of `ZkDatabase` with the specified name.
    *
    * @param name - The name of the database to access.
    * @returns An instance of `ZkDatabase`.

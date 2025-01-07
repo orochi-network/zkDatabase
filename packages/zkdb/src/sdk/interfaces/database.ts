@@ -4,20 +4,17 @@ import {
   TDatabaseCreateRequest,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
-  TMetadataDatabaseMongo,
   TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
-  TUserRecord,
   TZkProofResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
 import { IUser } from './user';
-import { info } from 'console';
 
 export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
 
