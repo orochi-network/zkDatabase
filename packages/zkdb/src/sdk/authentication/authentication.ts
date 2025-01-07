@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { IApiClient } from '@zkdb/api';
-import { Signer } from '../signer';
+import { IMinaProvider } from '@zkdb/common';
 import InMemoryStorage from '../storage/memory';
 import { TUserSignInResponse } from '@zkdb/common';
 
@@ -9,7 +9,7 @@ export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 export const ZKDB_KEY_USER_INFO = 'userInfo';
 
 export class Authenticator {
-  #signer: Signer | undefined;
+  #signer: IMinaProvider | undefined;
 
   #storage: Storage;
 
@@ -18,7 +18,7 @@ export class Authenticator {
   private apiClient: IApiClient;
 
   constructor(
-    signer: Signer,
+    signer: IMinaProvider,
     apiClient: IApiClient,
     userName: string,
     storage: Storage = new InMemoryStorage()
@@ -37,14 +37,14 @@ export class Authenticator {
     return Math.floor(Date.now() / 1000);
   }
 
-  public get signer(): Signer {
+  public get signer(): IMinaProvider {
     if (this.#signer) {
       return this.#signer;
     }
     throw new Error('Signer is not initialized');
   }
 
-  public connect(signer: Signer) {
+  public connect(signer: IMinaProvider) {
     this.#signer = signer;
   }
 
@@ -63,8 +63,11 @@ export class Authenticator {
   }
 
   public async signIn() {
-    const ecdsa = (await this.user.userEcdsaChallenge()).unwrap();
-    const proof = await this.signer.signMessage(ecdsa);
+    const ecdsaChallenge = (await this.user.userEcdsaChallenge()).unwrap();
+    const proof = await this.signer.signMessage({ message: ecdsaChallenge });
+    if (proof instanceof Error) {
+      throw proof;
+    }
     const userData = (await this.user.userSignIn({ proof })).unwrap();
     this.#storage.setItem(ZKDB_KEY_ACCESS_TOKEN, userData.accessToken);
 
@@ -81,12 +84,16 @@ export class Authenticator {
   }
 
   public async signUp(email: string) {
-    const proof = await this.signer.signMessage(
-      JSON.stringify({
+    const proof = await this.signer.signMessage({
+      message: JSON.stringify({
         userName: this.#userName,
         email,
-      })
-    );
+      }),
+    });
+
+    if (proof instanceof Error) {
+      throw proof;
+    }
 
     return (
       await this.user.userSignUp({

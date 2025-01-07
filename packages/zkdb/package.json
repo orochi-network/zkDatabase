@@ -55,10 +55,9 @@
       "prettier --write --ignore-unknown"
     ]
   },
-  "devDependencies": {},
   "peerDependencies": {
     "graphql": "^16.10.0",
-    "o1js": "^1.9.1"
+    "o1js": "^2.2.0"
   },
   "dependencies": {
     "@zkdb/api": "^1.1.14",

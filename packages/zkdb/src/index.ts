@@ -1,2 +1,2 @@
-export { ZKDatabase, NodeSigner, AuroWalletSigner } from './sdk';
-export { Schema } from '@zkdb/common';
+export { ZkDatabase } from './sdk';
+export { Schema, NodeProvider, MinaProvider } from '@zkdb/common';

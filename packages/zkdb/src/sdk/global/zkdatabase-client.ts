@@ -5,7 +5,7 @@ import { NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
 import { Database } from '../implement';
 import { IDatabase } from '../interfaces';
-import { AuroWalletSigner, NodeSigner, Signer } from '../signer';
+import { MinaProvider, NodeProvider, IMinaProvider } from '@zkdb/common';
 import InMemoryStorage from '../storage/memory';
 
 type MinaConfig = {
@@ -31,7 +31,7 @@ type ZKDatabaseConfig =
  * It allows connecting to the database using different authentication methods
  * and provides access to database and system functionalities.
  */
-export class ZKDatabase {
+export class ZkDatabase {
   private apiClient: IApiClient;
 
   public auth: Authenticator;
@@ -123,7 +123,7 @@ export class ZKDatabase {
   public static async connect(
     config: string | ZKDatabaseConfig
   ): Promise<ZkDatabase> {
-    const cfg = ZKDatabase.parseConfig(config);
+    const cfg = ZkDatabase.parseConfig(config);
     const tmpClient = ApiClient.newInstance(cfg.url, new InMemoryStorage());
 
     // Get environment variables
@@ -140,14 +140,14 @@ export class ZKDatabase {
           cfg.url,
           globalThis.localStorage
         );
-        const signer = new AuroWalletSigner();
+        const signer = new MinaProvider();
         const authenticator = new Authenticator(
           signer,
           apiClient,
           cfg.userName,
           globalThis.localStorage
         );
-        return new ZKDatabase(apiClient, authenticator, {
+        return new ZkDatabase(apiClient, authenticator, {
           networkId,
           networkUrl,
         });
@@ -156,7 +156,7 @@ export class ZKDatabase {
       // Nodejs environment
       const storage = new InMemoryStorage();
       const apiClient = ApiClient.newInstance(cfg.url, storage);
-      const signer = new NodeSigner(
+      const signer = new NodeProvider(
         PrivateKey.fromBase58(cfg.privateKey),
         networkId
       );
