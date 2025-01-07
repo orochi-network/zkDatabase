@@ -4,10 +4,7 @@
     "composite": true,
     "target": "ESNext",
     "module": "ESNext",
-    "lib": [
-      "dom",
-      "esnext"
-    ],
+    "lib": ["dom", "esnext"],
     "outDir": "./build",
     "rootDir": ".",
     "declarationMap": false,
@@ -22,24 +19,12 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "paths": {
-      "@o1js/*": [
-        "../../node_modules/o1js/dist/node/lib/provable/*"
-      ],
-      "@common": [
-        "./src/common"
-      ],
-      "@sdk": [
-        "./src/sdk"
-      ],
-      "@types": [
-        "./src/types"
-      ],
-      "@utils": [
-        "./src/utils"
-      ],
-      "@tests": [
-        "./src/tests"
-      ]
+      "@o1js/*": ["../../node_modules/o1js/dist/node/lib/provable/*"],
+      "@common": ["./src/common"],
+      "@sdk": ["./src/sdk"],
+      "@types": ["./src/types"],
+      "@utils": ["./src/utils"],
+      "@tests": ["./src/tests"]
     }
   },
   "references": [
@@ -50,13 +35,7 @@
       "path": "../smart-contract"
     }
   ],
-  "include": [
-    "./src"
-  ],
-  "exclude": [
-    "./node_modules",
-    "./build",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-  ]
+  "include": ["./src"],
+  "exclude": ["./node_modules", "./build", "**/*.spec.ts", "**/*test.ts"]
 }
+

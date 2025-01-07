@@ -32,16 +32,18 @@ export class Group implements IGroup {
     return (await this.apiClient.group.groupDetail(this.basicQuery)).unwrap();
   }
 
-  async create(groupConfig: TGroupConfig): Promise<boolean> {
+  async create(
+    groupConfig: Omit<TGroupConfig, 'groupName'> | undefined = undefined
+  ): Promise<boolean> {
     return (
       await this.apiClient.group.groupCreate({
         ...this.basicQuery,
-        groupDescription: groupConfig.groupDescription,
+        groupDescription: groupConfig && groupConfig.groupDescription,
       })
     ).unwrap();
   }
 
-  async update(groupConfig: TGroupConfig): Promise<boolean> {
+  async update(groupConfig: Partial<TGroupConfig>): Promise<boolean> {
     return (
       await this.apiClient.group.groupUpdate({
         ...this.basicQuery,

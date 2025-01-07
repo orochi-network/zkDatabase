@@ -1,11 +1,6 @@
-import {
-  ClientSession,
-  Document,
-  ListDatabasesResult,
-  ObjectId,
-} from 'mongodb';
 import { zkDatabaseConstant, zkDatabaseMetadataCollections } from '@common';
 import { DATABASE_ENGINE } from '@helper';
+import { ClientSession, Document, ListDatabasesResult } from 'mongodb';
 import { ModelBasic } from '../base';
 
 /**
