@@ -1,4 +1,3 @@
-/** @type {import('@ts-jest/dist/types').InitialOptionsTsJest} */
 export default {
   verbose: true,
   preset: 'ts-jest/presets/default-esm',
@@ -11,11 +10,11 @@ export default {
   },
   transform: {
     '^.+\\.(ts)$': 'ts-jest',
-    '^.+\\.(js)$': 'babel-jest',
+    '^.+\\.(js|mjs)$': 'babel-jest',
   },
   resolver: '<rootDir>/jest-resolver.cjs',
   transformIgnorePatterns: [
-    '<rootDir>/../../node_modules/(?!(tslib|o1js/node_modules/tslib|punycode|tr46|whatwg-url|fecha|no-case|lower-case|mongodb-connection-string-url|node-fetch)/)',
+    '<rootDir>/../../node_modules/(?!(tslib|o1js/node_modules/tslib|punycode|tr46|whatwg-url|fecha|no-case|lower-case|mongodb-connection-string-url|node-fetch|@orochi-network/framework|@orochi-network/utilities|@orochi-network/vault|@orochi-network/queue)/)',
   ],
   modulePathIgnorePatterns: ['<rootDir>/build/'],
   moduleNameMapper: {
