@@ -10,8 +10,8 @@ export default {
     },
   },
   transform: {
-    '^.+\\.(t)s$': 'ts-jest',
-    '^.+\\.(j)s$': 'babel-jest', // Use ts-jest for both .ts and .js files
+    '^.+\\.(ts)$': 'ts-jest',
+    '^.+\\.(js)$': 'babel-jest',
   },
   resolver: '<rootDir>/jest-resolver.cjs',
   transformIgnorePatterns: [
@@ -20,5 +20,13 @@ export default {
   modulePathIgnorePatterns: ['<rootDir>/build/'],
   moduleNameMapper: {
     '^(\\.{1,2}/.+)\\.js$': '$1',
+    '^@orochi-network/framework$':
+      '<rootDir>/../../node_modules/@orochi-network/framework',
+    '^@orochi-network/utilities$':
+      '<rootDir>/../../node_modules/@orochi-network/utilities',
+    '^@orochi-network/vault$':
+      '<rootDir>/../../node_modules/@orochi-network/vault',
+    '^@orochi-network/queue$':
+      '<rootDir>/../../node_modules/@orochi-network/queue',
   },
 };
