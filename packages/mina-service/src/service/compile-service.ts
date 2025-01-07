@@ -1,5 +1,5 @@
 import { ZkCompile } from '@domain';
-import { config, QueueWorker } from '@helper';
+import { config, logger, QueueWorker } from '@helper';
 import { EncryptionKey } from '@orochi-network/vault';
 import {
   ETransactionStatus,
@@ -8,8 +8,10 @@ import {
 } from '@zkdb/common';
 import {
   DatabaseEngine,
+  getCurrentTime,
   ModelMetadataDatabase,
   ModelProof,
+  ModelRollupHistory,
   ModelSecureStorage,
   ModelTransaction,
   withCompoundTransaction,
@@ -108,9 +110,6 @@ export const SERVICE_COMPILE = {
                   transactionRaw,
                   updatedAt: new Date(),
                   createdAt: new Date(),
-                  // TODO: We will redesign the transaction later and default should be undefined/null
-                  txHash: '',
-                  error: '',
                 },
               },
               { session, upsert: true }
@@ -185,32 +184,49 @@ export const SERVICE_COMPILE = {
               throw new Error(`Proof for ${databaseName} not found`);
             }
 
-            const transactionRaw = await zkAppCompiler.getRollupRawTx(
-              payerAddress,
-              zkAppPrivateKey,
-              metadataDatabase.merkleHeight,
-              proof
-            );
+            try {
+              const transactionRaw = await zkAppCompiler.getRollupRawTx(
+                payerAddress,
+                zkAppPrivateKey,
+                metadataDatabase.merkleHeight,
+                proof
+              );
 
-            // Update transaction status and add transaction raw
-            await imTransaction.updateOne(
-              {
-                _id: transactionObjectId,
-                databaseName,
-                transactionType: ETransactionType.Rollup,
-              },
-              {
-                $set: {
-                  status: ETransactionStatus.Unsigned,
-                  transactionRaw,
-                  updatedAt: new Date(),
+              // Update transaction status and add transaction raw
+              const date = getCurrentTime();
+              await imTransaction.updateOne(
+                {
+                  _id: new ObjectId(transactionObjectId),
+                  databaseName,
+                  transactionType: ETransactionType.Rollup,
                 },
-              },
-              {
-                session,
-                upsert: true,
-              }
-            );
+                {
+                  $set: {
+                    status: ETransactionStatus.Unsigned,
+                    transactionRaw,
+                    updatedAt: date,
+                    createdAt: date,
+                  },
+                },
+                {
+                  session,
+                  upsert: true,
+                }
+              );
+            } catch (error) {
+              logger.error(`Rollup transaction error: `, error);
+
+              // Remove rollup history with transactionObjectId provided before
+              // If not remove it will generate new rollup history without transaction doc
+              const imRollupHistory = ModelRollupHistory.getInstance();
+              await imRollupHistory.deleteOne({
+                databaseName,
+                transactionObjectId,
+                proofObjectId: proof._id,
+              });
+
+              throw error;
+            }
           } else {
             throw new Error('Unsupported transaction');
           }

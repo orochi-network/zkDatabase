@@ -1,7 +1,7 @@
 import { CircuitString, UInt64 } from 'o1js';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { Schema } from '@zkdb/common';
-import { ZKDatabase } from 'zkdb';
+import { ZkDatabase } from 'zkdb';
 import { Permission } from '@zkdb/permission';
 
 class TShirt extends Schema.create({
@@ -13,7 +13,7 @@ const COLLECTION_NAME = 'my-test-document-collection';
 const GROUP_NAME = 'my-test-document-group';
 
 async function run() {
-  const zkdb = await ZKDatabase.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();

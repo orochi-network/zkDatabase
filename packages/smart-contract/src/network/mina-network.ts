@@ -1,5 +1,9 @@
 import { fetchAccount, Mina, NetworkId, PublicKey } from 'o1js';
-import { BlockberryApi, TBlockConfirmationTransaction, TZkAppTransaction } from './api';
+import {
+  BlockberryApi,
+  TBlockConfirmationTransaction,
+  TZkAppTransaction,
+} from './api.js';
 
 export class MinaNetwork {
   private static instance: MinaNetwork;
@@ -55,7 +59,6 @@ export class MinaNetwork {
   ): Promise<TZkAppTransaction | undefined> {
     return this.#api.getZkAppTransactionByTxHash(txHash);
   }
-
 
   private ensureConnection() {
     if (!this.isConnected) {

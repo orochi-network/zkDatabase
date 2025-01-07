@@ -1,8 +1,7 @@
-import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord } from './common';
-import { TTransaction, TTransactionRecord } from './transaction';
+import type { ObjectId } from 'mongodb';
+import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest } from './database';
-import { TProofRecord } from './proof';
+import { TTransactionRecord } from './transaction';
 
 /**
  * Rollup state
@@ -12,50 +11,61 @@ import { TProofRecord } from './proof';
  * @property {string} Outdated - Rollup is outdated
  * @property {string} Failed - Rollup is errored
  */
-export enum ERollUpState {
+export enum ERollupState {
   Updated = 'Updated',
   Updating = 'Updating',
   Outdated = 'Outdated',
   Failed = 'Failed',
 }
 
-export type TRollUpHistory = {
+export type TRollupHistory = {
   databaseName: string;
-  merkletreeRoot: string;
-  merkletreeRootPrevious: string;
+  merkleTreeRoot: string;
+  merkleTreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
   // txId is not a good name it's alias of tx hash
+  // From transactionObjectId we can track the transaction status
   transactionObjectId: ObjectId;
   proofObjectId: ObjectId;
+  error: string;
 };
 
-export type TRollUpHistoryRecord = TDbRecord<TRollUpHistory>;
+export type TRollupState = Pick<
+  TRollupHistory,
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+> & {
+  // Number of merkle root transformation different to previous one
+  rollUpDifferent: number;
+  rollUpState: ERollupState;
+  latestRollupSuccess: Date;
+};
+
+export type TRollupHistoryRecordNullable = TDbRecord<
+  TNullable<TRollupHistory, 'error'>
+>;
+
+export type TRollupHistoryRecord = TDbRecord<TRollupHistory>;
+
+export type TRollupStateRecordNullable = TDbRecord<
+  TNullable<TRollupState, 'error' | 'latestRollupSuccess'>
+>;
 
 // Compound Type
-export type TRollUpTransactionHistory = TRollUpHistory &
-  WithoutId<TDbRecord<TTransaction>>;
 
-export type TRollUpHistoryDetail = Pick<
-  TRollUpHistoryRecord,
-  'databaseName' | 'merkletreeRoot' | 'merkletreeRootPrevious'
-> & {
+export type TRollupHistoryTransactionAggregate = TRollupHistoryRecord & {
   transaction: TTransactionRecord;
-  proof: TProofRecord;
 };
 
-export type TRollUpDetail = {
-  history: TRollUpHistoryDetail[];
-  state: ERollUpState;
-  // Number of merkle root transformatiion different to previous one
-  rollUpDifferent: number;
+export type TRollupDetail = TRollupStateRecordNullable & {
+  history: TRollupHistoryRecordNullable[];
 };
 
-// RollUp history
+// Rollup history
 export type TRollupHistoryRequest = TDatabaseRequest;
 
-export type TRollUpHistoryResponse = TRollUpDetail;
+export type TRollupHistoryResponse = TRollupDetail | null;
 
-// Rolup create
-export type TRollUpCreateRequest = TDatabaseRequest;
+// Rollup create
+export type TRollupCreateRequest = TDatabaseRequest;
 
-export type TRollUpCreateResponse = boolean;
+export type TRollupCreateResponse = boolean;

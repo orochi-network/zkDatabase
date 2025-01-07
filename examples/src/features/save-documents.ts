@@ -1,5 +1,5 @@
 import { CircuitString, UInt64 } from 'o1js';
-import { ZKDatabase } from 'zkdb';
+import { ZkDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { EProofStatusDocument, Schema } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
@@ -13,7 +13,7 @@ class TShirt extends Schema.create({
 }) {}
 
 async function run() {
-  const zkdb = await ZKDatabase.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();

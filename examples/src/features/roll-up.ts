@@ -1,13 +1,13 @@
 import { Mina } from 'o1js';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
-import { ZKDatabase } from 'zkdb';
-import { ERollUpState, ETransactionType } from '@zkdb/common';
+import { ZkDatabase } from 'zkdb';
+import { ERollupState, ETransactionType } from '@zkdb/common';
 
 const MINA_DECIMAL = 1e9;
 
 async function run() {
   // This is On-chain action. Need to set Mina network
-  const zkdb = await ZKDatabase.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   await zkdb.authenticator.signIn();
 
@@ -20,7 +20,7 @@ async function run() {
 
   const history = await zkdb.db(DB_NAME).rollUpHistory();
 
-  if (history.state === ERollUpState.Outdated) {
+  if (history?.rollUpState === ERollupState.Outdated) {
     // Create a rollup, this time will take time in background so need to write a polling function
     await zkdb.db(DB_NAME).rollUpStart();
   }
@@ -35,6 +35,10 @@ async function run() {
 
       return tx;
     });
+
+  if (draftTransaction.txHash === null) {
+    throw new Error('No transaction hash');
+  }
 
   // Signed the transaction
   const txHash = await zkdb

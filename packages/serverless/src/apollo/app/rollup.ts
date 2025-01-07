@@ -1,57 +1,60 @@
 import { Rollup } from '@domain';
 import {
   databaseName,
-  TRollUpCreateRequest,
-  TRollUpCreateResponse,
+  TRollupCreateRequest,
+  TRollupCreateResponse,
   TRollupHistoryRequest,
-  TRollUpHistoryResponse,
+  TRollupHistoryResponse,
 } from '@zkdb/common';
 import { withCompoundTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
-export const typeDefsRollUp = `#graphql
+export const typeDefsRollup = `#graphql
 scalar Date
 type Mutation
 
-enum RollUpState {
+enum RollupState {
   Updated
   Updating
   Outdated
   Failed
 }
 
-# @TODO: Refactor rollup
-type RollUpHistoryItem {
+type RollupHistoryItem {
   databaseName: String!
-  transactionType: TransactionType!
   txHash: String
   transactionRaw: String!
   status: TransactionStatus!
-  merkletreeRoot: String!
-  merkletreeRootPrevious: String!
+  merkleTreeRoot: String!
+  merkleTreeRootPrevious: String!
   error: String
   createdAt: Date!
   updatedAt: Date!
 }
 
-type RollUpHistory {
-  state: RollUpState!,
-  extraData: Int,
-  history: [RollUpHistoryItem]!
+type RollupHistory {
+  state: RollupState,
+  merkleTreeRoot: String!
+  merkleTreeRootPrevious: String!
+  rollUpDifferent: Int,
+  history: [RollupHistoryItem]
+  latestRollupSuccess: Date
+}
+
+extend type Query {
+  rollupHistory(databaseName: String!): RollupHistory
 }
 
 extend type Mutation {
-  rollupCreate(databaseName: String!): Boolean
-  
-  rollupHistory(databaseName: String!): RollUpHistory!
+  rollupCreate(databaseName: String!): Boolean 
 }
 `;
 
 const rollupHistory = authorizeWrapper<
   TRollupHistoryRequest,
-  TRollUpHistoryResponse
+  TRollupHistoryResponse
 >(
   Joi.object({
     databaseName,
@@ -60,24 +63,26 @@ const rollupHistory = authorizeWrapper<
 );
 
 const rollupCreate = authorizeWrapper<
-  TRollUpCreateRequest,
-  TRollUpCreateResponse
+  TRollupCreateRequest,
+  TRollupCreateResponse
 >(
   Joi.object({
     databaseName,
   }),
   async (_root, { databaseName }, ctx) => {
-    const result = await withCompoundTransaction((compoundSession) =>
+    const result = await withCompoundTransaction(async (compoundSession) =>
       Rollup.create(databaseName, ctx.userName, compoundSession)
     );
     return result === null ? false : result;
   }
 );
 
-export const resolversRollUp = {
+export const resolversRollup = {
   JSON: GraphQLJSON,
-  Mutation: {
+  Query: {
     rollupHistory,
+  },
+  Mutation: {
     rollupCreate,
   },
 };

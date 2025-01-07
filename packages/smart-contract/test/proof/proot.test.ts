@@ -10,22 +10,22 @@ import {
   PublicKey,
 } from 'o1js';
 import {
-  DatabaseRollUp,
-  RollUpProgram,
+  DatabaseRollup,
+  RollupProgram,
 } from '../../src/proof/proof-program.js';
-import { ZKDatabaseSmartContractWrapper } from '../../src/contracts/zkdb-app-wrapper.js';
+import { ZkDatabaseSmartContractWrapper } from '../../src/contracts/zkdb-app-wrapper.js';
 import {
-  ProofStateInput,
-  ProofStateOutput,
+  ZkDatabaseStateInput,
+  ZkDatabaseStateOutput,
 } from '../../src/proof/proof-state.js';
 
 async function genesisUpdate(
-  input: ProofStateInput,
+  input: ZkDatabaseStateInput,
   previousLeaf: Field,
   newLeaf: Field,
   merkleTree: MerkleTree,
-  rollUp: DatabaseRollUp,
-  zkAppWrapper?: ZKDatabaseSmartContractWrapper,
+  rollUp: DatabaseRollup,
+  zkAppWrapper?: ZkDatabaseSmartContractWrapper,
   userPrivateKey?: PrivateKey,
   zkAppPrivateKey?: PrivateKey
 ) {
@@ -37,7 +37,7 @@ async function genesisUpdate(
   );
 
   if (zkAppWrapper) {
-    const rollUpTx = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: userPrivateKey!.toPublicKey(),
         zkApp: zkAppPrivateKey!.toPublicKey(),
@@ -58,14 +58,14 @@ async function genesisUpdate(
 }
 
 async function regularUpdate(
-  input: ProofStateInput,
-  previousProof: Proof<ProofStateInput, ProofStateOutput>,
+  input: ZkDatabaseStateInput,
+  previousProof: Proof<ZkDatabaseStateInput, ZkDatabaseStateOutput>,
   merkleIndex: bigint,
   previousLeaf: Field,
   newLeaf: Field,
   merkleTree: MerkleTree,
-  rollUp: DatabaseRollUp,
-  zkAppWrapper?: ZKDatabaseSmartContractWrapper,
+  rollUp: DatabaseRollup,
+  zkAppWrapper?: ZkDatabaseSmartContractWrapper,
   userPrivateKey?: PrivateKey,
   zkAppPrivateKey?: PrivateKey
 ) {
@@ -78,7 +78,7 @@ async function regularUpdate(
   );
 
   if (zkAppWrapper) {
-    const rollUpTx = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: userPrivateKey!.toPublicKey(),
         zkApp: zkAppPrivateKey!.toPublicKey(),
@@ -99,15 +99,15 @@ async function regularUpdate(
 }
 
 async function transactionUpdate(
-  input: ProofStateInput,
-  previousProof: Proof<ProofStateInput, ProofStateOutput>,
-  rollUpProof: Proof<ProofStateInput, ProofStateOutput>,
+  input: ZkDatabaseStateInput,
+  previousProof: Proof<ZkDatabaseStateInput, ZkDatabaseStateOutput>,
+  rollUpProof: Proof<ZkDatabaseStateInput, ZkDatabaseStateOutput>,
   merkleIndex: bigint,
   previousLeaf: Field,
   newLeaf: Field,
   merkleTree: MerkleTree,
-  rollUp: DatabaseRollUp,
-  zkAppWrapper?: ZKDatabaseSmartContractWrapper,
+  rollUp: DatabaseRollup,
+  zkAppWrapper?: ZkDatabaseSmartContractWrapper,
   userPrivateKey?: PrivateKey,
   zkAppPrivateKey?: PrivateKey
 ) {
@@ -121,7 +121,7 @@ async function transactionUpdate(
   );
 
   if (zkAppWrapper) {
-    const rollUpTx = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: userPrivateKey!.toPublicKey(),
         zkApp: zkAppPrivateKey!.toPublicKey(),
@@ -145,9 +145,9 @@ const MERKLE_HEIGHT = 12;
 
 class DatabaseMerkleWitness extends MerkleWitness(MERKLE_HEIGHT) {}
 
-describe('RollUpProgram', () => {
-  let rollUp: DatabaseRollUp;
-  let zkAppWrapper: ZKDatabaseSmartContractWrapper;
+describe('RollupProgram', () => {
+  let rollUp: DatabaseRollup;
+  let zkAppWrapper: ZkDatabaseSmartContractWrapper;
   let bobPk: PublicKey;
   let bobKey: PrivateKey;
   let zkAppPublic: PublicKey;
@@ -157,9 +157,9 @@ describe('RollUpProgram', () => {
     const Local = await Mina.LocalBlockchain({ proofsEnabled: true });
     Mina.setActiveInstance(Local);
 
-    rollUp = RollUpProgram(MERKLE_HEIGHT);
+    rollUp = RollupProgram(MERKLE_HEIGHT);
 
-    zkAppWrapper = ZKDatabaseSmartContractWrapper.testConstructor(
+    zkAppWrapper = ZkDatabaseSmartContractWrapper.testConstructor(
       MERKLE_HEIGHT,
       rollUp
     );
@@ -192,10 +192,10 @@ describe('RollUpProgram', () => {
 
     merkleTree.setLeaf(0n, Field(1));
 
-    let input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    let input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     await genesisUpdate(
@@ -224,10 +224,10 @@ describe('RollUpProgram', () => {
     const firstLeaf = Field(1);
     merkleTree.setLeaf(0n, firstLeaf);
 
-    let input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    let input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const firstProof = await genesisUpdate(
@@ -249,10 +249,10 @@ describe('RollUpProgram', () => {
     const secondLeaf = Field(2);
     merkleTree.setLeaf(1n, secondLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const secondProof = await transactionUpdate(
@@ -277,10 +277,10 @@ describe('RollUpProgram', () => {
     const thirdLeaf = Field(3);
     merkleTree.setLeaf(2n, thirdLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const thirdProof = await transactionUpdate(
@@ -302,10 +302,10 @@ describe('RollUpProgram', () => {
     const fourthLeaf = Field(4);
     merkleTree.setLeaf(3n, fourthLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const fourthProof = await regularUpdate(
@@ -326,10 +326,10 @@ describe('RollUpProgram', () => {
     const fifthLeaf = Field(5);
     merkleTree.setLeaf(4n, fifthLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const fifthProof = await regularUpdate(
@@ -353,10 +353,10 @@ describe('RollUpProgram', () => {
     const sixLeaf = Field(6);
     merkleTree.setLeaf(5n, sixLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const sixProof = await transactionUpdate(
@@ -381,10 +381,10 @@ describe('RollUpProgram', () => {
     const sevenLeaf = Field(7);
     merkleTree.setLeaf(6n, sevenLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     const sevenProof = await transactionUpdate(
@@ -406,10 +406,10 @@ describe('RollUpProgram', () => {
     const eightLeaf = Field(8);
     merkleTree.setLeaf(7n, eightLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: previousRoot,
-      currentOnChainState: currentRoot,
-      currentOffChainState: offChainState,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: previousRoot,
+      onChainStateCurrent: currentRoot,
+      offChainStateCurrent: offChainState,
     });
 
     await regularUpdate(
@@ -438,10 +438,10 @@ describe('RollUpProgram', () => {
 
     const firstRoot = merkleTree.getRoot();
 
-    let input = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: zeroRoot,
-      currentOffChainState: zeroRoot,
+    let input = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: zeroRoot,
+      offChainStateCurrent: zeroRoot,
     });
 
     let proof = await rollUp.init(
@@ -451,7 +451,7 @@ describe('RollUpProgram', () => {
       firstLeaf
     );
 
-    const rollUpTx = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: bobPk,
         zkApp: zkAppPublic,
@@ -470,10 +470,10 @@ describe('RollUpProgram', () => {
 
     const secondRoot = merkleTree.getRoot();
 
-    input = new ProofStateInput({
-      previousOnChainState: zeroRoot,
-      currentOnChainState: firstRoot,
-      currentOffChainState: firstRoot,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: zeroRoot,
+      onChainStateCurrent: firstRoot,
+      offChainStateCurrent: firstRoot,
     });
 
     proof = await rollUp.updateTransition(
@@ -487,10 +487,10 @@ describe('RollUpProgram', () => {
 
     merkleTree.setLeaf(2n, thirdLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: zeroRoot,
-      currentOnChainState: firstRoot,
-      currentOffChainState: secondRoot,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: zeroRoot,
+      onChainStateCurrent: firstRoot,
+      offChainStateCurrent: secondRoot,
     });
 
     proof = await rollUp.update(
@@ -501,7 +501,7 @@ describe('RollUpProgram', () => {
       thirdLeaf
     );
 
-    const rollUpTx3 = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx3 = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: bobPk,
         zkApp: zkAppPublic,
@@ -526,10 +526,10 @@ describe('RollUpProgram', () => {
 
     const firstRoot = merkleTree.getRoot();
 
-    let input = new ProofStateInput({
-      previousOnChainState: Field(0),
-      currentOnChainState: zeroRoot,
-      currentOffChainState: zeroRoot,
+    let input = new ZkDatabaseStateInput({
+      onChainStatePervious: Field(0),
+      onChainStateCurrent: zeroRoot,
+      offChainStateCurrent: zeroRoot,
     });
 
     let proof = await rollUp.init(
@@ -539,7 +539,7 @@ describe('RollUpProgram', () => {
       firstLeaf
     );
 
-    const rollUpTx = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: bobPk,
         zkApp: zkAppPublic,
@@ -558,10 +558,10 @@ describe('RollUpProgram', () => {
 
     const secondRoot = merkleTree.getRoot();
 
-    input = new ProofStateInput({
-      previousOnChainState: zeroRoot,
-      currentOnChainState: firstRoot,
-      currentOffChainState: firstRoot,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: zeroRoot,
+      onChainStateCurrent: firstRoot,
+      offChainStateCurrent: firstRoot,
     });
 
     proof = await rollUp.updateTransition(
@@ -573,7 +573,7 @@ describe('RollUpProgram', () => {
       secondLeaf
     );
 
-    const rollUpTx2 = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx2 = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: bobPk,
         zkApp: zkAppPublic,
@@ -587,10 +587,10 @@ describe('RollUpProgram', () => {
 
     merkleTree.setLeaf(2n, thirdLeaf);
 
-    input = new ProofStateInput({
-      previousOnChainState: firstRoot,
-      currentOnChainState: secondRoot,
-      currentOffChainState: secondRoot,
+    input = new ZkDatabaseStateInput({
+      onChainStatePervious: firstRoot,
+      onChainStateCurrent: secondRoot,
+      offChainStateCurrent: secondRoot,
     });
 
     proof = await rollUp.updateTransition(
@@ -602,7 +602,7 @@ describe('RollUpProgram', () => {
       thirdLeaf
     );
 
-    const rollUpTx3 = await zkAppWrapper.createAndProveRollUpTransaction(
+    const rollUpTx3 = await zkAppWrapper.createAndProveRollupTransaction(
       {
         sender: bobPk,
         zkApp: zkAppPublic,

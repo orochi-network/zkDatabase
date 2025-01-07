@@ -1,6 +1,6 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
-import { ETransactionStatus } from '@zkdb/common';
+import { ETransactionStatus, ETransactionType } from '@zkdb/common';
 import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
@@ -39,7 +39,7 @@ export const SERVICE_TRANSACTION = {
       'get-transaction',
       async () => {
         if (isRunning) {
-          logger.debug('Task skipped to prevent overlap:', new Date());
+          logger.debug('Task skipped to prevent overlap: ', new Date());
           return;
         }
 
@@ -94,7 +94,7 @@ export const SERVICE_TRANSACTION = {
                             // We skip the confirming
                             // Sometime the rpc Mina chain won't stable that throw 404
                             // That lead to confirming status back to unconfirmed
-                            $not: { $eq: ETransactionStatus.Confirming },
+                            $nin: [ETransactionStatus.Confirming],
                           },
                         },
                         {
@@ -104,9 +104,13 @@ export const SERVICE_TRANSACTION = {
                         },
                         { session }
                       );
-
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -115,7 +119,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Unconfirmed,
                         },
                       },
                       {
@@ -143,8 +147,13 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -153,7 +162,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Failed,
                         },
                       },
                       { session }
@@ -180,8 +189,13 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -190,7 +204,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Confirmed,
                         },
                       },
                       {
@@ -216,8 +230,13 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -226,7 +245,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Confirming,
                         },
                       },
                       {
@@ -246,7 +265,7 @@ export const SERVICE_TRANSACTION = {
                         {
                           $set: {
                             status: ETransactionStatus.Failed,
-                            error: '',
+                            error: `zk transaction ${transaction.txHash} is failed`,
                           },
                         },
                         {
@@ -254,8 +273,13 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -264,7 +288,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Failed,
                         },
                       },
                       {
@@ -292,8 +316,13 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    if (!updatedTransaction) {
-                      throw new Error("Can't not found transaction");
+                    // If Rollup => early return, we don't need to update the metadata database deploy status
+                    if (
+                      !updatedTransaction ||
+                      updatedTransaction.transactionType ===
+                        ETransactionType.Rollup
+                    ) {
+                      return;
                     }
 
                     await imMetadataDatabase.updateOne(
@@ -302,7 +331,7 @@ export const SERVICE_TRANSACTION = {
                       },
                       {
                         $set: {
-                          deployStatus: updatedTransaction.status,
+                          deployStatus: ETransactionStatus.Unknown,
                         },
                       },
                       {

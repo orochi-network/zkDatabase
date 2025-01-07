@@ -1,6 +1,11 @@
 import { logger } from '@helper';
 import { ClusterApplication, LoggerSet } from '@orochi-network/framework';
-import { SERVICE_COMPILE, SERVICE_TRANSACTION, SERVICE_TASK } from '@service';
+import {
+  SERVICE_COMPILE,
+  SERVICE_TRANSACTION,
+  SERVICE_TASK,
+  SERVICE_ROLLUP,
+} from '@service';
 // Set logger
 LoggerSet(logger);
 // Init cluster application
@@ -10,4 +15,5 @@ clusterApp
   .add(SERVICE_COMPILE)
   .add(SERVICE_TRANSACTION)
   .add(SERVICE_TASK)
+  .add(SERVICE_ROLLUP)
   .start();

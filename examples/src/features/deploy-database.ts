@@ -1,5 +1,5 @@
 import { Mina } from 'o1js';
-import { ZKDatabase } from 'zkdb';
+import { ZkDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
 import { ETransactionType } from '@zkdb/common';
 
@@ -7,7 +7,7 @@ const MINA_DECIMAL = 1e9;
 
 async function run() {
   // This is On-chain action. Need to set Mina network
-  const zkdb = await ZKDatabase.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   const Network = Mina.Network({
     networkId: zkdb.minaConfig.networkId,
@@ -26,6 +26,10 @@ async function run() {
 
   if (draftTransaction === null) {
     throw new Error('No transaction draft');
+  }
+
+  if (draftTransaction.txHash === null) {
+    throw new Error('No transaction hash');
   }
 
   // Signed the transaction

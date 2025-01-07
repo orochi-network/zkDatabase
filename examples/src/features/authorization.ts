@@ -1,8 +1,8 @@
-import { ZKDatabase } from 'zkdb';
+import { ZkDatabase } from 'zkdb';
 import { ZKDB_URL } from '../utils/config.js';
 
 async function run() {
-  const zkdb = await ZKDatabase.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   await zkdb.authenticator.signUp('exampleuser', 'user@example.com');
   await zkdb.authenticator.signIn();

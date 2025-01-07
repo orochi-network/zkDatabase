@@ -1,12 +1,16 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TTransaction, TTransactionRecord } from '@zkdb/common';
+import {
+  TTransaction,
+  TTransactionRecord,
+  TTransactionRecordNullable,
+} from '@zkdb/common';
 import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelTransaction extends ModelGeneral<
-  OptionalId<TTransactionRecord>
+  OptionalId<TTransactionRecordNullable>
 > {
   private static instance: ModelTransaction;
 
@@ -25,7 +29,7 @@ export class ModelTransaction extends ModelGeneral<
     return this.instance;
   }
 
-  public async count(filter?: Filter<TTransaction>) {
+  public async count(filter?: Filter<TTransactionRecordNullable>) {
     return await this.collection.countDocuments(filter);
   }
 
