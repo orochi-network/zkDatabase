@@ -19,6 +19,7 @@ import {
   withTransaction,
 } from '@zkdb/storage';
 import { EProofStatusDocument } from '@zkdb/common';
+import { Mina, NetworkId } from 'o1js';
 
 // The duration to wait before exiting the service after a crash to prevent a
 // tight loop of restarts.
@@ -45,6 +46,7 @@ export class TaskService {
       if (retries >= this.maxRetries) {
         break;
       }
+      const x = Mina.setActiveInstance({});
 
       let backoff = true;
 

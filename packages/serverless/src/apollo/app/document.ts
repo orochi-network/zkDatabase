@@ -10,13 +10,12 @@ import { authorizeWrapper } from '../validation';
 import {
   collectionName,
   databaseName,
-  documentRecord as schemaDocumentRecord,
   pagination,
   TDocumentCreateRequest,
   TDocumentFindRequest,
   TDocumentUpdateRequest,
-  TDocumentHistoryRequest,
-  TDocumentHistoryResponse,
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryFindResponse,
   TDocumentUpdateResponse,
   TDocumentFindResponse,
   PERMISSION_DEFAULT,
@@ -32,37 +31,44 @@ import { Permission } from '@zkdb/permission';
 import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
 
+// The value will be validated against the schema type in the database later
+const JOI_DOCUMENT_CREATE = (required?: boolean) =>
+  required !== false
+    ? Joi.object().pattern(Joi.string(), Joi.any()).required()
+    : Joi.object().pattern(Joi.string(), Joi.any()).optional();
+
 const JOI_DOCUMENT_LIST_REQUEST = Joi.object<TDocumentFindRequest>({
   databaseName,
-  collectionName,
+  collectionName: collectionName(),
   query: Joi.object(),
   pagination,
 });
 
 const JOI_DOCUMENT_CREATE_REQUEST = Joi.object<TDocumentCreateRequest>({
   databaseName,
-  collectionName,
+  collectionName: collectionName(),
   documentPermission: Joi.number().min(0).max(0xffffff).optional(),
 
   // TODO: need testing
-  document: schemaDocumentRecord,
+  document: JOI_DOCUMENT_CREATE(true),
 });
 
 const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   databaseName,
-  collectionName,
-  docId: docId(true),
+  collectionName: collectionName(),
+  docId: docId(),
 
   // TODO: need testing
-  document: schemaDocumentRecord,
+  document: JOI_DOCUMENT_CREATE(true),
 });
 
-const JOI_DOCUMENT_HISTORY_FIND_REQUEST = Joi.object<TDocumentHistoryRequest>({
-  databaseName,
-  collectionName,
-  docId: docId(true),
-  pagination,
-});
+const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
+  Joi.object<TDocumentHistoryFindRequest>({
+    databaseName,
+    collectionName: collectionName(),
+    docId: docId(),
+    pagination,
+  });
 
 export const typeDefsDocument = gql`
   #graphql
@@ -276,8 +282,8 @@ const documentDrop = authorizeWrapper<
 });
 
 const documentHistoryFind = authorizeWrapper<
-  TDocumentHistoryRequest,
-  TDocumentHistoryResponse
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryFindResponse
 >(
   JOI_DOCUMENT_HISTORY_FIND_REQUEST,
   async (

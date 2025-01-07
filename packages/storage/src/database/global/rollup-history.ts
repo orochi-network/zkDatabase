@@ -1,15 +1,15 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
 import {
-  TRollUpHistoryRecord,
-  TRollUpHistoryRecordNullable,
+  TRollupHistoryRecord,
+  TRollupHistoryRecordNullable,
 } from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelRollupHistory extends ModelGeneral<
-  OptionalId<TRollUpHistoryRecordNullable>
+  OptionalId<TRollupHistoryRecordNullable>
 > {
   private static instance: ModelRollupHistory;
 
@@ -30,7 +30,7 @@ export class ModelRollupHistory extends ModelGeneral<
 
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<
-      WithoutId<TRollUpHistoryRecord>
+      WithoutId<TRollupHistoryRecord>
     >(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,

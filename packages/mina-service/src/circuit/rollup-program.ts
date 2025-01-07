@@ -1,21 +1,21 @@
 import {
   CacheManager,
-  DatabaseRollUp,
-  RollUpProgram,
+  DatabaseRollup,
+  RollupProgram,
 } from '@zkdb/smart-contract';
 import { VerificationKey } from 'o1js';
 
-export function getDatabaseRollUpFunction(merkleHeight: number): RollUpProxy {
-  const rollup = RollUpProgram(merkleHeight);
-  return new RollUpProxy(rollup, merkleHeight);
+export function getDatabaseRollupFunction(merkleHeight: number): RollupProxy {
+  const rollup = RollupProgram(merkleHeight);
+  return new RollupProxy(rollup, merkleHeight);
 }
 
-export class RollUpProxy {
-  private rollUp: DatabaseRollUp;
+export class RollupProxy {
+  private rollUp: DatabaseRollup;
   private merkleHeight: number;
   private verificationKey: VerificationKey | undefined = undefined;
 
-  constructor(rollUp: DatabaseRollUp, merkleHeight: number) {
+  constructor(rollUp: DatabaseRollup, merkleHeight: number) {
     this.rollUp = rollUp;
     this.merkleHeight = merkleHeight;
   }
@@ -33,7 +33,7 @@ export class RollUpProxy {
     }
   }
 
-  getProgram(): DatabaseRollUp {
+  getProgram(): DatabaseRollup {
     return this.rollUp;
   }
 }

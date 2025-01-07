@@ -1,12 +1,12 @@
 import { logger } from '@helper';
-import { ZKDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
+// import { ZkDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
 import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from 'o1js';
 
 const MAX_MERKLE_TREE_HEIGHT = 256;
 const MIN_MERKLE_TREE_HEIGHT = 8;
 
 export class ZkCompile {
-  private smartContractMap: Map<number, ZKDatabaseSmartContractWrapper>;
+  private smartContractMap: Map<number, ZkDatabaseSmartContractWrapper>;
 
   constructor(
     private readonly network: { networkId: NetworkId; mina: string }
@@ -14,12 +14,12 @@ export class ZkCompile {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
     // Smart contract map with key is merkleHeight and value is smart contract
-    this.smartContractMap = new Map<number, ZKDatabaseSmartContractWrapper>();
+    this.smartContractMap = new Map<number, ZkDatabaseSmartContractWrapper>();
   }
 
   private async getSmartContract(
     merkleHeight: number
-  ): Promise<ZKDatabaseSmartContractWrapper> {
+  ): Promise<ZkDatabaseSmartContractWrapper> {
     if (
       merkleHeight > MAX_MERKLE_TREE_HEIGHT ||
       merkleHeight < MIN_MERKLE_TREE_HEIGHT
@@ -30,9 +30,9 @@ export class ZkCompile {
     }
     if (!this.smartContractMap.has(merkleHeight)) {
       const zkWrapper =
-        ZKDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
+        ZkDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
       await zkWrapper.compile();
-      // set ZKDatabaseSmartContractWrapper
+      // set ZkDatabaseSmartContractWrapper
       this.smartContractMap.set(merkleHeight, zkWrapper);
     }
     // Need to using null assertion since we already check if
@@ -83,7 +83,7 @@ export class ZkCompile {
 
     const smartContract = await this.getSmartContract(merkleHeight);
 
-    const rawTx = await smartContract.createAndProveRollUpTransaction(
+    const rawTx = await smartContract.createAndProveRollupTransaction(
       {
         sender: senderPublicKey,
         zkApp: zkDbPublicKey,

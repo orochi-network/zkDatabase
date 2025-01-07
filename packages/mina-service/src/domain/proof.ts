@@ -1,7 +1,7 @@
 import {
-  getZkDbSmartContractClass,
-  ProofStateInput,
-  ProofStateOutput,
+  ZkDatabaseContractFactory,
+  ZkDatabaseStateInput,
+  ZkDatabaseStateOutput,
 } from '@zkdb/smart-contract';
 import {
   ModelMerkleTree,
@@ -65,7 +65,7 @@ export class Proof {
     }
 
     const circuit = CircuitFactory.getCircuit(circuitName).getProgram();
-    class RollUpProof extends ZkProgram.Proof(circuit) {}
+    class RollupProof extends ZkProgram.Proof(circuit) {}
     class DatabaseMerkleWitness extends MerkleWitness(merkleHeight) {}
 
     const zkProof = await imProof.findOne(
@@ -73,7 +73,7 @@ export class Proof {
       { sort: { createdAt: -1 }, session: session.proofService }
     );
 
-    let proof = zkProof ? await RollUpProof.fromJSON(zkProof) : undefined;
+    let proof = zkProof ? await RollupProof.fromJSON(zkProof) : undefined;
 
     const rollupProof = await RollUpProof.fromJSON(zkProof);
 
@@ -106,7 +106,7 @@ export class Proof {
       const res = await fetchAccount({ publicKey });
       const accountExists = res.error == null;
       if (accountExists) {
-        class ZkDbApp extends getZkDbSmartContractClass(
+        class ZkDbApp extends ZkDatabaseContractFactory(
           merkleHeight,
           circuit
         ) {}
@@ -118,12 +118,12 @@ export class Proof {
     }
 
     if (proof) {
-      const prevProofOutput = proof.publicOutput as ProofStateOutput;
+      const prevProofOutput = proof.publicOutput as ZkDatabaseStateOutput;
 
-      const proofState = new ProofStateInput({
-        currentOnChainState: onChainRootState,
-        previousOnChainState: prevOnChainRootState,
-        currentOffChainState: merkleRoot,
+      const proofState = new ZkDatabaseStateInput({
+        onChainStateCurrent: onChainRootState,
+        onChainStatePervious: prevOnChainRootState,
+        offChainStateCurrent: merkleRoot,
       });
 
       if (prevProofOutput.onChainState.equals(onChainRootState).toBoolean()) {
@@ -146,21 +146,21 @@ export class Proof {
         if (rollupProof) {
           proof = await circuit.updateTransition(
             proofState,
-            await RollUpProof.fromJSON(rollupProof),
+            await RollupProof.fromJSON(rollupProof),
             proof,
             witness,
             oldLeaf,
             Field(hash)
           );
         } else {
-          throw Error('RollUp Proof has not been found');
+          throw Error('Rollup Proof has not been found');
         }
       }
     } else {
-      const proofState = new ProofStateInput({
-        previousOnChainState: Field(0),
-        currentOnChainState: onChainRootState,
-        currentOffChainState: merkleRoot,
+      const proofState = new ZkDatabaseStateInput({
+        onChainStatePervious: Field(0),
+        onChainStateCurrent: onChainRootState,
+        offChainStateCurrent: merkleRoot,
       });
       proof = await circuit.init(proofState, witness, oldLeaf, Field(hash));
     }

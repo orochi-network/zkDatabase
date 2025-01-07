@@ -24,7 +24,7 @@ export const typeDefsProof = gql`
   scalar JSON
   type Query
 
-  # TZKDatabaseProof in TS
+  # TZkDatabaseProof in TS
   type ZkProof {
     publicInput: [String!]!
     publicOutput: [String!]!

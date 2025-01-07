@@ -1,16 +1,16 @@
 import { gql } from "@apollo/client";
 import {
-  TRollUpCreateRequest,
-  TRollUpCreateResponse,
+  TRollupCreateRequest,
+  TRollupCreateResponse,
   TRollupHistoryRequest,
-  TRollUpHistoryResponse,
+  TRollupHistoryResponse,
 } from "@zkdb/common";
 import { createMutateFunction, TApolloClient } from "./common.js";
 
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
-    TRollUpCreateRequest,
-    TRollUpCreateResponse
+    TRollupCreateRequest,
+    TRollupCreateResponse
   >(
     client,
     gql`
@@ -22,7 +22,7 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   ),
   rollupHistory: createMutateFunction<
     TRollupHistoryRequest,
-    TRollUpHistoryResponse
+    TRollupHistoryResponse
   >(
     client,
     gql`
@@ -31,7 +31,7 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
           state
           extraData
           history {
-            ...RollUpHistoryItemFragment
+            ...RollupHistoryItemFragment
           }
         }
       }

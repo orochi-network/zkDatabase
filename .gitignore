@@ -119,3 +119,4 @@ npm-token
 .npmrc
 package-lock.json
 public/
+cache/
