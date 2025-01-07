@@ -1,12 +1,13 @@
 import { Mina } from 'o1js';
-import { ZkDatabaseClient } from 'zkdb';
+import { ZkDatabase } from 'zkdb';
 import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { ETransactionType } from '@zkdb/common';
 
 const MINA_DECIMAL = 1e9;
 
 async function run() {
   // This is On-chain action. Need to set Mina network
-  const zkdb = await ZkDatabaseClient.connect(ZKDB_URL);
+  const zkdb = await ZkDatabase.connect(ZKDB_URL);
 
   const Network = Mina.Network({
     networkId: zkdb.minaConfig.networkId,
@@ -16,16 +17,31 @@ async function run() {
   Mina.setActiveInstance(Network);
 
   await zkdb.authenticator.signIn();
+
   // The transaction will be created in background after database created
   // Get unsigned transaction
-  const { tx, id } = await zkdb.db(DB_NAME).getTransaction('deploy');
+  const draftTransaction = await zkdb
+    .db(DB_NAME)
+    .transactionDraft(ETransactionType.Deploy);
+
+  if (draftTransaction === null) {
+    throw new Error('No transaction draft');
+  }
+
+  if (draftTransaction.txHash === null) {
+    throw new Error('No transaction hash');
+  }
+
   // Signed the transaction
-  const txHash = await zkdb.getSigner().signAndSendTransaction(tx, {
-    fee: MINA_DECIMAL,
-    memo: '',
-  });
+  const txHash = await zkdb
+    .getSigner()
+    .signAndSendTransaction(draftTransaction.txHash, {
+      fee: MINA_DECIMAL,
+      memo: '',
+    });
+
   // Confirm the transaction
-  await zkdb.db(DB_NAME).confirmTransaction(id, txHash);
+  await zkdb.db(DB_NAME).transactionSubmit(draftTransaction._id, txHash);
 
   await zkdb.authenticator.signOut();
 }
