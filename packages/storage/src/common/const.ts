@@ -38,7 +38,7 @@ export const zkDatabaseConstant = {
 
     // Queue to store documents waiting to be processed, e.g. update the merkle
     // tree and queue proof tasks
-    document_queue: 'document',
+    document_queue: 'document_queue',
   },
 
   // Collections that are common across different databases
