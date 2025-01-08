@@ -82,15 +82,15 @@ export type TCollectionRequest = TDatabaseRequest &
  * @param {string} group - Collection permission
  */
 export type TCollectionCreateRequest = TCollectionRequest &
+  Pick<TCollection, 'schema'> &
   Partial<
-    Pick<TCollection, 'schema'> &
-      TPickAlter<
-        OwnershipAndPermission,
-        {
-          group: 'groupName';
-          permission: 'permission';
-        }
-      >
+    TPickAlter<
+      OwnershipAndPermission,
+      {
+        group: 'groupName';
+        permission: 'permission';
+      }
+    >
   >;
 
 export type TCollectionCreateResponse = boolean;
