@@ -140,11 +140,22 @@ export class Rollup {
     if (latestRollupHistory) {
       const rollUpDifferent = onChainRollupStep - rollupHistory[0].step;
 
+      const imTransaction = ModelTransaction.getInstance();
+      // Get latest rollup success transaction info
+      const latestRollupSuccessTransaction = await imTransaction.findOne(
+        {
+          databaseName,
+          transactionType: ETransactionType.Rollup,
+          status: ETransactionStatus.Confirmed,
+        },
+        { sort: { updatedAt: -1 } }
+      );
+
       return {
         databaseName,
         merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
         merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
-        latestRollupSuccess: new Date(),
+        latestRollupSuccess: latestRollupSuccessTransaction?.updatedAt || null,
         rollUpDifferent,
         rollUpState:
           rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,

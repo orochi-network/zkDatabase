@@ -1,4 +1,4 @@
-import { logger } from '@helper';
+import { CACHE_PATH, logger } from '@helper';
 import { TZkDatabaseProof } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
@@ -33,7 +33,7 @@ export class ZkCompile {
 
     const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    await zkDbProcessor.compile('');
+    await zkDbProcessor.compile(CACHE_PATH);
 
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
 
@@ -75,7 +75,7 @@ export class ZkCompile {
 
     const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    await zkDbProcessor.compile('');
+    await zkDbProcessor.compile(CACHE_PATH);
 
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
     const proofProgram = ZkProgram.Proof(zkDbProcessor.getInstanceZkDBRollup());

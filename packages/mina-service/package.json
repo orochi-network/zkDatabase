@@ -36,6 +36,5 @@
     "@zkdb/smart-contract": "^1.1.0",
     "@zkdb/storage": "^1.1.0",
     "graphql-request": "7.1.2"
-  },
-  "devDependencies": {}
+  }
 }

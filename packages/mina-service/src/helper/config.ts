@@ -4,6 +4,7 @@ import {
   TNodeEnv,
 } from '@orochi-network/framework';
 import Joi from 'joi';
+import path from 'node:path';
 import { NetworkId } from 'o1js';
 
 type TApplicationConfig = {
@@ -48,5 +49,7 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
     BLOCKBERRY_API_KEY: Joi.string().trim().required(),
   }
 );
+
+export const CACHE_PATH = path.join('downloads');
 
 export const { config } = configLoader;

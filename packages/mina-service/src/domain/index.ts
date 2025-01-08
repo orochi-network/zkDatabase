@@ -1,2 +1,2 @@
 export * from './zk-compile';
-export * from './rollup';
+export * from './rollup-offchain';

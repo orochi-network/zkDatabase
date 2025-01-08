@@ -38,7 +38,7 @@ export type TRollupState = Pick<
   // Number of merkle root transformation different to previous one
   rollUpDifferent: bigint;
   rollUpState: ERollupState;
-  latestRollupSuccess: Date;
+  latestRollupSuccess: Date | null;
   error: string | null;
 };
 
