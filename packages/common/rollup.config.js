@@ -21,7 +21,10 @@ export default {
       ],
     }),
     commonjs(),
-    nodeResolve({ resolveOnly: (module) => !module.includes('o1js') }),
+    nodeResolve({
+      resolveOnly: (module) =>
+        !module.includes('o1js') && !module.includes('mina-signer'),
+    }),
     typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
   ],
 };

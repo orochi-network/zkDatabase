@@ -1,42 +1,22 @@
 import { logger } from '@helper';
-// import { ZkDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
-import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from 'o1js';
-
-const MAX_MERKLE_TREE_HEIGHT = 256;
-const MIN_MERKLE_TREE_HEIGHT = 8;
+import { ZkDbProcessor } from '@zkdb/smart-contract';
+import {
+  AccountUpdate,
+  JsonProof,
+  Mina,
+  NetworkId,
+  PrivateKey,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 
 export class ZkCompile {
-  private smartContractMap: Map<number, ZkDatabaseSmartContractWrapper>;
-
   constructor(
     private readonly network: { networkId: NetworkId; mina: string }
   ) {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
     // Smart contract map with key is merkleHeight and value is smart contract
-    this.smartContractMap = new Map<number, ZkDatabaseSmartContractWrapper>();
-  }
-
-  private async getSmartContract(
-    merkleHeight: number
-  ): Promise<ZkDatabaseSmartContractWrapper> {
-    if (
-      merkleHeight > MAX_MERKLE_TREE_HEIGHT ||
-      merkleHeight < MIN_MERKLE_TREE_HEIGHT
-    ) {
-      throw new Error(
-        `Invalid merkle height, ensure it between from ${MIN_MERKLE_TREE_HEIGHT} to ${MAX_MERKLE_TREE_HEIGHT}`
-      );
-    }
-    if (!this.smartContractMap.has(merkleHeight)) {
-      const zkWrapper =
-        ZkDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
-      await zkWrapper.compile();
-      // set ZkDatabaseSmartContractWrapper
-      this.smartContractMap.set(merkleHeight, zkWrapper);
-    }
-    // Need to using null assertion since we already check if
-    return this.smartContractMap.get(merkleHeight)!;
   }
 
   async getDeployRawTx(
@@ -51,14 +31,26 @@ export class ZkCompile {
 
     const start = performance.now();
 
-    const smartContract = await this.getSmartContract(merkleHeight);
+    const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    const unsignedTx = await smartContract.createAndProveDeployTransaction({
-      sender: senderPublicKey,
-      zkApp: zkDbPublicKey,
-    });
+    await zkDbProcessor.compile('');
 
-    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
+
+    const tx = await Mina.transaction(
+      {
+        sender: senderPublicKey,
+        fee: 100_000_000,
+      },
+      async () => {
+        AccountUpdate.fundNewAccount(senderPublicKey);
+        await smartContract.deploy();
+      }
+    );
+
+    await tx.prove();
+
+    const partialSignedTx = await tx.sign([zkDbPrivateKey]);
 
     const end = performance.now();
     logger.info(
@@ -81,17 +73,26 @@ export class ZkCompile {
 
     const start = performance.now();
 
-    const smartContract = await this.getSmartContract(merkleHeight);
+    const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    const rawTx = await smartContract.createAndProveRollupTransaction(
+    await zkDbProcessor.compile('');
+
+    const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
+    const proofProgram = ZkProgram.Proof(zkDbProcessor.getInstanceZkDBRollup());
+
+    const tx = await Mina.transaction(
       {
         sender: senderPublicKey,
-        zkApp: zkDbPublicKey,
+        fee: 100_000_000,
       },
-      proof
+      async () => {
+        await smartContract.rollUp(await proofProgram.fromJSON(proof));
+      }
     );
 
-    const partialSignedTx = rawTx.sign([zkDbPrivateKey]);
+    await tx.prove();
+
+    const partialSignedTx = tx.sign([zkDbPrivateKey]);
 
     const end = performance.now();
     logger.info(

@@ -46,7 +46,9 @@ export type TMinaSignature = {
   data: string;
 };
 
-export type TZkDatabaseProof = JsonProof;
+export type TZkDatabaseProof = JsonProof & {
+  step: number;
+};
 
 // Document's proof status
 export type TProofStatusDocumentRequest = TCollectionRequest & {

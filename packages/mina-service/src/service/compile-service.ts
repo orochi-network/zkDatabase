@@ -1,3 +1,4 @@
+// import { ZkCompile } from '@domain';
 import { ZkCompile } from '@domain';
 import { config, logger, QueueWorker } from '@helper';
 import { EncryptionKey } from '@orochi-network/vault';
@@ -6,6 +7,7 @@ import {
   ETransactionType,
   TTransactionQueue,
 } from '@zkdb/common';
+import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   getCurrentTime,

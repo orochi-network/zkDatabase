@@ -3,8 +3,7 @@ import { ClusterApplication, LoggerSet } from '@orochi-network/framework';
 import {
   SERVICE_COMPILE,
   SERVICE_TRANSACTION,
-  SERVICE_TASK,
-  SERVICE_ROLLUP,
+  SERVICE_OFFCHAIN_ROLLUP,
 } from '@service';
 // Set logger
 LoggerSet(logger);
@@ -14,6 +13,5 @@ const clusterApp = new ClusterApplication();
 clusterApp
   .add(SERVICE_COMPILE)
   .add(SERVICE_TRANSACTION)
-  .add(SERVICE_TASK)
-  .add(SERVICE_ROLLUP)
+  .add(SERVICE_OFFCHAIN_ROLLUP)
   .start();
