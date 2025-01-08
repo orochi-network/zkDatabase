@@ -1,12 +1,8 @@
-export * from './network/index.js';
+export * from './network';
 export {
   TRollupProof,
   TRollupTransition,
   ZkDbProcessor,
-} from './zkdb-processor.js';
-export { ZkDbContract } from './zkdb-contract.js';
-export {
-  ZkDbRollup,
-  ZkDbRollupInput,
-  ZkDbRollupOutput,
-} from './zkdb-rollup.js';
+} from './zkdb-processor';
+export { ZkDbContract } from './zkdb-contract';
+export { ZkDbRollup, ZkDbRollupInput, ZkDbRollupOutput } from './zkdb-rollup';

@@ -1,2 +1,3 @@
-export * from './mina-network.js';
-export * from './native-api.js';
+export * from './mina-network';
+export * from './native-api';
+export * from './api';
