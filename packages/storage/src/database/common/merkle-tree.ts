@@ -15,6 +15,7 @@ import { ClientSession, FindOptions, OptionalId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
 import { ModelGeneral } from '../base';
 import { ModelMetadataDatabase } from '../global';
+import { ModelCollection } from '../general';
 
 export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -41,6 +42,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     );
     this._height = height;
     this.generateZeroNode(this._height);
+    ModelMerkleTree.init(databaseName);
   }
 
   public static async getInstance(
@@ -93,7 +95,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
     for (let level = 0; level < this._height; level += 1) {
       const dataToInsert: OptionalId<TMerkleRecord> = {
-        leaf: leaf.toString(),
+        isLeaf: level === 0,
         hash: path[level].toString(),
         level,
         index: currIndex,
@@ -119,7 +121,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   /**
    * Get merkle tree proof
-   * @param index
+   * @param indexmerkletree
    * @param options
    * @returns
    */
@@ -214,75 +216,46 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     return witnessPath;
   }
 
+  /** Get a node given its level and index */
   public async getNode(
     level: number,
     index: bigint,
     options?: FindOptions
   ): Promise<Field> {
-    const node = await this.collection
-      .find({ level, index }, options)
-      .limit(1)
-      .toArray();
+    const node = await this.collection.findOne({ level, index }, options);
 
-    if (node.length === 0) {
+    if (!node) {
       return this.zeroes[level];
     }
 
-    return Field(node[0].hash);
+    return Field(node.hash);
   }
 
+  /** Get all non-empty nodes at a given level */
   public async getListNodeByLevel(
     level: number,
-    options?: FindOptions
+    session?: ClientSession
   ): Promise<TMerkleJson<TMerkleNode>[]> {
-    const pipeline: any[] = [
-      { $match: { level } },
-      {
-        // TODO: is this group by necessary?
-        $group: {
-          _id: '$index',
-          node: { $first: '$$ROOT' },
-        },
-      },
-      { $replaceRoot: { newRoot: '$node' } },
-      { $sort: { index: 1 } },
-    ];
-
-    if (options?.projection) {
-      pipeline.push({ $project: options.projection });
-    }
-
-    if (options?.limit) {
-      pipeline.push({ $limit: options.limit });
-    }
-
-    const latestNode = await this.collection
-      .aggregate<TMerkleJson<TMerkleNode>>(pipeline)
-      .toArray();
-
-    return latestNode;
+    return this.collection
+      .find({ level }, { session })
+      .sort({ index: 1 })
+      .toArray()
+      .then((result) =>
+        result.map((node) => ({
+          hash: node.hash,
+          isLeaf: node.isLeaf,
+          level: node.level,
+          index: node.index,
+        }))
+      );
   }
 
-  public async countLatestNodeByLevel(level: number): Promise<number> {
-    const latestNodeAggregation = await this.collection
-      .aggregate([
-        { $match: { level } },
-        { $sort: { index: 1 } },
-        {
-          // TODO: is this group by necessary?
-          $group: {
-            _id: '$index',
-            latestTimestamp: { $first: '$updatedAt' },
-          },
-        },
-        { $count: 'total' },
-      ])
-      .toArray();
-
-    const totalLatestNode =
-      latestNodeAggregation.length > 0 ? latestNodeAggregation[0].total : 0;
-
-    return totalLatestNode;
+  /** Count the number of non-empty nodes at a given level */
+  public async countNodeByLevel(
+    level: number,
+    session?: ClientSession
+  ): Promise<number> {
+    return this.collection.countDocuments({ level }, { session });
   }
 
   public get height(): number {
@@ -291,6 +264,22 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   public get leafCount() {
     return 2n ** BigInt(this._height - 1);
+  }
+
+  public static async init(databaseName: string, session?: ClientSession) {
+    const collection = ModelCollection.getInstance(
+      databaseName,
+      DATABASE_ENGINE.serverless,
+      zkDatabaseConstant.databaseCollection.merkleTree
+    );
+    if (!(await collection.isExist())) {
+      // TODO: are there any other indexes that need to be created?
+      await collection.createSystemIndex(
+        { level: 1, index: 1 },
+        { unique: true, session }
+      );
+      await collection.addTimestampMongoDb({ session });
+    }
   }
 }
 

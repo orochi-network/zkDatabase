@@ -6,7 +6,7 @@ import { TDbRecord } from './common.js';
 export type TMerkle = {
   // Must be index
   hash: string;
-  leaf: string;
+  isLeaf: boolean;
   level: number;
   index: bigint;
 };

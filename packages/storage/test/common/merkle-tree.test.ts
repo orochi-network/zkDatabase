@@ -85,4 +85,46 @@ describe('ModelMerkleTree', () => {
       expect(witness).toEqual(merkleTree.getWitness(index));
     }
   });
+
+  test('merkle tree utilities correctness', async () => {
+    const modelMerkleTree = await ModelMerkleTree.getInstance(DB_NAME);
+
+    const merkleTree = new MerkleTree(MERKLE_HEIGHT);
+
+    for (let i = 0; i < 100; i++) {
+      const index = BigInt(i);
+      const value = Field(i + 1);
+      merkleTree.setLeaf(index, value);
+      await modelMerkleTree.setLeaf(
+        index,
+        value,
+        dbEngine.client.startSession()
+      );
+
+      expect(await modelMerkleTree.countNodeByLevel(0)).toEqual(i + 1);
+      expect(await modelMerkleTree.getListNodeByLevel(0)).toEqual(
+        Array.from({ length: i + 1 }, (_, j) => ({
+          hash: Field(j + 1).toString(),
+          level: 0,
+          index: j,
+          isLeaf: true,
+        }))
+      );
+    }
+
+    expect(await modelMerkleTree.countNodeByLevel(1)).toEqual(50);
+    expect(modelMerkleTree.height).toEqual(12);
+    expect(await modelMerkleTree.getNode(0, 12n)).toEqual(Field(13));
+    expect(modelMerkleTree.leafCount).toEqual(2048n);
+    expect(await modelMerkleTree.getNode(1, 1n)).toEqual(
+      merkleTree.getNode(1, 1n)
+    );
+    expect(await modelMerkleTree.getNode(10, 1024n)).toEqual(
+      merkleTree.getNode(10, 1024n)
+    );
+    expect(await modelMerkleTree.getRoot()).toEqual(merkleTree.getRoot());
+    expect(await modelMerkleTree.getMerkleProof(55n)).toEqual(
+      merkleTree.getWitness(55n)
+    );
+  });
 });
