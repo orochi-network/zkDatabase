@@ -4,6 +4,7 @@ FROM orochinetwork/node:22-bookworm AS builder
 # Create a non-root user and group early in the Dockerfile
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
 
+
 # Set the working directory
 WORKDIR /usr/src/app
 
