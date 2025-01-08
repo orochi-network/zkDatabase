@@ -20,6 +20,7 @@ export enum ERollupState {
 
 export type TRollupHistory = {
   databaseName: string;
+  step: bigint;
   merkleTreeRoot: string;
   merkleTreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
@@ -32,12 +33,13 @@ export type TRollupHistory = {
 
 export type TRollupState = Pick<
   TRollupHistory,
-  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
 > & {
   // Number of merkle root transformation different to previous one
-  rollUpDifferent: number;
+  rollUpDifferent: bigint;
   rollUpState: ERollupState;
   latestRollupSuccess: Date;
+  error: string | null;
 };
 
 export type TRollupHistoryRecordNullable = TDbRecord<
@@ -46,24 +48,20 @@ export type TRollupHistoryRecordNullable = TDbRecord<
 
 export type TRollupHistoryRecord = TDbRecord<TRollupHistory>;
 
-export type TRollupStateRecordNullable = TDbRecord<
-  TNullable<TRollupState, 'error' | 'latestRollupSuccess'>
->;
-
 // Compound Type
 
 export type TRollupHistoryTransactionAggregate = TRollupHistoryRecord & {
   transaction: TTransactionRecord;
 };
 
-export type TRollupDetail = TRollupStateRecordNullable & {
+export type TRollupHistoryDetail = TRollupState & {
   history: TRollupHistoryRecordNullable[];
 };
 
 // Rollup history
 export type TRollupHistoryRequest = TDatabaseRequest;
 
-export type TRollupHistoryResponse = TRollupDetail | null;
+export type TRollupHistoryResponse = TRollupHistoryDetail | null;
 
 // Rollup create
 export type TRollupCreateRequest = TDatabaseRequest;

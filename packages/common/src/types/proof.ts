@@ -47,7 +47,7 @@ export type TMinaSignature = {
 };
 
 export type TZkDatabaseProof = JsonProof & {
-  step: number;
+  step: bigint;
 };
 
 // Document's proof status

@@ -34,11 +34,7 @@ RUN yarn workspace @zkdb/common build && \
 FROM orochinetwork/node:22-bookworm AS runner
 
 # Create a non-root user and group in the runner stage
-<<<<<<< HEAD:packages/mina-service/Dockerfile
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
-=======
-RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S -G appuser -h /usr/src/app appuser
->>>>>>> adaed4ef3293c78e18ab50ce5d32718c511119c3:packages/proof-service/Dockerfile
 
 # Set the working directory
 WORKDIR /usr/src/app

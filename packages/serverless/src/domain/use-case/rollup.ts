@@ -1,14 +1,15 @@
 import { getCurrentTime, logger } from '@helper';
 import {
+  ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TRollupDetail,
+  TRollupHistoryDetail,
 } from '@zkdb/common';
+import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   ModelMetadataDatabase,
   ModelProof,
   ModelRollupHistory,
-  ModelRollupState,
   ModelTransaction,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -29,14 +30,14 @@ export class Rollup {
       compoundSession.serverless
     );
 
-    const modelProof = ModelProof.getInstance();
-    const latestProofForDb = await modelProof.findOne(
+    const imProof = ModelProof.getInstance();
+    const latestProofForDb = await imProof.findOne(
       { databaseName },
       {
-        session: compoundSession.proofService,
         sort: {
           createdAt: -1,
         },
+        session: compoundSession.proofService,
       }
     );
 
@@ -44,22 +45,22 @@ export class Rollup {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollup = ModelRollupHistory.getInstance();
-    const modelTransaction = ModelTransaction.getInstance();
+    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imTransaction = ModelTransaction.getInstance();
 
-    const rollUp = await imRollup.findOne(
+    const rollUpHistory = await imRollupHistory.findOne(
       {
         proofId: latestProofForDb._id,
       },
       { session: compoundSession.serverless }
     );
 
-    if (rollUp) {
+    if (rollUpHistory) {
       logger.debug('Identified repeated proof');
 
-      const transaction = await modelTransaction.findOne(
+      const transaction = await imTransaction.findOne(
         {
-          _id: rollUp.transactionObjectId,
+          _id: rollUpHistory.transactionObjectId,
         },
         { session: compoundSession.serverless }
       );
@@ -85,7 +86,7 @@ export class Rollup {
     );
 
     const currentTime = getCurrentTime();
-    await imRollup.insertOne(
+    await imRollupHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
@@ -96,6 +97,7 @@ export class Rollup {
         createdAt: currentTime,
         updatedAt: currentTime,
         error: '',
+        step: latestProofForDb.step,
       },
       { session: compoundSession?.serverless }
     );
@@ -106,7 +108,7 @@ export class Rollup {
   static async history(
     databaseName: string,
     session?: ClientSession
-  ): Promise<TRollupDetail | null> {
+  ): Promise<TRollupHistoryDetail | null> {
     const database = await ModelMetadataDatabase.getInstance().findOne(
       { databaseName },
       {
@@ -121,18 +123,33 @@ export class Rollup {
       throw Error('Database is not bound to zk app');
     }
 
+    const zkDbProcessor = new ZkDbProcessor(database.merkleHeight);
+    const zkDbSmartContract = zkDbProcessor.getInstanceZkDBContract(
+      PublicKey.fromBase58(database.appPublicKey)
+    );
+    const onChainRollupStep = zkDbSmartContract.step.get().toBigInt();
     const imRollupHistory = ModelRollupHistory.getInstance();
-    const imRollupState = await ModelRollupState.getInstance(databaseName);
+
     const rollupHistory = await imRollupHistory
       .find({ databaseName })
       .sort({ createdAt: -1, updatedAt: -1 })
       .toArray();
-    const rollupState = await imRollupState.findOne({ databaseName });
-    // state.roll
-    if (rollupHistory.length > 0 && rollupState) {
+
+    const latestRollupHistory = rollupHistory.at(0);
+
+    if (latestRollupHistory) {
+      const rollUpDifferent = onChainRollupStep - rollupHistory[0].step;
+
       return {
-        ...rollupState,
+        databaseName,
+        merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
+        merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
+        latestRollupSuccess: new Date(),
+        rollUpDifferent,
+        rollUpState:
+          rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
         history: rollupHistory,
+        error: latestRollupHistory.error,
       };
     }
 
