@@ -1,8 +1,8 @@
 import { logger } from '@helper';
+import { TZkDatabaseProof } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   AccountUpdate,
-  JsonProof,
   Mina,
   NetworkId,
   PrivateKey,
@@ -64,7 +64,7 @@ export class ZkCompile {
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number,
-    proof: JsonProof
+    proof: TZkDatabaseProof
   ): Promise<string> {
     this.ensureTransaction();
 
