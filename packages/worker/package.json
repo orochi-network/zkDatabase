@@ -1,0 +1,28 @@
+{
+  "name": "@zkdb/worker",
+  "version": "0.1.0",
+  "description": "Worker for zkdb",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "rm -rf ./build && rollup -c",
+    "dev:debug": "tsx --inspect ./src/index.ts",
+    "start:prod": "yarn run build && node ./build/src/index.js",
+    "dev": "tsx --watch ./src/index.ts",
+    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "format": "prettier --write --ignore-unknown **/*",
+    "test": "jest",
+    "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "lint": "eslint --fix && prettier . --write"
+  },
+  "peerDependencies": {
+    "mongodb": "^6.12.0",
+    "o1js": "^2.2.0"
+  },
+  "dependencies": {
+    "@orochi-network/framework": "^2.3.22",
+    "@orochi-network/queue": "^0.1.11",
+    "@zkdb/common": "^0.1.2",
+    "@zkdb/storage": "^1.1.0"
+  }
+}
