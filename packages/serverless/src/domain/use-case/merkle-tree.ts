@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import {
   TMerkleNodeJson,
   TMerkleProof,
@@ -31,19 +32,15 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(databaseName);
 
-    return merkleTree.getMerkleProof(
-      BigInt(docMetadata.merkleIndex),
-      new Date(),
-      {
-        session,
-      }
-    );
+    return merkleTree.getMerkleProof(BigInt(docMetadata.merkleIndex), {
+      session,
+    });
   }
 
   public static async nodeByLevel(
     databaseName: string,
     nodeLevel: number,
-    pagination?: TPagination
+    pagination: TPagination
   ): Promise<TPaginationReturn<TMerkleNodeJson[]>> {
     const modelMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
@@ -51,11 +48,7 @@ export class MerkleTree {
 
     if (nodeLevel < modelMerkleTree.height) {
       const listNode = (
-        await modelMerkleTree.getListNodeByLevel(
-          nodeLevel,
-          new Date(),
-          pagination
-        )
+        await modelMerkleTree.getListNodeByLevel(nodeLevel, pagination)
       ).map(({ level, index, hash }) => ({
         level,
         index,
@@ -66,10 +59,7 @@ export class MerkleTree {
       return {
         data: listNode,
         offset: pagination?.offset ?? 0,
-        total: await modelMerkleTree.countLatestNodeByLevel(
-          nodeLevel,
-          new Date()
-        ),
+        total: await modelMerkleTree.countNodeByLevel(nodeLevel),
       };
     }
 
@@ -79,7 +69,7 @@ export class MerkleTree {
   public static async info(databaseName: string): Promise<TMerkleTreeInfo> {
     const modelMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
-    const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
+    const merkleRoot = (await modelMerkleTree.getRoot()).toString();
 
     return {
       merkleRoot,
@@ -106,21 +96,17 @@ export class MerkleTree {
       );
     }
 
-    const currentDate = new Date();
-
     const childrenLevel = parentLevel - 1;
     const leftChildIndex = parentIndex * 2n;
     const rightChildIndex = leftChildIndex + 1n;
 
     const leftNodeField = await modelMerkleTree.getNode(
       childrenLevel,
-      leftChildIndex,
-      currentDate
+      leftChildIndex
     );
     const rightNodeField = await modelMerkleTree.getNode(
       childrenLevel,
-      rightChildIndex,
-      currentDate
+      rightChildIndex
     );
 
     const listZeroNode = modelMerkleTree.getListZeroNode();
@@ -154,9 +140,6 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(databaseName);
 
-    return merkleTree.getMerkleProofPath(
-      BigInt(docMetadata.merkleIndex),
-      new Date()
-    );
+    return merkleTree.getMerkleProofPath(BigInt(docMetadata.merkleIndex));
   }
 }

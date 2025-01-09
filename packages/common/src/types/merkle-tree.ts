@@ -69,7 +69,7 @@ export type TMerkleTreeProofByDocIdResponse = TMerkleTreeProofByIndexResponse;
 
 export type TMerkleTreeNodeListByLevelRequest = TDatabaseRequest & {
   level: number;
-  pagination: TPagination;
+  pagination?: TPagination;
 };
 
 export type TMerkleTreeNodeListByLevelResponse = TPaginationReturn<

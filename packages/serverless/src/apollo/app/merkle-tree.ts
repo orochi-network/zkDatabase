@@ -23,6 +23,7 @@ import Joi from 'joi';
 import { MerkleTree } from '@domain';
 import { publicWrapper } from '../validation';
 import { GraphQLScalarType } from 'graphql';
+import { DEFAULT_PAGINATION } from '@common';
 
 export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
   databaseName,
@@ -109,8 +110,7 @@ const merkleProof = publicWrapper<
 >(JOI_MERKLE_TREE_PROOF_BY_INDEX, async (_root, args) => {
   const imMerkleTree = await ModelMerkleTree.getInstance(args.databaseName);
   const resultMerkleProof = await imMerkleTree.getMerkleProof(
-    BigInt(args.index),
-    new Date()
+    BigInt(args.index)
   );
 
   return resultMerkleProof.map((proof) => ({
@@ -141,7 +141,11 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    MerkleTree.nodeByLevel(databaseName, level, pagination)
+    MerkleTree.nodeByLevel(
+      databaseName,
+      level,
+      pagination || DEFAULT_PAGINATION
+    )
 );
 
 const merkleTreeInfo = publicWrapper<

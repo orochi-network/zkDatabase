@@ -63,7 +63,7 @@ export class Prover {
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.document_queue
+      zkDatabaseConstant.globalCollection.documentQueue
     ).queueTask(
       {
         data: {
@@ -108,7 +108,7 @@ export class Prover {
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.document_queue
+      zkDatabaseConstant.globalCollection.documentQueue
     ).queueTask(
       {
         data: {
@@ -150,7 +150,7 @@ export class Prover {
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.document_queue
+      zkDatabaseConstant.globalCollection.documentQueue
     ).queueTask(
       {
         data: {

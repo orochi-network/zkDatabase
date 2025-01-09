@@ -12,12 +12,14 @@ import {
   TMerkleNodeDetailJson,
   TMerkleProof,
   TMerkleRecord,
+  TPagination,
 } from '@zkdb/common';
 import { ClientSession, FindOptions, OptionalId } from 'mongodb';
 import { Field, MerkleTree, Poseidon } from 'o1js';
 import { ModelGeneral } from '../base';
 import { ModelMetadataDatabase } from '../global';
 import { ModelCollection } from '../general';
+import { TPaginationQuery } from '@orochi-network/framework';
 
 export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -236,11 +238,14 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   /** Get all non-empty nodes at a given level */
   public async getListNodeByLevel(
     level: number,
+    pagination: TPagination,
     session?: ClientSession
   ): Promise<TMerkleJson<TMerkleNode>[]> {
     return this.collection
       .find({ level }, { session })
       .sort({ index: 1 })
+      .limit(pagination.limit)
+      .skip(pagination.offset)
       .toArray()
       .then((result) =>
         result.map((node) => ({
