@@ -73,6 +73,17 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     }
   }
 
+  async current(type: ESequencer, session?: ClientSession) {
+    const index = await this.collection.findOne(
+      { type },
+      {
+        session,
+      }
+    );
+
+    return index?.seq ?? 0;
+  }
+
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,

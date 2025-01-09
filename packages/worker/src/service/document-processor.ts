@@ -12,11 +12,14 @@ import { config, logger } from '@helper';
 import { DocumentProcessor, TDocumentQueuedData } from '@domain';
 import {
   DatabaseEngine,
+  getCurrentTime,
   ModelGenericQueue,
+  ModelSequencer,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Backoff from 'src/helper/backoff';
 import assert from 'node:assert';
+import { ESequencer } from '@zkdb/common';
 
 /** The duration to wait before exiting the service after a crash to prevent a
  * tight loop of restarts. */
@@ -48,21 +51,27 @@ export class DocumentWorker {
     // their next task does not match the expected value (tracking sequence
     // number + 1). This queue helps avoid repeatedly polling the same tasks
     // that fail the sequence number check, preventing unnecessary processing
-    // attempts. After each iteration, one database is removed from the
+    // attempts. After each iteration, one database is popped from the
     // exclusion queue, allowing it to be considered for polling in the next
     // iteration.
     const exclusionQueue: string[] = [];
 
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const task = await imDocumentQueue.peakNextQualifiedTask();
+        const task = await imDocumentQueue.peakNextQualifiedTask({
+          databaseName: { $nin: exclusionQueue },
+        });
+
         if (task === null) {
           exclusionQueue.shift();
           return true;
         }
 
-        const trackingSequenceNumber = 12; // TODO: Get the tracking sequence number from the database
         assert(task.sequenceNumber !== null, "Task's sequence number is null");
+
+        const trackingSequenceNumber = await ModelSequencer.getInstance(
+          task.databaseName
+        ).current(ESequencer.LastProcessedOperation);
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
           exclusionQueue.shift();
@@ -88,14 +97,45 @@ tracking sequence number: ${trackingSequenceNumber}`
         // can still fail to acquire the task if another worker has already
         // acquired it.
         const result = await imDocumentQueue.acquireNextTaskInQueue(
-          async (ttask, compoundSession) => {
-            DocumentProcessor.onTask(ttask, compoundSession);
+          async (acquiredTask, compoundSession) => {
+            await DocumentProcessor.onTask(acquiredTask, compoundSession);
+            const bumpSeqResult = await ModelSequencer.getInstance(
+              task.databaseName
+            ).collection.findOneAndUpdate(
+              {
+                type: ESequencer.LastProcessedOperation,
+              },
+              {
+                $set: {
+                  seq: acquiredTask.sequenceNumber!,
+                  updatedAt: getCurrentTime(),
+                },
+                $setOnInsert: {
+                  type: ESequencer.LastProcessedOperation,
+                  createdAt: getCurrentTime(),
+                },
+              },
+              { session: compoundSession.serverless, upsert: true }
+            );
+
+            if (bumpSeqResult === null) {
+              // Throw error so that the transaction rolls back everything
+              throw new Error(
+                `Failed to update the last processed sequence number for database ${task.databaseName}. \
+Someone has updated the sequence number while we're acquiring the task for this database. \
+Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
+              );
+            }
+
             return true;
+          },
+          {
+            _id: task._id,
           }
         );
 
-        // Indicates that the task was not acquired, so we should back off
-        if (!result) {
+        // Indicates that no task was acquired, so we should back off
+        if (result === null) {
           exclusionQueue.shift();
           return true;
         }

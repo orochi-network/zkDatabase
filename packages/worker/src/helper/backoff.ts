@@ -27,14 +27,14 @@ export default class Backoff {
    * behavior is *not backing off*. Any error thrown will automatically trigger
    * a backoff. */
   public async run(
-    f: () => Promise<boolean | undefined>,
+    f: () => Promise<boolean>,
     onError: (error: any) => Promise<void>
   ): Promise<void> {
     let retries = 0;
     let delay = this.initialDelayMs;
 
     /* eslint-disable no-await-in-loop --
-     * Polling logic requires an await in the loop body */
+     * Retries with backoff require an await in the loop body */
     while (true) {
       if (retries >= this.maxRetries) {
         break;
@@ -43,8 +43,7 @@ export default class Backoff {
       let backoff = true;
 
       try {
-        const shouldBackoff = await f();
-        backoff = shouldBackoff === undefined ? false : shouldBackoff;
+        backoff = await f();
       } catch (error) {
         await onError(error);
       }

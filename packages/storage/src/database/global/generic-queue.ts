@@ -77,7 +77,10 @@ export class ModelGenericQueue<T> extends ModelGeneral<
    * as 'Success'. If the callback function throws an error, the task is marked
    * as 'Failed' and the error message is stored with the task. When
    * `removeTaskOnSuccess` is enabled, successful tasks are automatically
-   * removed from the queue after processing. */
+   * removed from the queue after processing.
+   *
+   * @return The result of the callback function or `null` if no task is available to acquire.
+   * */
   public async acquireNextTaskInQueue<R>(
     f: (
       task: TDbRecord<TGenericQueue<T>>,
