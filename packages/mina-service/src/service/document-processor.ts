@@ -100,6 +100,7 @@ tracking sequence number: ${trackingSequenceNumber}`
         const result = await imDocumentQueue.acquireNextTaskInQueue(
           async (acquiredTask, compoundSession) => {
             await DocumentProcessor.onTask(acquiredTask, compoundSession);
+
             const bumpSeqResult = await ModelSequencer.getInstance(
               task.databaseName
             ).collection.findOneAndUpdate(

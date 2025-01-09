@@ -19,7 +19,7 @@ export class DocumentProcessor {
   /** Update merkle tree and queue new proof task */
   static async onTask(
     task: TDbRecord<TGenericQueue<TDocumentQueuedData>>,
-    session: TCompoundSession
+    { proofService: session }: TCompoundSession
   ) {
     const {
       databaseName,
@@ -33,13 +33,13 @@ export class DocumentProcessor {
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     const leafOld = await imMerkleTree.getNode(0, merkleIndex, {
-      session: session.serverless,
+      session,
     });
 
-    await imMerkleTree.setLeaf(merkleIndex, leafNew, session.serverless);
+    await imMerkleTree.setLeaf(merkleIndex, leafNew, session);
 
     const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
-      session: session.serverless,
+      session,
     });
 
     await ModelQueueTask.getInstance().queueTask(
@@ -49,11 +49,13 @@ export class DocumentProcessor {
         operationNumber: sequenceNumber,
         merkleIndex,
         merkleWitness,
-        merkleRoot: await imMerkleTree.getRoot({ session: session.serverless }),
+        merkleRoot: await imMerkleTree.getRoot({
+          session,
+        }),
         leafOld,
         leafNew,
       } as any, // TODO: Fix this type cast once the queue is updated to the new schema
-      { session: session.proofService }
+      { session }
     );
   }
 }

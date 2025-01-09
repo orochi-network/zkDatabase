@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+
 import { zkDatabaseConstant } from '@common';
 import {
   DATABASE_ENGINE,
@@ -36,13 +38,12 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   private constructor(databaseName: string, height: number) {
     super(
-      databaseName,
+      zkDatabaseConstant.databaseCollection.merkleTree,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.databaseCollection.merkleTree
+      databaseName
     );
     this._height = height;
     this.generateZeroNode(this._height);
-    ModelMerkleTree.init(databaseName);
   }
 
   public static async getInstance(
@@ -60,6 +61,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
         databaseName,
         new ModelMerkleTree(databaseName, metadataDatabase?.merkleHeight)
       );
+      ModelMerkleTree.init(databaseName);
     }
     return ModelMerkleTree.instances.get(databaseName)!;
   }
@@ -268,9 +270,9 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      databaseName,
+      zkDatabaseConstant.databaseCollection.merkleTree,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.databaseCollection.merkleTree
+      databaseName
     );
     if (!(await collection.isExist())) {
       // TODO: are there any other indexes that need to be created?
