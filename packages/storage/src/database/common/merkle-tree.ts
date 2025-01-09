@@ -124,10 +124,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   }
 
   /**
-   * Get merkle tree proof
-   * @param indexmerkletree
-   * @param options
-   * @returns
+   * Get the merkle proof for a leaf at a given merkle index
    */
   public async getMerkleProof(
     index: bigint,
