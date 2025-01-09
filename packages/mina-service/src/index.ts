@@ -5,6 +5,7 @@ import {
   SERVICE_TRANSACTION,
   SERVICE_TASK,
   SERVICE_ROLLUP,
+  SERVICE_DOCUMENT,
 } from '@service';
 // Set logger
 LoggerSet(logger);
@@ -16,4 +17,5 @@ clusterApp
   .add(SERVICE_TRANSACTION)
   .add(SERVICE_TASK)
   .add(SERVICE_ROLLUP)
+  .add(SERVICE_DOCUMENT)
   .start();
