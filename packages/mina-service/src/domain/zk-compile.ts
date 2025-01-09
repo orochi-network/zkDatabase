@@ -1,6 +1,8 @@
 import { CACHE_PATH, logger } from '@helper';
-import { TZkDatabaseProof } from '@zkdb/common';
+import { TVerificationKeySerialized, TZkDatabaseProof } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
+import { getCurrentTime, ModelVerificationKey } from '@zkdb/storage';
+import { createHash } from 'node:crypto';
 import {
   AccountUpdate,
   Mina,
@@ -33,8 +35,31 @@ export class ZkCompile {
 
     const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    await zkDbProcessor.compile(CACHE_PATH);
+    const {
+      zkdbContract: { verificationKey },
+    } = await zkDbProcessor.compile(CACHE_PATH);
 
+    const imVerification = ModelVerificationKey.getInstance();
+
+    const verificationKeySerialized: TVerificationKeySerialized = {
+      ...verificationKey,
+      hash: verificationKey.hash.toString(),
+    };
+
+    // Using SHA-256 hash from 'crypto' to hash verification key
+
+    const verificationKeyHash = createHash('sha256')
+      .update(JSON.stringify(verificationKeySerialized))
+      .digest('hex');
+
+    await imVerification.insertOne({
+      verificationKeyHash,
+      verificationKey: verificationKeySerialized,
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
+    });
+
+    // Store smart contract's verification key into database and hashed like hash table for key hash and value
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
 
     const tx = await Mina.transaction(
@@ -50,7 +75,7 @@ export class ZkCompile {
 
     await tx.prove();
 
-    const partialSignedTx = await tx.sign([zkDbPrivateKey]);
+    const partialSignedTx = tx.sign([zkDbPrivateKey]);
 
     const end = performance.now();
     logger.info(

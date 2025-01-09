@@ -1,12 +1,12 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TTransactionRecord, TTransactionRecordNullable } from '@zkdb/common';
+import { TZkDbVerificationKeyRecord } from '@zkdb/common';
 import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelVerificationKey extends ModelGeneral<
-  OptionalId<TTransactionRecordNullable>
+  OptionalId<TZkDbVerificationKeyRecord>
 > {
   private static instance: ModelVerificationKey;
 
@@ -25,12 +25,12 @@ export class ModelVerificationKey extends ModelGeneral<
     return this.instance;
   }
 
-  public async count(filter?: Filter<TTransactionRecordNullable>) {
+  public async count(filter?: Filter<TZkDbVerificationKeyRecord>) {
     return await this.collection.countDocuments(filter);
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance<TTransactionRecord>(
+    const collection = ModelCollection.getInstance<TZkDbVerificationKeyRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.verificationKey

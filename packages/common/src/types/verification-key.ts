@@ -1,8 +1,15 @@
+import { VerificationKey } from 'o1js';
 import { TDbRecord } from './common';
 
-export type TVerificationKey = {
-  verificationKeyHash: string;
-  verificationKey: string;
+// It's a serialize version of VerificationKey from o1js hash: Field => hash: string
+export type TVerificationKeySerialized = {
+  data: string;
+  hash: string;
 };
 
-export type TVerificationKeyRecord = TDbRecord<TVerificationKey>;
+export type TZkDbVerificationKey = {
+  verificationKeyHash: string;
+  verificationKey: TVerificationKeySerialized;
+};
+
+export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;

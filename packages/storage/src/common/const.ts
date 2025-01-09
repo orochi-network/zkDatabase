@@ -26,7 +26,7 @@ export const zkDatabaseConstant = {
     queue: 'queue',
 
     // Proof storage
-    proof: 'proof',
+    rollupOffChain: 'rollup_offchain',
 
     // Deployed transaction
     transaction: 'transaction',
