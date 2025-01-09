@@ -16,11 +16,11 @@ Document Operations        Merkle Tree Worker              Proof Worker
 
 Tenant A:                   ┌──────────────┐            ┌─────────────┐
  [Op4]  [Op1]               │ Tenant A:    │            │ Tenant A:   │
- [Op7]  [Op2]  ═══Poll═══》 │ Check Seq #  │  ═══》     │ Process     │
+ [Op7]  [Op2]  ═══Poll═══>  │ Check Seq #  │  ═══>      │ Process     │
                             │ Process Ops  │            │ Proofs      │
 Tenant B:                   └──────────────┘            └─────────────┘
  [Op3]  [Op6]               ┌─────────────┐            ┌─────────────┐
- [Op5]  [Op8]  ═══Poll═══》 │ Tenant B:   │  ═══》     │ Tenant B:   │
+ [Op5]  [Op8]  ═══Poll═══>  │ Tenant B:   │  ═══>      │ Tenant B:   │
      │                      │ Check Seq # │            │ Process     │
      │                      │ Process Ops │            │ Proofs      │
      ▼                      └─────────────┘            └─────────────┘
