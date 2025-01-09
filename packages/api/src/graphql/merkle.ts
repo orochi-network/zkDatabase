@@ -1,7 +1,5 @@
 import { gql } from "@apollo/client";
 import {
-  TDatabaseRequest,
-  TMerkleProof,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -35,7 +33,10 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           pagination: $pagination
         ) {
           data {
-            ...MerkleNodeFragment
+            index
+            level
+            hash
+            empty
           }
           totalSize
           offset

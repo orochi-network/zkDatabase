@@ -1,3 +1,2 @@
-export * from './global';
-export * from './signer';
+export * from './global/zkdatabase-client';
 export * from './interfaces';

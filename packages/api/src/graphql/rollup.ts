@@ -31,7 +31,16 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
           state
           extraData
           history {
-            ...RollupHistoryItemFragment
+            databaseName
+            transactionType
+            txHash
+            transactionRaw
+            status
+            merkletreeRoot
+            merkletreeRootPrevious
+            error
+            createdAt
+            updatedAt
           }
         }
       }

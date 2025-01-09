@@ -60,6 +60,7 @@
     "o1js": "^1.9.1"
   },
   "dependencies": {
+    "@aurowallet/mina-provider": "^1.0.6",
     "@zkdb/permission": "^0.1.7"
   }
 }

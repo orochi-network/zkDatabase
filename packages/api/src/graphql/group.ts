@@ -109,7 +109,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           updatedAt
           createdAt
           listUser {
-            ...GroupUserInfoFragment
+            userName
+            updatedAt
+            createdAt
           }
         }
       }
