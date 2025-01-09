@@ -1,16 +1,18 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TProofRecord } from '@zkdb/common';
+import { TRollUpOffChainRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
-  public static instance: ModelProof;
+export class ModelRollupOffChain extends ModelGeneral<
+  OptionalId<TRollUpOffChainRecord>
+> {
+  public static instance: ModelRollupOffChain;
 
-  public static getInstance(): ModelProof {
+  public static getInstance(): ModelRollupOffChain {
     if (!this.instance) {
-      this.instance = new ModelProof(
+      this.instance = new ModelRollupOffChain(
         zkDatabaseConstant.globalProofDatabase,
         DATABASE_ENGINE.proofService,
         zkDatabaseConstant.globalCollection.proof
@@ -20,7 +22,7 @@ export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance<TProofRecord>(
+    const collection = ModelCollection.getInstance<TRollUpOffChainRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.proof
@@ -32,17 +34,20 @@ export class ModelProof extends ModelGeneral<OptionalId<TProofRecord>> {
         { unique: true, session }
       );
 
+      await collection.createSystemIndex({ databaseName: 1 }, { session });
+
       await collection.createSystemIndex(
-        { databaseName: 1, collectionName: 1 },
-        { session }
-      );
-      await collection.createSystemIndex(
-        { merkleRoot: 1 },
+        { merkleRootNew: 1 },
         { unique: true, session }
       );
 
       await collection.createSystemIndex(
-        { merkleRootPrevious: 1 },
+        { merkleRootOld: 1 },
+        { unique: true, session }
+      );
+
+      await collection.createSystemIndex(
+        { merkleRootOld: 1 },
         { unique: true, session }
       );
 

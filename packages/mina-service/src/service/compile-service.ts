@@ -7,13 +7,12 @@ import {
   ETransactionType,
   TTransactionQueue,
 } from '@zkdb/common';
-import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   getCurrentTime,
   ModelMetadataDatabase,
-  ModelProof,
   ModelRollupHistory,
+  ModelRollupOffChain,
   ModelSecureStorage,
   ModelTransaction,
   withCompoundTransaction,
@@ -172,7 +171,7 @@ export const SERVICE_COMPILE = {
               throw new Error('Mismatch between privateKey and publicKey');
             }
 
-            const proof = await ModelProof.getInstance().findOne(
+            const proof = await ModelRollupOffChain.getInstance().findOne(
               { databaseName },
               {
                 session: proofSession,
@@ -191,7 +190,10 @@ export const SERVICE_COMPILE = {
                 payerAddress,
                 zkAppPrivateKey,
                 metadataDatabase.merkleHeight,
-                proof
+                {
+                  ...proof.proof,
+                  step: proof.step,
+                }
               );
 
               // Update transaction status and add transaction raw

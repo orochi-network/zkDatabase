@@ -35,6 +35,12 @@ export const zkDatabaseConstant = {
 
     // Rollup history
     rollupHistory: 'rollup_history',
+
+    // Verification key
+    verificationKey: 'verification_key',
+
+    // Rollup onchain
+    rollupOnChain: 'rollup_onchain',
   },
 
   // Collections that are common across different databases
@@ -55,9 +61,6 @@ export const zkDatabaseConstant = {
 
     // Sequencer
     sequencer: '_zkdatabase_sequencer',
-
-    // Rollup state 1 - 1 with database
-    rollUpState: '_zkdatabase_rollup_state',
   },
 };
 

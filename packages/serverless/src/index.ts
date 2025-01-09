@@ -17,7 +17,7 @@ import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
-  ModelProof,
+  ModelRollupOffChain,
   ModelQueueTask,
   ModelRollupHistory,
   ModelSecureStorage,
@@ -60,7 +60,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     // proof db
     await ModelQueueTask.init(session.proofService);
     await ModelSecureStorage.init(session.proofService);
-    await ModelProof.init(session.proofService);
+    await ModelRollupOffChain.init(session.proofService);
   });
 
   MinaNetwork.getInstance().connect(

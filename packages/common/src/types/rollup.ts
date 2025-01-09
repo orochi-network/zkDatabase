@@ -42,6 +42,19 @@ export type TRollupState = Pick<
   error: string | null;
 };
 
+export type TRollupOnChain = {
+  databaseName: string;
+  step: bigint;
+  txHash: string;
+  status: string; // TODO: Redefined
+  error: string;
+  // TODO:
+};
+
+export type TRollOpChainRecordNullable = TDbRecord<
+  TNullable<TRollupOnChain, 'error'>
+>;
+
 export type TRollupHistoryRecordNullable = TDbRecord<
   TNullable<TRollupHistory, 'error'>
 >;

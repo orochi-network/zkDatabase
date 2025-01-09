@@ -2,7 +2,7 @@ import {
   DatabaseEngine,
   ModelDbSetting,
   ModelMerkleTree,
-  ModelProof,
+  ModelRollupOffChain,
   ModelQueueTask,
   TaskEntity,
 } from '@zkdb/storage';

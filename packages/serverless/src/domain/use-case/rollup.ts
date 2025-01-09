@@ -8,7 +8,7 @@ import {
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   ModelMetadataDatabase,
-  ModelProof,
+  ModelRollupOffChain,
   ModelRollupHistory,
   ModelTransaction,
   TCompoundSession,
@@ -30,8 +30,8 @@ export class Rollup {
       compoundSession.serverless
     );
 
-    const imProof = ModelProof.getInstance();
-    const latestProofForDb = await imProof.findOne(
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
+    const latestProofForDb = await imRollupOffChain.findOne(
       { databaseName },
       {
         sort: {

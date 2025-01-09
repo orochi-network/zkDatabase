@@ -13,7 +13,7 @@ import {
   TZkProofRequest,
   TZkProofResponse,
 } from '@zkdb/common';
-import { ModelProof, ModelQueueTask } from '@zkdb/storage';
+import { ModelRollupOffChain, ModelQueueTask } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
@@ -76,8 +76,8 @@ const proofStatusDocument = authorizeWrapper<
       actor: ctx.userName,
     });
     if (actorPermission.read) {
-      const imProof = ModelQueueTask.getInstance();
-      const proof = await imProof.findOne({
+      const imRollupOffChain = ModelQueueTask.getInstance();
+      const proof = await imRollupOffChain.findOne({
         databaseName,
         docId,
       });
@@ -100,7 +100,7 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const modelProof = ModelProof.getInstance();
+    const modelProof = ModelRollupOffChain.getInstance();
 
     return modelProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
   }
@@ -126,7 +126,7 @@ const proofStatusDatabase = publicWrapper<
     if (task) {
       return EProofDatabaseStatus.Proving;
     } else {
-      const modelProof = ModelProof.getInstance();
+      const modelProof = ModelRollupOffChain.getInstance();
       const proof = await modelProof.findOne(
         { databaseName },
         { sort: { createdAt: -1 } }

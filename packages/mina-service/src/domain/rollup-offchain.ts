@@ -4,7 +4,7 @@ import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   getCurrentTime,
   ModelMetadataDatabase,
-  ModelProof,
+  ModelRollupOffChain,
   TCompoundSession,
 } from '@zkdb/storage';
 import { Field, MerkleTree } from 'o1js';
@@ -49,9 +49,9 @@ export class RollupOffchain {
     // Cache path required
     await zkAppProcessor.compile(CACHE_PATH);
 
-    const imProof = ModelProof.getInstance();
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
 
-    const previousProof = await imProof.findOne(
+    const previousProof = await imRollupOffChain.findOne(
       { databaseName },
       { sort: { createdAt: -1 }, session: proofService }
     );
@@ -74,21 +74,22 @@ export class RollupOffchain {
       const { proof, merkleRootOld, step } =
         zkAppProcessor.serialize(newRollupProof);
 
-      await imProof.insertOne(
+      await imRollupOffChain.insertOne(
         {
           databaseName,
           // TODO: Since queue not implement I'll assume that we have
           // @ts-expect-error
-          merkleRoot: task.merkleRootNew,
-          merkleRootPrevious: merkleRootOld,
-          publicInput: proof.publicInput,
-          publicOutput: proof.publicOutput,
-          maxProofsVerified: proof.maxProofsVerified,
-          collectionName: task.collectionName,
-          proof: proof.proof,
-          step: step,
+          merkleRootNew: task.merkleRootNew,
+          merkleRootOld: merkleRootOld,
+          proof,
+          step,
           createdAt: getCurrentTime(),
           updatedAt: getCurrentTime(),
+          merkleProof: [],
+          leafOld: Field(0).toString(),
+          // TODO: Since queue not implement I'll assume that we have
+          // @ts-expect-error
+          leafNew: task.leafNew,
         },
         {
           session: proofService,
@@ -119,19 +120,24 @@ export class RollupOffchain {
     const { proof, merkleRootOld, step } =
       zkAppProcessor.serialize(newRollupProof);
 
-    await imProof.insertOne(
+    await imRollupOffChain.insertOne(
       {
         databaseName,
         // TODO: Since queue not implement I'll assume that we have
         // @ts-expect-error
-        merkleRoot: task.merkleRootNew,
-        merkleRootPrevious: merkleRootOld,
-        publicInput: proof.publicInput,
-        publicOutput: proof.publicOutput,
-        maxProofsVerified: proof.maxProofsVerified,
-        collectionName: task.collectionName,
-        proof: proof.proof,
-        step: step,
+        merkleRootNew: task.merkleRootNew,
+        merkleRootOld,
+        proof,
+        step,
+        // TODO: Since queue not implement I'll assume that we have
+        // @ts-expect-error
+        merkleProof: task.merkleProof,
+        // TODO: Since queue not implement I'll assume that we have
+        // @ts-expect-error
+        leafOld: task.leafOld,
+        // TODO: Since queue not implement I'll assume that we have
+        // @ts-expect-error
+        leafNew: task.leafNew,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },

@@ -2,7 +2,7 @@ import {
   DatabaseEngine,
   ModelDbSetting,
   ModelMerkleTree,
-  ModelProof,
+  ModelRollupOffChain,
   ModelQueueTask,
   TaskEntity,
 } from '@zkdb/storage';
@@ -136,7 +136,7 @@ describe('QueueService', () => {
     });
 
     // Check if proof is created and saved
-    const proofStorage = ModelProof.getInstance();
+    const proofStorage = ModelRollupOffChain.getInstance();
     const proofs = await proofStorage.collection.find({}).toArray();
     expect(proofs.length).toEqual(2);
 

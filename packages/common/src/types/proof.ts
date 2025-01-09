@@ -1,7 +1,8 @@
 import type { JsonProof } from 'o1js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { TDatabaseRequest, TMetadataDatabase } from './database.js';
+import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
 
 /**
  * Ownership types
@@ -81,11 +82,22 @@ export type TQueue = {
 
 export type TQueueRecord = TDbRecord<TQueue>;
 
-export type TProof = TZkDatabaseProof & {
-  databaseName: string;
-  collectionName: string;
-  merkleRoot: string;
-  merkleRootPrevious: string;
+// NOTE: This type base from @orochi-network/smart-contract -> ZkDbProcessor
+export type TRollupSerializedProof = {
+  step: bigint;
+  proof: JsonProof;
+  merkleRootOld: string;
 };
 
-export type TProofRecord = TDbRecord<TProof>;
+export type TRollupTransitionSerialized = {
+  merkleRootNew: string;
+  merkleProof: Witness;
+  leafOld: string;
+  leafNew: string;
+};
+
+export type TRollUpOffChainRecord = TDbRecord<
+  TRollupSerializedProof &
+    TRollupTransitionSerialized &
+    Pick<TMetadataDatabase, 'databaseName'>
+>;
