@@ -56,9 +56,9 @@
     ]
   },
   "peerDependencies": {
+    "@aurowallet/mina-provider": "^1.0.6",
     "graphql": "^16.10.0",
-    "o1js": "^2.2.0",
-    "@aurowallet/mina-provider": "^1.0.6"
+    "o1js": "^2.2.0"
   },
   "dependencies": {
     "@zkdb/api": "^1.1.14",

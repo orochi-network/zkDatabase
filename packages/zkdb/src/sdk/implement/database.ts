@@ -1,6 +1,7 @@
 import { IApiClient } from '@zkdb/api';
 import {
   ETransactionType,
+  TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TProofStatusDatabaseResponse,
@@ -58,9 +59,11 @@ export class Database implements IDatabase {
   }
 
   async collectionList(): Promise<string[]> {
-    return (await this.apiClient.collection.collectionList(this.basicQuery))
-      .unwrap()
-      .map((e) => e.collectionName);
+    const result: TCollectionListResponse = (
+      await this.apiClient.collection.collectionList(this.basicQuery)
+    ).unwrap();
+
+    return result.map((e) => e.collectionName);
   }
 
   group(groupName: string): IGroup {

@@ -26,14 +26,14 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
         $databaseName: String!
         $collectionName: String!
         $schema: [SchemaFieldInput!]!
-        $group: String
+        $groupName: String
         $permission: Int
       ) {
         collectionCreate(
           databaseName: $databaseName
           collectionName: $collectionName
           schema: $schema
-          group: $group
+          groupName: $groupName
           permission: $permission
         )
       }
