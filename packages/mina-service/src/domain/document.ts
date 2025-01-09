@@ -1,6 +1,8 @@
 import {
+  getCurrentTime,
   ModelMerkleTree,
   ModelQueueTask,
+  ModelTransitionProof,
   TCompoundSession,
   TDocumentQueuedData,
   TGenericQueue,
@@ -28,18 +30,38 @@ export class DocumentProcessor {
     } = task;
     assert(sequenceNumber !== null, 'Sequence number should not be null');
 
-    const leafNew = Field(updatedDocumentHash);
-
     const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
-    const leafOld = await imMerkleTree.getNode(0, merkleIndex, {
-      session,
-    });
+    const leafOld = (
+      await imMerkleTree.getNode(0, merkleIndex, {
+        session,
+      })
+    ).toString();
 
-    await imMerkleTree.setLeaf(merkleIndex, leafNew, session);
+    await imMerkleTree.setLeaf(
+      merkleIndex,
+      Field(updatedDocumentHash),
+      session
+    );
 
     const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
       session,
+    });
+
+    const transitionProofObjectId = await ModelTransitionProof.getInstance(
+      databaseName
+    ).then(async (modelTransitionProof) => {
+      return modelTransitionProof.collection
+        .insertOne({
+          merkleRootNew: (await imMerkleTree.getRoot({ session })).toString(),
+          merkleProof: merkleWitness,
+          leafOld,
+          leafNew: updatedDocumentHash,
+          operationNumber: sequenceNumber,
+          createdAt: getCurrentTime(),
+          updatedAt: getCurrentTime(),
+        })
+        .then((result) => result.insertedId);
     });
 
     await ModelQueueTask.getInstance().queueTask(
@@ -47,14 +69,8 @@ export class DocumentProcessor {
         databaseName,
         collectionName,
         operationNumber: sequenceNumber,
-        merkleIndex,
-        merkleWitness,
-        merkleRoot: await imMerkleTree.getRoot({
-          session,
-        }),
-        leafOld,
-        leafNew,
-      } as any, // TODO: Fix this type cast once the queue is updated to the new schema
+        transitionProofObjectId,
+      },
       { session }
     );
   }

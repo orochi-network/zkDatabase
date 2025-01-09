@@ -38,8 +38,8 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   private constructor(databaseName: string, height: number) {
     super(
-      zkDatabaseConstant.databaseCollection.merkleTree,
-      DATABASE_ENGINE.serverless,
+      zkDatabaseConstant.globalMerkleTreeDatabase,
+      DATABASE_ENGINE.proofService,
       databaseName
     );
     this._height = height;
@@ -270,8 +270,8 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstant.databaseCollection.merkleTree,
-      DATABASE_ENGINE.serverless,
+      zkDatabaseConstant.globalMerkleTreeDatabase,
+      DATABASE_ENGINE.proofService,
       databaseName
     );
     if (!(await collection.isExist())) {

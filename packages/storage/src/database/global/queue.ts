@@ -1,4 +1,4 @@
-import { EProofStatusDocument, TQueueRecord } from '@zkdb/common';
+import { EProofStatusDocument, TDbRecord } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -10,11 +10,26 @@ import {
   WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE } from '@helper';
+import { DATABASE_ENGINE, getCurrentTime } from '@helper';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
+export type TRollupQueueData = {
+  databaseName: string;
+  // collectionName is not really necessary but it could be useful for debugging
+  collectionName: string;
+  operationNumber: number;
+  transitionProofObjectId: ObjectId;
+  status: EProofStatusDocument;
+  error?: string;
+};
+
+export type TRollupQueueRecord = TDbRecord<TRollupQueueData>;
+
+export class ModelQueueTask extends ModelGeneral<
+  WithoutId<TRollupQueueRecord>
+> {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelQueueTask | null = null;
 
   private constructor() {
@@ -33,7 +48,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   }
 
   public async queueTask(
-    task: WithoutId<TQueueRecord>,
+    task: Omit<TRollupQueueData, 'status' | 'error'>,
     options?: InsertOneOptions
   ): Promise<void> {
     if (!this.collection) {
@@ -43,6 +58,8 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
       {
         ...task,
         status: EProofStatusDocument.Queued,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
       },
       options
     );
@@ -56,7 +73,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
    * is implemented (e.g. a processing timeout). */
   public async acquireNextTaskInQueue(
     session?: ClientSession
-  ): Promise<TQueueRecord | null> {
+  ): Promise<TRollupQueueRecord | null> {
     // The intent is to:
     // - Not allow parallel processing of tasks from the same database
     // - Take the oldest queued task from each available database
@@ -80,32 +97,34 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         $set: { status: EProofStatusDocument.Proving },
       },
       {
-        sort: { createdAt: 1 },
+        sort: { operationNumber: 1 },
         session,
       }
     );
   }
 
-  public async getNewTask(options?: FindOptions): Promise<TQueueRecord | null> {
+  public async getNewTask(
+    options?: FindOptions
+  ): Promise<TRollupQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     return this.collection.findOne(
       { status: EProofStatusDocument.Queued },
-      { sort: { createdAt: 1 }, ...options }
+      { sort: { operationNumber: 1 }, ...options }
     );
   }
 
   public async getQueuedTask(
-    filter: Filter<TQueueRecord>,
+    filter: Filter<TRollupQueueRecord>,
     options?: FindOptions
-  ): Promise<TQueueRecord | null> {
+  ): Promise<TRollupQueueRecord | null> {
     if (!this.collection) {
       throw new Error('TaskQueue is not connected to the database.');
     }
     return this.collection.findOne(
       { ...filter, status: EProofStatusDocument.Queued },
-      { sort: { createdAt: 1 }, ...options }
+      { sort: { operationNumber: 1 }, ...options }
     );
   }
 
@@ -153,7 +172,7 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
   }
 
   public static async init(session?: ClientSession) {
-    const collection = ModelCollection.getInstance<TQueueRecord>(
+    const collection = ModelCollection.getInstance<TRollupQueueRecord>(
       zkDatabaseConstant.globalProofDatabase,
       DATABASE_ENGINE.proofService,
       zkDatabaseConstant.globalCollection.queue
@@ -174,16 +193,10 @@ export class ModelQueueTask extends ModelGeneral<WithoutId<TQueueRecord>> {
         { databaseName: 1, operationNumber: 1 },
         { unique: true, session }
       );
-      await collection.createSystemIndex({ merkleRoot: 1 }, { session });
-      await collection.createSystemIndex({ merkleIndex: 1 }, { session });
-      await collection.createSystemIndex(
-        { hash: 1 },
-        { unique: true, session }
-      );
 
       // Index for acquiring the next task from the queue
       await collection.createSystemIndex(
-        { status: 1, databaseName: 1, createdAt: 1 },
+        { status: 1, databaseName: 1, operationNumber: 1 },
         { session }
       );
 

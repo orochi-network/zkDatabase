@@ -42,6 +42,7 @@ export type TGenericQueue<T> = {
 export class ModelGenericQueue<T> extends ModelGeneral<
   OptionalId<TDbRecord<TGenericQueue<T>>>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: Map<string, ModelGenericQueue<unknown>> = new Map();
 
   private constructor(queueName: string) {
@@ -166,7 +167,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       if (error instanceof Error) {
         errorMessage = error.message;
       } else {
-        errorMessage = 'Unknown error: ' + String(error);
+        errorMessage = `Unknown error: ${String(error)}`;
       }
 
       await this.updateOne(

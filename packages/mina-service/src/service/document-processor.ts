@@ -44,7 +44,7 @@ export class DocumentWorker {
 
   public static async run(): Promise<void> {
     const imDocumentQueue = ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.document_queue
+      zkDatabaseConstant.globalCollection.documentQueue
     );
 
     // NOTE: The exclusion queue stores databases that currently have a
@@ -133,7 +133,8 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
           },
           {
             _id: task._id,
-          }
+          },
+          true
         );
 
         // Indicates that no task was acquired, so we should back off
