@@ -12,7 +12,6 @@ import {
   PERMISSION_DEFAULT,
   TDocumentField,
   TDocumentRecordNullable,
-  TMerkleProof,
   TMetadataDetailDocument,
   TPagination,
   TParamCollection,
@@ -57,8 +56,8 @@ export class Document {
   static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TSerializedValue>,
-    permission = PERMISSION_DEFAULT,
-    compoundSession: TCompoundSession
+    compoundSession: TCompoundSession,
+    permission = PERMISSION_DEFAULT
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 
@@ -71,7 +70,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -139,7 +139,7 @@ export class Document {
       { session: compoundSession?.serverless }
     );
 
-    const witness = await Prover.create(
+    await Prover.create(
       {
         databaseName,
         collectionName,
@@ -150,9 +150,10 @@ export class Document {
     );
 
     return {
-      merkleProof: witness,
       docId,
       acknowledged: true,
+      // NOTE: this returns an extra validated field, remove this or not?
+      document: fieldArrayToRecord(validatedDocument),
     };
   }
 
@@ -173,7 +174,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -231,7 +233,7 @@ export class Document {
       compoundSession.serverless
     );
 
-    const witness = await Prover.update(
+    await Prover.update(
       {
         databaseName,
         collectionName,
@@ -241,14 +243,14 @@ export class Document {
       compoundSession
     );
 
-    return witness;
+    return fieldArrayToRecord(validatedDocument);
   }
 
   static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
     docId: string,
     compoundSession: TCompoundSession
-  ): Promise<TMerkleProof[]> {
+  ): Promise<void> {
     const { databaseName, collectionName, actor } = permissionParam;
 
     if (
@@ -260,7 +262,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -307,13 +310,14 @@ export class Document {
       }
     );
 
-    const witness = await Prover.delete({
-      databaseName,
-      collectionName,
-      docId: document.docId,
-    });
-
-    return witness;
+    await Prover.delete(
+      {
+        databaseName,
+        collectionName,
+        docId: document.docId,
+      },
+      compoundSession
+    );
   }
 
   /** Query for documents given a filter criteria. Returns a list of documents
@@ -328,7 +332,8 @@ export class Document {
 
     if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
       throw new Error(
-        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -422,7 +427,8 @@ export class Document {
 
     if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
       throw new Error(
-        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 

@@ -7,10 +7,16 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
+import { TDbRecord } from '@zkdb/common';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-import { TDbRecord } from '@zkdb/common';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
+
+export type TDocumentQueuedData = {
+  collectionName: string;
+  updatedDocumentHash: string;
+  merkleIndex: bigint;
+};
 
 export enum EQueueTaskStatus {
   Queued = 'Queued',

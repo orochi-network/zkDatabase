@@ -5,8 +5,7 @@ import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, Metadata } from '@domain';
-import { gql } from '@helper';
-import { authorizeWrapper } from '../validation';
+import { gql, GraphqlHelper } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -28,8 +27,8 @@ import {
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
-import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
+import { authorizeWrapper } from '../validation';
 
 // The value will be validated against the schema type in the database later
 const JOI_DOCUMENT_CREATE = (required?: boolean) =>
@@ -110,7 +109,6 @@ export const typeDefsDocument = gql`
   }
 
   type DocumentCreateResponse {
-    merkleProof: [MerkleProof!]!
     docId: String!
     acknowledged: Boolean!
   }
@@ -238,10 +236,10 @@ const documentCreate = authorizeWrapper<
         actor: ctx.userName,
       },
       args.document,
+      compoundSession,
       args.documentPermission
         ? Permission.from(args.documentPermission)
-        : PERMISSION_DEFAULT,
-      compoundSession
+        : PERMISSION_DEFAULT
     )
   )
 );
@@ -268,7 +266,7 @@ const documentDrop = authorizeWrapper<
   TDocumentDropRequest,
   TDocumentDropResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return withCompoundTransaction(async (session) => {
+  await withCompoundTransaction(async (session) => {
     return Document.drop(
       {
         databaseName: args.databaseName,
@@ -279,6 +277,8 @@ const documentDrop = authorizeWrapper<
       session
     );
   });
+
+  return true;
 });
 
 const documentHistoryFind = authorizeWrapper<

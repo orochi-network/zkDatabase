@@ -1,7 +1,6 @@
 import type { ObjectId } from 'mongodb';
 import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
-import { TMerkleProof } from './merkle-tree.js';
 import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { EProofStatusDocument } from './proof.js';
@@ -52,7 +51,7 @@ export type TDocumentCreateRequest = TCollectionRequest & {
 export type TDocumentCreateResponse = {
   docId: string;
   acknowledged: boolean;
-  merkleProof: TMerkleProof[];
+  document: Record<string, TSchemaSerializedField>;
 };
 
 export type TDocumentUpdateRequest = TCollectionRequest & {
@@ -60,13 +59,13 @@ export type TDocumentUpdateRequest = TCollectionRequest & {
   document: Record<string, TSerializedValue>;
 };
 
-export type TDocumentUpdateResponse = TMerkleProof[];
+export type TDocumentUpdateResponse = Record<string, TSchemaSerializedField>;
 
 export type TDocumentDropRequest = TCollectionRequest & {
   docId: string;
 };
 
-export type TDocumentDropResponse = TMerkleProof[];
+export type TDocumentDropResponse = boolean;
 
 export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;

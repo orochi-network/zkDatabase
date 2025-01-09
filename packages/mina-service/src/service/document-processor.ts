@@ -9,12 +9,13 @@
 // N is processed before the task with sequence number N+1.
 
 import { config, logger } from '@helper';
-import { DocumentProcessor, TDocumentQueuedData } from '@domain';
+import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
   getCurrentTime,
   ModelGenericQueue,
   ModelSequencer,
+  TDocumentQueuedData,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Backoff from 'src/helper/backoff';

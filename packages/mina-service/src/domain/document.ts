@@ -2,6 +2,7 @@ import {
   ModelMerkleTree,
   ModelQueueTask,
   TCompoundSession,
+  TDocumentQueuedData,
   TGenericQueue,
 } from '@zkdb/storage';
 import { TDbRecord } from '@zkdb/common';
@@ -13,12 +14,6 @@ export enum EDocumentOperation {
   Update = 'Update',
   Delete = 'Delete',
 }
-
-export type TDocumentQueuedData = {
-  collectionName: string;
-  updatedDocumentHash: string;
-  merkleIndex: bigint;
-};
 
 export class DocumentProcessor {
   /** Update merkle tree and queue new proof task */

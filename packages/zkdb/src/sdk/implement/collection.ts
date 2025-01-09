@@ -1,7 +1,5 @@
 import { IApiClient } from '@zkdb/api';
 import {
-  EIndexType,
-  TCollectionIndex,
   TCollectionMetadata,
   TDocumentCreateResponse,
   TPagination,
@@ -115,7 +113,7 @@ export class Collection<T extends TSchemaExtendable<any>>
     const result = await this.apiClient.document.documentFind({
       ...this.basicRequest,
       query: filter as any,
-      pagination: { limit: 1, offset: 0 },
+      pagination,
     });
 
     if (result.isValid()) {

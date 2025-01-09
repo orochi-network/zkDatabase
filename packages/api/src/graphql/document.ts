@@ -36,15 +36,13 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document: $document
           documentPermission: $documentPermission
         ) {
-          merkleProof {
-            ...MerkleProofFragment
-          }
           docId
           acknowledged
+          document
         }
       }
     `,
-    (data) => data.documentCreate
+    (data) => data.documentCreate,
   ),
   documentDrop: createMutateFunction<
     TDocumentDropRequest,
@@ -61,13 +59,10 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId
-        ) {
-          isLeft
-          sibling
-        }
+        )
       }
     `,
-    (data) => data.documentDrop
+    (data) => data.documentDrop,
   ),
   documentUpdate: createMutateFunction<
     TDocumentUpdateRequest,
@@ -86,13 +81,10 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           collectionName: $collectionName
           docId: $docId
           document: $document
-        ) {
-          isLeft
-          sibling
-        }
+        )
       }
     `,
-    (data) => data.documentUpdate
+    (data) => data.documentUpdate,
   ),
   documentFind: createQueryFunction<
     TDocumentFindRequest,
@@ -120,7 +112,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentFind
+    (data) => data.documentFind,
   ),
   documentHistoryFind: createQueryFunction<
     TDocumentFindRequest,
@@ -148,7 +140,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentHistoryFind
+    (data) => data.documentHistoryFind,
   ),
   documentMetadata: createQueryFunction<
     TDocumentMetadataRequest,
@@ -175,6 +167,6 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentMetadata
+    (data) => data.documentMetadata,
   ),
 });
