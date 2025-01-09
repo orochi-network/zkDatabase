@@ -206,9 +206,20 @@ in database '${databaseName}'.`
       );
     }
 
+    const newDocument = {
+      ...Object.entries(document.document).reduce(
+        (acc, [key, value]) => {
+          acc[key] = value.value;
+          return acc;
+        },
+        {} as Record<string, TSerializedValue>
+      ),
+      ...update,
+    };
+
     const validatedDocument = DocumentSchema.validateDocumentSchema(
       collectionMetadata,
-      update
+      newDocument
     );
 
     const actorPermissionDocument = await PermissionSecurity.document(
@@ -221,15 +232,11 @@ in database '${databaseName}'.`
       );
     }
 
-    if (Object.keys(update).length === 0) {
-      throw new Error(
-        'Document array is empty. At least one field is required.'
-      );
-    }
+    const documentRecord = fieldArrayToRecord(validatedDocument);
 
     await imDocument.update(
       document.docId,
-      fieldArrayToRecord(validatedDocument),
+      documentRecord,
       compoundSession.serverless
     );
 
@@ -243,7 +250,7 @@ in database '${databaseName}'.`
       compoundSession
     );
 
-    return fieldArrayToRecord(validatedDocument);
+    return documentRecord;
   }
 
   static async drop(
