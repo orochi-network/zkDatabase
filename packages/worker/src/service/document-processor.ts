@@ -92,9 +92,9 @@ tracking sequence number: ${trackingSequenceNumber}`
           return true;
         }
 
-        // Acquire the task again, this time with a lock to prevent other
-        // workers from processing the same task. Note that at this stage it
-        // can still fail to acquire the task if another worker has already
+        // Acquire the task again, this time with findOneAndUpdate to prevent
+        // other workers from processing the same task. Note that at this stage
+        // it can still fail to acquire the task if another worker has already
         // acquired it.
         const result = await imDocumentQueue.acquireNextTaskInQueue(
           async (acquiredTask, compoundSession) => {
