@@ -5,6 +5,9 @@ import {
   TRollupCreateResponse,
   TRollupHistoryRequest,
   TRollupHistoryResponse,
+  TRollupStateRequest,
+  TRollupStateResponse,
+  pagination,
 } from '@zkdb/common';
 import { withCompoundTransaction } from '@zkdb/storage';
 import GraphQLJSON from 'graphql-type-json';
@@ -34,34 +37,56 @@ type RollupHistoryItem {
   updatedAt: Date!
 }
 
-type RollupHistory {
+type RollupHistoryListResponse {
+  data: [RollupHistoryItem]!
+  total: Int!
+  offset: Int!
+}
+
+type RollupState {
   state: RollupState,
   merkleTreeRoot: String!
   merkleTreeRootPrevious: String!
   rollUpDifferent: Int,
-  history: [RollupHistoryItem]
   latestRollupSuccess: Date
 }
 
 extend type Query {
-  rollupHistory(databaseName: String!): RollupHistory
+  rollupHistory(query: JSON, pagination: PaginationInput): RollupHistoryListResponse!
+  rollupState(databaseName: String!): RollupState!
 }
 
 extend type Mutation {
   rollupCreate(databaseName: String!): Boolean 
 }
 `;
+const SchemaRollupHistoryRecordQuery = Joi.object<
+  TRollupHistoryRequest['query']
+>({
+  databaseName: Joi.string().optional(),
+  merkleTreeRoot: Joi.string().optional(),
+  merkleTreeRootPrevious: Joi.string().optional(),
+});
+
+const JOI_ROLLUP_HISTORY_LIST = Joi.object<TRollupHistoryRequest>({
+  query: SchemaRollupHistoryRecordQuery.required(),
+  pagination,
+});
+
+// Query
+const rollupState = authorizeWrapper<TRollupStateRequest, TRollupStateResponse>(
+  Joi.object({ databaseName }),
+  async (_root, { databaseName }) => Rollup.state(databaseName)
+);
 
 const rollupHistory = authorizeWrapper<
   TRollupHistoryRequest,
   TRollupHistoryResponse
->(
-  Joi.object({
-    databaseName,
-  }),
-  async (_root, { databaseName }) => Rollup.history(databaseName)
-);
+>(JOI_ROLLUP_HISTORY_LIST, async (_root, args) => {
+  return Rollup.history(args);
+});
 
+// Mutation
 const rollupCreate = authorizeWrapper<
   TRollupCreateRequest,
   TRollupCreateResponse
@@ -81,6 +106,7 @@ export const resolversRollup = {
   JSON: GraphQLJSON,
   Query: {
     rollupHistory,
+    rollupState,
   },
   Mutation: {
     rollupCreate,

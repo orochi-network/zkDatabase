@@ -35,29 +35,47 @@ export class ZkCompile {
 
     const zkDbProcessor = new ZkDbProcessor(merkleHeight);
 
-    const {
-      zkdbContract: { verificationKey },
-    } = await zkDbProcessor.compile(CACHE_PATH);
+    const { zkdbContract, zkdbRollup } =
+      await zkDbProcessor.compile(CACHE_PATH);
 
     const imVerification = ModelVerificationKey.getInstance();
 
-    const verificationKeySerialized: TVerificationKeySerialized = {
-      ...verificationKey,
-      hash: verificationKey.hash.toString(),
+    const contractVerificationKeySerialized: TVerificationKeySerialized = {
+      ...zkdbContract.verificationKey,
+      hash: zkdbContract.verificationKey.hash.toString(),
+    };
+
+    const rollupVerificationKeySerialized: TVerificationKeySerialized = {
+      ...zkdbRollup.verificationKey,
+      hash: zkdbRollup.verificationKey.hash.toString(),
     };
 
     // Using SHA-256 hash from 'crypto' to hash verification key
 
-    const verificationKeyHash = createHash('sha256')
-      .update(JSON.stringify(verificationKeySerialized))
+    const contractVerificationKeyHash = createHash('sha256')
+      .update(JSON.stringify(contractVerificationKeySerialized))
       .digest('hex');
 
-    await imVerification.insertOne({
-      verificationKeyHash,
-      verificationKey: verificationKeySerialized,
-      createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
-    });
+    const rollupVerificationKeyHash = createHash('sha256')
+      .update(JSON.stringify(rollupVerificationKeySerialized))
+      .digest('hex');
+
+    await imVerification.insertMany([
+      {
+        contractName: 'zkdb-contract',
+        verificationKeyHash: contractVerificationKeyHash,
+        verificationKey: contractVerificationKeySerialized,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+      {
+        contractName: 'zkdb-rollup',
+        verificationKeyHash: rollupVerificationKeyHash,
+        verificationKey: rollupVerificationKeySerialized,
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+      },
+    ]);
 
     // Store smart contract's verification key into database and hashed like hash table for key hash and value
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);

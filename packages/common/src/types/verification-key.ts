@@ -10,6 +10,7 @@ export type TVerificationKeySerialized = {
 export type TZkDbVerificationKey = {
   verificationKeyHash: string;
   verificationKey: TVerificationKeySerialized;
+  contractName: string;
 };
 
 export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;

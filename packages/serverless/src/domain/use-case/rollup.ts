@@ -1,15 +1,15 @@
 import { getCurrentTime, logger } from '@helper';
 import {
-  ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TRollupHistoryDetail,
+  TRollupHistoryParam,
+  TRollupHistoryResponse,
+  TRollupStateNullable,
 } from '@zkdb/common';
-import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   ModelMetadataDatabase,
-  ModelRollupOffChain,
   ModelRollupHistory,
+  ModelRollupOffChain,
   ModelTransaction,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -86,18 +86,19 @@ export class Rollup {
     );
 
     const currentTime = getCurrentTime();
+
     await imRollupHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
         // @NOTICE Something possible wrong here
-        merkleTreeRoot: latestProofForDb.merkleRoot,
-        merkleTreeRootPrevious: latestProofForDb.merkleRootPrevious,
+        merkleTreeRoot: latestProofForDb.merkleRootNew,
+        merkleTreeRootPrevious: latestProofForDb.merkleRootOld,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        error: '',
         step: latestProofForDb.step,
+        error: null,
       },
       { session: compoundSession?.serverless }
     );
@@ -106,64 +107,77 @@ export class Rollup {
   }
 
   static async history(
-    databaseName: string,
+    param: TRollupHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupHistoryDetail | null> {
-    const database = await ModelMetadataDatabase.getInstance().findOne(
-      { databaseName },
+  ): Promise<TRollupHistoryResponse | null> {
+    const { query, pagination } = param;
+
+    const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
+      query,
       {
         session,
       }
     );
 
     if (
-      !database?.appPublicKey ||
-      PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
+      !metadataDatabase?.appPublicKey ||
+      PublicKey.fromBase58(metadataDatabase?.appPublicKey).isEmpty().toBoolean()
     ) {
       throw Error('Database is not bound to zk app');
     }
 
-    const zkDbProcessor = new ZkDbProcessor(database.merkleHeight);
-    const zkDbSmartContract = zkDbProcessor.getInstanceZkDBContract(
-      PublicKey.fromBase58(database.appPublicKey)
-    );
-    const onChainRollupStep = zkDbSmartContract.step.get().toBigInt();
     const imRollupHistory = ModelRollupHistory.getInstance();
 
     const rollupHistory = await imRollupHistory
-      .find({ databaseName })
+      .find(query)
       .sort({ createdAt: -1, updatedAt: -1 })
       .toArray();
 
-    const latestRollupHistory = rollupHistory.at(0);
-
-    if (latestRollupHistory) {
-      const rollUpDifferent = onChainRollupStep - rollupHistory[0].step;
-
-      const imTransaction = ModelTransaction.getInstance();
-      // Get latest rollup success transaction info
-      const latestRollupSuccessTransaction = await imTransaction.findOne(
-        {
-          databaseName,
-          transactionType: ETransactionType.Rollup,
-          status: ETransactionStatus.Confirmed,
-        },
-        { sort: { updatedAt: -1 } }
-      );
-
+    if (!rollupHistory.length) {
       return {
-        databaseName,
-        merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
-        merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
-        latestRollupSuccess: latestRollupSuccessTransaction?.updatedAt || null,
-        rollUpDifferent,
-        rollUpState:
-          rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
-        history: rollupHistory,
-        error: latestRollupHistory.error,
+        data: [],
+        total: 0,
+        offset: pagination.offset || 0,
       };
     }
 
-    return null;
+    return {
+      data: rollupHistory,
+      total: await imRollupHistory.count(query),
+      offset: pagination.offset || 0,
+    };
+
+    // if (latestRollupHistory) {
+    //   const rollUpDifferent = onChainRollupStep - rollupHistory[0].step;
+
+    //   const imTransaction = ModelTransaction.getInstance();
+    //   // Get latest rollup success transaction info
+    //   const latestRollupSuccessTransaction = await imTransaction.findOne(
+    //     {
+    //       databaseName,
+    //       transactionType: ETransactionType.Rollup,
+    //       status: ETransactionStatus.Confirmed,
+    //     },
+    //     { sort: { updatedAt: -1 } }
+    //   );
+
+    //   return {
+    //     databaseName,
+    //     merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
+    //     merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
+    //     latestRollupSuccess: latestRollupSuccessTransaction?.updatedAt || null,
+    //     rollUpDifferent,
+    //     rollUpState:
+    //       rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+    //     history: rollupHistory,
+    //     error: latestRollupHistory.error,
+    //   };
+    // }
+
+    // return null;
+  }
+
+  static async state(databaseName: string): Promise<TRollupStateNullable> {
+    throw new Error('Not implemented');
   }
 }

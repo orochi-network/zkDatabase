@@ -1,7 +1,7 @@
 import type { ObjectId } from 'mongodb';
 import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest } from './database';
-import { TTransactionRecord } from './transaction';
+import { TPagination, TPaginationReturn } from './pagination';
 
 /**
  * Rollup state
@@ -38,9 +38,14 @@ export type TRollupState = Pick<
   // Number of merkle root transformation different to previous one
   rollUpDifferent: bigint;
   rollUpState: ERollupState;
-  latestRollupSuccess: Date | null;
-  error: string | null;
+  latestRollupSuccess: Date;
+  error: string;
 };
+
+export type TRollupStateNullable = TNullable<
+  TRollupState,
+  'rollUpDifferent' | 'latestRollupSuccess' | 'error'
+>;
 
 export type TRollupOnChain = {
   databaseName: string;
@@ -61,20 +66,27 @@ export type TRollupHistoryRecordNullable = TDbRecord<
 
 export type TRollupHistoryRecord = TDbRecord<TRollupHistory>;
 
-// Compound Type
-
-export type TRollupHistoryTransactionAggregate = TRollupHistoryRecord & {
-  transaction: TTransactionRecord;
-};
-
-export type TRollupHistoryDetail = TRollupState & {
-  history: TRollupHistoryRecordNullable[];
-};
-
 // Rollup history
-export type TRollupHistoryRequest = TDatabaseRequest;
+export type TRollupHistoryRequest = {
+  query: Partial<
+    Pick<
+      TRollupHistory,
+      'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
+    >
+  >;
+  pagination: TPagination;
+};
 
-export type TRollupHistoryResponse = TRollupHistoryDetail | null;
+export type TRollupHistoryParam = TRollupHistoryRequest;
+
+export type TRollupHistoryResponse = TPaginationReturn<
+  TRollupHistoryRecordNullable[]
+> | null;
+
+// Rollup state
+export type TRollupStateRequest = TDatabaseRequest;
+
+export type TRollupStateResponse = TRollupStateNullable;
 
 // Rollup create
 export type TRollupCreateRequest = TDatabaseRequest;
