@@ -1,41 +1,41 @@
-## Introduction
+### Overview
 
-zkDatabase as a service, it used the same license with [MongoDB](https://www.mongodb.com/).
+The system processes document operations through a multi-tenant pipeline.
+Operations first land in an unordered pool grouped by tenant. The Merkle Tree
+Worker polls from this pool and processes operations in strict sequential order
+for each tenant (ensuring each operation's sequence number matches the expected
+next number). It then queues proof tasks for the Proof Worker to consume. While
+operations from different tenants can be processed concurrently, operations
+within each tenant maintain strict ordering through both workers. This
+architecture enables parallel processing across tenants while preserving
+sequential guarantees within each tenant's operations.
 
-## MongoDB Replica Set Setup
+```text
+Document Operations        Merkle Tree Worker              Proof Worker
+      Pool                (Per-tenant Ordering)         (Per-tenant Ordering)
 
-### Prerequisites
+Tenant A:                   ┌──────────────┐            ┌─────────────┐
+ [Op4]  [Op1]               │ Tenant A:    │            │ Tenant A:   │
+ [Op7]  [Op2]  ═══Poll═══》 │ Check Seq #  │  ═══》     │ Process     │
+                            │ Process Ops  │            │ Proofs      │
+Tenant B:                   └──────────────┘            └─────────────┘
+ [Op3]  [Op6]               ┌─────────────┐            ┌─────────────┐
+ [Op5]  [Op8]  ═══Poll═══》 │ Tenant B:   │  ═══》     │ Tenant B:   │
+     │                      │ Check Seq # │            │ Process     │
+     │                      │ Process Ops │            │ Proofs      │
+     ▼                      └─────────────┘            └─────────────┘
+New ops arrive
+(unordered)                  Concurrent but              Concurrent but
+                            ordered per tenant          ordered per tenant
 
-- Docker and Docker Compose
-- OpenSSL (for generating the keyfile)
-
-### Setup Instructions
-
-1. Generate Keyfile for Replica Set Authentication
-   Run the setup.sh script to generate a keyfile for internal authentication between replica set members:
-
-```bash
-cd scripts
-./setup.sh
+Sequential Flow (per tenant): ━━━━━━━━━━━━━━━━━━━━━━》
+                             1 → 2 → 3 → 4 → 5 → ...
 ```
 
-This script creates a keyfile in the mongo-keyfile directory, which is used by MongoDB for authentication.
+While the diagram might suggest we have a dedicated worker per tenant, the
+actual implementation uses a pool of workers that dynamically process
+operations across different tenants. These workers automatically multiplex
+operations for different tenants while maintaining per-tenant ordering
+guarantees. The diagram is simplified to illustrate this per-tenant ordering
+concept.
 
-2. Start MongoDB with Docker Compose
-   Launch the MongoDB container with the replica set configuration using Docker Compose:
-
-```bash
-docker-compose up -d
-```
-
-This will start a MongoDB instance with the replica set named rs0 and enable keyfile-based authorization.
-
-3. Copy the `.env.example` file to a new file named `.env`. And edit the `.env` file and replace the placeholder values with your actual environment-specific values.
-
-Url: `mongodb://admin:password@127.0.0.1:27017/?directConnection=true`
-
-## License
-
-This project is licensed under the Server Side Public License - see the [LICENSE](LICENSE) file for details
-
-_built with <3_
