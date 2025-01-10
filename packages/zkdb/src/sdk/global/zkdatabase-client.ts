@@ -135,7 +135,7 @@ export class ZkDatabase {
 
     // Get environment variables
     const { networkId: networkEnum, networkUrl } = (
-      await tmpClient.db.dbEnvironment()
+      await tmpClient.db.dbEnvironment(undefined)
     ).unwrap();
     const networkId =
       networkEnum === ENetworkId.Mainnet ? 'mainnet' : 'testnet';

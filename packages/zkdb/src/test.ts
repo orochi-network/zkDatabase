@@ -1,6 +1,5 @@
-import { extend } from 'joi';
-import { Schema, ZkDatabase } from './index';
 import { CircuitString, UInt64 } from 'o1js';
+import { Schema, ZkDatabase } from './index';
 
 const zkdb = await ZkDatabase.connect({
   userName: 'chiro-user',
@@ -9,26 +8,31 @@ const zkdb = await ZkDatabase.connect({
   url: 'http://zkdb-serverless.zenfactory.org/graphql',
 });
 
-if (!(await zkdb.auth.isUserExist('chiro-user'))) {
-  await zkdb.auth.signUp('chiro@example.com');
-}
-
 console.log(await zkdb.auth.signIn());
 
-console.log(await zkdb.db('zkdb_test').info());
-
-/*
-class TShirt extends Schema.create({
+class Shirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
-const shirt = new TShirt({
-  name: CircuitString.fromString('Orochi'),
-  price: UInt64.from(12),
+type TShirt = typeof Shirt;
+
+const collection = await zkdb
+  .db('zkdb_test')
+  .collection<TShirt>('test_collection');
+
+const doc = await collection.findOne({ name: 'Test Shirt' });
+
+if (doc) {
+  console.log(doc.document);
+}
+
+const listDoc = await collection.findMany(undefined, { limit: 10, offset: 0 });
+
+listDoc.data.forEach((item) => {
+  console.log(item.document);
 });
 
-const encodedShirt = shirt.serialize();
-console.log(encodedShirt);*/
+await zkdb.db('zkdb_test').group('test').userAdd(['user1', 'user2']);
 
 await zkdb.auth.signOut();

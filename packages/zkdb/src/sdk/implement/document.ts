@@ -14,6 +14,7 @@ import {
 } from '@zkdb/common';
 import { IDocument, IMetadata, TDocument } from '../interfaces';
 import { DocumentMetadata } from './document-metadata';
+import { serializeDocument } from '../helper/serialize';
 
 export class Document<T extends TSchemaExtendable<any>>
   implements IDocument<T>
@@ -91,13 +92,16 @@ export class Document<T extends TSchemaExtendable<any>>
     return (
       await this.apiClient.document.documentUpdate({
         ...this.basicRequest,
-        document: document as Record<string, TSerializedValue>,
+        document: serializeDocument(document) as Record<
+          string,
+          TSerializedValue
+        >,
       })
     ).unwrap();
   }
 
   toProvable(schema: T): InstanceType<T> {
-    const schemaDefinition = schema.getSchemaDefinition();
+    const schemaDefinition = schema.definition();
     const document = schemaDefinition.map(({ name, kind }) => {
       return {
         name,

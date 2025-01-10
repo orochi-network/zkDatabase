@@ -1,20 +1,20 @@
 /* eslint-disable max-classes-per-file */
 import {
-  Poseidon,
-  InferProvable,
-  CircuitString,
-  UInt32,
   Bool,
-  Field,
-  UInt64,
   Character,
+  CircuitString,
+  Field,
+  InferProvable,
   Int64,
-  Sign,
-  PublicKey,
-  PrivateKey,
-  Signature,
   MerkleMapWitness,
+  Poseidon,
+  PrivateKey,
+  PublicKey,
+  Sign,
+  Signature,
   Struct,
+  UInt32,
+  UInt64,
 } from 'o1js';
 import { TMerkleNodeJson } from './types/merkle-tree';
 
@@ -110,19 +110,24 @@ export type TSchemaSerializedFieldDefinition = Omit<
 
 export interface ISchemaExtend {
   serialize(): TSchemaSerializedField[];
+
   hash(): Field;
 }
 
-export type TSchemaExtendable<A> = Struct<InferProvable<A> & ISchemaExtend> &
-  ISchemaStatic<A>;
+export type TSchemaExtendable<
+  A,
+  T extends InferProvable<A> = InferProvable<A> & ISchemaExtend,
+> = Struct<InferProvable<A>> & (new (..._args: any[]) => T) & ISchemaStatic<A>;
 
 export interface ISchemaStatic<A> {
   innerStructure: TSchemaQueryMap<A>;
+
   // eslint-disable-next-line no-use-before-define
   deserialize(
     doc: TSchemaSerializedField[]
   ): InstanceType<TSchemaExtendable<A>>;
-  getSchemaDefinition(): TSchemaSerializedFieldDefinition[];
+
+  definition(): TSchemaSerializedFieldDefinition[];
 }
 
 export type TProvableMapped<T extends TSchemaSerializedFieldDefinition[]> = {
@@ -141,13 +146,11 @@ function toInnerStructure<T extends TSchemaSerializedFieldDefinition[]>(
 }
 
 export class Schema {
-  public static create<A, T extends InferProvable<A> = InferProvable<A>>(
-    type: A
-  ): TSchemaExtendable<A> & (new (..._args: T[]) => T) {
+  public static create<A>(type: A): TSchemaExtendable<A> {
     class SchemaProvable extends Struct(type) {
-      public innerStructure: TSchemaQueryMap<A> = type as any;
+      public innerStructure: TSchemaQueryMap<A> = {} as any;
 
-      private static schemaEntries: TSchemaSerializedFieldDefinition[] =
+      public static schemaEntries: TSchemaSerializedFieldDefinition[] =
         Object.entries(type as any).map(
           ([name, kind]): TSchemaSerializedFieldDefinition => {
             return {
@@ -157,7 +160,7 @@ export class Schema {
           }
         );
 
-      public static getSchemaDefinition(): TSchemaSerializedFieldDefinition[] {
+      public static definition(): TSchemaSerializedFieldDefinition[] {
         return SchemaProvable.schemaEntries.map(({ name, kind }) => ({
           name,
           kind,
@@ -166,7 +169,7 @@ export class Schema {
 
       // Serialize the document to a Uint8Array
       serialize(): TSchemaSerializedField[] {
-        const anyThis = <any>this;
+        const anyThis = this as any;
         const result: any = [];
         for (let i = 0; i < SchemaProvable.schemaEntries.length; i += 1) {
           const { name, kind } = SchemaProvable.schemaEntries[i];
@@ -247,7 +250,6 @@ export class Schema {
         return new SchemaProvable(result);
       }
     }
-
     return SchemaProvable as any;
   }
 
