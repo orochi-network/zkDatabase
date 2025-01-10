@@ -88,6 +88,7 @@ export class DocumentWorker {
         );
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
+          exclusionQueue.push(task.databaseName);
           exclusionQueue.shift();
           throw new Error(
             `Task sequence number of task ${task._id} is less than or equal \
@@ -170,6 +171,7 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
         return false;
       },
       async (error) => {
+        exclusionQueue.shift();
         logger.error('Error while processing document queue:', error);
       }
     );
