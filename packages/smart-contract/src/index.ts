@@ -1,10 +1,7 @@
+export { TRollupProof, TRollupTransition } from './common.js';
 export * from './network/index.js';
-export {
-  TRollupProof,
-  TRollupTransition,
-  ZkDbProcessor,
-} from './zkdb-processor.js';
 export { ZkDbContract } from './zkdb-contract.js';
+export { ZkDbProcessor } from './zkdb-processor.js';
 export {
   ZkDbRollup,
   ZkDbRollupInput,
