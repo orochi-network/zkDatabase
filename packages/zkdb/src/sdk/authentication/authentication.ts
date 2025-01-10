@@ -63,7 +63,9 @@ export class Authenticator {
   }
 
   public async signIn() {
-    const ecdsaChallenge = (await this.user.userEcdsaChallenge()).unwrap();
+    const ecdsaChallenge = (
+      await this.user.userEcdsaChallenge(undefined)
+    ).unwrap();
     const proof = await this.signer.signMessage({ message: ecdsaChallenge });
     if (proof instanceof Error) {
       throw proof;
@@ -109,7 +111,7 @@ export class Authenticator {
   }
 
   public async signOut(): Promise<void> {
-    if ((await this.user.userSignOut()).unwrap()) {
+    if ((await this.user.userSignOut(undefined)).unwrap()) {
       this.#storage.clear();
     }
   }
