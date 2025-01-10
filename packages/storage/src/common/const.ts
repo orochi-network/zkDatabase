@@ -11,7 +11,7 @@ export const zkDatabaseConstant = {
 
   globalMerkleTreeDatabase: '_zkdatabase_merkle_tree',
 
-  globalTransitionProofDatabase: '_zkdatabase_transition_proof',
+  globalTransitionLogDatabase: '_zkdatabase_transition_log',
 
   systemIndex: '_zkdatabase_system_index',
 

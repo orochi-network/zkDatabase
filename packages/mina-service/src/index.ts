@@ -17,5 +17,7 @@ clusterApp
   .add(SERVICE_TRANSACTION)
   .add(SERVICE_TASK)
   .add(SERVICE_ROLLUP)
-  .add(SERVICE_DOCUMENT)
+  // TODO: Make num of workers configurable instead of hardcoding
+  .add(SERVICE_DOCUMENT('1'))
+  .add(SERVICE_DOCUMENT('2'))
   .start();

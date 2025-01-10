@@ -12,10 +12,18 @@ import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
 
+export enum EDocumentOperation {
+  Create = 'Create',
+  Update = 'Update',
+  Delete = 'Delete',
+}
+
 export type TDocumentQueuedData = {
   collectionName: string;
-  updatedDocumentHash: string;
+  operationKind: EDocumentOperation;
+  newDocumentHash?: string;
   merkleIndex: bigint;
+  docId: string;
 };
 
 export enum EQueueTaskStatus {
@@ -53,9 +61,16 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     );
   }
 
-  public static getInstance<T>(queueName: string): ModelGenericQueue<T> {
+  /** Session is required to avoid concurrency issues such as write conflict
+   * while initializing the collection (create index, etc.) and writing to the
+   * collection at the same time. */
+  public static async getInstance<T>(
+    queueName: string,
+    session: ClientSession
+  ): Promise<ModelGenericQueue<T>> {
     if (!this.instance.has(queueName)) {
       this.instance.set(queueName, new ModelGenericQueue(queueName));
+      await ModelGenericQueue.init(queueName, session);
     }
     return this.instance.get(queueName) as ModelGenericQueue<T>;
   }
@@ -113,13 +128,32 @@ export class ModelGenericQueue<T> extends ModelGeneral<
             status: EQueueTaskStatus.Queued,
             databaseName: {
               $nin: await this.collection.distinct('databaseName', {
-                status: EQueueTaskStatus.Processing,
+                $or: [
+                  {
+                    status: EQueueTaskStatus.Processing,
+                  },
+                  {
+                    // We should not continue processing tasks for databases
+                    // that have failed tasks in the queue. The latest failed
+                    // task should be resolved manually before we can continue.
+                    // NOTE: that if the sequence number check for task
+                    // ordering is implemented correctly by the caller, this is
+                    // still helpful since it prevents acquiring a non-eligible
+                    // task.
+                    status: EQueueTaskStatus.Failed,
+                  },
+                ],
               }),
             },
           },
           {
             // Enable retry mechanism for tasks stuck in 'Processing' status
-            // for more than a timeout period
+            // for more than a timeout period.
+            // NOTE: that this is based on the assumption that if the task is
+            // stuck in 'Processing' status for more than a timeout period, it
+            // is likely that the task is cancelled midway and the transaction
+            // is rolled back. Thus the caller of this function should ensure
+            // that every task's operations are contained within a transaction.
             status: EQueueTaskStatus.Processing,
             acquiredAt: {
               $lt: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes
@@ -128,10 +162,10 @@ export class ModelGenericQueue<T> extends ModelGeneral<
         ],
       },
       {
-        $set: { status: EQueueTaskStatus.Processing },
+        $set: { status: EQueueTaskStatus.Processing, acquiredAt: new Date() },
       },
       {
-        sort: { createdAt: 1 },
+        sort: { sequenceNumber: 1 },
         returnDocument: 'after',
       }
     );
@@ -141,7 +175,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     }
 
     try {
-      const result = withCompoundTransaction(async (session) => {
+      const result = await withCompoundTransaction(async (session) => {
         return f(task, session);
       });
 
@@ -199,7 +233,17 @@ export class ModelGenericQueue<T> extends ModelGeneral<
             status: EQueueTaskStatus.Queued,
             databaseName: {
               $nin: await this.collection.distinct('databaseName', {
-                status: EQueueTaskStatus.Processing,
+                $or: [
+                  {
+                    status: EQueueTaskStatus.Processing,
+                  },
+                  {
+                    // We must not continue processing tasks for databases that
+                    // have failed tasks in the queue. The latest failed task
+                    // should be resolved before we can continue.
+                    status: EQueueTaskStatus.Failed,
+                  },
+                ],
               }),
             },
           },
@@ -214,7 +258,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
         ],
       },
       {
-        sort: { createdAt: 1 },
+        sort: { sequenceNumber: 1 },
         ...options,
       }
     );

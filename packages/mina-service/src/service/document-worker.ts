@@ -8,7 +8,7 @@
 // processing is done in the correct order, i.e. the task with sequence number
 // N is processed before the task with sequence number N+1.
 
-import { config, logger } from '@helper';
+import { config } from '@helper';
 import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
@@ -16,24 +16,28 @@ import {
   ModelGenericQueue,
   ModelSequencer,
   TDocumentQueuedData,
+  withTransaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Backoff from 'src/helper/backoff';
 import assert from 'node:assert';
 import { ESequencer } from '@zkdb/common';
+import { LoggerLoader } from '@orochi-network/framework';
+
+let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
 
 /** The duration to wait before exiting the service after a crash to prevent a
  * tight loop of restarts. */
 const CRASH_TIMEOUT_MS = 60000;
 
 /** The initial delay for task retries. */
-const INITIAL_DELAY = 1000;
+const INITIAL_DELAY = 10;
 
 /** Defines the maximum backoff delay for task retries. This value represents
  * the upper limit for task delay and should strike a balance between system
  * responsiveness and avoiding excessive polling that could overload the
  * system. */
-const DELAY_CAP_MS = 1000;
+const DELAY_CAP_MS = 2000;
 
 export class DocumentWorker {
   public static async delay(ms: number): Promise<void> {
@@ -43,8 +47,13 @@ export class DocumentWorker {
   }
 
   public static async run(): Promise<void> {
-    const imDocumentQueue = ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue
+    const imDocumentQueue = await withTransaction(
+      (session) =>
+        ModelGenericQueue.getInstance<TDocumentQueuedData>(
+          zkDatabaseConstant.globalCollection.documentQueue,
+          session
+        ),
+      'proofService'
     );
 
     // NOTE: The exclusion queue stores databases that currently have a
@@ -70,9 +79,13 @@ export class DocumentWorker {
 
         assert(task.sequenceNumber !== null, "Task's sequence number is null");
 
-        const trackingSequenceNumber = await ModelSequencer.getInstance(
-          task.databaseName
-        ).current(ESequencer.LastProcessedOperation);
+        const trackingSequenceNumber = await withTransaction(
+          (session) =>
+            ModelSequencer.getInstance(task.databaseName, session).then(
+              (self) => self.current(ESequencer.LastProcessedOperation)
+            ),
+          'proofService'
+        );
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
           exclusionQueue.shift();
@@ -99,10 +112,16 @@ tracking sequence number: ${trackingSequenceNumber}`
         // acquired it.
         const result = await imDocumentQueue.acquireNextTaskInQueue(
           async (acquiredTask, compoundSession) => {
+            logger.debug(
+              `Processing task with seq ${acquiredTask.sequenceNumber} for database ${acquiredTask.databaseName}`
+            );
             await DocumentProcessor.onTask(acquiredTask, compoundSession);
 
-            const bumpSeqResult = await ModelSequencer.getInstance(
-              task.databaseName
+            const bumpSeqResult = (
+              await ModelSequencer.getInstance(
+                task.databaseName,
+                compoundSession.serverless
+              )
             ).collection.findOneAndUpdate(
               {
                 type: ESequencer.LastProcessedOperation,
@@ -117,7 +136,11 @@ tracking sequence number: ${trackingSequenceNumber}`
                   createdAt: getCurrentTime(),
                 },
               },
-              { session: compoundSession.serverless, upsert: true }
+              {
+                session: compoundSession.serverless,
+                upsert: true,
+                returnDocument: 'after',
+              }
             );
 
             if (bumpSeqResult === null) {
@@ -153,9 +176,10 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
   }
 }
 
-export const SERVICE_DOCUMENT = {
-  clusterName: 'document-worker',
+export const SERVICE_DOCUMENT = (workerId = '1') => ({
+  clusterName: `document-worker-${workerId}`,
   payload: async () => {
+    logger = new LoggerLoader(`document-worker-${workerId}`, 'debug', 'string');
     try {
       // Connect to db
       const serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
@@ -169,6 +193,8 @@ export const SERVICE_DOCUMENT = {
         await proofDb.connect();
       }
 
+      // TODO: consider using queue.Parallel with configurable parallelism
+      // count if workload is mostly I/O bound
       await DocumentWorker.run();
     } catch (error) {
       logger.error(
@@ -182,4 +208,4 @@ export const SERVICE_DOCUMENT = {
       throw error;
     }
   },
-};
+});

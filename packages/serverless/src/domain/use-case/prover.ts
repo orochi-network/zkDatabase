@@ -5,8 +5,8 @@ import {
   ModelGenericQueue,
   TDocumentQueuedData,
   zkDatabaseConstant,
+  EDocumentOperation,
 } from '@zkdb/storage';
-import { Field } from 'o1js';
 
 import { ModelMetadataDocument } from '@model';
 import { DocumentSchema, TValidatedDocument } from './document-schema';
@@ -55,7 +55,10 @@ export class Prover {
 
     const hash = schema.hash();
 
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session.serverless
+    );
 
     const operationNumber = await imSequencer.nextValue(
       ESequencer.Operation,
@@ -63,18 +66,23 @@ export class Prover {
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue
-    ).queueTask(
-      {
-        data: {
-          collectionName,
-          merkleIndex: BigInt(index),
-          updatedDocumentHash: hash.toString(),
+      zkDatabaseConstant.globalCollection.documentQueue,
+      session.proofService
+    ).then((self) =>
+      self.queueTask(
+        {
+          data: {
+            collectionName,
+            merkleIndex: BigInt(index),
+            newDocumentHash: hash.toString(),
+            operationKind: EDocumentOperation.Create,
+            docId,
+          },
+          databaseName,
+          sequenceNumber: operationNumber,
         },
-        databaseName,
-        sequenceNumber: operationNumber,
-      },
-      { session: session.proofService }
+        { session: session.proofService }
+      )
     );
   }
 
@@ -101,25 +109,33 @@ export class Prover {
 
     const hash = schema.hash();
 
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session.serverless
+    );
     const operationNumber = await imSequencer.nextValue(
       ESequencer.Operation,
       session.serverless
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue
-    ).queueTask(
-      {
-        data: {
-          collectionName,
-          merkleIndex: BigInt(metadataDocument.merkleIndex),
-          updatedDocumentHash: hash.toString(),
+      zkDatabaseConstant.globalCollection.documentQueue,
+      session.proofService
+    ).then((self) =>
+      self.queueTask(
+        {
+          data: {
+            collectionName,
+            merkleIndex: BigInt(metadataDocument.merkleIndex),
+            newDocumentHash: hash.toString(),
+            operationKind: EDocumentOperation.Update,
+            docId,
+          },
+          databaseName,
+          sequenceNumber: operationNumber,
         },
-        databaseName,
-        sequenceNumber: operationNumber,
-      },
-      { session: session.proofService }
+        { session: session.proofService }
+      )
     );
   }
 
@@ -142,7 +158,10 @@ export class Prover {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session.serverless
+    );
 
     const operationNumber = await imSequencer.nextValue(
       ESequencer.Operation,
@@ -150,18 +169,23 @@ export class Prover {
     );
 
     await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue
-    ).queueTask(
-      {
-        data: {
-          collectionName,
-          merkleIndex: BigInt(metadataDocument.merkleIndex),
-          updatedDocumentHash: Field(0).toString(),
+      zkDatabaseConstant.globalCollection.documentQueue,
+      session.proofService
+    ).then((self) =>
+      self.queueTask(
+        {
+          data: {
+            collectionName,
+            merkleIndex: BigInt(metadataDocument.merkleIndex),
+            newDocumentHash: undefined,
+            operationKind: EDocumentOperation.Delete,
+            docId,
+          },
+          databaseName,
+          sequenceNumber: operationNumber,
         },
-        databaseName,
-        sequenceNumber: operationNumber,
-      },
-      { session: session.proofService }
+        { session: session.proofService }
+      )
     );
   }
 }

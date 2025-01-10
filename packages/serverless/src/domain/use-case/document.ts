@@ -98,14 +98,17 @@ in database '${databaseName}'.`
     const [_, docId] = await imDocument.insertOneFromListField(
       fieldArrayToRecord(validatedDocument),
       undefined,
-      compoundSession?.serverless
+      compoundSession.serverless
     );
 
     // 2. Create new sequence value
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
     const merkleIndex = await imSequencer.nextValue(
       ESequencer.MerkleIndex,
-      compoundSession?.serverless
+      compoundSession.serverless
     );
 
     // 3. Create Metadata
@@ -136,7 +139,7 @@ in database '${databaseName}'.`
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
-      { session: compoundSession?.serverless }
+      { session: compoundSession.serverless }
     );
 
     await Prover.create(
@@ -197,7 +200,7 @@ in database '${databaseName}'.`
     const collectionMetadata = await ModelMetadataCollection.getInstance(
       databaseName
     ).getMetadata(collectionName, {
-      session: compoundSession?.serverless,
+      session: compoundSession.serverless,
     });
 
     if (!collectionMetadata) {

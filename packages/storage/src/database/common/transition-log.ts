@@ -7,7 +7,7 @@ import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export type TTransitionProof = {
+export type TTransitionLog = {
   merkleRootNew: string;
   merkleProof: TMerkleProof[];
   leafOld: string;
@@ -15,37 +15,41 @@ export type TTransitionProof = {
   operationNumber: number;
 };
 
-export type TTransitionProofRecord = TDbRecord<TTransitionProof>;
+export type TTransitionLogRecord = TDbRecord<TTransitionLog>;
 
-export class ModelTransitionProof extends ModelGeneral<
-  OptionalId<TTransitionProofRecord>
+export class ModelTransitionLog extends ModelGeneral<
+  OptionalId<TTransitionLogRecord>
 > {
-  private static instances = new Map<string, ModelTransitionProof>();
+  private static instances = new Map<string, ModelTransitionLog>();
 
   private constructor(databaseName: string) {
     super(
-      zkDatabaseConstant.globalTransitionProofDatabase,
+      zkDatabaseConstant.globalTransitionLogDatabase,
       DATABASE_ENGINE.proofService,
       databaseName
     );
   }
 
+  /** Session is required to avoid concurrency issues such as write conflict
+   * while initializing the collection (create index, etc.) and writing to the
+   * collection at the same time. */
   public static async getInstance(
-    databaseName: string
-  ): Promise<ModelTransitionProof> {
-    if (!ModelTransitionProof.instances.has(databaseName)) {
-      ModelTransitionProof.instances.set(
+    databaseName: string,
+    session: ClientSession
+  ): Promise<ModelTransitionLog> {
+    if (!ModelTransitionLog.instances.has(databaseName)) {
+      ModelTransitionLog.instances.set(
         databaseName,
-        new ModelTransitionProof(databaseName)
+        new ModelTransitionLog(databaseName)
       );
-      ModelTransitionProof.init(databaseName);
+      await ModelTransitionLog.init(databaseName, session);
     }
-    return ModelTransitionProof.instances.get(databaseName)!;
+    return ModelTransitionLog.instances.get(databaseName)!;
   }
 
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstant.globalTransitionProofDatabase,
+      zkDatabaseConstant.globalTransitionLogDatabase,
       DATABASE_ENGINE.proofService,
       databaseName
     );
@@ -60,4 +64,4 @@ export class ModelTransitionProof extends ModelGeneral<
   }
 }
 
-export default ModelTransitionProof;
+export default ModelTransitionLog;

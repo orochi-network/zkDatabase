@@ -19,7 +19,6 @@ import { Field, MerkleTree, Poseidon } from 'o1js';
 import { ModelGeneral } from '../base';
 import { ModelMetadataDatabase } from '../global';
 import { ModelCollection } from '../general';
-import { TPaginationQuery } from '@orochi-network/framework';
 
 export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   private static instances = new Map<string, ModelMerkleTree>();
@@ -48,8 +47,12 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     this.generateZeroNode(this._height);
   }
 
+  /** Session is required to avoid concurrency issues such as write conflict
+   * while initializing the collection (create index, etc.) and writing to the
+   * collection at the same time. */
   public static async getInstance(
-    databaseName: string
+    databaseName: string,
+    session: ClientSession
   ): Promise<ModelMerkleTree> {
     if (!ModelMerkleTree.instances.has(databaseName)) {
       const modelDatabaseMetadata = ModelMetadataDatabase.getInstance();
@@ -63,7 +66,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
         databaseName,
         new ModelMerkleTree(databaseName, metadataDatabase?.merkleHeight)
       );
-      ModelMerkleTree.init(databaseName);
+      await ModelMerkleTree.init(databaseName, session);
     }
     return ModelMerkleTree.instances.get(databaseName)!;
   }

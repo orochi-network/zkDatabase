@@ -16,10 +16,11 @@ import { ModelCollection } from '../general';
 
 export type TRollupQueueData = {
   databaseName: string;
+  operationNumber: number;
   // collectionName is not really necessary but it could be useful for debugging
   collectionName: string;
-  operationNumber: number;
   transitionProofObjectId: ObjectId;
+  docId: string;
   status: EProofStatusDocument;
   error?: string;
 };
