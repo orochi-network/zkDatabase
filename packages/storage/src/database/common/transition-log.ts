@@ -7,9 +7,13 @@ import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
+export type TMerkleProofSerialized = Omit<TMerkleProof, 'sibling'> & {
+  sibling: string;
+};
+
 export type TTransitionLog = {
   merkleRootNew: string;
-  merkleProof: TMerkleProof[];
+  merkleProof: TMerkleProofSerialized[];
   leafOld: string;
   leafNew: string;
   operationNumber: number;

@@ -60,7 +60,7 @@ export class DocumentProcessor {
       session,
     });
 
-    const transitionProofObjectId = await ModelTransitionLog.getInstance(
+    const transitionLogObjectId = await ModelTransitionLog.getInstance(
       databaseName,
       session
     ).then(async (modelTransitionProof) => {
@@ -68,7 +68,10 @@ export class DocumentProcessor {
         .insertOne(
           {
             merkleRootNew: (await imMerkleTree.getRoot({ session })).toString(),
-            merkleProof: merkleWitness,
+            merkleProof: merkleWitness.map((proof) => ({
+              ...proof,
+              sibling: proof.sibling.toString(),
+            })),
             leafOld,
             leafNew,
             operationNumber: sequenceNumber,
@@ -85,7 +88,7 @@ export class DocumentProcessor {
         databaseName,
         collectionName,
         operationNumber: sequenceNumber,
-        transitionProofObjectId,
+        transitionLogObjectId,
         docId,
       },
       { session }

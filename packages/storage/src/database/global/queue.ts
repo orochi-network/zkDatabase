@@ -19,7 +19,7 @@ export type TRollupQueueData = {
   operationNumber: number;
   // collectionName is not really necessary but it could be useful for debugging
   collectionName: string;
-  transitionProofObjectId: ObjectId;
+  transitionLogObjectId: ObjectId;
   docId: string;
   status: EProofStatusDocument;
   error?: string;
