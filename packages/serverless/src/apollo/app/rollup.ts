@@ -53,7 +53,7 @@ type RollupState {
 
 extend type Query {
   rollupHistory(query: JSON, pagination: PaginationInput): RollupHistoryListResponse!
-  rollupState(databaseName: String!): RollupState!
+  rollupState(databaseName: String!): RollupState
 }
 
 extend type Mutation {

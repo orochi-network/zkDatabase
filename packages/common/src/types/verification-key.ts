@@ -6,7 +6,7 @@ export type TVerificationKeySerialized = {
   hash: string;
 };
 
-// NOTE: Consider does Hash from VerificationKey is a hash of the contract
+// NOTE: Consider does Hash from VerificationKey is a hash of the VerificationKey itself or not
 // so we don't need to use verificationKeyHash field
 // Since the o1js document too ambiguous
 // Refer to: https://docs.minaprotocol.com/zkapps/o1js-reference/classes/VerificationKey#hash

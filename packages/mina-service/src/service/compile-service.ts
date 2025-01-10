@@ -1,12 +1,4 @@
-// import { ZkCompile } from '@domain';
-import { ZkCompile } from '@domain';
-import { config, logger, QueueWorker } from '@helper';
 import { EncryptionKey } from '@orochi-network/vault';
-import {
-  ETransactionStatus,
-  ETransactionType,
-  TTransactionQueue,
-} from '@zkdb/common';
 import {
   DatabaseEngine,
   getCurrentTime,
@@ -18,9 +10,16 @@ import {
   withCompoundTransaction,
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
+import {
+  ETransactionStatus,
+  ETransactionType,
+  TTransactionQueue,
+} from '@zkdb/common';
 import { Job } from 'bullmq';
 import { ObjectId } from 'mongodb';
 import { PrivateKey } from 'o1js';
+import { ZkCompile } from '@domain';
+import { config, logger, QueueWorker } from '@helper';
 
 export const SERVICE_COMPILE = {
   clusterName: 'compile',

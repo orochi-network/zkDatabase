@@ -1,15 +1,19 @@
 import { getCurrentTime, logger } from '@helper';
 import {
+  EMinaTransactionStatus,
+  ERollupState,
   ETransactionStatus,
   ETransactionType,
   TRollupHistoryParam,
   TRollupHistoryResponse,
   TRollupStateNullable,
+  TRollupStateResponse,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
   ModelRollupHistory,
   ModelRollupOffChain,
+  ModelRollupOnChain,
   ModelTransaction,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -146,38 +150,43 @@ export class Rollup {
       total: await imRollupHistory.count(query),
       offset: pagination.offset || 0,
     };
-
-    // if (latestRollupHistory) {
-    //   const rollUpDifferent = onChainRollupStep - rollupHistory[0].step;
-
-    //   const imTransaction = ModelTransaction.getInstance();
-    //   // Get latest rollup success transaction info
-    //   const latestRollupSuccessTransaction = await imTransaction.findOne(
-    //     {
-    //       databaseName,
-    //       transactionType: ETransactionType.Rollup,
-    //       status: ETransactionStatus.Confirmed,
-    //     },
-    //     { sort: { updatedAt: -1 } }
-    //   );
-
-    //   return {
-    //     databaseName,
-    //     merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
-    //     merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
-    //     latestRollupSuccess: latestRollupSuccessTransaction?.updatedAt || null,
-    //     rollUpDifferent,
-    //     rollUpState:
-    //       rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
-    //     history: rollupHistory,
-    //     error: latestRollupHistory.error,
-    //   };
-    // }
-
-    // return null;
   }
 
-  static async state(databaseName: string): Promise<TRollupStateNullable> {
-    throw new Error('Not implemented');
+  static async state(databaseName: string): Promise<TRollupStateResponse> {
+    const imRollupOnChain = ModelRollupOnChain.getInstance();
+    const imRollupHistory = ModelRollupHistory.getInstance();
+
+    // Get latest rollup history
+    const latestRollupHistory = await imRollupHistory.findOne(
+      { databaseName },
+      { sort: { updatedAt: -1, createdAt: -1 } }
+    );
+
+    // Get onchain rollup info, we don't interact with smart contract in serverless
+    const rollupOnChainHistory = await imRollupOnChain
+      .find({ databaseName }, { sort: { createdAt: -1 } })
+      .toArray();
+
+    const latestOnChainRollup = rollupOnChainHistory.at(0);
+
+    if (!latestRollupHistory || !latestOnChainRollup) {
+      return null;
+    }
+
+    const rollUpDifferent = latestRollupHistory.step - latestOnChainRollup.step;
+
+    return {
+      databaseName,
+      merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
+      merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
+      rollUpDifferent,
+      rollUpState:
+        rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+      latestRollupSuccess:
+        rollupOnChainHistory.find(
+          (i) => i.status === EMinaTransactionStatus.Applied
+        )?.createdAt || null,
+      error: latestOnChainRollup.error,
+    };
   }
 }

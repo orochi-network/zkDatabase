@@ -3,6 +3,12 @@ import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 
+export enum EMinaTransactionStatus {
+  Failed = 'failed',
+  Pending = 'pending',
+  Applied = 'applied',
+}
+
 /**
  * Rollup state
  * @enum
@@ -44,14 +50,14 @@ export type TRollupState = Pick<
 
 export type TRollupStateNullable = TNullable<
   TRollupState,
-  'rollUpDifferent' | 'latestRollupSuccess' | 'error'
+  'error' | 'latestRollupSuccess'
 >;
 
 export type TRollupOnChain = {
   databaseName: string;
   step: bigint;
   txHash: string;
-  status: string; // TODO: Redefined
+  status: EMinaTransactionStatus; // TODO: Redefined
   error: string;
   // TODO:
 };
@@ -86,7 +92,8 @@ export type TRollupHistoryResponse = TPaginationReturn<
 // Rollup state
 export type TRollupStateRequest = TDatabaseRequest;
 
-export type TRollupStateResponse = TRollupStateNullable;
+// RollupStateResponse can be null due to user never make an onchain rollup before
+export type TRollupStateResponse = TRollupStateNullable | null;
 
 // Rollup create
 export type TRollupCreateRequest = TDatabaseRequest;
