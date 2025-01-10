@@ -273,7 +273,6 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       queueName
     );
     if (!(await collection.isExist())) {
-      // TODO: Add indexes
       await collection.createSystemIndex(
         { databaseName: 1, sequenceNumber: 1 },
         { unique: true, session }
