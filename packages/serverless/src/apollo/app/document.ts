@@ -111,6 +111,7 @@ export const typeDefsDocument = gql`
   type DocumentCreateResponse {
     docId: String!
     acknowledged: Boolean!
+    document: JSON!
   }
 
   # History aka revisions of a document
@@ -164,13 +165,13 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       document: JSON!
-    ): [MerkleProof!]!
+    ): JSON!
 
     documentDrop(
       databaseName: String!
       collectionName: String!
       docId: String!
-    ): [MerkleProof!]!
+    ): Boolean
   }
 `;
 

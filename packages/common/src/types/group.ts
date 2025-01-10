@@ -28,7 +28,7 @@ export type TUserGroupRecord = TDbRecord<TUserGroup>;
 export type TGroupParam = Pick<TGroup, 'groupName'> &
   Pick<TMetadataDatabase, 'databaseName'>;
 
-export type TGroupParamCreate = TGroup &
+export type TGroupParamCreate = TPickOptional<TGroup, 'groupDescription'> &
   Pick<TMetadataDatabase, 'databaseName'>;
 
 export type TGroupParamIsParticipant = TGroupParam & {
