@@ -3,6 +3,8 @@ import {
   DatabaseEngine,
   ModelMerkleTree,
   ModelMetadataDatabase,
+  withTransaction,
+  zkDatabaseConstant,
 } from '../../build/src';
 import { config } from '../../build/src';
 import { ETransactionStatus } from '@zkdb/common';
@@ -11,20 +13,24 @@ const DB_NAME = '__test_run_db__merkle-tree';
 const MERKLE_HEIGHT = 12;
 
 describe('ModelMerkleTree', () => {
-  let dbEngine: DatabaseEngine;
+  let proofDb: DatabaseEngine;
+  let serverlessDb: DatabaseEngine;
 
   beforeAll(async () => {
-    dbEngine = DatabaseEngine.getInstance(config.MONGODB_URL);
-    if (!dbEngine.isConnected()) {
-      await dbEngine.connect();
+    proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+    serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
+    if (!proofDb.isConnected()) {
+      await proofDb.connect();
+      await serverlessDb.connect();
     }
 
     await new ModelMetadataDatabase().deleteOne({ databaseName: DB_NAME });
-    await dbEngine.client.db(DB_NAME).dropDatabase();
   });
 
   afterAll(async () => {
-    await dbEngine.disconnect();
+    await new ModelMetadataDatabase().deleteOne({ databaseName: DB_NAME });
+    await proofDb.disconnect();
+    await serverlessDb.disconnect();
   });
 
   beforeEach(async () => {
@@ -37,15 +43,23 @@ describe('ModelMerkleTree', () => {
       updatedAt: new Date(),
       deployStatus: ETransactionStatus.Unknown,
     });
+    await proofDb.client
+      .db(zkDatabaseConstant.globalMerkleTreeDatabase)
+      .collection(DB_NAME)
+      .drop();
   });
 
   afterEach(async () => {
-    await new ModelMetadataDatabase().deleteOne({ databaseName: DB_NAME });
-    await dbEngine.client.db(DB_NAME).dropDatabase();
+    await proofDb.client
+      .db(zkDatabaseConstant.globalMerkleTreeDatabase)
+      .collection(DB_NAME)
+      .drop();
   });
 
   test('should correctly set leaf nodes and match root with in-memory MerkleTree', async () => {
-    const modelMerkleTree = await ModelMerkleTree.getInstance(DB_NAME);
+    const modelMerkleTree = await withTransaction(async (session) => {
+      return ModelMerkleTree.getInstance(DB_NAME, session);
+    }, 'proofService');
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -53,11 +67,9 @@ describe('ModelMerkleTree', () => {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await modelMerkleTree.setLeaf(
-        index,
-        value,
-        dbEngine.client.startSession()
-      );
+      await withTransaction(async (session) => {
+        await modelMerkleTree.setLeaf(index, value, session);
+      }, 'proofService');
 
       const root = await modelMerkleTree.getRoot();
 
@@ -66,7 +78,9 @@ describe('ModelMerkleTree', () => {
   });
 
   test('should correctly retrieve Merkle witnesses for leaf nodes', async () => {
-    const modelMerkleTree = await ModelMerkleTree.getInstance(DB_NAME);
+    const modelMerkleTree = await withTransaction(async (session) => {
+      return ModelMerkleTree.getInstance(DB_NAME, session);
+    }, 'proofService');
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -74,11 +88,9 @@ describe('ModelMerkleTree', () => {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await modelMerkleTree.setLeaf(
-        index,
-        value,
-        dbEngine.client.startSession()
-      );
+      await withTransaction(async (session) => {
+        await modelMerkleTree.setLeaf(index, value, session);
+      }, 'proofService');
 
       const witness = await modelMerkleTree.getMerkleProof(index);
 
@@ -87,22 +99,27 @@ describe('ModelMerkleTree', () => {
   });
 
   test('merkle tree utilities correctness', async () => {
-    const modelMerkleTree = await ModelMerkleTree.getInstance(DB_NAME);
-
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
+
+    const modelMerkleTree = await withTransaction(async (session) => {
+      return ModelMerkleTree.getInstance(DB_NAME, session);
+    }, 'proofService');
 
     for (let i = 0; i < 100; i++) {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await modelMerkleTree.setLeaf(
-        index,
-        value,
-        dbEngine.client.startSession()
-      );
+      await withTransaction(async (session) => {
+        await modelMerkleTree.setLeaf(index, value, session);
+      }, 'proofService');
 
       expect(await modelMerkleTree.countNodeByLevel(0)).toEqual(i + 1);
-      expect(await modelMerkleTree.getListNodeByLevel(0)).toEqual(
+      expect(
+        await modelMerkleTree.getListNodeByLevel(0, {
+          limit: Infinity,
+          offset: 0,
+        })
+      ).toEqual(
         Array.from({ length: i + 1 }, (_, j) => ({
           hash: Field(j + 1).toString(),
           level: 0,
