@@ -13,7 +13,7 @@ import { ZkDbProcessor } from './zkdb-processor.js';
 const doProofs = false;
 
 // Height of the Merkle Tree
-const merkleHeight = 3;
+const merkleHeight = 64;
 
 const Local = await Mina.LocalBlockchain({ proofsEnabled: doProofs });
 Mina.setActiveInstance(Local);
@@ -21,15 +21,6 @@ const initialBalance = 1_000_000_000;
 
 const feePayerKey = Local.testAccounts[0].key;
 const feePayer = Local.testAccounts[0];
-
-function H(l: Field, r: Field): Field {
-  return Poseidon.hash([l, r]);
-}
-
-console.log(
-  'Calculate:>',
-  H(H(Field(0), Field(0)), H(Field(0), Field(0))).toString()
-);
 
 // the zkapp account
 const zkappKey = PrivateKey.random();

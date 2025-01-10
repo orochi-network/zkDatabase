@@ -15,7 +15,6 @@ import { CompilerCache } from './compiler-cache.js';
 import { logger, LoggerSet } from './helper/logger.js';
 import { ZkDbContract } from './zkdb-contract.js';
 import { ZkDbRollup, ZkDbRollupInput } from './zkdb-rollup.js';
-import { off } from 'process';
 
 const processorCache = {
   zkDbContract: new Map<string, InstanceType<ZkDbContract>>(),

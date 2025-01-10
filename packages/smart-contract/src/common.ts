@@ -21,7 +21,7 @@ export type TRollupTransition = {
   leafNew: Field;
 };
 
-export enum EZkDbContract {
-  zkdbContract = 'ZkDbContract',
-  zkdbRollup = 'ZkDbRollup',
+export enum EZkDbContractName {
+  Contract = 'ZkDbContract',
+  Rollup = 'ZkDbRollup',
 }

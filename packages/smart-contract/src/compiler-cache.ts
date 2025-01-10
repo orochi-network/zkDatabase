@@ -1,5 +1,5 @@
 import { Cache, VerificationKey } from 'o1js';
-import { EZkDbContract } from './common.js';
+import { EZkDbContractName } from './common.js';
 import { logger } from './helper/logger.js';
 import { ZkDbContract, ZkDbContractFactory } from './zkdb-contract.js';
 import { ZkDbRollup, ZkDbRollupFactory } from './zkdb-rollup.js';
@@ -22,11 +22,11 @@ export class CompilerCache {
 
     if (!CompilerCache.zkDbRollupCompiled.has(key)) {
       logger.debug(
-        `Compiling ${EZkDbContract.zkdbRollup} revision: ${digest}...`
+        `Compiling ${EZkDbContractName.Rollup} revision: ${digest}...`
       );
       const { verificationKey } = await zkDbRollup.compile({
         cache: Cache.FileSystem(
-          `${CompilerCache.cachePath}/${EZkDbContract.zkdbRollup}-${digest}/${merkleHeight}`
+          `${CompilerCache.cachePath}/${EZkDbContractName.Rollup}/${merkleHeight}/${digest}/`
         ),
       });
       CompilerCache.verificationKey.set(key, verificationKey);
@@ -38,7 +38,6 @@ export class CompilerCache {
   public static async getZkDbContract(
     merkleHeight: number
   ): Promise<ZkDbContract> {
-    1;
     const zkDbContract = ZkDbContractFactory(
       merkleHeight,
       await CompilerCache.getZkDbRollup(merkleHeight)
@@ -49,11 +48,11 @@ export class CompilerCache {
 
     if (!CompilerCache.zkDbContractCompiled.has(key)) {
       logger.debug(
-        `Compiling ${EZkDbContract.zkdbContract} revision: ${digest}...`
+        `Compiling ${EZkDbContractName.Contract} revision: ${digest}...`
       );
       const { verificationKey } = await zkDbContract.compile({
         cache: Cache.FileSystem(
-          `${CompilerCache.cachePath}/${EZkDbContract.zkdbContract}-${digest}/${merkleHeight}`
+          `${CompilerCache.cachePath}/${EZkDbContractName.Contract}/${merkleHeight}/${digest}/`
         ),
       });
       CompilerCache.verificationKey.set(key, verificationKey);
