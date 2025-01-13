@@ -3,7 +3,6 @@ import {
   FeatureFlags,
   Field,
   MerkleWitness,
-  Provable,
   SelfProof,
   Struct,
   ZkProgram,

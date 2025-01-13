@@ -1,100 +1,143 @@
 import {
-  Cache,
   Field,
-  JsonProof,
   MerkleWitness,
-  Proof,
   PublicKey,
+  VerificationKey,
   ZkProgram,
 } from 'o1js';
 import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
-import { logger, LoggerSet } from './helper/logger.js';
-import { ZkDbContract, ZkDbContractFactory } from './zkdb-contract.js';
 import {
-  ZkDbRollup,
-  ZkDbRollupFactory,
-  ZkDbRollupInput,
-  ZkDbRollupOutput,
-} from './zkdb-rollup.js';
+  TRollupProof,
+  TRollupSerializedProof,
+  TRollupTransition,
+} from './common.js';
+import { CompilerCache } from './compiler-cache.js';
+import { logger, LoggerSet } from './helper/logger.js';
+import { ZkDbContract } from './zkdb-contract.js';
+import { ZkDbRollup, ZkDbRollupInput } from './zkdb-rollup.js';
 
-export type TRollupProof = {
-  step: Field;
-  proof: Proof<ZkDbRollupInput, ZkDbRollupOutput>;
-  merkleRootOld: Field;
-};
-
-export type TRollupSerializedProof = {
-  step: bigint;
-  proof: JsonProof;
-  merkleRootOld: string;
-};
-
-export type TRollupTransition = {
-  merkleRootNew: Field;
-  merkleProof: Witness;
-  leafOld: Field;
-  leafNew: Field;
+const processorCache = {
+  zkDbContract: new Map<string, InstanceType<ZkDbContract>>(),
+  zkdbRollup: new Map<string, ZkDbRollup>(),
+  compiledZkDbContract: new Map<string, ZkDbContract>(),
+  compiledZkdbRollup: new Map<string, ZkDbRollup>(),
 };
 
 export class ZkDbProcessor {
-  private cache: Map<string, InstanceType<ZkDbContract>>;
+  private static cache: Map<string, InstanceType<ZkDbContract>> = new Map();
 
   private zkdbContract: ZkDbContract;
 
   private zkdbRollup: ZkDbRollup;
 
-  public readonly merkleHeight: number; // readonly
+  private startTime: number = 0;
 
-  constructor(merkleHeight: number) {
-    this.zkdbRollup = ZkDbRollupFactory(merkleHeight);
-    this.zkdbContract = ZkDbContractFactory(merkleHeight, this.zkdbRollup);
-    this.merkleHeight = merkleHeight;
-    this.cache = new Map<string, any>();
+  private startMeasure() {
+    this.startTime = Date.now();
   }
 
-  setLogger(logger: any): void {
+  #vkContract: VerificationKey;
+
+  #vkRollup: VerificationKey;
+
+  public readonly merkleHeight: number; // readonly
+
+  private get elapsedTime(): string {
+    return `${(Date.now() - this.startTime).toLocaleString('en-US')} ms`;
+  }
+
+  public get vkContract() {
+    return this.#vkContract;
+  }
+
+  public get vkRollup() {
+    return this.#vkRollup;
+  }
+
+  private constructor(
+    zkDbContract: ZkDbContract,
+    vkContract: VerificationKey,
+    zkdbRollup: ZkDbRollup,
+    vkRollup: VerificationKey,
+    merkleHeight: number
+  ) {
+    this.zkdbRollup = zkdbRollup;
+    this.zkdbContract = zkDbContract;
+    this.merkleHeight = merkleHeight;
+    this.#vkContract = vkContract;
+    this.#vkRollup = vkRollup;
+  }
+
+  public static configCache(cachePath: string, recompile: boolean = false) {
+    CompilerCache.cachePath = cachePath;
+    CompilerCache.recompile = recompile;
+  }
+
+  public static setLogger(logger: any): void {
     LoggerSet(logger);
   }
 
-  getInstanceZkDBContract(
+  public static async getInstance(
+    merkleHeight: number
+  ): Promise<ZkDbProcessor> {
+    let startTime = Date.now();
+    const zkdbRollup = await CompilerCache.getZkDbRollup(merkleHeight);
+    logger.debug(
+      `Loaded ZkDbRollup in: ${(Date.now() - startTime).toLocaleString('en-US')} ms`
+    );
+
+    startTime = Date.now();
+    const zkdbContract = await CompilerCache.getZkDbContract(merkleHeight);
+    logger.debug(
+      `Loaded ZkDbContract in: ${(Date.now() - startTime).toLocaleString('en-US')} ms`
+    );
+
+    const vkRollup = await CompilerCache.getVerificationKey(
+      zkdbRollup,
+      merkleHeight
+    );
+
+    const vkContract = await CompilerCache.getVerificationKey(
+      zkdbContract,
+      merkleHeight
+    );
+
+    if (!vkContract) {
+      throw new Error('Verification key of contract not found');
+    }
+
+    if (!vkRollup) {
+      throw new Error('Verification key of rollup not found');
+    }
+
+    return new ZkDbProcessor(
+      zkdbContract,
+      vkContract,
+      zkdbRollup,
+      vkRollup,
+      merkleHeight
+    );
+  }
+
+  public getInstanceZkDBContract(
     publicKey: PublicKey,
     tokenId?: Field
   ): InstanceType<ZkDbContract> {
     const publicKeyString = publicKey.toBase58();
-    if (!this.cache.has(publicKeyString)) {
+    if (!ZkDbProcessor.cache.has(publicKeyString)) {
       logger.debug(
         `Create new instance of zkDatabase Contract for: ${publicKeyString}`
       );
-      this.cache.set(
+      processorCache.zkDbContract.set(
         publicKeyString,
         new this.zkdbContract(publicKey, tokenId)
       );
     }
-    return this.cache.get(publicKeyString)!;
+    return processorCache.zkDbContract.get(publicKeyString)!;
   }
 
   getInstanceZkDBRollup(): ZkDbRollup {
     return this.zkdbRollup;
-  }
-
-  async compile(cachePath: string, forceRecompile: boolean = false) {
-    if (forceRecompile) {
-      logger.info(`Force recompiling zkDatabase Contract and Rollup Program`);
-    }
-    const zkdbRollup = await this.zkdbRollup.compile({
-      cache: Cache.FileSystem(`${cachePath}/rollup/${this.merkleHeight}`),
-      forceRecompile,
-    });
-
-    const zkdbContract = await this.zkdbContract.compile({
-      cache: Cache.FileSystem(`${cachePath}/contract/${this.merkleHeight}`),
-      forceRecompile,
-    });
-
-    return {
-      zkdbContract,
-      zkdbRollup,
-    };
   }
 
   async init(initialRoot: Field, merkleProof: Witness): Promise<TRollupProof> {
@@ -104,7 +147,7 @@ export class ZkDbProcessor {
       `Initializing zkDatabase Rollup with initial root ${initialRoot.toString()}`
     );
 
-    const startTime = Date.now();
+    this.startMeasure();
 
     const zkProof = await this.zkdbRollup.init(
       new ZkDbRollupInput({
@@ -115,9 +158,7 @@ export class ZkDbProcessor {
       new MerkleProof(merkleProof)
     );
 
-    logger.debug(
-      `Prove step 0 to 1 in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
-    );
+    logger.debug(`Prove step 0 to 1 in ${this.elapsedTime}`);
 
     return {
       step: zkProof.proof.publicOutput.step,
@@ -132,7 +173,7 @@ export class ZkDbProcessor {
   ): Promise<TRollupProof> {
     class MerkleProof extends MerkleWitness(this.merkleHeight) {}
 
-    const startTime = Date.now();
+    this.startMeasure();
 
     logger.debug(
       `Prove the transition from ${proofPrevious.merkleRootOld.toString()} to ${transition.merkleRootNew.toString()}`
@@ -155,7 +196,7 @@ export class ZkDbProcessor {
     }
 
     logger.debug(
-      `Prove step ${proofPrevious.step.toString()} to ${proofPrevious.step.add(1).toString()} in ${(Date.now() - startTime).toLocaleString('en-US')} ms`
+      `Prove step ${proofPrevious.step.toString()} to ${proofPrevious.step.add(1).toString()} in ${this.elapsedTime}`
     );
 
     return {
@@ -167,7 +208,7 @@ export class ZkDbProcessor {
 
   serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
-      step: proof.step.toBigInt(),
+      step: proof.step.toString(),
       proof: proof.proof.toJSON(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };

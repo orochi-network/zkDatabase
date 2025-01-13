@@ -1,14 +1,14 @@
 import { IApiClient } from '@zkdb/api';
 import {
-  EIndexType,
-  TCollectionIndex,
   TCollectionMetadata,
   TDocumentCreateResponse,
+  TDocumentFindResponse,
   TPagination,
   TPaginationReturn,
   TSchemaExtendable,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
+import { serializeDocument } from '../helper/serialize';
 import {
   ICollection,
   ICollectionIndex,
@@ -75,7 +75,7 @@ export class Collection<T extends TSchemaExtendable<any>>
     return (
       await this.apiClient.collection.collectionCreate({
         ...this.basicRequest,
-        schema: schema ? schema.getSchemaDefinition() : undefined,
+        schema: schema ? schema.definition() : undefined,
         permission: permission ? permission.value : undefined,
         groupName,
       })
@@ -115,13 +115,14 @@ export class Collection<T extends TSchemaExtendable<any>>
     const result = await this.apiClient.document.documentFind({
       ...this.basicRequest,
       query: filter as any,
-      pagination: { limit: 1, offset: 0 },
+      pagination: pagination ?? { limit: 10, offset: 0 },
     });
 
     if (result.isValid()) {
       const { data, offset, total } = result.unwrap();
+      const typedData = data as TDocumentFindResponse['data'];
       return {
-        data: data.map(
+        data: typedData.map(
           (e) =>
             new Document(
               this.apiClient,
@@ -138,12 +139,14 @@ export class Collection<T extends TSchemaExtendable<any>>
   }
 
   async insert(
-    document: T['innerStructure']
+    document: T['innerStructure'],
+    permission?: Permission
   ): Promise<TDocumentCreateResponse> {
     return (
       await this.apiClient.document.documentCreate({
         ...this.basicRequest,
-        document,
+        document: serializeDocument(document),
+        documentPermission: permission ? permission.value : undefined,
       })
     ).unwrap();
   }
