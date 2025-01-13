@@ -115,7 +115,10 @@ tracking sequence number: ${trackingSequenceNumber}`
             logger.debug(
               `Processing task with seq ${acquiredTask.sequenceNumber} for database ${acquiredTask.databaseName}`
             );
-            await DocumentProcessor.onTask(acquiredTask, compoundSession);
+            await DocumentProcessor.onTask(
+              acquiredTask,
+              compoundSession.proofService
+            );
 
             const bumpSeqResult = (
               await ModelSequencer.getInstance(
