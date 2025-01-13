@@ -13,15 +13,13 @@ import {
   TZkProofRequest,
   TZkProofResponse,
 } from '@zkdb/common';
-import { ModelRollupOffChain, ModelQueueTask } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
+import { ModelQueueTask, ModelRollupOffChain } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = gql`
   #graphql
-  scalar JSON
   type Query
 
   # TZkDatabaseProof in TS
@@ -100,9 +98,8 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const modelProof = ModelRollupOffChain.getInstance();
-
-    return modelProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
+    const imProof = ModelRollupOffChain.getInstance();
+    return imProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
   }
 );
 
@@ -137,7 +134,6 @@ const proofStatusDatabase = publicWrapper<
 );
 
 export const resolversProof = {
-  JSON: GraphQLJSON,
   Query: {
     proof,
     proofStatusDatabase,

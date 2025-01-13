@@ -1,18 +1,21 @@
-import { EProofStatusDocument, TQueueRecord } from '@zkdb/common';
+import { deserializeTransition } from '@helper';
+import { EProofStatusDocument } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   getCurrentTime,
   ModelMetadataDatabase,
   ModelRollupOffChain,
+  ModelTransitionLog,
   TCompoundSession,
+  TRollupQueueData,
 } from '@zkdb/storage';
-import { Field, MerkleTree } from 'o1js';
+import { MerkleTree } from 'o1js';
 
 const MAX_MERKLE_TREE_HEIGHT = 256;
 const MIN_MERKLE_TREE_HEIGHT = 8;
 
 export class RollupOffchain {
-  static async create(task: TQueueRecord, session: TCompoundSession) {
+  static async create(task: TRollupQueueData, session: TCompoundSession) {
     const { serverless, proofService } = session;
     const { status, databaseName } = task;
     // Ensure status must be 'queued' to process
@@ -49,10 +52,26 @@ export class RollupOffchain {
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
 
+    // Get previous proof to update
     const previousProof = await imRollupOffChain.findOne(
       { databaseName },
       { sort: { createdAt: -1 }, session: proofService }
     );
+
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      databaseName,
+      proofService
+    );
+
+    const rollupTransition = await imTransitionLog.findOne({
+      _id: task.transitionLogObjectId,
+    });
+
+    if (!rollupTransition) {
+      throw new Error(
+        `Cannot found rollup transaction for database ${databaseName}`
+      );
+    }
 
     // If previous proof not found, which mean first time create
     if (!previousProof) {
@@ -64,30 +83,20 @@ export class RollupOffchain {
 
       const newRollupProof = await zkAppProcessor.update(
         firstRollupProof,
-        // TODO: Since queue not implement I'll assume that we have rollup transaction
-        // @ts-expect-error
-        task.rollupTransition
+        deserializeTransition(rollupTransition)
       );
 
       const { proof, merkleRootOld, step } =
         zkAppProcessor.serialize(newRollupProof);
-
       await imRollupOffChain.insertOne(
         {
           databaseName,
-          // TODO: Since queue not implement I'll assume that we have
-          // @ts-expect-error
-          merkleRootNew: task.merkleRootNew,
           merkleRootOld: merkleRootOld,
           proof,
           step: BigInt(step),
           createdAt: getCurrentTime(),
           updatedAt: getCurrentTime(),
-          merkleProof: [],
-          leafOld: Field(0).toString(),
-          // TODO: Since queue not implement I'll assume that we have
-          // @ts-expect-error
-          leafNew: task.leafNew,
+          transitionLogObjectId: task.transitionLogObjectId,
         },
         {
           session: proofService,
@@ -100,20 +109,10 @@ export class RollupOffchain {
       JSON.stringify(previousProof)
     );
 
-    const newRollupProof = await zkAppProcessor.update(previousProofFormat, {
-      // TODO: Since queue not implement I'll assume that we have
-      // @ts-expect-error: Since we don't have rollup transition yet
-      merkleProof: task.merkleProof,
-      // TODO: Since queue not implement I'll assume that we have
-      // @ts-expect-error: Since we don't have rollup transition yet
-      merkleRootNew: Field(task.merkleRootNew),
-      // TODO: Since queue not implement I'll assume that we have
-      // @ts-expect-error: Since we don't have rollup transition yet
-      leafOld: Field(task.leafOld),
-      // TODO: Since queue not implement I'll assume that we have
-      // @ts-expect-error: Since we don't have rollup transition yet
-      leafNew: Field(task.leafNew),
-    });
+    const newRollupProof = await zkAppProcessor.update(
+      previousProofFormat,
+      deserializeTransition(rollupTransition)
+    );
 
     const { proof, merkleRootOld, step } =
       zkAppProcessor.serialize(newRollupProof);
@@ -121,21 +120,10 @@ export class RollupOffchain {
     await imRollupOffChain.insertOne(
       {
         databaseName,
-        // TODO: Since queue not implement I'll assume that we have
-        // @ts-expect-error
-        merkleRootNew: task.merkleRootNew,
         merkleRootOld,
         proof,
         step: BigInt(step),
-        // TODO: Since queue not implement I'll assume that we have
-        // @ts-expect-error
-        merkleProof: task.merkleProof,
-        // TODO: Since queue not implement I'll assume that we have
-        // @ts-expect-error
-        leafOld: task.leafOld,
-        // TODO: Since queue not implement I'll assume that we have
-        // @ts-expect-error
-        leafNew: task.leafNew,
+        transitionLogObjectId: task.transitionLogObjectId,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },

@@ -17,12 +17,16 @@ import {
   pagination,
 } from '@zkdb/common';
 import { ScalarType } from '@orochi-network/utilities';
-import { ModelMerkleTree } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
+import {
+  ModelMerkleTree,
+  withCompoundTransaction,
+  withTransaction,
+} from '@zkdb/storage';
 import Joi from 'joi';
 import { MerkleTree } from '@domain';
-import { publicWrapper } from '../validation';
 import { GraphQLScalarType } from 'graphql';
+import { DEFAULT_PAGINATION } from '@common';
+import { publicWrapper } from '../validation';
 
 export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
   databaseName,
@@ -51,7 +55,6 @@ export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
 });
 
 export const typeDefsMerkleTree = `#graphql
-scalar JSON
 scalar BigInt
 type Query
 type Mutation
@@ -107,32 +110,22 @@ const merkleProof = publicWrapper<
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse
 >(JOI_MERKLE_TREE_PROOF_BY_INDEX, async (_root, args) => {
-  const imMerkleTree = await ModelMerkleTree.getInstance(args.databaseName);
-  const resultMerkleProof = await imMerkleTree.getMerkleProof(
-    BigInt(args.index),
-    new Date()
-  );
-
-  return resultMerkleProof.map((proof) => ({
-    isLeft: proof.isLeft,
-    sibling: proof.sibling.toString(),
-  }));
+  return withTransaction(async (session) => {
+    const imMerkleTree = await ModelMerkleTree.getInstance(
+      args.databaseName,
+      session
+    );
+    return imMerkleTree.getMerkleProof(BigInt(args.index));
+  }, 'proofService');
 });
 
 const merkleProofDocId = publicWrapper<
   TMerkleTreeProofByDocIdRequest,
   TMerkleTreeProofByDocIdResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) => {
-  const resultMerkleProofByDocId = await MerkleTree.document(
-    databaseName,
-    docId
-  );
-  return resultMerkleProofByDocId.map((proof) => {
-    return {
-      isLeft: proof.isLeft,
-      sibling: proof.sibling.toString(),
-    };
-  });
+  return withTransaction(async (session) => {
+    return MerkleTree.document(databaseName, docId, session);
+  }, 'proofService');
 });
 
 const merkleNodeByLevel = publicWrapper<
@@ -141,14 +134,21 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    MerkleTree.nodeByLevel(databaseName, level, pagination)
+    withTransaction((session) =>
+      MerkleTree.nodeByLevel(
+        databaseName,
+        level,
+        pagination || DEFAULT_PAGINATION,
+        session
+      )
+    )
 );
 
 const merkleTreeInfo = publicWrapper<
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse
 >(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
-  MerkleTree.info(databaseName)
+  withTransaction((session) => MerkleTree.info(databaseName, session))
 );
 
 const merkleNodeChildren = publicWrapper<
@@ -157,14 +157,18 @@ const merkleNodeChildren = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_CHILDREN,
   async (_root, { databaseName, level, index }) =>
-    MerkleTree.nodeChildren(databaseName, level, index)
+    withTransaction((session) =>
+      MerkleTree.nodeChildren(databaseName, level, index, session)
+    )
 );
 
 const merkleNodePath = publicWrapper<
   TMerkleTreeNodePathRequest,
   TMerkleTreeNodePathResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) =>
-  MerkleTree.nodePath(databaseName, docId)
+  withCompoundTransaction((compoundSession) =>
+    MerkleTree.nodePath(databaseName, docId, compoundSession)
+  )
 );
 
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
@@ -173,7 +177,6 @@ export const resolversMerkleTree = {
   // The inferred type of cannot be named without a reference
   // We need to have a temp variable that hold the function and explicit the type
   BigInt: BigIntScalar,
-  JSON: GraphQLJSON,
   Query: {
     merkleProof,
     merkleProofDocId,

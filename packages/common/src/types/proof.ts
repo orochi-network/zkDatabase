@@ -1,8 +1,10 @@
+import { ObjectId } from 'mongodb';
 import type { JsonProof } from 'o1js';
 import { TCollectionRequest } from './collection.js';
 import { TDbRecord } from './common.js';
 import { TDatabaseRequest, TMetadataDatabase } from './database.js';
-import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
+import { TRollUpOffChainRecord, TRollupSerializedProof } from './rollup.js';
+import { TTransitionLogRecord } from './transition-log.js';
 
 /**
  * Ownership types
@@ -47,10 +49,6 @@ export type TMinaSignature = {
   data: string;
 };
 
-export type TZkDatabaseProof = JsonProof & {
-  step: bigint;
-};
-
 // Document's proof status
 export type TProofStatusDocumentRequest = TCollectionRequest & {
   docId: string;
@@ -66,38 +64,8 @@ export type TProofStatusDatabaseResponse = EProofDatabaseStatus;
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;
 
-export type TZkProofResponse = TZkDatabaseProof | null;
+export type TZkProofResponse = TRollupSerializedProof | null;
 
-export type TQueue = {
-  databaseName: string;
-  collectionName: string;
-  docId: string;
-  operationNumber: number;
-  merkleIndex: bigint;
-  documentHash: string;
-  status: EProofStatusDocument;
-  merkleRoot: string;
-  error?: string;
+export type TPoofTransitionAggregate = TRollUpOffChainRecord & {
+  transition: TTransitionLogRecord;
 };
-
-export type TQueueRecord = TDbRecord<TQueue>;
-
-// NOTE: This type base from @orochi-network/smart-contract -> ZkDbProcessor
-export type TRollupSerializedProof = {
-  step: bigint;
-  proof: JsonProof;
-  merkleRootOld: string;
-};
-
-export type TRollupTransitionSerialized = {
-  merkleRootNew: string;
-  merkleProof: Witness;
-  leafOld: string;
-  leafNew: string;
-};
-
-export type TRollUpOffChainRecord = TDbRecord<
-  TRollupSerializedProof &
-    TRollupTransitionSerialized &
-    Pick<TMetadataDatabase, 'databaseName'>
->;

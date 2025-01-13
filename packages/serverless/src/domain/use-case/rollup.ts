@@ -4,9 +4,9 @@ import {
   ERollupState,
   ETransactionStatus,
   ETransactionType,
+  TPoofTransitionAggregate,
   TRollupHistoryParam,
   TRollupHistoryResponse,
-  TRollupStateNullable,
   TRollupStateResponse,
 } from '@zkdb/common';
 import {
@@ -35,15 +35,32 @@ export class Rollup {
     );
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
-    const latestProofForDb = await imRollupOffChain.findOne(
-      { databaseName },
-      {
-        sort: {
-          createdAt: -1,
+    const [latestProofForDb] = await imRollupOffChain.collection
+      .aggregate<TPoofTransitionAggregate>([
+        {
+          $match: { databaseName },
         },
-        session: compoundSession.proofService,
-      }
-    );
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $limit: 1,
+        },
+        {
+          $lookup: {
+            from: 'transaction',
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $unwind: {
+            path: '$transaction',
+          },
+        },
+      ])
+      .toArray();
 
     if (!latestProofForDb) {
       throw Error('No proof has been generated yet');
@@ -96,7 +113,7 @@ export class Rollup {
         databaseName,
         transactionObjectId,
         // @NOTICE Something possible wrong here
-        merkleTreeRoot: latestProofForDb.merkleRootNew,
+        merkleTreeRoot: latestProofForDb.transition.merkleRootNew,
         merkleTreeRootPrevious: latestProofForDb.merkleRootOld,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,

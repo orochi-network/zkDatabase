@@ -20,7 +20,6 @@ import {
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
@@ -57,7 +56,6 @@ export const JOI_COLLECTION_CREATE_REQUEST =
 
 export const typeDefsCollection = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -171,7 +169,6 @@ const collectionMetadata = authorizeWrapper<
 );
 
 export const resolversCollection = {
-  JSON: GraphQLJSON,
   Query: {
     collectionList,
     collectionExist,

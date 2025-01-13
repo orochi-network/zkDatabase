@@ -10,7 +10,6 @@ import {
   pagination,
 } from '@zkdb/common';
 import { withCompoundTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
@@ -103,7 +102,6 @@ const rollupCreate = authorizeWrapper<
 );
 
 export const resolversRollup = {
-  JSON: GraphQLJSON,
   Query: {
     rollupHistory,
     rollupState,

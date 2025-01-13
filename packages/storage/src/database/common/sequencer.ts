@@ -19,11 +19,17 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
     );
   }
 
-  public static getInstance(databaseName: string) {
+  /** Session is required to avoid concurrency issues such as write conflict
+   * while initializing the collection (create index, etc.) and writing to the
+   * collection at the same time. */
+  public static async getInstance(
+    databaseName: string,
+    session: ClientSession
+  ) {
     const key = databaseName;
     if (!ModelSequencer.instances.has(key)) {
       ModelSequencer.instances.set(key, new ModelSequencer(databaseName));
-      ModelSequencer.init(key);
+      await ModelSequencer.init(key, session);
     }
     return ModelSequencer.instances.get(key)!;
   }
@@ -71,6 +77,17 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
 
       return ModelSequencer.INITIAL_SEQUENCE_VALUE;
     }
+  }
+
+  async current(type: ESequencer, session?: ClientSession) {
+    const index = await this.collection.findOne(
+      { type },
+      {
+        session,
+      }
+    );
+
+    return index?.seq ?? 0;
   }
 
   public static async init(databaseName: string, session?: ClientSession) {

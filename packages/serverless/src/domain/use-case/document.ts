@@ -12,7 +12,6 @@ import {
   PERMISSION_DEFAULT,
   TDocumentField,
   TDocumentRecordNullable,
-  TMerkleProof,
   TMetadataDetailDocument,
   TPagination,
   TParamCollection,
@@ -57,8 +56,8 @@ export class Document {
   static async create(
     permissionParam: TPermissionSudo<TParamCollection>,
     fields: Record<string, TSerializedValue>,
-    permission = PERMISSION_DEFAULT,
-    compoundSession: TCompoundSession
+    compoundSession: TCompoundSession,
+    permission = PERMISSION_DEFAULT
   ) {
     const { databaseName, collectionName, actor } = permissionParam;
 
@@ -71,7 +70,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -98,11 +98,14 @@ export class Document {
     const [_, docId] = await imDocument.insertOneFromListField(
       fieldArrayToRecord(validatedDocument),
       undefined,
-      compoundSession?.serverless
+      compoundSession.serverless
     );
 
     // 2. Create new sequence value
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
     const merkleIndex = await imSequencer.nextValue(
       ESequencer.MerkleIndex,
       compoundSession.serverless
@@ -139,7 +142,7 @@ export class Document {
       { session: compoundSession.serverless }
     );
 
-    const witness = await Prover.create(
+    await Prover.create(
       {
         databaseName,
         collectionName,
@@ -150,9 +153,10 @@ export class Document {
     );
 
     return {
-      merkleProof: witness,
       docId,
       acknowledged: true,
+      // NOTE: this returns an extra validated field, remove this or not?
+      document: fieldArrayToRecord(validatedDocument),
     };
   }
 
@@ -173,7 +177,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -195,7 +200,7 @@ export class Document {
     const collectionMetadata = await ModelMetadataCollection.getInstance(
       databaseName
     ).getMetadata(collectionName, {
-      session: compoundSession?.serverless,
+      session: compoundSession.serverless,
     });
 
     if (!collectionMetadata) {
@@ -204,9 +209,20 @@ export class Document {
       );
     }
 
+    const newDocument = {
+      ...Object.entries(document.document).reduce(
+        (acc, [key, value]) => {
+          acc[key] = value.value;
+          return acc;
+        },
+        {} as Record<string, TSerializedValue>
+      ),
+      ...update,
+    };
+
     const validatedDocument = DocumentSchema.validateDocumentSchema(
       collectionMetadata,
-      update
+      newDocument
     );
 
     const actorPermissionDocument = await PermissionSecurity.document(
@@ -219,19 +235,15 @@ export class Document {
       );
     }
 
-    if (Object.keys(update).length === 0) {
-      throw new Error(
-        'Document array is empty. At least one field is required.'
-      );
-    }
+    const documentRecord = fieldArrayToRecord(validatedDocument);
 
     await imDocument.update(
       document.docId,
-      fieldArrayToRecord(validatedDocument),
+      documentRecord,
       compoundSession.serverless
     );
 
-    const witness = await Prover.update(
+    await Prover.update(
       {
         databaseName,
         collectionName,
@@ -241,14 +253,14 @@ export class Document {
       compoundSession
     );
 
-    return witness;
+    return documentRecord;
   }
 
   static async drop(
     permissionParam: TPermissionSudo<TParamCollection>,
     docId: string,
     compoundSession: TCompoundSession
-  ): Promise<TMerkleProof[]> {
+  ): Promise<string> {
     const { databaseName, collectionName, actor } = permissionParam;
 
     if (
@@ -260,7 +272,8 @@ export class Document {
       ).write
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'write' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -307,13 +320,16 @@ export class Document {
       }
     );
 
-    const witness = await Prover.delete({
-      databaseName,
-      collectionName,
-      docId: document.docId,
-    });
+    await Prover.delete(
+      {
+        databaseName,
+        collectionName,
+        docId: document.docId,
+      },
+      compoundSession
+    );
 
-    return witness;
+    return document.docId;
   }
 
   /** Query for documents given a filter criteria. Returns a list of documents
@@ -328,7 +344,8 @@ export class Document {
 
     if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
       throw new Error(
-        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 
@@ -422,7 +439,8 @@ export class Document {
 
     if (!(await PermissionSecurity.collection(permissionParam, session)).read) {
       throw new Error(
-        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' in database '${databaseName}'.`
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
     }
 

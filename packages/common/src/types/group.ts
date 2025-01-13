@@ -28,13 +28,8 @@ export type TUserGroupRecord = TDbRecord<TUserGroup>;
 export type TGroupParam = Pick<TGroup, 'groupName'> &
   Pick<TMetadataDatabase, 'databaseName'>;
 
-export type TGroupParamCreate = TGroup &
-  TPickOptional<TGroup, 'groupDescription'> &
+export type TGroupParamCreate = TPickOptional<TGroup, 'groupDescription'> &
   Pick<TMetadataDatabase, 'databaseName'>;
-
-export type TGroupParamIsParticipant = TGroupParam & {
-  userName: string;
-};
 
 export type TGroupParamUpdateMetadata = Pick<
   TGroupParamCreate,

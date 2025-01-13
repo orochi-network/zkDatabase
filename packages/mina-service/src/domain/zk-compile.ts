@@ -1,8 +1,8 @@
 import { logger } from '@helper';
 import {
   EVerificationKeyType,
+  TRollupSerializedProof,
   TVerificationKeySerialized,
-  TZkDatabaseProof,
 } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import { getCurrentTime, ModelVerificationKey } from '@zkdb/storage';
@@ -106,7 +106,7 @@ export class ZkCompile {
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number,
-    proof: TZkDatabaseProof
+    proof: TRollupSerializedProof['proof']
   ): Promise<string> {
     this.ensureTransaction();
 

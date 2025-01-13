@@ -1,7 +1,8 @@
 import type { ObjectId } from 'mongodb';
 import { TDbRecord, TNullable } from './common';
-import { TDatabaseRequest } from './database';
+import { TDatabaseRequest, TMetadataDatabase } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
+import { JsonProof } from 'o1js';
 
 export enum EMinaTransactionStatus {
   Failed = 'failed',
@@ -99,3 +100,17 @@ export type TRollupStateResponse = TRollupStateNullable | null;
 export type TRollupCreateRequest = TDatabaseRequest;
 
 export type TRollupCreateResponse = boolean;
+
+// NOTE: This type base from @orochi-network/smart-contract -> ZkDbProcessor
+export type TRollupSerializedProof = {
+  step: bigint;
+  proof: JsonProof;
+  merkleRootOld: string;
+};
+
+export type TRollUpOffChainRecord = TDbRecord<
+  TRollupSerializedProof &
+    Pick<TMetadataDatabase, 'databaseName'> & {
+      transitionLogObjectId: ObjectId;
+    }
+>;

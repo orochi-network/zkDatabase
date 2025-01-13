@@ -10,7 +10,7 @@ import { MerkleWitness, Field, Poseidon, Provable } from 'o1js';
  * @returns ExtendedMerkleWitness class with the specified height.
  */
 
-export function createExtendedMerkleWitness(height: number): any {
+export function createExtendedMerkleWitness(height: number) {
   const BaseWitness = MerkleWitness(height);
 
   class ExtendedMerkleWitness extends BaseWitness {
@@ -83,5 +83,5 @@ export function createExtendedMerkleWitness(height: number): any {
     }
   }
 
-  return ExtendedMerkleWitness as any;
+  return ExtendedMerkleWitness;
 }

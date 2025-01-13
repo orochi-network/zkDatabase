@@ -1,12 +1,12 @@
-import { EProofStatusDocument, ESequencer } from '@zkdb/common';
+import { ESequencer } from '@zkdb/common';
 import {
   TCompoundSession,
-  ModelMerkleTree,
-  ModelQueueTask,
   ModelSequencer,
+  ModelGenericQueue,
+  TDocumentQueuedData,
+  zkDatabaseConstant,
+  EDocumentOperation,
 } from '@zkdb/storage';
-import { ClientSession } from 'mongodb';
-import { Field } from 'o1js';
 
 import { ModelMetadataDocument } from '@model';
 import { DocumentSchema, TValidatedDocument } from './document-schema';
@@ -48,52 +48,43 @@ export class Prover {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
-
     // Building schema
     const schema = DocumentSchema.buildSchema(document);
-
-    const currDate = new Date();
 
     const index = metadataDocument.merkleIndex;
 
     const documentHash = schema.hash();
 
-    const newRoot = await imMerkleTree.setLeaf(
-      BigInt(index),
-      documentHash,
-      currDate,
-      {
-        session: session.serverless,
-      }
-    );
-
-    const imSequencer = ModelSequencer.getInstance(databaseName);
-
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
       session.serverless
     );
 
-    await ModelQueueTask.getInstance().queueTask(
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      session.serverless
+    );
+
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
       {
-        merkleIndex: BigInt(index),
-        documentHash: documentHash.toString(),
-        status: EProofStatusDocument.Queued,
-        createdAt: currDate,
-        updatedAt: currDate,
+        data: {
+          collectionName,
+          merkleIndex: BigInt(index),
+          newDocumentHash: documentHash.toString(),
+          operationKind: EDocumentOperation.Create,
+          docId,
+        },
         databaseName,
-        collectionName,
-        docId,
-        operationNumber,
-        merkleRoot: newRoot.toString(),
+        sequenceNumber: operationNumber,
       },
       { session: session.proofService }
     );
-
-    return imMerkleTree.getMerkleProof(BigInt(index), currDate, {
-      session: session.serverless,
-    });
   }
 
   public static async update(
@@ -102,8 +93,6 @@ export class Prover {
   ) {
     const { databaseName, collectionName, docId, newDocument } =
       proveUpdateParam;
-
-    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
     const metadataDocument = await imMetadataDocument.findOne(
@@ -119,96 +108,87 @@ export class Prover {
 
     const schema = DocumentSchema.buildSchema(newDocument);
 
-    const currDate = new Date();
     const hash = schema.hash();
-    const merkleIndex = BigInt(metadataDocument.merkleIndex);
 
-    const newRoot = await imMerkleTree.setLeaf(merkleIndex, hash, currDate, {
-      session: session.serverless,
-    });
-
-    const imSequencer = ModelSequencer.getInstance(databaseName);
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session.serverless
+    );
     const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
+      ESequencer.DataOperation,
       session.serverless
     );
 
-    await ModelQueueTask.getInstance().queueTask(
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
       {
-        merkleIndex,
-        documentHash: hash.toString(),
-        status: EProofStatusDocument.Queued,
-        createdAt: currDate,
-        updatedAt: currDate,
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: hash.toString(),
+          operationKind: EDocumentOperation.Update,
+          docId,
+        },
         databaseName,
-        collectionName,
-        docId,
-        operationNumber,
-        merkleRoot: newRoot.toString(),
+        sequenceNumber: operationNumber,
       },
       { session: session.proofService }
     );
-
-    return imMerkleTree.getMerkleProof(merkleIndex, currDate, {
-      session: session.serverless,
-    });
   }
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
-    session?: ClientSession
+    session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId } = proveDeleteParam;
 
-    const imMerkleTree = await ModelMerkleTree.getInstance(databaseName);
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
     const metadataDocument = await imMetadataDocument.findOne(
       {
         docId,
       },
-      { session }
+      { session: session.serverless }
     );
 
     if (!metadataDocument) {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const currDate = new Date();
-    const merkleIndex = BigInt(metadataDocument.merkleIndex);
-
-    const newRoot = await imMerkleTree.setLeaf(
-      merkleIndex,
-      Field(0),
-      currDate,
-      { session }
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session.serverless
     );
-
-    const imSequencer = ModelSequencer.getInstance(databaseName);
 
     const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
-      session
+      ESequencer.DataOperation,
+      session.serverless
     );
 
-    await ModelQueueTask.getInstance().queueTask(
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
       {
-        merkleIndex,
-        documentHash: Field(0).toString(),
-        status: EProofStatusDocument.Queued,
-        createdAt: currDate,
-        updatedAt: currDate,
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: undefined,
+          operationKind: EDocumentOperation.Delete,
+          docId,
+        },
         databaseName,
-        collectionName,
-        docId,
-        operationNumber,
-        merkleRoot: newRoot.toString(),
+        sequenceNumber: operationNumber,
       },
-      { session }
+      { session: session.proofService }
     );
-
-    return imMerkleTree.getMerkleProof(merkleIndex, currDate, {
-      session,
-    });
   }
 }

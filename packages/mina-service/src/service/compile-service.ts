@@ -193,10 +193,7 @@ export const SERVICE_COMPILE = {
                 payerAddress,
                 zkAppPrivateKey,
                 metadataDatabase.merkleHeight,
-                {
-                  ...proofOffChain.proof,
-                  step: proofOffChain.step,
-                }
+                proofOffChain.proof
               );
 
               // Update transaction status and add transaction raw

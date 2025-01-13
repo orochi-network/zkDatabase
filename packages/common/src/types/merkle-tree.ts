@@ -6,7 +6,6 @@ import { TDbRecord } from './common.js';
 export type TMerkle = {
   // Must be index
   hash: string;
-  leaf: string;
   level: number;
   index: bigint;
 };
@@ -40,6 +39,10 @@ export type TMerkleWitness = {
   target: boolean;
 };
 
+export type TMerkleProofSerialized = Omit<TMerkleProof, 'sibling'> & {
+  sibling: string;
+};
+
 export type TMerkleNodeDetailJson = TMerkleJson<TMerkleNode> &
   TMerkleEmptyNode &
   TMerkleWitness;
@@ -55,11 +58,7 @@ export type TMerkleTreeProofByIndexRequest = TDatabaseRequest & {
   index: string;
 };
 
-export type TMerkleTreeProofByIndexResponse = Array<
-  Omit<TMerkleProof, 'sibling'> & {
-    sibling: string;
-  }
->;
+export type TMerkleTreeProofByIndexResponse = Array<TMerkleProofSerialized>;
 
 export type TMerkleTreeProofByDocIdRequest = TDatabaseRequest & {
   docId: string;
@@ -69,7 +68,7 @@ export type TMerkleTreeProofByDocIdResponse = TMerkleTreeProofByIndexResponse;
 
 export type TMerkleTreeNodeListByLevelRequest = TDatabaseRequest & {
   level: number;
-  pagination: TPagination;
+  pagination?: TPagination;
 };
 
 export type TMerkleTreeNodeListByLevelResponse = TPaginationReturn<

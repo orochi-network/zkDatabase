@@ -1,4 +1,4 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import { ListCollectionsOptions, MongoClient, ServerApiVersion } from 'mongodb';
 import { logger } from '@helper';
 
 export class DatabaseEngine {
@@ -30,13 +30,20 @@ export class DatabaseEngine {
 
   public async isCollection(
     database: string,
-    collection: string
+    collection: string,
+    options?: ListCollectionsOptions
   ): Promise<boolean> {
-    const collections = await this.client
-      .db(database)
-      .listCollections()
-      .toArray();
-    return collections.some((col) => col.name === collection);
+    return (
+      (await this.client
+        .db(database)
+        .listCollections(
+          {
+            name: collection,
+          },
+          options
+        )
+        .next()) !== null
+    );
   }
 
   public get db() {

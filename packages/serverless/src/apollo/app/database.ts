@@ -21,14 +21,12 @@ import {
   ModelMetadataDatabase,
   withTransaction,
 } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsDatabase = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -74,7 +72,13 @@ export const typeDefsDatabase = gql`
 // Joi definition
 
 const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
-  databaseName: Joi.string().optional(),
+  databaseName: Joi.alternatives().try(
+    Joi.string().optional(),
+    Joi.object({
+      $regex: Joi.string().required(),
+      $options: Joi.string().valid('i', 'm', 'g', 's').optional(),
+    })
+  ),
   databaseOwner: Joi.string().optional(),
   merkleHeight: Joi.number().integer().optional(),
   appPublicKey: Joi.string().optional(),
@@ -193,7 +197,6 @@ const dbEnvironment = publicWrapper(
 );
 
 export const resolversDatabase = {
-  JSON: GraphQLJSON,
   Query: {
     dbStats,
     dbList,

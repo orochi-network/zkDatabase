@@ -11,13 +11,11 @@ import {
   TIndexListRequest,
   TIndexListResponse,
 } from '@zkdb/common';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 import { JOI_COLLECTION_INDEX } from './collection';
 
 export const typeDefsCollectionIndex = gql`
-  scalar JSON
   scalar Date
   type Query
   type Mutation
@@ -110,7 +108,6 @@ const indexDrop = authorizeWrapper<TIndexDropRequest, TIndexDropResponse>(
 );
 
 export const resolversCollectionIndex = {
-  JSON: GraphQLJSON,
   Query: {
     indexList,
   },
