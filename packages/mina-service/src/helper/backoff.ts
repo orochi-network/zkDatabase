@@ -2,7 +2,7 @@ import { LoggerLoader } from '@orochi-network/framework';
 import { logger as defaultLogger } from './logger.js';
 
 /** Run a function repeatedly with exponential backoff. */
-export default class Backoff {
+class Backoff {
   /* eslint-disable-next-line no-useless-constructor --
    * Reason: This constructor is not useless */
   constructor(
@@ -61,3 +61,6 @@ export default class Backoff {
     this.logger.info('Maximum retries reached. Stopping task consumption.');
   }
 }
+
+export { Backoff };
+export default Backoff;
