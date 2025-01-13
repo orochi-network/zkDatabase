@@ -136,12 +136,10 @@ const merkleProofDocId = publicWrapper<
       docId,
       session
     );
-    return resultMerkleProofByDocId.map((proof) => {
-      return {
-        isLeft: proof.isLeft,
-        sibling: proof.sibling.toString(),
-      };
-    });
+    return resultMerkleProofByDocId.map(({ isLeft, sibling }) => ({
+      isLeft,
+      sibling: sibling.toString(),
+    }));
   }, 'proofService');
 });
 
