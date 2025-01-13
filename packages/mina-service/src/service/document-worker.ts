@@ -180,7 +180,7 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
   }
 }
 
-export const SERVICE_DOCUMENT = (workerId = '1') => ({
+export const newServiceDocument = (workerId = '1') => ({
   clusterName: `document-worker-${workerId}`,
   payload: async () => {
     logger = new LoggerLoader(`document-worker-${workerId}`, 'debug', 'string');
