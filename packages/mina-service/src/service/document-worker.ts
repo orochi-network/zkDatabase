@@ -160,14 +160,9 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
           true
         );
 
-        // Indicates that no task was acquired, so we should back off
-        if (result === null) {
-          exclusionQueue.shift();
-          return true;
-        }
-
         exclusionQueue.shift();
-        return false;
+        // Backoff if the task was not acquired
+        return result === null;
       },
       async (error) => {
         exclusionQueue.shift();
