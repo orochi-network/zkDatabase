@@ -93,7 +93,12 @@ describe('ModelMerkleTree', () => {
         await modelMerkleTree.setLeaf(index, value, session);
       }, 'proofService');
 
-      const witness = await modelMerkleTree.getMerkleProof(index);
+      const witness = (await modelMerkleTree.getMerkleProof(index)).map(
+        (w) => ({
+          ...w,
+          sibling: Field(w.sibling),
+        })
+      );
 
       expect(witness).toEqual(merkleTree.getWitness(index));
     }
@@ -142,8 +147,11 @@ describe('ModelMerkleTree', () => {
     expect(await modelMerkleTree.getRoot()).toEqual(
       merkleTree.getRoot().toString()
     );
-    expect(await modelMerkleTree.getMerkleProof(55n)).toEqual(
-      merkleTree.getWitness(55n)
-    );
+    expect(
+      (await modelMerkleTree.getMerkleProof(55n)).map((w) => ({
+        ...w,
+        sibling: Field(w.sibling),
+      }))
+    ).toEqual(merkleTree.getWitness(55n));
   });
 });

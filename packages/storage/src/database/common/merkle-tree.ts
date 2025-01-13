@@ -10,7 +10,7 @@ import {
   TMerkleJson,
   TMerkleNode,
   TMerkleNodeDetailJson,
-  TMerkleProof,
+  TMerkleProofSerialized,
   TMerkleRecord,
   TPagination,
 } from '@zkdb/common';
@@ -92,8 +92,13 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     index: bigint,
     leaf: Field,
     session: ClientSession
-  ): Promise<Field> {
-    const witnesses = await this.getMerkleProof(index, { session });
+  ): Promise<string> {
+    const witnesses = (await this.getMerkleProof(index, { session })).map(
+      (w) => ({
+        ...w,
+        sibling: Field(w.sibling),
+      })
+    );
     const ExtendedWitnessClass = createExtendedMerkleWitness(this._height);
     const extendedWitness = new ExtendedWitnessClass(witnesses);
     const path: Field[] = extendedWitness.calculatePath(leaf);
@@ -126,7 +131,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     );
     await this.collection.insertMany(inserts, { session });
 
-    return path[this.height - 1];
+    return path[this.height - 1].toString();
   }
 
   /**
@@ -135,7 +140,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
   public async getMerkleProof(
     index: bigint,
     options?: FindOptions
-  ): Promise<TMerkleProof[]> {
+  ): Promise<TMerkleProofSerialized[]> {
     if (index >= this.leafCount) {
       throw new Error(
         `index ${index} is out of range for ${this.leafCount} leaves.`
@@ -144,14 +149,14 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
     let currIndex = BigInt(index);
 
-    const witnessPromises: Promise<TMerkleProof>[] = [];
+    const witnessPromises: Promise<TMerkleProofSerialized>[] = [];
     for (let level = 0; level < this._height - 1; level += 1) {
       const isLeft = currIndex % 2n === 0n;
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
       witnessPromises.push(
         this.getNode(level, siblingIndex, options).then((sibling) => {
-          return { isLeft, sibling: Field(sibling) };
+          return { isLeft, sibling };
         })
       );
 

@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import {
   TMerkleNodeJson,
-  TMerkleProof,
+  TMerkleProofSerialized,
   TMerkleTreeInfo,
   TPagination,
   TPaginationReturn,
@@ -16,7 +16,7 @@ export class MerkleTree {
     databaseName: string,
     docId: string,
     session: ClientSession
-  ): Promise<TMerkleProof[]> {
+  ): Promise<TMerkleProofSerialized[]> {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
     const docMetadata = await modelDocumentMetadata.findOne(

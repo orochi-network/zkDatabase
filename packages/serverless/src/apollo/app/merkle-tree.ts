@@ -115,14 +115,7 @@ const merkleProof = publicWrapper<
       args.databaseName,
       session
     );
-    const resultMerkleProof = await imMerkleTree.getMerkleProof(
-      BigInt(args.index)
-    );
-
-    return resultMerkleProof.map(({ isLeft, sibling }) => ({
-      isLeft,
-      sibling: sibling.toString(),
-    }));
+    return imMerkleTree.getMerkleProof(BigInt(args.index));
   }, 'proofService');
 });
 
@@ -131,15 +124,7 @@ const merkleProofDocId = publicWrapper<
   TMerkleTreeProofByDocIdResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) => {
   return withTransaction(async (session) => {
-    const resultMerkleProofByDocId = await MerkleTree.document(
-      databaseName,
-      docId,
-      session
-    );
-    return resultMerkleProofByDocId.map(({ isLeft, sibling }) => ({
-      isLeft,
-      sibling: sibling.toString(),
-    }));
+    return MerkleTree.document(databaseName, docId, session);
   }, 'proofService');
 });
 

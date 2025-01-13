@@ -39,6 +39,10 @@ export type TMerkleWitness = {
   target: boolean;
 };
 
+export type TMerkleProofSerialized = Omit<TMerkleProof, 'sibling'> & {
+  sibling: string;
+};
+
 export type TMerkleNodeDetailJson = TMerkleJson<TMerkleNode> &
   TMerkleEmptyNode &
   TMerkleWitness;
@@ -54,11 +58,7 @@ export type TMerkleTreeProofByIndexRequest = TDatabaseRequest & {
   index: string;
 };
 
-export type TMerkleTreeProofByIndexResponse = Array<
-  Omit<TMerkleProof, 'sibling'> & {
-    sibling: string;
-  }
->;
+export type TMerkleTreeProofByIndexResponse = Array<TMerkleProofSerialized>;
 
 export type TMerkleTreeProofByDocIdRequest = TDatabaseRequest & {
   docId: string;

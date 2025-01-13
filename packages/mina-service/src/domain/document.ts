@@ -54,14 +54,9 @@ export class DocumentProcessor {
 
     await imMerkleTree.setLeaf(merkleIndex, Field(leafNew), proofSession);
 
-    const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
+    const merkleProof = await imMerkleTree.getMerkleProof(merkleIndex, {
       session: proofSession,
     });
-
-    const merkleProof = merkleWitness.map((proof) => ({
-      ...proof,
-      sibling: proof.sibling.toString(),
-    }));
 
     const merkleRootNew = (
       await imMerkleTree.getRoot({ session: proofSession })
