@@ -58,9 +58,9 @@ export type TRollupOnChain = {
   databaseName: string;
   step: bigint;
   txHash: string;
-  status: EMinaTransactionStatus; // TODO: Redefined
+  status: EMinaTransactionStatus;
   error: string;
-  // TODO:
+  // TODO: Implement more if we want to store more field from on-chain
 };
 
 export type TRollOpChainRecordNullable = TDbRecord<
