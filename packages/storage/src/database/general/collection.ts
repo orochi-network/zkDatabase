@@ -1,5 +1,6 @@
 import { TCollectionIndexMap } from '@zkdb/common';
 import {
+  ClientSession,
   CreateIndexesOptions,
   Document,
   DropIndexesOptions,
@@ -36,11 +37,13 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return ModelCollection.instances.get(key) as ModelCollection<T>;
   }
 
-  public async isExist(): Promise<boolean> {
+  public async isExist(session?: ClientSession): Promise<boolean> {
     if (!this.collectionName) {
       return false;
     }
-    return this.dbEngine.isCollection(this.databaseName, this.collectionName);
+    return this.dbEngine.isCollection(this.databaseName, this.collectionName, {
+      session,
+    });
   }
 
   public async create(

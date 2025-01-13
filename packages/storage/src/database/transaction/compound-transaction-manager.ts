@@ -27,14 +27,12 @@ export async function withCompoundTransaction<T>(
 
     result = await callback({ serverless, proofService });
 
+    // NOTE: (or TODO?) this has a limitation where if the serverless commit
+    // succeeds but the proofService commit fails, the serverless commit will
+    // not be rolled back because the session is already closed.
     await serverless.commitTransaction();
     await proofService.commitTransaction();
   } catch (error) {
-    logger.error('DatabaseEngine::withCompoundTransaction()', {
-      message: (error as MongoError).message,
-      code: (error as MongoError).code,
-      stack: (error as Error).stack,
-    });
     if (serverless.inTransaction()) {
       try {
         await serverless.abortTransaction();

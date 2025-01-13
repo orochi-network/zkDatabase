@@ -32,7 +32,7 @@ export default [
     compat.extends('airbnb-base', 'prettier', 'plugin:import/typescript')
   ),
   {
-    files: ['packages/*/src/**/*.+(ts|js)'],
+    files: ['src/**/*.+(ts|js)'],
     plugins: {
       '@o1js-eslint': o1js,
       '@typescript-eslint': typescriptEslint,
@@ -84,6 +84,7 @@ export default [
       camelcase: 2,
       'arrow-body-style': 0,
       'no-mixed-spaces-and-tabs': 2,
+      'max-classes-per-file': 0,
 
       'max-len': [
         2,

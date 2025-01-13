@@ -2,11 +2,9 @@
 // consider validating the query object before passing to parseQuery
 
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, Metadata } from '@domain';
-import { gql } from '@helper';
-import { authorizeWrapper } from '../validation';
+import { gql, GraphqlHelper } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -28,8 +26,8 @@ import {
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
-import { GraphqlHelper } from '@helper';
 import { DEFAULT_PAGINATION } from '@common';
+import { authorizeWrapper } from '../validation';
 
 // The value will be validated against the schema type in the database later
 const JOI_DOCUMENT_CREATE = (required?: boolean) =>
@@ -72,7 +70,6 @@ const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
 
 export const typeDefsDocument = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -110,7 +107,12 @@ export const typeDefsDocument = gql`
   }
 
   type DocumentCreateResponse {
-    merkleProof: [MerkleProof!]!
+    docId: String!
+    acknowledged: Boolean!
+    document: JSON!
+  }
+
+  type DocumentDropResponse {
     docId: String!
     acknowledged: Boolean!
   }
@@ -166,13 +168,13 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       document: JSON!
-    ): [MerkleProof!]!
+    ): JSON!
 
     documentDrop(
       databaseName: String!
       collectionName: String!
       docId: String!
-    ): [MerkleProof!]!
+    ): DocumentDropResponse!
   }
 `;
 
@@ -238,10 +240,10 @@ const documentCreate = authorizeWrapper<
         actor: ctx.userName,
       },
       args.document,
+      compoundSession,
       args.documentPermission
         ? Permission.from(args.documentPermission)
-        : PERMISSION_DEFAULT,
-      compoundSession
+        : PERMISSION_DEFAULT
     )
   )
 );
@@ -269,7 +271,7 @@ const documentDrop = authorizeWrapper<
   TDocumentDropResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
   return withCompoundTransaction(async (session) => {
-    return Document.drop(
+    const droppedDocId = await Document.drop(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -278,6 +280,11 @@ const documentDrop = authorizeWrapper<
       args.docId,
       session
     );
+
+    return {
+      docId: droppedDocId,
+      acknowledged: true,
+    };
   });
 });
 
@@ -338,7 +345,6 @@ const documentMetadata = authorizeWrapper<
 );
 
 export const resolversDocument = {
-  JSON: GraphQLJSON,
   Query: {
     documentFind,
     documentHistoryFind,

@@ -5,6 +5,7 @@ import {
   SERVICE_TRANSACTION,
   SERVICE_TASK,
   SERVICE_ROLLUP,
+  newServiceDocument,
 } from '@service';
 // Set logger
 LoggerSet(logger);
@@ -16,4 +17,7 @@ clusterApp
   .add(SERVICE_TRANSACTION)
   .add(SERVICE_TASK)
   .add(SERVICE_ROLLUP)
+  // TODO: Make num of workers configurable instead of hardcoding
+  .add(newServiceDocument('1'))
+  .add(newServiceDocument('2'))
   .start();

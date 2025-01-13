@@ -1,7 +1,10 @@
 import { gql } from '@helper';
+import { GraphQLScalarType } from 'graphql';
+import { GraphQLJSONObject } from 'graphql-type-json';
 
 export const typeDefsCommon = gql`
   scalar Date
+  scalar JSON
 
   enum TransactionType {
     Deploy
@@ -76,3 +79,34 @@ export const typeDefsCommon = gql`
     kind: SchemaType!
   }
 `;
+
+/** Recusively traverse through an object and convert all field with bigint to
+ * string */
+function convertBigIntToString(obj: any): any {
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToString(item));
+  }
+  if (typeof obj === 'object') {
+    Object.keys(obj).forEach((key) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[key] = convertBigIntToString(obj[key]);
+    });
+  }
+  return obj;
+}
+
+export const resolversCommon = {
+  JSON: new GraphQLScalarType({
+    name: 'JSON',
+    description: 'JSON scalar type (aka Object)',
+    serialize(value) {
+      return GraphQLJSONObject.serialize(convertBigIntToString(value));
+    },
+    parseValue(value) {
+      return GraphQLJSONObject.parseValue(value);
+    },
+  }),
+};

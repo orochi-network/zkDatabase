@@ -12,13 +12,11 @@ import {
   TTransactionSubmitResponse,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
 export const typeDefsTransaction = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -117,7 +115,6 @@ const transactionSubmit = authorizeWrapper<
 );
 
 export const resolversTransaction = {
-  JSON: GraphQLJSON,
   Query: {
     transactionDraft,
   },

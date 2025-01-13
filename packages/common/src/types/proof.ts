@@ -65,20 +65,6 @@ export type TZkProofRequest = TDatabaseRequest;
 
 export type TZkProofResponse = TZkDatabaseProof | null;
 
-export type TQueue = {
-  databaseName: string;
-  collectionName: string;
-  docId: string;
-  operationNumber: number;
-  merkleIndex: bigint;
-  hash: string;
-  status: EProofStatusDocument;
-  merkleRoot: string;
-  error?: string;
-};
-
-export type TQueueRecord = TDbRecord<TQueue>;
-
 export type TProof = TZkDatabaseProof & {
   databaseName: string;
   collectionName: string;

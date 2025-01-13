@@ -9,6 +9,10 @@ export const zkDatabaseConstant = {
 
   globalProofDatabase: '_zkdatabase_proof_service',
 
+  globalMerkleTreeDatabase: '_zkdatabase_merkle_tree',
+
+  globalTransitionLogDatabase: '_zkdatabase_transition_log',
+
   systemIndex: '_zkdatabase_system_index',
 
   // Global collections within the global database
@@ -35,6 +39,10 @@ export const zkDatabaseConstant = {
 
     // Rollup history
     rollupHistory: 'rollup_history',
+
+    // Queue to store documents waiting to be processed, e.g. update the merkle
+    // tree and queue proof tasks
+    documentQueue: 'document_queue',
   },
 
   // Collections that are common across different databases
@@ -49,9 +57,6 @@ export const zkDatabaseConstant = {
 
     // User -> Group mapping
     userGroup: '_zkdatabase_user_group',
-
-    // Merkle tree collection
-    merkleTree: '_zkdatabase_merkle_tree',
 
     // Sequencer
     sequencer: '_zkdatabase_sequencer',

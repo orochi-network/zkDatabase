@@ -17,7 +17,6 @@ import {
 } from '@zkdb/common';
 import { randomUUID } from 'crypto';
 import { User } from '@domain';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import Client from 'mina-signer';
 import {
@@ -36,7 +35,6 @@ import { NetworkId } from 'o1js';
 
 export const typeDefsUser = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -258,7 +256,6 @@ const userSignUp = publicWrapper<TUserSignUpRequest, TUserSignUpResponse>(
 );
 
 export const resolversUser = {
-  JSON: GraphQLJSON,
   Query: {
     userMe,
     userFind,

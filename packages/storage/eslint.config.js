@@ -60,7 +60,7 @@ export default [
 
     rules: {
       'no-shadow': 'off',
-      '@typescript-eslint/no-shadow': ['error'],
+      '@typescript-eslint/no-shadow': 'off',
 
       'class-methods-use-this': [1],
       'no-underscore-dangle': [0],

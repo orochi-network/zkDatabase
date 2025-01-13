@@ -73,7 +73,6 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
     filter?: Filter<T>,
     options?: FindOptions
   ): Promise<WithId<T> | null> {
-    logger.debug(`ModelGeneral::findOne()`, filter);
     return this.collection.findOne(filter || {}, options);
   }
 

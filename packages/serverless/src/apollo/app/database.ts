@@ -21,14 +21,12 @@ import {
   ModelMetadataDatabase,
   withTransaction,
 } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsDatabase = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -199,7 +197,6 @@ const dbEnvironment = publicWrapper(
 );
 
 export const resolversDatabase = {
-  JSON: GraphQLJSON,
   Query: {
     dbStats,
     dbList,

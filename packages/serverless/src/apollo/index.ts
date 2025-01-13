@@ -22,6 +22,7 @@ import {
   typeDefsUser,
   resolversPermission,
   typeDefsPermission,
+  resolversCommon,
 } from './app';
 
 export const TypedefsApp = [
@@ -40,6 +41,7 @@ export const TypedefsApp = [
 ];
 
 export const ResolversApp = [
+  resolversCommon,
   resolversDatabase,
   resolversCollection,
   resolversDocument,
