@@ -12,6 +12,8 @@ import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
 
+const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
+
 export enum EDocumentOperation {
   Create = 'Create',
   Update = 'Update',
@@ -104,7 +106,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
    * @return The result of the callback function or `null` if no task is available to acquire.
    * */
   public async acquireNextTaskInQueue<R>(
-    f: (
+    callback: (
       task: TDbRecord<TGenericQueue<T>>,
       session: TCompoundSession
     ) => Promise<R>,
@@ -158,7 +160,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
             // that every task's operations are contained within a transaction.
             status: EQueueTaskStatus.Processing,
             acquiredAt: {
-              $lt: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes
+              $lt: new Date(Date.now() - TASK_TIMEOUT_MS),
             },
           },
         ],
@@ -178,7 +180,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
 
     try {
       const result = await withCompoundTransaction(async (session) => {
-        return f(task, session);
+        return callback(task, session);
       });
 
       if (removeTaskOnSuccess) {
