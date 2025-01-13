@@ -74,7 +74,13 @@ export const typeDefsDatabase = gql`
 // Joi definition
 
 const SchemaDatabaseRecordQuery = Joi.object<TDatabaseListRequest['query']>({
-  databaseName: Joi.string().optional(),
+  databaseName: Joi.alternatives().try(
+    Joi.string().optional(),
+    Joi.object({
+      $regex: Joi.string().required(),
+      $options: Joi.string().valid('i', 'm', 'g', 's').optional(),
+    })
+  ),
   databaseOwner: Joi.string().optional(),
   merkleHeight: Joi.number().integer().optional(),
   appPublicKey: Joi.string().optional(),
