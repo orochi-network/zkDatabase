@@ -39,3 +39,7 @@ operations for different tenants while maintaining per-tenant ordering
 guarantees. The diagram is simplified to illustrate this per-tenant ordering
 concept.
 
+## License
+
+[Apache-2.0](LICENSE)
+
