@@ -127,7 +127,7 @@ describe('Schema', () => {
 
   it('Should construct schema from schema definition', () => {
     // Set up
-    const userSchemaStructure = User.getSchemaDefinition();
+    const userSchemaStructure = User.definition();
 
     const myUser = new User({
       name,

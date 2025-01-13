@@ -1,7 +1,6 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
 import {
-  databaseName,
   EMinaTransactionStatus,
   ETransactionStatus,
   ETransactionType,
@@ -9,7 +8,6 @@ import {
 import { MinaNetwork, ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
-  getCurrentTime,
   ModelMetadataDatabase,
   ModelRollupOnChain,
   ModelTransaction,
@@ -214,7 +212,7 @@ export const SERVICE_TRANSACTION = {
                         );
                       }
 
-                      const zkDbProcessor = new ZkDbProcessor(
+                      const zkDbProcessor = await ZkDbProcessor.getInstance(
                         metadataDatabase.merkleHeight
                       );
 

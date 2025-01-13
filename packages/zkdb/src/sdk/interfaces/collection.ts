@@ -57,5 +57,8 @@ export interface ICollection<T extends TSchemaExtendable<any>> {
     pagination?: TPagination
   ): Promise<TPaginationReturn<IDocument<T>[]>>;
 
-  insert(document: T['innerStructure']): Promise<TDocumentCreateResponse>;
+  insert(
+    document: T['innerStructure'],
+    permission?: Permission
+  ): Promise<TDocumentCreateResponse>;
 }

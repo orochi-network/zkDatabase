@@ -1,4 +1,4 @@
-import { CACHE_PATH, logger } from '@helper';
+import { logger } from '@helper';
 import { TVerificationKeySerialized, TZkDatabaseProof } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import { getCurrentTime, ModelVerificationKey } from '@zkdb/storage';
@@ -33,25 +33,21 @@ export class ZkCompile {
 
     const start = performance.now();
 
-    const zkDbProcessor = new ZkDbProcessor(merkleHeight);
+    const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
-    const { zkdbContract, zkdbRollup } =
-      await zkDbProcessor.compile(CACHE_PATH);
-
-    const imVerification = ModelVerificationKey.getInstance();
+    const { vkContract, vkRollup } = zkDbProcessor;
 
     const contractVerificationKeySerialized: TVerificationKeySerialized = {
-      ...zkdbContract.verificationKey,
-      hash: zkdbContract.verificationKey.hash.toString(),
+      ...vkContract,
+      hash: vkContract.hash.toString(),
     };
 
     const rollupVerificationKeySerialized: TVerificationKeySerialized = {
-      ...zkdbRollup.verificationKey,
-      hash: zkdbRollup.verificationKey.hash.toString(),
+      ...vkRollup,
+      hash: vkRollup.hash.toString(),
     };
 
     // Using SHA-256 hash from 'crypto' to hash verification key
-
     const contractVerificationKeyHash = createHash('sha256')
       .update(JSON.stringify(contractVerificationKeySerialized))
       .digest('hex');
@@ -59,6 +55,8 @@ export class ZkCompile {
     const rollupVerificationKeyHash = createHash('sha256')
       .update(JSON.stringify(rollupVerificationKeySerialized))
       .digest('hex');
+
+    const imVerification = ModelVerificationKey.getInstance();
 
     await imVerification.insertMany([
       {
@@ -116,9 +114,7 @@ export class ZkCompile {
 
     const start = performance.now();
 
-    const zkDbProcessor = new ZkDbProcessor(merkleHeight);
-
-    await zkDbProcessor.compile(CACHE_PATH);
+    const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
     const proofProgram = ZkProgram.Proof(zkDbProcessor.getInstanceZkDBRollup());

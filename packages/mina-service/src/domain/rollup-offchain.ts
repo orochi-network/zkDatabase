@@ -1,4 +1,3 @@
-import { CACHE_PATH } from '@helper';
 import { EProofStatusDocument, TQueueRecord } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
@@ -45,9 +44,8 @@ export class RollupOffchain {
       );
     }
 
-    const zkAppProcessor = new ZkDbProcessor(merkleHeight);
-    // Cache path required
-    await zkAppProcessor.compile(CACHE_PATH);
+    // ZkDbProcessor will automatically compile when getInstance
+    const zkAppProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
 
@@ -82,7 +80,7 @@ export class RollupOffchain {
           merkleRootNew: task.merkleRootNew,
           merkleRootOld: merkleRootOld,
           proof,
-          step,
+          step: BigInt(step),
           createdAt: getCurrentTime(),
           updatedAt: getCurrentTime(),
           merkleProof: [],
@@ -128,7 +126,7 @@ export class RollupOffchain {
         merkleRootNew: task.merkleRootNew,
         merkleRootOld,
         proof,
-        step,
+        step: BigInt(step),
         // TODO: Since queue not implement I'll assume that we have
         // @ts-expect-error
         merkleProof: task.merkleProof,

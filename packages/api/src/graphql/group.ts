@@ -142,16 +142,11 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query indexExist(
+      query groupListByUser(
         $databaseName: String!
-        $collectionName: String!
-        $indexName: String!
+        $userQuery: GroupListByUserRequest!
       ) {
-        indexExist(
-          databaseName: $databaseName
-          collectionName: $collectionName
-          indexName: $indexName
-        )
+        groupListByUser(databaseName: $databaseName, userQuery: $userQuery)
       }
     `,
     (data) => data.groupListByUser

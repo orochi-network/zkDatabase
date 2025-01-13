@@ -5,6 +5,7 @@ import {
   Mina,
   Poseidon,
   PrivateKey,
+  verify,
 } from 'o1js';
 import { ZkDbProcessor } from './zkdb-processor.js';
 
@@ -12,7 +13,7 @@ import { ZkDbProcessor } from './zkdb-processor.js';
 const doProofs = false;
 
 // Height of the Merkle Tree
-const merkleHeight = 3;
+const merkleHeight = 64;
 
 const Local = await Mina.LocalBlockchain({ proofsEnabled: doProofs });
 Mina.setActiveInstance(Local);
@@ -21,30 +22,17 @@ const initialBalance = 1_000_000_000;
 const feePayerKey = Local.testAccounts[0].key;
 const feePayer = Local.testAccounts[0];
 
-function H(l: Field, r: Field): Field {
-  return Poseidon.hash([l, r]);
-}
-
-console.log(
-  'Calculate:>',
-  H(H(Field(0), Field(0)), H(Field(0), Field(0))).toString()
-);
-
 // the zkapp account
 const zkappKey = PrivateKey.random();
 const zkappAddress = zkappKey.toPublicKey();
 
-const zkdbProcessor = new ZkDbProcessor(merkleHeight);
+ZkDbProcessor.setLogger(console);
 
-zkdbProcessor.setLogger(console);
-
-await zkdbProcessor.compile(
-  '/home/chiro/Git/zkDatabase/packages/smart-contract/cache'
-);
+const processor = await ZkDbProcessor.getInstance(merkleHeight);
 
 const merkleTree = new MerkleTree(merkleHeight);
 
-const zkApp = zkdbProcessor.getInstanceZkDBContract(zkappAddress);
+const zkApp = processor.getInstanceZkDBContract(zkappAddress);
 
 // Fund new account
 const tx = await Mina.transaction(feePayer, async () => {
@@ -65,14 +53,14 @@ console.log(
 
 console.log('Initial root off-chain:', merkleTree.getRoot().toString());
 
-const proof1 = await zkdbProcessor.init(
+const proof1 = await processor.init(
   merkleTree.getRoot(),
   merkleTree.getWitness(0n)
 );
 
 merkleTree.setLeaf(1n, Field(3n));
 
-const proof2 = await zkdbProcessor.update(proof1, {
+const proof2 = await processor.update(proof1, {
   merkleRootNew: merkleTree.getRoot(),
   merkleProof: merkleTree.getWitness(1n),
   leafOld: Field(0n),
@@ -81,19 +69,23 @@ const proof2 = await zkdbProcessor.update(proof1, {
 
 merkleTree.setLeaf(2n, Field(5n));
 
-const serializedProof2 = zkdbProcessor.serialize(proof2);
+const serializedProof2 = processor.serialize(proof2);
 
 console.log('Proof2>', serializedProof2);
 
-const proof3 = await zkdbProcessor.update(
-  await zkdbProcessor.deserialize(JSON.stringify(serializedProof2)),
-  {
-    merkleRootNew: merkleTree.getRoot(),
-    merkleProof: merkleTree.getWitness(2n),
-    leafOld: Field(0n),
-    leafNew: Field(5n),
-  }
+const deserializeProof2 = await processor.deserialize(
+  JSON.stringify(serializedProof2)
 );
+
+console.log('Verify generic proof');
+console.log('>>>', await verify(serializedProof2.proof, processor.vkRollup));
+
+const proof3 = await processor.update(deserializeProof2, {
+  merkleRootNew: merkleTree.getRoot(),
+  merkleProof: merkleTree.getWitness(2n),
+  leafOld: Field(0n),
+  leafNew: Field(5n),
+});
 
 // Perform the transaction
 let tx2 = await Mina.transaction(feePayer, async () => {
@@ -110,7 +102,7 @@ console.log(
 
 merkleTree.setLeaf(2n, Field(7n));
 
-const proof4 = await zkdbProcessor.update(proof3, {
+const proof4 = await processor.update(proof3, {
   merkleRootNew: merkleTree.getRoot(),
   merkleProof: merkleTree.getWitness(2n),
   leafOld: Field(5n),
