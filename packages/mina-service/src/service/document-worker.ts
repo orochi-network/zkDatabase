@@ -81,7 +81,7 @@ export class DocumentWorker {
         const trackingSequenceNumber = await withTransaction(
           (session) =>
             ModelSequencer.getInstance(task.databaseName, session).then(
-              (self) => self.current(ESequencer.LastProcessedOperation)
+              (self) => self.current(ESequencer.ProvedMerkleRoot)
             ),
           'proofService'
         );
@@ -127,7 +127,7 @@ tracking sequence number: ${trackingSequenceNumber}`
               )
             ).collection.findOneAndUpdate(
               {
-                type: ESequencer.LastProcessedOperation,
+                type: ESequencer.ProvedMerkleRoot,
               },
               {
                 $set: {
@@ -135,7 +135,7 @@ tracking sequence number: ${trackingSequenceNumber}`
                   updatedAt: getCurrentTime(),
                 },
                 $setOnInsert: {
-                  type: ESequencer.LastProcessedOperation,
+                  type: ESequencer.ProvedMerkleRoot,
                   createdAt: getCurrentTime(),
                 },
               },

@@ -12,11 +12,11 @@ export enum ESequencer {
   MerkleIndex = 'MerkleIndex',
   // The latest operation number performed by the user, i.e. each document
   // update, create, or delete bumps this number by one.
-  Operation = 'Operation',
+  DataOperation = 'DataOperation',
   // The highest operation number that has been fully processed and
   // incorporated into the current Merkle tree state. This number should always
   // be less than or equal to the Operation number.
-  LastProcessedOperation = 'LastProcessedOperation',
+  ProvedMerkleRoot = 'ProvedMerkleRoot,
 }
 
 export type TSequencedItem = TDbRecord<{
