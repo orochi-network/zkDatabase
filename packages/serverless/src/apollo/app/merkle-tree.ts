@@ -119,9 +119,9 @@ const merkleProof = publicWrapper<
       BigInt(args.index)
     );
 
-    return resultMerkleProof.map((proof) => ({
-      isLeft: proof.isLeft,
-      sibling: proof.sibling.toString(),
+    return resultMerkleProof.map(({ isLeft, sibling }) => ({
+      isLeft,
+      sibling: sibling.toString(),
     }));
   }, 'proofService');
 });
