@@ -79,10 +79,13 @@ export class DocumentWorker {
         assert(task.sequenceNumber !== null, "Task's sequence number is null");
 
         const trackingSequenceNumber = await withTransaction(
-          (session) =>
-            ModelSequencer.getInstance(task.databaseName, session).then(
-              (self) => self.current(ESequencer.ProvedMerkleRoot)
-            ),
+          async (session) => {
+            const imModelSequencer = await ModelSequencer.getInstance(
+              task.databaseName,
+              session
+            );
+            return imModelSequencer.current(ESequencer.ProvedMerkleRoot);
+          },
           'proofService'
         );
 

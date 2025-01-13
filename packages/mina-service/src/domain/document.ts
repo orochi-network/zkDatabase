@@ -56,47 +56,44 @@ export class DocumentProcessor {
 
     await imMerkleTree.setLeaf(merkleIndex, Field(leafNew), proofSession);
 
-    const merkleWitness = await imMerkleTree
-      .getMerkleProof(merkleIndex, {
-        session: proofSession,
-      })
-      .then((result) =>
-        result.map((proof) => ({
-          ...proof,
-          sibling: proof.sibling.toString(),
-        }))
-      );
+    const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
+      session: proofSession,
+    });
 
-    const merkleRootNew = await imMerkleTree
-      .getRoot({ session: proofSession })
-      .then((root) => root.toString());
+    const merkleProof = merkleWitness.map((proof) => ({
+      ...proof,
+      sibling: proof.sibling.toString(),
+    }));
 
-    const transitionLogObjectId = await ModelTransitionLog.getInstance(
+    const merkleRootNew = (
+      await imMerkleTree.getRoot({ session: proofSession })
+    ).toString();
+
+    const imModelTransitionLog = await ModelTransitionLog.getInstance(
       databaseName,
       proofSession
-    ).then((imModelTransitionLog) =>
-      imModelTransitionLog.collection
-        .insertOne(
-          {
-            merkleRootNew,
-            merkleProof: merkleWitness,
-            leafOld,
-            leafNew,
-            operationNumber: sequenceNumber,
-            createdAt: getCurrentTime(),
-            updatedAt: getCurrentTime(),
-          },
-          { session: proofSession }
-        )
-        .then((result) => result.insertedId)
     );
+
+    const transitionLogObjectId =
+      await imModelTransitionLog.collection.insertOne(
+        {
+          merkleRootNew,
+          merkleProof,
+          leafOld,
+          leafNew,
+          operationNumber: sequenceNumber,
+          createdAt: getCurrentTime(),
+          updatedAt: getCurrentTime(),
+        },
+        { session: proofSession }
+      );
 
     await ModelQueueTask.getInstance().queueTask(
       {
         databaseName,
         collectionName,
         operationNumber: sequenceNumber,
-        transitionLogObjectId,
+        transitionLogObjectId: transitionLogObjectId.insertedId,
         docId,
       },
       { session: proofSession }

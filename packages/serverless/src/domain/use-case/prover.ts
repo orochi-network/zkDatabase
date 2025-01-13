@@ -65,24 +65,25 @@ export class Prover {
       session.serverless
     );
 
-    await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue,
-      session.proofService
-    ).then((self) =>
-      self.queueTask(
-        {
-          data: {
-            collectionName,
-            merkleIndex: BigInt(index),
-            newDocumentHash: hash.toString(),
-            operationKind: EDocumentOperation.Create,
-            docId,
-          },
-          databaseName,
-          sequenceNumber: operationNumber,
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(index),
+          newDocumentHash: hash.toString(),
+          operationKind: EDocumentOperation.Create,
+          docId,
         },
-        { session: session.proofService }
-      )
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: session.proofService }
     );
   }
 
@@ -118,24 +119,25 @@ export class Prover {
       session.serverless
     );
 
-    await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue,
-      session.proofService
-    ).then((self) =>
-      self.queueTask(
-        {
-          data: {
-            collectionName,
-            merkleIndex: BigInt(metadataDocument.merkleIndex),
-            newDocumentHash: hash.toString(),
-            operationKind: EDocumentOperation.Update,
-            docId,
-          },
-          databaseName,
-          sequenceNumber: operationNumber,
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: hash.toString(),
+          operationKind: EDocumentOperation.Update,
+          docId,
         },
-        { session: session.proofService }
-      )
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: session.proofService }
     );
   }
 
@@ -168,24 +170,25 @@ export class Prover {
       session.serverless
     );
 
-    await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-      zkDatabaseConstant.globalCollection.documentQueue,
-      session.proofService
-    ).then((self) =>
-      self.queueTask(
-        {
-          data: {
-            collectionName,
-            merkleIndex: BigInt(metadataDocument.merkleIndex),
-            newDocumentHash: undefined,
-            operationKind: EDocumentOperation.Delete,
-            docId,
-          },
-          databaseName,
-          sequenceNumber: operationNumber,
+    const imModelGenericQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session.proofService
+      );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: undefined,
+          operationKind: EDocumentOperation.Delete,
+          docId,
         },
-        { session: session.proofService }
-      )
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: session.proofService }
     );
   }
 }

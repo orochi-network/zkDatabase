@@ -179,47 +179,39 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
       const isLeft = currIndex % 2n === 0n;
       const siblingIndex = isLeft ? currIndex + 1n : currIndex - 1n;
 
-      witnessPath.push(
-        await this.getNode(level, currIndex, options).then((node) => {
-          return {
-            hash: node.toString(),
-            level,
-            index: currIndex,
-            witness: false,
-            target: currIndex === index,
-            empty: node.equals(this.zeroes[level]).toBoolean(),
-          };
-        })
-      );
+      const node = await this.getNode(level, currIndex, options);
+      witnessPath.push({
+        hash: node.toString(),
+        level,
+        index: currIndex,
+        witness: false,
+        target: currIndex === index,
+        empty: node.equals(this.zeroes[level]).toBoolean(),
+      });
 
-      witnessPath.push(
-        await this.getNode(level, siblingIndex, options).then((node) => {
-          return {
-            hash: node.toString(),
-            level,
-            index: siblingIndex,
-            witness: true,
-            target: false,
-            empty: node.equals(this.zeroes[level]).toBoolean(),
-          };
-        })
-      );
+      const sibling = await this.getNode(level, siblingIndex, options);
+      witnessPath.push({
+        hash: sibling.toString(),
+        level,
+        index: siblingIndex,
+        witness: true,
+        target: false,
+        empty: sibling.equals(this.zeroes[level]).toBoolean(),
+      });
 
       currIndex /= 2n;
     }
 
-    witnessPath.push(
-      await this.getNode(this._height - 1, 0n, options).then((node) => {
-        return {
-          hash: node.toString(),
-          level: this.height - 1,
-          index: 0n,
-          witness: false,
-          target: false,
-          empty: node.equals(this.zeroes[this._height - 1]).toBoolean(),
-        };
-      })
-    );
+    const root = await this.getNode(this._height - 1, 0n, options);
+    witnessPath.push({
+      hash: root.toString(),
+      level: this.height - 1,
+      index: 0n,
+      witness: false,
+      target: false,
+      empty: root.equals(this.zeroes[this._height - 1]).toBoolean(),
+    });
+
     return witnessPath;
   }
 
@@ -244,19 +236,18 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     pagination: TPagination,
     session?: ClientSession
   ): Promise<TMerkleJson<TMerkleNode>[]> {
-    return this.collection
+    const result = await this.collection
       .find({ level }, { session })
       .sort({ index: 1 })
       .limit(pagination.limit)
       .skip(pagination.offset)
-      .toArray()
-      .then((result) =>
-        result.map((node) => ({
-          hash: node.hash,
-          level: node.level,
-          index: node.index,
-        }))
-      );
+      .toArray();
+
+    return result.map((node) => ({
+      hash: node.hash,
+      level: node.level,
+      index: node.index,
+    }));
   }
 
   /** Count the number of non-empty nodes at a given level */
