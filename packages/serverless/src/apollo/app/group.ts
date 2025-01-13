@@ -201,7 +201,9 @@ const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
         {
           databaseName,
           groupName,
-          groupDescription,
+          groupDescription:
+            groupDescription ||
+            `Group ${groupName} from ${databaseName}, owned by ${ctx.userName}`,
           createdBy: ctx.userName,
         },
         session
