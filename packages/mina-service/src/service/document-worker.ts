@@ -76,7 +76,7 @@ export class DocumentWorker {
           return true;
         }
 
-        assert(task.sequenceNumber !== null, "Task's sequence number is null");
+        assert(task.sequenceNumber != null, "Task's sequence number is null");
 
         const trackingSequenceNumber = await withTransaction(
           async (session) => {
