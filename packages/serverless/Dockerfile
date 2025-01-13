@@ -1,7 +1,7 @@
 # Use our customized image based on Node.js 20 slim image as a base
 FROM orochinetwork/node:20-iron AS builder
 
-# Create a non-root user and group with specific IDs
+# Create a non-root user and group early in the Dockerfile
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
 
 # Set the working directory
@@ -24,12 +24,8 @@ RUN --mount=type=secret,id=npm,target=/root/.npmrc yarn install --frozen-lockfil
 USER appuser
 
 # Build the necessary workspaces
-<<<<<<< HEAD
 RUN yarn workspace @zkdb/common build && \
     yarn workspace @zkdb/permission build && \ 
-=======
-RUN yarn workspace @zkdb/permission build && \
->>>>>>> adaed4ef3293c78e18ab50ce5d32718c511119c3
     yarn workspace @zkdb/smart-contract build && \
     yarn workspace @zkdb/storage build && \
     yarn workspace @zkdb/serverless build
@@ -38,22 +34,14 @@ RUN yarn workspace @zkdb/permission build && \
 # Use our customized image based on Node.js 20 slim image as a runner
 FROM orochinetwork/node:22-bookworm AS runner
 
-<<<<<<< HEAD
 # Create a non-root user and group in the runner stage
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
-=======
-# Create a non-root user and group with specific IDs in the runner stage
-RUN addgroup -g 1001 -S appuser && adduser -u 1001 -S -G appuser -h /usr/src/app appuser
->>>>>>> adaed4ef3293c78e18ab50ce5d32718c511119c3
 
 # Set the working directory
 WORKDIR /usr/src/app
 
 # Copy the application code and node_modules from the builder stage
-<<<<<<< HEAD
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/common /usr/src/app/packages/common
-=======
->>>>>>> adaed4ef3293c78e18ab50ce5d32718c511119c3
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/permission /usr/src/app/packages/permission
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/smart-contract /usr/src/app/packages/smart-contract
 COPY --from=builder --chown=appuser:appuser /usr/src/app/packages/storage /usr/src/app/packages/storage
