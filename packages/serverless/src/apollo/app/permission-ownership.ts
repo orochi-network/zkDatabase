@@ -12,14 +12,12 @@ import {
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
 import { withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 import { gql } from '@helper';
 
 export const typeDefsPermission = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -119,7 +117,6 @@ const ownershipTransfer = authorizeWrapper<
 );
 
 export const resolversPermission = {
-  JSON: GraphQLJSON,
   Query: {},
   Mutation: {
     permissionSet,

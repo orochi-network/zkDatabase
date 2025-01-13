@@ -22,7 +22,6 @@ import {
   withCompoundTransaction,
   withTransaction,
 } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { MerkleTree } from '@domain';
 import { GraphQLScalarType } from 'graphql';
@@ -56,7 +55,6 @@ export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
 });
 
 export const typeDefsMerkleTree = `#graphql
-scalar JSON
 scalar BigInt
 type Query
 type Mutation
@@ -190,22 +188,12 @@ const merkleNodePath = publicWrapper<
   )
 );
 
-// TODO: Quick fix when serializing bigint in graphql. Remove this when we have
-// a better solution
-/* eslint-disable no-extend-native */
-/* eslint-disable func-names */
-// @ts-expect-error: as above
-BigInt.prototype.toJSON = function () {
-  return this.toString();
-};
-
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 export const resolversMerkleTree = {
   // If we put directly BigInt: ScalarType.BigInt() you will got
   // The inferred type of cannot be named without a reference
   // We need to have a temp variable that hold the function and explicit the type
   BigInt: BigIntScalar,
-  JSON: GraphQLJSON,
   Query: {
     merkleProof,
     merkleProofDocId,

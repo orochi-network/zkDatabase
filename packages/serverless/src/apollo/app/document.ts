@@ -2,7 +2,6 @@
 // consider validating the query object before passing to parseQuery
 
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Document, Metadata } from '@domain';
 import { gql, GraphqlHelper } from '@helper';
@@ -71,7 +70,6 @@ const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
 
 export const typeDefsDocument = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -339,7 +337,6 @@ const documentMetadata = authorizeWrapper<
 );
 
 export const resolversDocument = {
-  JSON: GraphQLJSON,
   Query: {
     documentFind,
     documentHistoryFind,

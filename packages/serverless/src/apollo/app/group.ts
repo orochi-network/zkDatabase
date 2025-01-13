@@ -20,7 +20,6 @@ import {
   userName,
 } from '@zkdb/common';
 import { withTransaction } from '@zkdb/storage';
-import GraphQLJSON from 'graphql-type-json';
 import Joi from 'joi';
 import { Group } from '@domain';
 import { gql } from '@helper';
@@ -29,7 +28,6 @@ import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsGroup = gql`
   #graphql
-  scalar JSON
   type Query
   type Mutation
 
@@ -238,7 +236,6 @@ const groupRemoveUser = authorizeWrapper<
 );
 
 export const resolversGroup = {
-  JSON: GraphQLJSON,
   Query: {
     groupListAll,
     groupListByUser,
