@@ -1,5 +1,9 @@
 import { logger } from '@helper';
-import { TVerificationKeySerialized, TZkDatabaseProof } from '@zkdb/common';
+import {
+  EVerificationKeyType,
+  TVerificationKeySerialized,
+  TZkDatabaseProof,
+} from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import { getCurrentTime, ModelVerificationKey } from '@zkdb/storage';
 import { createHash } from 'node:crypto';
@@ -11,6 +15,8 @@ import {
   PublicKey,
   ZkProgram,
 } from 'o1js';
+
+const DEFAULT_TRANSACTION_FEE = 100_000_000;
 
 export class ZkCompile {
   constructor(
@@ -31,8 +37,6 @@ export class ZkCompile {
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
     const senderPublicKey = PublicKey.fromBase58(payerAddress);
 
-    const start = performance.now();
-
     const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
     const { vkContract, vkRollup } = zkDbProcessor;
@@ -47,6 +51,7 @@ export class ZkCompile {
       hash: vkRollup.hash.toString(),
     };
 
+    // Store smart contract's verification key into database and hashed like hash table for key hash and value
     // Using SHA-256 hash from 'crypto' to hash verification key
     const contractVerificationKeyHash = createHash('sha256')
       .update(JSON.stringify(contractVerificationKeySerialized))
@@ -58,16 +63,17 @@ export class ZkCompile {
 
     const imVerification = ModelVerificationKey.getInstance();
 
+    // Insert these 2 vk contract & rollup to database
     await imVerification.insertMany([
       {
-        contractName: 'zkdb-contract',
+        type: EVerificationKeyType.VkContract,
         verificationKeyHash: contractVerificationKeyHash,
         verificationKey: contractVerificationKeySerialized,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
       {
-        contractName: 'zkdb-rollup',
+        type: EVerificationKeyType.VkRollup,
         verificationKeyHash: rollupVerificationKeyHash,
         verificationKey: rollupVerificationKeySerialized,
         createdAt: getCurrentTime(),
@@ -75,13 +81,13 @@ export class ZkCompile {
       },
     ]);
 
-    // Store smart contract's verification key into database and hashed like hash table for key hash and value
+    // Get the smart contract from zk processor to `deploy()`
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
 
     const tx = await Mina.transaction(
       {
         sender: senderPublicKey,
-        fee: 100_000_000,
+        fee: DEFAULT_TRANSACTION_FEE,
       },
       async () => {
         AccountUpdate.fundNewAccount(senderPublicKey);
@@ -92,11 +98,6 @@ export class ZkCompile {
     await tx.prove();
 
     const partialSignedTx = tx.sign([zkDbPrivateKey]);
-
-    const end = performance.now();
-    logger.info(
-      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
-    );
 
     return partialSignedTx.toJSON();
   }
@@ -116,13 +117,14 @@ export class ZkCompile {
 
     const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
+    // Get smart contract to rollup and get proof zkProgram from a JSON
     const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
     const proofProgram = ZkProgram.Proof(zkDbProcessor.getInstanceZkDBRollup());
 
     const tx = await Mina.transaction(
       {
         sender: senderPublicKey,
-        fee: 100_000_000,
+        fee: DEFAULT_TRANSACTION_FEE,
       },
       async () => {
         await smartContract.rollUp(await proofProgram.fromJSON(proof));

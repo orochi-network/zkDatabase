@@ -6,6 +6,11 @@ export type TVerificationKeySerialized = {
   hash: string;
 };
 
+export enum EVerificationKeyType {
+  VkRollup = 'vkRollup',
+  VkContract = 'vkContract',
+}
+
 // NOTE: Consider does Hash from VerificationKey is a hash of the VerificationKey itself or not
 // so we don't need to use verificationKeyHash field
 // Since the o1js document too ambiguous
@@ -13,7 +18,7 @@ export type TVerificationKeySerialized = {
 export type TZkDbVerificationKey = {
   verificationKeyHash: string;
   verificationKey: TVerificationKeySerialized;
-  contractName: string;
+  type: EVerificationKeyType;
 };
 
 export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;

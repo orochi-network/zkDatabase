@@ -50,6 +50,4 @@ const configLoader = new ConfigLoader<TApplicationConfig>(
   }
 );
 
-export const CACHE_PATH = path.join('downloads');
-
 export const { config } = configLoader;

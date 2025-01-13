@@ -1,4 +1,11 @@
+import { ZkCompile } from '@domain';
+import { config, logger, QueueWorker } from '@helper';
 import { EncryptionKey } from '@orochi-network/vault';
+import {
+  ETransactionStatus,
+  ETransactionType,
+  TTransactionQueue,
+} from '@zkdb/common';
 import {
   DatabaseEngine,
   getCurrentTime,
@@ -10,16 +17,9 @@ import {
   withCompoundTransaction,
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
-import {
-  ETransactionStatus,
-  ETransactionType,
-  TTransactionQueue,
-} from '@zkdb/common';
 import { Job } from 'bullmq';
 import { ObjectId } from 'mongodb';
 import { PrivateKey } from 'o1js';
-import { ZkCompile } from '@domain';
-import { config, logger, QueueWorker } from '@helper';
 
 export const SERVICE_COMPILE = {
   clusterName: 'compile',
@@ -97,6 +97,7 @@ export const SERVICE_COMPILE = {
               metadataDatabase.merkleHeight
             );
 
+            const date = getCurrentTime();
             // Update transaction status and add transaction raw
             await imTransaction.updateOne(
               {
@@ -108,8 +109,8 @@ export const SERVICE_COMPILE = {
                 $set: {
                   status: ETransactionStatus.Unsigned,
                   transactionRaw,
-                  updatedAt: new Date(),
-                  createdAt: new Date(),
+                  updatedAt: date,
+                  createdAt: date,
                 },
               },
               { session, upsert: true }
@@ -136,8 +137,8 @@ export const SERVICE_COMPILE = {
                   privateKey: encryptedZkAppPrivateKey,
                   publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
                   databaseName,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
+                  createdAt: date,
+                  updatedAt: date,
                 },
               },
               { upsert: true, session: proofSession }
@@ -153,7 +154,9 @@ export const SERVICE_COMPILE = {
             );
 
             if (!privateKey) {
-              throw Error('Private key has not been found');
+              throw Error(
+                `Private key of database ${databaseName} has not been found`
+              );
             }
             // storing encryptedData:
             const decryptedPrivateKey = EncryptionKey.decrypt(
@@ -170,17 +173,18 @@ export const SERVICE_COMPILE = {
               throw new Error('Mismatch between privateKey and publicKey');
             }
 
-            const proof = await ModelRollupOffChain.getInstance().findOne(
-              { databaseName },
-              {
-                session: proofSession,
-                sort: {
-                  createdAt: -1,
-                },
-              }
-            );
+            const proofOffChain =
+              await ModelRollupOffChain.getInstance().findOne(
+                { databaseName },
+                {
+                  session: proofSession,
+                  sort: {
+                    createdAt: -1,
+                  },
+                }
+              );
 
-            if (!proof) {
+            if (!proofOffChain) {
               throw new Error(`Proof for ${databaseName} not found`);
             }
 
@@ -190,8 +194,8 @@ export const SERVICE_COMPILE = {
                 zkAppPrivateKey,
                 metadataDatabase.merkleHeight,
                 {
-                  ...proof.proof,
-                  step: proof.step,
+                  ...proofOffChain.proof,
+                  step: proofOffChain.step,
                 }
               );
 
@@ -225,13 +229,14 @@ export const SERVICE_COMPILE = {
               await imRollupHistory.deleteOne({
                 databaseName,
                 transactionObjectId,
-                proofObjectId: proof._id,
+                proofObjectId: proofOffChain._id,
               });
 
               throw error;
             }
           } else {
-            throw new Error('Unsupported transaction');
+            // Show what transaction type that unsupported and not suppose to be
+            throw new Error(`Unsupported transaction ${transactionType}`);
           }
         }
       )

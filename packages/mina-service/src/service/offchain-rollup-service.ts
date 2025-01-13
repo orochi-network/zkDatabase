@@ -41,11 +41,7 @@ export class TaskService {
     let retries = 0;
     let delay = this.initialDelay;
 
-    while (true) {
-      if (retries >= this.maxRetries) {
-        break;
-      }
-
+    while (retries < this.maxRetries) {
       let backoff = true;
 
       const imQueue = ModelQueueTask.getInstance();
@@ -69,19 +65,18 @@ export class TaskService {
             });
 
             const end = performance.now();
-            logger.debug(`Proof create take ${end - start}`);
+            logger.debug(`Proof create take ${end - start}ms`);
           });
 
           backoff = false;
         } catch (error) {
           logger.error(`Error processing task with ID ${task._id}:`, error);
-          let errorMessage;
 
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          } else {
-            errorMessage = 'Unknown error: ' + String(error);
-          }
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : // Serialize error
+                `Unknown error: ${String(error)}`;
 
           await imQueue.markTaskAsError(task._id, errorMessage);
 
@@ -91,7 +86,7 @@ export class TaskService {
             _id: task._id,
           });
 
-          if (processedTask === null) {
+          if (!processedTask) {
             logger.error(
               `Task with ID ${task._id} is no longer present after processing`
             );
