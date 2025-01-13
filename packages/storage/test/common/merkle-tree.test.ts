@@ -125,7 +125,6 @@ describe('ModelMerkleTree', () => {
           hash: Field(j + 1).toString(),
           level: 0,
           index: j,
-          isLeaf: true,
         }))
       );
     }
