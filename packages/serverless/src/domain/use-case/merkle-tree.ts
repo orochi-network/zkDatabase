@@ -43,16 +43,16 @@ export class MerkleTree {
     pagination: TPagination,
     session: ClientSession
   ): Promise<TPaginationReturn<TMerkleNodeJson[]>> {
-    const modelMerkleTree = await ModelMerkleTree.getInstance(
+    const imMerkleTree = await ModelMerkleTree.getInstance(
       databaseName,
       session
     );
 
-    const listZeroNode = modelMerkleTree.getListZeroNode();
+    const listZeroNode = imMerkleTree.getListZeroNode();
 
-    if (nodeLevel < modelMerkleTree.height) {
+    if (nodeLevel < imMerkleTree.height) {
       const listNode = (
-        await modelMerkleTree.getListNodeByLevel(nodeLevel, pagination, session)
+        await imMerkleTree.getListNodeByLevel(nodeLevel, pagination, session)
       ).map(({ level, index, hash }) => ({
         level,
         index,
@@ -63,7 +63,7 @@ export class MerkleTree {
       return {
         data: listNode,
         offset: pagination?.offset ?? 0,
-        total: await modelMerkleTree.countNodeByLevel(nodeLevel, session),
+        total: await imMerkleTree.countNodeByLevel(nodeLevel, session),
       };
     }
 
@@ -74,16 +74,16 @@ export class MerkleTree {
     databaseName: string,
     session: ClientSession
   ): Promise<TMerkleTreeInfo> {
-    const modelMerkleTree = await ModelMerkleTree.getInstance(
+    const imMerkleTree = await ModelMerkleTree.getInstance(
       databaseName,
       session
     );
 
-    const merkleRoot = (await modelMerkleTree.getRoot({ session })).toString();
+    const merkleRoot = (await imMerkleTree.getRoot({ session })).toString();
 
     return {
       merkleRoot,
-      merkleHeight: modelMerkleTree.height,
+      merkleHeight: imMerkleTree.height,
     };
   }
 
@@ -99,14 +99,14 @@ export class MerkleTree {
       );
     }
 
-    const modelMerkleTree = await ModelMerkleTree.getInstance(
+    const imMerkleTree = await ModelMerkleTree.getInstance(
       databaseName,
       session
     );
 
-    if (parentLevel >= modelMerkleTree.height) {
+    if (parentLevel >= imMerkleTree.height) {
       throw new Error(
-        `Invalid parentLevel: ${parentLevel}. The Merkle Tree has a height of ${modelMerkleTree.height}.`
+        `Invalid parentLevel: ${parentLevel}. The Merkle Tree has a height of ${imMerkleTree.height}.`
       );
     }
 
@@ -114,18 +114,18 @@ export class MerkleTree {
     const leftChildIndex = parentIndex * 2n;
     const rightChildIndex = leftChildIndex + 1n;
 
-    const leftNodeField = await modelMerkleTree.getNode(
+    const leftNodeField = await imMerkleTree.getNode(
       childrenLevel,
       leftChildIndex,
       session
     );
-    const rightNodeField = await modelMerkleTree.getNode(
+    const rightNodeField = await imMerkleTree.getNode(
       childrenLevel,
       rightChildIndex,
       session
     );
 
-    const listZeroNode = modelMerkleTree.getListZeroNode();
+    const listZeroNode = imMerkleTree.getListZeroNode();
 
     return [
       {
