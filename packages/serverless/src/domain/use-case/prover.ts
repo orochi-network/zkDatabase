@@ -61,7 +61,7 @@ export class Prover {
     );
 
     const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
+      ESequencer.DataOperation,
       session.serverless
     );
 
@@ -114,7 +114,7 @@ export class Prover {
       session.serverless
     );
     const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
+      ESequencer.DataOperation,
       session.serverless
     );
 
@@ -164,7 +164,7 @@ export class Prover {
     );
 
     const operationNumber = await imSequencer.nextValue(
-      ESequencer.Operation,
+      ESequencer.DataOperation,
       session.serverless
     );
 

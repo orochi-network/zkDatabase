@@ -106,7 +106,6 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
     for (let level = 0; level < this._height; level += 1) {
       const dataToInsert: OptionalId<TMerkleRecord> = {
-        isLeaf: level === 0,
         hash: path[level].toString(),
         level,
         index: currIndex,
@@ -254,7 +253,6 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
       .then((result) =>
         result.map((node) => ({
           hash: node.hash,
-          isLeaf: node.isLeaf,
           level: node.level,
           index: node.index,
         }))

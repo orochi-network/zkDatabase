@@ -22,7 +22,7 @@ export type TRollupQueueData = {
   transitionLogObjectId: ObjectId;
   docId: string;
   status: EProofStatusDocument;
-  error?: string;
+  error: string | null;
 };
 
 export type TRollupQueueRecord = TDbRecord<TRollupQueueData>;
@@ -61,6 +61,7 @@ export class ModelQueueTask extends ModelGeneral<
         status: EProofStatusDocument.Queued,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
+        error: null,
       },
       options
     );

@@ -81,7 +81,7 @@ export class DocumentWorker {
         const trackingSequenceNumber = await withTransaction(
           (session) =>
             ModelSequencer.getInstance(task.databaseName, session).then(
-              (self) => self.current(ESequencer.LastProcessedOperation)
+              (self) => self.current(ESequencer.ProvedMerkleRoot)
             ),
           'proofService'
         );
@@ -115,7 +115,10 @@ tracking sequence number: ${trackingSequenceNumber}`
             logger.debug(
               `Processing task with seq ${acquiredTask.sequenceNumber} for database ${acquiredTask.databaseName}`
             );
-            await DocumentProcessor.onTask(acquiredTask, compoundSession);
+            await DocumentProcessor.onTask(
+              acquiredTask,
+              compoundSession.proofService
+            );
 
             const bumpSeqResult = (
               await ModelSequencer.getInstance(
@@ -124,7 +127,7 @@ tracking sequence number: ${trackingSequenceNumber}`
               )
             ).collection.findOneAndUpdate(
               {
-                type: ESequencer.LastProcessedOperation,
+                type: ESequencer.ProvedMerkleRoot,
               },
               {
                 $set: {
@@ -132,7 +135,7 @@ tracking sequence number: ${trackingSequenceNumber}`
                   updatedAt: getCurrentTime(),
                 },
                 $setOnInsert: {
-                  type: ESequencer.LastProcessedOperation,
+                  type: ESequencer.ProvedMerkleRoot,
                   createdAt: getCurrentTime(),
                 },
               },
@@ -172,7 +175,7 @@ Sequence number: ${task.sequenceNumber}, task id: ${task._id}`
   }
 }
 
-export const SERVICE_DOCUMENT = (workerId = '1') => ({
+export const newServiceDocument = (workerId = '1') => ({
   clusterName: `document-worker-${workerId}`,
   payload: async () => {
     logger = new LoggerLoader(`document-worker-${workerId}`, 'debug', 'string');

@@ -127,6 +127,8 @@ export class ModelGenericQueue<T> extends ModelGeneral<
           {
             status: EQueueTaskStatus.Queued,
             databaseName: {
+              // TODO: can we do nested query instead of two queries for this?
+              // not sure if mongodb supports that
               $nin: await this.collection.distinct('databaseName', {
                 $or: [
                   {

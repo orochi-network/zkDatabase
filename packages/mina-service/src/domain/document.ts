@@ -5,19 +5,19 @@ import {
   ModelMerkleTree,
   ModelQueueTask,
   ModelTransitionLog,
-  TCompoundSession,
   TDocumentQueuedData,
   TGenericQueue,
 } from '@zkdb/storage';
 import { TDbRecord } from '@zkdb/common';
 import { Field } from 'o1js';
 import assert from 'node:assert';
+import { ClientSession } from 'mongodb';
 
 export class DocumentProcessor {
   /** Update merkle tree and queue new proof task */
   static async onTask(
     task: TDbRecord<TGenericQueue<TDocumentQueuedData>>,
-    { proofService: session }: TCompoundSession
+    proofSession: ClientSession
   ) {
     const {
       databaseName,
@@ -34,12 +34,12 @@ export class DocumentProcessor {
 
     const imMerkleTree = await ModelMerkleTree.getInstance(
       databaseName,
-      session
+      proofSession
     );
 
     const leafOld = (
       await imMerkleTree.getNode(0, merkleIndex, {
-        session,
+        session: proofSession,
       })
     ).toString();
 
@@ -54,34 +54,42 @@ export class DocumentProcessor {
         ? Field(0).toString()
         : newDocumentHash!;
 
-    await imMerkleTree.setLeaf(merkleIndex, Field(leafNew), session);
+    await imMerkleTree.setLeaf(merkleIndex, Field(leafNew), proofSession);
 
-    const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
-      session,
-    });
+    const merkleWitness = await imMerkleTree
+      .getMerkleProof(merkleIndex, {
+        session: proofSession,
+      })
+      .then((result) =>
+        result.map((proof) => ({
+          ...proof,
+          sibling: proof.sibling.toString(),
+        }))
+      );
+
+    const merkleRootNew = await imMerkleTree
+      .getRoot({ session: proofSession })
+      .then((root) => root.toString());
 
     const transitionLogObjectId = await ModelTransitionLog.getInstance(
       databaseName,
-      session
-    ).then(async (modelTransitionProof) => {
-      return modelTransitionProof.collection
+      proofSession
+    ).then((imModelTransitionLog) =>
+      imModelTransitionLog.collection
         .insertOne(
           {
-            merkleRootNew: (await imMerkleTree.getRoot({ session })).toString(),
-            merkleProof: merkleWitness.map((proof) => ({
-              ...proof,
-              sibling: proof.sibling.toString(),
-            })),
+            merkleRootNew,
+            merkleProof: merkleWitness,
             leafOld,
             leafNew,
             operationNumber: sequenceNumber,
             createdAt: getCurrentTime(),
             updatedAt: getCurrentTime(),
           },
-          { session }
+          { session: proofSession }
         )
-        .then((result) => result.insertedId);
-    });
+        .then((result) => result.insertedId)
+    );
 
     await ModelQueueTask.getInstance().queueTask(
       {
@@ -91,7 +99,7 @@ export class DocumentProcessor {
         transitionLogObjectId,
         docId,
       },
-      { session }
+      { session: proofSession }
     );
   }
 }
