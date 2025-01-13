@@ -65,7 +65,10 @@ export type TDocumentDropRequest = TCollectionRequest & {
   docId: string;
 };
 
-export type TDocumentDropResponse = boolean;
+export type TDocumentDropResponse = {
+  docId: string;
+  acknowledged: boolean;
+};
 
 export type TDocumentHistoryFindRequest = TCollectionRequest & {
   docId: string;

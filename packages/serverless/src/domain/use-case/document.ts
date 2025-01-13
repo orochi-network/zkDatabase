@@ -260,7 +260,7 @@ in database '${databaseName}'.`
     permissionParam: TPermissionSudo<TParamCollection>,
     docId: string,
     compoundSession: TCompoundSession
-  ): Promise<void> {
+  ): Promise<string> {
     const { databaseName, collectionName, actor } = permissionParam;
 
     if (
@@ -328,6 +328,8 @@ in database '${databaseName}'.`
       },
       compoundSession
     );
+
+    return document.docId;
   }
 
   /** Query for documents given a filter criteria. Returns a list of documents

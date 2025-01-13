@@ -59,7 +59,10 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId
-        )
+        ) {
+          docId
+          acknowledged
+        }
       }
     `,
     (data) => data.documentDrop,

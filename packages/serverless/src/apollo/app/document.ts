@@ -112,6 +112,11 @@ export const typeDefsDocument = gql`
     document: JSON!
   }
 
+  type DocumentDropResponse {
+    docId: String!
+    acknowledged: Boolean!
+  }
+
   # History aka revisions of a document
   type DocumentHistoryFindResponse {
     data: [DocumentRevisionResponse!]!
@@ -169,7 +174,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       docId: String!
-    ): Boolean
+    ): DocumentDropResponse!
   }
 `;
 
@@ -265,8 +270,8 @@ const documentDrop = authorizeWrapper<
   TDocumentDropRequest,
   TDocumentDropResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  await withCompoundTransaction(async (session) => {
-    return Document.drop(
+  return withCompoundTransaction(async (session) => {
+    const droppedDocId = await Document.drop(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -275,9 +280,12 @@ const documentDrop = authorizeWrapper<
       args.docId,
       session
     );
-  });
 
-  return true;
+    return {
+      docId: droppedDocId,
+      acknowledged: true,
+    };
+  });
 });
 
 const documentHistoryFind = authorizeWrapper<
