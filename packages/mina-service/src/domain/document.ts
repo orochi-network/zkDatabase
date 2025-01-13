@@ -56,24 +56,30 @@ export class DocumentProcessor {
 
     await imMerkleTree.setLeaf(merkleIndex, Field(leafNew), proofSession);
 
-    const merkleWitness = await imMerkleTree.getMerkleProof(merkleIndex, {
-      session: proofSession,
-    });
+    const merkleWitness = await imMerkleTree
+      .getMerkleProof(merkleIndex, {
+        session: proofSession,
+      })
+      .then((result) =>
+        result.map((proof) => ({
+          ...proof,
+          sibling: proof.sibling.toString(),
+        }))
+      );
+
+    const merkleRootNew = await imMerkleTree
+      .getRoot({ session: proofSession })
+      .then((root) => root.toString());
 
     const transitionLogObjectId = await ModelTransitionLog.getInstance(
       databaseName,
       proofSession
-    ).then(async (modelTransitionProof) => {
-      return modelTransitionProof.collection
+    ).then((imModelTransitionLog) =>
+      imModelTransitionLog.collection
         .insertOne(
           {
-            merkleRootNew: (
-              await imMerkleTree.getRoot({ session: proofSession })
-            ).toString(),
-            merkleProof: merkleWitness.map((proof) => ({
-              ...proof,
-              sibling: proof.sibling.toString(),
-            })),
+            merkleRootNew,
+            merkleProof: merkleWitness,
             leafOld,
             leafNew,
             operationNumber: sequenceNumber,
@@ -82,8 +88,8 @@ export class DocumentProcessor {
           },
           { session: proofSession }
         )
-        .then((result) => result.insertedId);
-    });
+        .then((result) => result.insertedId)
+    );
 
     await ModelQueueTask.getInstance().queueTask(
       {
