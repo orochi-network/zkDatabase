@@ -121,11 +121,6 @@ export type TIndexCreateRequest = TCollectionRequest & {
 
 export type TIndexCreateResponse = boolean;
 
-// Index exist
-export type TIndexExistRequest = Omit<TIndexCreateRequest, 'index'>;
-
-export type TIndexExistResponse = boolean;
-
 // Index drop
 export type TIndexDropRequest = TCollectionRequest & {
   indexName: string;

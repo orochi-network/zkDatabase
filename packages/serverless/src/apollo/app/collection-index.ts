@@ -8,8 +8,6 @@ import {
   TIndexCreateResponse,
   TIndexDropResponse,
   TIndexDropRequest,
-  TIndexExistRequest,
-  TIndexExistResponse,
   TIndexListRequest,
   TIndexListResponse,
 } from '@zkdb/common';
@@ -45,12 +43,6 @@ export const typeDefsCollectionIndex = gql`
       databaseName: String!
       collectionName: String!
     ): [CollectionIndexInfo]!
-
-    indexExist(
-      databaseName: String!
-      collectionName: String!
-      indexName: String!
-    ): Boolean
   }
 
   extend type Mutation {
@@ -80,23 +72,6 @@ const indexList = authorizeWrapper<TIndexListRequest, TIndexListResponse>(
       actor: ctx.userName,
       collectionName,
     })
-);
-
-const indexExist = authorizeWrapper<TIndexExistRequest, TIndexExistResponse>(
-  Joi.object({
-    databaseName,
-    collectionName,
-    indexName,
-  }),
-  async (_root, { databaseName, collectionName, indexName }, ctx) =>
-    Collection.indexExist(
-      {
-        databaseName,
-        actor: ctx.userName,
-        collectionName,
-      },
-      indexName
-    )
 );
 
 // Mutation
@@ -138,7 +113,6 @@ export const resolversCollectionIndex = {
   JSON: GraphQLJSON,
   Query: {
     indexList,
-    indexExist,
   },
   Mutation: {
     indexCreate,

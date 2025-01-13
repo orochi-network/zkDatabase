@@ -4,8 +4,6 @@ import {
   TIndexCreateResponse,
   TIndexDropResponse,
   TIndexDropRequest,
-  TIndexExistResponse,
-  TIndexExistRequest,
   TIndexListRequest,
   TIndexListResponse,
 } from "@zkdb/common";
@@ -49,23 +47,6 @@ export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.indexDrop
-  ),
-  indexExist: createQueryFunction<TIndexExistRequest, TIndexExistResponse>(
-    client,
-    gql`
-      query indexExist(
-        $databaseName: String!
-        $collectionName: String!
-        $indexName: String!
-      ) {
-        indexExist(
-          databaseName: $databaseName
-          collectionName: $collectionName
-          indexName: $indexName
-        )
-      }
-    `,
-    (data) => data.indexExist
   ),
   indexList: createQueryFunction<TIndexListRequest, TIndexListResponse>(
     client,

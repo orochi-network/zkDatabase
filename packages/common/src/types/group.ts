@@ -29,6 +29,7 @@ export type TGroupParam = Pick<TGroup, 'groupName'> &
   Pick<TMetadataDatabase, 'databaseName'>;
 
 export type TGroupParamCreate = TGroup &
+  TPickOptional<TGroup, 'groupDescription'> &
   Pick<TMetadataDatabase, 'databaseName'>;
 
 export type TGroupParamIsParticipant = TGroupParam & {
