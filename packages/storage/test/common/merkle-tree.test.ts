@@ -54,6 +54,7 @@ describe('ModelMerkleTree', () => {
       .db(zkDatabaseConstant.globalMerkleTreeDatabase)
       .collection(DB_NAME)
       .drop();
+    ModelMerkleTree.clearInstance(DB_NAME);
   });
 
   test('should correctly set leaf nodes and match root with in-memory MerkleTree', async () => {

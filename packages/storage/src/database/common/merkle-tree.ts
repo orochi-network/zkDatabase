@@ -71,6 +71,10 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     return ModelMerkleTree.instances.get(databaseName)!;
   }
 
+  public static clearInstance(databaseName: string) {
+    ModelMerkleTree.instances.delete(databaseName);
+  }
+
   public static getEmptyRoot(height: number): Field {
     return new MerkleTree(height).getRoot();
   }
