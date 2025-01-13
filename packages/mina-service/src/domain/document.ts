@@ -37,11 +37,9 @@ export class DocumentProcessor {
       proofSession
     );
 
-    const leafOld = (
-      await imMerkleTree.getNode(0, merkleIndex, {
-        session: proofSession,
-      })
-    ).toString();
+    const leafOld = await imMerkleTree.getNode(0, merkleIndex, {
+      session: proofSession,
+    });
 
     if (operationKind !== EDocumentOperation.Delete && !newDocumentHash) {
       throw new Error(

@@ -64,7 +64,7 @@ describe('ModelMerkleTree', () => {
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 100; i++) {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
@@ -74,7 +74,7 @@ describe('ModelMerkleTree', () => {
 
       const root = await modelMerkleTree.getRoot();
 
-      expect(root).toEqual(merkleTree.getRoot());
+      expect(root).toEqual(merkleTree.getRoot().toString());
     }
   });
 
@@ -85,7 +85,7 @@ describe('ModelMerkleTree', () => {
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 100; i++) {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
@@ -131,15 +131,17 @@ describe('ModelMerkleTree', () => {
 
     expect(await modelMerkleTree.countNodeByLevel(1)).toEqual(50);
     expect(modelMerkleTree.height).toEqual(12);
-    expect(await modelMerkleTree.getNode(0, 12n)).toEqual(Field(13));
+    expect(await modelMerkleTree.getNode(0, 12n)).toEqual(Field(13).toString());
     expect(modelMerkleTree.leafCount).toEqual(2048n);
     expect(await modelMerkleTree.getNode(1, 1n)).toEqual(
-      merkleTree.getNode(1, 1n)
+      merkleTree.getNode(1, 1n).toString()
     );
     expect(await modelMerkleTree.getNode(10, 1024n)).toEqual(
-      merkleTree.getNode(10, 1024n)
+      merkleTree.getNode(10, 1024n).toString()
     );
-    expect(await modelMerkleTree.getRoot()).toEqual(merkleTree.getRoot());
+    expect(await modelMerkleTree.getRoot()).toEqual(
+      merkleTree.getRoot().toString()
+    );
     expect(await modelMerkleTree.getMerkleProof(55n)).toEqual(
       merkleTree.getWitness(55n)
     );

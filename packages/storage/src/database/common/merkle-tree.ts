@@ -83,9 +83,9 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     return this.zeroes;
   }
 
-  public async getRoot(options?: FindOptions): Promise<Field> {
+  public async getRoot(options?: FindOptions): Promise<string> {
     const root = await this.getNode(this._height - 1, 0n, options);
-    return Field(root);
+    return root;
   }
 
   public async setLeaf(
@@ -151,7 +151,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
 
       witnessPromises.push(
         this.getNode(level, siblingIndex, options).then((sibling) => {
-          return { isLeft, sibling };
+          return { isLeft, sibling: Field(sibling) };
         })
       );
 
@@ -186,7 +186,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
         index: currIndex,
         witness: false,
         target: currIndex === index,
-        empty: node.equals(this.zeroes[level]).toBoolean(),
+        empty: Field(node).equals(this.zeroes[level]).toBoolean(),
       });
 
       const sibling = await this.getNode(level, siblingIndex, options);
@@ -196,7 +196,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
         index: siblingIndex,
         witness: true,
         target: false,
-        empty: sibling.equals(this.zeroes[level]).toBoolean(),
+        empty: Field(sibling).equals(this.zeroes[level]).toBoolean(),
       });
 
       currIndex /= 2n;
@@ -209,25 +209,27 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
       index: 0n,
       witness: false,
       target: false,
-      empty: root.equals(this.zeroes[this._height - 1]).toBoolean(),
+      empty: Field(root)
+        .equals(this.zeroes[this._height - 1])
+        .toBoolean(),
     });
 
     return witnessPath;
   }
 
-  /** Get a node given its level and index */
+  /** Get a node content given its level and index */
   public async getNode(
     level: number,
     index: bigint,
     options?: FindOptions
-  ): Promise<Field> {
+  ): Promise<string> {
     const node = await this.collection.findOne({ level, index }, options);
 
     if (!node) {
-      return this.zeroes[level];
+      return this.zeroes[level].toString();
     }
 
-    return Field(node.hash);
+    return node.hash;
   }
 
   /** Get all non-empty nodes at a given level */

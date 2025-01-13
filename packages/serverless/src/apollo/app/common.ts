@@ -1,6 +1,6 @@
 import { gql } from '@helper';
 import { GraphQLScalarType } from 'graphql';
-import GraphQLJSON, { GraphQLJSONObject } from 'graphql-type-json';
+import { GraphQLJSONObject } from 'graphql-type-json';
 
 export const typeDefsCommon = gql`
   scalar Date
@@ -85,6 +85,9 @@ export const typeDefsCommon = gql`
 function convertBigIntToString(obj: any): any {
   if (typeof obj === 'bigint') {
     return obj.toString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToString(item));
   }
   if (typeof obj === 'object') {
     Object.keys(obj).forEach((key) => {
