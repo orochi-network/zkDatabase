@@ -7,7 +7,7 @@ import {
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TDbRecord } from '@zkdb/common';
+import { TDbRecord, TNullable } from '@zkdb/common';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
@@ -35,17 +35,22 @@ export enum EQueueTaskStatus {
   Success = 'Success',
 }
 
-export type TGenericQueue<T> = {
+export type TGenericQueueBase<T> = {
   databaseName: string;
-  // Sequence number is used to order tasks within the same database, if user
-  // of this model doesn't need to maintain order, she can set it to null on
-  // task creation.
-  sequenceNumber: number | null;
+  sequenceNumber: number;
   status: EQueueTaskStatus;
   data: T;
-  error: any | null;
-  acquiredAt: Date | null;
+  error: any;
+  acquiredAt: Date;
 };
+
+// Sequence number is used to order tasks within the same database, if user
+// of this model doesn't need to maintain order, she can set it to null on
+// task creation.
+export type TGenericQueue<T> = TNullable<
+  TGenericQueueBase<T>,
+  'sequenceNumber' | 'error' | 'acquiredAt'
+>;
 
 /** Un upgraded version of [ModelQueueTask] that can be used for any type of
  * queue. */

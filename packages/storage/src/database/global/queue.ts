@@ -5,9 +5,9 @@ import {
   FindOptions,
   InsertOneOptions,
   ObjectId,
+  OptionalId,
   UpdateOptions,
   UpdateResult,
-  WithoutId,
 } from 'mongodb';
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE, getCurrentTime } from '@helper';
@@ -28,7 +28,7 @@ export type TRollupQueueData = {
 export type TRollupQueueRecord = TDbRecord<TRollupQueueData>;
 
 export class ModelQueueTask extends ModelGeneral<
-  WithoutId<TRollupQueueRecord>
+  OptionalId<TRollupQueueRecord>
 > {
   // eslint-disable-next-line no-use-before-define
   private static instance: ModelQueueTask | null = null;
