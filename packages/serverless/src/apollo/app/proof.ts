@@ -4,13 +4,13 @@ import {
   collectionName,
   databaseName,
   docId,
-  TProofStatusDatabaseRequest,
-  TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
   TRollupQueueData,
   TZkProofRequest,
   TZkProofResponse,
+  TZkProofStatusRequest,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import {
   ModelGenericQueue,
@@ -109,8 +109,8 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
 );
 
 const zkProofStatus = publicWrapper<
-  TProofStatusDatabaseRequest,
-  TProofStatusDatabaseResponse
+  TZkProofStatusRequest,
+  TZkProofStatusResponse
 >(
   Joi.object({
     databaseName,

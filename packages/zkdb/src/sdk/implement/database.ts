@@ -4,13 +4,13 @@ import {
   TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
-  TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 
 import {
@@ -93,10 +93,8 @@ export class Database implements IDatabase {
     return (await this.apiClient.proof.proof(this.basicQuery)).unwrap();
   }
 
-  async zkProofStatus(): Promise<TProofStatusDatabaseResponse> {
-    return (
-      await this.apiClient.proof.proofStatusDatabase(this.basicQuery)
-    ).unwrap();
+  async zkProofStatus(): Promise<TZkProofStatusResponse> {
+    return (await this.apiClient.proof.zkProofStatus(this.basicQuery)).unwrap();
   }
 
   async transactionDraft(

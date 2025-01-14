@@ -22,10 +22,10 @@ export type TProofStatusDocumentRequest = TCollectionRequest & {
 
 export type TProofStatusDocumentResponse = EQueueTaskStatus;
 
-// Database's proof status
-export type TProofStatusDatabaseRequest = TDatabaseRequest;
+// Database's/ZK proof status
+export type TZkProofStatusRequest = TDatabaseRequest;
 
-export type TProofStatusDatabaseResponse = EQueueTaskStatus | null;
+export type TZkProofStatusResponse = EQueueTaskStatus | null;
 
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;
