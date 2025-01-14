@@ -12,13 +12,13 @@
 
 import { RollupOffChain } from '@domain';
 import { Backoff, config, logger } from '@helper';
-import { EProofStatusDocument } from '@zkdb/common';
+import { TRollupQueueData } from '@zkdb/common';
 import {
   DatabaseEngine,
-  ModelQueueTask,
+  ModelGenericQueue,
   ModelRollupOffChain,
-  withCompoundTransaction,
   withTransaction,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 
 // The duration to wait before exiting the service after a crash to prevent a
@@ -44,75 +44,46 @@ export class RollupOffChainService {
   public static async run(): Promise<void> {
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const imQueue = ModelQueueTask.getInstance();
-        const imRollupOffChain = ModelRollupOffChain.getInstance();
-        const task = await withTransaction(
-          async (session) => imQueue.acquireNextTaskInQueue(session),
+        const imRollUpQueue = await withTransaction(
+          (session) =>
+            ModelGenericQueue.getInstance<TRollupQueueData>(
+              zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+              session
+            ),
           'proofService'
         );
 
-        if (task !== null) {
-          try {
-            await withCompoundTransaction(async (session) => {
-              logger.debug('Task received:', task);
-              const start = performance.now();
+        const rollupResult = await imRollUpQueue.acquireNextTaskInQueue(
+          async (acquiredTask, compoundSession) => {
+            const start = performance.now();
 
-              const rollupOffChain = await RollupOffChain.create(task, session);
+            const rollupOffChain = await RollupOffChain.create(
+              acquiredTask.data,
+              compoundSession
+            );
 
-              // Mark queue as success
-              await imQueue.markTaskProcessed(task._id, {
-                session: session.proofService,
-              });
-              // Insert to rollup off-chain document after success
-              await imRollupOffChain.insertOne(rollupOffChain, {
-                session: session.proofService,
-              });
+            const end = performance.now();
+            logger.debug(`Proof create take ${end - start}ms`);
 
-              const end = performance.now();
-              logger.debug(`Proof create take ${end - start}ms`);
-            });
-            // Backoff: false
-            return false;
-          } catch (error) {
-            // This error from `withCompoundTransaction` that already rollback but failed
-            const errorMessage =
-              error instanceof Error
-                ? error.message
-                : // Serialize error
-                  `Unknown error: ${String(error)}`;
-
-            await imQueue.markTaskAsError(task._id, errorMessage);
-            // Backoff = true;
-            return true;
-          } finally {
-            const processedTask = await ModelQueueTask.getInstance().findOne({
-              _id: task._id,
-            });
-
-            if (!processedTask) {
-              throw new Error(
-                `Task with ID ${task._id} is no longer present after processing`
-              );
-            } else if (processedTask.status === EProofStatusDocument.Proving) {
-              await ModelQueueTask.getInstance().markTaskAsError(
-                task._id,
-                `Task status has not been updated properly, check server logs
-for this task's object ID for more information`
-              );
-              // Backoff = true
-              return true;
-            }
+            return rollupOffChain;
           }
-        }
+        );
 
-        return task == null;
+        if (rollupResult !== null) {
+          const imRollUpOffChain = ModelRollupOffChain.getInstance();
+          // Insert to rollup off-chain document after success
+          await imRollUpOffChain.insertOne(rollupResult);
+
+          // Backoff: false
+          return false;
+        }
+        // Backoff: true
+        return rollupResult == null;
       },
       async (error) => {
         logger.error('Error while processing document queue:', error);
       }
     );
-
-    logger.info('Maximum retries reached. Stopping task consumption.');
   }
 }
 
@@ -135,7 +106,7 @@ export const SERVICE_OFFCHAIN_ROLLUP = {
       await RollupOffChainService.run();
     } catch (error) {
       logger.error(
-        'Task service crashed, waiting for 1 minute before exiting. Error:',
+        'RollupOffChainService crashed, waiting for 1 minute before exiting. Error:',
         error
       );
       // Sleep for CRASH_TIMEOUT before exiting to prevent the cluster from

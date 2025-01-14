@@ -191,7 +191,8 @@ const documentFind = authorizeWrapper<
     'proofStatus',
   ]);
 
-  return withTransaction(async (session) => {
+  return withCompoundTransaction(async (compoundTransaction) => {
+    const { serverless, proofService } = compoundTransaction;
     let [listDocument, numTotalDocument] = await Document.query(
       {
         databaseName: args.databaseName,
@@ -200,7 +201,7 @@ const documentFind = authorizeWrapper<
       },
       args.query || {},
       args.pagination || DEFAULT_PAGINATION,
-      session
+      serverless
     );
 
     // Lazily fill metadata and proof status if requested
@@ -208,14 +209,16 @@ const documentFind = authorizeWrapper<
     if (includesMetadata) {
       listDocument = await Document.fillMetadata(
         listDocument,
-        args.databaseName
+        args.databaseName,
+        serverless
       );
     }
 
     if (includesProofStatus) {
       listDocument = await Document.fillProofStatus(
         listDocument,
-        args.collectionName
+        args.collectionName,
+        proofService
       );
     }
 

@@ -6,6 +6,12 @@
 // update and delete operations where we only allow one document to be updated
 // leaving the possibility of no documents being updated if the user does not
 // have permission to update the document.
+import { ZKDATABASE_GROUP_SYSTEM, ZKDATABASE_USER_SYSTEM } from '@common';
+import {
+  ModelDocument,
+  ModelMetadataCollection,
+  ModelMetadataDocument,
+} from '@model';
 import {
   EProofStatusDocument,
   ESequencer,
@@ -17,27 +23,22 @@ import {
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
+  TRollupQueueData,
   TSerializedValue,
   TWithProofStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
-  TCompoundSession,
-  ModelQueueTask,
+  ModelGenericQueue,
   ModelSequencer,
+  TCompoundSession,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import { ZKDATABASE_GROUP_SYSTEM, ZKDATABASE_USER_SYSTEM } from '@common';
-import { getCurrentTime } from '@helper';
-import {
-  ModelDocument,
-  ModelMetadataCollection,
-  ModelMetadataDocument,
-} from '@model';
 import { FilterCriteria, parseQuery } from '../utils';
+import { DocumentSchema } from './document-schema';
 import { PermissionSecurity } from './permission-security';
 import { Prover } from './prover';
-import { DocumentSchema } from './document-schema';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -136,8 +137,8 @@ in database '${databaseName}'.`
         permission: permissionCombine.value,
         owner: actor,
         group: collectionMetadata.group,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       { session: compoundSession.serverless }
     );
@@ -381,7 +382,8 @@ in database '${databaseName}'.`
    * documents. */
   static async fillMetadata(
     listDocument: TDocumentRecordNullable[],
-    databaseName: string
+    databaseName: string,
+    session: ClientSession
   ): Promise<TMetadataDetailDocument<TDocumentRecordNullable>[]> {
     if (!listDocument.length) {
       return [];
@@ -390,9 +392,12 @@ in database '${databaseName}'.`
     const docIds = listDocument.map((doc) => doc.docId);
 
     const metadataRecords = await new ModelMetadataDocument(databaseName)
-      .find({
-        docId: { $in: docIds },
-      })
+      .find(
+        {
+          docId: { $in: docIds },
+        },
+        { session }
+      )
       .toArray();
 
     // Create a map for quick metadata lookup
@@ -403,7 +408,7 @@ in database '${databaseName}'.`
     // Combine documents with their metadata
     return listDocument.map((doc) => ({
       ...doc,
-      metadata: metadataMap.get(doc.docId)!!,
+      metadata: metadataMap.get(doc.docId)!,
     }));
   }
 
@@ -411,22 +416,35 @@ in database '${databaseName}'.`
    * permission and will return all proof status for the given documents. */
   static async fillProofStatus(
     listDocument: TDocumentRecordNullable[],
-    collectionName: string
+    collectionName: string,
+    // NOTE: This is proof service session since we using ModelGenericQueue from proof database
+    session: ClientSession
   ): Promise<TWithProofStatus<TDocumentRecordNullable>[]> {
-    const listQueueTask = await ModelQueueTask.getInstance()
-      .find({ collectionName })
-      .toArray();
-
-    const taskMap = new Map(
-      listQueueTask?.map((task) => [task.docId, task.status]) || []
+    const imRollUpQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
+      zkDatabaseConstant.globalCollection.documentQueue,
+      session
     );
 
-    return listDocument.map((item) => {
-      return {
-        ...item,
-        proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
-      };
-    });
+    const listQueueTask = await imRollUpQueue
+      .find({ 'data.collectionName': collectionName })
+      .toArray();
+
+    if (!listQueueTask) {
+      return [];
+    }
+
+    const taskMap = new Map(
+      listQueueTask.map((task) =>
+        // Transform task.status from EQueueTaskStatus to EProofStatusDocument
+        [task.data.docId, task.status]
+      )
+    );
+
+    return listDocument.map((item) => ({
+      // Maybe it can be Unknown
+      proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
+      ...item,
+    }));
   }
 
   /** List an active document's revisions, not including the active one. */

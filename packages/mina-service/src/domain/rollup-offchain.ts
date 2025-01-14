@@ -1,13 +1,11 @@
 import { deserializeTransition } from '@helper';
-import { EProofStatusDocument, TRollUpOffChainRecord } from '@zkdb/common';
+import { TRollUpOffChainRecord, TRollupQueueData } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
-  getCurrentTime,
   ModelMetadataDatabase,
   ModelRollupOffChain,
   ModelTransitionLog,
   TCompoundSession,
-  TRollupQueueData,
 } from '@zkdb/storage';
 import { OptionalId } from 'mongodb';
 import { MerkleTree } from 'o1js';
@@ -21,13 +19,7 @@ export class RollupOffChain {
     session: TCompoundSession
   ): Promise<OptionalId<TRollUpOffChainRecord>> {
     const { serverless, proofService } = session;
-    const { status, databaseName, transitionLogObjectId } = task;
-    // Ensure status must be 'queued' to process
-    if (status !== EProofStatusDocument.Queued) {
-      throw new Error(
-        `Task status should be in ${EProofStatusDocument.Queued}`
-      );
-    }
+    const { databaseName, transitionLogObjectId } = task;
 
     const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
@@ -57,8 +49,9 @@ export class RollupOffChain {
     const imRollupOffChain = ModelRollupOffChain.getInstance();
 
     // Get previous proof to update
+    // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousProof = await imRollupOffChain.findOne(
-      { databaseName },
+      { databaseName, step: BigInt(task.operationNumber) - 1n },
       { sort: { createdAt: -1 }, session: proofService }
     );
 
@@ -78,7 +71,7 @@ export class RollupOffChain {
     }
 
     // If previous proof not found and operationNumber must be 1, which mean first time create
-    if (!previousProof) {
+    if (!previousProof && task.operationNumber === 1) {
       const merkleTree = new MerkleTree(merkleHeight);
       const firstRollupProof = await zkAppProcessor.init(
         merkleTree.getRoot(),
@@ -98,8 +91,8 @@ export class RollupOffChain {
         merkleRootOld: merkleRootOld,
         proof,
         step: BigInt(step),
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         transitionLogObjectId,
       };
     }
@@ -122,8 +115,8 @@ export class RollupOffChain {
       proof,
       transitionLogObjectId,
       step: BigInt(step),
-      createdAt: getCurrentTime(),
-      updatedAt: getCurrentTime(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
   }
 }

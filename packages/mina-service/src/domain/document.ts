@@ -1,14 +1,14 @@
 /* eslint-disable import/prefer-default-export */
 import {
   EDocumentOperation,
-  getCurrentTime,
+  ModelGenericQueue,
   ModelMerkleTree,
-  ModelQueueTask,
   ModelTransitionLog,
   TDocumentQueuedData,
   TGenericQueue,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
-import { TDbRecord } from '@zkdb/common';
+import { TDbRecord, TRollupQueueData } from '@zkdb/common';
 import { Field } from 'o1js';
 import assert from 'node:assert';
 import { ClientSession } from 'mongodb';
@@ -75,21 +75,27 @@ export class DocumentProcessor {
           leafOld,
           leafNew,
           operationNumber: sequenceNumber,
-          createdAt: getCurrentTime(),
-          updatedAt: getCurrentTime(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         { session: proofSession }
       );
 
-    await ModelQueueTask.getInstance().queueTask(
-      {
+    (
+      await ModelGenericQueue.getInstance<TRollupQueueData>(
+        zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+        proofSession
+      )
+    ).queueTask({
+      data: {
         databaseName,
         collectionName,
         operationNumber: sequenceNumber,
         transitionLogObjectId: transitionLogObjectId.insertedId,
         docId,
       },
-      { session: proofSession }
-    );
+      databaseName,
+      sequenceNumber,
+    });
   }
 }

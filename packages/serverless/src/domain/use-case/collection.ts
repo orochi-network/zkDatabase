@@ -1,7 +1,6 @@
 import {
   convertIndexToGraphqlFormat,
   convertIndexToMongoFormat,
-  getCurrentTime,
 } from '@helper';
 import { ModelDocument, ModelMetadataCollection } from '@model';
 import {
@@ -288,8 +287,8 @@ export class Collection {
         owner: actor,
         group: groupName,
         permission: permission.value,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         session,

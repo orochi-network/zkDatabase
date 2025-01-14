@@ -17,3 +17,5 @@ export * from './transaction';
 export * from './user';
 export * from './param';
 export * from './verification-key';
+export * from './transition-log';
+export * from './queue';

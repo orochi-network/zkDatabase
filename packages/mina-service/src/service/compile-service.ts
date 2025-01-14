@@ -8,7 +8,6 @@ import {
 } from '@zkdb/common';
 import {
   DatabaseEngine,
-  getCurrentTime,
   ModelMetadataDatabase,
   ModelRollupHistory,
   ModelRollupOffChain,
@@ -97,7 +96,6 @@ export const SERVICE_COMPILE = {
               metadataDatabase.merkleHeight
             );
 
-            const date = getCurrentTime();
             // Update transaction status and add transaction raw
             await imTransaction.updateOne(
               {
@@ -109,8 +107,8 @@ export const SERVICE_COMPILE = {
                 $set: {
                   status: ETransactionStatus.Unsigned,
                   transactionRaw,
-                  updatedAt: date,
-                  createdAt: date,
+                  updatedAt: new Date(),
+                  createdAt: new Date(),
                 },
               },
               { session, upsert: true }
@@ -137,8 +135,8 @@ export const SERVICE_COMPILE = {
                   privateKey: encryptedZkAppPrivateKey,
                   publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
                   databaseName,
-                  createdAt: date,
-                  updatedAt: date,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
                 },
               },
               { upsert: true, session: proofSession }
@@ -197,7 +195,6 @@ export const SERVICE_COMPILE = {
               );
 
               // Update transaction status and add transaction raw
-              const date = getCurrentTime();
               await imTransaction.updateOne(
                 {
                   _id: new ObjectId(transactionObjectId),
@@ -208,8 +205,8 @@ export const SERVICE_COMPILE = {
                   $set: {
                     status: ETransactionStatus.Unsigned,
                     transactionRaw,
-                    updatedAt: date,
-                    createdAt: date,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                   },
                 },
                 {

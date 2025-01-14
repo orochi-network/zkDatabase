@@ -1,5 +1,5 @@
 import { PermissionSecurity } from '@domain';
-import { gql } from '@helper';
+import { getProofStatusDocumentFromQueueTaskStatus, gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -10,11 +10,19 @@ import {
   TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
+  TRollupQueueData,
   TZkProofRequest,
   TZkProofResponse,
 } from '@zkdb/common';
-import { ModelQueueTask, ModelRollupOffChain } from '@zkdb/storage';
+import {
+  EQueueTaskStatus,
+  ModelGenericQueue,
+  ModelRollupOffChain,
+  withCompoundTransaction,
+  zkDatabaseConstant,
+} from '@zkdb/storage';
 import Joi from 'joi';
+import { ClientSession } from 'mongodb';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 /* eslint-disable import/prefer-default-export */
@@ -67,29 +75,43 @@ const proofStatusDocument = authorizeWrapper<
     docId: docId(false),
   }),
   async (_root, { databaseName, collectionName, docId }, ctx) => {
-    const actorPermission = await PermissionSecurity.document({
-      databaseName,
-      collectionName,
-      docId,
-      actor: ctx.userName,
-    });
-    if (actorPermission.read) {
-      const imRollupOffChain = ModelQueueTask.getInstance();
-      const proof = await imRollupOffChain.findOne({
-        databaseName,
-        docId,
-      });
+    return withCompoundTransaction(async (compoundTransaction) => {
+      const { serverless, proofService } = compoundTransaction;
+      const actorPermission = await PermissionSecurity.document(
+        {
+          databaseName,
+          collectionName,
+          docId,
+          actor: ctx.userName,
+        },
+        serverless
+      );
 
-      if (!proof) {
-        throw new Error('Proof has not been found');
+      if (actorPermission.read) {
+        const imRollupQueue =
+          await ModelGenericQueue.getInstance<TRollupQueueData>(
+            zkDatabaseConstant.globalCollection.documentQueue,
+            proofService
+          );
+        const proof = await imRollupQueue.findOne(
+          {
+            databaseName,
+            'data.docId': docId,
+          },
+          { session: proofService }
+        );
+
+        if (!proof) {
+          throw new Error('Proof has not been found');
+        }
+
+        return getProofStatusDocumentFromQueueTaskStatus(proof.status);
       }
 
-      return proof.status;
-    }
-
-    throw new Error(
-      `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
-    );
+      throw new Error(
+        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
+      );
+    });
   }
 );
 
@@ -111,12 +133,17 @@ const proofStatusDatabase = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const modelTask = ModelQueueTask.getInstance();
+    const proofService = {} as ClientSession;
 
-    const task = await modelTask.findOne({
+    const imRollupQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
+      zkDatabaseConstant.globalCollection.documentQueue,
+      proofService
+    );
+
+    const task = await imRollupQueue.findOne({
       databaseName,
       status: {
-        $in: [EProofStatusDocument.Proving, EProofStatusDocument.Queued],
+        $in: [EQueueTaskStatus.Proving, EProofStatusDocument.Queued],
       },
     });
 

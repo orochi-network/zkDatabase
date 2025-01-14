@@ -2,7 +2,7 @@
 
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TDbRecord, TMerkleProofSerialized } from '@zkdb/common';
+import { TTransitionLogRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';

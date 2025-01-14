@@ -1,10 +1,10 @@
-import { getCurrentTime, logger } from '@helper';
+import { logger } from '@helper';
 import {
   EMinaTransactionStatus,
   ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TPoofTransitionAggregate,
+  TRollUpOffChainAndTransitionAggregate,
   TRollupHistoryParam,
   TRollupHistoryResponse,
   TRollupStateResponse,
@@ -36,7 +36,7 @@ export class Rollup {
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
     const [latestProofForDb] = await imRollupOffChain.collection
-      .aggregate<TPoofTransitionAggregate>([
+      .aggregate<TRollUpOffChainAndTransitionAggregate>([
         {
           $match: { databaseName },
         },
@@ -106,7 +106,7 @@ export class Rollup {
       compoundSession.serverless
     );
 
-    const currentTime = getCurrentTime();
+    const currentTime = new Date();
 
     await imRollupHistory.insertOne(
       {

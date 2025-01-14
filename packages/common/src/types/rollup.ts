@@ -1,8 +1,8 @@
 import type { ObjectId } from 'mongodb';
+import { JsonProof } from 'o1js';
 import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest, TMetadataDatabase } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
-import { JsonProof } from 'o1js';
 
 export enum EMinaTransactionStatus {
   Failed = 'failed',
@@ -114,3 +114,11 @@ export type TRollUpOffChainRecord = TDbRecord<
       transitionLogObjectId: ObjectId;
     }
 >;
+
+export type TRollupQueueData = {
+  databaseName: string;
+  operationNumber: number;
+  collectionName: string;
+  transitionLogObjectId: ObjectId;
+  docId: string;
+};

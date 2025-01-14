@@ -5,7 +5,7 @@ import {
   TVerificationKeySerialized,
 } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
-import { getCurrentTime, ModelVerificationKey } from '@zkdb/storage';
+import { ModelVerificationKey } from '@zkdb/storage';
 import { createHash } from 'node:crypto';
 import {
   AccountUpdate,
@@ -69,15 +69,15 @@ export class ZkCompile {
         contractName: EContractName.VkContract,
         verificationKeyHash: contractVerificationKeyHash,
         verificationKey: contractVerificationKeySerialized,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
       {
         contractName: EContractName.VkRollup,
         verificationKeyHash: rollupVerificationKeyHash,
         verificationKey: rollupVerificationKeySerialized,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       },
     ]);
 

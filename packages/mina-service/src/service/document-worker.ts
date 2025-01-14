@@ -12,7 +12,6 @@ import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
-  getCurrentTime,
   ModelGenericQueue,
   ModelSequencer,
   TDocumentQueuedData,
@@ -135,11 +134,11 @@ tracking sequence number: ${trackingSequenceNumber}`
               {
                 $set: {
                   seq: acquiredTask.sequenceNumber!,
-                  updatedAt: getCurrentTime(),
+                  updatedAt: new Date(),
                 },
                 $setOnInsert: {
                   type: ESequencer.ProvedMerkleRoot,
-                  createdAt: getCurrentTime(),
+                  createdAt: new Date(),
                 },
               },
               {

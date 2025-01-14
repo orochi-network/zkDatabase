@@ -1,6 +1,5 @@
-import { TMerkleProofSerialized } from '@zkdb/common';
+import { TMerkleProofSerialized, TTransitionLogRecord } from '@zkdb/common';
 import { TRollupTransition } from '@zkdb/smart-contract';
-import { TTransitionLogRecord } from '@zkdb/storage';
 import { Field } from 'o1js';
 import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree';
 

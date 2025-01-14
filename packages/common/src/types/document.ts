@@ -3,8 +3,8 @@ import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
 import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
-import { EProofStatusDocument } from './proof.js';
 import { TCollectionRequest } from './collection.js';
+import { EQueueTaskStatus } from './queue.js';
 
 export type TDocumentField = TSchemaSerializedField;
 
@@ -38,7 +38,7 @@ export type TDocumentFindResponse = TPaginationReturn<
   Array<
     TDocumentResponse & {
       metadata?: TDocumentMetadata;
-      proofStatus?: EProofStatusDocument;
+      queueStatus?: EQueueTaskStatus;
     }
   >
 >;

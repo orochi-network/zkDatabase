@@ -1,3 +1,6 @@
+import { DEFAULT_PAGINATION } from '@common';
+import { config } from '@helper';
+import { ModelUser } from '@model';
 import {
   TPaginationReturn,
   TParamPagination,
@@ -7,9 +10,6 @@ import {
 } from '@zkdb/common';
 import Client from 'mina-signer';
 import { ClientSession, WithoutId } from 'mongodb';
-import { DEFAULT_PAGINATION } from '@common';
-import { getCurrentTime, config } from '@helper';
-import { ModelUser } from '@model';
 import { NetworkId } from 'o1js';
 
 export class User {
@@ -63,8 +63,8 @@ export class User {
         publicKey: signature.publicKey,
         userData,
         activated: true,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
       // Get user after inserted
       const user = await imUser.findOne({ _id: createResult.insertedId });

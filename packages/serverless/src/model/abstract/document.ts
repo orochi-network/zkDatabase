@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 // eslint-disable-next-line max-classes-per-file
-import { getCurrentTime, logger } from '@helper';
+import { logger } from '@helper';
 import {
   TDocumentField,
   TDocumentRecordNullable,
@@ -93,8 +93,8 @@ export class ModelDocument extends ModelGeneral<
           document: listField,
           docId: insertingDocId,
           active: true,
-          createdAt: getCurrentTime(),
-          updatedAt: getCurrentTime(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
           previousObjectId: oldDocument?._id || null,
         },
         {

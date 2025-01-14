@@ -26,9 +26,6 @@ export const zkDatabaseConstant = {
     // User
     user: 'user',
 
-    // Proof queue
-    queue: 'queue',
-
     // Proof storage
     rollupOffChain: 'rollup_offchain',
 
@@ -48,6 +45,8 @@ export const zkDatabaseConstant = {
     // Queue to store documents waiting to be processed, e.g. update the merkle
     // tree and queue proof tasks
     documentQueue: 'document_queue',
+    // Rollup off-chain queue
+    rollupOffChainQueue: 'rollup_offchain_queue',
   },
 
   // Collections that are common across different databases
