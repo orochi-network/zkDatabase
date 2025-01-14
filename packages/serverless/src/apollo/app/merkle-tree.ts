@@ -123,9 +123,9 @@ const merkleProofDocId = publicWrapper<
   TMerkleTreeProofByDocIdRequest,
   TMerkleTreeProofByDocIdResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) => {
-  return withTransaction(async (session) => {
+  return withCompoundTransaction(async (session) => {
     return MerkleTree.document(databaseName, docId, session);
-  }, 'proofService');
+  });
 });
 
 const merkleNodeByLevel = publicWrapper<
@@ -134,13 +134,15 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    withTransaction((session) =>
-      MerkleTree.nodeByLevel(
-        databaseName,
-        level,
-        pagination || DEFAULT_PAGINATION,
-        session
-      )
+    withTransaction(
+      (session) =>
+        MerkleTree.nodeByLevel(
+          databaseName,
+          level,
+          pagination || DEFAULT_PAGINATION,
+          session
+        ),
+      'proofService'
     )
 );
 
@@ -148,7 +150,10 @@ const merkleTreeInfo = publicWrapper<
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse
 >(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
-  withTransaction((session) => MerkleTree.info(databaseName, session))
+  withTransaction(
+    (session) => MerkleTree.info(databaseName, session),
+    'proofService'
+  )
 );
 
 const merkleNodeChildren = publicWrapper<
@@ -157,8 +162,9 @@ const merkleNodeChildren = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_CHILDREN,
   async (_root, { databaseName, level, index }) =>
-    withTransaction((session) =>
-      MerkleTree.nodeChildren(databaseName, level, index, session)
+    withTransaction(
+      (session) => MerkleTree.nodeChildren(databaseName, level, index, session),
+      'proofService'
     )
 );
 
