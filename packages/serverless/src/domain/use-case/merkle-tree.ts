@@ -15,7 +15,7 @@ export class MerkleTree {
   public static async document(
     databaseName: string,
     docId: string,
-    session: ClientSession
+    session: TCompoundSession
   ): Promise<TMerkleProofSerialized[]> {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
@@ -23,17 +23,20 @@ export class MerkleTree {
       {
         docId,
       },
-      { session }
+      { session: session.serverless }
     );
 
     if (!docMetadata) {
       throw Error(`Metadata has not been found`);
     }
 
-    const merkleTree = await ModelMerkleTree.getInstance(databaseName, session);
+    const merkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      session.proofService
+    );
 
     return merkleTree.getMerkleProof(BigInt(docMetadata.merkleIndex), {
-      session,
+      session: session.proofService,
     });
   }
 
