@@ -4,13 +4,13 @@ import {
   TDatabaseCreateRequest,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
-  TProofStatusDatabaseResponse,
   TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -48,7 +48,7 @@ export interface IDatabase {
   // ZK Proof
   zkProof(): Promise<TZkProofResponse>;
 
-  zkProofStatus(): Promise<TProofStatusDatabaseResponse>;
+  zkProofStatus(): Promise<TZkProofStatusResponse>;
 
   // Transaction
   transactionDraft(

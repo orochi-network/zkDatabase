@@ -1,11 +1,11 @@
 import { gql } from "@apollo/client";
 import {
-  TProofStatusDatabaseRequest,
-  TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
   TZkProofRequest,
   TZkProofResponse,
+  TZkProofStatusRequest,
+  TZkProofStatusResponse,
 } from "@zkdb/common";
 import { createQueryFunction, TApolloClient } from "./common";
 
@@ -24,17 +24,17 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.proof
   ),
-  proofStatusDatabase: createQueryFunction<
-    TProofStatusDatabaseRequest,
-    TProofStatusDatabaseResponse
+  zkProofStatus: createQueryFunction<
+    TZkProofStatusRequest,
+    TZkProofStatusResponse
   >(
     client,
     gql`
-      query proofStatusDatabase($databaseName: String!) {
-        proofStatusDatabase(databaseName: $databaseName)
+      query zkProofStatus($databaseName: String!) {
+        zkProofStatus(databaseName: $databaseName)
       }
     `,
-    (data) => data.proofStatusDatabase
+    (data) => data.zkProofStatus
   ),
   proofStatusDocument: createQueryFunction<
     TProofStatusDocumentRequest,
