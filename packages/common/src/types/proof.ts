@@ -66,6 +66,6 @@ export type TZkProofRequest = TDatabaseRequest;
 
 export type TZkProofResponse = TRollupSerializedProof | null;
 
-export type TPoofTransitionAggregate = TRollUpOffChainRecord & {
+export type TRollUpOffChainAndTransitionAggregate = TRollUpOffChainRecord & {
   transition: TTransitionLogRecord;
 };

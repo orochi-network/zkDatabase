@@ -6,7 +6,7 @@ export type TVerificationKeySerialized = {
   hash: string;
 };
 
-export enum EVerificationKeyType {
+export enum EContractName {
   VkRollup = 'vkRollup',
   VkContract = 'vkContract',
 }
@@ -18,7 +18,7 @@ export enum EVerificationKeyType {
 export type TZkDbVerificationKey = {
   verificationKeyHash: string;
   verificationKey: TVerificationKeySerialized;
-  type: EVerificationKeyType;
+  type: EContractName;
 };
 
 export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;

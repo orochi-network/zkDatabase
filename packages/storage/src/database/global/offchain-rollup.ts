@@ -36,20 +36,9 @@ export class ModelRollupOffChain extends ModelGeneral<
 
       await collection.createSystemIndex({ databaseName: 1 }, { session });
 
-      await collection.createSystemIndex(
-        { merkleRootNew: 1 },
-        { unique: true, session }
-      );
+      await collection.createSystemIndex({ merkleRootNew: 1 }, { session });
 
-      await collection.createSystemIndex(
-        { merkleRootOld: 1 },
-        { unique: true, session }
-      );
-
-      await collection.createSystemIndex(
-        { merkleRootOld: 1 },
-        { unique: true, session }
-      );
+      await collection.createSystemIndex({ merkleRootOld: 1 }, { session });
 
       await collection.addTimestampMongoDb({ session });
     }

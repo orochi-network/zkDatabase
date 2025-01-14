@@ -1,6 +1,6 @@
 import { logger } from '@helper';
 import {
-  EVerificationKeyType,
+  EContractName,
   TRollupSerializedProof,
   TVerificationKeySerialized,
 } from '@zkdb/common';
@@ -66,14 +66,14 @@ export class ZkCompile {
     // Insert these 2 vk contract & rollup to database
     await imVerification.insertMany([
       {
-        type: EVerificationKeyType.VkContract,
+        type: EContractName.VkContract,
         verificationKeyHash: contractVerificationKeyHash,
         verificationKey: contractVerificationKeySerialized,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
       {
-        type: EVerificationKeyType.VkRollup,
+        type: EContractName.VkRollup,
         verificationKeyHash: rollupVerificationKeyHash,
         verificationKey: rollupVerificationKeySerialized,
         createdAt: getCurrentTime(),

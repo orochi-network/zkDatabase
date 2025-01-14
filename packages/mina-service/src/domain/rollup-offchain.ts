@@ -1,5 +1,5 @@
 import { deserializeTransition } from '@helper';
-import { EProofStatusDocument } from '@zkdb/common';
+import { EProofStatusDocument, TRollUpOffChainRecord } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   getCurrentTime,
@@ -9,15 +9,19 @@ import {
   TCompoundSession,
   TRollupQueueData,
 } from '@zkdb/storage';
+import { OptionalId } from 'mongodb';
 import { MerkleTree } from 'o1js';
 
 const MAX_MERKLE_TREE_HEIGHT = 256;
 const MIN_MERKLE_TREE_HEIGHT = 8;
 
-export class RollupOffchain {
-  static async create(task: TRollupQueueData, session: TCompoundSession) {
+export class RollupOffChain {
+  static async create(
+    task: TRollupQueueData,
+    session: TCompoundSession
+  ): Promise<OptionalId<TRollUpOffChainRecord>> {
     const { serverless, proofService } = session;
-    const { status, databaseName } = task;
+    const { status, databaseName, transitionLogObjectId } = task;
     // Ensure status must be 'queued' to process
     if (status !== EProofStatusDocument.Queued) {
       throw new Error(
@@ -64,7 +68,7 @@ export class RollupOffchain {
     );
 
     const rollupTransition = await imTransitionLog.findOne({
-      _id: task.transitionLogObjectId,
+      _id: transitionLogObjectId,
     });
 
     if (!rollupTransition) {
@@ -73,7 +77,7 @@ export class RollupOffchain {
       );
     }
 
-    // If previous proof not found, which mean first time create
+    // If previous proof not found and operationNumber must be 1, which mean first time create
     if (!previousProof) {
       const merkleTree = new MerkleTree(merkleHeight);
       const firstRollupProof = await zkAppProcessor.init(
@@ -88,21 +92,16 @@ export class RollupOffchain {
 
       const { proof, merkleRootOld, step } =
         zkAppProcessor.serialize(newRollupProof);
-      await imRollupOffChain.insertOne(
-        {
-          databaseName,
-          merkleRootOld: merkleRootOld,
-          proof,
-          step: BigInt(step),
-          createdAt: getCurrentTime(),
-          updatedAt: getCurrentTime(),
-          transitionLogObjectId: task.transitionLogObjectId,
-        },
-        {
-          session: proofService,
-        }
-      );
-      return;
+
+      return {
+        databaseName,
+        merkleRootOld: merkleRootOld,
+        proof,
+        step: BigInt(step),
+        createdAt: getCurrentTime(),
+        updatedAt: getCurrentTime(),
+        transitionLogObjectId,
+      };
     }
 
     const previousProofFormat = await zkAppProcessor.deserialize(
@@ -117,19 +116,14 @@ export class RollupOffchain {
     const { proof, merkleRootOld, step } =
       zkAppProcessor.serialize(newRollupProof);
 
-    await imRollupOffChain.insertOne(
-      {
-        databaseName,
-        merkleRootOld,
-        proof,
-        step: BigInt(step),
-        transitionLogObjectId: task.transitionLogObjectId,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      {
-        session: proofService,
-      }
-    );
+    return {
+      databaseName,
+      merkleRootOld,
+      proof,
+      transitionLogObjectId,
+      step: BigInt(step),
+      createdAt: getCurrentTime(),
+      updatedAt: getCurrentTime(),
+    };
   }
 }
