@@ -13,7 +13,7 @@ import {
   ModelMetadataDocument,
 } from '@model';
 import {
-  EProofStatusDocument,
+  EQueueTaskStatus,
   ESequencer,
   PERMISSION_DEFAULT,
   TDocumentField,
@@ -25,7 +25,7 @@ import {
   TPermissionSudo,
   TRollupQueueData,
   TSerializedValue,
-  TWithProofStatus,
+  TWithQueueStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
@@ -419,9 +419,9 @@ in database '${databaseName}'.`
     collectionName: string,
     // NOTE: This is proof service session since we using ModelGenericQueue from proof database
     session: ClientSession
-  ): Promise<TWithProofStatus<TDocumentRecordNullable>[]> {
+  ): Promise<TWithQueueStatus<TDocumentRecordNullable>[]> {
     const imRollUpQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
-      zkDatabaseConstant.globalCollection.documentQueue,
+      zkDatabaseConstant.globalCollection.rollupOffChainQueue,
       session
     );
 
@@ -434,15 +434,12 @@ in database '${databaseName}'.`
     }
 
     const taskMap = new Map(
-      listQueueTask.map((task) =>
-        // Transform task.status from EQueueTaskStatus to EProofStatusDocument
-        [task.data.docId, task.status]
-      )
+      listQueueTask.map((task) => [task.data.docId, task.status])
     );
 
     return listDocument.map((item) => ({
       // Maybe it can be Unknown
-      proofStatus: taskMap.get(item.docId) || EProofStatusDocument.Failed,
+      proofStatus: taskMap.get(item.docId) || EQueueTaskStatus.Failed,
       ...item,
     }));
   }

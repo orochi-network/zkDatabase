@@ -1,11 +1,9 @@
 import { PermissionSecurity } from '@domain';
-import { getProofStatusDocumentFromQueueTaskStatus, gql } from '@helper';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
   docId,
-  EProofDatabaseStatus,
-  EProofStatusDocument,
   TProofStatusDatabaseRequest,
   TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
@@ -15,14 +13,13 @@ import {
   TZkProofResponse,
 } from '@zkdb/common';
 import {
-  EQueueTaskStatus,
   ModelGenericQueue,
   ModelRollupOffChain,
   withCompoundTransaction,
+  withTransaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
-import { ClientSession } from 'mongodb';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
 /* eslint-disable import/prefer-default-export */
@@ -90,7 +87,7 @@ const proofStatusDocument = authorizeWrapper<
       if (actorPermission.read) {
         const imRollupQueue =
           await ModelGenericQueue.getInstance<TRollupQueueData>(
-            zkDatabaseConstant.globalCollection.documentQueue,
+            zkDatabaseConstant.globalCollection.rollupOffChainQueue,
             proofService
           );
         const proof = await imRollupQueue.findOne(
@@ -105,7 +102,7 @@ const proofStatusDocument = authorizeWrapper<
           throw new Error('Proof has not been found');
         }
 
-        return getProofStatusDocumentFromQueueTaskStatus(proof.status);
+        return proof.status;
       }
 
       throw new Error(
@@ -133,30 +130,24 @@ const proofStatusDatabase = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const proofService = {} as ClientSession;
+    return withTransaction(async (proofSession) => {
+      const imRollupQueue =
+        await ModelGenericQueue.getInstance<TRollupQueueData>(
+          zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+          proofSession
+        );
+      // Get latest task rollup task queue
+      const task = await imRollupQueue.findOne({
+        databaseName,
+        sort: { createdAt: -1 },
+      });
 
-    const imRollupQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
-      zkDatabaseConstant.globalCollection.documentQueue,
-      proofService
-    );
+      if (!task) {
+        return null;
+      }
 
-    const task = await imRollupQueue.findOne({
-      databaseName,
-      status: {
-        $in: [EQueueTaskStatus.Proving, EProofStatusDocument.Queued],
-      },
+      return task.status;
     });
-
-    if (task) {
-      return EProofDatabaseStatus.Proving;
-    } else {
-      const modelProof = ModelRollupOffChain.getInstance();
-      const proof = await modelProof.findOne(
-        { databaseName },
-        { sort: { createdAt: -1 } }
-      );
-      return proof ? EProofDatabaseStatus.Proved : EProofDatabaseStatus.None;
-    }
   }
 );
 

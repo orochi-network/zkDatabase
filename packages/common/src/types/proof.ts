@@ -25,7 +25,7 @@ export type TProofStatusDocumentResponse = EQueueTaskStatus;
 // Database's proof status
 export type TProofStatusDatabaseRequest = TDatabaseRequest;
 
-export type TProofStatusDatabaseResponse = EQueueTaskStatus;
+export type TProofStatusDatabaseResponse = EQueueTaskStatus | null;
 
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;
