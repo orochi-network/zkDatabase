@@ -18,7 +18,7 @@ export enum EContractName {
 export type TZkDbVerificationKey = {
   verificationKeyHash: string;
   verificationKey: TVerificationKeySerialized;
-  type: EContractName;
+  contractName: EContractName;
 };
 
 export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;

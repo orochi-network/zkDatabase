@@ -66,14 +66,14 @@ export class ZkCompile {
     // Insert these 2 vk contract & rollup to database
     await imVerification.insertMany([
       {
-        type: EContractName.VkContract,
+        contractName: EContractName.VkContract,
         verificationKeyHash: contractVerificationKeyHash,
         verificationKey: contractVerificationKeySerialized,
         createdAt: getCurrentTime(),
         updatedAt: getCurrentTime(),
       },
       {
-        type: EContractName.VkRollup,
+        contractName: EContractName.VkRollup,
         verificationKeyHash: rollupVerificationKeyHash,
         verificationKey: rollupVerificationKeySerialized,
         createdAt: getCurrentTime(),
