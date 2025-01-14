@@ -439,7 +439,7 @@ in database '${databaseName}'.`
 
     return listDocument.map((item) => ({
       // Maybe it can be Unknown
-      proofStatus: taskMap.get(item.docId) || EQueueTaskStatus.Failed,
+      queueStatus: taskMap.get(item.docId) || EQueueTaskStatus.Failed,
       ...item,
     }));
   }

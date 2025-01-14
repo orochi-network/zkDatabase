@@ -1,11 +1,13 @@
-import { ESequencer } from '@zkdb/common';
+import {
+  EDocumentOperation,
+  ESequencer,
+  TDocumentQueuedData,
+} from '@zkdb/common';
 import {
   TCompoundSession,
   ModelSequencer,
   ModelGenericQueue,
-  TDocumentQueuedData,
   zkDatabaseConstant,
-  EDocumentOperation,
 } from '@zkdb/storage';
 
 import { ModelMetadataDocument } from '@model';
