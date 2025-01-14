@@ -127,9 +127,12 @@ export class Database implements IDatabase {
     return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
 
-  async rollUpHistory(): Promise<TRollupHistoryResponse> {
+  async rollUpHistory(offset?: number): Promise<TRollupHistoryResponse> {
     return (
-      await this.apiClient.rollup.rollupHistory(this.basicQuery)
+      await this.apiClient.rollup.rollupHistory({
+        query: this.basicQuery,
+        pagination: { offset: offset || 0, limit: 100 },
+      })
     ).unwrap();
   }
 

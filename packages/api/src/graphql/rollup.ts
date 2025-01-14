@@ -5,7 +5,11 @@ import {
   TRollupHistoryRequest,
   TRollupHistoryResponse,
 } from "@zkdb/common";
-import { createMutateFunction, TApolloClient } from "./common";
+import {
+  createMutateFunction,
+  createQueryFunction,
+  TApolloClient,
+} from "./common";
 
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
@@ -20,28 +24,27 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.rollupCreate
   ),
-  rollupHistory: createMutateFunction<
+  rollupHistory: createQueryFunction<
     TRollupHistoryRequest,
     TRollupHistoryResponse
   >(
     client,
     gql`
-      mutation rollupHistory($databaseName: String!) {
-        rollupHistory(databaseName: $databaseName) {
-          state
-          extraData
-          history {
+      query RollupHistory($query: JSON, $pagination: PaginationInput) {
+        rollupHistory(query: $query, pagination: $pagination) {
+          data {
             databaseName
-            transactionType
             txHash
             transactionRaw
             status
-            merkletreeRoot
-            merkletreeRootPrevious
+            merkleTreeRoot
+            merkleTreeRootPrevious
             error
             createdAt
             updatedAt
           }
+          total
+          offset
         }
       }
     `,
