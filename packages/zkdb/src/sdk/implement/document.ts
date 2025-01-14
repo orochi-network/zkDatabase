@@ -113,13 +113,13 @@ export class Document<T extends TSchemaExtendable<any>>
     return schema.deserialize(document as any);
   }
 
-  async proofMerkle(): Promise<TMerkleTreeProofByDocIdResponse> {
+  async merkleProof(): Promise<TMerkleTreeProofByDocIdResponse> {
     return (
       await this.apiClient.merkle.merkleProofDocId(this.basicRequest)
     ).unwrap();
   }
 
-  async proofStatus(): Promise<TProofStatusDocumentResponse> {
+  async merkleProofStatus(): Promise<TProofStatusDocumentResponse> {
     return (
       await this.apiClient.proof.proofStatusDocument(this.basicRequest)
     ).unwrap();

@@ -32,7 +32,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
   pagination?: TPagination;
 };
 
-// metadata and proofStatus's presence depends on whether the graphql client
+// metadata and queueStatus's presence depends on whether the graphql client
 // requests them or not
 export type TDocumentFindResponse = TPaginationReturn<
   Array<

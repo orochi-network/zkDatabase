@@ -97,7 +97,7 @@ export const typeDefsDocument = gql`
     createdAt: Date!
     updatedAt: Date!
     metadata: DocumentMetadataResponse
-    proofStatus: ProofStatusDocument
+    queueStatus: ProofStatusDocument
   }
 
   type DocumentFindResponse {
@@ -188,7 +188,7 @@ const documentFind = authorizeWrapper<
   ]);
   const includesProofStatus = GraphqlHelper.checkRequestedFieldExist(info, [
     'data',
-    'proofStatus',
+    'queueStatus',
   ]);
 
   return withCompoundTransaction(async (compoundTransaction) => {
