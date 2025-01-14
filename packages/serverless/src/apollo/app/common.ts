@@ -22,6 +22,13 @@ export const typeDefsCommon = gql`
     Unknown
   }
 
+  enum QueueTaskStatus {
+    Queued
+    Processing
+    Failed
+    Success
+  }
+
   enum Sorting {
     Asc
     Desc

@@ -12,7 +12,7 @@ import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
-} from "./common.js";
+} from "./common";
 
 export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
   transactionSubmit: createMutateFunction<

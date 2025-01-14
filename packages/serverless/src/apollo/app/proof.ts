@@ -35,20 +35,6 @@ export const typeDefsProof = gql`
     proof: String!
   }
 
-  enum ProofStatusDocument {
-    Queued
-    Proving
-    Proved
-    Failed
-  }
-
-  enum ProofStatusDatabase {
-    None
-    Proving
-    Proved
-    Failed
-  }
-
   extend type Query {
     proofStatusDocument(
       databaseName: String!
@@ -56,7 +42,7 @@ export const typeDefsProof = gql`
       docId: String
     ): ProofStatusDocument!
 
-    proofStatusDatabase(databaseName: String!): ProofStatusDatabase!
+    proofStatusDatabase(databaseName: String!): QueueTaskStatus!
 
     proof(databaseName: String!): ZkProof
   }
