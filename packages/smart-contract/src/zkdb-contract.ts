@@ -51,7 +51,9 @@ export function ZkDbContractFactory(
 
       this.step.set(zkRollupProof.publicOutput.step);
 
-      // TODO: Why do we need this?
+      // Using `createSigned` to ensure this database(zkApp) update will be authorized with a signature.
+      // So we will need to pass correct zkApp private key
+      // tx.sign([zkAppPrivate]); rather than tx.sign([]) like `AccountUpdate.create`
       AccountUpdate.createSigned(this.address);
     }
   }

@@ -8,10 +8,9 @@ import {
 } from '@zkdb/common';
 import {
   DatabaseEngine,
-  getCurrentTime,
   ModelMetadataDatabase,
-  ModelProof,
   ModelRollupHistory,
+  ModelRollupOffChain,
   ModelSecureStorage,
   ModelTransaction,
   withCompoundTransaction,
@@ -153,7 +152,9 @@ export const SERVICE_COMPILE = {
             );
 
             if (!privateKey) {
-              throw Error('Private key has not been found');
+              throw Error(
+                `Private key of database ${databaseName} has not been found`
+              );
             }
             // storing encryptedData:
             const decryptedPrivateKey = EncryptionKey.decrypt(
@@ -170,17 +171,18 @@ export const SERVICE_COMPILE = {
               throw new Error('Mismatch between privateKey and publicKey');
             }
 
-            const proof = await ModelProof.getInstance().findOne(
-              { databaseName },
-              {
-                session: proofSession,
-                sort: {
-                  createdAt: -1,
-                },
-              }
-            );
+            const proofOffChain =
+              await ModelRollupOffChain.getInstance().findOne(
+                { databaseName },
+                {
+                  session: proofSession,
+                  sort: {
+                    createdAt: -1,
+                  },
+                }
+              );
 
-            if (!proof) {
+            if (!proofOffChain) {
               throw new Error(`Proof for ${databaseName} not found`);
             }
 
@@ -189,11 +191,10 @@ export const SERVICE_COMPILE = {
                 payerAddress,
                 zkAppPrivateKey,
                 metadataDatabase.merkleHeight,
-                proof
+                proofOffChain.proof
               );
 
               // Update transaction status and add transaction raw
-              const date = getCurrentTime();
               await imTransaction.updateOne(
                 {
                   _id: new ObjectId(transactionObjectId),
@@ -204,8 +205,8 @@ export const SERVICE_COMPILE = {
                   $set: {
                     status: ETransactionStatus.Unsigned,
                     transactionRaw,
-                    updatedAt: date,
-                    createdAt: date,
+                    updatedAt: new Date(),
+                    createdAt: new Date(),
                   },
                 },
                 {
@@ -222,13 +223,14 @@ export const SERVICE_COMPILE = {
               await imRollupHistory.deleteOne({
                 databaseName,
                 transactionObjectId,
-                proofObjectId: proof._id,
+                proofObjectId: proofOffChain._id,
               });
 
               throw error;
             }
           } else {
-            throw new Error('Unsupported transaction');
+            // Show what transaction type that unsupported and not suppose to be
+            throw new Error(`Unsupported transaction ${transactionType}`);
           }
         }
       )

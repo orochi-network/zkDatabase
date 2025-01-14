@@ -1,13 +1,19 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
-import { ETransactionStatus, ETransactionType } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
+import {
+  EMinaTransactionStatus,
+  ETransactionStatus,
+  ETransactionType,
+} from '@zkdb/common';
+import { MinaNetwork, ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
+  ModelRollupOnChain,
   ModelTransaction,
   withTransaction,
 } from '@zkdb/storage';
+import { PublicKey } from 'o1js';
 // Time duration is equal 1/10 time on chain
 const PADDING_TIME = TimeDuration.fromMinute(1);
 
@@ -189,28 +195,60 @@ export const SERVICE_TRANSACTION = {
                         }
                       );
 
-                    // If Rollup => early return, we don't need to update the metadata database deploy status
                     if (
-                      !updatedTransaction ||
-                      updatedTransaction.transactionType ===
-                        ETransactionType.Rollup
+                      updatedTransaction?.transactionType ===
+                      ETransactionType.Rollup
                     ) {
-                      return;
-                    }
+                      const imRollupOnChain = ModelRollupOnChain.getInstance();
+                      // Insert on chain info
+                      // NOTE: Do get onchain data from smart contract or we get from transaction
+                      const metadataDatabase = await imMetadataDatabase.findOne(
+                        { databaseName: updatedTransaction.databaseName }
+                      );
 
-                    await imMetadataDatabase.updateOne(
-                      {
-                        databaseName: updatedTransaction.databaseName,
-                      },
-                      {
-                        $set: {
-                          deployStatus: ETransactionStatus.Confirmed,
-                        },
-                      },
-                      {
-                        session,
+                      if (!metadataDatabase) {
+                        throw new Error(
+                          `Cannot found metadata database ${updatedTransaction.databaseName}`
+                        );
                       }
-                    );
+
+                      const zkDbProcessor = await ZkDbProcessor.getInstance(
+                        metadataDatabase.merkleHeight
+                      );
+
+                      const zkDbContract =
+                        zkDbProcessor.getInstanceZkDBContract(
+                          PublicKey.fromBase58(metadataDatabase.appPublicKey)
+                        );
+
+                      await imRollupOnChain.insertOne({
+                        step: zkDbContract.step.get().toBigInt(),
+                        error: zkAppTx.failures.join(' '),
+                        txHash: transaction.txHash,
+                        databaseName: updatedTransaction.databaseName,
+                        status: zkAppTx.txStatus as EMinaTransactionStatus,
+                        // Don't use getCurrentTime, We want to since with transaction model
+                        createdAt: updatedTransaction.createdAt,
+                        updatedAt: updatedTransaction.updatedAt,
+                      });
+                    } else if (
+                      updatedTransaction?.transactionType ===
+                      ETransactionType.Deploy
+                    ) {
+                      await imMetadataDatabase.updateOne(
+                        {
+                          databaseName: updatedTransaction.databaseName,
+                        },
+                        {
+                          $set: {
+                            deployStatus: ETransactionStatus.Confirmed,
+                          },
+                        },
+                        {
+                          session,
+                        }
+                      );
+                    }
 
                     return;
                   } else if (zkAppTx.txStatus === 'pending') {

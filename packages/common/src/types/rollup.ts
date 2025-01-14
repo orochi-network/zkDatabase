@@ -1,7 +1,14 @@
 import type { ObjectId } from 'mongodb';
+import { JsonProof } from 'o1js';
 import { TDbRecord, TNullable } from './common';
-import { TDatabaseRequest } from './database';
-import { TTransactionRecord } from './transaction';
+import { TDatabaseRequest, TMetadataDatabase } from './database';
+import { TPagination, TPaginationReturn } from './pagination';
+
+export enum EMinaTransactionStatus {
+  Failed = 'failed',
+  Pending = 'pending',
+  Applied = 'applied',
+}
 
 /**
  * Rollup state
@@ -20,6 +27,7 @@ export enum ERollupState {
 
 export type TRollupHistory = {
   databaseName: string;
+  step: bigint;
   merkleTreeRoot: string;
   merkleTreeRootPrevious: string;
   // Previous name `txId` is changed to `transactionObjectId`,
@@ -32,13 +40,32 @@ export type TRollupHistory = {
 
 export type TRollupState = Pick<
   TRollupHistory,
-  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
 > & {
   // Number of merkle root transformation different to previous one
-  rollUpDifferent: number;
+  rollUpDifferent: bigint;
   rollUpState: ERollupState;
   latestRollupSuccess: Date;
+  error: string;
 };
+
+export type TRollupStateNullable = TNullable<
+  TRollupState,
+  'error' | 'latestRollupSuccess'
+>;
+
+export type TRollupOnChain = {
+  databaseName: string;
+  step: bigint;
+  txHash: string;
+  status: EMinaTransactionStatus;
+  error: string;
+  // TODO: Implement more if we want to store more field from on-chain
+};
+
+export type TRollOpChainRecordNullable = TDbRecord<
+  TNullable<TRollupOnChain, 'error'>
+>;
 
 export type TRollupHistoryRecordNullable = TDbRecord<
   TNullable<TRollupHistory, 'error'>
@@ -46,26 +73,52 @@ export type TRollupHistoryRecordNullable = TDbRecord<
 
 export type TRollupHistoryRecord = TDbRecord<TRollupHistory>;
 
-export type TRollupStateRecordNullable = TDbRecord<
-  TNullable<TRollupState, 'error' | 'latestRollupSuccess'>
->;
-
-// Compound Type
-
-export type TRollupHistoryTransactionAggregate = TRollupHistoryRecord & {
-  transaction: TTransactionRecord;
-};
-
-export type TRollupDetail = TRollupStateRecordNullable & {
-  history: TRollupHistoryRecordNullable[];
-};
-
 // Rollup history
-export type TRollupHistoryRequest = TDatabaseRequest;
+export type TRollupHistoryRequest = {
+  query: Partial<
+    Pick<
+      TRollupHistory,
+      'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
+    >
+  >;
+  pagination: TPagination;
+};
 
-export type TRollupHistoryResponse = TRollupDetail | null;
+export type TRollupHistoryParam = TRollupHistoryRequest;
+
+export type TRollupHistoryResponse = TPaginationReturn<
+  TRollupHistoryRecordNullable[]
+> | null;
+
+// Rollup state
+export type TRollupStateRequest = TDatabaseRequest;
+
+// RollupStateResponse can be null due to user never make an onchain rollup before
+export type TRollupStateResponse = TRollupStateNullable | null;
 
 // Rollup create
 export type TRollupCreateRequest = TDatabaseRequest;
 
 export type TRollupCreateResponse = boolean;
+
+// NOTE: This type base from @orochi-network/smart-contract -> ZkDbProcessor
+export type TRollupSerializedProof = {
+  step: bigint;
+  proof: JsonProof;
+  merkleRootOld: string;
+};
+
+export type TRollUpOffChainRecord = TDbRecord<
+  TRollupSerializedProof &
+    Pick<TMetadataDatabase, 'databaseName'> & {
+      transitionLogObjectId: ObjectId;
+    }
+>;
+
+export type TRollupQueueData = {
+  databaseName: string;
+  operationNumber: number;
+  collectionName: string;
+  transitionLogObjectId: ObjectId;
+  docId: string;
+};

@@ -46,9 +46,9 @@ export interface IDatabase {
   userList(): Promise<TUserFindResponse>;
 
   // ZK Proof
-  proofZk(): Promise<TZkProofResponse>;
+  zkProof(): Promise<TZkProofResponse>;
 
-  proofStatus(): Promise<TProofStatusDatabaseResponse>;
+  zkProofStatus(): Promise<TProofStatusDatabaseResponse>;
 
   // Transaction
   transactionDraft(

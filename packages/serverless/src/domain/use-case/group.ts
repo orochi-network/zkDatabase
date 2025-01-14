@@ -8,7 +8,6 @@ import {
   groupName as joiGroupName,
 } from '@zkdb/common';
 import { ClientSession } from 'mongodb';
-import { getCurrentTime } from '@helper';
 import { ModelGroup, ModelUserGroup, ModelUser } from '@model';
 import { Database } from './database';
 
@@ -79,8 +78,8 @@ export class Group {
             groupName,
             groupDescription: groupDescription || `Group ${groupName}`,
             createdBy,
-            createdAt: getCurrentTime(),
-            updatedAt: getCurrentTime(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
           { session }
         );

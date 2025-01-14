@@ -16,7 +16,7 @@ export enum ESequencer {
   // The highest operation number that has been fully processed and
   // incorporated into the current Merkle tree state. This number should always
   // be less than or equal to the Operation number.
-  ProvedMerkleRoot = 'ProvedMerkleRoot,
+  ProvedMerkleRoot = 'ProvedMerkleRoot',
 }
 
 export type TSequencedItem = TDbRecord<{

@@ -2,7 +2,11 @@ import { logger } from '@helper';
 import { Job, Worker, WorkerOptions } from 'bullmq';
 import { TTransactionQueue } from '@zkdb/common';
 type TProcessJob = (job: Job) => Promise<void>;
-
+/**
+ * QueueWorker take responsibility for handle message queue from bullMQ
+ * We can enhanced it by implement multiple worker for compile service
+ * It's cover the bullMQ's `Worker` including init, start, event register and graceful shutdown
+ */
 export class QueueWorker {
   private worker: Worker;
 

@@ -1,11 +1,7 @@
 /* eslint-disable no-await-in-loop */
 
 import { zkDatabaseConstant } from '@common';
-import {
-  DATABASE_ENGINE,
-  createExtendedMerkleWitness,
-  getCurrentTime,
-} from '@helper';
+import { DATABASE_ENGINE, createExtendedMerkleWitness } from '@helper';
 import {
   TMerkleJson,
   TMerkleNode,
@@ -107,7 +103,7 @@ export class ModelMerkleTree extends ModelGeneral<OptionalId<TMerkleRecord>> {
     const inserts = [];
     const removals = [];
 
-    const currentTime = getCurrentTime();
+    const currentTime = new Date();
 
     for (let level = 0; level < this._height; level += 1) {
       const dataToInsert: OptionalId<TMerkleRecord> = {

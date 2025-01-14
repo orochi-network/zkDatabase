@@ -3,10 +3,9 @@ import { ClusterApplication, LoggerSet } from '@orochi-network/framework';
 import {
   SERVICE_COMPILE,
   SERVICE_TRANSACTION,
-  SERVICE_TASK,
-  SERVICE_ROLLUP,
-  newServiceDocument,
+  SERVICE_OFFCHAIN_ROLLUP,
 } from '@service';
+import { newServiceDocument } from './service/document-worker';
 // Set logger
 LoggerSet(logger);
 // Init cluster application
@@ -15,8 +14,8 @@ const clusterApp = new ClusterApplication();
 clusterApp
   .add(SERVICE_COMPILE)
   .add(SERVICE_TRANSACTION)
-  .add(SERVICE_TASK)
-  .add(SERVICE_ROLLUP)
+  .add(SERVICE_OFFCHAIN_ROLLUP)
+  .add(SERVICE_OFFCHAIN_ROLLUP)
   // TODO: Make num of workers configurable instead of hardcoding
   .add(newServiceDocument('1'))
   .add(newServiceDocument('2'))

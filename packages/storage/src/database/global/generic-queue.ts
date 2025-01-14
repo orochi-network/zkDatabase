@@ -1,3 +1,11 @@
+import { zkDatabaseConstant } from '@common';
+import { DATABASE_ENGINE } from '@helper';
+import {
+  EQueueTaskStatus,
+  TDbRecord,
+  TGenericQueueBase,
+  TNullable,
+} from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -5,44 +13,11 @@ import {
   InsertOneOptions,
   OptionalId,
 } from 'mongodb';
-import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE } from '@helper';
-import { TDbRecord, TNullable } from '@zkdb/common';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
-
-export enum EDocumentOperation {
-  Create = 'Create',
-  Update = 'Update',
-  Delete = 'Delete',
-}
-
-export type TDocumentQueuedData = {
-  collectionName: string;
-  operationKind: EDocumentOperation;
-  newDocumentHash?: string;
-  merkleIndex: bigint;
-  docId: string;
-};
-
-export enum EQueueTaskStatus {
-  Queued = 'Queued',
-  Processing = 'Processing',
-  Failed = 'Failed',
-  Success = 'Success',
-}
-
-export type TGenericQueueBase<T> = {
-  databaseName: string;
-  sequenceNumber: number;
-  status: EQueueTaskStatus;
-  data: T;
-  error: any;
-  acquiredAt: Date;
-};
 
 // Sequence number is used to order tasks within the same database, if user
 // of this model doesn't need to maintain order, she can set it to null on

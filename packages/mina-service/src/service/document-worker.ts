@@ -12,15 +12,13 @@ import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
-  getCurrentTime,
   ModelGenericQueue,
   ModelSequencer,
-  TDocumentQueuedData,
   withTransaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import assert from 'node:assert';
-import { ESequencer } from '@zkdb/common';
+import { ESequencer, TDocumentQueuedData } from '@zkdb/common';
 import { LoggerLoader } from '@orochi-network/framework';
 
 let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
@@ -135,11 +133,11 @@ tracking sequence number: ${trackingSequenceNumber}`
               {
                 $set: {
                   seq: acquiredTask.sequenceNumber!,
-                  updatedAt: getCurrentTime(),
+                  updatedAt: new Date(),
                 },
                 $setOnInsert: {
                   type: ESequencer.ProvedMerkleRoot,
-                  createdAt: getCurrentTime(),
+                  createdAt: new Date(),
                 },
               },
               {

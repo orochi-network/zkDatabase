@@ -47,9 +47,9 @@ export class ModelMetadataDatabase extends ModelGeneral<
 
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TMetadataDatabase>(
-      zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
-      zkDatabaseConstant.globalCollection.proof
+      zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.serverless,
+      zkDatabaseConstant.globalCollection.metadataDatabase
     );
     if (!(await collection.isExist())) {
       /*

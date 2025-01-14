@@ -1,11 +1,13 @@
-import { ESequencer } from '@zkdb/common';
+import {
+  EDocumentOperation,
+  ESequencer,
+  TDocumentQueuedData,
+} from '@zkdb/common';
 import {
   TCompoundSession,
   ModelSequencer,
   ModelGenericQueue,
-  TDocumentQueuedData,
   zkDatabaseConstant,
-  EDocumentOperation,
 } from '@zkdb/storage';
 
 import { ModelMetadataDocument } from '@model';
@@ -53,7 +55,7 @@ export class Prover {
 
     const index = metadataDocument.merkleIndex;
 
-    const hash = schema.hash();
+    const documentHash = schema.hash();
 
     const imSequencer = await ModelSequencer.getInstance(
       databaseName,
@@ -76,7 +78,7 @@ export class Prover {
         data: {
           collectionName,
           merkleIndex: BigInt(index),
-          newDocumentHash: hash.toString(),
+          newDocumentHash: documentHash.toString(),
           operationKind: EDocumentOperation.Create,
           docId,
         },

@@ -1,14 +1,19 @@
-import { getCurrentTime, logger } from '@helper';
+import { logger } from '@helper';
 import {
+  EMinaTransactionStatus,
+  ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TRollupDetail,
+  TRollUpOffChainAndTransitionAggregate,
+  TRollupHistoryParam,
+  TRollupHistoryResponse,
+  TRollupStateResponse,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
-  ModelProof,
   ModelRollupHistory,
-  ModelRollupState,
+  ModelRollupOffChain,
+  ModelRollupOnChain,
   ModelTransaction,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -29,37 +34,54 @@ export class Rollup {
       compoundSession.serverless
     );
 
-    const modelProof = ModelProof.getInstance();
-    const latestProofForDb = await modelProof.findOne(
-      { databaseName },
-      {
-        session: compoundSession.proofService,
-        sort: {
-          createdAt: -1,
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
+    const [latestProofForDb] = await imRollupOffChain.collection
+      .aggregate<TRollUpOffChainAndTransitionAggregate>([
+        {
+          $match: { databaseName },
         },
-      }
-    );
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $limit: 1,
+        },
+        {
+          $lookup: {
+            from: 'transaction',
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $unwind: {
+            path: '$transaction',
+          },
+        },
+      ])
+      .toArray();
 
     if (!latestProofForDb) {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollup = ModelRollupHistory.getInstance();
-    const modelTransaction = ModelTransaction.getInstance();
+    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imTransaction = ModelTransaction.getInstance();
 
-    const rollUp = await imRollup.findOne(
+    const rollUpHistory = await imRollupHistory.findOne(
       {
         proofId: latestProofForDb._id,
       },
       { session: compoundSession.serverless }
     );
 
-    if (rollUp) {
+    if (rollUpHistory) {
       logger.debug('Identified repeated proof');
 
-      const transaction = await modelTransaction.findOne(
+      const transaction = await imTransaction.findOne(
         {
-          _id: rollUp.transactionObjectId,
+          _id: rollUpHistory.transactionObjectId,
         },
         { session: compoundSession.serverless }
       );
@@ -84,18 +106,20 @@ export class Rollup {
       compoundSession.serverless
     );
 
-    const currentTime = getCurrentTime();
-    await imRollup.insertOne(
+    const currentTime = new Date();
+
+    await imRollupHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
         // @NOTICE Something possible wrong here
-        merkleTreeRoot: latestProofForDb.merkleRoot,
-        merkleTreeRootPrevious: latestProofForDb.merkleRootPrevious,
+        merkleTreeRoot: latestProofForDb.transition.merkleRootNew,
+        merkleTreeRootPrevious: latestProofForDb.merkleRootOld,
         proofObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        error: '',
+        step: latestProofForDb.step,
+        error: null,
       },
       { session: compoundSession?.serverless }
     );
@@ -104,38 +128,82 @@ export class Rollup {
   }
 
   static async history(
-    databaseName: string,
+    param: TRollupHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupDetail | null> {
-    const database = await ModelMetadataDatabase.getInstance().findOne(
-      { databaseName },
+  ): Promise<TRollupHistoryResponse | null> {
+    const { query, pagination } = param;
+
+    const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
+      query,
       {
         session,
       }
     );
 
     if (
-      !database?.appPublicKey ||
-      PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
+      !metadataDatabase?.appPublicKey ||
+      PublicKey.fromBase58(metadataDatabase?.appPublicKey).isEmpty().toBoolean()
     ) {
       throw Error('Database is not bound to zk app');
     }
 
     const imRollupHistory = ModelRollupHistory.getInstance();
-    const imRollupState = await ModelRollupState.getInstance(databaseName);
+
     const rollupHistory = await imRollupHistory
-      .find({ databaseName })
+      .find(query)
       .sort({ createdAt: -1, updatedAt: -1 })
       .toArray();
-    const rollupState = await imRollupState.findOne({ databaseName });
-    // state.roll
-    if (rollupHistory.length > 0 && rollupState) {
+
+    if (!rollupHistory.length) {
       return {
-        ...rollupState,
-        history: rollupHistory,
+        data: [],
+        total: 0,
+        offset: pagination.offset || 0,
       };
     }
 
-    return null;
+    return {
+      data: rollupHistory,
+      total: await imRollupHistory.count(query),
+      offset: pagination.offset || 0,
+    };
+  }
+
+  static async state(databaseName: string): Promise<TRollupStateResponse> {
+    const imRollupOnChain = ModelRollupOnChain.getInstance();
+    const imRollupHistory = ModelRollupHistory.getInstance();
+
+    // Get latest rollup history
+    const latestRollupHistory = await imRollupHistory.findOne(
+      { databaseName },
+      { sort: { updatedAt: -1, createdAt: -1 } }
+    );
+
+    // Get onchain rollup info, we don't interact with smart contract in serverless
+    const rollupOnChainHistory = await imRollupOnChain
+      .find({ databaseName }, { sort: { createdAt: -1 } })
+      .toArray();
+
+    const latestOnChainRollup = rollupOnChainHistory.at(0);
+
+    if (!latestRollupHistory || !latestOnChainRollup) {
+      return null;
+    }
+
+    const rollUpDifferent = latestRollupHistory.step - latestOnChainRollup.step;
+
+    return {
+      databaseName,
+      merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
+      merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
+      rollUpDifferent,
+      rollUpState:
+        rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+      latestRollupSuccess:
+        rollupOnChainHistory.find(
+          (i) => i.status === EMinaTransactionStatus.Applied
+        )?.createdAt || null,
+      error: latestOnChainRollup.error,
+    };
   }
 }

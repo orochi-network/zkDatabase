@@ -89,11 +89,11 @@ export class Database implements IDatabase {
     ).unwrap();
   }
 
-  async proofZk(): Promise<TZkProofResponse> {
+  async zkProof(): Promise<TZkProofResponse> {
     return (await this.apiClient.proof.proof(this.basicQuery)).unwrap();
   }
 
-  async proofStatus(): Promise<TProofStatusDatabaseResponse> {
+  async zkProofStatus(): Promise<TProofStatusDatabaseResponse> {
     return (
       await this.apiClient.proof.proofStatusDatabase(this.basicQuery)
     ).unwrap();

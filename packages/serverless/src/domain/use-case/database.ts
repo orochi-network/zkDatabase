@@ -1,5 +1,5 @@
 import { GROUP_DEFAULT_ADMIN } from '@common';
-import { getCurrentTime, logger } from '@helper';
+import { logger } from '@helper';
 import {
   ModelGroup,
   ModelMetadataCollection,
@@ -60,8 +60,8 @@ export class Database {
           merkleHeight,
           databaseOwner,
           appPublicKey: '',
-          createdAt: getCurrentTime(),
-          updatedAt: getCurrentTime(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
           deployStatus: ETransactionStatus.Unknown,
         },
         { session }

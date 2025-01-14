@@ -1,22 +1,22 @@
-import { logger } from '../helper/logger.js';
+import { logger } from '@helper';
 
 export type TChain = 'mainnet' | 'devnet';
 
-export type TStatus = 'applied' | 'failed' | 'pending';
+export type TMinaTransactionStatus = 'applied' | 'failed' | 'pending';
 
 export type TBlockConfirmationTransaction = {
   blockConfirmationsCount: number;
   blockHeight: number;
   stateHash: string;
   txHashNext: string;
-  txStatus: TStatus;
+  txStatus: TMinaTransactionStatus;
   txHashPrevious: string;
   isCanonical: boolean;
   failureReason: string;
 };
 
 export type TZkAppTransaction = {
-  txStatus: TStatus;
+  txStatus: TMinaTransactionStatus;
   failures: string[];
 };
 

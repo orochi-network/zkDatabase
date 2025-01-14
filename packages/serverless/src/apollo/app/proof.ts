@@ -4,16 +4,21 @@ import {
   collectionName,
   databaseName,
   docId,
-  EProofDatabaseStatus,
-  EProofStatusDocument,
   TProofStatusDatabaseRequest,
   TProofStatusDatabaseResponse,
   TProofStatusDocumentRequest,
   TProofStatusDocumentResponse,
+  TRollupQueueData,
   TZkProofRequest,
   TZkProofResponse,
 } from '@zkdb/common';
-import { ModelProof, ModelQueueTask } from '@zkdb/storage';
+import {
+  ModelGenericQueue,
+  ModelRollupOffChain,
+  withCompoundTransaction,
+  withTransaction,
+  zkDatabaseConstant,
+} from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
@@ -30,20 +35,6 @@ export const typeDefsProof = gql`
     proof: String!
   }
 
-  enum ProofStatusDocument {
-    Queued
-    Proving
-    Proved
-    Failed
-  }
-
-  enum ProofStatusDatabase {
-    None
-    Proving
-    Proved
-    Failed
-  }
-
   extend type Query {
     proofStatusDocument(
       databaseName: String!
@@ -51,7 +42,7 @@ export const typeDefsProof = gql`
       docId: String
     ): ProofStatusDocument!
 
-    proofStatusDatabase(databaseName: String!): ProofStatusDatabase!
+    proofStatusDatabase(databaseName: String!): QueueTaskStatus!
 
     proof(databaseName: String!): ZkProof
   }
@@ -67,29 +58,43 @@ const proofStatusDocument = authorizeWrapper<
     docId: docId(false),
   }),
   async (_root, { databaseName, collectionName, docId }, ctx) => {
-    const actorPermission = await PermissionSecurity.document({
-      databaseName,
-      collectionName,
-      docId,
-      actor: ctx.userName,
-    });
-    if (actorPermission.read) {
-      const imProof = ModelQueueTask.getInstance();
-      const proof = await imProof.findOne({
-        databaseName,
-        docId,
-      });
+    return withCompoundTransaction(async (compoundTransaction) => {
+      const { serverless, proofService } = compoundTransaction;
+      const actorPermission = await PermissionSecurity.document(
+        {
+          databaseName,
+          collectionName,
+          docId,
+          actor: ctx.userName,
+        },
+        serverless
+      );
 
-      if (!proof) {
-        throw new Error('Proof has not been found');
+      if (actorPermission.read) {
+        const imRollupQueue =
+          await ModelGenericQueue.getInstance<TRollupQueueData>(
+            zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+            proofService
+          );
+        const proof = await imRollupQueue.findOne(
+          {
+            databaseName,
+            'data.docId': docId,
+          },
+          { session: proofService }
+        );
+
+        if (!proof) {
+          throw new Error('Proof has not been found');
+        }
+
+        return proof.status;
       }
 
-      return proof.status;
-    }
-
-    throw new Error(
-      `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
-    );
+      throw new Error(
+        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
+      );
+    });
   }
 );
 
@@ -98,9 +103,8 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const modelProof = ModelProof.getInstance();
-
-    return modelProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
+    const imProof = ModelRollupOffChain.getInstance();
+    return imProof.findOne({ databaseName }, { sort: { createdAt: -1 } });
   }
 );
 
@@ -112,25 +116,24 @@ const proofStatusDatabase = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    const modelTask = ModelQueueTask.getInstance();
+    return withTransaction(async (proofSession) => {
+      const imRollupQueue =
+        await ModelGenericQueue.getInstance<TRollupQueueData>(
+          zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+          proofSession
+        );
+      // Get latest task rollup task queue
+      const task = await imRollupQueue.findOne({
+        databaseName,
+        sort: { createdAt: -1 },
+      });
 
-    const task = await modelTask.findOne({
-      databaseName,
-      status: {
-        $in: [EProofStatusDocument.Proving, EProofStatusDocument.Queued],
-      },
+      if (!task) {
+        return null;
+      }
+
+      return task.status;
     });
-
-    if (task) {
-      return EProofDatabaseStatus.Proving;
-    } else {
-      const modelProof = ModelProof.getInstance();
-      const proof = await modelProof.findOne(
-        { databaseName },
-        { sort: { createdAt: -1 } }
-      );
-      return proof ? EProofDatabaseStatus.Proved : EProofDatabaseStatus.None;
-    }
   }
 );
 

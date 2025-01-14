@@ -1,5 +1,5 @@
 import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE, getCurrentTime } from '@helper';
+import { DATABASE_ENGINE } from '@helper';
 import { ESequencer, TSequencedItem } from '@zkdb/common';
 import { ClientSession, WithoutId } from 'mongodb';
 import { ModelBasic } from '../base';
@@ -48,7 +48,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
         { type: sequenceName },
         {
           $inc: { seq: ModelSequencer.SEQUENCE_INCREMENT },
-          $set: { updatedAt: getCurrentTime() },
+          $set: { updatedAt: new Date() },
         },
         { upsert: true, returnDocument: 'after', session }
       );
@@ -59,7 +59,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
 
       return updateResult.seq;
     } else {
-      const creationTime = getCurrentTime();
+      const creationTime = new Date();
 
       const insertResult = await this.collection.insertOne(
         {

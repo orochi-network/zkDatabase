@@ -3,7 +3,7 @@ import {
   BlockberryApi,
   TBlockConfirmationTransaction,
   TZkAppTransaction,
-} from './api.js';
+} from './api';
 
 export class MinaNetwork {
   private static instance: MinaNetwork;

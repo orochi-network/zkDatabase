@@ -5,7 +5,7 @@ import {
   TRollupHistoryRequest,
   TRollupHistoryResponse,
 } from "@zkdb/common";
-import { createMutateFunction, TApolloClient } from "./common.js";
+import { createMutateFunction, TApolloClient } from "./common";
 
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<

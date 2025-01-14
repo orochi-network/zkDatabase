@@ -4,6 +4,7 @@ import {
   TNodeEnv,
 } from '@orochi-network/framework';
 import Joi from 'joi';
+import path from 'node:path';
 import { NetworkId } from 'o1js';
 
 type TApplicationConfig = {

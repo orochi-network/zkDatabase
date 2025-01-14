@@ -1,14 +1,9 @@
 import { ZkDbProcessor } from './zkdb-processor.js';
 
-const processor = new ZkDbProcessor(8);
+const processor = await ZkDbProcessor.getInstance(8);
 
-processor.setLogger(console);
+ZkDbProcessor.setLogger(console);
 
 let start = Date.now();
-
-await processor.compile(
-  '/home/chiro/Git/zkDatabase/packages/smart-contract/cache',
-  true
-);
 
 console.log(Date.now() - start, 'ms');

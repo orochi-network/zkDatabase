@@ -30,9 +30,9 @@ export interface IDocument<T extends TSchemaExtendable<any>> {
 
   toProvable(schema: T): InstanceType<T>;
 
-  proofMerkle(): Promise<TMerkleTreeProofByDocIdResponse>;
+  merkleProof(): Promise<TMerkleTreeProofByDocIdResponse>;
 
-  proofStatus(): Promise<TProofStatusDocumentResponse>;
+  merkleProofStatus(): Promise<TProofStatusDocumentResponse>;
 
   history(pagination?: TPagination): Promise<TDocumentHistoryFindResponse>;
 }

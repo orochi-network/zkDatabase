@@ -2,24 +2,10 @@
 
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TDbRecord, TMerkleProof } from '@zkdb/common';
+import { TTransitionLogRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-
-export type TMerkleProofSerialized = Omit<TMerkleProof, 'sibling'> & {
-  sibling: string;
-};
-
-export type TTransitionLog = {
-  merkleRootNew: string;
-  merkleProof: TMerkleProofSerialized[];
-  leafOld: string;
-  leafNew: string;
-  operationNumber: number;
-};
-
-export type TTransitionLogRecord = TDbRecord<TTransitionLog>;
 
 export class ModelTransitionLog extends ModelGeneral<
   OptionalId<TTransitionLogRecord>

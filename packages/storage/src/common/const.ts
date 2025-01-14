@@ -26,11 +26,8 @@ export const zkDatabaseConstant = {
     // User
     user: 'user',
 
-    // Proof queue
-    queue: 'queue',
-
     // Proof storage
-    proof: 'proof',
+    rollupOffChain: 'rollup_offchain',
 
     // Deployed transaction
     transaction: 'transaction',
@@ -40,9 +37,16 @@ export const zkDatabaseConstant = {
     // Rollup history
     rollupHistory: 'rollup_history',
 
+    // Verification key
+    verificationKey: 'verification_key',
+
+    // Rollup onchain
+    rollupOnChain: 'rollup_onchain',
     // Queue to store documents waiting to be processed, e.g. update the merkle
     // tree and queue proof tasks
     documentQueue: 'document_queue',
+    // Rollup off-chain queue
+    rollupOffChainQueue: 'rollup_offchain_queue',
   },
 
   // Collections that are common across different databases
@@ -60,9 +64,6 @@ export const zkDatabaseConstant = {
 
     // Sequencer
     sequencer: '_zkdatabase_sequencer',
-
-    // Rollup state 1 - 1 with database
-    rollUpState: '_zkdatabase_rollup_state',
   },
 };
 

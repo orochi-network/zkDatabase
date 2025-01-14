@@ -1,42 +1,30 @@
 import { logger } from '@helper';
-import { ZkDatabaseSmartContractWrapper } from '@zkdb/smart-contract';
-import { JsonProof, Mina, NetworkId, PrivateKey, PublicKey } from 'o1js';
+import {
+  EContractName,
+  TRollupSerializedProof,
+  TVerificationKeySerialized,
+} from '@zkdb/common';
+import { ZkDbProcessor } from '@zkdb/smart-contract';
+import { ModelVerificationKey } from '@zkdb/storage';
+import { createHash } from 'node:crypto';
+import {
+  AccountUpdate,
+  Mina,
+  NetworkId,
+  PrivateKey,
+  PublicKey,
+  ZkProgram,
+} from 'o1js';
 
-const MAX_MERKLE_TREE_HEIGHT = 256;
-const MIN_MERKLE_TREE_HEIGHT = 8;
+const DEFAULT_TRANSACTION_FEE = 100_000_000;
 
 export class ZkCompile {
-  private smartContractMap: Map<number, ZkDatabaseSmartContractWrapper>;
-
   constructor(
     private readonly network: { networkId: NetworkId; mina: string }
   ) {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
     // Smart contract map with key is merkleHeight and value is smart contract
-    this.smartContractMap = new Map<number, ZkDatabaseSmartContractWrapper>();
-  }
-
-  private async getSmartContract(
-    merkleHeight: number
-  ): Promise<ZkDatabaseSmartContractWrapper> {
-    if (
-      merkleHeight > MAX_MERKLE_TREE_HEIGHT ||
-      merkleHeight < MIN_MERKLE_TREE_HEIGHT
-    ) {
-      throw new Error(
-        `Invalid merkle height, ensure it between from ${MIN_MERKLE_TREE_HEIGHT} to ${MAX_MERKLE_TREE_HEIGHT}`
-      );
-    }
-    if (!this.smartContractMap.has(merkleHeight)) {
-      const zkWrapper =
-        ZkDatabaseSmartContractWrapper.mainConstructor(merkleHeight);
-      await zkWrapper.compile();
-      // set ZkDatabaseSmartContractWrapper
-      this.smartContractMap.set(merkleHeight, zkWrapper);
-    }
-    // Need to using null assertion since we already check if
-    return this.smartContractMap.get(merkleHeight)!;
   }
 
   async getDeployRawTx(
@@ -49,21 +37,67 @@ export class ZkCompile {
     const zkDbPublicKey = PublicKey.fromPrivateKey(zkDbPrivateKey);
     const senderPublicKey = PublicKey.fromBase58(payerAddress);
 
-    const start = performance.now();
+    const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
-    const smartContract = await this.getSmartContract(merkleHeight);
+    const { vkContract, vkRollup } = zkDbProcessor;
 
-    const unsignedTx = await smartContract.createAndProveDeployTransaction({
-      sender: senderPublicKey,
-      zkApp: zkDbPublicKey,
-    });
+    const contractVerificationKeySerialized: TVerificationKeySerialized = {
+      ...vkContract,
+      hash: vkContract.hash.toString(),
+    };
 
-    const partialSignedTx = unsignedTx.sign([zkDbPrivateKey]);
+    const rollupVerificationKeySerialized: TVerificationKeySerialized = {
+      ...vkRollup,
+      hash: vkRollup.hash.toString(),
+    };
 
-    const end = performance.now();
-    logger.info(
-      `Deploy ${zkDbPublicKey.toBase58()} take ${(end - start) / 1000}s`
+    // Store smart contract's verification key into database and hashed like hash table for key hash and value
+    // Using SHA-256 hash from 'crypto' to hash verification key
+    const contractVerificationKeyHash = createHash('sha256')
+      .update(JSON.stringify(contractVerificationKeySerialized))
+      .digest('hex');
+
+    const rollupVerificationKeyHash = createHash('sha256')
+      .update(JSON.stringify(rollupVerificationKeySerialized))
+      .digest('hex');
+
+    const imVerification = ModelVerificationKey.getInstance();
+
+    // Insert these 2 vk contract & rollup to database
+    await imVerification.insertMany([
+      {
+        contractName: EContractName.VkContract,
+        verificationKeyHash: contractVerificationKeyHash,
+        verificationKey: contractVerificationKeySerialized,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        contractName: EContractName.VkRollup,
+        verificationKeyHash: rollupVerificationKeyHash,
+        verificationKey: rollupVerificationKeySerialized,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+
+    // Get the smart contract from zk processor to `deploy()`
+    const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
+
+    const tx = await Mina.transaction(
+      {
+        sender: senderPublicKey,
+        fee: DEFAULT_TRANSACTION_FEE,
+      },
+      async () => {
+        AccountUpdate.fundNewAccount(senderPublicKey);
+        await smartContract.deploy();
+      }
     );
+
+    await tx.prove();
+
+    const partialSignedTx = tx.sign([zkDbPrivateKey]);
 
     return partialSignedTx.toJSON();
   }
@@ -72,7 +106,7 @@ export class ZkCompile {
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number,
-    proof: JsonProof
+    proof: TRollupSerializedProof['proof']
   ): Promise<string> {
     this.ensureTransaction();
 
@@ -81,17 +115,25 @@ export class ZkCompile {
 
     const start = performance.now();
 
-    const smartContract = await this.getSmartContract(merkleHeight);
+    const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
-    const rawTx = await smartContract.createAndProveRollupTransaction(
+    // Get smart contract to rollup and get proof zkProgram from a JSON
+    const smartContract = zkDbProcessor.getInstanceZkDBContract(zkDbPublicKey);
+    const proofProgram = ZkProgram.Proof(zkDbProcessor.getInstanceZkDBRollup());
+
+    const tx = await Mina.transaction(
       {
         sender: senderPublicKey,
-        zkApp: zkDbPublicKey,
+        fee: DEFAULT_TRANSACTION_FEE,
       },
-      proof
+      async () => {
+        await smartContract.rollUp(await proofProgram.fromJSON(proof));
+      }
     );
 
-    const partialSignedTx = rawTx.sign([zkDbPrivateKey]);
+    await tx.prove();
+
+    const partialSignedTx = tx.sign([zkDbPrivateKey]);
 
     const end = performance.now();
     logger.info(

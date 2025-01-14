@@ -16,7 +16,8 @@ export default [
       commonjs(),
       alias({
         entries: [
-
+          { find: '@helper', replacement: 'src/helper' },
+          { find: '@network', replacement: 'src/network' },
         ],
       }),
       typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),
