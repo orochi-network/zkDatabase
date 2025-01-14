@@ -40,9 +40,9 @@ export const typeDefsProof = gql`
       databaseName: String!
       collectionName: String!
       docId: String
-    ): ProofStatusDocument!
+    ): QueueTaskStatus!
 
-    proofStatusDatabase(databaseName: String!): QueueTaskStatus!
+    zkProofStatus(databaseName: String!): QueueTaskStatus!
 
     proof(databaseName: String!): ZkProof
   }
@@ -108,7 +108,7 @@ const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   }
 );
 
-const proofStatusDatabase = publicWrapper<
+const zkProofStatus = publicWrapper<
   TProofStatusDatabaseRequest,
   TProofStatusDatabaseResponse
 >(
@@ -140,7 +140,7 @@ const proofStatusDatabase = publicWrapper<
 export const resolversProof = {
   Query: {
     proof,
-    proofStatusDatabase,
+    zkProofStatus,
     proofStatusDocument,
   },
 };
