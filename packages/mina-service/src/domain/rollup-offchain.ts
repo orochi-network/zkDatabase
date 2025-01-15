@@ -51,11 +51,8 @@ export class RollupOffChain {
     // Get previous proof to update
     // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousProof = await imRollupOffChain.findOne(
-      // ZkProof = operation number + 1
-      // Which mean, to get previous zkProof step = operation number
-      // This is output step
-      { databaseName, step: BigInt(task.operationNumber) },
-      { sort: { createdAt: -1 }, session: proofService }
+      { databaseName },
+      { sort: { createdAt: -1, step: -1 }, session: proofService }
     );
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
@@ -76,37 +73,34 @@ export class RollupOffChain {
     if (!previousProof) {
       // If previous proof not found and operationNumber must be 1, which mean first time create
 
-      if (task.operationNumber === 1) {
-        const merkleTree = new MerkleTree(merkleHeight);
-        // Output step increase by 1 after init 0 - 1
-        const firstRollupProof = await zkAppProcessor.init(
-          merkleTree.getRoot(),
-          merkleTree.getWitness(0n)
-        );
-        // Output step increase by 1 after update from 1 - 2 now
-        const newRollupProof = await zkAppProcessor.update(
-          firstRollupProof,
-          deserializeTransition(rollupTransition)
-        );
+      const merkleTree = new MerkleTree(merkleHeight);
+      const firstRollup = deserializeTransition(rollupTransition);
 
-        const { proof, merkleRootOld, step } =
-          zkAppProcessor.serialize(newRollupProof);
+      // Output step increase by 1 after init 0 - 1
+      const firstRollupProof = await zkAppProcessor.init(
+        merkleTree.getRoot(),
+        merkleTree.getWitness(0n),
+        firstRollup.leafNew
+      );
 
-        return {
-          databaseName,
-          merkleRootOld,
-          proof,
-          step: BigInt(step),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          transitionLogObjectId,
-        };
-      } else {
-        // Cannot found previous proof, but operationNumber not equals to 1, which mean error, not proof for the first time
+      const { proof, merkleRootOld, step } =
+        zkAppProcessor.serialize(firstRollupProof);
+
+      if (step !== operationNumber) {
         throw new Error(
-          `Previous proof cannot be found on ${databaseName} which operation number ${operationNumber}`
+          `Output step and operationNumber did not match except ${operationNumber} but received ${step}`
         );
       }
+
+      return {
+        databaseName,
+        merkleRootOld,
+        proof,
+        step,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        transitionLogObjectId,
+      };
     }
 
     const previousProofFormat = await zkAppProcessor.deserialize(
@@ -121,12 +115,18 @@ export class RollupOffChain {
     const { proof, merkleRootOld, step } =
       zkAppProcessor.serialize(newRollupProof);
 
+    if (step !== operationNumber) {
+      throw new Error(
+        `Output step and operationNumber did not match except ${operationNumber} but received ${step}`
+      );
+    }
+
     return {
       databaseName,
       merkleRootOld,
       proof,
       transitionLogObjectId,
-      step: BigInt(step),
+      step,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

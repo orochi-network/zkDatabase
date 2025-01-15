@@ -213,7 +213,7 @@ export class ZkDbProcessor {
 
   serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
-      step: proof.step.toString(),
+      step: proof.step.toBigInt(),
       proof: proof.proof.toJSON(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };

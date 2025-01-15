@@ -21,5 +21,5 @@ export enum ESequencer {
 
 export type TSequencedItem = TDbRecord<{
   type: ESequencer;
-  seq: number;
+  seq: bigint;
 }>;

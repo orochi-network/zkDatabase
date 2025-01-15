@@ -101,7 +101,7 @@ tracking sequence number: ${trackingSequenceNumber}`
         // This means that the next sequential task has not arrived yet. We're
         // going to add this task to the exclusion queue and skip processing it
         // for now.
-        if (task.sequenceNumber !== trackingSequenceNumber + 1) {
+        if (task.sequenceNumber !== trackingSequenceNumber + 1n) {
           exclusionQueue.push(task.databaseName);
           exclusionQueue.shift();
           return true;

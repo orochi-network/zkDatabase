@@ -117,7 +117,7 @@ export type TRollUpOffChainRecord = TDbRecord<
 
 export type TRollupQueueData = {
   databaseName: string;
-  operationNumber: number;
+  operationNumber: bigint;
   collectionName: string;
   transitionLogObjectId: ObjectId;
   docId: string;
