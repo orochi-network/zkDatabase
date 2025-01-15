@@ -4,15 +4,16 @@ import {
   TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
+  TPagination,
+  TZkProofStatusResponse,
+  TRollupHistoryRequest,
   TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
-  TZkProofStatusResponse,
 } from '@zkdb/common';
-
 import {
   ICollection,
   IDatabase,
@@ -125,13 +126,27 @@ export class Database implements IDatabase {
     return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
 
-  async rollUpHistory(offset?: number): Promise<TRollupHistoryResponse> {
+  async rollUpOnChainHistory(
+    query: TRollupHistoryRequest['query'],
+    pagination?: TPagination
+  ): Promise<TRollupHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupHistory({
-        query: this.basicQuery,
-        pagination: { offset: offset || 0, limit: 100 },
+        query: { ...this.basicQuery, ...query },
+        pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
+  }
+
+  rollUpOnChainStart(): Promise<boolean> {
+    throw new Error('Method not implemented.');
+  }
+
+  rollUpOffChainHistory(
+    query: TRollupHistoryRequest['query'],
+    pagination?: TPagination
+  ): Promise<TRollupHistoryResponse> {
+    throw new Error('Method not implemented.');
   }
 
   async info(): Promise<TDatabaseInfoResponse> {

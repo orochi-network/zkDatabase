@@ -4,13 +4,15 @@ import {
   TDatabaseCreateRequest,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
+  TPagination,
+  TZkProofStatusResponse,
+  TRollupHistoryRequest,
   TRollupHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
-  TZkProofStatusResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -61,7 +63,15 @@ export interface IDatabase {
   ): Promise<boolean>;
 
   // Rollup
-  rollUpStart(): Promise<boolean>;
+  rollUpOnChainStart(): Promise<boolean>;
 
-  rollUpHistory(): Promise<TRollupHistoryResponse>;
+  rollUpOnChainHistory(
+    query: TRollupHistoryRequest['query'],
+    pagination?: TPagination
+  ): Promise<TRollupHistoryResponse>;
+
+  rollUpOffChainHistory(
+    query: TRollupHistoryRequest['query'],
+    pagination?: TPagination
+  ): Promise<TRollupHistoryResponse>;
 }
