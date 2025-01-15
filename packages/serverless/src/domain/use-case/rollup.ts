@@ -205,7 +205,7 @@ export class Rollup {
   static async onChainHistory(
     param: TRollupHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupHistoryResponse> {
+  ): Promise<TRollupOnChainHist> {
     const { query, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
@@ -247,40 +247,39 @@ export class Rollup {
   static async state(
     databaseName: string
   ): Promise<TRollupOnChainStateResponse> {
-    const imRollupOnChain = ModelRollupOnChain.getInstance();
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
-
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
     // Get latest rollup history
-    const latestRollupHistory = await imRollupOnChainHistory.findOne(
-      { databaseName },
+    const rollupOnChainHistory = await imRollupOnChainHistory
+      .find({ databaseName }, { sort: { updatedAt: -1, createdAt: -1 } })
+      .toArray();
+
+    const latestRollupOffChain = await imRollupOffChain.findOne(
+      {
+        databaseName,
+      },
       { sort: { updatedAt: -1, createdAt: -1 } }
     );
 
-    // Get onchain rollup info, we don't interact with smart contract in serverless
-    const rollupOnChainHistory = await imRollupOnChain
-      .find({ databaseName }, { sort: { createdAt: -1 } })
-      .toArray();
-
-    const latestOnChainRollup = rollupOnChainHistory.at(0);
-
-    if (!latestRollupHistory || !latestOnChainRollup) {
+    if (!latestRollupOffChain) {
       return null;
     }
 
-    const rollUpDifferent = latestRollupHistory.step - latestOnChainRollup.step;
+    const rollupDifferent =
+      latestRollupOffChain.step - (rollupOnChainHistory[0]?.step || 0n);
 
     return {
       databaseName,
-      merkleRootNew: latestRollupHistory.merkleTreeRoot,
-      merkleRootOld: latestRollupHistory.merkleTreeRootPrevious,
-      rollUpDifferent,
-      rollUpState:
-        rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
-      latestRollupSuccess:
+      merkleRootOnChainNew: rollupOnChainHistory[0].merkleRootOnChainNew,
+      merkleRootOnChainOld: rollupOnChainHistory[0].merkleRootOnChainOld,
+      rollupDifferent,
+      rollupOnChainState:
+        rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+      latestRollupOnChainSuccess:
         rollupOnChainHistory.find(
           (i) => i.status === EMinaTransactionStatus.Applied
         )?.createdAt || null,
-      error: latestOnChainRollup.error,
+      error: rollupOnChainHistory[0].error,
     };
   }
 }

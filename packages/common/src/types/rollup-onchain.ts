@@ -1,6 +1,6 @@
 import type { ObjectId } from 'mongodb';
 import { ModelRollupOnChainHistory } from './../../../../node_modules/@zkdb/storage/src/database/global/rollup-history';
-import { TDbRecord, TNullable } from './common';
+import { TDbRecord, TNullable, TPickAlter } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
@@ -31,24 +31,34 @@ export enum ERollupState {
 /**
  * Base type for ModelRollupOnChainHistory
  */
-export type TRollupOnChainHistory = TRollupBaseHistory & {
-  // Previous name `txId` is changed to `transactionObjectId`,
-  // txId is not a good name it's alias of tx hash
-  // From transactionObjectId we can track the transaction status
-  transactionObjectId: ObjectId;
-  // Previous name is `proofObjectId` is changed to `rollupOffChainObjectId`
-  // Since proof model changed, this will ref to the proof in 'rollup_offchain'
-  rollupOffChainObjectId: ObjectId;
-  status: EMinaTransactionStatus;
-  error: string;
-};
+export type TRollupOnChainHistory = Omit<
+  TRollupBaseHistory,
+  'merkleRootNew' | 'merkleRootOld'
+> &
+  TPickAlter<
+    TRollupBaseHistory,
+    {
+      merkleRootNew: 'merkleRootOnChainNew';
+      merkleRootOld: 'merkleRootOnChainOld';
+    }
+  > & {
+    // Previous name `txId` is changed to `transactionObjectId`,
+    // txId is not a good name it's alias of tx hash
+    // From transactionObjectId we can track the transaction status
+    transactionObjectId: ObjectId;
+    // Previous name is `proofObjectId` is changed to `rollupOffChainObjectId`
+    // Since proof model changed, this will ref to the proof in 'rollup_offchain'
+    rollupOffChainObjectId: ObjectId;
+    status: EMinaTransactionStatus;
+    error: string;
+  };
 
 /*
  * Base type for represents onchain rollup state of that database
  */
 export type TRollupOnChainState = Pick<
   TRollupOnChainHistory,
-  'databaseName' | 'merkleRootNew' | 'merkleRootOld' | 'error'
+  'databaseName' | 'error' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
 > & {
   // Number of merkle root transformation different to previous one
   rollupDifferent: bigint;
@@ -61,7 +71,10 @@ export type TRollupOnChainState = Pick<
  */
 export type TRollupStateNullable = TNullable<
   TRollupOnChainState,
-  'error' | 'latestRollupOnChainSuccess'
+  | 'error'
+  | 'latestRollupOnChainSuccess'
+  | 'merkleRootOnChainNew'
+  | 'merkleRootOnChainOld'
 >;
 
 /**
@@ -91,7 +104,7 @@ export type TRollupOnChainHistoryRequest = {
   query: Partial<
     Pick<
       TRollupOnChainHistory,
-      'databaseName' | 'merkleRootOld' | 'merkleRootNew'
+      'databaseName' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
     >
   >;
   pagination: TPagination;
