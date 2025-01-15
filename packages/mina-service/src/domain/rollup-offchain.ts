@@ -73,7 +73,7 @@ export class RollupOffChain {
       );
     }
 
-    if (!previousProof && operationNumber === 1) {
+    if (!previousProof) {
       // If previous proof not found and operationNumber must be 1, which mean first time create
 
       if (task.operationNumber === 1) {
