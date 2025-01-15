@@ -15,7 +15,8 @@ export type ZkDbContract = ReturnType<typeof ZkDbContractFactory>;
 
 export function ZkDbContractFactory(
   merkleHeight: number,
-  zkDbRollup: ZkDbRollup
+  zkDbRollup: ZkDbRollup,
+  initialMerkleRoot?: Field
 ) {
   const merkleTree = new MerkleTree(merkleHeight);
 
@@ -33,7 +34,7 @@ export function ZkDbContractFactory(
         editState: Permissions.proofOrSignature(),
       });
 
-      this.merkleRoot.set(merkleTree.getRoot());
+      this.merkleRoot.set(initialMerkleRoot ?? merkleTree.getRoot());
 
       this.step.set(Field(0));
     }

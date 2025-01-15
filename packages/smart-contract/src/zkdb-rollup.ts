@@ -45,15 +45,21 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
 
     methods: {
       init: {
-        privateInputs: [ZkDbMerkleWitness],
+        privateInputs: [ZkDbMerkleWitness, Field],
 
         async method(
           stateInput: ZkDbRollupInput,
-          merkleProof: ZkDbMerkleWitness
+          merkleProof: ZkDbMerkleWitness,
+          leaf: Field
         ) {
+          stateInput.merkleRootOld.assertEquals(
+            Field(0),
+            'Initial step require old merkle root to be Field(0)'
+          );
+
           // Make sure merkle proof is valid for root of zero merkle tree
           merkleProof
-            .calculateRoot(Field(0))
+            .calculateRoot(leaf)
             .assertEquals(stateInput.merkleRootNew);
 
           stateInput.step.assertEquals(Field(0));
