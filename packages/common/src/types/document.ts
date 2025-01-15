@@ -5,6 +5,7 @@ import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { TCollectionRequest } from './collection.js';
 import { EQueueTaskStatus } from './queue.js';
+import { TDatabaseRequest } from './database.js';
 
 export type TDocumentField = TSchemaSerializedField;
 
@@ -78,3 +79,10 @@ export type TDocumentHistoryFindRequest = TCollectionRequest & {
 export type TDocumentHistoryFindResponse = TPaginationReturn<
   TDocumentResponse[]
 >;
+
+export type TDatabaseMerkleProofStatusRequest = TDatabaseRequest;
+
+export type TDatabaseMerkleProofStatusResponse = {
+  status: EQueueTaskStatus;
+  latestProcessedMerkleIndex: bigint;
+};

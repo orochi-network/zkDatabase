@@ -109,8 +109,14 @@ export class ModelGenericQueue<T> extends ModelGeneral<
           {
             status: EQueueTaskStatus.Queued,
             databaseName: {
-              // TODO: can we do nested query instead of two queries for this?
-              // not sure if mongodb supports that
+              // FIXME: data races can still happen because of the below nested
+              // query. For example if two workers run this query at the same
+              // time before the outter query is executed, they can both get
+              // the same list of databaseName and acquire the two tasks of one
+              // database in parallel. This is prevented in the merkle tree
+              // worker implementation by checking if the sequence number is
+              // the expected one. However, it'd be better to have a more
+              // correct behavior here.
               $nin: await this.collection.distinct('databaseName', {
                 $or: [
                   {

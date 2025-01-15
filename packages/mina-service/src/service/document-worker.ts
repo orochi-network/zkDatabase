@@ -129,6 +129,7 @@ tracking sequence number: ${trackingSequenceNumber}`
             ).collection.findOneAndUpdate(
               {
                 type: ESequencer.ProvedMerkleRoot,
+                seq: trackingSequenceNumber,
               },
               {
                 $set: {

@@ -23,6 +23,10 @@ import {
   docId,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
+  TDocumentRecordNullable,
+  TDocumentMetadata,
+  TDatabaseMerkleProofStatusRequest,
+  TDatabaseMerkleProofStatusResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -90,7 +94,7 @@ export const typeDefsDocument = gql`
     createdAt: Date!
     updatedAt: Date!
     metadata: DocumentMetadataResponse
-    queueStatus: QueueTaskStatus
+    merkleProofStatus: QueueTaskStatus
   }
 
   type DocumentFindResponse {
@@ -126,6 +130,11 @@ export const typeDefsDocument = gql`
     merkleIndex: String!
   }
 
+  type DatabaseMerkleProofStatus {
+    status: QueueTaskStatus!
+    latestProcessedMerkleIndex: BigInt!
+  }
+
   extend type Query {
     documentFind(
       databaseName: String!
@@ -146,6 +155,8 @@ export const typeDefsDocument = gql`
       docId: String!
       pagination: PaginationInput
     ): DocumentHistoryFindResponse
+
+    databaseMerkleProofStatus(databaseName: String!): DatabaseMerkleProofStatus!
   }
 
   extend type Mutation {
@@ -186,7 +197,10 @@ const documentFind = authorizeWrapper<
 
   return withCompoundTransaction(async (compoundTransaction) => {
     const { serverless, proofService } = compoundTransaction;
-    let [listDocument, numTotalDocument] = await Document.query(
+    let [listDocument, numTotalDocument]: [
+      TDocumentFindResponse['data'],
+      number,
+    ] = await Document.query(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -198,8 +212,7 @@ const documentFind = authorizeWrapper<
     );
 
     // Lazily fill metadata and proof status if requested
-    // TODO: can we fill metadata and proof status in parallel?
-    if (includesMetadata) {
+    if (includesMetadata || includesProofStatus) {
       listDocument = await Document.fillMetadata(
         listDocument,
         args.databaseName,
@@ -208,8 +221,13 @@ const documentFind = authorizeWrapper<
     }
 
     if (includesProofStatus) {
-      listDocument = await Document.fillProofStatus(
-        listDocument,
+      listDocument = await Document.fillMerkleProofStatus(
+        // Safety: listDocument is guaranteed to have metadata as we filled it
+        // above
+        listDocument as (TDocumentRecordNullable & {
+          metadata: TDocumentMetadata;
+        })[],
+        args.databaseName,
         args.collectionName,
         proofService
       );
@@ -340,11 +358,26 @@ const documentMetadata = authorizeWrapper<
   }
 );
 
+const databaseMerkleProofStatus = authorizeWrapper<
+  TDatabaseMerkleProofStatusRequest,
+  TDatabaseMerkleProofStatusResponse
+>(
+  Joi.object({
+    databaseName,
+  }),
+  async (_root, { databaseName }, ctx) => {
+    return withTransaction(async (session) =>
+      Document.databaseMerkleProofStatus(databaseName, ctx.userName, session)
+    );
+  }
+);
+
 export const resolversDocument = {
   Query: {
     documentFind,
     documentHistoryFind,
     documentMetadata,
+    databaseMerkleProofStatus,
   },
   Mutation: {
     documentCreate,

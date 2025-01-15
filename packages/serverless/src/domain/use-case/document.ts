@@ -16,14 +16,16 @@ import {
   EQueueTaskStatus,
   ESequencer,
   PERMISSION_DEFAULT,
+  TDatabaseMerkleProofStatusResponse,
   TDocumentField,
+  TDocumentMetadata,
+  TDocumentQueuedData,
   TDocumentRecordNullable,
   TMetadataDetailDocument,
   TPagination,
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
-  TRollupQueueData,
   TSerializedValue,
   TWithQueueStatus,
 } from '@zkdb/common';
@@ -414,32 +416,56 @@ in database '${databaseName}'.`
 
   /** Fill proof status for a list of documents. Note that this won't check for
    * permission and will return all proof status for the given documents. */
-  static async fillProofStatus(
-    listDocument: TDocumentRecordNullable[],
+  static async fillMerkleProofStatus(
+    listDocument: (TDocumentRecordNullable & { metadata: TDocumentMetadata })[],
+    databaseName: string,
     collectionName: string,
     // NOTE: This is proof service session since we using ModelGenericQueue from proof database
     session: ClientSession
   ): Promise<TWithQueueStatus<TDocumentRecordNullable>[]> {
-    const imRollUpQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
-      zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+    const imRollUpQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session
+      );
+
+    const listQueueTask = await imRollUpQueue
+      .find(
+        {
+          databaseName,
+          // TODO: index these fields
+          'data.collectionName': collectionName,
+          'data.docId': { $in: listDocument.map((doc) => doc.docId) },
+        },
+        { session }
+      )
+      .toArray();
+
+    const imModelSequencer = await ModelSequencer.getInstance(
+      databaseName,
       session
     );
 
-    const listQueueTask = await imRollUpQueue
-      .find({ 'data.collectionName': collectionName })
-      .toArray();
-
-    if (!listQueueTask) {
-      return [];
-    }
+    const latestProcessedMerkleIndex = await imModelSequencer.current(
+      ESequencer.ProvedMerkleRoot,
+      session
+    );
 
     const taskMap = new Map(
       listQueueTask.map((task) => [task.data.docId, task.status])
     );
 
     return listDocument.map((item) => ({
-      // Maybe it can be Unknown
-      queueStatus: taskMap.get(item.docId) || EQueueTaskStatus.Failed,
+      queueStatus:
+        // The queue may not contain the task for this document since
+        // successfully completed tasks are immediately removed (failed tasks
+        // are kept persisted for diagnosis). Therefore, we assume tasks with
+        // merkleIndex smaller than the latest processed merkleIndex were
+        // successful.
+        taskMap.get(item.docId) ||
+        BigInt(item.metadata.merkleIndex) > latestProcessedMerkleIndex
+          ? EQueueTaskStatus.Queued
+          : EQueueTaskStatus.Success,
       ...item,
     }));
   }
@@ -504,5 +530,71 @@ in database '${databaseName}'.`
     ]);
 
     return [listRevision, totalRevision];
+  }
+
+  static async databaseMerkleProofStatus(
+    databaseName: string,
+    actor: string,
+    session: ClientSession
+  ): Promise<TDatabaseMerkleProofStatusResponse> {
+    if (
+      !(
+        await PermissionSecurity.database(
+          {
+            databaseName,
+            actor,
+          },
+          session
+        )
+      ).read
+    ) {
+      throw new Error(
+        `Actor '${actor}' does not have 'read' permission for database '${databaseName}'.`
+      );
+    }
+
+    const imDocumentQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session
+      );
+
+    const latestFailedTask = await imDocumentQueue
+      .find(
+        {
+          databaseName,
+          status: EQueueTaskStatus.Failed,
+        },
+        { session }
+      )
+      .sort({ sequenceNumber: -1, createdAt: -1 })
+      .limit(1)
+      .next();
+
+    const imModelSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      session
+    );
+
+    const latestProcessedMerkleIndex = await imModelSequencer.current(
+      ESequencer.ProvedMerkleRoot,
+      session
+    );
+
+    const latestDataOperationNumber = await imModelSequencer.current(
+      ESequencer.DataOperation,
+      session
+    );
+
+    return {
+      /* eslint-disable-next-line no-nested-ternary --
+       * for lazy evaluation */
+      status: latestFailedTask
+        ? EQueueTaskStatus.Failed
+        : latestDataOperationNumber === latestProcessedMerkleIndex
+          ? EQueueTaskStatus.Success
+          : EQueueTaskStatus.Processing,
+      latestProcessedMerkleIndex: BigInt(latestProcessedMerkleIndex),
+    };
   }
 }

@@ -10,6 +10,8 @@ import {
   TDocumentUpdateResponse,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
+  TDatabaseMerkleProofStatusRequest,
+  TDatabaseMerkleProofStatusResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -42,7 +44,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentCreate
+    (data) => data.documentCreate,
   ),
   documentDrop: createMutateFunction<
     TDocumentDropRequest,
@@ -65,7 +67,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentDrop
+    (data) => data.documentDrop,
   ),
   documentUpdate: createMutateFunction<
     TDocumentUpdateRequest,
@@ -87,7 +89,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         )
       }
     `,
-    (data) => data.documentUpdate
+    (data) => data.documentUpdate,
   ),
   documentFind: createQueryFunction<
     TDocumentFindRequest,
@@ -127,7 +129,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentFind
+    (data) => data.documentFind,
   ),
   documentHistoryFind: createQueryFunction<
     TDocumentFindRequest,
@@ -157,7 +159,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentHistoryFind
+    (data) => data.documentHistoryFind,
   ),
   documentMetadata: createQueryFunction<
     TDocumentMetadataRequest,
@@ -184,6 +186,21 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentMetadata
+    (data) => data.documentMetadata,
+  ),
+  databaseMerkleProofStatus: createQueryFunction<
+    TDatabaseMerkleProofStatusRequest,
+    TDatabaseMerkleProofStatusResponse
+  >(
+    client,
+    gql`
+      query databaseMerkleProofStatus($databaseName: String!) {
+        databaseMerkleProofStatus(databaseName: $databaseName) {
+          status
+          latestProcessedMerkleIndex
+        }
+      }
+    `,
+    (data) => data.databaseMerkleProofStatus,
   ),
 });
