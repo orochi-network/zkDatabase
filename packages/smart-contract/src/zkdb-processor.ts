@@ -219,10 +219,12 @@ export class ZkDbProcessor {
     };
   }
 
-  async deserialize(proofStr: string): Promise<TRollupProof> {
+  async deserialize(
+    serializedProof: TRollupSerializedProof
+  ): Promise<TRollupProof> {
     class ZkDbRollupProof extends ZkProgram.Proof(this.zkdbRollup) {}
 
-    const { step, proof, merkleRootOld } = JSON.parse(proofStr);
+    const { step, proof, merkleRootOld } = serializedProof;
 
     return {
       step: Field(step),

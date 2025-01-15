@@ -103,9 +103,7 @@ export class RollupOffChain {
       };
     }
 
-    const previousProofFormat = await zkAppProcessor.deserialize(
-      JSON.stringify(previousProof)
-    );
+    const previousProofFormat = await zkAppProcessor.deserialize(previousProof);
 
     const newRollupProof = await zkAppProcessor.update(
       previousProofFormat,
