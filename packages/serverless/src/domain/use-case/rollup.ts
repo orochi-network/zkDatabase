@@ -5,11 +5,14 @@ import {
   ETransactionStatus,
   ETransactionType,
   TRollUpOffChainAndTransitionAggregate,
-  TRollupHistory,
-  TRollupHistoryParam,
-  TRollupHistoryResponse,
+  TRollupOffChainHistory,
+  TRollupOffChainHistoryParam,
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOffChainQueueTransitionAggregate,
+  TRollupOnChainStateResponse,
   TRollupQueueData,
-  TRollupStateResponse,
+  databaseName,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
@@ -20,6 +23,8 @@ import {
   TCompoundSession,
   ModelGenericQueue,
   zkDatabaseConstant,
+  ModelDatabase,
+  DATABASE_ENGINE,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -52,7 +57,7 @@ export class Rollup {
         },
         {
           $lookup: {
-            from: 'transaction',
+            from: zkDatabaseConstant.globalCollection.transaction,
             localField: 'transactionObjectId',
             foreignField: '_id',
             as: 'transaction',
@@ -132,9 +137,9 @@ export class Rollup {
   }
 
   static async offChainHistory(
-    param: TRollupHistoryParam,
+    param: TRollupOffChainHistoryParam,
     session: ClientSession
-  ): Promise<TRollupHistoryResponse> {
+  ): Promise<TRollupOffChainHistoryResponse> {
     //
     const { query, pagination } = param;
 
@@ -144,42 +149,55 @@ export class Rollup {
         session
       );
 
-    const rollupOffChainList = await imRollupOffChainQueue
-      .find({
-        databaseName: query.databaseName,
-      })
-      .sort({ createdAt: -1 })
-      .toArray();
+    // Perform aggregation joining 2 collections from 2 databases
+    // `rollup_offchain_queue` from db `_zkdatabase_proof_service`
+    // with `${databaseName}` from db `_zkdatabase_transition_log`
+    const rollupOffChainQueueTransitionAggregateList =
+      await imRollupOffChainQueue.collection
+        .aggregate<TRollupOffChainQueueTransitionAggregate>([
+          {
+            $match: {
+              databaseName: query.databaseName,
+            },
+          },
+          {
+            $lookup: {
+              from: `${zkDatabaseConstant.globalTransitionLogDatabase}.${databaseName}`,
+              localField: 'transitionObjectId',
+              foreignField: '_id',
+              as: 'transition',
+            },
+          },
+          {
+            $unwind: {
+              path: '$transition',
+            },
+          },
+        ])
+        .toArray();
 
-    /*
-        export type TRollupHistory = {
-          databaseName: string;
-          step: bigint;
-          merkleTreeRoot: string;
-          merkleTreeRootPrevious: string;
-          // Previous name `txId` is changed to `transactionObjectId`,
-          // txId is not a good name it's alias of tx hash
-          // From transactionObjectId we can track the transaction status
-          transactionObjectId: ObjectId;
-          proofObjectId: ObjectId;
-          error: string;
+    if (!rollupOffChainQueueTransitionAggregateList.length) {
+      return {
+        data: [],
+        total: 0,
+        offset: pagination.offset || 0,
       };
+    }
 
-      */
-
-    const rollUpOffChainHistory: TRollupHistory[] = rollupOffChainList.map(
-      (e) => {
-        return {
-          databaseName: e.databaseName,
-          step: BigInt(e.sequenceNumber || 0n) + 1n,
-          transactionObjectId,
-        };
-      }
-    );
+    const rollUpOffChainHistory: TRollupOffChainHistory[] =
+      rollupOffChainQueueTransitionAggregateList.map((e) => ({
+        merkleRootNew: e.data.transition.merkleRootNew,
+        merkleRootOld: e.data.transition.merkleRootOld,
+        error: e.error,
+        docId: e.data.docId,
+        status: e.status,
+        databaseName: e.databaseName,
+        step: BigInt(e.sequenceNumber) + 1n,
+      }));
 
     return {
-      data: rollupHistory,
-      total: await imRollupHistory.count(query),
+      data: rollUpOffChainHistory,
+      total: rollUpOffChainHistory.length,
       offset: pagination.offset || 0,
     };
   }
@@ -226,12 +244,14 @@ export class Rollup {
     };
   }
 
-  static async state(databaseName: string): Promise<TRollupStateResponse> {
+  static async state(
+    databaseName: string
+  ): Promise<TRollupOnChainStateResponse> {
     const imRollupOnChain = ModelRollupOnChain.getInstance();
-    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
 
     // Get latest rollup history
-    const latestRollupHistory = await imRollupHistory.findOne(
+    const latestRollupHistory = await imRollupOnChainHistory.findOne(
       { databaseName },
       { sort: { updatedAt: -1, createdAt: -1 } }
     );
@@ -251,8 +271,8 @@ export class Rollup {
 
     return {
       databaseName,
-      merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
-      merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
+      merkleRootNew: latestRollupHistory.merkleTreeRoot,
+      merkleRootOld: latestRollupHistory.merkleTreeRootPrevious,
       rollUpDifferent,
       rollUpState:
         rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,

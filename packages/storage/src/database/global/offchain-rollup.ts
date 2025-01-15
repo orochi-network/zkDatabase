@@ -1,12 +1,12 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TRollUpOffChainRecord } from '@zkdb/common';
+import { TRollupOffChainRecord } from '@zkdb/common';
 import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelRollupOffChain extends ModelGeneral<
-  OptionalId<TRollUpOffChainRecord>
+  OptionalId<TRollupOffChainRecord>
 > {
   public static instance: ModelRollupOffChain;
 

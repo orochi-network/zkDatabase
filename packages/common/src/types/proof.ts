@@ -2,7 +2,7 @@ import { TCollectionRequest } from './collection';
 import { TDatabaseRequest } from './database';
 import { EQueueTaskStatus } from './queue';
 import {
-  TRollUpOffChainRecord,
+  TRollupOffChainRecord,
   TRollupSerializedProof,
 } from './rollup-offchain';
 import { TTransitionLogRecord } from './transition-log';
@@ -35,6 +35,6 @@ export type TZkProofRequest = TDatabaseRequest;
 
 export type TZkProofResponse = TRollupSerializedProof | null;
 
-export type TRollUpOffChainAndTransitionAggregate = TRollUpOffChainRecord & {
+export type TRollUpOffChainAndTransitionAggregate = TRollupOffChainRecord & {
   transition: TTransitionLogRecord;
 };

@@ -5,6 +5,8 @@ import { JsonProof } from 'o1js';
 import { TDbRecord } from './common';
 import { TMetadataDatabase } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
+import { TGenericQueueBase } from './queue';
+import { TTransitionLogRecord } from './transition-log';
 
 // Base type
 
@@ -18,8 +20,8 @@ export type TRollupSerializedProof = {
 export type TRollupBaseHistory = {
   databaseName: string;
   step: bigint;
-  merkleTreeRoot: string;
-  merkleTreeRootPrevious: string;
+  merkleRootOld: string;
+  merkleRootNew: string;
 };
 
 /**
@@ -36,9 +38,13 @@ export type TRollupQueueData = {
   docId: string;
 };
 
+export type TRollupOffChainHistory = TRollupBaseHistory &
+  Pick<TRollupQueueData, 'docId'> &
+  Pick<TGenericQueueBase<TRollupQueueData>, 'status'>;
+
 // Model
 
-export type TRollUpOffChainRecord = TDbRecord<
+export type TRollupOffChainRecord = TDbRecord<
   TRollupSerializedProof &
     Pick<TMetadataDatabase, 'databaseName'> & {
       transitionLogObjectId: ObjectId;
@@ -49,18 +55,23 @@ export type TRollUpOffChainRecord = TDbRecord<
 // ==== OffChain History ====
 export type TRollupOffChainHistoryRequest = {
   query: Partial<
-    Pick<
-      TRollupBaseHistory,
-      'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
-    >
+    Pick<TRollupBaseHistory, 'databaseName' | 'merkleRootOld' | 'merkleRootNew'>
   >;
   pagination: TPagination;
 };
 
 export type TRollupOffChainHistoryResponse = TPaginationReturn<
   TRollupBaseHistory[]
-> | null;
+>;
 
 // Param
 
 export type TRollupOffChainHistoryParam = TRollupOffChainHistoryRequest;
+
+// Common type
+
+export type TRollupOffChainQueueTransitionAggregate = TGenericQueueBase<
+  Omit<TRollupQueueData, 'transitionLogObjectId'> & {
+    transition: TTransitionLogRecord;
+  }
+>;

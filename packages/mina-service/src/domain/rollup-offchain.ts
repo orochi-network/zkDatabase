@@ -1,5 +1,5 @@
 import { deserializeTransition } from '@helper';
-import { TRollUpOffChainRecord, TRollupQueueData } from '@zkdb/common';
+import { TRollupOffChainRecord, TRollupQueueData } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   ModelMetadataDatabase,
@@ -17,7 +17,7 @@ export class RollupOffChain {
   static async create(
     task: TRollupQueueData,
     session: TCompoundSession
-  ): Promise<OptionalId<TRollUpOffChainRecord>> {
+  ): Promise<OptionalId<TRollupOffChainRecord>> {
     const { serverless, proofService } = session;
     const { databaseName, transitionLogObjectId } = task;
 

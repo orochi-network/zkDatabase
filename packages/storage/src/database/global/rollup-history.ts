@@ -1,15 +1,12 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import {
-  TRollupHistoryRecord,
-  TRollupHistoryRecordNullable,
-} from '@zkdb/common';
+import { TRollupOnChainHistoryRecord } from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
 export class ModelRollupOnChainHistory extends ModelGeneral<
-  OptionalId<TRollupHistoryRecordNullable>
+  OptionalId<TRollupOnChainHistoryRecord>
 > {
   private static instance: ModelRollupOnChainHistory;
 
@@ -30,7 +27,7 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
 
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<
-      WithoutId<TRollupHistoryRecord>
+      WithoutId<TRollupOnChainHistoryRecord>
     >(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
@@ -45,11 +42,8 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
     */
     if (!(await collection.isExist())) {
       await collection.createSystemIndex({ databaseName: 1 }, { session });
-      await collection.createSystemIndex({ merkleTreeRoot: 1 }, { session });
-      await collection.createSystemIndex(
-        { merkleTreeRootPrevious: 1 },
-        { session }
-      );
+      await collection.createSystemIndex({ merkleRootNew: 1 }, { session });
+      await collection.createSystemIndex({ merkleRootOld: 1 }, { session });
       await collection.createSystemIndex({ proofObjectId: 1 }, { session });
       await collection.createSystemIndex(
         { transactionObjectId: 1 },

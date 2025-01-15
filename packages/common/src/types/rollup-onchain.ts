@@ -1,8 +1,7 @@
-import { ModelRollupOnChainHistory } from './../../../../node_modules/@zkdb/storage/src/database/global/rollup-history';
 import type { ObjectId } from 'mongodb';
-import { JsonProof } from 'o1js';
+import { ModelRollupOnChainHistory } from './../../../../node_modules/@zkdb/storage/src/database/global/rollup-history';
 import { TDbRecord, TNullable } from './common';
-import { TDatabaseRequest, TMetadataDatabase } from './database';
+import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
 
@@ -49,7 +48,7 @@ export type TRollupOnChainHistory = TRollupBaseHistory & {
  */
 export type TRollupOnChainState = Pick<
   TRollupOnChainHistory,
-  'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
+  'databaseName' | 'merkleRootNew' | 'merkleRootOld' | 'error'
 > & {
   // Number of merkle root transformation different to previous one
   rollupDifferent: bigint;
@@ -92,7 +91,7 @@ export type TRollupOnChainHistoryRequest = {
   query: Partial<
     Pick<
       TRollupOnChainHistory,
-      'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
+      'databaseName' | 'merkleRootOld' | 'merkleRootNew'
     >
   >;
   pagination: TPagination;
