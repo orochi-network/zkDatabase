@@ -52,7 +52,7 @@ export class RollupOffChain {
     // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousProof = await imRollupOffChain.findOne(
       // ZkProof = operation number + 1
-      // to get previous proof zkPoof step = operation number
+      // Which mean, to get previous zkProof step = operation number
       // This is output step
       { databaseName, step: BigInt(task.operationNumber) },
       { sort: { createdAt: -1 }, session: proofService }
@@ -78,12 +78,12 @@ export class RollupOffChain {
 
       if (task.operationNumber === 1) {
         const merkleTree = new MerkleTree(merkleHeight);
-        // First
+        // Output step increase by 1 after init 0 - 1
         const firstRollupProof = await zkAppProcessor.init(
           merkleTree.getRoot(),
           merkleTree.getWitness(0n)
         );
-        // Step now
+        // Output step increase by 1 after update from 1 - 2 now
         const newRollupProof = await zkAppProcessor.update(
           firstRollupProof,
           deserializeTransition(rollupTransition)
