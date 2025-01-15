@@ -86,11 +86,16 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
               'Step must increase by one'
             );
 
+          previousProof.publicOutput.step.assertEquals(
+            stateInput.step,
+            'This proof must be linked to previous proof'
+          );
+
           // It happened since state will create a chain
           // prevProof.publicOutput.merkleRoot === currentProof.publicInput.merkleRootOld
           previousProof.publicOutput.merkleRoot.assertEquals(
             stateInput.merkleRootOld,
-            'Out put of previous proof must be equal to old merkle root.'
+            'Output of previous proof must be equal to old merkle root.'
           );
 
           // Recalculate old root and make sure it's equal to old merkle root.
