@@ -2,9 +2,9 @@
 
 import { ObjectId } from 'mongodb';
 import { JsonProof } from 'o1js';
-import { TMetadataDatabase } from './database';
 import { TDbRecord } from './common';
-import { TPagination } from './pagination';
+import { TMetadataDatabase } from './database';
+import { TPagination, TPaginationReturn } from './pagination';
 
 // Base type
 
@@ -20,7 +20,6 @@ export type TRollupBaseHistory = {
   step: bigint;
   merkleTreeRoot: string;
   merkleTreeRootPrevious: string;
-  error: string;
 };
 
 /**
@@ -48,9 +47,19 @@ export type TRollUpOffChainRecord = TDbRecord<
 // Request & Response
 
 // ==== OffChain History ====
-export type TRollupOffChainHistoryRequest = TRollupBaseHistory;
+export type TRollupOffChainHistoryRequest = {
+  query: Partial<
+    Pick<
+      TRollupBaseHistory,
+      'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
+    >
+  >;
+  pagination: TPagination;
+};
 
-export type TRollupOffChainHistoryResponse = TPagination;
+export type TRollupOffChainHistoryResponse = TPaginationReturn<
+  TRollupBaseHistory[]
+> | null;
 
 // Param
 

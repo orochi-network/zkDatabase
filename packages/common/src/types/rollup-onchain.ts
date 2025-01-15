@@ -41,13 +41,14 @@ export type TRollupOnChainHistory = TRollupBaseHistory & {
   // Since proof model changed, this will ref to the proof in 'rollup_offchain'
   rollupOffChainObjectId: ObjectId;
   status: EMinaTransactionStatus;
+  error: string;
 };
 
 /*
  * Base type for represents onchain rollup state of that database
  */
 export type TRollupOnChainState = Pick<
-  TRollupBaseHistory,
+  TRollupOnChainHistory,
   'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious' | 'error'
 > & {
   // Number of merkle root transformation different to previous one
@@ -90,7 +91,7 @@ export type TRollupOnChainCreateResponse = boolean;
 export type TRollupOnChainHistoryRequest = {
   query: Partial<
     Pick<
-      TRollupBaseHistory,
+      TRollupOnChainHistory,
       'databaseName' | 'merkleTreeRoot' | 'merkleTreeRootPrevious'
     >
   >;

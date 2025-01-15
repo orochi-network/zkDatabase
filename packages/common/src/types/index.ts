@@ -10,6 +10,7 @@ export * from './permission-ownership';
 export * from './pagination';
 export * from './proof';
 export * from './rollup-onchain';
+export * from './rollup-offchain';
 export * from './search';
 export * from './secure-storage';
 export * from './sequencer';
