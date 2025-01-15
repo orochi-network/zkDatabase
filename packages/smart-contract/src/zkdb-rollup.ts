@@ -45,15 +45,21 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
 
     methods: {
       init: {
-        privateInputs: [ZkDbMerkleWitness],
+        privateInputs: [ZkDbMerkleWitness, Field],
 
         async method(
           stateInput: ZkDbRollupInput,
-          merkleProof: ZkDbMerkleWitness
+          merkleProof: ZkDbMerkleWitness,
+          leaf: Field
         ) {
+          stateInput.merkleRootOld.assertEquals(
+            Field(0),
+            'Initial step require old merkle root to be Field(0)'
+          );
+
           // Make sure merkle proof is valid for root of zero merkle tree
           merkleProof
-            .calculateRoot(Field(0))
+            .calculateRoot(leaf)
             .assertEquals(stateInput.merkleRootNew);
 
           stateInput.step.assertEquals(Field(0));
@@ -86,11 +92,16 @@ export function ZkDbRollupFactory(merkleTreeHeight: number) {
               'Step must increase by one'
             );
 
+          previousProof.publicOutput.step.assertEquals(
+            stateInput.step,
+            'This proof must be linked to previous proof'
+          );
+
           // It happened since state will create a chain
           // prevProof.publicOutput.merkleRoot === currentProof.publicInput.merkleRootOld
           previousProof.publicOutput.merkleRoot.assertEquals(
             stateInput.merkleRootOld,
-            'Out put of previous proof must be equal to old merkle root.'
+            'Output of previous proof must be equal to old merkle root.'
           );
 
           // Recalculate old root and make sure it's equal to old merkle root.

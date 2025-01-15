@@ -47,37 +47,36 @@ export class Ownership {
 
       const result = await imMetadataCollection.updateOne(
         {
-          collection: collectionName,
-        },
-        {
-          $set: { 'metadata.owner': newOwner },
-        },
-        { session }
-      );
-      return result.acknowledged;
-    } else {
-      // Case groupType is EOwnershipType.Group
-      if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
-        throw Error(
-          `Cannot change ownership, group ${newOwner} does not exist`
-        );
-      }
-
-      const imMetadataCollection =
-        ModelMetadataCollection.getInstance(databaseName);
-
-      const result = await imMetadataCollection.updateOne(
-        {
           collectionName,
         },
         {
-          $set: { 'metadata.group': newOwner },
+          $set: { owner: newOwner },
         },
         { session }
       );
 
       return result.acknowledged;
     }
+
+    // Case groupType is EOwnershipType.Group
+    if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
+      throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
+    }
+
+    const imMetadataCollection =
+      ModelMetadataCollection.getInstance(databaseName);
+
+    const result = await imMetadataCollection.updateOne(
+      {
+        collectionName,
+      },
+      {
+        $set: { group: newOwner },
+      },
+      { session }
+    );
+
+    return result.acknowledged;
   }
   public static async transferDocument(
     paramTransfer: TParamDocumentOwnership,
@@ -112,35 +111,34 @@ export class Ownership {
 
       const result = await imMetadataDocument.updateOne(
         {
-          collection: collectionName,
+          collectionName,
           docId,
         },
         {
-          $set: { 'metadata.owner': newOwner },
+          $set: { owner: newOwner },
         },
         { session }
       );
-      return result.acknowledged;
-    } else {
-      if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
-        throw Error(
-          `Cannot change ownership, group ${newOwner} does not exist`
-        );
-      }
 
-      const imMetadataDocument = new ModelMetadataDocument(databaseName);
-
-      const result = await imMetadataDocument.updateOne(
-        {
-          collection: collectionName,
-          docId,
-        },
-        {
-          $set: { 'metadata.group': newOwner },
-        },
-        { session }
-      );
       return result.acknowledged;
     }
+
+    if (!Group.exist({ databaseName, groupName: newOwner }, session)) {
+      throw Error(`Cannot change ownership, group ${newOwner} does not exist`);
+    }
+
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
+
+    const result = await imMetadataDocument.updateOne(
+      {
+        collectionName,
+        docId,
+      },
+      {
+        $set: { group: newOwner },
+      },
+      { session }
+    );
+    return result.acknowledged;
   }
 }
