@@ -75,7 +75,7 @@ export class Collection<T extends TSchemaExtendable<any>>
     return (
       await this.apiClient.collection.collectionCreate({
         ...this.basicRequest,
-        schema: schema ? schema.definition() : undefined,
+        schema: schema.definition(),
         permission: permission ? permission.value : undefined,
         groupName,
       })
