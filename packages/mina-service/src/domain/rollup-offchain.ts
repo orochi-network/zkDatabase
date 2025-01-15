@@ -19,7 +19,7 @@ export class RollupOffChain {
     session: TCompoundSession
   ): Promise<OptionalId<TRollUpOffChainRecord>> {
     const { serverless, proofService } = session;
-    const { databaseName, transitionLogObjectId } = task;
+    const { databaseName, transitionLogObjectId, operationNumber } = task;
 
     const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
@@ -51,7 +51,10 @@ export class RollupOffChain {
     // Get previous proof to update
     // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousProof = await imRollupOffChain.findOne(
-      { databaseName, step: BigInt(task.operationNumber) - 1n },
+      // ZkProof = operation number + 1
+      // to get previous proof zkPoof step = operation number
+      // This is output step
+      { databaseName, step: BigInt(task.operationNumber) },
       { sort: { createdAt: -1 }, session: proofService }
     );
 
@@ -70,31 +73,40 @@ export class RollupOffChain {
       );
     }
 
-    // If previous proof not found and operationNumber must be 1, which mean first time create
-    if (!previousProof && task.operationNumber === 1) {
-      const merkleTree = new MerkleTree(merkleHeight);
-      const firstRollupProof = await zkAppProcessor.init(
-        merkleTree.getRoot(),
-        merkleTree.getWitness(0n)
-      );
+    if (!previousProof && operationNumber === 1) {
+      // If previous proof not found and operationNumber must be 1, which mean first time create
 
-      const newRollupProof = await zkAppProcessor.update(
-        firstRollupProof,
-        deserializeTransition(rollupTransition)
-      );
+      if (task.operationNumber === 1) {
+        const merkleTree = new MerkleTree(merkleHeight);
+        // First
+        const firstRollupProof = await zkAppProcessor.init(
+          merkleTree.getRoot(),
+          merkleTree.getWitness(0n)
+        );
+        // Step now
+        const newRollupProof = await zkAppProcessor.update(
+          firstRollupProof,
+          deserializeTransition(rollupTransition)
+        );
 
-      const { proof, merkleRootOld, step } =
-        zkAppProcessor.serialize(newRollupProof);
+        const { proof, merkleRootOld, step } =
+          zkAppProcessor.serialize(newRollupProof);
 
-      return {
-        databaseName,
-        merkleRootOld: merkleRootOld,
-        proof,
-        step: BigInt(step),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        transitionLogObjectId,
-      };
+        return {
+          databaseName,
+          merkleRootOld,
+          proof,
+          step: BigInt(step),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          transitionLogObjectId,
+        };
+      } else {
+        // Cannot found previous proof, but operationNumber not equals to 1, which mean error, not proof for the first time
+        throw new Error(
+          `Previous proof cannot be found on ${databaseName} which operation number ${operationNumber}`
+        );
+      }
     }
 
     const previousProofFormat = await zkAppProcessor.deserialize(
