@@ -424,13 +424,13 @@ in database '${databaseName}'.`
     // NOTE: This is proof service session since we using ModelGenericQueue from proof database
     session: ClientSession
   ): Promise<TWithQueueStatus<TDocumentRecordNullable>[]> {
-    const imRollUpQueue =
+    const imDocumentQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
         session
       );
 
-    const listQueueTask = await imRollUpQueue
+    const listQueueTask = await imDocumentQueue
       .find(
         {
           databaseName,
