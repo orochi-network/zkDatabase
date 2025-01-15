@@ -82,7 +82,7 @@ export type TRollupStateNullable = TNullable<
  */
 export type TRollupOnChainHistoryNullable = TNullable<
   TRollupOnChainHistory,
-  'error'
+  'error' | 'status'
 >;
 
 // Model
@@ -90,7 +90,8 @@ export type TRollupOnChainHistoryNullable = TNullable<
 /**
  * Model type for {@link ModelRollupOnChainHistory}
  */
-export type TRollupOnChainHistoryRecord = TDbRecord<TRollupOnChainHistory>;
+export type TRollupOnChainHistoryRecord =
+  TDbRecord<TRollupOnChainHistoryNullable>;
 
 // Rollup Request & Response type
 
@@ -110,7 +111,7 @@ export type TRollupOnChainHistoryRequest = {
   pagination: TPagination;
 };
 
-export type TRollupHistoryOnChainResponse = TPaginationReturn<
+export type TRollupOnChainHistoryResponse = TPaginationReturn<
   TRollupOnChainHistoryRecord[]
 > | null;
 

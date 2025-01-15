@@ -5,26 +5,24 @@ import {
   ETransactionStatus,
   ETransactionType,
   TRollUpOffChainAndTransitionAggregate,
+  TRollupHistoryOnChainResponse,
   TRollupOffChainHistory,
   TRollupOffChainHistoryParam,
-  TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
   TRollupOffChainQueueTransitionAggregate,
+  TRollupOnChainHistoryParam,
   TRollupOnChainStateResponse,
   TRollupQueueData,
   databaseName,
 } from '@zkdb/common';
 import {
+  ModelGenericQueue,
   ModelMetadataDatabase,
-  ModelRollupOnChainHistory,
   ModelRollupOffChain,
-  ModelRollupOnChain,
+  ModelRollupOnChainHistory,
   ModelTransaction,
   TCompoundSession,
-  ModelGenericQueue,
   zkDatabaseConstant,
-  ModelDatabase,
-  DATABASE_ENGINE,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -121,14 +119,14 @@ export class Rollup {
       {
         databaseName,
         transactionObjectId,
-        // @NOTICE Something possible wrong here
-        merkleTreeRoot: latestProofForDb.transition.merkleRootNew,
-        merkleTreeRootPrevious: latestProofForDb.merkleRootOld,
-        proofObjectId: latestProofForDb._id,
+        merkleRootOnChainNew: latestProofForDb.transition.merkleRootNew,
+        merkleRootOnChainOld: latestProofForDb.merkleRootOld,
+        rollupOffChainObjectId: latestProofForDb._id,
         createdAt: currentTime,
         updatedAt: currentTime,
         step: latestProofForDb.step,
         error: null,
+        status: null,
       },
       { session: compoundSession?.serverless }
     );
@@ -185,14 +183,14 @@ export class Rollup {
     }
 
     const rollUpOffChainHistory: TRollupOffChainHistory[] =
-      rollupOffChainQueueTransitionAggregateList.map((e) => ({
-        merkleRootNew: e.data.transition.merkleRootNew,
-        merkleRootOld: e.data.transition.merkleRootOld,
-        error: e.error,
-        docId: e.data.docId,
-        status: e.status,
-        databaseName: e.databaseName,
-        step: BigInt(e.sequenceNumber) + 1n,
+      rollupOffChainQueueTransitionAggregateList.map((queue) => ({
+        merkleRootNew: queue.data.transition.merkleRootNew,
+        merkleRootOld: queue.data.transition.merkleRootOld,
+        error: queue.error,
+        docId: queue.data.docId,
+        status: queue.status,
+        databaseName: queue.databaseName,
+        step: BigInt(queue.sequenceNumber) + 1n,
       }));
 
     return {
@@ -203,9 +201,9 @@ export class Rollup {
   }
 
   static async onChainHistory(
-    param: TRollupHistoryParam,
+    param: TRollupOnChainHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupOnChainHist> {
+  ): Promise<TRollupHistoryOnChainResponse> {
     const { query, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
@@ -265,13 +263,17 @@ export class Rollup {
       return null;
     }
 
+    // Using Array.prototype.at(0) safer than array[0].
+    // We can .at(0) and check undefined instead of arr[0] don't give type check when array is undefined
+    const latestRollupOnChain = rollupOnChainHistory.at(0);
+
     const rollupDifferent =
-      latestRollupOffChain.step - (rollupOnChainHistory[0]?.step || 0n);
+      latestRollupOffChain.step - (latestRollupOnChain?.step || 0n);
 
     return {
       databaseName,
-      merkleRootOnChainNew: rollupOnChainHistory[0].merkleRootOnChainNew,
-      merkleRootOnChainOld: rollupOnChainHistory[0].merkleRootOnChainOld,
+      merkleRootOnChainNew: latestRollupOnChain?.merkleRootOnChainNew || null,
+      merkleRootOnChainOld: latestRollupOnChain?.merkleRootOnChainOld || null,
       rollupDifferent,
       rollupOnChainState:
         rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
@@ -279,7 +281,7 @@ export class Rollup {
         rollupOnChainHistory.find(
           (i) => i.status === EMinaTransactionStatus.Applied
         )?.createdAt || null,
-      error: rollupOnChainHistory[0].error,
+      error: latestRollupOnChain?.error || null,
     };
   }
 }

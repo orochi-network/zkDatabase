@@ -1,15 +1,17 @@
 import { Rollup } from '@domain';
 import {
   databaseName,
-  TRollupCreateRequest,
-  TRollupCreateResponse,
-  TRollupHistoryRequest,
-  TRollupHistoryResponse,
-  TRollupStateRequest,
-  TRollupStateResponse,
   pagination,
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainCreateRequest,
+  TRollupOnChainCreateResponse,
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateRequest,
+  TRollupOnChainStateResponse,
 } from '@zkdb/common';
-import { withCompoundTransaction } from '@zkdb/storage';
+import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
@@ -59,36 +61,63 @@ extend type Mutation {
   rollupCreate(databaseName: String!): Boolean 
 }
 `;
-const SchemaRollupHistoryRecordQuery = Joi.object<
-  TRollupHistoryRequest['query']
+const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
+  TRollupOnChainHistoryRequest['query']
 >({
   databaseName: Joi.string().optional(),
-  merkleTreeRoot: Joi.string().optional(),
-  merkleTreeRootPrevious: Joi.string().optional(),
+  merkleRootOnChainNew: Joi.string().optional(),
+  merkleRootOnChainOld: Joi.string().optional(),
 });
 
-const JOI_ROLLUP_HISTORY_LIST = Joi.object<TRollupHistoryRequest>({
-  query: SchemaRollupHistoryRecordQuery.required(),
-  pagination,
+const SchemaRollupOffChainHistoryRecordQuery = Joi.object<
+  TRollupOffChainHistoryRequest['query']
+>({
+  databaseName: Joi.string().optional(),
+  merkleRootNew: Joi.string().optional(),
+  merkleRootOld: Joi.string().optional(),
 });
+
+const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
+  Joi.object<TRollupOnChainHistoryRequest>({
+    query: SchemaRollupOnChainHistoryRecordQuery.required(),
+    pagination,
+  });
+
+const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
+  Joi.object<TRollupOnChainHistoryRequest>({
+    query: SchemaRollupOffChainHistoryRecordQuery.required(),
+    pagination,
+  });
 
 // Query
-const rollupState = authorizeWrapper<TRollupStateRequest, TRollupStateResponse>(
-  Joi.object({ databaseName }),
-  async (_root, { databaseName }) => Rollup.state(databaseName)
+const rollupState = authorizeWrapper<
+  TRollupOnChainStateRequest,
+  TRollupOnChainStateResponse
+>(Joi.object({ databaseName }), async (_root, { databaseName }) =>
+  Rollup.state(databaseName)
 );
 
 const rollupOnChainHistory = authorizeWrapper<
-  TRollupHistoryRequest,
-  TRollupHistoryResponse
->(JOI_ROLLUP_HISTORY_LIST, async (_root, args) => {
-  return Rollup.onChainHistory(args);
-});
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse
+>(JOI_ROLLUP_ONCHAIN_HISTORY_LIST, async (_root, args) =>
+  Rollup.onChainHistory(args)
+);
+
+const rollupOffChainHistory = authorizeWrapper<
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse
+>(JOI_ROLLUP_OFFCHAIN_HISTORY_LIST, async (_root, args) =>
+  withTransaction(
+    async (session) => Rollup.offChainHistory(args, session),
+    'proofService'
+  )
+);
 
 // Mutation
 const rollupCreate = authorizeWrapper<
-  TRollupCreateRequest,
-  TRollupCreateResponse
+  TRollupOnChainCreateRequest,
+  TRollupOnChainCreateResponse
 >(
   Joi.object({
     databaseName,
@@ -104,6 +133,7 @@ const rollupCreate = authorizeWrapper<
 export const resolversRollup = {
   Query: {
     rollupOnChainHistory,
+    rollupOffChainHistory,
     rollupState,
   },
   Mutation: {
