@@ -33,6 +33,7 @@ export type TParamProveDelete = TParamProve;
 export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
+    operationNumber: number,
     session: TCompoundSession
   ) {
     const { databaseName, docId, collectionName, document } = proveCreateParam;
@@ -56,16 +57,6 @@ export class Prover {
     const index = metadataDocument.merkleIndex;
 
     const documentHash = schema.hash();
-
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
 
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
@@ -91,6 +82,7 @@ export class Prover {
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
+    operationNumber: number,
     session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId, newDocument } =
@@ -111,15 +103,6 @@ export class Prover {
     const schema = DocumentSchema.buildSchema(newDocument);
 
     const hash = schema.hash();
-
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
 
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
@@ -145,6 +128,7 @@ export class Prover {
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
+    operationNumber: number,
     session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId } = proveDeleteParam;
@@ -161,16 +145,6 @@ export class Prover {
     if (!metadataDocument) {
       throw new Error(`No metadata found for docId ${docId}`);
     }
-
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
 
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(

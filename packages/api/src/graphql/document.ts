@@ -10,8 +10,6 @@ import {
   TDocumentUpdateResponse,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
-  TDatabaseMerkleProofStatusRequest,
-  TDatabaseMerkleProofStatusResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -187,20 +185,5 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.documentMetadata,
-  ),
-  databaseMerkleProofStatus: createQueryFunction<
-    TDatabaseMerkleProofStatusRequest,
-    TDatabaseMerkleProofStatusResponse
-  >(
-    client,
-    gql`
-      query databaseMerkleProofStatus($databaseName: String!) {
-        databaseMerkleProofStatus(databaseName: $databaseName) {
-          status
-          latestProcessedMerkleIndex
-        }
-      }
-    `,
-    (data) => data.databaseMerkleProofStatus,
   ),
 });

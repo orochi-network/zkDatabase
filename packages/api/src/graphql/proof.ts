@@ -1,7 +1,9 @@
 import { gql } from "@apollo/client";
 import {
-  TProofStatusDocumentRequest,
-  TProofStatusDocumentResponse,
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse,
+  TZkProofDocumentRequest,
+  TZkProofDocumentResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
@@ -22,7 +24,7 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.proof
+    (data) => data.proof,
   ),
   zkProofStatus: createQueryFunction<
     TZkProofStatusRequest,
@@ -34,26 +36,46 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
         zkProofStatus(databaseName: $databaseName)
       }
     `,
-    (data) => data.zkProofStatus
+    (data) => data.zkProofStatus,
   ),
-  proofStatusDocument: createQueryFunction<
-    TProofStatusDocumentRequest,
-    TProofStatusDocumentResponse
+  documentMerkleProofStatus: createQueryFunction<
+    TMerkleProofDocumentRequest,
+    TMerkleProofDocumentResponse
   >(
     client,
     gql`
-      query proofStatusDocument(
+      query documentMerkleProofStatus(
         $databaseName: String!
         $collectionName: String!
-        $docId: String
+        $docId: String!
       ) {
-        proofStatusDocument(
+        documentMerkleProofStatus(
           databaseName: $databaseName
           collectionName: $collectionName
           docId: $docId
         )
       }
     `,
-    (data) => data.proofStatusDocument
+    (data) => data.documentMerkleProofStatus,
+  ),
+  documentZkProofStatus: createQueryFunction<
+    TZkProofDocumentRequest,
+    TZkProofDocumentResponse
+  >(
+    client,
+    gql`
+      query documentZkProofStatus(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentZkProofStatus(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        )
+      }
+    `,
+    (data) => data.documentZkProofStatus,
   ),
 });

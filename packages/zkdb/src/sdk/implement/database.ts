@@ -3,7 +3,6 @@ import {
   ETransactionType,
   TCollectionListResponse,
   TDatabaseInfoResponse,
-  TDatabaseMerkleProofStatusResponse,
   TGroupListAllResponse,
   TRollupHistoryResponse,
   TSchemaExtendable,
@@ -87,12 +86,6 @@ export class Database implements IDatabase {
         query: {},
         pagination: { limit: 100, offset: offset || 0 },
       })
-    ).unwrap();
-  }
-
-  async merkleProofStatus(): Promise<TDatabaseMerkleProofStatusResponse> {
-    return (
-      await this.apiClient.document.databaseMerkleProofStatus(this.basicQuery)
     ).unwrap();
   }
 

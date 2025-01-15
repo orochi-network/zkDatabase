@@ -16,11 +16,13 @@ export type TMinaSignature = {
 };
 
 // Document's proof status
-export type TProofStatusDocumentRequest = TCollectionRequest & {
+export type TMerkleProofDocumentRequest = TCollectionRequest & {
   docId: string;
 };
+export type TMerkleProofDocumentResponse = EQueueTaskStatus;
 
-export type TProofStatusDocumentResponse = EQueueTaskStatus;
+export type TZkProofDocumentRequest = TMerkleProofDocumentRequest;
+export type TZkProofDocumentResponse = EQueueTaskStatus;
 
 // Database's/ZK proof status
 export type TZkProofStatusRequest = TDatabaseRequest;

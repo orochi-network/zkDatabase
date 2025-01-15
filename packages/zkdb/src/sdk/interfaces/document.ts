@@ -5,10 +5,11 @@ import {
   TDocumentMetadata,
   TDocumentRecord,
   TDocumentUpdateResponse,
+  TMerkleProofDocumentResponse,
   TMerkleTreeProofByDocIdResponse,
   TPagination,
-  TProofStatusDocumentResponse,
   TSchemaExtendable,
+  TZkProofDocumentResponse,
 } from '@zkdb/common';
 import { IMetadata } from './metadata';
 
@@ -32,7 +33,9 @@ export interface IDocument<T extends TSchemaExtendable<any>> {
 
   merkleProof(): Promise<TMerkleTreeProofByDocIdResponse>;
 
-  merkleProofStatus(): Promise<TProofStatusDocumentResponse>;
+  merkleProofStatus(): Promise<TMerkleProofDocumentResponse>;
+
+  zkProofStatus(): Promise<TZkProofDocumentResponse>;
 
   history(pagination?: TPagination): Promise<TDocumentHistoryFindResponse>;
 }

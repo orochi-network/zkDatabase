@@ -6,11 +6,12 @@ import {
   TDocumentMetadata,
   TDocumentResponse,
   TDocumentUpdateResponse,
+  TMerkleProofDocumentResponse,
   TMerkleTreeProofByDocIdResponse,
   TPagination,
-  TProofStatusDocumentResponse,
   TSchemaExtendable,
   TSerializedValue,
+  TZkProofDocumentResponse,
 } from '@zkdb/common';
 import { IDocument, IMetadata, TDocument } from '../interfaces';
 import { DocumentMetadata } from './document-metadata';
@@ -119,9 +120,15 @@ export class Document<T extends TSchemaExtendable<any>>
     ).unwrap();
   }
 
-  async merkleProofStatus(): Promise<TProofStatusDocumentResponse> {
+  async merkleProofStatus(): Promise<TMerkleProofDocumentResponse> {
     return (
-      await this.apiClient.proof.proofStatusDocument(this.basicRequest)
+      await this.apiClient.proof.documentMerkleProofStatus(this.basicRequest)
+    ).unwrap();
+  }
+
+  async zkProofStatus(): Promise<TZkProofDocumentResponse> {
+    return (
+      await this.apiClient.proof.documentZkProofStatus(this.basicRequest)
     ).unwrap();
   }
 

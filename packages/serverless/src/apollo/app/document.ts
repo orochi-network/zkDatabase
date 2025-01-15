@@ -4,7 +4,7 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { Document, Metadata } from '@domain';
-import { gql, GraphqlHelper } from '@helper';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -23,10 +23,8 @@ import {
   docId,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
-  TDocumentRecordNullable,
-  TDocumentMetadata,
-  TDatabaseMerkleProofStatusRequest,
-  TDatabaseMerkleProofStatusResponse,
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -93,8 +91,6 @@ export const typeDefsDocument = gql`
     document: JSON!
     createdAt: Date!
     updatedAt: Date!
-    metadata: DocumentMetadataResponse
-    merkleProofStatus: QueueTaskStatus
   }
 
   type DocumentFindResponse {
@@ -127,10 +123,11 @@ export const typeDefsDocument = gql`
     permission: Int!
     collectionName: String!
     docId: String!
-    merkleIndex: String!
+    merkleIndex: Int!
+    operationNumber: Int!
   }
 
-  type DatabaseMerkleProofStatus {
+  type MerkleProofStatus {
     status: QueueTaskStatus!
     latestProcessedMerkleIndex: BigInt!
   }
@@ -156,7 +153,7 @@ export const typeDefsDocument = gql`
       pagination: PaginationInput
     ): DocumentHistoryFindResponse
 
-    databaseMerkleProofStatus(databaseName: String!): DatabaseMerkleProofStatus!
+    documentMerkleProofStatus(databaseName: String!): MerkleProofStatus!
   }
 
   extend type Mutation {
@@ -185,19 +182,9 @@ export const typeDefsDocument = gql`
 const documentFind = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentFindResponse
->(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
-  const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
-    'data',
-    'metadata',
-  ]);
-  const includesProofStatus = GraphqlHelper.checkRequestedFieldExist(info, [
-    'data',
-    'queueStatus',
-  ]);
-
-  return withCompoundTransaction(async (compoundTransaction) => {
-    const { serverless, proofService } = compoundTransaction;
-    let [listDocument, numTotalDocument]: [
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
+  return withTransaction(async (session) => {
+    const [listDocument, numTotalDocument]: [
       TDocumentFindResponse['data'],
       number,
     ] = await Document.query(
@@ -208,37 +195,15 @@ const documentFind = authorizeWrapper<
       },
       args.query || {},
       args.pagination || DEFAULT_PAGINATION,
-      serverless
+      session
     );
-
-    // Lazily fill metadata and proof status if requested
-    if (includesMetadata || includesProofStatus) {
-      listDocument = await Document.fillMetadata(
-        listDocument,
-        args.databaseName,
-        serverless
-      );
-    }
-
-    if (includesProofStatus) {
-      listDocument = await Document.fillMerkleProofStatus(
-        // Safety: listDocument is guaranteed to have metadata as we filled it
-        // above
-        listDocument as (TDocumentRecordNullable & {
-          metadata: TDocumentMetadata;
-        })[],
-        args.databaseName,
-        args.collectionName,
-        proofService
-      );
-    }
 
     return {
       data: listDocument,
       total: numTotalDocument,
       offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
     };
-  });
+  }, 'serverless');
 });
 
 // Mutation
@@ -358,16 +323,24 @@ const documentMetadata = authorizeWrapper<
   }
 );
 
-const databaseMerkleProofStatus = authorizeWrapper<
-  TDatabaseMerkleProofStatusRequest,
-  TDatabaseMerkleProofStatusResponse
+const documentMerkleProofStatus = authorizeWrapper<
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse
 >(
   Joi.object({
     databaseName,
+    collectionName,
+    docId,
   }),
-  async (_root, { databaseName }, ctx) => {
-    return withTransaction(async (session) =>
-      Document.databaseMerkleProofStatus(databaseName, ctx.userName, session)
+  async (_root, args, ctx) => {
+    return withCompoundTransaction(async (session) =>
+      Document.merkleProofStatus(
+        {
+          ...args,
+          actor: ctx.userName,
+        },
+        session
+      )
     );
   }
 );
@@ -377,7 +350,7 @@ export const resolversDocument = {
     documentFind,
     documentHistoryFind,
     documentMetadata,
-    databaseMerkleProofStatus,
+    documentMerkleProofStatus,
   },
   Mutation: {
     documentCreate,

@@ -16,18 +16,14 @@ import {
   EQueueTaskStatus,
   ESequencer,
   PERMISSION_DEFAULT,
-  TDatabaseMerkleProofStatusResponse,
   TDocumentField,
-  TDocumentMetadata,
   TDocumentQueuedData,
   TDocumentRecordNullable,
-  TMetadataDetailDocument,
   TPagination,
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
   TSerializedValue,
-  TWithQueueStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
@@ -37,6 +33,7 @@ import {
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { logger } from '@helper';
 import { FilterCriteria, parseQuery } from '../utils';
 import { DocumentSchema } from './document-schema';
 import { PermissionSecurity } from './permission-security';
@@ -113,6 +110,10 @@ in database '${databaseName}'.`
       ESequencer.MerkleIndex,
       compoundSession.serverless
     );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      compoundSession.serverless
+    );
 
     // 3. Create Metadata
     const imDocumentMetadata = new ModelMetadataDocument(databaseName);
@@ -127,7 +128,8 @@ in database '${databaseName}'.`
       {
         collectionName,
         docId,
-        merkleIndex: merkleIndex.toString(),
+        merkleIndex,
+        operationNumber,
         ...{
           // I'm set these to system user and group as default
           // In case this permission don't override by the user
@@ -152,6 +154,7 @@ in database '${databaseName}'.`
         docId,
         document: validatedDocument,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -246,6 +249,28 @@ in database '${databaseName}'.`
       compoundSession.serverless
     );
 
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      compoundSession.serverless
+    );
+
+    // Update document metadata
+    const imDocumentMetadata = new ModelMetadataDocument(databaseName);
+    imDocumentMetadata.updateOne(
+      { docId: document.docId },
+      {
+        $set: {
+          operationNumber,
+          updatedAt: new Date(),
+        },
+      },
+      { session: compoundSession.serverless }
+    );
+
     await Prover.update(
       {
         databaseName,
@@ -253,6 +278,7 @@ in database '${databaseName}'.`
         docId: document.docId,
         newDocument: validatedDocument,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -323,12 +349,22 @@ in database '${databaseName}'.`
       }
     );
 
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      compoundSession.serverless
+    );
+
     await Prover.delete(
       {
         databaseName,
         collectionName,
         docId: document.docId,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -377,98 +413,6 @@ in database '${databaseName}'.`
       ),
       totalDocument,
     ];
-  }
-
-  /** Fill document metadata for a list of documents. Note that this won't
-   * check for permission and will return all metadata records for the given
-   * documents. */
-  static async fillMetadata(
-    listDocument: TDocumentRecordNullable[],
-    databaseName: string,
-    session: ClientSession
-  ): Promise<TMetadataDetailDocument<TDocumentRecordNullable>[]> {
-    if (!listDocument.length) {
-      return [];
-    }
-
-    const docIds = listDocument.map((doc) => doc.docId);
-
-    const metadataRecords = await new ModelMetadataDocument(databaseName)
-      .find(
-        {
-          docId: { $in: docIds },
-        },
-        { session }
-      )
-      .toArray();
-
-    // Create a map for quick metadata lookup
-    const metadataMap = new Map(
-      metadataRecords.map((metadata) => [metadata.docId, metadata])
-    );
-
-    // Combine documents with their metadata
-    return listDocument.map((doc) => ({
-      ...doc,
-      metadata: metadataMap.get(doc.docId)!,
-    }));
-  }
-
-  /** Fill merkle proof status for a list of documents. Note that this won't
-   * check for permission and will return all proof status for the given
-   * documents. */
-  static async fillMerkleProofStatus(
-    listDocument: (TDocumentRecordNullable & { metadata: TDocumentMetadata })[],
-    databaseName: string,
-    collectionName: string,
-    // NOTE: This is proof service session since we using ModelGenericQueue from proof database
-    session: ClientSession
-  ): Promise<TWithQueueStatus<TDocumentRecordNullable>[]> {
-    const imDocumentQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        session
-      );
-
-    const listQueueTask = await imDocumentQueue
-      .find(
-        {
-          databaseName,
-          // TODO: index these fields
-          'data.collectionName': collectionName,
-          'data.docId': { $in: listDocument.map((doc) => doc.docId) },
-        },
-        { session }
-      )
-      .toArray();
-
-    const imModelSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session
-    );
-
-    const latestProcessedMerkleIndex = await imModelSequencer.current(
-      ESequencer.ProvedMerkleRoot,
-      session
-    );
-
-    const taskMap = new Map(
-      listQueueTask.map((task) => [task.data.docId, task.status])
-    );
-
-    return listDocument.map((item) => ({
-      queueStatus:
-        // The queue may not contain the task for this document since
-        // successfully completed tasks are immediately removed (failed tasks
-        // are kept persisted for diagnosis). Therefore, we assume tasks with
-        // merkleIndex smaller than the latest processed merkleIndex were
-        // successful.
-        taskMap.get(item.docId) ||
-        BigInt(item.metadata.merkleIndex) > latestProcessedMerkleIndex
-          ? EQueueTaskStatus.Queued
-          : EQueueTaskStatus.Success,
-      ...item,
-    }));
   }
 
   /** List an active document's revisions, not including the active one. */
@@ -533,69 +477,74 @@ in database '${databaseName}'.`
     return [listRevision, totalRevision];
   }
 
-  static async databaseMerkleProofStatus(
-    databaseName: string,
-    actor: string,
-    session: ClientSession
-  ): Promise<TDatabaseMerkleProofStatusResponse> {
+  static async merkleProofStatus(
+    permissionParam: TPermissionSudo<TParamDocument>,
+    { serverless, proofService }: TCompoundSession
+  ): Promise<EQueueTaskStatus> {
+    const { databaseName, collectionName, actor, docId } = permissionParam;
+
     if (
-      !(
-        await PermissionSecurity.database(
-          {
-            databaseName,
-            actor,
-          },
-          session
-        )
-      ).read
+      !(await PermissionSecurity.document(permissionParam, serverless)).read
     ) {
       throw new Error(
-        `Actor '${actor}' does not have 'read' permission for database '${databaseName}'.`
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
       );
+    }
+
+    const imDocumentMetadata = new ModelMetadataDocument(databaseName);
+    const documentMetadata = await imDocumentMetadata.findOne(
+      { docId },
+      { session: serverless }
+    );
+
+    if (documentMetadata == null) {
+      throw new Error(`Document metadata with docId '${docId}' not found.`);
     }
 
     const imDocumentQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
-        session
+        proofService
       );
 
-    const latestFailedTask = await imDocumentQueue
-      .find(
-        {
-          databaseName,
-          status: EQueueTaskStatus.Failed,
+    const queuedTaskForThisDocument = await imDocumentQueue.findOne(
+      {
+        data: {
+          docId,
         },
-        { session }
-      )
-      .sort({ sequenceNumber: -1, createdAt: -1 })
-      .limit(1)
-      .next();
+      },
+      { session: proofService }
+    );
+
+    if (queuedTaskForThisDocument !== null) {
+      return queuedTaskForThisDocument.status;
+    }
+
+    // If there is no queued task for this document, it's probably already
+    // processed and removed from the queue. Check and compare with the latest
+    // processed merkle index to make sure that the document is indeed
+    // processed.
 
     const imModelSequencer = await ModelSequencer.getInstance(
       databaseName,
-      session
+      serverless
     );
 
-    const latestProcessedMerkleIndex = await imModelSequencer.current(
+    const latestProcessedOperation = await imModelSequencer.current(
       ESequencer.ProvedMerkleRoot,
-      session
+      serverless
     );
 
-    const latestDataOperationNumber = await imModelSequencer.current(
-      ESequencer.DataOperation,
-      session
+    if (BigInt(documentMetadata.operationNumber) <= latestProcessedOperation) {
+      return EQueueTaskStatus.Success;
+    }
+
+    logger.error(
+      `The document with docId '${docId}', collection '${collectionName}' in database '${databaseName}' \
+with sequence number '${documentMetadata.operationNumber}' is neither processed nor queued, task is missing.`
     );
 
-    return {
-      /* eslint-disable-next-line no-nested-ternary --
-       * for lazy evaluation */
-      status: latestFailedTask
-        ? EQueueTaskStatus.Failed
-        : latestDataOperationNumber === latestProcessedMerkleIndex
-          ? EQueueTaskStatus.Success
-          : EQueueTaskStatus.Processing,
-      latestProcessedMerkleIndex: BigInt(latestProcessedMerkleIndex),
-    };
+    return EQueueTaskStatus.Failed;
   }
 }

@@ -1,11 +1,8 @@
 import type { ObjectId } from 'mongodb';
 import { TSchemaSerializedField, TSerializedValue } from '../schema.js';
 import { TDbRecord, TNullable } from './common.js';
-import { TDocumentMetadata } from './metadata.js';
 import { TPagination, TPaginationReturn } from './pagination.js';
 import { TCollectionRequest } from './collection.js';
-import { EQueueTaskStatus } from './queue.js';
-import { TDatabaseRequest } from './database.js';
 
 export type TDocumentField = TSchemaSerializedField;
 
@@ -33,16 +30,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
   pagination?: TPagination;
 };
 
-// metadata and queueStatus's presence depends on whether the graphql client
-// requests them or not
-export type TDocumentFindResponse = TPaginationReturn<
-  Array<
-    TDocumentResponse & {
-      metadata?: TDocumentMetadata;
-      queueStatus?: EQueueTaskStatus;
-    }
-  >
->;
+export type TDocumentFindResponse = TPaginationReturn<Array<TDocumentResponse>>;
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   document: Record<string, TSerializedValue>;
@@ -79,10 +67,3 @@ export type TDocumentHistoryFindRequest = TCollectionRequest & {
 export type TDocumentHistoryFindResponse = TPaginationReturn<
   TDocumentResponse[]
 >;
-
-export type TDatabaseMerkleProofStatusRequest = TDatabaseRequest;
-
-export type TDatabaseMerkleProofStatusResponse = {
-  status: EQueueTaskStatus;
-  latestProcessedMerkleIndex: bigint;
-};

@@ -4,9 +4,9 @@ import {
   collectionName,
   databaseName,
   docId,
-  TProofStatusDocumentRequest,
-  TProofStatusDocumentResponse,
   TRollupQueueData,
+  TZkProofDocumentRequest,
+  TZkProofDocumentResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
@@ -36,7 +36,7 @@ export const typeDefsProof = gql`
   }
 
   extend type Query {
-    proofStatusDocument(
+    documentZkProofStatus(
       databaseName: String!
       collectionName: String!
       docId: String
@@ -48,9 +48,9 @@ export const typeDefsProof = gql`
   }
 `;
 
-const proofStatusDocument = authorizeWrapper<
-  TProofStatusDocumentRequest,
-  TProofStatusDocumentResponse
+const documentZkProofStatus = authorizeWrapper<
+  TZkProofDocumentRequest,
+  TZkProofDocumentResponse
 >(
   Joi.object({
     databaseName,
@@ -141,6 +141,6 @@ export const resolversProof = {
   Query: {
     proof,
     zkProofStatus,
-    proofStatusDocument,
+    documentZkProofStatus,
   },
 };
