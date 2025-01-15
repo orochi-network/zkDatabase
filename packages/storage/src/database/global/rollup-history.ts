@@ -8,10 +8,10 @@ import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export class ModelRollupHistory extends ModelGeneral<
+export class ModelRollupOnChainHistory extends ModelGeneral<
   OptionalId<TRollupHistoryRecordNullable>
 > {
-  private static instance: ModelRollupHistory;
+  private static instance: ModelRollupOnChainHistory;
 
   private constructor() {
     super(
@@ -22,8 +22,8 @@ export class ModelRollupHistory extends ModelGeneral<
   }
 
   public static getInstance() {
-    if (!ModelRollupHistory.instance) {
-      this.instance = new ModelRollupHistory();
+    if (!ModelRollupOnChainHistory.instance) {
+      this.instance = new ModelRollupOnChainHistory();
     }
     return this.instance;
   }

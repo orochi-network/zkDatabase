@@ -5,17 +5,21 @@ import {
   ETransactionStatus,
   ETransactionType,
   TRollUpOffChainAndTransitionAggregate,
+  TRollupHistory,
   TRollupHistoryParam,
   TRollupHistoryResponse,
+  TRollupQueueData,
   TRollupStateResponse,
 } from '@zkdb/common';
 import {
   ModelMetadataDatabase,
-  ModelRollupHistory,
+  ModelRollupOnChainHistory,
   ModelRollupOffChain,
   ModelRollupOnChain,
   ModelTransaction,
   TCompoundSession,
+  ModelGenericQueue,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -66,7 +70,7 @@ export class Rollup {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
     const imTransaction = ModelTransaction.getInstance();
 
     const rollUpHistory = await imRollupHistory.findOne(
@@ -127,10 +131,63 @@ export class Rollup {
     return true;
   }
 
-  static async history(
+  static async offChainHistory(
+    param: TRollupHistoryParam,
+    session: ClientSession
+  ): Promise<TRollupHistoryResponse> {
+    //
+    const { query, pagination } = param;
+
+    const imRollupOffChainQueue =
+      await ModelGenericQueue.getInstance<TRollupQueueData>(
+        zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+        session
+      );
+
+    const rollupOffChainList = await imRollupOffChainQueue
+      .find({
+        databaseName: query.databaseName,
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    /*
+        export type TRollupHistory = {
+          databaseName: string;
+          step: bigint;
+          merkleTreeRoot: string;
+          merkleTreeRootPrevious: string;
+          // Previous name `txId` is changed to `transactionObjectId`,
+          // txId is not a good name it's alias of tx hash
+          // From transactionObjectId we can track the transaction status
+          transactionObjectId: ObjectId;
+          proofObjectId: ObjectId;
+          error: string;
+      };
+
+      */
+
+    const rollUpOffChainHistory: TRollupHistory[] = rollupOffChainList.map(
+      (e) => {
+        return {
+          databaseName: e.databaseName,
+          step: BigInt(e.sequenceNumber || 0n) + 1n,
+          transactionObjectId,
+        };
+      }
+    );
+
+    return {
+      data: rollupHistory,
+      total: await imRollupHistory.count(query),
+      offset: pagination.offset || 0,
+    };
+  }
+
+  static async onChainHistory(
     param: TRollupHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupHistoryResponse | null> {
+  ): Promise<TRollupHistoryResponse> {
     const { query, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
@@ -147,7 +204,7 @@ export class Rollup {
       throw Error('Database is not bound to zk app');
     }
 
-    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
 
     const rollupHistory = await imRollupHistory
       .find(query)
@@ -171,7 +228,7 @@ export class Rollup {
 
   static async state(databaseName: string): Promise<TRollupStateResponse> {
     const imRollupOnChain = ModelRollupOnChain.getInstance();
-    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
 
     // Get latest rollup history
     const latestRollupHistory = await imRollupHistory.findOne(

@@ -78,11 +78,11 @@ const rollupState = authorizeWrapper<TRollupStateRequest, TRollupStateResponse>(
   async (_root, { databaseName }) => Rollup.state(databaseName)
 );
 
-const rollupHistory = authorizeWrapper<
+const rollupOnChainHistory = authorizeWrapper<
   TRollupHistoryRequest,
   TRollupHistoryResponse
 >(JOI_ROLLUP_HISTORY_LIST, async (_root, args) => {
-  return Rollup.history(args);
+  return Rollup.onChainHistory(args);
 });
 
 // Mutation
@@ -103,7 +103,7 @@ const rollupCreate = authorizeWrapper<
 
 export const resolversRollup = {
   Query: {
-    rollupHistory,
+    rollupOnChainHistory,
     rollupState,
   },
   Mutation: {

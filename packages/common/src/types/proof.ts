@@ -1,7 +1,10 @@
 import { TCollectionRequest } from './collection.js';
 import { TDatabaseRequest } from './database.js';
 import { EQueueTaskStatus } from './queue.js';
-import { TRollUpOffChainRecord, TRollupSerializedProof } from './rollup.js';
+import {
+  TRollUpOffChainRecord,
+  TRollupSerializedProof,
+} from './rollup-onchain.js';
 import { TTransitionLogRecord } from './transition-log.js';
 
 export type TWithQueueStatus<T> = T & { queueStatus: EQueueTaskStatus };

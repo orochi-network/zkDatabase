@@ -18,7 +18,7 @@ import {
   DatabaseEngine,
   ModelMetadataDatabase,
   ModelRollupOffChain,
-  ModelRollupHistory,
+  ModelRollupOnChainHistory,
   ModelSecureStorage,
   ModelTransaction,
   withCompoundTransaction,
@@ -54,7 +54,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await ModelTransaction.init(session.serverless);
     await ModelUser.init(session.serverless);
     await ModelMetadataDatabase.init(session.serverless);
-    await ModelRollupHistory.init(session.serverless);
+    await ModelRollupOnChainHistory.init(session.serverless);
     await ModelOwnership.init(session.serverless);
     // proof db
     await ModelSecureStorage.init(session.proofService);

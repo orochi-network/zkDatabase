@@ -9,7 +9,7 @@ export * from './metadata';
 export * from './permission-ownership';
 export * from './pagination';
 export * from './proof';
-export * from './rollup';
+export * from './rollup-onchain';
 export * from './search';
 export * from './secure-storage';
 export * from './sequencer';
