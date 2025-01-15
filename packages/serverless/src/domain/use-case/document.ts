@@ -414,8 +414,9 @@ in database '${databaseName}'.`
     }));
   }
 
-  /** Fill proof status for a list of documents. Note that this won't check for
-   * permission and will return all proof status for the given documents. */
+  /** Fill merkle proof status for a list of documents. Note that this won't
+   * check for permission and will return all proof status for the given
+   * documents. */
   static async fillMerkleProofStatus(
     listDocument: (TDocumentRecordNullable & { metadata: TDocumentMetadata })[],
     databaseName: string,
