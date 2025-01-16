@@ -14,7 +14,7 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
     super(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
   }
 
@@ -31,20 +31,18 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
     >(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
     /*
       databaseName: string;
       merkleTreeRoot: string;
       merkleTreeRootPrevious: string;
       transactionObjectId: ObjectId;
-      proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
       await collection.createSystemIndex({ databaseName: 1 }, { session });
       await collection.createSystemIndex({ merkleRootNew: 1 }, { session });
       await collection.createSystemIndex({ merkleRootOld: 1 }, { session });
-      await collection.createSystemIndex({ proofObjectId: 1 }, { session });
       await collection.createSystemIndex(
         { transactionObjectId: 1 },
         { unique: true, session }

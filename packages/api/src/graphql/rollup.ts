@@ -1,20 +1,22 @@
 import { gql } from "@apollo/client";
-import {
-  TRollupCreateRequest,
-  TRollupCreateResponse,
-  TRollupHistoryRequest,
-  TRollupHistoryResponse,
-} from "@zkdb/common";
+
 import {
   createMutateFunction,
   createQueryFunction,
   TApolloClient,
 } from "./common";
-
+import {
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainCreateRequest,
+  TRollupOnChainCreateResponse,
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse,
+} from "@zkdb/common";
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
-    TRollupCreateRequest,
-    TRollupCreateResponse
+    TRollupOnChainCreateRequest,
+    TRollupOnChainCreateResponse
   >(
     client,
     gql`
@@ -24,30 +26,54 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
     `,
     (data) => data.rollupCreate
   ),
-  rollupHistory: createQueryFunction<
-    TRollupHistoryRequest,
-    TRollupHistoryResponse
+  rollupOffChainHistory: createQueryFunction<
+    TRollupOffChainHistoryRequest,
+    TRollupOffChainHistoryResponse
   >(
     client,
     gql`
-      query RollupHistory($query: JSON, $pagination: PaginationInput) {
-        rollupHistory(query: $query, pagination: $pagination) {
+      query RollupOffChainHistory($query: JSON, $pagination: PaginationInput) {
+        rollupOffChainHistory(query: $query, pagination: $pagination) {
           data {
             databaseName
-            txHash
-            transactionRaw
-            status
-            merkleTreeRoot
-            merkleTreeRootPrevious
+            collectionName
+            merkleRootOld
+            merkleRootNew
             error
-            createdAt
-            updatedAt
+            docId
+            status
+            step
+            acquiredAt
           }
           total
           offset
         }
       }
     `,
-    (data) => data.rollUpHistory
+    (data) => data.rollupOffChainHistory
+  ),
+  rollupOnChainHistory: createQueryFunction<
+    TRollupOnChainHistoryRequest,
+    TRollupOnChainHistoryResponse
+  >(
+    client,
+    gql`
+      query RollupOnChainHistory($query: JSON, $pagination: PaginationInput) {
+        rollupOnChainHistory(query: $query, pagination: $pagination) {
+          data {
+            databaseName
+            onChainStep
+            merkleRootOnChainNew
+            merkleRootOnChainOld
+            status
+            error
+            txHash
+          }
+          total
+          offset
+        }
+      }
+    `,
+    (data) => data.rollupOnChainHistory
   ),
 });

@@ -122,7 +122,7 @@ export class Database implements IDatabase {
     ).unwrap();
   }
 
-  async rollUpStart(): Promise<boolean> {
+  async rollUpOnChainStart(): Promise<boolean> {
     return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
 
@@ -136,10 +136,6 @@ export class Database implements IDatabase {
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
-  }
-
-  rollUpOnChainStart(): Promise<boolean> {
-    throw new Error('Method not implemented.');
   }
 
   rollUpOffChainHistory(
