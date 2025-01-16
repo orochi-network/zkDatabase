@@ -46,7 +46,7 @@ jobs:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true" > ~/.npmrc
-          PUBLISH_LIST=("@zkdb/api" "@zkdb/smart-contract" "@zkdb/permission" "zkdb")
+          LIST_PACKAGE=("@zkdb/api" "@zkdb/smart-contract" "@zkdb/permission" "zkdb")
           packages_dir="packages"
 
           # Loop through all packages
@@ -61,7 +61,7 @@ jobs:
                 yarn run lint
             fi
 
-            if [[ " ${PUBLISH_LIST[@]} " =~ " ${PACKAGE_NAME} " ]]; then
+            if [[ " ${LIST_PACKAGE[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"
               NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
               PACKAGE_VERSION=$(node -p "require('./package.json').version")
