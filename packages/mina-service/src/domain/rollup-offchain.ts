@@ -83,12 +83,15 @@ export class RollupOffChain {
         firstRollup.leafNew
       );
 
-      const { proof, merkleRootOld, step } =
-        zkAppProcessor.serialize(firstRollupProof);
-
-      if (step !== operationNumber) {
+      const {
+        proof,
+        merkleRootOld,
+        step: outputStep,
+      } = zkAppProcessor.serialize(firstRollupProof);
+      // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
+      if (outputStep !== operationNumber) {
         throw new Error(
-          `Output step and operationNumber did not match except ${operationNumber} but received ${step}`
+          `Output first step and operationNumber did not match. Except ${operationNumber} but received ${outputStep}`
         );
       }
 
@@ -96,11 +99,17 @@ export class RollupOffChain {
         databaseName,
         merkleRootOld,
         proof,
-        step,
+        step: outputStep,
         createdAt: new Date(),
         updatedAt: new Date(),
         transitionLogObjectId,
       };
+    }
+    // Previous output step + 1n = operationNumber, if not throw Error
+    if (previousProof.step + 1n !== operationNumber) {
+      throw new Error(
+        `Previous output step and operationNumber did not match. Except ${operationNumber} but received ${previousProof.step}`
+      );
     }
 
     const previousProofFormat = await zkAppProcessor.deserialize(previousProof);
@@ -112,12 +121,6 @@ export class RollupOffChain {
 
     const { proof, merkleRootOld, step } =
       zkAppProcessor.serialize(newRollupProof);
-
-    if (step !== operationNumber) {
-      throw new Error(
-        `Output step and operationNumber did not match except ${operationNumber} but received ${step}`
-      );
-    }
 
     return {
       databaseName,
