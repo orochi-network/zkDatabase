@@ -14,9 +14,12 @@ import {
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
+import { GraphQLScalarType } from 'graphql';
+import { ScalarType } from '@orochi-network/utilities';
 
 export const typeDefsRollup = `#graphql
 scalar Date
+scalar BigInt
 type Mutation
 
 enum RollupState {
@@ -26,45 +29,54 @@ enum RollupState {
   Failed
 }
 
-enum MinaTransactionStatus {
-  Applied
-  Failed
-  Pending
+enum QueueTaskStatus {
+  Queued 
+  Processing 
+  Failed 
+  Success 
 }
 
 type RollupOnChainHistoryItem {
-  databaseName: String!;
-  step: Int!;
-  merkleRootOnChainNew: string;
-  merkleRootOnChainOld: string;
-  transactionObjectId: String;
-  rollupOffChainObjectId: String;
-  status: MinaTransactionStatus;
-  error: String;
+  databaseName: String!
+  onChainStep: BigInt
+  merkleRootOnChainNew: String!
+  merkleRootOnChainOld: String!
+  status: TransactionStatus
+  error: String
+  txHash: String
 }
 
 type RollupOffChainHistoryItem {
-
+  databaseName: String!
+  collectionName: String!
+  merkleRootOld: String!
+  merkleRootNew: String
+  error: String
+  docId: String!
+  status: QueueTaskStatus
+  step: BigInt
+  acquiredAt: Date!
 }
 
 type RollupOnChainHistoryListResponse {
-  data: [RollupHistoryItem]!
+  data: [RollupOnChainHistoryItem]!
   total: Int!
   offset: Int!
 }
 
 type RollupOffChainHistoryListResponse {
-  data: []!
+  data: [RollupOffChainHistoryItem]!
   total: Int!
   offset: Int!
 }
 
 type RollupState {
-  state: RollupState,
-  merkleTreeRoot: String!
-  merkleTreeRootPrevious: String!
-  rollUpDifferent: Int,
-  latestRollupSuccess: Date
+  databaseName: String!
+  merkleRootOnChainNew: String
+  merkleRootOnChainOld: String
+  rollupDifferent: BigInt
+  rollupOnChainState: RollupState!
+  latestRollupOnChainSuccess: Date
 }
 
 extend type Query {
@@ -146,7 +158,13 @@ const rollupCreate = authorizeWrapper<
   }
 );
 
+const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
+
 export const resolversRollup = {
+  // If we put directly BigInt: ScalarType.BigInt() you will got
+  // The inferred type of cannot be named without a reference
+  // We need to have a temp variable that hold the function and explicit the type
+  BigInt: BigIntScalar,
   Query: {
     rollupOnChainHistory,
     rollupOffChainHistory,

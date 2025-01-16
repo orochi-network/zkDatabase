@@ -4,7 +4,11 @@ import { TDbRecord, TNullable, TPickAlter } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
-import { TTransactionRecord } from './transaction';
+import {
+  ETransactionStatus,
+  TTransactionRecord,
+  TTransactionRecordNullable,
+} from './transaction';
 
 // Base type
 export enum EMinaTransactionStatus {
@@ -108,8 +112,15 @@ export type TRollupOnChainHistoryRequest = {
   pagination: TPagination;
 };
 
+// Hide all ref objectId field related, show status to user
+export type TRollupOnChainHistoryDataResponse = Omit<
+  TRollupOnChainHistoryRecord,
+  'transactionObjectId' | 'rollupOffChainObjectId' | '_id'
+> &
+  Pick<TTransactionRecordNullable, 'status' | 'error' | 'txHash'>;
+
 export type TRollupOnChainHistoryResponse = TPaginationReturn<
-  TRollupOnChainHistoryRecord[]
+  TRollupOnChainHistoryDataResponse[]
 > | null;
 
 // ==== Onchain State ====
@@ -124,8 +135,8 @@ export type TRollupOnChainHistoryParam = TRollupOnChainHistoryRequest;
 // Common type
 
 export type TRollupOnChainHistoryTransactionAggregate = Omit<
-  TRollupOnChainHistory,
-  'transactionObjectId' & {
-    transaction: TTransactionRecord;
-  }
->;
+  TRollupOnChainHistoryRecord,
+  'transactionObjectId'
+> & {
+  transaction: TTransactionRecord;
+};

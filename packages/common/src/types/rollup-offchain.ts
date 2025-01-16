@@ -39,8 +39,8 @@ export type TRollupQueueData = {
 };
 
 export type TRollupOffChainHistory = TRollupBaseHistory &
-  Pick<TRollupQueueData, 'docId'> &
-  Pick<TGenericQueueBase<TRollupQueueData>, 'status'>;
+  Pick<TRollupQueueData, 'docId' | 'collectionName'> &
+  Pick<TGenericQueueBase<TRollupQueueData>, 'status' | 'acquiredAt'>;
 
 // Model
 
@@ -61,7 +61,7 @@ export type TRollupOffChainHistoryRequest = {
 };
 
 export type TRollupOffChainHistoryResponse = TPaginationReturn<
-  TRollupBaseHistory[]
+  TRollupOffChainHistory[]
 >;
 
 // Param

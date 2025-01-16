@@ -9,6 +9,7 @@ import {
   TRollupOffChainHistoryResponse,
   TRollupOffChainQueueTransitionAggregate,
   TRollupOffChainTransitionAggregate,
+  TRollupOnChainHistoryDataResponse,
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
   TRollupOnChainHistoryTransactionAggregate,
@@ -191,6 +192,8 @@ export class Rollup {
         status: queue.status,
         databaseName: queue.databaseName,
         step: BigInt(queue.sequenceNumber) + 1n,
+        collectionName: queue.data.collectionName,
+        acquiredAt: queue.acquiredAt,
       }));
 
     return {
@@ -220,14 +223,33 @@ export class Rollup {
       throw Error('Database is not bound to zk app');
     }
 
-    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
 
-    const rollupHistory = await imRollupHistory
-      .find(query)
-      .sort({ createdAt: -1, updatedAt: -1 })
+    const rollupOnChainHistoryAgg = await imRollupOnChainHistory.collection
+      .aggregate<TRollupOnChainHistoryTransactionAggregate>([
+        {
+          $match: { databaseName },
+        },
+        {
+          $sort: { updatedAt: -1, createdAt: -1 },
+        },
+        {
+          $lookup: {
+            from: zkDatabaseConstant.globalCollection.transaction,
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $unwind: {
+            path: '$transaction',
+          },
+        },
+      ])
       .toArray();
 
-    if (!rollupHistory.length) {
+    if (!rollupOnChainHistoryAgg.length) {
       return {
         data: [],
         total: 0,
@@ -235,9 +257,34 @@ export class Rollup {
       };
     }
 
+    // Map to satisfies type `TRollupOnChainHistoryDataResponse` and make sure don't leak any extra fields
+    const rollupOnChainHistory: TRollupOnChainHistoryDataResponse[] =
+      rollupOnChainHistoryAgg.map(
+        ({
+          databaseName,
+          transaction,
+          merkleRootOnChainNew,
+          merkleRootOnChainOld,
+          onChainStep,
+          createdAt,
+          updatedAt,
+        }) => ({
+          // Using spread will leak unexpected data, make sure return what we really need
+          databaseName,
+          merkleRootOnChainNew,
+          merkleRootOnChainOld,
+          onChainStep,
+          createdAt,
+          updatedAt,
+          status: transaction.status,
+          error: transaction.error,
+          txHash: transaction.txHash,
+        })
+      );
+
     return {
-      data: rollupHistory,
-      total: await imRollupHistory.count(query),
+      data: rollupOnChainHistory,
+      total: await imRollupOnChainHistory.count(query),
       offset: pagination.offset || 0,
     };
   }
@@ -255,9 +302,6 @@ export class Rollup {
         },
         {
           $sort: { updatedAt: -1, createdAt: -1 },
-        },
-        {
-          $limit: 1,
         },
         {
           $lookup: {
@@ -294,9 +338,20 @@ export class Rollup {
     // We can .at(0) and check undefined instead of arr[0] don't give type check when array is undefined
     const latestRollupOnChain = rollupOnChainHistory.at(0);
 
-    const latestRollupOnChainSuccess = rollupOnChainHistory.find({});
+    const latestRollupOnChainSuccess = rollupOnChainHistory.find(
+      (rollupOnChainHistory) =>
+        rollupOnChainHistory.transaction.status === ETransactionStatus.Confirmed
+    )?.updatedAt;
+
+    // Rollup different = step(offchain) - step(onchain)
     const rollupDifferent =
       latestRollupOffChain.step - (latestRollupOnChain?.onChainStep || 0n);
+
+    if (rollupDifferent < 0) {
+      throw new Error(
+        'Rollup different cannot be less than 0, onchain step always lte offchain step'
+      );
+    }
 
     return {
       databaseName,
@@ -305,9 +360,7 @@ export class Rollup {
       rollupDifferent,
       rollupOnChainState:
         rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
-      latestRollupOnChainSuccess:
-        rollupOnChainHistory.find((i) => i === EMinaTransactionStatus.Applied)
-          ?.createdAt || null,
+      latestRollupOnChainSuccess: latestRollupOnChainSuccess || null,
     };
   }
 }
