@@ -26,20 +26,35 @@ enum RollupState {
   Failed
 }
 
-type RollupHistoryItem {
-  databaseName: String!
-  txHash: String
-  transactionRaw: String!
-  status: TransactionStatus!
-  merkleTreeRoot: String!
-  merkleTreeRootPrevious: String!
-  error: String
-  createdAt: Date!
-  updatedAt: Date!
+enum MinaTransactionStatus {
+  Applied
+  Failed
+  Pending
 }
 
-type RollupHistoryListResponse {
+type RollupOnChainHistoryItem {
+  databaseName: String!;
+  step: Int!;
+  merkleRootOnChainNew: string;
+  merkleRootOnChainOld: string;
+  transactionObjectId: String;
+  rollupOffChainObjectId: String;
+  status: MinaTransactionStatus;
+  error: String;
+}
+
+type RollupOffChainHistoryItem {
+
+}
+
+type RollupOnChainHistoryListResponse {
   data: [RollupHistoryItem]!
+  total: Int!
+  offset: Int!
+}
+
+type RollupOffChainHistoryListResponse {
+  data: []!
   total: Int!
   offset: Int!
 }
@@ -53,7 +68,8 @@ type RollupState {
 }
 
 extend type Query {
-  rollupHistory(query: JSON, pagination: PaginationInput): RollupHistoryListResponse!
+  rollupOnChainHistory(query: JSON, pagination: PaginationInput): RollupOnChainHistoryListResponse!
+  rollupOffChainHistory(query: JSON, pagination: PaginationInput): RollupOffChainHistoryListResponse!
   rollupState(databaseName: String!): RollupState
 }
 

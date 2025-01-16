@@ -4,13 +4,14 @@ import {
   ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TRollUpOffChainAndTransitionAggregate,
-  TRollupHistoryOnChainResponse,
   TRollupOffChainHistory,
   TRollupOffChainHistoryParam,
   TRollupOffChainHistoryResponse,
   TRollupOffChainQueueTransitionAggregate,
+  TRollupOffChainTransitionAggregate,
   TRollupOnChainHistoryParam,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainHistoryTransactionAggregate,
   TRollupOnChainStateResponse,
   TRollupQueueData,
   databaseName,
@@ -27,7 +28,7 @@ import {
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { Database } from './database';
-import Transaction from './transaction';
+import { Transaction } from './transaction';
 
 export class Rollup {
   static async create(
@@ -42,8 +43,8 @@ export class Rollup {
     );
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
-    const [latestProofForDb] = await imRollupOffChain.collection
-      .aggregate<TRollUpOffChainAndTransitionAggregate>([
+    const [latestOffChainRollupProof] = await imRollupOffChain.collection
+      .aggregate<TRollupOffChainTransitionAggregate>([
         {
           $match: { databaseName },
         },
@@ -55,30 +56,30 @@ export class Rollup {
         },
         {
           $lookup: {
-            from: zkDatabaseConstant.globalCollection.transaction,
-            localField: 'transactionObjectId',
+            from: `${zkDatabaseConstant.globalTransitionLogDatabase}.${databaseName}`,
+            localField: 'transitionLogObjectId',
             foreignField: '_id',
-            as: 'transaction',
+            as: 'transition',
           },
         },
         {
           $unwind: {
-            path: '$transaction',
+            path: '$transition',
           },
         },
       ])
       .toArray();
 
-    if (!latestProofForDb) {
+    if (!latestOffChainRollupProof) {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollupHistory = ModelRollupOnChainHistory.getInstance();
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
     const imTransaction = ModelTransaction.getInstance();
 
-    const rollUpHistory = await imRollupHistory.findOne(
+    const rollUpHistory = await imRollupOnChainHistory.findOne(
       {
-        proofId: latestProofForDb._id,
+        proofId: latestOffChainRollupProof._id,
       },
       { session: compoundSession.serverless }
     );
@@ -115,18 +116,17 @@ export class Rollup {
 
     const currentTime = new Date();
 
-    await imRollupHistory.insertOne(
+    await imRollupOnChainHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
-        merkleRootOnChainNew: latestProofForDb.transition.merkleRootNew,
-        merkleRootOnChainOld: latestProofForDb.merkleRootOld,
-        rollupOffChainObjectId: latestProofForDb._id,
+        merkleRootOnChainNew:
+          latestOffChainRollupProof.transitionLog.merkleRootNew,
+        merkleRootOnChainOld: latestOffChainRollupProof.merkleRootOld,
+        rollupOffChainObjectId: latestOffChainRollupProof._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        step: latestProofForDb.step,
-        error: null,
-        status: null,
+        onChainStep: latestOffChainRollupProof.step,
       },
       { session: compoundSession?.serverless }
     );
@@ -161,14 +161,14 @@ export class Rollup {
           {
             $lookup: {
               from: `${zkDatabaseConstant.globalTransitionLogDatabase}.${databaseName}`,
-              localField: 'transitionObjectId',
+              localField: 'transitionLogObjectId',
               foreignField: '_id',
-              as: 'transition',
+              as: 'transitionLog',
             },
           },
           {
             $unwind: {
-              path: '$transition',
+              path: '$transitionLog',
             },
           },
         ])
@@ -184,8 +184,8 @@ export class Rollup {
 
     const rollUpOffChainHistory: TRollupOffChainHistory[] =
       rollupOffChainQueueTransitionAggregateList.map((queue) => ({
-        merkleRootNew: queue.data.transition.merkleRootNew,
-        merkleRootOld: queue.data.transition.merkleRootOld,
+        merkleRootNew: queue.data.transitionLog.merkleRootNew,
+        merkleRootOld: queue.data.transitionLog.merkleRootOld,
         error: queue.error,
         docId: queue.data.docId,
         status: queue.status,
@@ -203,7 +203,7 @@ export class Rollup {
   static async onChainHistory(
     param: TRollupOnChainHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupHistoryOnChainResponse> {
+  ): Promise<TRollupOnChainHistoryResponse> {
     const { query, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
@@ -248,8 +248,31 @@ export class Rollup {
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
     const imRollupOffChain = ModelRollupOffChain.getInstance();
     // Get latest rollup history
-    const rollupOnChainHistory = await imRollupOnChainHistory
-      .find({ databaseName }, { sort: { updatedAt: -1, createdAt: -1 } })
+    const rollupOnChainHistory = await imRollupOnChainHistory.collection
+      .aggregate<TRollupOnChainHistoryTransactionAggregate>([
+        {
+          $match: { databaseName },
+        },
+        {
+          $sort: { updatedAt: -1, createdAt: -1 },
+        },
+        {
+          $limit: 1,
+        },
+        {
+          $lookup: {
+            from: zkDatabaseConstant.globalCollection.transaction,
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $unwind: {
+            path: '$transaction',
+          },
+        },
+      ])
       .toArray();
 
     const latestRollupOffChain = await imRollupOffChain.findOne(
@@ -263,12 +286,17 @@ export class Rollup {
       return null;
     }
 
+    /*
+    TRollupOnChainHistoryTransactionAggregate
+    */
+
     // Using Array.prototype.at(0) safer than array[0].
     // We can .at(0) and check undefined instead of arr[0] don't give type check when array is undefined
     const latestRollupOnChain = rollupOnChainHistory.at(0);
 
+    const latestRollupOnChainSuccess = rollupOnChainHistory.find({});
     const rollupDifferent =
-      latestRollupOffChain.step - (latestRollupOnChain?.step || 0n);
+      latestRollupOffChain.step - (latestRollupOnChain?.onChainStep || 0n);
 
     return {
       databaseName,
@@ -278,10 +306,8 @@ export class Rollup {
       rollupOnChainState:
         rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
       latestRollupOnChainSuccess:
-        rollupOnChainHistory.find(
-          (i) => i.status === EMinaTransactionStatus.Applied
-        )?.createdAt || null,
-      error: latestRollupOnChain?.error || null,
+        rollupOnChainHistory.find((i) => i === EMinaTransactionStatus.Applied)
+          ?.createdAt || null,
     };
   }
 }

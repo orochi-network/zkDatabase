@@ -72,6 +72,13 @@ export type TRollupOffChainHistoryParam = TRollupOffChainHistoryRequest;
 
 export type TRollupOffChainQueueTransitionAggregate = TGenericQueueBase<
   Omit<TRollupQueueData, 'transitionLogObjectId'> & {
-    transition: TTransitionLogRecord;
+    transitionLog: TTransitionLogRecord;
   }
 >;
+
+export type TRollupOffChainTransitionAggregate = Omit<
+  TRollupOffChainRecord,
+  'transitionLogObjectId'
+> & {
+  transitionLog: TTransitionLogRecord;
+};

@@ -4,6 +4,7 @@ import { TDbRecord, TNullable, TPickAlter } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
+import { TTransactionRecord } from './transaction';
 
 // Base type
 export enum EMinaTransactionStatus {
@@ -33,13 +34,14 @@ export enum ERollupState {
  */
 export type TRollupOnChainHistory = Omit<
   TRollupBaseHistory,
-  'merkleRootNew' | 'merkleRootOld'
+  'merkleRootNew' | 'merkleRootOld' | 'step'
 > &
   TPickAlter<
     TRollupBaseHistory,
     {
       merkleRootNew: 'merkleRootOnChainNew';
       merkleRootOld: 'merkleRootOnChainOld';
+      step: 'onChainStep';
     }
   > & {
     // Previous name `txId` is changed to `transactionObjectId`,
@@ -49,8 +51,6 @@ export type TRollupOnChainHistory = Omit<
     // Previous name is `proofObjectId` is changed to `rollupOffChainObjectId`
     // Since proof model changed, this will ref to the proof in 'rollup_offchain'
     rollupOffChainObjectId: ObjectId;
-    status: EMinaTransactionStatus;
-    error: string;
   };
 
 /*
@@ -58,7 +58,7 @@ export type TRollupOnChainHistory = Omit<
  */
 export type TRollupOnChainState = Pick<
   TRollupOnChainHistory,
-  'databaseName' | 'error' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
+  'databaseName' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
 > & {
   // Number of merkle root transformation different to previous one
   rollupDifferent: bigint;
@@ -71,10 +71,7 @@ export type TRollupOnChainState = Pick<
  */
 export type TRollupStateNullable = TNullable<
   TRollupOnChainState,
-  | 'error'
-  | 'latestRollupOnChainSuccess'
-  | 'merkleRootOnChainNew'
-  | 'merkleRootOnChainOld'
+  'latestRollupOnChainSuccess' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
 >;
 
 /**
@@ -82,7 +79,7 @@ export type TRollupStateNullable = TNullable<
  */
 export type TRollupOnChainHistoryNullable = TNullable<
   TRollupOnChainHistory,
-  'error' | 'status'
+  'onChainStep'
 >;
 
 // Model
@@ -123,3 +120,12 @@ export type TRollupOnChainStateResponse = TRollupStateNullable | null;
 // Param type
 
 export type TRollupOnChainHistoryParam = TRollupOnChainHistoryRequest;
+
+// Common type
+
+export type TRollupOnChainHistoryTransactionAggregate = Omit<
+  TRollupOnChainHistory,
+  'transactionObjectId' & {
+    transaction: TTransactionRecord;
+  }
+>;
