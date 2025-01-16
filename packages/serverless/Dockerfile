@@ -1,5 +1,5 @@
 # Use our customized image based on Node.js 20 slim image as a base
-FROM orochinetwork/node:20-iron AS builder
+FROM orochinetwork/node:22-bookworm AS builder
 
 # Create a non-root user and group early in the Dockerfile
 RUN groupadd -g 1001 appuser && useradd -u 1001 -g appuser -s /bin/bash -d /usr/src/app appuser
@@ -31,7 +31,7 @@ RUN yarn workspace @zkdb/common build && \
     yarn workspace @zkdb/serverless build
 
 
-# Use our customized image based on Node.js 20 slim image as a runner
+# Use our customized image based on Node.js 22 slim image as a runner
 FROM orochinetwork/node:22-bookworm AS runner
 
 # Create a non-root user and group in the runner stage
