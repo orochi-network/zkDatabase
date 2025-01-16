@@ -68,12 +68,12 @@ export interface IDatabase {
   rollUpOnChainStart(): Promise<boolean>;
 
   rollUpOnChainHistory(
-    query: TRollupOnChainHistoryRequest['query'],
+    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse>;
 
   rollUpOffChainHistory(
-    query: TRollupOffChainHistoryRequest['query'],
+    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse>;
 }
