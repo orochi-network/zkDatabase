@@ -1,5 +1,4 @@
 import type { ObjectId } from 'mongodb';
-import { ModelRollupOnChainHistory } from './../../../../node_modules/@zkdb/storage/src/database/global/rollup-history';
 import { TDbRecord, TNullable, TPickAlter } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';

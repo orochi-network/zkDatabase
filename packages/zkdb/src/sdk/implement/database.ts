@@ -5,14 +5,16 @@ import {
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TZkProofStatusResponse,
-  TRollupHistoryRequest,
-  TRollupHistoryResponse,
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import {
   ICollection,
@@ -127,22 +129,27 @@ export class Database implements IDatabase {
   }
 
   async rollUpOnChainHistory(
-    query: TRollupHistoryRequest['query'],
+    query: TRollupOnChainHistoryRequest['query'],
     pagination?: TPagination
-  ): Promise<TRollupHistoryResponse> {
+  ): Promise<TRollupOnChainHistoryResponse> {
     return (
-      await this.apiClient.rollup.rollupHistory({
+      await this.apiClient.rollup.rollupOnChainHistory({
         query: { ...this.basicQuery, ...query },
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
   }
 
-  rollUpOffChainHistory(
-    query: TRollupHistoryRequest['query'],
+  async rollUpOffChainHistory(
+    query: TRollupOffChainHistoryRequest['query'],
     pagination?: TPagination
-  ): Promise<TRollupHistoryResponse> {
-    throw new Error('Method not implemented.');
+  ): Promise<TRollupOffChainHistoryResponse> {
+    return (
+      await this.apiClient.rollup.rollupOffChainHistory({
+        query: { ...this.basicQuery, ...query },
+        pagination: pagination ?? { limit: 10, offset: 0 },
+      })
+    ).unwrap();
   }
 
   async info(): Promise<TDatabaseInfoResponse> {
