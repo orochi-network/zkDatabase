@@ -1,7 +1,6 @@
 # This GitHub Action will loop through all sub-repos:
 # If a package is in the publish list and its package.json version is higher than the NPM registry version, it will be published.
 # For now: The publish list is:
-# @zkdb/kubo
 # @zkdb/api
 # @zkdb/smart-contract
 # zkdb
