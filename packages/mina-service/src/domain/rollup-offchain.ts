@@ -52,7 +52,7 @@ export class RollupOffChain {
     // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousProof = await imRollupOffChain.findOne(
       { databaseName },
-      { sort: { createdAt: -1, step: -1 }, session: proofService }
+      { sort: { step: -1 }, session: proofService }
     );
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
