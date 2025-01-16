@@ -1,11 +1,6 @@
-import {
-  EDocumentOperation,
-  ESequencer,
-  TDocumentQueuedData,
-} from '@zkdb/common';
+import { EDocumentOperation, TDocumentQueuedData } from '@zkdb/common';
 import {
   TCompoundSession,
-  ModelSequencer,
   ModelGenericQueue,
   zkDatabaseConstant,
 } from '@zkdb/storage';
@@ -158,7 +153,7 @@ export class Prover {
           collectionName,
           merkleIndex: BigInt(metadataDocument.merkleIndex),
           newDocumentHash: undefined,
-          operationKind: EDocumentOperation.Delete,
+          operationKind: EDocumentOperation.Drop,
           docId,
         },
         databaseName,

@@ -44,14 +44,14 @@ export class DocumentProcessor {
       session: proofSession,
     });
 
-    if (operationKind !== EDocumentOperation.Delete && !newDocumentHash) {
+    if (operationKind !== EDocumentOperation.Drop && !newDocumentHash) {
       throw new Error(
         'New document hash is required for create and update operations'
       );
     }
 
     const leafNew =
-      operationKind === EDocumentOperation.Delete
+      operationKind === EDocumentOperation.Drop
         ? Field(0).toString()
         : newDocumentHash!;
 
