@@ -107,29 +107,29 @@ export class RollupOffChain {
     // ZkDbProcessor will automatically compile when getInstance
     const zkAppProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
-    const transitionDeserialized = deserializeTransition(transitionLog);
+    const transition = deserializeTransition(transitionLog);
 
     const zkProof = await zkAppProcessor.init(
-      transitionDeserialized.merkleRootNew,
-      transitionDeserialized.merkleProof,
-      transitionDeserialized.leafNew
+      transition.merkleRootNew,
+      transition.merkleProof,
+      transition.leafNew
     );
 
     // Serialized after init
-    const serializedZkProof = zkAppProcessor.serialize(zkProof);
+    const zkProofSerialized = zkAppProcessor.serialize(zkProof);
     // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
-    if (serializedZkProof.step !== task.operationNumber) {
+    if (zkProofSerialized.step !== BigInt(task.operationNumber)) {
       throw new Error(
-        `Output first step and operationNumber did not match. Except ${task.operationNumber} but received ${serializedZkProof.step}`
+        `Output first step and operationNumber did not match. Except ${task.operationNumber} but received ${zkProofSerialized.step}`
       );
     }
 
     return {
       databaseName: task.databaseName,
       transitionLogObjectId: transitionLog._id,
-      merkleRootOld: serializedZkProof.merkleRootOld,
-      proof: serializedZkProof.proof,
-      step: serializedZkProof.step,
+      merkleRootOld: zkProofSerialized.merkleRootOld,
+      proof: zkProofSerialized.proof,
+      step: zkProofSerialized.step,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -141,7 +141,7 @@ export class RollupOffChain {
     const { task, previousZkProof, merkleHeight, transitionLog } = param;
 
     // Previous output step + 1n = operationNumber, if not throw Error
-    if (previousZkProof.step + 1n !== task.operationNumber) {
+    if (BigInt(previousZkProof.step) + 1n !== BigInt(task.operationNumber)) {
       throw new Error(
         `Previous output step and operationNumber did not match. Except ${task.operationNumber} but received ${previousZkProof.step}`
       );
@@ -149,14 +149,14 @@ export class RollupOffChain {
     // ZkDbProcessor will automatically compile when getInstance
     const zkAppProcessor = await ZkDbProcessor.getInstance(merkleHeight);
 
-    const transitionDeserialized = deserializeTransition(transitionLog);
+    const transition = deserializeTransition(transitionLog);
 
     const previousProofFormat =
       await zkAppProcessor.deserialize(previousZkProof);
 
     const zkProof = await zkAppProcessor.update(
       previousProofFormat,
-      transitionDeserialized
+      transition
     );
 
     const zkProofSerialized = zkAppProcessor.serialize(zkProof);

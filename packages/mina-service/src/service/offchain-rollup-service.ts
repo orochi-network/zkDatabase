@@ -57,7 +57,7 @@ export class RollupOffChainService {
           async (acquiredTask, compoundSession) => {
             const start = performance.now();
 
-            const rollupOffChain = await RollupOffChain.create(
+            const rollupOffChain = await RollupOffChain.rollup(
               acquiredTask.data,
               compoundSession
             );
