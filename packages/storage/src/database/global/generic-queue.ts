@@ -115,8 +115,12 @@ export class ModelGenericQueue<T> extends ModelGeneral<
               // the same list of databaseName and acquire the two tasks of one
               // database in parallel. This is prevented in the merkle tree
               // worker implementation by checking if the sequence number is
-              // the expected one. However, it'd be better to have a more
-              // correct behavior here.
+              // the expected one. For the off chain rollup worker, the
+              // sequence number is also compared with the rollup step in order
+              // to prevent non-sequential processing. However, it'd be better
+              // to have a more correct behavior here. A fix could be to
+              // abstract the whole queue operation (i.e. pop from queue) to
+              // include the sequence number check.
               $nin: await this.collection.distinct('databaseName', {
                 $or: [
                   {
@@ -126,10 +130,6 @@ export class ModelGenericQueue<T> extends ModelGeneral<
                     // We should not continue processing tasks for databases
                     // that have failed tasks in the queue. The latest failed
                     // task should be resolved manually before we can continue.
-                    // NOTE: that if the sequence number check for task
-                    // ordering is implemented correctly by the caller, this is
-                    // still helpful since it prevents acquiring a non-eligible
-                    // task.
                     status: EQueueTaskStatus.Failed,
                   },
                 ],
