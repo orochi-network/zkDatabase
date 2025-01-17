@@ -152,7 +152,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       docId: String!
-    ): QueueTaskStatus
+    ): QueueTaskStatus!
   }
 
   extend type Mutation {
