@@ -42,7 +42,7 @@ export const typeDefsProof = gql`
       docId: String
     ): QueueTaskStatus!
 
-    zkProofStatus(databaseName: String!): QueueTaskStatus!
+    zkProofStatus(databaseName: String!): QueueTaskStatus
 
     proof(databaseName: String!): ZkProof
   }
@@ -123,10 +123,12 @@ const zkProofStatus = publicWrapper<
           proofSession
         );
       // Get latest task rollup task queue
-      const task = await imRollupQueue.findOne({
-        databaseName,
-        sort: { createdAt: -1 },
-      });
+      const task = await imRollupQueue.findOne(
+        {
+          databaseName,
+        },
+        { sort: { createdAt: -1 } }
+      );
 
       if (!task) {
         return null;

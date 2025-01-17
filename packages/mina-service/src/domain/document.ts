@@ -3,13 +3,13 @@ import {
   ModelGenericQueue,
   ModelMerkleTree,
   ModelTransitionLog,
-  TGenericQueue,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import {
   EDocumentOperation,
   TDbRecord,
   TDocumentQueuedData,
+  TGenericQueue,
   TRollupQueueData,
 } from '@zkdb/common';
 import { Field } from 'o1js';

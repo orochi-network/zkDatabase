@@ -322,15 +322,20 @@ export class Collection {
     actor: string,
     session?: ClientSession
   ): Promise<TCollectionMetadataRecord[]> {
-    const lisTCollectionMetadata = await ModelMetadataCollection.getInstance(
-      databaseName
-    )
-      .find()
-      .toArray();
+    const listCollectionMetadata = (
+      await ModelMetadataCollection.getInstance(databaseName).find().toArray()
+    ).map(async (metadata) => ({
+      ...metadata,
+      sizeOnDisk: await ModelCollection.getInstance(
+        databaseName,
+        DATABASE_ENGINE.serverless,
+        metadata.collectionName
+      ).size(),
+    }));
 
     return PermissionSecurity.filterMetadataCollection(
       databaseName,
-      lisTCollectionMetadata,
+      await Promise.all(listCollectionMetadata),
       actor,
       PermissionBase.permissionRead(),
       session

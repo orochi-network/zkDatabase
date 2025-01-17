@@ -19,9 +19,12 @@ describe('RollupProgram', () => {
   });
 
   it('init zk rollup program', async () => {
+    // Update index 0 with a leaf
+    merkleTree.setLeaf(0n, Field(1337));
     const proof = await zkProcessor.init(
       merkleTree.getRoot(),
-      merkleTree.getWitness(0n)
+      merkleTree.getWitness(0n),
+      Field(1337)
     );
     proofStorage.push(proof);
     expect(proof.proof.publicOutput.merkleRoot.toString()).toEqual(
@@ -30,7 +33,7 @@ describe('RollupProgram', () => {
   });
 
   it('generate trace of transition', async () => {
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 1; i < 4; i += 1) {
       const index = BigInt(i);
       const leafOld = Field(0n);
       const leafNew = Field(Math.round(Math.random() * 0xffff));
@@ -58,7 +61,7 @@ describe('RollupProgram', () => {
   it('prove update transition', async () => {
     const index = 1n;
     const previousProof = proofStorage[proofStorage.length - 1];
-    const leafOld = transitionStorage[Number(index)].leafNew;
+    const leafOld = transitionStorage[Number(index - 1n)].leafNew;
     const leafNew = Field(Math.round(Math.random() * 0xffff));
     merkleTree.setLeaf(index, leafNew);
     const proof = await zkProcessor.update(previousProof, {
@@ -73,7 +76,7 @@ describe('RollupProgram', () => {
   it('prove delete transition', async () => {
     const index = 2n;
     const previousProof = proofStorage[proofStorage.length - 1];
-    const leafOld = transitionStorage[Number(index)].leafNew;
+    const leafOld = transitionStorage[Number(index - 1n)].leafNew;
     const leafNew = Field(0);
     merkleTree.setLeaf(index, leafNew);
     const proof = await zkProcessor.update(previousProof, {
