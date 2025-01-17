@@ -18,26 +18,28 @@ export class Metadata {
     session?: ClientSession
   ): Promise<TCollectionMetadata> {
     const { sudo, databaseName, collectionName, actor } = paramCollection;
-    const modelCollectionMetadata =
+
+    const imMetadataCollection =
       ModelMetadataCollection.getInstance(databaseName);
 
-    const metadata = await modelCollectionMetadata.findOne(
+    const metadataCollection = await imMetadataCollection.findOne(
       { collectionName },
       { session }
     );
 
-    if (!metadata) {
+    if (!metadataCollection) {
       throw new Error(
         `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
       );
     }
+
     const actorPermission = await PermissionSecurity.collection(
       {
         databaseName,
         collectionName,
         actor,
-        // We going to reuse metadata from above to minimize the number of queries.
-        sudo: sudo || metadata,
+        // We going to reuse collection metadata from above to minimize the number of queries.
+        sudo: sudo || metadataCollection,
       },
       session
     );
@@ -48,15 +50,16 @@ export class Metadata {
       );
     }
 
-    const modelCollection = ModelCollection.getInstance(
+    const imCollection = ModelCollection.getInstance(
       databaseName,
       DATABASE_ENGINE.serverless,
       collectionName
     );
 
-    const sizeOnDisk = await modelCollection.size();
+    const sizeOnDisk = await imCollection.size();
+
     return {
-      ...metadata,
+      ...metadataCollection,
       sizeOnDisk,
     };
   }
@@ -67,15 +70,17 @@ export class Metadata {
   ): Promise<TDocumentMetadata> {
     const { sudo, databaseName, collectionName, docId, actor } = paramDocument;
 
-    const modelMetadata = new ModelMetadataDocument(databaseName);
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
-    const metadata = await modelMetadata.findOne(
+    const metadataDocument = await imMetadataDocument.findOne(
       { docId, collectionName },
       { session }
     );
 
-    if (!metadata) {
-      throw Error('Metadata has not been found');
+    if (!metadataDocument) {
+      throw new Error(
+        `Metadata document has not been found on collection ${collectionName} database ${databaseName}`
+      );
     }
 
     const actorPermissions = await PermissionSecurity.document(
@@ -84,7 +89,7 @@ export class Metadata {
         collectionName,
         docId,
         actor,
-        sudo: sudo || metadata,
+        sudo: sudo || metadataDocument,
       },
       session
     );
@@ -95,6 +100,6 @@ export class Metadata {
       );
     }
 
-    return metadata;
+    return metadataDocument;
   }
 }
