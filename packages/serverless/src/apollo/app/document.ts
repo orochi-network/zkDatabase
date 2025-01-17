@@ -127,11 +127,6 @@ export const typeDefsDocument = gql`
     operationNumber: Int!
   }
 
-  type MerkleProofStatus {
-    status: QueueTaskStatus!
-    latestProcessedMerkleIndex: BigInt!
-  }
-
   extend type Query {
     documentFind(
       databaseName: String!
@@ -157,7 +152,7 @@ export const typeDefsDocument = gql`
       databaseName: String!
       collectionName: String!
       docId: String!
-    ): MerkleProofStatus!
+    ): QueueTaskStatus
   }
 
   extend type Mutation {
