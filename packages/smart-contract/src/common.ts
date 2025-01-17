@@ -9,7 +9,7 @@ export type TRollupProof = {
 };
 
 export type TRollupSerializedProof = {
-  step: string;
+  step: bigint;
   proof: JsonProof;
   merkleRootOld: string;
 };

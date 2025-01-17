@@ -1,11 +1,6 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import {
-  EQueueTaskStatus,
-  TDbRecord,
-  TGenericQueueBase,
-  TNullable,
-} from '@zkdb/common';
+import { EQueueTaskStatus, TDbRecord, TGenericQueue } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
@@ -18,14 +13,6 @@ import { ModelCollection } from '../general';
 import { TCompoundSession, withCompoundTransaction } from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
-
-// Sequence number is used to order tasks within the same database, if user
-// of this model doesn't need to maintain order, she can set it to null on
-// task creation.
-export type TGenericQueue<T> = TNullable<
-  TGenericQueueBase<T>,
-  'sequenceNumber' | 'error' | 'acquiredAt'
->;
 
 /** Un upgraded version of [ModelQueueTask] that can be used for any type of
  * queue. */

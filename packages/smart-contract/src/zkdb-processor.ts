@@ -213,16 +213,18 @@ export class ZkDbProcessor {
 
   serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
-      step: proof.step.toString(),
+      step: proof.step.toBigInt(),
       proof: proof.proof.toJSON(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };
   }
 
-  async deserialize(proofStr: string): Promise<TRollupProof> {
+  async deserialize(
+    serializedProof: TRollupSerializedProof
+  ): Promise<TRollupProof> {
     class ZkDbRollupProof extends ZkProgram.Proof(this.zkdbRollup) {}
 
-    const { step, proof, merkleRootOld } = JSON.parse(proofStr);
+    const { step, proof, merkleRootOld } = serializedProof;
 
     return {
       step: Field(step),

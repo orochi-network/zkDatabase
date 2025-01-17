@@ -6,7 +6,7 @@ export type TTransitionLog = {
   merkleProof: TMerkleProofSerialized[];
   leafOld: string;
   leafNew: string;
-  operationNumber: number;
+  operationNumber: bigint;
 };
 
 export type TTransitionLogRecord = TDbRecord<TTransitionLog>;
