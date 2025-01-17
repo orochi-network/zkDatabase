@@ -3,7 +3,7 @@ import { TNullable } from './common';
 export enum EDocumentOperation {
   Create = 'Create',
   Update = 'Update',
-  Delete = 'Delete',
+  Drop = 'Drop',
 }
 
 export type TDocumentQueuedData = {
