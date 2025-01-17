@@ -21,9 +21,6 @@ export type TMerkleProofDocumentRequest = TCollectionRequest & {
 };
 export type TMerkleProofDocumentResponse = EQueueTaskStatus;
 
-export type TZkProofDocumentRequest = TMerkleProofDocumentRequest;
-export type TZkProofDocumentResponse = EQueueTaskStatus;
-
 // Database's/ZK proof status
 export type TZkProofStatusRequest = TDatabaseRequest;
 

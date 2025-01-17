@@ -1,12 +1,7 @@
-import { PermissionSecurity } from '@domain';
 import { gql } from '@helper';
 import {
-  collectionName,
   databaseName,
-  docId,
   TRollupQueueData,
-  TZkProofDocumentRequest,
-  TZkProofDocumentResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
@@ -15,12 +10,11 @@ import {
 import {
   ModelGenericQueue,
   ModelRollupOffChain,
-  withCompoundTransaction,
   withTransaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
-import { authorizeWrapper, publicWrapper } from '../validation';
+import { publicWrapper } from '../validation';
 
 /* eslint-disable import/prefer-default-export */
 export const typeDefsProof = gql`
@@ -36,67 +30,11 @@ export const typeDefsProof = gql`
   }
 
   extend type Query {
-    documentZkProofStatus(
-      databaseName: String!
-      collectionName: String!
-      docId: String
-    ): QueueTaskStatus!
-
     zkProofStatus(databaseName: String!): QueueTaskStatus
 
     proof(databaseName: String!): ZkProof
   }
 `;
-
-const documentZkProofStatus = authorizeWrapper<
-  TZkProofDocumentRequest,
-  TZkProofDocumentResponse
->(
-  Joi.object({
-    databaseName,
-    collectionName,
-    docId: docId(false),
-  }),
-  async (_root, { databaseName, collectionName, docId }, ctx) => {
-    return withCompoundTransaction(async (compoundTransaction) => {
-      const { serverless, proofService } = compoundTransaction;
-      const actorPermission = await PermissionSecurity.document(
-        {
-          databaseName,
-          collectionName,
-          docId,
-          actor: ctx.userName,
-        },
-        serverless
-      );
-
-      if (actorPermission.read) {
-        const imRollupQueue =
-          await ModelGenericQueue.getInstance<TRollupQueueData>(
-            zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-            proofService
-          );
-        const proof = await imRollupQueue.findOne(
-          {
-            databaseName,
-            'data.docId': docId,
-          },
-          { session: proofService }
-        );
-
-        if (!proof) {
-          throw new Error('Proof has not been found');
-        }
-
-        return proof.status;
-      }
-
-      throw new Error(
-        `Access denied: Actor '${ctx.userName}' does not have 'read' permission for the specified document.`
-      );
-    });
-  }
-);
 
 const proof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   Joi.object({
@@ -143,6 +81,5 @@ export const resolversProof = {
   Query: {
     proof,
     zkProofStatus,
-    documentZkProofStatus,
   },
 };

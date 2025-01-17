@@ -2,8 +2,6 @@ import { gql } from "@apollo/client";
 import {
   TMerkleProofDocumentRequest,
   TMerkleProofDocumentResponse,
-  TZkProofDocumentRequest,
-  TZkProofDocumentResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
@@ -57,25 +55,5 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.documentMerkleProofStatus,
-  ),
-  documentZkProofStatus: createQueryFunction<
-    TZkProofDocumentRequest,
-    TZkProofDocumentResponse
-  >(
-    client,
-    gql`
-      query documentZkProofStatus(
-        $databaseName: String!
-        $collectionName: String!
-        $docId: String!
-      ) {
-        documentZkProofStatus(
-          databaseName: $databaseName
-          collectionName: $collectionName
-          docId: $docId
-        )
-      }
-    `,
-    (data) => data.documentZkProofStatus,
   ),
 });

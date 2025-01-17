@@ -11,7 +11,6 @@ import {
   TPagination,
   TSchemaExtendable,
   TSerializedValue,
-  TZkProofDocumentResponse,
 } from '@zkdb/common';
 import { IDocument, IMetadata, TDocument } from '../interfaces';
 import { DocumentMetadata } from './document-metadata';
@@ -123,12 +122,6 @@ export class Document<T extends TSchemaExtendable<any>>
   async merkleProofStatus(): Promise<TMerkleProofDocumentResponse> {
     return (
       await this.apiClient.proof.documentMerkleProofStatus(this.basicRequest)
-    ).unwrap();
-  }
-
-  async zkProofStatus(): Promise<TZkProofDocumentResponse> {
-    return (
-      await this.apiClient.proof.documentZkProofStatus(this.basicRequest)
     ).unwrap();
   }
 
