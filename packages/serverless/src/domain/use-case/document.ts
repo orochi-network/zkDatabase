@@ -95,11 +95,12 @@ in database '${databaseName}'.`
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
     // Save the document to the database
-    const [_, docId] = await imDocument.insertOneFromListField(
-      fieldArrayToRecord(validatedDocument),
-      undefined,
-      compoundSession.serverless
-    );
+    const [{ insertedId: documentObjectId }, docId] =
+      await imDocument.insertOneFromListField(
+        fieldArrayToRecord(validatedDocument),
+        undefined,
+        compoundSession.serverless
+      );
 
     // 2. Create new sequence value
     const imSequencer = await ModelSequencer.getInstance(
@@ -153,6 +154,7 @@ in database '${databaseName}'.`
         collectionName,
         docId,
         document: validatedDocument,
+        documentObjectId,
       },
       operationNumber,
       compoundSession
@@ -190,14 +192,14 @@ in database '${databaseName}'.`
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const document = await imDocument.findOne(
+    const oldDocument = await imDocument.findOne(
       { docId, active: true },
       {
         session: compoundSession.serverless,
       }
     );
 
-    if (document === null) {
+    if (oldDocument === null) {
       throw new Error(
         `Document with docId '${docId}' not found or is dropped.`
       );
@@ -216,7 +218,7 @@ in database '${databaseName}'.`
     }
 
     const newDocument = {
-      ...Object.entries(document.document).reduce(
+      ...Object.entries(oldDocument.document).reduce(
         (acc, [key, value]) => {
           acc[key] = value.value;
           return acc;
@@ -232,7 +234,7 @@ in database '${databaseName}'.`
     );
 
     const actorPermissionDocument = await PermissionSecurity.document(
-      { ...permissionParam, docId: document.docId },
+      { ...permissionParam, docId: oldDocument.docId },
       compoundSession.serverless
     );
     if (!actorPermissionDocument.write) {
@@ -243,8 +245,8 @@ in database '${databaseName}'.`
 
     const documentRecord = fieldArrayToRecord(validatedDocument);
 
-    await imDocument.update(
-      document.docId,
+    const [{ insertedId: newDocumentObjectId }] = await imDocument.update(
+      oldDocument.docId,
       documentRecord,
       compoundSession.serverless
     );
@@ -261,7 +263,7 @@ in database '${databaseName}'.`
     // Update document metadata
     const imDocumentMetadata = new ModelMetadataDocument(databaseName);
     imDocumentMetadata.updateOne(
-      { docId: document.docId },
+      { docId: oldDocument.docId },
       {
         $set: {
           operationNumber,
@@ -275,8 +277,10 @@ in database '${databaseName}'.`
       {
         databaseName,
         collectionName,
-        docId: document.docId,
+        docId: oldDocument.docId,
         newDocument: validatedDocument,
+        newDocumentObjectId,
+        oldDocumentObjectId: oldDocument._id,
       },
       operationNumber,
       compoundSession
@@ -337,7 +341,7 @@ in database '${databaseName}'.`
       );
     }
 
-    await imDocument.updateMany(
+    const updateResult = await imDocument.updateMany(
       {
         docId: document.docId,
         active: true,
@@ -346,8 +350,16 @@ in database '${databaseName}'.`
         $set: {
           active: false,
         },
-      }
+      },
+      { session: compoundSession.serverless }
     );
+
+    if (updateResult.modifiedCount !== 1) {
+      logger.error(
+        `Setting active document with docID \`${docId}\` to false should only update ONLY one document, but \
+updated ${updateResult.modifiedCount} documents.`
+      );
+    }
 
     const imSequencer = await ModelSequencer.getInstance(
       databaseName,
@@ -363,6 +375,7 @@ in database '${databaseName}'.`
         databaseName,
         collectionName,
         docId: document.docId,
+        oldDocumentObjectId: document._id,
       },
       operationNumber,
       compoundSession

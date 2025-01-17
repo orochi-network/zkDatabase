@@ -90,12 +90,14 @@ export class DocumentWorker {
         if (task.sequenceNumber <= trackingSequenceNumber) {
           exclusionQueue.push(task.databaseName);
           exclusionQueue.shift();
-          throw new Error(
+          logger.debug(
             `Task sequence number of task ${task._id} is less than or equal \
-to the current tracking sequence number. This should never happen unless we \
-has some flaws in the logic. Task sequence number: ${task.sequenceNumber}, \
-tracking sequence number: ${trackingSequenceNumber}`
+to the current tracking sequence number. This is expected as the workers  \
+might acquire multiple tasks of the same database. Task sequence number: \
+${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
           );
+
+          return true;
         }
 
         // This means that the next sequential task has not arrived yet. We're
