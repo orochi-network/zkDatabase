@@ -1,4 +1,4 @@
-import { EIndexType, ETransactionType, TDocumentField } from '@types';
+import { EIndexType, ETransactionType } from '@types';
 import { Permission } from '@zkdb/permission';
 import Joi from 'joi';
 
@@ -78,10 +78,9 @@ export const publicKey = (required: boolean = true) => {
 };
 
 export const merkleIndex = (required: boolean = true) => {
-  const joiMerkleIndex = Joi.number()
-    .integer()
-    .min(0)
-    .max(Number.MAX_SAFE_INTEGER);
+  const joiMerkleIndex = Joi.custom((value) => {
+    return BigInt(value);
+  });
   return required ? joiMerkleIndex.required() : joiMerkleIndex.optional();
 };
 

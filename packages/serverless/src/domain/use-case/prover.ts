@@ -28,7 +28,7 @@ export type TParamProveDelete = TParamProve;
 export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
-    operationNumber: number,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
     const { databaseName, docId, collectionName, document } = proveCreateParam;
@@ -77,7 +77,7 @@ export class Prover {
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
-    operationNumber: number,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId, newDocument } =
@@ -123,7 +123,7 @@ export class Prover {
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
-    operationNumber: number,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
     const { databaseName, collectionName, docId } = proveDeleteParam;

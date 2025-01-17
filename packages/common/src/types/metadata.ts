@@ -10,11 +10,11 @@ export type TMetadataBasic = OwnershipAndPermission;
 export type TDocumentMetadata = TMetadataBasic & {
   collectionName: string;
   docId: string;
-  merkleIndex: number;
+  merkleIndex: bigint;
   /** The operation number of the database that is associated with this
    * document. As opposed to merkleIndex which is fixed, this field is mutable
    * and will be updated every time the document is updated */
-  operationNumber: number;
+  operationNumber: bigint;
 };
 
 export type TDocumentMetadataRecord = TDbRecord<TDocumentMetadata>;

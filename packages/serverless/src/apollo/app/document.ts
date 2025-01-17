@@ -123,7 +123,7 @@ export const typeDefsDocument = gql`
     permission: Int!
     collectionName: String!
     docId: String!
-    merkleIndex: Int!
+    merkleIndex: BigInt!
     operationNumber: Int!
   }
 
