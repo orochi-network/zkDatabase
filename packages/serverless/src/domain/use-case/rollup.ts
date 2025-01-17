@@ -148,9 +148,12 @@ export class Rollup {
     // https://jira.mongodb.org/browse/SERVER-34935
 
     const rollupOffChainQueue = await imRollupOffChainQueue
-      .find({
-        databaseName: query.databaseName,
-      })
+      .find(
+        {
+          databaseName: query.databaseName,
+        },
+        { session }
+      )
       .toArray();
 
     if (!rollupOffChainQueue.length) {
@@ -166,7 +169,7 @@ export class Rollup {
       session
     );
 
-    const transitionLog = await imTransitionLog.find({}).toArray();
+    const transitionLog = await imTransitionLog.find({}, { session }).toArray();
 
     const transitionLogMap = new Map(
       transitionLog.map((transition) => [transition._id.toString(), transition])
@@ -229,27 +232,31 @@ export class Rollup {
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
 
     const rollupOnChainHistoryAgg = await imRollupOnChainHistory.collection
-      .aggregate<TRollupOnChainHistoryTransactionAggregate>([
-        {
-          $match: { databaseName },
-        },
-        {
-          $sort: { updatedAt: -1, createdAt: -1 },
-        },
-        {
-          $lookup: {
-            from: zkDatabaseConstant.globalCollection.transaction,
-            localField: 'transactionObjectId',
-            foreignField: '_id',
-            as: 'transaction',
+      .aggregate<TRollupOnChainHistoryTransactionAggregate>(
+        [
+          {
+            $match: { databaseName },
           },
-        },
-        {
-          $unwind: {
-            path: '$transaction',
+          {
+            $sort: { updatedAt: -1, createdAt: -1 },
           },
-        },
-      ])
+          {
+            $lookup: {
+              from: zkDatabaseConstant.globalCollection.transaction,
+              localField: 'transactionObjectId',
+              foreignField: '_id',
+              as: 'transaction',
+            },
+          },
+          {
+            $addFields: {
+              // It's 1-1 relation so the array must have 1 element
+              transaction: { $arrayElemAt: ['$transaction', 0] },
+            },
+          },
+        ],
+        { session }
+      )
       .toArray();
 
     if (!rollupOnChainHistoryAgg.length) {
@@ -315,8 +322,9 @@ export class Rollup {
           },
         },
         {
-          $unwind: {
-            path: '$transaction',
+          $addFields: {
+            // It's 1-1 relation so the array must have 1 element
+            transaction: { $arrayElemAt: ['$transaction', 0] },
           },
         },
       ])
@@ -348,9 +356,10 @@ export class Rollup {
 
     // Rollup different = step(offchain) - step(onchain)
     const rollupDifferent =
-      latestRollupOffChain.step - (latestRollupOnChain?.onChainStep || 0n);
+      BigInt(latestRollupOffChain.step) -
+      BigInt(latestRollupOnChain?.onChainStep || 0n);
 
-    if (rollupDifferent < 0) {
+    if (rollupDifferent < 0n) {
       throw new Error(
         'Rollup different cannot be less than 0, onchain step always lte offchain step'
       );

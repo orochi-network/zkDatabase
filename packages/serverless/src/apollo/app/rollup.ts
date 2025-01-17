@@ -70,7 +70,7 @@ type RollupOffChainHistoryListResponse {
   offset: Int!
 }
 
-type RollupState {
+type RollupOnChainState {
   databaseName: String!
   merkleRootOnChainNew: String
   merkleRootOnChainOld: String
@@ -82,7 +82,7 @@ type RollupState {
 extend type Query {
   rollupOnChainHistory(query: JSON, pagination: PaginationInput): RollupOnChainHistoryListResponse!
   rollupOffChainHistory(query: JSON, pagination: PaginationInput): RollupOffChainHistoryListResponse!
-  rollupState(databaseName: String!): RollupState
+  rollupState(databaseName: String!): RollupOnChainState
 }
 
 extend type Mutation {
@@ -100,7 +100,7 @@ const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
 const SchemaRollupOffChainHistoryRecordQuery = Joi.object<
   TRollupOffChainHistoryRequest['query']
 >({
-  databaseName: Joi.string().optional(),
+  databaseName: Joi.string().required(),
   merkleRootNew: Joi.string().optional(),
   merkleRootOld: Joi.string().optional(),
 });
@@ -112,7 +112,7 @@ const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
   });
 
 const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
-  Joi.object<TRollupOnChainHistoryRequest>({
+  Joi.object<TRollupOffChainHistoryRequest>({
     query: SchemaRollupOffChainHistoryRecordQuery.required(),
     pagination,
   });

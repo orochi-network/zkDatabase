@@ -230,7 +230,8 @@ export const SERVICE_TRANSACTION = {
                             step: zkDbContract.step.get().toBigInt(),
                             updatedAt: new Date(),
                           },
-                        }
+                        },
+                        { session }
                       );
                     } else if (
                       updatedTransaction?.transactionType ===
@@ -331,6 +332,9 @@ export const SERVICE_TRANSACTION = {
                           error: zkAppTx.failures.join(' '),
                           updatedAt: new Date(),
                         },
+                      },
+                      {
+                        session,
                       }
                     );
 

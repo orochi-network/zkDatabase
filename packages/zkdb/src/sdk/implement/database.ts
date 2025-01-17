@@ -129,7 +129,7 @@ export class Database implements IDatabase {
   }
 
   async rollUpOnChainHistory(
-    query: TRollupOnChainHistoryRequest['query'],
+    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse> {
     return (
@@ -141,7 +141,7 @@ export class Database implements IDatabase {
   }
 
   async rollUpOffChainHistory(
-    query: TRollupOffChainHistoryRequest['query'],
+    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse> {
     return (
