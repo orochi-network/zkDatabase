@@ -43,17 +43,9 @@
     },
     {
       "path": "./packages/serverless"
-    },
-    {
-      "path": "./packages/broker-service"
-    },
-    {
-      "path": "./packages/ftp"
-    },
+    }
   ],
-  "include": [
-    "./src/"
-  ],
+  "include": ["./src/"],
   "exclude": [
     "**/build",
     "**/node_modules",
