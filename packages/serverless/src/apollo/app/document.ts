@@ -153,7 +153,11 @@ export const typeDefsDocument = gql`
       pagination: PaginationInput
     ): DocumentHistoryFindResponse
 
-    documentMerkleProofStatus(databaseName: String!): MerkleProofStatus!
+    documentMerkleProofStatus(
+      databaseName: String!
+      collectionName: String!
+      docId: String!
+    ): MerkleProofStatus!
   }
 
   extend type Mutation {
