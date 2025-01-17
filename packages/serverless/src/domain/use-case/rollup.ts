@@ -1,14 +1,11 @@
 import { logger } from '@helper';
 import {
-  EMinaTransactionStatus,
   ERollupState,
   ETransactionStatus,
   ETransactionType,
   TRollupOffChainHistory,
   TRollupOffChainHistoryParam,
   TRollupOffChainHistoryResponse,
-  TRollupOffChainQueueTransitionAggregate,
-  TRollupOffChainTransitionAggregate,
   TRollupOnChainHistoryDataResponse,
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
@@ -23,6 +20,7 @@ import {
   ModelRollupOffChain,
   ModelRollupOnChainHistory,
   ModelTransaction,
+  ModelTransitionLog,
   TCompoundSession,
   zkDatabaseConstant,
 } from '@zkdb/storage';
@@ -44,35 +42,34 @@ export class Rollup {
     );
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
-    const [latestOffChainRollupProof] = await imRollupOffChain.collection
-      .aggregate<TRollupOffChainTransitionAggregate>([
-        {
-          $match: { databaseName },
+
+    const latestOffChainRollupProof = await imRollupOffChain.findOne(
+      { databaseName },
+      {
+        session: compoundSession.proofService,
+        sort: {
+          createdAt: -1,
         },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $limit: 1,
-        },
-        {
-          $lookup: {
-            from: `${zkDatabaseConstant.globalTransitionLogDatabase}.${databaseName}`,
-            localField: 'transitionLogObjectId',
-            foreignField: '_id',
-            as: 'transition',
-          },
-        },
-        {
-          $unwind: {
-            path: '$transition',
-          },
-        },
-      ])
-      .toArray();
+      }
+    );
 
     if (!latestOffChainRollupProof) {
       throw Error('No proof has been generated yet');
+    }
+
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      databaseName,
+      compoundSession.proofService
+    );
+
+    const transitionLog = await imTransitionLog.findOne({
+      _id: latestOffChainRollupProof.transitionLogObjectId,
+    });
+
+    if (!transitionLog) {
+      throw new Error(
+        `Cannot found transition log ${latestOffChainRollupProof.transitionLogObjectId} in rollup ${latestOffChainRollupProof._id}`
+      );
     }
 
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
@@ -121,8 +118,7 @@ export class Rollup {
       {
         databaseName,
         transactionObjectId,
-        merkleRootOnChainNew:
-          latestOffChainRollupProof.transitionLog.merkleRootNew,
+        merkleRootOnChainNew: transitionLog.merkleRootNew,
         merkleRootOnChainOld: latestOffChainRollupProof.merkleRootOld,
         rollupOffChainObjectId: latestOffChainRollupProof._id,
         createdAt: currentTime,
@@ -148,34 +144,16 @@ export class Rollup {
         session
       );
 
-    // Perform aggregation joining 2 collections from 2 databases
-    // `rollup_offchain_queue` from db `_zkdatabase_proof_service`
-    // with `${databaseName}` from db `_zkdatabase_transition_log`
-    const rollupOffChainQueueTransitionAggregateList =
-      await imRollupOffChainQueue.collection
-        .aggregate<TRollupOffChainQueueTransitionAggregate>([
-          {
-            $match: {
-              databaseName: query.databaseName,
-            },
-          },
-          {
-            $lookup: {
-              from: `${zkDatabaseConstant.globalTransitionLogDatabase}.${databaseName}`,
-              localField: 'transitionLogObjectId',
-              foreignField: '_id',
-              as: 'transitionLog',
-            },
-          },
-          {
-            $unwind: {
-              path: '$transitionLog',
-            },
-          },
-        ])
-        .toArray();
+    // Since mongodb $lookup doesn't support joining 2 collections from 2 databases
+    // https://jira.mongodb.org/browse/SERVER-34935
 
-    if (!rollupOffChainQueueTransitionAggregateList.length) {
+    const rollupOffChainQueue = await imRollupOffChainQueue
+      .find({
+        databaseName: query.databaseName,
+      })
+      .toArray();
+
+    if (!rollupOffChainQueue.length) {
       return {
         data: [],
         total: 0,
@@ -183,22 +161,45 @@ export class Rollup {
       };
     }
 
-    const rollUpOffChainHistory: TRollupOffChainHistory[] =
-      rollupOffChainQueueTransitionAggregateList.map((queue) => ({
-        merkleRootNew: queue.data.transitionLog.merkleRootNew,
-        merkleRootOld: queue.data.transitionLog.merkleRootOld,
-        error: queue.error,
-        docId: queue.data.docId,
-        status: queue.status,
-        databaseName: queue.databaseName,
-        step: BigInt(queue.sequenceNumber) + 1n,
-        collectionName: queue.data.collectionName,
-        acquiredAt: queue.acquiredAt,
-      }));
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      query.databaseName,
+      session
+    );
+
+    const transitionLog = await imTransitionLog.find({}).toArray();
+
+    const transitionLogMap = new Map(
+      transitionLog.map((transition) => [transition._id.toString(), transition])
+    );
+
+    const rollupOffChainQueueAndTransition: TRollupOffChainHistory[] =
+      rollupOffChainQueue.map((rollupOffchain) => {
+        const rollupTransition = transitionLogMap.get(
+          rollupOffchain.data.transitionLogObjectId.toString()
+        );
+
+        if (!rollupTransition) {
+          throw new Error(
+            `Cannot found transition ${rollupOffchain.data.transitionLogObjectId} in rollup ${rollupOffchain._id}`
+          );
+        }
+
+        return {
+          merkleRootNew: rollupTransition.merkleRootNew,
+          merkleRootOld: rollupTransition.merkleRootOld,
+          error: rollupOffchain.error,
+          docId: rollupOffchain.data.docId,
+          status: rollupOffchain.status,
+          databaseName: rollupOffchain.databaseName,
+          step: BigInt(rollupOffchain.sequenceNumber || 0n) + 1n,
+          collectionName: rollupOffchain.data.collectionName,
+          acquiredAt: rollupOffchain.acquiredAt || rollupOffchain.createdAt,
+        };
+      });
 
     return {
-      data: rollUpOffChainHistory,
-      total: rollUpOffChainHistory.length,
+      data: rollupOffChainQueueAndTransition,
+      total: rollupOffChainQueueAndTransition.length,
       offset: pagination.offset || 0,
     };
   }
@@ -220,7 +221,9 @@ export class Rollup {
       !metadataDatabase?.appPublicKey ||
       PublicKey.fromBase58(metadataDatabase?.appPublicKey).isEmpty().toBoolean()
     ) {
-      throw Error('Database is not bound to zk app');
+      throw Error(
+        `Database ${metadataDatabase?.databaseName} is not bound to zkApp, please deploy first`
+      );
     }
 
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();

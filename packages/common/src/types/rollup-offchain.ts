@@ -32,7 +32,7 @@ export type TRollupBaseHistory = {
  */
 export type TRollupQueueData = {
   databaseName: string;
-  operationNumber: number;
+  operationNumber: bigint;
   collectionName: string;
   transitionLogObjectId: ObjectId;
   docId: string;
@@ -53,10 +53,11 @@ export type TRollupOffChainRecord = TDbRecord<
 // Request & Response
 
 // ==== OffChain History ====
+
 export type TRollupOffChainHistoryRequest = {
-  query: Partial<
-    Pick<TRollupBaseHistory, 'databaseName' | 'merkleRootOld' | 'merkleRootNew'>
-  >;
+  query: Partial<Pick<TRollupBaseHistory, 'merkleRootOld' | 'merkleRootNew'>> &
+    // Database name is required since we need to use transitionLog model
+    Pick<TRollupBaseHistory, 'databaseName'>;
   pagination: TPagination;
 };
 
@@ -69,16 +70,3 @@ export type TRollupOffChainHistoryResponse = TPaginationReturn<
 export type TRollupOffChainHistoryParam = TRollupOffChainHistoryRequest;
 
 // Common type
-
-export type TRollupOffChainQueueTransitionAggregate = TGenericQueueBase<
-  Omit<TRollupQueueData, 'transitionLogObjectId'> & {
-    transitionLog: TTransitionLogRecord;
-  }
->;
-
-export type TRollupOffChainTransitionAggregate = Omit<
-  TRollupOffChainRecord,
-  'transitionLogObjectId'
-> & {
-  transitionLog: TTransitionLogRecord;
-};

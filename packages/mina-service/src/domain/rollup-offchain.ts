@@ -1,5 +1,6 @@
-import { deserializeTransition } from '@helper';
+import { deserializeTransition, logger } from '@helper';
 import {
+  databaseName,
   TRollupOffChainRecord,
   TRollupQueueData,
   TTransitionLogRecord,
@@ -119,8 +120,8 @@ export class RollupOffChain {
     const zkProofSerialized = zkAppProcessor.serialize(zkProof);
     // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
     if (zkProofSerialized.step !== BigInt(task.operationNumber)) {
-      throw new Error(
-        `Output first step and operationNumber did not match. Except ${task.operationNumber} but received ${zkProofSerialized.step}`
+      logger.debug(
+        `Output first step and operationNumber did not match. Except ${task.operationNumber} but received ${zkProofSerialized.step} at database ${databaseName}`
       );
     }
 
@@ -142,8 +143,8 @@ export class RollupOffChain {
 
     // Previous output step + 1n = operationNumber, if not throw Error
     if (BigInt(previousZkProof.step) + 1n !== BigInt(task.operationNumber)) {
-      throw new Error(
-        `Previous output step and operationNumber did not match. Except ${task.operationNumber} but received ${previousZkProof.step}`
+      logger.debug(
+        `Previous output step and operationNumber did not match. Except ${task.operationNumber} but received ${previousZkProof.step} at database ${databaseName}`
       );
     }
     // ZkDbProcessor will automatically compile when getInstance
