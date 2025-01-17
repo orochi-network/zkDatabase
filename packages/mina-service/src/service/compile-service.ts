@@ -9,7 +9,7 @@ import {
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
-  ModelRollupHistory,
+  ModelRollupOnChainHistory,
   ModelRollupOffChain,
   ModelSecureStorage,
   ModelTransaction,
@@ -219,7 +219,7 @@ export const SERVICE_COMPILE = {
 
               // Remove rollup history with transactionObjectId provided before
               // If not remove it will generate new rollup history without transaction doc
-              const imRollupHistory = ModelRollupHistory.getInstance();
+              const imRollupHistory = ModelRollupOnChainHistory.getInstance();
               await imRollupHistory.deleteOne({
                 databaseName,
                 transactionObjectId,

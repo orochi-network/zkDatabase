@@ -1,6 +1,7 @@
-import { deserializeTransition } from '@helper';
+import { deserializeTransition, logger } from '@helper';
 import {
-  TRollUpOffChainRecord,
+  databaseName,
+  TRollupOffChainRecord,
   TRollupQueueData,
   TTransitionLogRecord,
 } from '@zkdb/common';
@@ -23,14 +24,14 @@ type TRollupInitParam = {
 };
 
 type TRollupUpdateParam = TRollupInitParam & {
-  previousZkProof: TRollUpOffChainRecord;
+  previousZkProof: TRollupOffChainRecord;
 };
 
 export class RollupOffChain {
   public static async rollup(
     task: TRollupQueueData,
     session: TCompoundSession
-  ): Promise<OptionalId<TRollUpOffChainRecord>> {
+  ): Promise<OptionalId<TRollupOffChainRecord>> {
     const { serverless, proofService } = session;
 
     const imMetadataDatabase = ModelMetadataDatabase.getInstance();
@@ -80,6 +81,12 @@ export class RollupOffChain {
     );
 
     if (!previousZkProof) {
+      // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
+      if (BigInt(task.operationNumber) !== 1n) {
+        throw new Error(
+          `First operationNumber must equals to 1. Except 1 but received ${task.operationNumber} at database ${databaseName}`
+        );
+      }
       // If previous proof not found and operationNumber must be 1, which mean first time create
       const zkProof = await RollupOffChain.init({
         task,
@@ -102,7 +109,7 @@ export class RollupOffChain {
 
   private static async init(
     param: TRollupInitParam
-  ): Promise<OptionalId<TRollUpOffChainRecord>> {
+  ): Promise<OptionalId<TRollupOffChainRecord>> {
     const { task, merkleHeight, transitionLog } = param;
     // ZkDbProcessor will automatically compile when getInstance
     const zkAppProcessor = await ZkDbProcessor.getInstance(merkleHeight);
@@ -117,12 +124,6 @@ export class RollupOffChain {
 
     // Serialized after init
     const zkProofSerialized = zkAppProcessor.serialize(zkProof);
-    // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
-    if (zkProofSerialized.step !== BigInt(task.operationNumber)) {
-      throw new Error(
-        `Output first step and operationNumber did not match. Except ${task.operationNumber} but received ${zkProofSerialized.step}`
-      );
-    }
 
     return {
       databaseName: task.databaseName,
@@ -137,13 +138,13 @@ export class RollupOffChain {
 
   private static async update(
     param: TRollupUpdateParam
-  ): Promise<OptionalId<TRollUpOffChainRecord>> {
+  ): Promise<OptionalId<TRollupOffChainRecord>> {
     const { task, previousZkProof, merkleHeight, transitionLog } = param;
 
     // Previous output step + 1n = operationNumber, if not throw Error
     if (BigInt(previousZkProof.step) + 1n !== BigInt(task.operationNumber)) {
       throw new Error(
-        `Previous output step and operationNumber did not match. Except ${task.operationNumber} but received ${previousZkProof.step}`
+        `Previous output step and operationNumber did not match. Except ${task.operationNumber} but received ${previousZkProof.step} at database ${databaseName}`
       );
     }
     // ZkDbProcessor will automatically compile when getInstance
