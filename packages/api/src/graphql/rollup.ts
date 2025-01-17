@@ -12,7 +12,10 @@ import {
   TRollupOnChainCreateResponse,
   TRollupOnChainHistoryRequest,
   TRollupOnChainHistoryResponse,
+  TRollupOnChainStateRequest,
+  TRollupOnChainStateResponse,
 } from "@zkdb/common";
+
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   rollupCreate: createMutateFunction<
     TRollupOnChainCreateRequest,
@@ -75,5 +78,24 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.rollupOnChainHistory
+  ),
+  rollupOnChainState: createQueryFunction<
+    TRollupOnChainStateRequest,
+    TRollupOnChainStateResponse
+  >(
+    client,
+    gql`
+      query RollupState($databaseName: String!) {
+        rollupState(databaseName: $databaseName) {
+          databaseName
+          merkleRootOnChainNew
+          merkleRootOnChainOld
+          rollupDifferent
+          rollupOnChainState
+          latestRollupOnChainSuccess
+        }
+      }
+    `,
+    (data) => data.rollupState
   ),
 });

@@ -15,6 +15,7 @@ import {
   TRollupOnChainHistoryResponse,
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
+  TRollupOnChainStateResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -76,4 +77,6 @@ export interface IDatabase {
     query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse>;
+
+  rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
 }

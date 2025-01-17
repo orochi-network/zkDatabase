@@ -9,6 +9,7 @@ import {
   TRollupOffChainHistoryResponse,
   TRollupOnChainHistoryRequest,
   TRollupOnChainHistoryResponse,
+  TRollupOnChainStateResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
@@ -149,6 +150,12 @@ export class Database implements IDatabase {
         query: { ...this.basicQuery, ...query },
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
+    ).unwrap();
+  }
+
+  async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
+    return (
+      await this.apiClient.rollup.rollupOnChainState(this.basicQuery)
     ).unwrap();
   }
 
