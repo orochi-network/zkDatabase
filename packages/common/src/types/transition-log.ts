@@ -10,9 +10,9 @@ export type TTransitionLog = {
   operationNumber: bigint;
   operationKind: EDocumentOperation;
   // Should be null if the operation kind is create
-  previousDocumentObjectId: string | null;
+  documentObjectIdPrevious: string | null;
   // Should be null if the operation kind is drop
-  currentDocumentObjectId: string | null;
+  documentObjectIdCurrent: string | null;
 };
 
 export type TTransitionLogRecord = TDbRecord<TTransitionLog>;

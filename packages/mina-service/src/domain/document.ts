@@ -31,8 +31,8 @@ export class DocumentProcessor {
         newDocumentHash,
         collectionName,
         docId,
-        previousDocumentObjectId,
-        currentDocumentObjectId,
+        documentObjectIdPrevious,
+        documentObjectIdCurrent,
       },
     } = task;
     assert(sequenceNumber !== null, 'Sequence number should not be null');
@@ -80,8 +80,8 @@ export class DocumentProcessor {
           leafOld,
           leafNew,
           operationNumber: sequenceNumber,
-          previousDocumentObjectId,
-          currentDocumentObjectId,
+          documentObjectIdPrevious,
+          documentObjectIdCurrent,
           operationKind,
           createdAt: new Date(),
           updatedAt: new Date(),
