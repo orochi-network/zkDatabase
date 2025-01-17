@@ -8,8 +8,8 @@ import { ModelCollection } from '../general';
 // TODO: sequence value should be bigint, not number, e.g. merkle index is bigint
 
 export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
-  public static readonly INITIAL_SEQUENCE_VALUE = 1;
-  public static readonly SEQUENCE_INCREMENT = 1;
+  public static readonly INITIAL_SEQUENCE_VALUE = 1n;
+  public static readonly SEQUENCE_INCREMENT = 1n;
 
   private static instances = new Map<string, ModelSequencer>();
 
@@ -39,7 +39,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   async nextValue(
     sequenceName: ESequencer,
     session?: ClientSession
-  ): Promise<number> {
+  ): Promise<bigint> {
     const index = await this.collection.findOne(
       { type: sequenceName },
       { session }
@@ -89,7 +89,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       }
     );
 
-    return index?.seq ?? 0;
+    return index?.seq ?? 0n;
   }
 
   public static async init(databaseName: string, session?: ClientSession) {

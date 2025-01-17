@@ -140,7 +140,11 @@ export class ZkDbProcessor {
     return this.zkdbRollup;
   }
 
-  async init(initialRoot: Field, merkleProof: Witness): Promise<TRollupProof> {
+  async init(
+    initialRoot: Field,
+    merkleProof: Witness,
+    leaf: Field
+  ): Promise<TRollupProof> {
     class MerkleProof extends MerkleWitness(this.merkleHeight) {}
 
     logger.debug(
@@ -152,10 +156,11 @@ export class ZkDbProcessor {
     const zkProof = await this.zkdbRollup.init(
       new ZkDbRollupInput({
         step: Field(0),
+        merkleRootOld: Field(0),
         merkleRootNew: initialRoot,
-        merkleRootOld: initialRoot,
       }),
-      new MerkleProof(merkleProof)
+      new MerkleProof(merkleProof),
+      leaf
     );
 
     logger.debug(`Prove step 0 to 1 in ${this.elapsedTime}`);
@@ -182,8 +187,8 @@ export class ZkDbProcessor {
     const proof = await this.zkdbRollup.update(
       new ZkDbRollupInput({
         step: proofPrevious.step,
-        merkleRootNew: transition.merkleRootNew,
         merkleRootOld: proofPrevious.merkleRootOld,
+        merkleRootNew: transition.merkleRootNew,
       }),
       proofPrevious.proof,
       new MerkleProof(transition.merkleProof),
@@ -208,16 +213,18 @@ export class ZkDbProcessor {
 
   serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
-      step: proof.step.toString(),
+      step: proof.step.toBigInt(),
       proof: proof.proof.toJSON(),
       merkleRootOld: proof.merkleRootOld.toString(),
     };
   }
 
-  async deserialize(proofStr: string): Promise<TRollupProof> {
+  async deserialize(
+    serializedProof: TRollupSerializedProof
+  ): Promise<TRollupProof> {
     class ZkDbRollupProof extends ZkProgram.Proof(this.zkdbRollup) {}
 
-    const { step, proof, merkleRootOld } = JSON.parse(proofStr);
+    const { step, proof, merkleRootOld } = serializedProof;
 
     return {
       step: Field(step),

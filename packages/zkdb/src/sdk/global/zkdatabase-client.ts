@@ -35,7 +35,14 @@ export class ZkDatabase {
 
   public auth: Authenticator;
 
-  public mina: TMinaConfig;
+  private minaConfig: TMinaConfig;
+
+  public get mina() {
+    return Mina.Network({
+      mina: this.minaConfig.networkUrl,
+      networkId: this.minaConfig.networkId,
+    });
+  }
 
   private constructor(
     apiClient: IApiClient,
@@ -44,7 +51,7 @@ export class ZkDatabase {
   ) {
     this.apiClient = apiClient;
     this.auth = authenticator;
-    this.mina = TMinaConfig;
+    this.minaConfig = TMinaConfig;
   }
 
   private static parseConfig(
@@ -79,14 +86,6 @@ export class ZkDatabase {
     throw new Error(
       'Invalid configuration type. Expected string or TZkDatabaseConfig.'
     );
-  }
-
-  public getNetwork(option: Parameters<typeof Mina.Network>[number]) {
-    return Mina.Network({
-      ...option,
-      mina: option?.mina ?? this.mina.networkUrl,
-      networkId: option?.networkId ?? this.mina.networkId,
-    });
   }
 
   /**

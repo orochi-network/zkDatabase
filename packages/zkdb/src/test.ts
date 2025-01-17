@@ -1,38 +1,43 @@
 import { CircuitString, UInt64 } from 'o1js';
 import { Schema, ZkDatabase } from './index';
 
+/*
 const zkdb = await ZkDatabase.connect({
   userName: 'chiro-user',
   privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
   environment: 'node',
   url: 'http://zkdb-serverless.zenfactory.org/graphql',
-});
+});*/
 
+const zkdb = await ZkDatabase.connect(
+  'zkdb+http://chiro-user:EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP@localhost:4000/graphql'
+);
+
+if (!(await zkdb.auth.isUserExist('chiro-user'))) {
+  await zkdb.auth.signUp('chiro@orochi.network');
+}
+
+const DB_NAME = 'zkdb_test' + Math.floor(Math.random() * 10000);
+console.log('🚀 ~ DB_NAME:', DB_NAME);
 console.log(await zkdb.auth.signIn());
 
-class Shirt extends Schema.create({
+if (!(await zkdb.db(DB_NAME).exist())) {
+  await zkdb.db(DB_NAME).create({ merkleHeight: 8 });
+}
+class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
-type TShirt = typeof Shirt;
+await zkdb.db(DB_NAME).collection('students').create(TShirt);
 
-const collection = await zkdb
-  .db('zkdb_test')
-  .collection<TShirt>('test_collection');
+const collection = zkdb.db(DB_NAME).collection<typeof TShirt>('students');
 
-const doc = await collection.findOne({ name: 'Test Shirt' });
-
-if (doc) {
-  console.log(doc.document);
+for (let i = 0; i < 10; i += 1) {
+  const res = await collection.insert({ name: `zkDatabase ${i}`, price: 15n });
+  console.log(res);
 }
 
-const listDoc = await collection.findMany(undefined, { limit: 10, offset: 0 });
-
-listDoc.data.forEach((item) => {
-  console.log(item.document);
-});
-
-await zkdb.db('zkdb_test').group('test').userAdd(['user1', 'user2']);
+console.log(await zkdb.db(DB_NAME).info());
 
 await zkdb.auth.signOut();

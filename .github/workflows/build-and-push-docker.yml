@@ -1,4 +1,4 @@
-name: "Build & Push All Docker Images to Docker Hub with Change Detection"
+name: "Build & Push All Docker Images to Docker Hub"
 
 on:
   push:
@@ -6,67 +6,13 @@ on:
       - main
 
 jobs:
-  detect-changes:
-    name: Detect Changes
-    runs-on: [self-hosted, linux]
-    outputs:
-      filtered_packages: ${{ steps.filter.outputs.filtered_packages }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch full commit history
-
-      - name: Detect last two merge commits and diff
-        id: changed
-        run: |
-          LAST_MERGE=$(git log --merges --pretty=format:'%H' -n 2)
-          MERGE_ARRAY=($LAST_MERGE)
-          LAST_MERGE_COMMIT=${MERGE_ARRAY[0]}
-          PREV_MERGE_COMMIT=${MERGE_ARRAY[1]}
-
-          echo "Last merge commit: $LAST_MERGE_COMMIT"
-          echo "Previous merge commit: $PREV_MERGE_COMMIT"
-
-          CHANGED_PACKAGES=$(git diff --name-only $PREV_MERGE_COMMIT $LAST_MERGE_COMMIT -- packages/ | cut -d '/' -f 1-2 | sort -u)
-          CLEANED_PACKAGES=$(echo "$CHANGED_PACKAGES" | tr -d '\r' | tr '\n' ' ')
-          echo "Cleaned packages: $CLEANED_PACKAGES"
-          echo "changed_packages=$CLEANED_PACKAGES" >> $GITHUB_ENV
-
-      - name: Filter packages using case statement and map to numbers
-        id: filter
-        run: |
-          CHANGED_PACKAGES="${{ env.changed_packages }}"
-          echo "Changed packages: $CHANGED_PACKAGES"
-          FILTERED_PACKAGES=""
-
-          IFS=' ' read -r -a PACKAGE_ARRAY <<< "$CHANGED_PACKAGES"
-          for PACKAGE in "${PACKAGE_ARRAY[@]}"; do
-            case $PACKAGE in
-              "packages/serverless") FILTERED_PACKAGES="$FILTERED_PACKAGES 1" ;;
-              "packages/broker-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 2" ;;
-              "packages/mina-service") FILTERED_PACKAGES="$FILTERED_PACKAGES 3" ;;
-              "packages/ftp") FILTERED_PACKAGES="$FILTERED_PACKAGES 4" ;;
-              "packages/compile-service ") FILTERED_PACKAGES="$FILTERED_PACKAGES 5" ;;
-            esac
-          done
-
-          FILTERED_PACKAGES=$(echo $FILTERED_PACKAGES | xargs)
-          echo "Filtered packages: ${FILTERED_PACKAGES[@]}"
-          echo "filtered_packages=$FILTERED_PACKAGES" >> $GITHUB_OUTPUT
-
   build:
     name: Build & Push Docker Images and Push to GitOps
-    needs: detect-changes
     runs-on: [self-hosted, linux]
-    outputs:
-      changed_services: ${{ steps.build.outputs.changed_services }}
     env:
       version: ${{ github.sha }}
-      SERVICES: "serverless broker proof ftp compile"
-      SERVICES_BUILD: "serverless broker-service mina-service ftp compile-service"
-      DOCKER_REPOS: "orochinetwork/zkdb-serverless orochinetwork/zkdb-broker-service orochinetwork/zkdb-mina-service orochinetwork/zkdb-ftp orochinetwork/zkdb-compile-service"
+      LIST_SERVICE_BUILD: "serverless mina-service"
+      LIST_DOCKER_REPO: "orochinetwork/zkdb-serverless orochinetwork/zkdb-mina-service"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,17 +27,13 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       - name: Build & Push Docker Images
-        id: build
         run: |
-          IFS=' ' read -r -a DOCKER_REPOS <<< "${{env.DOCKER_REPOS}}"
-          IFS=' ' read -r -a SERVICES_BUILD <<< "${{env.SERVICES_BUILD}}"
-          IFS=' ' read -r -a SERVICES <<< "${{env.SERVICES}}"
-          CHANGED_SERVICES="${{ needs.detect-changes.outputs.filtered_packages }}"
-
-          for i in ${!SERVICES_BUILD[@]}; do
-            SERVICE_BUILD="${SERVICES_BUILD[$i]}"
-            SERVICE="${SERVICES[$i]}"
-            DOCKER_REPO="${DOCKER_REPOS[$i]}"
+          IFS=' ' read -r -a LIST_DOCKER_REPO <<< "${{env.LIST_DOCKER_REPO}}"
+          IFS=' ' read -r -a LIST_SERVICE_BUILD <<< "${{env.LIST_SERVICE_BUILD}}"
+          
+          for i in ${!LIST_SERVICE_BUILD[@]}; do
+            SERVICE_BUILD="${LIST_SERVICE_BUILD[$i]}"
+            DOCKER_REPO="${LIST_DOCKER_REPO[$i]}"
             
             echo "Building and pushing $SERVICE_BUILD..."
             echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_ACCESS_TOKEN }}" > npm-token 
@@ -107,7 +49,6 @@ jobs:
             docker push "$DOCKER_REPO:${{ env.version }}"
 
           done
-          echo "changed_services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
 
   gitops-push:
     name: Push Changes to GitOps
@@ -130,22 +71,14 @@ jobs:
 
           cd test-argo-cd
           git checkout ${{ env.gitopsbranch }}
-          CHANGED_SERVICES_ARRAY=("serverless" "broker" "proof" "ftp" "compile")
-          CHANGED_SERVICES=$(IFS=,; echo "${CHANGED_SERVICES_ARRAY[*]}")
-          echo "Changed services: $CHANGED_SERVICES"
-          for SERVICE in "${CHANGED_SERVICES_ARRAY[@]}"; do
+          LIST_CHANGE_SERVICE=("serverless" "mina-service")
+
+          for SERVICE in "${LIST_CHANGE_SERVICE[@]}"; do
             VALUES_PATH="services/orochi/zkDatabase/$SERVICE/zkdb-$SERVICE/values.yaml"
             sed -i "s| tag: .*| tag: ${{ env.version }}|" "$VALUES_PATH"
             git add "$VALUES_PATH"
           done
 
-          echo "Committing and pushing changes for ${CHANGED_SERVICES} to ${{ env.gitopsbranch }} version ${{ env.version }}"
-          git commit -m "Update versions for: ${CHANGED_SERVICES} to ${{ env.version }}"
+          echo "Committing and pushing changes for ${LIST_CHANGE_SERVICE[*]} to ${{ env.gitopsbranch }} version ${{ env.version }}"
+          git commit -m "Update versions for: ${LIST_CHANGE_SERVICE[*]} to ${{ env.version }}"
           git push origin ${{ env.gitopsbranch }}
-  cleanup:
-    name: Cleanup
-    runs-on: [self-hosted, linux]
-    steps:
-      - name: Cleanup
-        run: |
-          rm -rf {{ secrets.GITOPS_REPO_NAME }}
