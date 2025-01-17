@@ -5,8 +5,6 @@ import { ClientSession, WithoutId } from 'mongodb';
 import { ModelBasic } from '../base';
 import { ModelCollection } from '../general';
 
-// TODO: sequence value should be bigint, not number, e.g. merkle index is bigint
-
 export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   public static readonly INITIAL_SEQUENCE_VALUE = 1n;
   public static readonly SEQUENCE_INCREMENT = 1n;
