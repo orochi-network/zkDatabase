@@ -107,7 +107,9 @@ export class ModelGenericQueue<T> extends ModelGeneral<
               // to prevent non-sequential processing. However, it'd be better
               // to have a more correct behavior here. A fix could be to
               // abstract the whole queue operation (i.e. pop from queue) to
-              // include the sequence number check.
+              // include the sequence number check, or use a distributed lock
+              // like redlock to ensure only one worker can run this query at a
+              // time.
               $nin: await this.collection.distinct('databaseName', {
                 $or: [
                   {
