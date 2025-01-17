@@ -12,6 +12,8 @@ export type TDocumentQueuedData = {
   newDocumentHash?: string;
   merkleIndex: bigint;
   docId: string;
+  documentObjectIdPrevious: string | null;
+  documentObjectIdCurrent: string | null;
 };
 
 export enum EQueueTaskStatus {
