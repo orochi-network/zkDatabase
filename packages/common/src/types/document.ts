@@ -30,7 +30,7 @@ export type TDocumentFindRequest = TCollectionRequest & {
   pagination?: TPagination;
 };
 
-export type TDocumentFindResponse = TPaginationReturn<Array<TDocumentResponse>>;
+export type TDocumentFindResponse = TPaginationReturn<TDocumentResponse[]>;
 
 export type TDocumentCreateRequest = TCollectionRequest & {
   document: Record<string, TSerializedValue>;
