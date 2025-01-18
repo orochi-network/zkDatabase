@@ -13,8 +13,8 @@ import {
   ModelRollupOffChain,
   ModelSecureStorage,
   ModelTransaction,
-  withCompoundTransaction,
   ZKDB_TRANSACTION_QUEUE,
+  Transaction,
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
 import { ObjectId } from 'mongodb';
@@ -46,8 +46,8 @@ export const SERVICE_COMPILE = {
     });
 
     transactionWorker.start(async (job: Job<TTransactionQueue>) =>
-      withCompoundTransaction(
-        async ({ serverless: session, proofService: proofSession }) => {
+      Transaction.compound(
+        async ({ serverless: session, minaService: proofSession }) => {
           // Init model transaction to update status
           const imTransaction = ModelTransaction.getInstance();
           // Init model secure storage to store encrypted privatekey or get privatekey to rollup

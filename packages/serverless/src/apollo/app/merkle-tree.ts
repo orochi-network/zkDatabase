@@ -17,11 +17,7 @@ import {
   pagination,
 } from '@zkdb/common';
 import { ScalarType } from '@orochi-network/utilities';
-import {
-  ModelMerkleTree,
-  withCompoundTransaction,
-  withTransaction,
-} from '@zkdb/storage';
+import { ModelMerkleTree, Transaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { MerkleTree } from '@domain';
 import { GraphQLScalarType } from 'graphql';
@@ -110,20 +106,20 @@ const merkleProof = publicWrapper<
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse
 >(JOI_MERKLE_TREE_PROOF_BY_INDEX, async (_root, args) => {
-  return withTransaction(async (session) => {
+  return Transaction.minaService(async (session) => {
     const imMerkleTree = await ModelMerkleTree.getInstance(
       args.databaseName,
       session
     );
     return imMerkleTree.getMerkleProof(BigInt(args.index));
-  }, 'proofService');
+  });
 });
 
 const merkleProofDocId = publicWrapper<
   TMerkleTreeProofByDocIdRequest,
   TMerkleTreeProofByDocIdResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) => {
-  return withCompoundTransaction(async (session) => {
+  return Transaction.compound(async (session) => {
     return MerkleTree.document(databaseName, docId, session);
   });
 });
@@ -134,15 +130,13 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    withTransaction(
-      (session) =>
-        MerkleTree.nodeByLevel(
-          databaseName,
-          level,
-          pagination || DEFAULT_PAGINATION,
-          session
-        ),
-      'proofService'
+    Transaction.minaService((session) =>
+      MerkleTree.nodeByLevel(
+        databaseName,
+        level,
+        pagination || DEFAULT_PAGINATION,
+        session
+      )
     )
 );
 
@@ -150,10 +144,7 @@ const merkleTreeInfo = publicWrapper<
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse
 >(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
-  withTransaction(
-    (session) => MerkleTree.info(databaseName, session),
-    'proofService'
-  )
+  Transaction.minaService((session) => MerkleTree.info(databaseName, session))
 );
 
 const merkleNodeChildren = publicWrapper<
@@ -162,9 +153,8 @@ const merkleNodeChildren = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_CHILDREN,
   async (_root, { databaseName, level, index }) =>
-    withTransaction(
-      (session) => MerkleTree.nodeChildren(databaseName, level, index, session),
-      'proofService'
+    Transaction.minaService((session) =>
+      MerkleTree.nodeChildren(databaseName, level, index, session)
     )
 );
 
@@ -172,7 +162,7 @@ const merkleNodePath = publicWrapper<
   TMerkleTreeNodePathRequest,
   TMerkleTreeNodePathResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName, docId }) =>
-  withCompoundTransaction((compoundSession) =>
+  Transaction.compound((compoundSession) =>
     MerkleTree.nodePath(databaseName, docId, compoundSession)
   )
 );

@@ -11,10 +11,9 @@ import {
   TTransactionSubmitRequest,
   TTransactionSubmitResponse,
 } from '@zkdb/common';
-import { withTransaction } from '@zkdb/storage';
+import { Transaction as MongoTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
-
 export const typeDefsTransaction = gql`
   #graphql
   type Query
@@ -84,7 +83,7 @@ const transactionDeployEnqueue = authorizeWrapper<
     databaseName,
   }),
   async (_root, args, ctx) =>
-    withTransaction(async (session) =>
+    MongoTransaction.serverless(async (session) =>
       (
         await Transaction.enqueue(
           args.databaseName,

@@ -10,7 +10,7 @@ import {
 import {
   ModelGenericQueue,
   ModelRollupOffChain,
-  withTransaction,
+  Transaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
@@ -54,7 +54,7 @@ const zkProofStatus = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    return withTransaction(async (proofSession) => {
+    return Transaction.minaService(async (proofSession) => {
       const imRollupQueue =
         await ModelGenericQueue.getInstance<TRollupQueueData>(
           zkDatabaseConstant.globalCollection.rollupOffChainQueue,

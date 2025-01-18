@@ -14,7 +14,7 @@ export class ModelRollupOffChain extends ModelGeneral<
     if (!this.instance) {
       this.instance = new ModelRollupOffChain(
         zkDatabaseConstant.globalProofDatabase,
-        DATABASE_ENGINE.proofService,
+        DATABASE_ENGINE.minaService,
         zkDatabaseConstant.globalCollection.rollupOffChain
       );
     }
@@ -24,7 +24,7 @@ export class ModelRollupOffChain extends ModelGeneral<
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TRollupOffChainRecord>(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.minaService,
       zkDatabaseConstant.globalCollection.rollupOffChain
     );
 

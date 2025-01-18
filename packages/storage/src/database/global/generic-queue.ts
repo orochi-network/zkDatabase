@@ -10,7 +10,7 @@ import {
 } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-import { TCompoundSession, withCompoundTransaction } from '../transaction';
+import { TCompoundSession, Transaction } from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
 
@@ -25,7 +25,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   private constructor(queueName: string) {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.minaService,
       queueName
     );
   }
@@ -154,7 +154,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     }
 
     try {
-      const result = await withCompoundTransaction(async (session) => {
+      const result = await Transaction.compound(async (session) => {
         return callback(task, session);
       });
 
@@ -248,7 +248,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       TDbRecord<TGenericQueue<unknown>>
     >(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.minaService,
       queueName
     );
     if (!(await collection.isExist())) {

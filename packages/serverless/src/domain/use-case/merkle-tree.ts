@@ -32,11 +32,11 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(
       databaseName,
-      session.proofService
+      session.minaService
     );
 
     return merkleTree.getMerkleProof(BigInt(docMetadata.merkleIndex), {
-      session: session.proofService,
+      session: session.minaService,
     });
   }
 
@@ -166,11 +166,11 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(
       databaseName,
-      session.proofService
+      session.minaService
     );
 
     return merkleTree.getMerkleProofPath(BigInt(docMetadata.merkleIndex), {
-      session: session.proofService,
+      session: session.minaService,
     });
   }
 }

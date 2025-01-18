@@ -17,7 +17,7 @@ import {
   DatabaseEngine,
   ModelGenericQueue,
   ModelRollupOffChain,
-  withTransaction,
+  Transaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 
@@ -44,13 +44,11 @@ export class RollupOffChainService {
   public static async run(): Promise<void> {
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const imRollUpQueue = await withTransaction(
-          (session) =>
-            ModelGenericQueue.getInstance<TRollupQueueData>(
-              zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-              session
-            ),
-          'proofService'
+        const imRollUpQueue = await Transaction.minaService((session) =>
+          ModelGenericQueue.getInstance<TRollupQueueData>(
+            zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+            session
+          )
         );
 
         const rollupResult = await imRollUpQueue.acquireNextTaskInQueue(

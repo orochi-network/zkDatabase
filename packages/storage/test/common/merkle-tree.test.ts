@@ -60,7 +60,7 @@ describe('ModelMerkleTree', () => {
   test('should correctly set leaf nodes and match root with in-memory MerkleTree', async () => {
     const modelMerkleTree = await withTransaction(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    }, 'minaService');
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -70,7 +70,7 @@ describe('ModelMerkleTree', () => {
       merkleTree.setLeaf(index, value);
       await withTransaction(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      }, 'minaService');
 
       const root = await modelMerkleTree.getRoot();
 
@@ -81,7 +81,7 @@ describe('ModelMerkleTree', () => {
   test('should correctly retrieve Merkle witnesses for leaf nodes', async () => {
     const modelMerkleTree = await withTransaction(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    }, 'minaService');
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -91,7 +91,7 @@ describe('ModelMerkleTree', () => {
       merkleTree.setLeaf(index, value);
       await withTransaction(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      }, 'minaService');
 
       const witness = (await modelMerkleTree.getMerkleProof(index)).map(
         (w) => ({
@@ -109,7 +109,7 @@ describe('ModelMerkleTree', () => {
 
     const modelMerkleTree = await withTransaction(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    }, 'minaService');
 
     for (let i = 0; i < 100; i++) {
       const index = BigInt(i);
@@ -117,7 +117,7 @@ describe('ModelMerkleTree', () => {
       merkleTree.setLeaf(index, value);
       await withTransaction(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      }, 'minaService');
 
       expect(await modelMerkleTree.countNodeByLevel(0)).toEqual(i + 1);
       expect(

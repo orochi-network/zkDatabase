@@ -492,7 +492,7 @@ in database '${databaseName}'.`
 
   static async merkleProofStatus(
     permissionParam: TPermissionSudo<TParamDocument>,
-    { serverless, proofService }: TCompoundSession
+    { serverless, minaService }: TCompoundSession
   ): Promise<EQueueTaskStatus> {
     const { databaseName, collectionName, actor, docId } = permissionParam;
 
@@ -518,7 +518,7 @@ in database '${databaseName}'.`
     const imDocumentQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
-        proofService
+        minaService
       );
 
     const queuedTaskForThisDocument = await imDocumentQueue.findOne(
@@ -527,7 +527,7 @@ in database '${databaseName}'.`
           docId,
         },
       },
-      { session: proofService }
+      { session: minaService }
     );
 
     if (queuedTaskForThisDocument !== null) {

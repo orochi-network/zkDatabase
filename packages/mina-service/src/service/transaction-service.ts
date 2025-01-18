@@ -1,17 +1,13 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
-import {
-  EMinaTransactionStatus,
-  ETransactionStatus,
-  ETransactionType,
-} from '@zkdb/common';
+import { ETransactionStatus, ETransactionType } from '@zkdb/common';
 import { MinaNetwork, ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
   ModelRollupOnChainHistory,
   ModelTransaction,
-  withTransaction,
+  Transaction,
 } from '@zkdb/storage';
 import { PublicKey } from 'o1js';
 // Time duration is equal 1/10 time on chain
@@ -70,7 +66,7 @@ export const SERVICE_TRANSACTION = {
         if (transactionList.length > 0) {
           await Fill(
             transactionList.map((transaction) => async () => {
-              withTransaction(async (session) => {
+              Transaction.serverless(async (session) => {
                 const minaNetwork = MinaNetwork.getInstance();
 
                 minaNetwork.connect(

@@ -46,7 +46,7 @@ export class Rollup {
     const latestOffChainRollupProof = await imRollupOffChain.findOne(
       { databaseName },
       {
-        session: compoundSession.proofService,
+        session: compoundSession.minaService,
         sort: {
           createdAt: -1,
         },
@@ -59,7 +59,7 @@ export class Rollup {
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
       databaseName,
-      compoundSession.proofService
+      compoundSession.minaService
     );
 
     const transitionLog = await imTransitionLog.findOne({

@@ -63,7 +63,7 @@ export class Prover {
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
+        session.minaService
       );
 
     await imModelGenericQueue.queueTask(
@@ -80,7 +80,7 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: session.minaService }
     );
   }
 
@@ -117,7 +117,7 @@ export class Prover {
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
+        session.minaService
       );
 
     await imModelGenericQueue.queueTask(
@@ -134,7 +134,7 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: session.minaService }
     );
   }
 
@@ -162,7 +162,7 @@ export class Prover {
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
+        session.minaService
       );
 
     await imModelGenericQueue.queueTask(
@@ -179,7 +179,7 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: session.minaService }
     );
   }
 }

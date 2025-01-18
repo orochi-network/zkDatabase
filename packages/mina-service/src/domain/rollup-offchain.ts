@@ -32,7 +32,7 @@ export class RollupOffChain {
     task: TRollupQueueData,
     session: TCompoundSession
   ): Promise<OptionalId<TRollupOffChainRecord>> {
-    const { serverless, proofService } = session;
+    const { serverless, minaService } = session;
 
     const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
@@ -58,7 +58,7 @@ export class RollupOffChain {
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
       task.databaseName,
-      proofService
+      minaService
     );
 
     const transitionLog = await imTransitionLog.findOne({
@@ -77,7 +77,7 @@ export class RollupOffChain {
     // NOTE: It must be sequential and can't be access with another queue task in the same database
     const previousZkProof = await imRollupOffChain.findOne(
       { databaseName: task.databaseName },
-      { sort: { step: -1 }, session: proofService }
+      { sort: { step: -1 }, session: minaService }
     );
 
     if (!previousZkProof) {
