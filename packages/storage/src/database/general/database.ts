@@ -73,7 +73,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return false;
   }
 
-  public async dropCollection(
+  private async dropCollection(
     collectionName: string,
     session?: ClientSession
   ): Promise<boolean> {
@@ -87,7 +87,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return false;
   }
 
-  public async drop(options?: DropDatabaseOptions): Promise<boolean> {
+  private async drop(options?: DropDatabaseOptions): Promise<boolean> {
     return this.db.dropDatabase(options);
   }
 

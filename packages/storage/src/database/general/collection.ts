@@ -90,8 +90,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return isOk(async () => this.collection.dropIndex(indexName, options));
   }
 
-  public async listIndexes(): Promise<string[]> {
-    return (await this.collection.listIndexes().toArray()).map((i) => i.name);
+  public async listIndexes(options?: ListIndexesOptions): Promise<string[]> {
+    return (await this.collection.listIndexes(options).toArray()).map(
+      (i) => i.name
+    );
   }
 
   public async size(): Promise<number> {
