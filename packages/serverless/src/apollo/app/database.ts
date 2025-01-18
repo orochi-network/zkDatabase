@@ -15,10 +15,14 @@ import {
   pagination,
   publicKey,
   TDatabaseExistRequest,
+  EContractName,
+  TVerificationKeyRequest,
+  TVerificationKeyResponse,
 } from '@zkdb/common';
 import {
   ModelDatabase,
   ModelMetadataDatabase,
+  ModelVerificationKey,
   withTransaction,
 } from '@zkdb/storage';
 import Joi from 'joi';
@@ -30,13 +34,23 @@ export const typeDefsDatabase = gql`
   type Query
   type Mutation
 
-  enum ENetworkId {
+  enum NetworkId {
     Testnet
     Mainnet
   }
 
+  enum ContractName {
+    VkRollup
+    VkContract
+  }
+
+  type VerificationKeySerialized {
+    data: String
+    hash: String
+  }
+
   type EnvironmentInfo {
-    networkId: ENetworkId!
+    networkId: NetworkId!
     networkUrl: String!
   }
 
@@ -55,11 +69,22 @@ export const typeDefsDatabase = gql`
     offset: Int!
   }
 
+  type VerificationKeyResponse {
+    databaseName: String!
+    verificationKeyHash: String!
+    verificationKey: VerificationKeySerialized!
+    contractName: ContractName!
+  }
+
   extend type Query {
     dbList(query: JSON, pagination: PaginationInput): DatabaseListResponse!
     dbStats(databaseName: String!): JSON
     dbInfo(databaseName: String!): MetadataDatabase!
     dbExist(databaseName: String!): Boolean!
+    dbVerificationKey(
+      databaseName: String!
+      contractName: ContractName!
+    ): VerificationKeyResponse
     dbEnvironment: EnvironmentInfo!
   }
 
@@ -106,6 +131,14 @@ export const JOI_DATABASE_UPDATE_DEPLOY = Joi.object<TDatabaseDeployRequest>({
   databaseName,
   appPublicKey: publicKey,
 });
+
+export const JOI_DATABASE_VERIFICATION_KEY =
+  Joi.object<TVerificationKeyRequest>({
+    databaseName,
+    contractName: Joi.string()
+      .valid(...Object.values(EContractName))
+      .required(),
+  });
 
 // Query
 const dbStats = publicWrapper<TDatabaseRequest, Document>(
@@ -196,6 +229,19 @@ const dbEnvironment = publicWrapper(
   }
 );
 
+// Do we return both VkContract and VkRollup. Or let user choose
+const dbVerificationKey = publicWrapper<
+  TVerificationKeyRequest,
+  TVerificationKeyResponse
+>(
+  JOI_DATABASE_VERIFICATION_KEY,
+  async (_root, { databaseName, contractName }, _ctx) =>
+    ModelVerificationKey.getInstance().findOne({
+      databaseName,
+      contractName,
+    })
+);
+
 export const resolversDatabase = {
   Query: {
     dbStats,
@@ -203,6 +249,7 @@ export const resolversDatabase = {
     dbInfo,
     dbExist,
     dbEnvironment,
+    dbVerificationKey,
   },
   Mutation: {
     dbCreate,

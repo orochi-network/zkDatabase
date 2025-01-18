@@ -16,6 +16,8 @@ import {
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
   TRollupOnChainStateResponse,
+  TVerificationKeyResponse,
+  EContractName,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -79,4 +81,9 @@ export interface IDatabase {
   ): Promise<TRollupOffChainHistoryResponse>;
 
   rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
+
+  // Verification key
+  verificationKey(
+    contractName: EContractName
+  ): Promise<TVerificationKeyResponse>;
 }

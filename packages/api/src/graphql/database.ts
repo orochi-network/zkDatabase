@@ -14,6 +14,8 @@ import {
   TDatabaseListResponse,
   TDatabaseStatsRequest,
   TDatabaseStatsResponse,
+  TVerificationKeyRequest,
+  TVerificationKeyResponse,
 } from "@zkdb/common";
 import {
   createMutateFunction,
@@ -114,5 +116,31 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
       }
     `,
     (data) => data.dbStats
+  ),
+  dbVerificationKey: createQueryFunction<
+    TVerificationKeyRequest,
+    TVerificationKeyResponse
+  >(
+    client,
+    gql`
+      query DbVerificationKey(
+        $databaseName: String!
+        $contractName: ContractName!
+      ) {
+        dbVerificationKey(
+          databaseName: $databaseName
+          contractName: $contractName
+        ) {
+          databaseName
+          verificationKeyHash
+          verificationKey {
+            data
+            hash
+          }
+          contractName
+        }
+      }
+    `,
+    (data) => data.dbVerificationKey
   ),
 });

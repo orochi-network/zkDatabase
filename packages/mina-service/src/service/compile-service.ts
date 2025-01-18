@@ -91,6 +91,7 @@ export const SERVICE_COMPILE = {
             ).toString('base64');
 
             const transactionRaw = await zkAppCompiler.getDeployRawTx(
+              databaseName,
               payerAddress,
               zkAppPrivateKey,
               metadataDatabase.merkleHeight

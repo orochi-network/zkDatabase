@@ -28,6 +28,7 @@ export class ZkCompile {
   }
 
   async getDeployRawTx(
+    databaseName: string,
     payerAddress: string,
     zkDbPrivateKey: PrivateKey,
     merkleHeight: number
@@ -66,6 +67,7 @@ export class ZkCompile {
     // Insert these 2 vk contract & rollup to database
     await imVerification.insertMany([
       {
+        databaseName,
         contractName: EContractName.VkContract,
         verificationKeyHash: contractVerificationKeyHash,
         verificationKey: contractVerificationKeySerialized,
@@ -73,6 +75,7 @@ export class ZkCompile {
         updatedAt: new Date(),
       },
       {
+        databaseName,
         contractName: EContractName.VkRollup,
         verificationKeyHash: rollupVerificationKeyHash,
         verificationKey: rollupVerificationKeySerialized,
