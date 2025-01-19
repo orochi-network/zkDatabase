@@ -4791,7 +4791,7 @@ graphql-request@7.1.2, graphql-request@^7.1.2:
   dependencies:
     "@graphql-typed-document-node/core" "^3.2.0"
 
-graphql-scalars@1.24.0, graphql-scalars@^1.15.0:
+graphql-scalars@^1.15.0:
   version "1.24.0"
   resolved "https://registry.npmjs.org/graphql-scalars/-/graphql-scalars-1.24.0.tgz"
   integrity sha512-olbFN39m0XsHHESACUdd7jWU/lGxMMS1B7NZ8XqpqhKZrjBxzeGYAnQ4Ax//huYds771wb7gCznA+65QDuUa+g==
