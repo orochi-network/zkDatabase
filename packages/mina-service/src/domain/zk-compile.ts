@@ -140,7 +140,7 @@ export class ZkCompile {
       zkDbProcessor.vkRollup
     );
 
-    const vk = (
+    const vkList = (
       await imVerification
         .find({
           merkleHeight,
@@ -155,13 +155,13 @@ export class ZkCompile {
         .toArray()
     ).map((e) => e.verificationKeyHash);
 
-    const insertList = [vkContractRecord, vkRollupRecord].filter(
-      (e) => !vk.includes(e.verificationKeyHash)
+    const insertVkList = [vkContractRecord, vkRollupRecord].filter(
+      (e) => !vkList.includes(e.verificationKeyHash)
     );
 
-    if (insertList.length > 0) {
+    if (insertVkList.length > 0) {
       // Insert these 2 vk contract & rollup to database
-      const vkInsertResult = await imVerification.insertMany(insertList, {
+      const vkInsertResult = await imVerification.insertMany(insertVkList, {
         session,
       });
       return vkInsertResult.acknowledged;
