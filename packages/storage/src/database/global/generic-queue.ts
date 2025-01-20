@@ -183,7 +183,7 @@ that the acquisition logic is suboptimal.`
   }
 
   /** Get the next task in the queue without acquiring it. */
-  public async peakNextQualifiedTask(
+  public async peekNextQualifiedTask(
     filter?: Filter<TDbRecord<TGenericQueue<T>>>,
     options?: FindOptions
   ): Promise<TDbRecord<TGenericQueue<T>> | null> {

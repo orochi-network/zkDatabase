@@ -65,7 +65,7 @@ export class DocumentWorker {
 
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const task = await imDocumentQueue.peakNextQualifiedTask({
+        const task = await imDocumentQueue.peekNextQualifiedTask({
           databaseName: { $nin: exclusionQueue },
         });
 
