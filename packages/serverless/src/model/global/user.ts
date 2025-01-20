@@ -21,7 +21,7 @@ export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelUser.collectionName
     );
   }
@@ -89,7 +89,7 @@ export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelUser.collectionName
     );
     if (!(await collection.isExist())) {

@@ -15,7 +15,7 @@ export class ModelTransitionLog extends ModelGeneral<
   private constructor(databaseName: string) {
     super(
       zkDatabaseConstant.globalTransitionLogDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       databaseName
     );
   }
@@ -40,7 +40,7 @@ export class ModelTransitionLog extends ModelGeneral<
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalTransitionLogDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       databaseName
     );
     if (!(await collection.isExist())) {

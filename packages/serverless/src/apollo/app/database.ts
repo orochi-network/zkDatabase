@@ -19,7 +19,7 @@ import {
 import {
   ModelDatabase,
   ModelMetadataDatabase,
-  withTransaction,
+  Transaction,
 } from '@zkdb/storage';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
@@ -155,7 +155,7 @@ const dbDeploy = authorizeWrapper<
 >(
   JOI_DATABASE_UPDATE_DEPLOY,
   async (_root, { databaseName, appPublicKey }, _) =>
-    withTransaction((session) =>
+    Transaction.serverless((session) =>
       Database.deploy({ databaseName, appPublicKey }, session)
     )
 );
@@ -164,7 +164,7 @@ const dbCreate = authorizeWrapper<
   TDatabaseCreateRequest,
   TDatabaseCreateResponse
 >(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
-  withTransaction((session) =>
+  Transaction.serverless((session) =>
     Database.create(
       { databaseName, merkleHeight, databaseOwner: ctx.userName },
       session

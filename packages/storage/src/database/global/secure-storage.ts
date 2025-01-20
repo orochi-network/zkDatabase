@@ -13,7 +13,7 @@ export class ModelSecureStorage extends ModelGeneral<
   private constructor() {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       zkDatabaseConstant.globalCollection.secure
     );
   }
@@ -29,7 +29,7 @@ export class ModelSecureStorage extends ModelGeneral<
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       zkDatabaseConstant.globalCollection.secure
     );
     /*

@@ -14,7 +14,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
   }
@@ -93,7 +93,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {

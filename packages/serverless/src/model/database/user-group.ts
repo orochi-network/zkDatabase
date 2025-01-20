@@ -22,7 +22,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   constructor(databaseName: string) {
     super(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelUserGroup.collectionName
     );
   }
@@ -160,7 +160,7 @@ export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelUserGroup.collectionName
     );
 
