@@ -212,9 +212,17 @@ const dbVerificationKey = publicWrapper<
   TVerificationKeyRequest,
   TVerificationKeyResponse
 >(JOI_DATABASE_VERIFICATION_KEY, async (_root, { databaseName }, _ctx) => {
+  const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne({
+    databaseName,
+  });
+
+  if (!metadataDatabase) {
+    throw new Error(`Metadata database ${databaseName} cannot be found`);
+  }
+
   const vkList = await ModelVerificationKey.getInstance()
     .find({
-      databaseName,
+      merkleHeight: metadataDatabase.merkleHeight,
     })
     .toArray();
 
