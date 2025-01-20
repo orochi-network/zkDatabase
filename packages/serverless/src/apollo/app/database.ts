@@ -1,24 +1,26 @@
 import { Database } from '@domain';
 import { config, gql } from '@helper';
 import {
+  databaseName,
+  EContractName,
+  merkleHeight,
+  pagination,
   TDatabaseCreateRequest,
   TDatabaseCreateResponse,
+  TDatabaseExistRequest,
   TDatabaseExistResponse,
   TDatabaseListRequest,
   TDatabaseListResponse,
   TDatabaseRequest,
   TDatabaseResponse,
-  TDatabaseDeployRequest,
-  TDatabaseDeployResponse,
-  databaseName,
-  merkleHeight,
-  pagination,
-  publicKey,
-  TDatabaseExistRequest,
+  TVerificationKeyRequest,
+  TVerificationKeyResponse,
+  TZkDbVerificationKeyRecord,
 } from '@zkdb/common';
 import {
   ModelDatabase,
   ModelMetadataDatabase,
+  ModelVerificationKey,
   Transaction,
 } from '@zkdb/storage';
 import Joi from 'joi';
@@ -30,13 +32,23 @@ export const typeDefsDatabase = gql`
   type Query
   type Mutation
 
-  enum ENetworkId {
+  enum NetworkId {
     Testnet
     Mainnet
   }
 
+  enum ContractName {
+    VkRollup
+    VkContract
+  }
+
+  type VerificationKeySerialized {
+    data: String
+    hash: String
+  }
+
   type EnvironmentInfo {
-    networkId: ENetworkId!
+    networkId: NetworkId!
     networkUrl: String!
   }
 
@@ -55,11 +67,24 @@ export const typeDefsDatabase = gql`
     offset: Int!
   }
 
+  type VerificationKey {
+    databaseName: String!
+    verificationKeyHash: String!
+    verificationKey: VerificationKeySerialized!
+    contractName: ContractName!
+  }
+
+  type VerificationKeyResponse {
+    Contract: VerificationKey!
+    Rollup: VerificationKey!
+  }
+
   extend type Query {
     dbList(query: JSON, pagination: PaginationInput): DatabaseListResponse!
     dbStats(databaseName: String!): JSON
     dbInfo(databaseName: String!): MetadataDatabase!
     dbExist(databaseName: String!): Boolean!
+    dbVerificationKey(databaseName: String!): JSON
     dbEnvironment: EnvironmentInfo!
   }
 
@@ -102,10 +127,10 @@ export const JOI_DATABASE_CREATE = Joi.object<TDatabaseCreateRequest>({
   merkleHeight,
 });
 
-export const JOI_DATABASE_UPDATE_DEPLOY = Joi.object<TDatabaseDeployRequest>({
-  databaseName,
-  appPublicKey: publicKey,
-});
+export const JOI_DATABASE_VERIFICATION_KEY =
+  Joi.object<TVerificationKeyRequest>({
+    databaseName,
+  });
 
 // Query
 const dbStats = publicWrapper<TDatabaseRequest, Document>(
@@ -149,17 +174,6 @@ const dbInfo = publicWrapper<TDatabaseRequest, TDatabaseResponse>(
   }
 );
 
-const dbDeploy = authorizeWrapper<
-  TDatabaseDeployRequest,
-  TDatabaseDeployResponse
->(
-  JOI_DATABASE_UPDATE_DEPLOY,
-  async (_root, { databaseName, appPublicKey }, _) =>
-    Transaction.serverless((session) =>
-      Database.deploy({ databaseName, appPublicKey }, session)
-    )
-);
-
 const dbCreate = authorizeWrapper<
   TDatabaseCreateRequest,
   TDatabaseCreateResponse
@@ -186,15 +200,47 @@ const dbExist = publicWrapper<TDatabaseExistRequest, TDatabaseExistResponse>(
 );
 
 // Query
-const dbEnvironment = publicWrapper(
-  Joi.object({}),
-  async (_root: unknown, _) => {
-    return {
-      networkId: config.NETWORK_ID,
-      networkUrl: config.MINA_URL,
-    };
+const dbEnvironment = publicWrapper(async (_root: unknown, _) => {
+  return {
+    networkId: config.NETWORK_ID,
+    networkUrl: config.MINA_URL,
+  };
+});
+
+// Do we return both VkContract and VkRollup. Or let user choose
+const dbVerificationKey = publicWrapper<
+  TVerificationKeyRequest,
+  TVerificationKeyResponse
+>(JOI_DATABASE_VERIFICATION_KEY, async (_root, { databaseName }, _ctx) => {
+  const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne({
+    databaseName,
+  });
+
+  if (!metadataDatabase) {
+    throw new Error(`Metadata database ${databaseName} cannot be found`);
   }
-);
+
+  const vkList = await ModelVerificationKey.getInstance()
+    .find({
+      merkleHeight: metadataDatabase.merkleHeight,
+    })
+    .toArray();
+
+  if (!vkList) {
+    return null;
+  }
+
+  const result = vkList.reduce(
+    (acc, current) => {
+      acc[current.contractName] = current;
+      return acc;
+    },
+    {} as Record<EContractName, TZkDbVerificationKeyRecord>
+  );
+
+  // We have a case that empty {}
+  return Object.keys(result) ? result : null;
+});
 
 export const resolversDatabase = {
   Query: {
@@ -203,9 +249,9 @@ export const resolversDatabase = {
     dbInfo,
     dbExist,
     dbEnvironment,
+    dbVerificationKey,
   },
   Mutation: {
     dbCreate,
-    dbDeploy,
   },
 };

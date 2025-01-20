@@ -6,6 +6,7 @@ import {
   ETransactionType,
   TTransactionQueue,
 } from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
@@ -19,7 +20,7 @@ import {
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
 import { ObjectId } from 'mongodb';
-import { PrivateKey } from 'o1js';
+import { PrivateKey, PublicKey } from 'o1js';
 
 export const SERVICE_COMPILE = {
   clusterName: 'compile',
@@ -81,6 +82,27 @@ export const SERVICE_COMPILE = {
 
         if (!metadataDatabase) {
           throw new Error('Metadata database not found');
+        }
+
+        await zkAppCompiler.verificationKeySet(
+          metadataDatabase.merkleHeight,
+          sessionMina
+        );
+
+        const mina = MinaNetwork.getInstance();
+        mina.connect(
+          config.NETWORK_ID,
+          config.MINA_URL,
+          config.BLOCKBERRY_API_KEY
+        );
+
+        const { error, account } = await mina.getAccount(
+          PublicKey.fromBase58(payerAddress)
+        );
+
+        if (!account || error) {
+          logger.error(error);
+          return;
         }
 
         // We need to use if..else-if..else to sure type MUST be Deploy/Rollup

@@ -53,7 +53,7 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query transactionDraft(
+      query TransactionDraft(
         $databaseName: String!
         $transactionType: TransactionType!
       ) {
@@ -61,7 +61,7 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
           databaseName: $databaseName
           transactionType: $transactionType
         ) {
-          transactionObjectId
+          _id
           databaseName
           transactionType
           status

@@ -177,31 +177,4 @@ export class Database {
       offset: pagination?.offset || 0,
     };
   }
-
-  public static async deploy(
-    paramDeploy: TDatabaseParamDeploy,
-    session: ClientSession
-  ) {
-    try {
-      const { databaseName, appPublicKey } = paramDeploy;
-      // Add appPublicKey for database that deployed
-      await ModelMetadataDatabase.getInstance().updateOne(
-        { databaseName },
-        {
-          appPublicKey,
-        },
-        { session }
-      );
-      // Remove data from deploy transaction
-      await ModelTransaction.getInstance().deleteOne(
-        { databaseName, transactionType: ETransactionType.Deploy },
-        { session }
-      );
-
-      return true;
-    } catch (error) {
-      logger.debug(`Cannot deploy database ${error}`);
-      return false;
-    }
-  }
 }
