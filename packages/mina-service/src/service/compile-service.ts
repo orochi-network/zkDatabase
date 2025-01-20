@@ -121,6 +121,7 @@ export const SERVICE_COMPILE = {
             {
               $set: {
                 appPublicKey: zkAppPrivateKey.toPublicKey().toBase58(),
+                // @TODO: add EDeployStatus Undeploy, Deploying, Deployed, Fail
                 deployStatus: ETransactionStatus.Unsigned,
               },
             },
@@ -220,12 +221,20 @@ export const SERVICE_COMPILE = {
 
             // Remove rollup history with transactionObjectId provided before
             // If not remove it will generate new rollup history without transaction doc
-            const imRollupHistory = ModelRollupOnChainHistory.getInstance();
-            await imRollupHistory.deleteOne({
-              databaseName,
-              transactionObjectId,
-              proofObjectId: proofOffChain._id,
-            });
+            // @TODO: Query rollup history must filter all failed
+            await ModelRollupOnChainHistory.getInstance().updateOne(
+              {
+                databaseName,
+                transactionObjectId,
+                proofObjectId: proofOffChain._id,
+              },
+              {
+                status: ETransactionStatus.Failed,
+                databaseName,
+                transactionObjectId,
+                proofObjectId: proofOffChain._id,
+              }
+            );
 
             throw error;
           }
