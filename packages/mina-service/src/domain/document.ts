@@ -31,6 +31,8 @@ export class DocumentProcessor {
         newDocumentHash,
         collectionName,
         docId,
+        documentObjectIdPrevious,
+        documentObjectIdCurrent,
       },
     } = task;
     assert(sequenceNumber !== null, 'Sequence number should not be null');
@@ -40,18 +42,22 @@ export class DocumentProcessor {
       proofSession
     );
 
+    const merkleRootOld = (
+      await imMerkleTree.getRoot({ session: proofSession })
+    ).toString();
+
     const leafOld = await imMerkleTree.getNode(0, merkleIndex, {
       session: proofSession,
     });
 
-    if (operationKind !== EDocumentOperation.Delete && !newDocumentHash) {
+    if (operationKind !== EDocumentOperation.Drop && !newDocumentHash) {
       throw new Error(
         'New document hash is required for create and update operations'
       );
     }
 
     const leafNew =
-      operationKind === EDocumentOperation.Delete
+      operationKind === EDocumentOperation.Drop
         ? Field(0).toString()
         : newDocumentHash!;
 
@@ -73,11 +79,15 @@ export class DocumentProcessor {
     const transitionLogObjectId =
       await imModelTransitionLog.collection.insertOne(
         {
+          merkleRootOld,
           merkleRootNew,
           merkleProof,
           leafOld,
           leafNew,
           operationNumber: sequenceNumber,
+          documentObjectIdPrevious,
+          documentObjectIdCurrent,
+          operationKind,
           createdAt: new Date(),
           updatedAt: new Date(),
         },

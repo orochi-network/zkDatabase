@@ -4,7 +4,7 @@
 import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { Document, Metadata } from '@domain';
-import { gql, GraphqlHelper } from '@helper';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -23,6 +23,8 @@ import {
   docId,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse,
 } from '@zkdb/common';
 
 import { Permission } from '@zkdb/permission';
@@ -89,8 +91,6 @@ export const typeDefsDocument = gql`
     document: JSON!
     createdAt: Date!
     updatedAt: Date!
-    metadata: DocumentMetadataResponse
-    queueStatus: QueueTaskStatus
   }
 
   type DocumentFindResponse {
@@ -123,7 +123,8 @@ export const typeDefsDocument = gql`
     permission: Int!
     collectionName: String!
     docId: String!
-    merkleIndex: String!
+    merkleIndex: BigInt!
+    operationNumber: Int!
   }
 
   extend type Query {
@@ -146,6 +147,12 @@ export const typeDefsDocument = gql`
       docId: String!
       pagination: PaginationInput
     ): DocumentHistoryFindResponse
+
+    documentMerkleProofStatus(
+      databaseName: String!
+      collectionName: String!
+      docId: String!
+    ): QueueTaskStatus!
   }
 
   extend type Mutation {
@@ -174,19 +181,12 @@ export const typeDefsDocument = gql`
 const documentFind = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentFindResponse
->(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx, info) => {
-  const includesMetadata = GraphqlHelper.checkRequestedFieldExist(info, [
-    'data',
-    'metadata',
-  ]);
-  const includesProofStatus = GraphqlHelper.checkRequestedFieldExist(info, [
-    'data',
-    'queueStatus',
-  ]);
-
-  return withCompoundTransaction(async (compoundTransaction) => {
-    const { serverless, proofService } = compoundTransaction;
-    let [listDocument, numTotalDocument] = await Document.query(
+>(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
+  return withTransaction(async (session) => {
+    const [listDocument, numTotalDocument]: [
+      TDocumentFindResponse['data'],
+      number,
+    ] = await Document.query(
       {
         databaseName: args.databaseName,
         collectionName: args.collectionName,
@@ -194,33 +194,15 @@ const documentFind = authorizeWrapper<
       },
       args.query || {},
       args.pagination || DEFAULT_PAGINATION,
-      serverless
+      session
     );
-
-    // Lazily fill metadata and proof status if requested
-    // TODO: can we fill metadata and proof status in parallel?
-    if (includesMetadata) {
-      listDocument = await Document.fillMetadata(
-        listDocument,
-        args.databaseName,
-        serverless
-      );
-    }
-
-    if (includesProofStatus) {
-      listDocument = await Document.fillProofStatus(
-        listDocument,
-        args.collectionName,
-        proofService
-      );
-    }
 
     return {
       data: listDocument,
       total: numTotalDocument,
       offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
     };
-  });
+  }, 'serverless');
 });
 
 // Mutation
@@ -340,11 +322,34 @@ const documentMetadata = authorizeWrapper<
   }
 );
 
+const documentMerkleProofStatus = authorizeWrapper<
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse
+>(
+  Joi.object({
+    databaseName,
+    collectionName,
+    docId,
+  }),
+  async (_root, args, ctx) => {
+    return withCompoundTransaction(async (session) =>
+      Document.merkleProofStatus(
+        {
+          ...args,
+          actor: ctx.userName,
+        },
+        session
+      )
+    );
+  }
+);
+
 export const resolversDocument = {
   Query: {
     documentFind,
     documentHistoryFind,
     documentMetadata,
+    documentMerkleProofStatus,
   },
   Mutation: {
     documentCreate,

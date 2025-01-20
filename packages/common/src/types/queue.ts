@@ -3,7 +3,7 @@ import { TNullable } from './common';
 export enum EDocumentOperation {
   Create = 'Create',
   Update = 'Update',
-  Delete = 'Delete',
+  Drop = 'Drop',
 }
 
 export type TDocumentQueuedData = {
@@ -12,6 +12,8 @@ export type TDocumentQueuedData = {
   newDocumentHash?: string;
   merkleIndex: bigint;
   docId: string;
+  documentObjectIdPrevious: string | null;
+  documentObjectIdCurrent: string | null;
 };
 
 export enum EQueueTaskStatus {

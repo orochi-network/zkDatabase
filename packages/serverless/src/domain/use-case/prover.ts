@@ -1,16 +1,12 @@
-import {
-  EDocumentOperation,
-  ESequencer,
-  TDocumentQueuedData,
-} from '@zkdb/common';
+import { EDocumentOperation, TDocumentQueuedData } from '@zkdb/common';
 import {
   TCompoundSession,
-  ModelSequencer,
   ModelGenericQueue,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 
 import { ModelMetadataDocument } from '@model';
+import { ObjectId } from 'mongodb';
 import { DocumentSchema, TValidatedDocument } from './document-schema';
 
 // For prover param use-case
@@ -22,20 +18,27 @@ export type TParamProve = {
 
 export type TParamProveCreate = TParamProve & {
   document: TValidatedDocument;
+  documentObjectId: ObjectId;
 };
 
 export type TParamProveUpdate = TParamProve & {
   newDocument: TValidatedDocument;
+  newDocumentObjectId: ObjectId;
+  oldDocumentObjectId: ObjectId;
 };
 
-export type TParamProveDelete = TParamProve;
+export type TParamProveDelete = TParamProve & {
+  oldDocumentObjectId: ObjectId;
+};
 
 export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
-    const { databaseName, docId, collectionName, document } = proveCreateParam;
+    const { databaseName, docId, collectionName, document, documentObjectId } =
+      proveCreateParam;
     // Get document metadata
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
@@ -57,16 +60,6 @@ export class Prover {
 
     const documentHash = schema.hash();
 
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
-
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
@@ -81,6 +74,8 @@ export class Prover {
           newDocumentHash: documentHash.toString(),
           operationKind: EDocumentOperation.Create,
           docId,
+          documentObjectIdPrevious: null,
+          documentObjectIdCurrent: documentObjectId.toString(),
         },
         databaseName,
         sequenceNumber: operationNumber,
@@ -91,10 +86,17 @@ export class Prover {
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
-    const { databaseName, collectionName, docId, newDocument } =
-      proveUpdateParam;
+    const {
+      databaseName,
+      collectionName,
+      docId,
+      newDocument,
+      oldDocumentObjectId,
+      newDocumentObjectId,
+    } = proveUpdateParam;
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
     const metadataDocument = await imMetadataDocument.findOne(
@@ -112,15 +114,6 @@ export class Prover {
 
     const hash = schema.hash();
 
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
-
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
@@ -135,6 +128,8 @@ export class Prover {
           newDocumentHash: hash.toString(),
           operationKind: EDocumentOperation.Update,
           docId,
+          documentObjectIdPrevious: oldDocumentObjectId.toString(),
+          documentObjectIdCurrent: newDocumentObjectId.toString(),
         },
         databaseName,
         sequenceNumber: operationNumber,
@@ -145,9 +140,11 @@ export class Prover {
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
+    operationNumber: bigint,
     session: TCompoundSession
   ) {
-    const { databaseName, collectionName, docId } = proveDeleteParam;
+    const { databaseName, collectionName, docId, oldDocumentObjectId } =
+      proveDeleteParam;
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
@@ -162,16 +159,6 @@ export class Prover {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const imSequencer = await ModelSequencer.getInstance(
-      databaseName,
-      session.serverless
-    );
-
-    const operationNumber = await imSequencer.nextValue(
-      ESequencer.DataOperation,
-      session.serverless
-    );
-
     const imModelGenericQueue =
       await ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
@@ -184,7 +171,9 @@ export class Prover {
           collectionName,
           merkleIndex: BigInt(metadataDocument.merkleIndex),
           newDocumentHash: undefined,
-          operationKind: EDocumentOperation.Delete,
+          operationKind: EDocumentOperation.Drop,
+          documentObjectIdPrevious: oldDocumentObjectId.toString(),
+          documentObjectIdCurrent: null,
           docId,
         },
         databaseName,

@@ -34,8 +34,8 @@ export const zkDatabaseConstant = {
 
     secure: 'secure_storage',
 
-    // Rollup history
-    rollupHistory: 'rollup_history',
+    // OnChain Rollup history
+    rollupOnChainHistory: 'rollup_onchain_history',
 
     // Verification key
     verificationKey: 'verification_key',

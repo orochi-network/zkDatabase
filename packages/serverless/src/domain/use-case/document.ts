@@ -17,15 +17,13 @@ import {
   ESequencer,
   PERMISSION_DEFAULT,
   TDocumentField,
+  TDocumentQueuedData,
   TDocumentRecordNullable,
-  TMetadataDetailDocument,
   TPagination,
   TParamCollection,
   TParamDocument,
   TPermissionSudo,
-  TRollupQueueData,
   TSerializedValue,
-  TWithQueueStatus,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
@@ -35,6 +33,7 @@ import {
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
+import { logger } from '@helper';
 import { FilterCriteria, parseQuery } from '../utils';
 import { DocumentSchema } from './document-schema';
 import { PermissionSecurity } from './permission-security';
@@ -96,11 +95,12 @@ in database '${databaseName}'.`
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
     // Save the document to the database
-    const [_, docId] = await imDocument.insertOneFromListField(
-      fieldArrayToRecord(validatedDocument),
-      undefined,
-      compoundSession.serverless
-    );
+    const [{ insertedId: documentObjectId }, docId] =
+      await imDocument.insertOneFromListField(
+        fieldArrayToRecord(validatedDocument),
+        undefined,
+        compoundSession.serverless
+      );
 
     // 2. Create new sequence value
     const imSequencer = await ModelSequencer.getInstance(
@@ -109,6 +109,10 @@ in database '${databaseName}'.`
     );
     const merkleIndex = await imSequencer.nextValue(
       ESequencer.MerkleIndex,
+      compoundSession.serverless
+    );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
       compoundSession.serverless
     );
 
@@ -125,7 +129,8 @@ in database '${databaseName}'.`
       {
         collectionName,
         docId,
-        merkleIndex: merkleIndex.toString(),
+        merkleIndex,
+        operationNumber,
         ...{
           // I'm set these to system user and group as default
           // In case this permission don't override by the user
@@ -149,7 +154,9 @@ in database '${databaseName}'.`
         collectionName,
         docId,
         document: validatedDocument,
+        documentObjectId,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -185,14 +192,14 @@ in database '${databaseName}'.`
 
     const imDocument = ModelDocument.getInstance(databaseName, collectionName);
 
-    const document = await imDocument.findOne(
+    const oldDocument = await imDocument.findOne(
       { docId, active: true },
       {
         session: compoundSession.serverless,
       }
     );
 
-    if (document === null) {
+    if (oldDocument === null) {
       throw new Error(
         `Document with docId '${docId}' not found or is dropped.`
       );
@@ -211,7 +218,7 @@ in database '${databaseName}'.`
     }
 
     const newDocument = {
-      ...Object.entries(document.document).reduce(
+      ...Object.entries(oldDocument.document).reduce(
         (acc, [key, value]) => {
           acc[key] = value.value;
           return acc;
@@ -227,7 +234,7 @@ in database '${databaseName}'.`
     );
 
     const actorPermissionDocument = await PermissionSecurity.document(
-      { ...permissionParam, docId: document.docId },
+      { ...permissionParam, docId: oldDocument.docId },
       compoundSession.serverless
     );
     if (!actorPermissionDocument.write) {
@@ -238,19 +245,44 @@ in database '${databaseName}'.`
 
     const documentRecord = fieldArrayToRecord(validatedDocument);
 
-    await imDocument.update(
-      document.docId,
+    const [{ insertedId: newDocumentObjectId }] = await imDocument.update(
+      oldDocument.docId,
       documentRecord,
       compoundSession.serverless
+    );
+
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      compoundSession.serverless
+    );
+
+    // Update document metadata
+    const imDocumentMetadata = new ModelMetadataDocument(databaseName);
+    imDocumentMetadata.updateOne(
+      { docId: oldDocument.docId },
+      {
+        $set: {
+          operationNumber,
+          updatedAt: new Date(),
+        },
+      },
+      { session: compoundSession.serverless }
     );
 
     await Prover.update(
       {
         databaseName,
         collectionName,
-        docId: document.docId,
+        docId: oldDocument.docId,
         newDocument: validatedDocument,
+        newDocumentObjectId,
+        oldDocumentObjectId: oldDocument._id,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -309,7 +341,7 @@ in database '${databaseName}'.`
       );
     }
 
-    await imDocument.updateMany(
+    const updateResult = await imDocument.updateMany(
       {
         docId: document.docId,
         active: true,
@@ -318,7 +350,24 @@ in database '${databaseName}'.`
         $set: {
           active: false,
         },
-      }
+      },
+      { session: compoundSession.serverless }
+    );
+
+    if (updateResult.modifiedCount !== 1) {
+      logger.error(
+        `Setting active document with docID \`${docId}\` to false should only update ONLY one document, but \
+updated ${updateResult.modifiedCount} documents.`
+      );
+    }
+
+    const imSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      compoundSession.serverless
+    );
+    const operationNumber = await imSequencer.nextValue(
+      ESequencer.DataOperation,
+      compoundSession.serverless
     );
 
     await Prover.delete(
@@ -326,7 +375,9 @@ in database '${databaseName}'.`
         databaseName,
         collectionName,
         docId: document.docId,
+        oldDocumentObjectId: document._id,
       },
+      operationNumber,
       compoundSession
     );
 
@@ -375,73 +426,6 @@ in database '${databaseName}'.`
       ),
       totalDocument,
     ];
-  }
-
-  /** Fill document metadata for a list of documents. Note that this won't
-   * check for permission and will return all metadata records for the given
-   * documents. */
-  static async fillMetadata(
-    listDocument: TDocumentRecordNullable[],
-    databaseName: string,
-    session: ClientSession
-  ): Promise<TMetadataDetailDocument<TDocumentRecordNullable>[]> {
-    if (!listDocument.length) {
-      return [];
-    }
-
-    const docIds = listDocument.map((doc) => doc.docId);
-
-    const metadataRecords = await new ModelMetadataDocument(databaseName)
-      .find(
-        {
-          docId: { $in: docIds },
-        },
-        { session }
-      )
-      .toArray();
-
-    // Create a map for quick metadata lookup
-    const metadataMap = new Map(
-      metadataRecords.map((metadata) => [metadata.docId, metadata])
-    );
-
-    // Combine documents with their metadata
-    return listDocument.map((doc) => ({
-      ...doc,
-      metadata: metadataMap.get(doc.docId)!,
-    }));
-  }
-
-  /** Fill proof status for a list of documents. Note that this won't check for
-   * permission and will return all proof status for the given documents. */
-  static async fillProofStatus(
-    listDocument: TDocumentRecordNullable[],
-    collectionName: string,
-    // NOTE: This is proof service session since we using ModelGenericQueue from proof database
-    session: ClientSession
-  ): Promise<TWithQueueStatus<TDocumentRecordNullable>[]> {
-    const imRollUpQueue = await ModelGenericQueue.getInstance<TRollupQueueData>(
-      zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-      session
-    );
-
-    const listQueueTask = await imRollUpQueue
-      .find({ 'data.collectionName': collectionName })
-      .toArray();
-
-    if (!listQueueTask) {
-      return [];
-    }
-
-    const taskMap = new Map(
-      listQueueTask.map((task) => [task.data.docId, task.status])
-    );
-
-    return listDocument.map((item) => ({
-      // Maybe it can be Unknown
-      queueStatus: taskMap.get(item.docId) || EQueueTaskStatus.Failed,
-      ...item,
-    }));
   }
 
   /** List an active document's revisions, not including the active one. */
@@ -504,5 +488,76 @@ in database '${databaseName}'.`
     ]);
 
     return [listRevision, totalRevision];
+  }
+
+  static async merkleProofStatus(
+    permissionParam: TPermissionSudo<TParamDocument>,
+    { serverless, proofService }: TCompoundSession
+  ): Promise<EQueueTaskStatus> {
+    const { databaseName, collectionName, actor, docId } = permissionParam;
+
+    if (
+      !(await PermissionSecurity.document(permissionParam, serverless)).read
+    ) {
+      throw new Error(
+        `Actor '${actor}' does not have 'read' permission for collection '${collectionName}' \
+in database '${databaseName}'.`
+      );
+    }
+
+    const imDocumentMetadata = new ModelMetadataDocument(databaseName);
+    const documentMetadata = await imDocumentMetadata.findOne(
+      { docId },
+      { session: serverless }
+    );
+
+    if (documentMetadata == null) {
+      throw new Error(`Document metadata with docId '${docId}' not found.`);
+    }
+
+    const imDocumentQueue =
+      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        proofService
+      );
+
+    const queuedTaskForThisDocument = await imDocumentQueue.findOne(
+      {
+        data: {
+          docId,
+        },
+      },
+      { session: proofService }
+    );
+
+    if (queuedTaskForThisDocument !== null) {
+      return queuedTaskForThisDocument.status;
+    }
+
+    // If there is no queued task for this document, it's probably already
+    // processed and removed from the queue. Check and compare with the latest
+    // processed merkle index to make sure that the document is indeed
+    // processed.
+
+    const imModelSequencer = await ModelSequencer.getInstance(
+      databaseName,
+      serverless
+    );
+
+    const latestProcessedOperation = await imModelSequencer.current(
+      ESequencer.ProvedMerkleRoot,
+      serverless
+    );
+
+    if (BigInt(documentMetadata.operationNumber) <= latestProcessedOperation) {
+      return EQueueTaskStatus.Success;
+    }
+
+    logger.error(
+      `The document with docId '${docId}', collection '${collectionName}' in database '${databaseName}' \
+with sequence number '${documentMetadata.operationNumber}' is neither processed nor queued, task is missing.`
+    );
+
+    return EQueueTaskStatus.Failed;
   }
 }
