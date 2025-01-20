@@ -17,8 +17,8 @@ if (!(await zkdb.auth.isUserExist('chiro-user'))) {
   await zkdb.auth.signUp('chiro@orochi.network');
 }
 
-const DB_NAME = 'zkdb_test' + Math.floor(Math.random() * 10000);
-console.log('🚀 ~ DB_NAME:', DB_NAME);
+const DB_NAME = 'zkdb_test1';
+
 console.log(await zkdb.auth.signIn());
 
 if (!(await zkdb.db(DB_NAME).exist())) {
@@ -37,6 +37,8 @@ for (let i = 0; i < 10; i += 1) {
   const res = await collection.insert({ name: `zkDatabase ${i}`, price: 15n });
   console.log(res);
 }
+
+console.log(await zkdb.db(DB_NAME).rollUpOnChainState());
 
 console.log(await zkdb.db(DB_NAME).info());
 

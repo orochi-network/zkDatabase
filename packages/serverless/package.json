@@ -45,7 +45,7 @@
     "graphql-type-json": "^0.3.2",
     "joi": "^17.13.3",
     "mongodb": "^6.12.0",
-    "o1js": "^1.9.1"
+    "o1js": "^2.2.0"
   },
   "dependencies": {
     "@apollo/server": "4.11.0",

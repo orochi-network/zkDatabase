@@ -1,26 +1,33 @@
 import { logger } from '@helper';
 import {
-  EMinaTransactionStatus,
   ERollupState,
   ETransactionStatus,
   ETransactionType,
-  TRollUpOffChainAndTransitionAggregate,
-  TRollupHistoryParam,
-  TRollupHistoryResponse,
-  TRollupStateResponse,
+  TRollupOffChainHistory,
+  TRollupOffChainHistoryParam,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryDataResponse,
+  TRollupOnChainHistoryParam,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainHistoryTransactionAggregate,
+  TRollupOnChainStateResponse,
+  TRollupQueueData,
+  databaseName,
 } from '@zkdb/common';
 import {
+  ModelGenericQueue,
   ModelMetadataDatabase,
-  ModelRollupHistory,
   ModelRollupOffChain,
-  ModelRollupOnChain,
+  ModelRollupOnChainHistory,
   ModelTransaction,
+  ModelTransitionLog,
   TCompoundSession,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { Database } from './database';
-import Transaction from './transaction';
+import { Transaction } from './transaction';
 
 export class Rollup {
   static async create(
@@ -35,43 +42,42 @@ export class Rollup {
     );
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
-    const [latestProofForDb] = await imRollupOffChain.collection
-      .aggregate<TRollUpOffChainAndTransitionAggregate>([
-        {
-          $match: { databaseName },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $limit: 1,
-        },
-        {
-          $lookup: {
-            from: 'transaction',
-            localField: 'transactionObjectId',
-            foreignField: '_id',
-            as: 'transaction',
-          },
-        },
-        {
-          $unwind: {
-            path: '$transaction',
-          },
-        },
-      ])
-      .toArray();
 
-    if (!latestProofForDb) {
+    const latestOffChainRollupProof = await imRollupOffChain.findOne(
+      { databaseName },
+      {
+        session: compoundSession.proofService,
+        sort: {
+          createdAt: -1,
+        },
+      }
+    );
+
+    if (!latestOffChainRollupProof) {
       throw Error('No proof has been generated yet');
     }
 
-    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      databaseName,
+      compoundSession.proofService
+    );
+
+    const transitionLog = await imTransitionLog.findOne({
+      _id: latestOffChainRollupProof.transitionLogObjectId,
+    });
+
+    if (!transitionLog) {
+      throw new Error(
+        `Cannot found transition log ${latestOffChainRollupProof.transitionLogObjectId} in rollup ${latestOffChainRollupProof._id}`
+      );
+    }
+
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
     const imTransaction = ModelTransaction.getInstance();
 
-    const rollUpHistory = await imRollupHistory.findOne(
+    const rollUpHistory = await imRollupOnChainHistory.findOne(
       {
-        proofId: latestProofForDb._id,
+        proofId: latestOffChainRollupProof._id,
       },
       { session: compoundSession.serverless }
     );
@@ -108,18 +114,16 @@ export class Rollup {
 
     const currentTime = new Date();
 
-    await imRollupHistory.insertOne(
+    await imRollupOnChainHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
-        // @NOTICE Something possible wrong here
-        merkleTreeRoot: latestProofForDb.transition.merkleRootNew,
-        merkleTreeRootPrevious: latestProofForDb.merkleRootOld,
-        proofObjectId: latestProofForDb._id,
+        merkleRootOnChainNew: transitionLog.merkleRootNew,
+        merkleRootOnChainOld: latestOffChainRollupProof.merkleRootOld,
+        rollupOffChainObjectId: latestOffChainRollupProof._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        step: latestProofForDb.step,
-        error: null,
+        onChainStep: latestOffChainRollupProof.step,
       },
       { session: compoundSession?.serverless }
     );
@@ -127,10 +131,86 @@ export class Rollup {
     return true;
   }
 
-  static async history(
-    param: TRollupHistoryParam,
+  static async offChainHistory(
+    param: TRollupOffChainHistoryParam,
+    session: ClientSession
+  ): Promise<TRollupOffChainHistoryResponse> {
+    //
+    const { query, pagination } = param;
+
+    const imRollupOffChainQueue =
+      await ModelGenericQueue.getInstance<TRollupQueueData>(
+        zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+        session
+      );
+
+    // Since mongodb $lookup doesn't support joining 2 collections from 2 databases
+    // https://jira.mongodb.org/browse/SERVER-34935
+
+    const rollupOffChainQueue = await imRollupOffChainQueue
+      .find(
+        {
+          databaseName: query.databaseName,
+        },
+        { session }
+      )
+      .toArray();
+
+    if (!rollupOffChainQueue.length) {
+      return {
+        data: [],
+        total: 0,
+        offset: pagination.offset || 0,
+      };
+    }
+
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      query.databaseName,
+      session
+    );
+
+    const transitionLog = await imTransitionLog.find({}, { session }).toArray();
+
+    const transitionLogMap = new Map(
+      transitionLog.map((transition) => [transition._id.toString(), transition])
+    );
+
+    const rollupOffChainQueueAndTransition: TRollupOffChainHistory[] =
+      rollupOffChainQueue.map((rollupOffchain) => {
+        const rollupTransition = transitionLogMap.get(
+          rollupOffchain.data.transitionLogObjectId.toString()
+        );
+
+        if (!rollupTransition) {
+          throw new Error(
+            `Cannot found transition ${rollupOffchain.data.transitionLogObjectId} in rollup ${rollupOffchain._id}`
+          );
+        }
+
+        return {
+          merkleRootNew: rollupTransition.merkleRootNew,
+          merkleRootOld: rollupTransition.merkleRootOld,
+          error: rollupOffchain.error,
+          docId: rollupOffchain.data.docId,
+          status: rollupOffchain.status,
+          databaseName: rollupOffchain.databaseName,
+          step: BigInt(rollupOffchain.sequenceNumber || 0n) + 1n,
+          collectionName: rollupOffchain.data.collectionName,
+          acquiredAt: rollupOffchain.acquiredAt || rollupOffchain.createdAt,
+        };
+      });
+
+    return {
+      data: rollupOffChainQueueAndTransition,
+      total: rollupOffChainQueueAndTransition.length,
+      offset: pagination.offset || 0,
+    };
+  }
+
+  static async onChainHistory(
+    param: TRollupOnChainHistoryParam,
     session?: ClientSession
-  ): Promise<TRollupHistoryResponse | null> {
+  ): Promise<TRollupOnChainHistoryResponse> {
     const { query, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
@@ -144,17 +224,42 @@ export class Rollup {
       !metadataDatabase?.appPublicKey ||
       PublicKey.fromBase58(metadataDatabase?.appPublicKey).isEmpty().toBoolean()
     ) {
-      throw Error('Database is not bound to zk app');
+      throw Error(
+        `Database ${metadataDatabase?.databaseName} is not bound to zkApp, please deploy first`
+      );
     }
 
-    const imRollupHistory = ModelRollupHistory.getInstance();
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
 
-    const rollupHistory = await imRollupHistory
-      .find(query)
-      .sort({ createdAt: -1, updatedAt: -1 })
+    const rollupOnChainHistoryAgg = await imRollupOnChainHistory.collection
+      .aggregate<TRollupOnChainHistoryTransactionAggregate>(
+        [
+          {
+            $match: { databaseName },
+          },
+          {
+            $sort: { updatedAt: -1, createdAt: -1 },
+          },
+          {
+            $lookup: {
+              from: zkDatabaseConstant.globalCollection.transaction,
+              localField: 'transactionObjectId',
+              foreignField: '_id',
+              as: 'transaction',
+            },
+          },
+          {
+            $addFields: {
+              // It's 1-1 relation so the array must have 1 element
+              transaction: { $arrayElemAt: ['$transaction', 0] },
+            },
+          },
+        ],
+        { session }
+      )
       .toArray();
 
-    if (!rollupHistory.length) {
+    if (!rollupOnChainHistoryAgg.length) {
       return {
         data: [],
         total: 0,
@@ -162,48 +267,112 @@ export class Rollup {
       };
     }
 
+    // Map to satisfies type `TRollupOnChainHistoryDataResponse` and make sure don't leak any extra fields
+    const rollupOnChainHistory: TRollupOnChainHistoryDataResponse[] =
+      rollupOnChainHistoryAgg.map(
+        ({
+          databaseName,
+          transaction,
+          merkleRootOnChainNew,
+          merkleRootOnChainOld,
+          onChainStep,
+          createdAt,
+          updatedAt,
+        }) => ({
+          // Using spread will leak unexpected data, make sure return what we really need
+          databaseName,
+          merkleRootOnChainNew,
+          merkleRootOnChainOld,
+          onChainStep,
+          createdAt,
+          updatedAt,
+          status: transaction.status,
+          error: transaction.error,
+          txHash: transaction.txHash,
+        })
+      );
+
     return {
-      data: rollupHistory,
-      total: await imRollupHistory.count(query),
+      data: rollupOnChainHistory,
+      total: await imRollupOnChainHistory.count(query),
       offset: pagination.offset || 0,
     };
   }
 
-  static async state(databaseName: string): Promise<TRollupStateResponse> {
-    const imRollupOnChain = ModelRollupOnChain.getInstance();
-    const imRollupHistory = ModelRollupHistory.getInstance();
-
+  static async state(
+    databaseName: string
+  ): Promise<TRollupOnChainStateResponse> {
+    const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
     // Get latest rollup history
-    const latestRollupHistory = await imRollupHistory.findOne(
-      { databaseName },
+    const rollupOnChainHistory = await imRollupOnChainHistory.collection
+      .aggregate<TRollupOnChainHistoryTransactionAggregate>([
+        {
+          $match: { databaseName },
+        },
+        {
+          $sort: { updatedAt: -1, createdAt: -1 },
+        },
+        {
+          $lookup: {
+            from: zkDatabaseConstant.globalCollection.transaction,
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $addFields: {
+            // It's 1-1 relation so the array must have 1 element
+            transaction: { $arrayElemAt: ['$transaction', 0] },
+          },
+        },
+      ])
+      .toArray();
+
+    const latestRollupOffChain = await imRollupOffChain.findOne(
+      {
+        databaseName,
+      },
       { sort: { updatedAt: -1, createdAt: -1 } }
     );
 
-    // Get onchain rollup info, we don't interact with smart contract in serverless
-    const rollupOnChainHistory = await imRollupOnChain
-      .find({ databaseName }, { sort: { createdAt: -1 } })
-      .toArray();
-
-    const latestOnChainRollup = rollupOnChainHistory.at(0);
-
-    if (!latestRollupHistory || !latestOnChainRollup) {
+    if (!latestRollupOffChain) {
       return null;
     }
 
-    const rollUpDifferent = latestRollupHistory.step - latestOnChainRollup.step;
+    /*
+    TRollupOnChainHistoryTransactionAggregate
+    */
+
+    // Using Array.prototype.at(0) safer than array[0].
+    // We can .at(0) and check undefined instead of arr[0] don't give type check when array is undefined
+    const latestRollupOnChain = rollupOnChainHistory.at(0);
+
+    const latestRollupOnChainSuccess = rollupOnChainHistory.find(
+      (rollupOnChainHistory) =>
+        rollupOnChainHistory.transaction.status === ETransactionStatus.Confirmed
+    )?.updatedAt;
+
+    // Rollup different = step(offchain) - step(onchain)
+    const rollupDifferent =
+      BigInt(latestRollupOffChain.step) -
+      BigInt(latestRollupOnChain?.onChainStep || 0n);
+
+    if (rollupDifferent < 0n) {
+      throw new Error(
+        'Rollup different cannot be less than 0, onchain step always lte offchain step'
+      );
+    }
 
     return {
       databaseName,
-      merkleTreeRoot: latestRollupHistory.merkleTreeRoot,
-      merkleTreeRootPrevious: latestRollupHistory.merkleTreeRootPrevious,
-      rollUpDifferent,
-      rollUpState:
-        rollUpDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
-      latestRollupSuccess:
-        rollupOnChainHistory.find(
-          (i) => i.status === EMinaTransactionStatus.Applied
-        )?.createdAt || null,
-      error: latestOnChainRollup.error,
+      merkleRootOnChainNew: latestRollupOnChain?.merkleRootOnChainNew || null,
+      merkleRootOnChainOld: latestRollupOnChain?.merkleRootOnChainOld || null,
+      rollupDifferent,
+      rollupOnChainState:
+        rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+      latestRollupOnChainSuccess: latestRollupOnChainSuccess || null,
     };
   }
 }

@@ -40,6 +40,10 @@ export class DocumentProcessor {
       proofSession
     );
 
+    const merkleRootOld = (
+      await imMerkleTree.getRoot({ session: proofSession })
+    ).toString();
+
     const leafOld = await imMerkleTree.getNode(0, merkleIndex, {
       session: proofSession,
     });
@@ -73,6 +77,7 @@ export class DocumentProcessor {
     const transitionLogObjectId =
       await imModelTransitionLog.collection.insertOne(
         {
+          merkleRootOld,
           merkleRootNew,
           merkleProof,
           leafOld,

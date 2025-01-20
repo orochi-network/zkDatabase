@@ -3,6 +3,7 @@ import { TMerkleProofSerialized } from './merkle-tree';
 import { EDocumentOperation } from './queue';
 
 export type TTransitionLog = {
+  merkleRootOld: string;
   merkleRootNew: string;
   merkleProof: TMerkleProofSerialized[];
   leafOld: string;

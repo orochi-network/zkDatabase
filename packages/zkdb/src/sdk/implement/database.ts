@@ -5,14 +5,17 @@ import {
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TZkProofStatusResponse,
-  TRollupHistoryRequest,
-  TRollupHistoryResponse,
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
   TZkProofResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import {
   ICollection,
@@ -122,31 +125,38 @@ export class Database implements IDatabase {
     ).unwrap();
   }
 
-  async rollUpStart(): Promise<boolean> {
+  async rollUpOnChainStart(): Promise<boolean> {
     return (await this.apiClient.rollup.rollupCreate(this.basicQuery)).unwrap();
   }
 
   async rollUpOnChainHistory(
-    query: TRollupHistoryRequest['query'],
+    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
-  ): Promise<TRollupHistoryResponse> {
+  ): Promise<TRollupOnChainHistoryResponse> {
     return (
-      await this.apiClient.rollup.rollupHistory({
+      await this.apiClient.rollup.rollupOnChainHistory({
         query: { ...this.basicQuery, ...query },
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
   }
 
-  rollUpOnChainStart(): Promise<boolean> {
-    throw new Error('Method not implemented.');
+  async rollUpOffChainHistory(
+    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
+    pagination?: TPagination
+  ): Promise<TRollupOffChainHistoryResponse> {
+    return (
+      await this.apiClient.rollup.rollupOffChainHistory({
+        query: { ...this.basicQuery, ...query },
+        pagination: pagination ?? { limit: 10, offset: 0 },
+      })
+    ).unwrap();
   }
 
-  rollUpOffChainHistory(
-    query: TRollupHistoryRequest['query'],
-    pagination?: TPagination
-  ): Promise<TRollupHistoryResponse> {
-    throw new Error('Method not implemented.');
+  async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
+    return (
+      await this.apiClient.rollup.rollupOnChainState(this.basicQuery)
+    ).unwrap();
   }
 
   async info(): Promise<TDatabaseInfoResponse> {

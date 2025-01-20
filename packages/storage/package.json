@@ -26,7 +26,7 @@
     "lint": "eslint ./src/**/*.ts --fix && prettier . --write"
   },
   "peerDependencies": {
-    "o1js": "^1.9.1",
+    "o1js": "^2.2.0",
     "@orochi-network/framework": "^2.3.22",
     "mongodb": "^6.12.0"
   },
