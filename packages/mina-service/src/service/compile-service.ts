@@ -82,21 +82,19 @@ export const SERVICE_COMPILE = {
             throw new Error('Metadata database not found');
           }
 
-          const vkResult = await zkAppCompiler.verificationKeySet(
+          await zkAppCompiler.verificationKeySet(
             databaseName,
             metadataDatabase.merkleHeight,
             proofSession
           );
 
-          console.log('🚀 ~ vkResult:', vkResult);
-          // Check user active here
-
           const mina = MinaNetwork.getInstance();
           mina.connect(
-            'testnet',
-            'https://api.minascan.io/node/devnet/v1/graphql',
+            config.NETWORK_ID,
+            config.MINA_URL,
             config.BLOCKBERRY_API_KEY
           );
+
           const { error, account } = await mina.getAccount(
             PublicKey.fromBase58(payerAddress)
           );

@@ -13,10 +13,10 @@ const clusterApp = new ClusterApplication();
 
 clusterApp
   .add(SERVICE_COMPILE)
-  // .add(SERVICE_TRANSACTION)
-  // .add(SERVICE_OFFCHAIN_ROLLUP)
-  // .add(SERVICE_OFFCHAIN_ROLLUP)
+  .add(SERVICE_TRANSACTION)
+  .add(SERVICE_OFFCHAIN_ROLLUP)
+  .add(SERVICE_OFFCHAIN_ROLLUP)
   // TODO: Make num of workers configurable instead of hardcoding
-  // .add(newServiceDocument('1'))
-  // .add(newServiceDocument('2'))
+  .add(newServiceDocument('1'))
+  .add(newServiceDocument('2'))
   .start();
