@@ -1,16 +1,22 @@
 import { zkDatabaseConstant } from '@common';
-import { DATABASE_ENGINE } from '@helper';
+import { DATABASE_ENGINE, logger } from '@helper';
 import { EQueueTaskStatus, TDbRecord, TGenericQueue } from '@zkdb/common';
 import {
   ClientSession,
   Filter,
   FindOptions,
   InsertOneOptions,
+  MongoError,
+  MongoServerError,
   OptionalId,
 } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-import { TCompoundSession, withCompoundTransaction } from '../transaction';
+import {
+  TCompoundSession,
+  withCompoundTransaction,
+  withTransaction,
+} from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
 
@@ -89,65 +95,42 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     // Subsequently, tasks stuck in 'Processing' status may remain unretried
     // for extended periods. To mitigate this issue, one solution is to add
     // randomization to the query order to achieve fairer task distribution.
-    const task = await this.collection.findOneAndUpdate(
-      {
-        ...filter,
-        $or: [
-          {
-            status: EQueueTaskStatus.Queued,
-            databaseName: {
-              // FIXME: data races can still happen because of the below nested
-              // query. For example if two workers run this query at the same
-              // time before the outter query is executed, they can both get
-              // the same list of databaseName and acquire the two tasks of one
-              // database in parallel. This is prevented in the merkle tree
-              // worker implementation by checking if the sequence number is
-              // the expected one. For the off chain rollup worker, the
-              // sequence number is also compared with the rollup step in order
-              // to prevent non-sequential processing. However, it'd be better
-              // to have a more correct behavior here. A fix could be to
-              // abstract the whole queue operation (i.e. pop from queue) to
-              // include the sequence number check, or use a distributed lock
-              // like redlock to ensure only one worker can run this query at a
-              // time.
-              $nin: await this.collection.distinct('databaseName', {
-                $or: [
-                  {
-                    status: EQueueTaskStatus.Processing,
-                  },
-                  {
-                    // We should not continue processing tasks for databases
-                    // that have failed tasks in the queue. The latest failed
-                    // task should be resolved manually before we can continue.
-                    status: EQueueTaskStatus.Failed,
-                  },
-                ],
-              }),
+    let task: TDbRecord<TGenericQueue<T>> | null = null;
+
+    try {
+      task = await withTransaction(
+        async (session) =>
+          this.collection.findOneAndUpdate(
+            await this.getQueryCriteria(session, filter),
+            {
+              $set: {
+                status: EQueueTaskStatus.Processing,
+                acquiredAt: new Date(),
+              },
             },
-          },
-          {
-            // Enable retry mechanism for tasks stuck in 'Processing' status
-            // for more than a timeout period.
-            // NOTE: that this is based on the assumption that if the task is
-            // stuck in 'Processing' status for more than a timeout period, it
-            // is likely that the task is cancelled midway and the transaction
-            // is rolled back. Thus the caller of this function should ensure
-            // that every task's operations are contained within a transaction.
-            status: EQueueTaskStatus.Processing,
-            acquiredAt: {
-              $lt: new Date(Date.now() - TASK_TIMEOUT_MS),
-            },
-          },
-        ],
-      },
-      {
-        $set: { status: EQueueTaskStatus.Processing, acquiredAt: new Date() },
-      },
-      {
-        sort: { sequenceNumber: 1 },
-        returnDocument: 'after',
+            {
+              sort: { sequenceNumber: 1 },
+              returnDocument: 'after',
+              session,
+            }
+          ),
+        'proofService'
+      );
+    } catch (e) {
+      // This means the task is already acquired by another worker.
+      // DuplicateKey error
+      // https://www.mongodb.com/docs/manual/reference/error-codes/#mongodb-error-11000
+      if (e instanceof MongoServerError && String(e.code) == '11000') {
+        logger.warning(
+          `Task aquisition conflict due to duplicate key error is ignore, this is expected \
+and has been handled properly. However if this warning appears frequently, it may indicate \
+that the acquisition logic is suboptimal.`
+        );
+        return null;
       }
-    );
+
+      throw e;
+    }
 
     if (task === null) {
       return null;
@@ -204,43 +187,60 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     filter?: Filter<TDbRecord<TGenericQueue<T>>>,
     options?: FindOptions
   ): Promise<TDbRecord<TGenericQueue<T>> | null> {
-    return this.collection.findOne(
-      {
-        ...filter,
-        $or: [
-          {
-            status: EQueueTaskStatus.Queued,
-            databaseName: {
-              $nin: await this.collection.distinct('databaseName', {
+    return withTransaction(async (session) =>
+      this.collection.findOne(await this.getQueryCriteria(session, filter), {
+        sort: { sequenceNumber: 1 },
+        ...options,
+      })
+    );
+  }
+
+  /** Get the filter criteria for the next task in the queue. Accepts an
+   * optional filter object to further refine the criteria. */
+  private async getQueryCriteria<T>(
+    session: ClientSession,
+    filter?: Filter<TDbRecord<TGenericQueue<T>>>
+  ) {
+    return {
+      ...filter,
+      $or: [
+        {
+          status: EQueueTaskStatus.Queued,
+          databaseName: {
+            $nin: await this.collection.distinct(
+              'databaseName',
+              {
                 $or: [
                   {
                     status: EQueueTaskStatus.Processing,
                   },
                   {
-                    // We must not continue processing tasks for databases that
-                    // have failed tasks in the queue. The latest failed task
-                    // should be resolved before we can continue.
+                    // We should not continue processing tasks for databases
+                    // that have failed tasks in the queue. The latest failed
+                    // task should be resolved manually before we can continue.
                     status: EQueueTaskStatus.Failed,
                   },
                 ],
-              }),
-            },
+              },
+              { session }
+            ),
           },
-          {
-            // Enable retry mechanism for tasks stuck in 'Processing' status
-            // for more than a timeout period
-            status: EQueueTaskStatus.Processing,
-            acquiredAt: {
-              $lt: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes
-            },
+        },
+        {
+          // Enable retry mechanism for tasks stuck in 'Processing' status
+          // for more than a timeout period.
+          // NOTE: that this is based on the assumption that if the task is
+          // stuck in 'Processing' status for more than a timeout period, it
+          // is likely that the task is cancelled midway and the transaction
+          // is rolled back. Thus the caller of this function should ensure
+          // that every task's operations are contained within a transaction.
+          status: EQueueTaskStatus.Processing,
+          acquiredAt: {
+            $lt: new Date(Date.now() - TASK_TIMEOUT_MS),
           },
-        ],
-      },
-      {
-        sort: { sequenceNumber: 1 },
-        ...options,
-      }
-    );
+        },
+      ],
+    };
   }
 
   public static async init(queueName: string, session?: ClientSession) {
@@ -260,6 +260,18 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       await collection.createSystemIndex(
         { status: 1, databaseName: 1, createdAt: 1, acquiredAt: 1 },
         { session }
+      );
+      // This partial unique constraint makes sure that only one task is
+      // processed at a time for each database.
+      await collection.createSystemIndex(
+        { databaseName: 1, status: 1 },
+        {
+          unique: true,
+          partialFilterExpression: {
+            status: EQueueTaskStatus.Processing,
+          },
+          session,
+        }
       );
 
       await collection.addTimestampMongoDb({ session });
