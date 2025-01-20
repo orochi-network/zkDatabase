@@ -83,7 +83,6 @@ export const SERVICE_COMPILE = {
           }
 
           await zkAppCompiler.verificationKeySet(
-            databaseName,
             metadataDatabase.merkleHeight,
             proofSession
           );

@@ -1,9 +1,5 @@
 import { logger } from '@helper';
-import {
-  EContractName,
-  TRollupSerializedProof,
-  TVerificationKeySerialized,
-} from '@zkdb/common';
+import { EContractName, TRollupSerializedProof } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
 import { ModelVerificationKey } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
@@ -14,6 +10,7 @@ import {
   NetworkId,
   PrivateKey,
   PublicKey,
+  VerificationKey,
   ZkProgram,
 } from 'o1js';
 
@@ -26,6 +23,29 @@ export class ZkCompile {
     // Set active network
     Mina.setActiveInstance(Mina.Network(this.network));
     // Smart contract map with key is merkleHeight and value is smart contract
+  }
+
+  private static verificationKeyToDBRecord(
+    contractName: EContractName,
+    merkleHeight: number,
+    vk: VerificationKey
+  ) {
+    const { data, hash } = vk;
+    const hashStr = hash.toString();
+    const verificationKeyHash = createHash('sha256')
+      .update(Buffer.from(data, 'base64'))
+      .update(hashStr)
+      .digest('hex');
+
+    return {
+      contractName,
+      merkleHeight,
+      verificationKeyHash,
+      data,
+      hash: hashStr,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
   }
 
   public async getDeployRawTx(
@@ -103,61 +123,51 @@ export class ZkCompile {
   }
 
   public async verificationKeySet(
-    databaseName: string,
     merkleHeight: number,
     session: ClientSession
   ): Promise<boolean> {
     const zkDbProcessor = await ZkDbProcessor.getInstance(merkleHeight);
-
-    const contractVerificationKeySerialized: TVerificationKeySerialized = {
-      data: zkDbProcessor.vkContract.data,
-      hash: zkDbProcessor.vkContract.hash.toString(),
-    };
-
-    const rollupVerificationKeySerialized: TVerificationKeySerialized = {
-      data: zkDbProcessor.vkRollup.data,
-      hash: zkDbProcessor.vkRollup.hash.toString(),
-    };
-
-    // Store smart contract's verification key into database and hashed like hash table for key hash and value
-    // Using SHA-256 hash from 'crypto' to hash verification key
-    const contractVerificationKeyHash = createHash('sha256')
-      .update(Buffer.from(zkDbProcessor.vkContract.data, 'base64'))
-      .update(zkDbProcessor.vkContract.hash.toString())
-      .digest('hex');
-
-    const rollupVerificationKeyHash = createHash('sha256')
-      .update(Buffer.from(zkDbProcessor.vkRollup.data, 'base64'))
-      .update(zkDbProcessor.vkRollup.hash.toString())
-      .digest('hex');
-
     const imVerification = ModelVerificationKey.getInstance();
 
-    // Insert these 2 vk contract & rollup to database
-    const vkInsertResult = await imVerification.insertMany(
-      [
-        {
-          databaseName,
-          contractName: EContractName.Contract,
-          verificationKeyHash: contractVerificationKeyHash,
-          verificationKey: contractVerificationKeySerialized,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          databaseName,
-          contractName: EContractName.Rollup,
-          verificationKeyHash: rollupVerificationKeyHash,
-          verificationKey: rollupVerificationKeySerialized,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-      {
-        session,
-      }
+    const vkContractRecord = ZkCompile.verificationKeyToDBRecord(
+      EContractName.Contract,
+      merkleHeight,
+      zkDbProcessor.vkContract
     );
-    return vkInsertResult.acknowledged;
+    const vkRollupRecord = ZkCompile.verificationKeyToDBRecord(
+      EContractName.Rollup,
+      merkleHeight,
+      zkDbProcessor.vkRollup
+    );
+
+    const vk = (
+      await imVerification
+        .find({
+          merkleHeight,
+          verificationKeyHash: {
+            $in: [
+              vkContractRecord.verificationKeyHash,
+              vkRollupRecord.verificationKeyHash,
+            ],
+          },
+        })
+
+        .toArray()
+    ).map((e) => e.verificationKeyHash);
+
+    const insertList = [vkContractRecord, vkRollupRecord].filter(
+      (e) => !vk.includes(e.verificationKeyHash)
+    );
+
+    if (insertList.length > 0) {
+      // Insert these 2 vk contract & rollup to database
+      const vkInsertResult = await imVerification.insertMany(insertList, {
+        session,
+      });
+      return vkInsertResult.acknowledged;
+    }
+
+    return true;
   }
 
   private ensureTransaction() {

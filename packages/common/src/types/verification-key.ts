@@ -1,12 +1,6 @@
 import { TDbRecord } from './common';
 import { TDatabaseRequest } from './database';
 
-// It's a serialize version of VerificationKey from o1js hash: Field => hash: string
-export type TVerificationKeySerialized = {
-  data: string;
-  hash: string;
-};
-
 export enum EContractName {
   Rollup = 'Rollup',
   Contract = 'Contract',
@@ -17,9 +11,10 @@ export enum EContractName {
 // Since the o1js document too ambiguous
 // Refer to: https://docs.minaprotocol.com/zkapps/o1js-reference/classes/VerificationKey#hash
 export type TZkDbVerificationKey = {
-  databaseName: string;
+  merkleHeight: number;
   verificationKeyHash: string;
-  verificationKey: TVerificationKeySerialized;
+  hash: string;
+  data: string;
   contractName: EContractName;
 };
 
