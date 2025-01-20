@@ -44,7 +44,7 @@ export class DocumentWorker {
   }
 
   public static async run(): Promise<void> {
-    const imDocumentQueue = await Transaction.minaService((session) =>
+    const imDocumentQueue = await Transaction.mina((session) =>
       ModelGenericQueue.getInstance<TDocumentQueuedData>(
         zkDatabaseConstant.globalCollection.documentQueue,
         session
@@ -74,7 +74,7 @@ export class DocumentWorker {
 
         assert(task.sequenceNumber != null, "Task's sequence number is null");
 
-        const trackingSequenceNumber = await Transaction.minaService(
+        const trackingSequenceNumber = await Transaction.mina(
           async (session) => {
             const imModelSequencer = await ModelSequencer.getInstance(
               task.databaseName,
@@ -120,13 +120,13 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
             );
             await DocumentProcessor.onTask(
               acquiredTask,
-              compoundSession.minaService
+              compoundSession.sessionMina
             );
 
             const bumpSeqResult = (
               await ModelSequencer.getInstance(
                 task.databaseName,
-                compoundSession.serverless
+                compoundSession.sessionServerless
               )
             ).collection.findOneAndUpdate(
               {
@@ -144,7 +144,7 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
                 },
               },
               {
-                session: compoundSession.serverless,
+                session: compoundSession.sessionServerless,
                 upsert: true,
                 returnDocument: 'after',
               }

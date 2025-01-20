@@ -106,7 +106,7 @@ const merkleProof = publicWrapper<
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse
 >(JOI_MERKLE_TREE_PROOF_BY_INDEX, async (_root, args) => {
-  return Transaction.minaService(async (session) => {
+  return Transaction.mina(async (session) => {
     const imMerkleTree = await ModelMerkleTree.getInstance(
       args.databaseName,
       session
@@ -130,7 +130,7 @@ const merkleNodeByLevel = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL,
   async (_root, { databaseName, level, pagination }) =>
-    Transaction.minaService((session) =>
+    Transaction.mina((session) =>
       MerkleTree.nodeByLevel(
         databaseName,
         level,
@@ -144,7 +144,7 @@ const merkleTreeInfo = publicWrapper<
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse
 >(JOI_MERKLE_TREE_INFO, async (_root, { databaseName }) =>
-  Transaction.minaService((session) => MerkleTree.info(databaseName, session))
+  Transaction.mina((session) => MerkleTree.info(databaseName, session))
 );
 
 const merkleNodeChildren = publicWrapper<
@@ -153,7 +153,7 @@ const merkleNodeChildren = publicWrapper<
 >(
   JOI_MERKLE_TREE_NODE_CHILDREN,
   async (_root, { databaseName, level, index }) =>
-    Transaction.minaService((session) =>
+    Transaction.mina((session) =>
       MerkleTree.nodeChildren(databaseName, level, index, session)
     )
 );

@@ -25,7 +25,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   private constructor(queueName: string) {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.minaService,
+      DATABASE_ENGINE.dbMina,
       queueName
     );
   }
@@ -248,7 +248,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       TDbRecord<TGenericQueue<unknown>>
     >(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.minaService,
+      DATABASE_ENGINE.dbMina,
       queueName
     );
     if (!(await collection.isExist())) {

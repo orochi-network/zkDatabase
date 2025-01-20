@@ -44,7 +44,7 @@ export class RollupOffChainService {
   public static async run(): Promise<void> {
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const imRollUpQueue = await Transaction.minaService((session) =>
+        const imRollUpQueue = await Transaction.mina((session) =>
           ModelGenericQueue.getInstance<TRollupQueueData>(
             zkDatabaseConstant.globalCollection.rollupOffChainQueue,
             session

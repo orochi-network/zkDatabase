@@ -2,72 +2,71 @@ import { DATABASE_ENGINE, logger } from '@helper';
 import { ClientSession } from 'mongodb';
 
 export type TCompoundSession = {
-  serverless: ClientSession;
-  minaService: ClientSession;
+  sessionServerless: ClientSession;
+  sessionMina: ClientSession;
 };
 
 /**
  * Handles transaction abortion and logs relevant errors.
  */
 export class Transaction {
-  static async minaService<T>(
+  private static async withTransaction<T>(
+    sessionName: keyof TCompoundSession,
+    session: ClientSession,
     callback: (session: ClientSession) => Promise<T>
   ) {
-    const minaSession = DATABASE_ENGINE.minaService.client.startSession();
-
     try {
       // Start and execute the transaction
-      Transaction.start(minaSession);
-      const result = await callback(minaSession);
+      Transaction.start(session);
+      const result = await callback(session);
       // Commit transaction
-      await Transaction.commit(minaSession);
+      await session.commitTransaction();
 
       return result;
     } catch (error) {
       // Handle transaction abort
       // Only attempt to abort if an error occurred and transaction is still active
-      await Transaction.abort(minaSession, 'minaService');
+      await Transaction.abort(session, sessionName);
       throw error;
     } finally {
-      await minaSession.endSession();
+      await session.endSession();
     }
   }
 
-  static async serverless<T>(callback: (session: ClientSession) => Promise<T>) {
-    const serverlessSession = DATABASE_ENGINE.serverless.client.startSession();
+  static async mina<T>(
+    callback: (session: ClientSession) => Promise<T>
+  ): Promise<T> {
+    return Transaction.withTransaction(
+      'sessionMina',
+      DATABASE_ENGINE.dbMina.client.startSession(),
+      callback
+    );
+  }
 
-    try {
-      // Start and execute the transaction
-      Transaction.start(serverlessSession);
-      const result = await callback(serverlessSession);
-      // Commit transaction
-      await Transaction.commit(serverlessSession);
-
-      return result;
-    } catch (error) {
-      // Handle transaction abort
-      // Only attempt to abort if an error occurred and transaction is still active
-      await Transaction.abort(serverlessSession, 'serverless');
-      throw error;
-    } finally {
-      await serverlessSession.endSession();
-    }
+  static async serverless<T>(
+    callback: (session: ClientSession) => Promise<T>
+  ): Promise<T> {
+    return Transaction.withTransaction(
+      'sessionServerless',
+      DATABASE_ENGINE.dbServerless.client.startSession(),
+      callback
+    );
   }
 
   static async compound<T>(
     callback: (session: TCompoundSession) => Promise<T>
   ) {
-    const serverlessSession = DATABASE_ENGINE.serverless.client.startSession();
-    const proofServiceSession =
-      DATABASE_ENGINE.minaService.client.startSession();
+    const sessionServerless =
+      DATABASE_ENGINE.dbServerless.client.startSession();
+    const sessionMina = DATABASE_ENGINE.dbMina.client.startSession();
 
     try {
-      Transaction.start(serverlessSession);
-      Transaction.start(proofServiceSession);
+      Transaction.start(sessionServerless);
+      Transaction.start(sessionMina);
 
       const result = await callback({
-        serverless: serverlessSession,
-        minaService: proofServiceSession,
+        sessionServerless,
+        sessionMina,
       });
 
       // NOTE: (or TODO?) this has a limitation where if the serverless commit
@@ -76,17 +75,17 @@ export class Transaction {
       // MongoDB does not natively support 2PC across different database clusters
       // FIXME: We can implement saga pattern in the future but it too complicated
       // Since we need to pass the undoCallback for undo transaction
-      await Transaction.commit(serverlessSession);
-      await Transaction.commit(proofServiceSession);
+      await sessionServerless.commitTransaction();
+      await sessionMina.commitTransaction();
 
       return result;
     } catch (error) {
-      await Transaction.abort(serverlessSession, 'serverless');
-      await Transaction.abort(proofServiceSession, 'minaService');
+      await Transaction.abort(sessionServerless, 'sessionServerless');
+      await Transaction.abort(sessionMina, 'sessionServerless');
       throw error;
     } finally {
-      await serverlessSession.endSession();
-      await proofServiceSession.endSession();
+      await sessionServerless.endSession();
+      await sessionMina.endSession();
     }
   }
 
@@ -102,13 +101,6 @@ export class Transaction {
   }
 
   /**
-   * Commit a transaction
-   */
-  private static async commit(session: ClientSession): Promise<void> {
-    await session.commitTransaction();
-  }
-
-  /**
    * Safely abort a transaction and logs an error if the abort fail
    */
   private static async abort(
@@ -118,9 +110,12 @@ export class Transaction {
     if (session.inTransaction()) {
       try {
         await session.abortTransaction();
+        logger.debug(
+          `TransactionManager::abort() - Abort success for ${sessionName} session`
+        );
       } catch (abortError) {
         logger.error(
-          `TransactionManager::safelyAbortTransaction() - Abort failed for ${sessionName} session`,
+          `TransactionManager::abort() - Abort failed for ${sessionName} session`,
           abortError
         );
       }

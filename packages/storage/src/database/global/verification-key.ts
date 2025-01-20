@@ -13,7 +13,7 @@ export class ModelVerificationKey extends ModelGeneral<
   private constructor() {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.minaService,
+      DATABASE_ENGINE.dbMina,
       zkDatabaseConstant.globalCollection.verificationKey
     );
   }
@@ -32,7 +32,7 @@ export class ModelVerificationKey extends ModelGeneral<
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TZkDbVerificationKeyRecord>(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.minaService,
+      DATABASE_ENGINE.dbMina,
       zkDatabaseConstant.globalCollection.verificationKey
     );
 

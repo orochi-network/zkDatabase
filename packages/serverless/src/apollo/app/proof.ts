@@ -54,7 +54,7 @@ const zkProofStatus = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    return Transaction.minaService(async (proofSession) => {
+    return Transaction.mina(async (proofSession) => {
       const imRollupQueue =
         await ModelGenericQueue.getInstance<TRollupQueueData>(
           zkDatabaseConstant.globalCollection.rollupOffChainQueue,

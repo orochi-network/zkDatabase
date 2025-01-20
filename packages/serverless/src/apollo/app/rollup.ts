@@ -136,9 +136,7 @@ const rollupOffChainHistory = authorizeWrapper<
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse
 >(JOI_ROLLUP_OFFCHAIN_HISTORY_LIST, async (_root, args) =>
-  Transaction.minaService(async (session) =>
-    Rollup.offChainHistory(args, session)
-  )
+  Transaction.mina(async (session) => Rollup.offChainHistory(args, session))
 );
 
 // Mutation

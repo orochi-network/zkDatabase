@@ -21,6 +21,7 @@ import {
   ModelRollupOnChainHistory,
   ModelSecureStorage,
   ModelTransaction,
+  TCompoundSession,
   Transaction,
 } from '@zkdb/storage';
 import { RedisStore } from 'connect-redis';
@@ -49,16 +50,16 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     await dbProof.connect();
   }
   // For global Model that need to init index first
-  await Transaction.compound(async (session) => {
+  await Transaction.compound(async (compoundSession: TCompoundSession) => {
     // service db
-    await ModelTransaction.init(session.serverless);
-    await ModelUser.init(session.serverless);
-    await ModelMetadataDatabase.init(session.serverless);
-    await ModelRollupOnChainHistory.init(session.serverless);
-    await ModelOwnership.init(session.serverless);
+    await ModelTransaction.init(compoundSession.sessionServerless);
+    await ModelUser.init(compoundSession.sessionServerless);
+    await ModelMetadataDatabase.init(compoundSession.sessionServerless);
+    await ModelRollupOnChainHistory.init(compoundSession.sessionServerless);
+    await ModelOwnership.init(compoundSession.sessionServerless);
     // proof db
-    await ModelSecureStorage.init(session.minaService);
-    await ModelRollupOffChain.init(session.minaService);
+    await ModelSecureStorage.init(compoundSession.sessionMina);
+    await ModelRollupOffChain.init(compoundSession.sessionMina);
   });
 
   MinaNetwork.getInstance().connect(

@@ -13,7 +13,7 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
   }
@@ -30,7 +30,7 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
       WithoutId<TRollupOnChainHistoryRecord>
     >(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
     /*
