@@ -54,7 +54,7 @@ export class Transaction {
   }
 
   static async compound<T>(
-    callback: (session: TCompoundSession) => Promise<T>
+    callback: (compoundSession: TCompoundSession) => Promise<T>
   ) {
     const sessionServerless =
       DATABASE_ENGINE.dbServerless.client.startSession();

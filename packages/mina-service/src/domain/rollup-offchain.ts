@@ -30,10 +30,9 @@ type TRollupUpdateParam = TRollupInitParam & {
 export class RollupOffChain {
   public static async rollup(
     task: TRollupQueueData,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ): Promise<OptionalId<TRollupOffChainRecord>> {
-    const { sessionServerless, sessionMina } = session;
-
+    const { sessionServerless, sessionMina } = compoundSession;
     const imMetadataDatabase = ModelMetadataDatabase.getInstance();
 
     const metadataDatabase = await imMetadataDatabase.findOne(

@@ -492,8 +492,9 @@ in database '${databaseName}'.`
 
   static async merkleProofStatus(
     permissionParam: TPermissionSudo<TParamDocument>,
-    { sessionServerless, sessionMina }: TCompoundSession
+    compoundSession: TCompoundSession
   ): Promise<EQueueTaskStatus> {
+    const { sessionServerless, sessionMina } = compoundSession;
     const { databaseName, collectionName, actor, docId } = permissionParam;
 
     if (

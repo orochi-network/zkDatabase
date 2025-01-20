@@ -13,6 +13,7 @@ import {
   ModelRollupOnChainHistory,
   ModelSecureStorage,
   ModelTransaction,
+  TCompoundSession,
   Transaction,
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
@@ -46,7 +47,9 @@ export const SERVICE_COMPILE = {
     });
 
     transactionWorker.start(async (job: Job<TTransactionQueue>) =>
-      Transaction.compound(async ({ sessionServerless, sessionMina }) => {
+      Transaction.compound(async (compoundSession: TCompoundSession) => {
+        const { sessionServerless, sessionMina } = compoundSession;
+
         // Init model transaction to update status
         const imTransaction = ModelTransaction.getInstance();
         // Init model secure storage to store encrypted privatekey or get privatekey to rollup

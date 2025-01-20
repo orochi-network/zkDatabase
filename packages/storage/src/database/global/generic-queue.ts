@@ -75,7 +75,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   public async acquireNextTaskInQueue<R>(
     callback: (
       task: TDbRecord<TGenericQueue<T>>,
-      session: TCompoundSession
+      compoundSession: TCompoundSession
     ) => Promise<R>,
     filter?: Filter<TDbRecord<TGenericQueue<T>>>,
     removeTaskOnSuccess = false
