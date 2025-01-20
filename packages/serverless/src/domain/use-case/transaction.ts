@@ -140,9 +140,9 @@ export class Transaction {
       throw new Error(`Database ${databaseName} does not exist`);
     }
     /*
-      Contract đã đc deploy -> Throw error
-      Contract chưa đc deploy, không có data -> add vào queue, return null (cần make sure là không có trong queue)
-      Contract chưa đc deploy, có data -> return data
+      Contract already deploy -> Throw error
+      Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
+      Contract not deploy yet, have data -> return data
     */
     const imTransaction = ModelTransaction.getInstance();
     if (transactionType === ETransactionType.Deploy) {
@@ -161,7 +161,7 @@ export class Transaction {
         );
       }
 
-      // Contract chưa đc deploy, không có data -> add vào queue, return null (cần make sure là không có trong queue)
+      // Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
       if (!transactionDeploy) {
         await Transaction.enqueue(
           databaseName,
