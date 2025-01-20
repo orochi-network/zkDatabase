@@ -99,6 +99,7 @@ export class ApiClient {
       },
     });
   }
+
   public static newInstance(url: string, storage: Storage): IApiClient {
     const api = new ApiClient(url, storage);
     return {
