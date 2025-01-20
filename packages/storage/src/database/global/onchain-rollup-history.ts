@@ -1,56 +1,48 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import {
-  TRollupHistoryRecord,
-  TRollupHistoryRecordNullable,
-} from '@zkdb/common';
+import { TRollupOnChainHistoryRecord } from '@zkdb/common';
 import { ClientSession, OptionalId, WithoutId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
-export class ModelRollupHistory extends ModelGeneral<
-  OptionalId<TRollupHistoryRecordNullable>
+export class ModelRollupOnChainHistory extends ModelGeneral<
+  OptionalId<TRollupOnChainHistoryRecord>
 > {
-  private static instance: ModelRollupHistory;
+  private static instance: ModelRollupOnChainHistory;
 
   private constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
   }
 
   public static getInstance() {
-    if (!ModelRollupHistory.instance) {
-      this.instance = new ModelRollupHistory();
+    if (!ModelRollupOnChainHistory.instance) {
+      this.instance = new ModelRollupOnChainHistory();
     }
     return this.instance;
   }
 
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<
-      WithoutId<TRollupHistoryRecord>
+      WithoutId<TRollupOnChainHistoryRecord>
     >(
       zkDatabaseConstant.globalDatabase,
       DATABASE_ENGINE.serverless,
-      zkDatabaseConstant.globalCollection.rollupHistory
+      zkDatabaseConstant.globalCollection.rollupOnChainHistory
     );
     /*
       databaseName: string;
       merkleTreeRoot: string;
       merkleTreeRootPrevious: string;
       transactionObjectId: ObjectId;
-      proofObjectId: ObjectId;
     */
     if (!(await collection.isExist())) {
       await collection.createSystemIndex({ databaseName: 1 }, { session });
-      await collection.createSystemIndex({ merkleTreeRoot: 1 }, { session });
-      await collection.createSystemIndex(
-        { merkleTreeRootPrevious: 1 },
-        { session }
-      );
-      await collection.createSystemIndex({ proofObjectId: 1 }, { session });
+      await collection.createSystemIndex({ merkleRootNew: 1 }, { session });
+      await collection.createSystemIndex({ merkleRootOld: 1 }, { session });
       await collection.createSystemIndex(
         { transactionObjectId: 1 },
         { unique: true, session }

@@ -9,7 +9,7 @@ import { MinaNetwork, ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
-  ModelRollupOnChain,
+  ModelRollupOnChainHistory,
   ModelTransaction,
   withTransaction,
 } from '@zkdb/storage';
@@ -199,7 +199,6 @@ export const SERVICE_TRANSACTION = {
                       updatedTransaction?.transactionType ===
                       ETransactionType.Rollup
                     ) {
-                      const imRollupOnChain = ModelRollupOnChain.getInstance();
                       // Insert on chain info
                       // NOTE: Do get onchain data from smart contract or we get from transaction
                       const metadataDatabase = await imMetadataDatabase.findOne(
@@ -221,16 +220,19 @@ export const SERVICE_TRANSACTION = {
                           PublicKey.fromBase58(metadataDatabase.appPublicKey)
                         );
 
-                      await imRollupOnChain.insertOne({
-                        step: zkDbContract.step.get().toBigInt(),
-                        error: zkAppTx.failures.join(' '),
-                        txHash: transaction.txHash,
-                        databaseName: updatedTransaction.databaseName,
-                        status: zkAppTx.txStatus as EMinaTransactionStatus,
-                        // Don't use getCurrentTime, We want to since with transaction model
-                        createdAt: updatedTransaction.createdAt,
-                        updatedAt: updatedTransaction.updatedAt,
-                      });
+                      await ModelRollupOnChainHistory.getInstance().updateOne(
+                        {
+                          databaseName: updatedTransaction.databaseName,
+                          transactionObjectId: transaction._id,
+                        },
+                        {
+                          $set: {
+                            step: zkDbContract.step.get().toBigInt(),
+                            updatedAt: new Date(),
+                          },
+                        },
+                        { session }
+                      );
                     } else if (
                       updatedTransaction?.transactionType ===
                       ETransactionType.Deploy
@@ -319,6 +321,22 @@ export const SERVICE_TRANSACTION = {
                     ) {
                       return;
                     }
+
+                    await ModelRollupOnChainHistory.getInstance().updateOne(
+                      {
+                        databaseName: updatedTransaction.databaseName,
+                        transactionObjectId: transaction._id,
+                      },
+                      {
+                        $set: {
+                          error: zkAppTx.failures.join(' '),
+                          updatedAt: new Date(),
+                        },
+                      },
+                      {
+                        session,
+                      }
+                    );
 
                     await imMetadataDatabase.updateOne(
                       {

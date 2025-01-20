@@ -96,8 +96,20 @@ export class ModelGenericQueue<T> extends ModelGeneral<
           {
             status: EQueueTaskStatus.Queued,
             databaseName: {
-              // TODO: can we do nested query instead of two queries for this?
-              // not sure if mongodb supports that
+              // FIXME: data races can still happen because of the below nested
+              // query. For example if two workers run this query at the same
+              // time before the outter query is executed, they can both get
+              // the same list of databaseName and acquire the two tasks of one
+              // database in parallel. This is prevented in the merkle tree
+              // worker implementation by checking if the sequence number is
+              // the expected one. For the off chain rollup worker, the
+              // sequence number is also compared with the rollup step in order
+              // to prevent non-sequential processing. However, it'd be better
+              // to have a more correct behavior here. A fix could be to
+              // abstract the whole queue operation (i.e. pop from queue) to
+              // include the sequence number check, or use a distributed lock
+              // like redlock to ensure only one worker can run this query at a
+              // time.
               $nin: await this.collection.distinct('databaseName', {
                 $or: [
                   {
@@ -107,10 +119,6 @@ export class ModelGenericQueue<T> extends ModelGeneral<
                     // We should not continue processing tasks for databases
                     // that have failed tasks in the queue. The latest failed
                     // task should be resolved manually before we can continue.
-                    // NOTE: that if the sequence number check for task
-                    // ordering is implemented correctly by the caller, this is
-                    // still helpful since it prevents acquiring a non-eligible
-                    // task.
                     status: EQueueTaskStatus.Failed,
                   },
                 ],

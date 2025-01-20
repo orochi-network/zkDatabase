@@ -22,7 +22,7 @@ async function run() {
 
   if (history?.rollUpState === ERollupState.Outdated) {
     // Create a rollup, this time will take time in background so need to write a polling function
-    await zkdb.db(DB_NAME).rollUpStart();
+    await zkdb.db(DB_NAME).rollUpOnChainStart();
   }
 
   const draftTransaction = await zkdb
