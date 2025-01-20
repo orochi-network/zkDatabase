@@ -1,12 +1,17 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE, logger } from '@helper';
-import { EQueueTaskStatus, TDbRecord, TGenericQueue } from '@zkdb/common';
+import {
+  EQueueTaskStatus,
+  TDbRecord,
+  TDocumentQueuedData,
+  TGenericQueue,
+  TRollupQueueData,
+} from '@zkdb/common';
 import {
   ClientSession,
   Filter,
   FindOptions,
   InsertOneOptions,
-  MongoError,
   MongoServerError,
   OptionalId,
 } from 'mongodb';
@@ -19,6 +24,16 @@ import {
 } from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
+
+export enum EQueueType {
+  DocumentQueue,
+  RollupOffChainQueue,
+}
+
+type TMapQueueTypeToData = {
+  [EQueueType.DocumentQueue]: TDocumentQueuedData;
+  [EQueueType.RollupOffChainQueue]: TRollupQueueData;
+};
 
 /** Un upgraded version of [ModelQueueTask] that can be used for any type of
  * queue. */
@@ -39,15 +54,23 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   /** Session is required to avoid concurrency issues such as write conflict
    * while initializing the collection (create index, etc.) and writing to the
    * collection at the same time. */
-  public static async getInstance<T>(
-    queueName: string,
+  public static async getInstance<Q extends EQueueType>(
+    queueType: Q,
     session: ClientSession
-  ): Promise<ModelGenericQueue<T>> {
+  ): Promise<ModelGenericQueue<TMapQueueTypeToData[Q]>> {
+    const queueName =
+      queueType === EQueueType.DocumentQueue
+        ? zkDatabaseConstant.globalCollection.documentQueue
+        : zkDatabaseConstant.globalCollection.rollupOffChainQueue;
+
     if (!this.instance.has(queueName)) {
       this.instance.set(queueName, new ModelGenericQueue(queueName));
-      await ModelGenericQueue.init(queueName, session);
+      await ModelGenericQueue.init(queueType, queueName, session);
     }
-    return this.instance.get(queueName) as ModelGenericQueue<T>;
+
+    return this.instance.get(queueName) as ModelGenericQueue<
+      TMapQueueTypeToData[Q]
+    >;
   }
 
   public async queueTask(
@@ -243,7 +266,11 @@ that the acquisition logic is suboptimal.`
     };
   }
 
-  public static async init(queueName: string, session?: ClientSession) {
+  public static async init(
+    queueType: EQueueType,
+    queueName: string,
+    session?: ClientSession
+  ) {
     const collection = ModelCollection.getInstance<
       TDbRecord<TGenericQueue<unknown>>
     >(
@@ -273,6 +300,17 @@ that the acquisition logic is suboptimal.`
           session,
         }
       );
+
+      switch (queueType) {
+        case EQueueType.DocumentQueue:
+          await collection.createSystemIndex({
+            databaseName: 1,
+            'data.docId': 1,
+          });
+          break;
+        case EQueueType.RollupOffChainQueue:
+          break;
+      }
 
       await collection.addTimestampMongoDb({ session });
     }

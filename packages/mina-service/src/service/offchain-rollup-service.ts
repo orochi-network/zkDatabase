@@ -12,13 +12,12 @@
 
 import { RollupOffChain } from '@domain';
 import { Backoff, config, logger } from '@helper';
-import { TRollupQueueData } from '@zkdb/common';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelRollupOffChain,
   withTransaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 
 // The duration to wait before exiting the service after a crash to prevent a
@@ -46,8 +45,8 @@ export class RollupOffChainService {
       async () => {
         const imRollUpQueue = await withTransaction(
           (session) =>
-            ModelGenericQueue.getInstance<TRollupQueueData>(
-              zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+            ModelGenericQueue.getInstance(
+              EQueueType.RollupOffChainQueue,
               session
             ),
           'proofService'

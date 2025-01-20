@@ -12,13 +12,13 @@ import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelSequencer,
   withTransaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import assert from 'node:assert';
-import { ESequencer, TDocumentQueuedData } from '@zkdb/common';
+import { ESequencer } from '@zkdb/common';
 import { LoggerLoader } from '@orochi-network/framework';
 
 let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
@@ -46,10 +46,7 @@ export class DocumentWorker {
   public static async run(): Promise<void> {
     const imDocumentQueue = await withTransaction(
       (session) =>
-        ModelGenericQueue.getInstance<TDocumentQueuedData>(
-          zkDatabaseConstant.globalCollection.documentQueue,
-          session
-        ),
+        ModelGenericQueue.getInstance(EQueueType.DocumentQueue, session),
       'proofService'
     );
 

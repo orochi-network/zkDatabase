@@ -17,7 +17,6 @@ import {
   ESequencer,
   PERMISSION_DEFAULT,
   TDocumentField,
-  TDocumentQueuedData,
   TDocumentRecordNullable,
   TPagination,
   TParamCollection,
@@ -27,17 +26,17 @@ import {
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
+  EQueueType,
   ModelGenericQueue,
   ModelSequencer,
   TCompoundSession,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { logger } from '@helper';
 import { FilterCriteria, parseQuery } from '../utils';
-import { DocumentSchema } from './document-schema';
-import { PermissionSecurity } from './permission-security';
-import { Prover } from './prover';
+import { DocumentSchema } from './document-schema.js';
+import { PermissionSecurity } from './permission-security.js';
+import { Prover } from './prover.js';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
@@ -515,14 +514,14 @@ in database '${databaseName}'.`
       throw new Error(`Document metadata with docId '${docId}' not found.`);
     }
 
-    const imDocumentQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        proofService
-      );
+    const imDocumentQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      proofService
+    );
 
     const queuedTaskForThisDocument = await imDocumentQueue.findOne(
       {
+        databaseName,
         data: {
           docId,
         },
