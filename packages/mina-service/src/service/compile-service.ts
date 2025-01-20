@@ -219,22 +219,14 @@ export const SERVICE_COMPILE = {
           } catch (error) {
             logger.error(`Rollup transaction error: `, error);
 
-            // Remove rollup history with transactionObjectId provided before
-            // If not remove it will generate new rollup history without transaction doc
-            // @TODO: Query rollup history must filter all failed
-            await ModelRollupOnChainHistory.getInstance().updateOne(
-              {
-                databaseName,
-                transactionObjectId,
-                proofObjectId: proofOffChain._id,
-              },
-              {
-                status: ETransactionStatus.Failed,
-                databaseName,
-                transactionObjectId,
-                proofObjectId: proofOffChain._id,
-              }
-            );
+            // Remove rollup history with transactionObjectId provided
+            // If not remove it will generate new rollup history with broken link to given transaction
+            // @TODO: Use our own Queue, since we can have ObjectId duplication with Redis Queue
+            await ModelRollupOnChainHistory.getInstance().deleteOne({
+              databaseName,
+              transactionObjectId,
+              proofObjectId: proofOffChain._id,
+            });
 
             throw error;
           }
