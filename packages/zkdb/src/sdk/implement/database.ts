@@ -161,15 +161,9 @@ export class Database implements IDatabase {
     ).unwrap();
   }
 
-  async verificationKey(
-    contractName: EContractName
-  ): Promise<TVerificationKeyResponse> {
-    // NOTE: We can return a deserialized VK for user
+  async verificationKey(): Promise<TVerificationKeyResponse> {
     return (
-      await this.apiClient.db.dbVerificationKey({
-        ...this.basicQuery,
-        contractName,
-      })
+      await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
   }
 

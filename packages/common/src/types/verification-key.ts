@@ -8,8 +8,8 @@ export type TVerificationKeySerialized = {
 };
 
 export enum EContractName {
-  VkRollup = 'VkRollup',
-  VkContract = 'VkContract',
+  Rollup = 'Rollup',
+  Contract = 'Contract',
 }
 
 // NOTE: Consider does Hash from VerificationKey is a hash of the VerificationKey itself or not
@@ -25,7 +25,9 @@ export type TZkDbVerificationKey = {
 
 export type TZkDbVerificationKeyRecord = TDbRecord<TZkDbVerificationKey>;
 
-export type TVerificationKeyRequest = Pick<TDatabaseRequest, 'databaseName'> &
-  Pick<TZkDbVerificationKey, 'contractName'>;
+export type TVerificationKeyRequest = Pick<TDatabaseRequest, 'databaseName'>;
 
-export type TVerificationKeyResponse = TZkDbVerificationKeyRecord | null;
+export type TVerificationKeyResponse = Record<
+  EContractName,
+  TZkDbVerificationKeyRecord
+> | null;

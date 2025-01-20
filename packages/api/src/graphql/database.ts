@@ -123,22 +123,8 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query DbVerificationKey(
-        $databaseName: String!
-        $contractName: ContractName!
-      ) {
-        dbVerificationKey(
-          databaseName: $databaseName
-          contractName: $contractName
-        ) {
-          databaseName
-          verificationKeyHash
-          verificationKey {
-            data
-            hash
-          }
-          contractName
-        }
+      query dbVerificationKey($databaseName: String!) {
+        dbVerificationKey(databaseName: $databaseName)
       }
     `,
     (data) => data.dbVerificationKey

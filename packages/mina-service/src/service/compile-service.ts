@@ -6,6 +6,7 @@ import {
   ETransactionType,
   TTransactionQueue,
 } from '@zkdb/common';
+import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
@@ -18,7 +19,7 @@ import {
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
 import { ObjectId } from 'mongodb';
-import { PrivateKey } from 'o1js';
+import { PrivateKey, PublicKey } from 'o1js';
 
 export const SERVICE_COMPILE = {
   clusterName: 'compile',
@@ -81,6 +82,30 @@ export const SERVICE_COMPILE = {
             throw new Error('Metadata database not found');
           }
 
+          const vkResult = await zkAppCompiler.verificationKeySet(
+            databaseName,
+            metadataDatabase.merkleHeight,
+            proofSession
+          );
+
+          console.log('🚀 ~ vkResult:', vkResult);
+          // Check user active here
+
+          const mina = MinaNetwork.getInstance();
+          mina.connect(
+            'testnet',
+            'https://api.minascan.io/node/devnet/v1/graphql',
+            config.BLOCKBERRY_API_KEY
+          );
+          const { error, account } = await mina.getAccount(
+            PublicKey.fromBase58(payerAddress)
+          );
+
+          if (!account || error) {
+            logger.error(error);
+            return;
+          }
+
           // We need to use if..else-if..else to sure type MUST be Deploy/Rollup
           if (transactionType === ETransactionType.Deploy) {
             const zkAppPrivateKey = PrivateKey.random();
@@ -91,7 +116,6 @@ export const SERVICE_COMPILE = {
             ).toString('base64');
 
             const transactionRaw = await zkAppCompiler.getDeployRawTx(
-              databaseName,
               payerAddress,
               zkAppPrivateKey,
               metadataDatabase.merkleHeight
@@ -153,7 +177,7 @@ export const SERVICE_COMPILE = {
             );
 
             if (!privateKey) {
-              throw Error(
+              throw new Error(
                 `Private key of database ${databaseName} has not been found`
               );
             }
@@ -216,7 +240,7 @@ export const SERVICE_COMPILE = {
                 }
               );
             } catch (error) {
-              logger.error(`Rollup transaction error: `, error);
+              logger.error('Rollup transaction error: ', error);
 
               // Remove rollup history with transactionObjectId provided before
               // If not remove it will generate new rollup history without transaction doc

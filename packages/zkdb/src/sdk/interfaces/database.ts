@@ -83,7 +83,5 @@ export interface IDatabase {
   rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
 
   // Verification key
-  verificationKey(
-    contractName: EContractName
-  ): Promise<TVerificationKeyResponse>;
+  verificationKey(): Promise<TVerificationKeyResponse>;
 }
