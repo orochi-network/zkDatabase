@@ -10,11 +10,12 @@ import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
-  ModelRollupOnChainHistory,
   ModelRollupOffChain,
+  ModelRollupOnChainHistory,
   ModelSecureStorage,
   ModelTransaction,
-  withCompoundTransaction,
+  TCompoundSession,
+  Transaction,
   ZKDB_TRANSACTION_QUEUE,
 } from '@zkdb/storage';
 import { Job } from 'bullmq';
@@ -47,75 +48,174 @@ export const SERVICE_COMPILE = {
     });
 
     transactionWorker.start(async (job: Job<TTransactionQueue>) =>
-      withCompoundTransaction(
-        async ({ serverless: session, proofService: proofSession }) => {
-          // Init model transaction to update status
-          const imTransaction = ModelTransaction.getInstance();
-          // Init model secure storage to store encrypted privatekey or get privatekey to rollup
-          const imSecureStorage = ModelSecureStorage.getInstance();
+      Transaction.compound(async (compoundSession: TCompoundSession) => {
+        const { sessionServerless, sessionMina } = compoundSession;
 
-          const {
-            transactionObjectId,
-            payerAddress,
+        // Init model transaction to update status
+        const imTransaction = ModelTransaction.getInstance();
+        // Init model secure storage to store encrypted privatekey or get privatekey to rollup
+        const imSecureStorage = ModelSecureStorage.getInstance();
+
+        const {
+          transactionObjectId,
+          payerAddress,
+          databaseName,
+          transactionType,
+        } = job.data;
+
+        if (!payerAddress) {
+          throw new Error(
+            `Payer not found with transaction ${transactionObjectId}`
+          );
+        }
+
+        const imMetadataDatabase = ModelMetadataDatabase.getInstance();
+
+        const metadataDatabase = await imMetadataDatabase.findOne(
+          {
             databaseName,
-            transactionType,
-          } = job.data;
-
-          if (!payerAddress) {
-            throw new Error(
-              `Payer not found with transaction ${transactionObjectId}`
-            );
+          },
+          {
+            session: sessionServerless,
           }
+        );
 
-          const imMetadataDatabase = ModelMetadataDatabase.getInstance();
+        if (!metadataDatabase) {
+          throw new Error('Metadata database not found');
+        }
 
-          const metadataDatabase = await imMetadataDatabase.findOne(
+        await zkAppCompiler.verificationKeySet(
+          metadataDatabase.merkleHeight,
+          sessionMina
+        );
+
+        const mina = MinaNetwork.getInstance();
+        mina.connect(
+          config.NETWORK_ID,
+          config.MINA_URL,
+          config.BLOCKBERRY_API_KEY
+        );
+
+        const { error, account } = await mina.getAccount(
+          PublicKey.fromBase58(payerAddress)
+        );
+
+        if (!account || error) {
+          logger.error(error);
+          return;
+        }
+
+        // We need to use if..else-if..else to sure type MUST be Deploy/Rollup
+        if (transactionType === ETransactionType.Deploy) {
+          const zkAppPrivateKey = PrivateKey.random();
+
+          const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
+            Buffer.from(zkAppPrivateKey.toBase58(), 'utf-8'),
+            Buffer.from(config.SERVICE_SECRET, 'base64')
+          ).toString('base64');
+
+          const transactionRaw = await zkAppCompiler.getDeployRawTx(
+            payerAddress,
+            zkAppPrivateKey,
+            metadataDatabase.merkleHeight
+          );
+
+          // Update transaction status and add transaction raw
+          await imTransaction.updateOne(
+            {
+              _id: new ObjectId(transactionObjectId),
+              databaseName,
+              transactionType: ETransactionType.Deploy,
+            },
+            {
+              $set: {
+                status: ETransactionStatus.Unsigned,
+                transactionRaw,
+                updatedAt: new Date(),
+                createdAt: new Date(),
+              },
+            },
+            { session: sessionServerless, upsert: true }
+          );
+          // Update publicKey for database metadata
+          await imMetadataDatabase.updateOne(
+            { databaseName },
+            {
+              $set: {
+                appPublicKey: zkAppPrivateKey.toPublicKey().toBase58(),
+                // @TODO: add EDeployStatus Undeploy, Deploying, Deployed, Fail
+                deployStatus: ETransactionStatus.Unsigned,
+              },
+            },
+            { session: sessionServerless }
+          );
+
+          // Upsert to database when we have private key
+          await imSecureStorage.updateOne(
             {
               databaseName,
             },
             {
-              session,
+              $set: {
+                privateKey: encryptedZkAppPrivateKey,
+                publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
+                databaseName,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            },
+            { upsert: true, session: sessionMina }
+          );
+        } else if (transactionType === ETransactionType.Rollup) {
+          const privateKey = await imSecureStorage.findOne(
+            {
+              databaseName,
+            },
+            {
+              session: sessionMina,
             }
           );
 
-          if (!metadataDatabase) {
-            throw new Error('Metadata database not found');
+          if (!privateKey) {
+            throw Error(
+              `Private key of database ${databaseName} has not been found`
+            );
+          }
+          // storing encryptedData:
+          const decryptedPrivateKey = EncryptionKey.decrypt(
+            Buffer.from(privateKey.privateKey, 'base64'),
+            Buffer.from(config.SERVICE_SECRET, 'base64')
+          ).toString();
+
+          const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
+
+          if (
+            zkAppPrivateKey.toPublicKey().toBase58() !==
+            metadataDatabase.appPublicKey
+          ) {
+            throw new Error('Mismatch between privateKey and publicKey');
           }
 
-          await zkAppCompiler.verificationKeySet(
-            metadataDatabase.merkleHeight,
-            proofSession
+          const proofOffChain = await ModelRollupOffChain.getInstance().findOne(
+            { databaseName },
+            {
+              session: sessionMina,
+              sort: {
+                createdAt: -1,
+              },
+            }
           );
 
-          const mina = MinaNetwork.getInstance();
-          mina.connect(
-            config.NETWORK_ID,
-            config.MINA_URL,
-            config.BLOCKBERRY_API_KEY
-          );
-
-          const { error, account } = await mina.getAccount(
-            PublicKey.fromBase58(payerAddress)
-          );
-
-          if (!account || error) {
-            logger.error(error);
-            return;
+          if (!proofOffChain) {
+            throw new Error(`Proof for ${databaseName} not found`);
           }
 
-          // We need to use if..else-if..else to sure type MUST be Deploy/Rollup
-          if (transactionType === ETransactionType.Deploy) {
-            const zkAppPrivateKey = PrivateKey.random();
-
-            const encryptedZkAppPrivateKey = EncryptionKey.encrypt(
-              Buffer.from(zkAppPrivateKey.toBase58(), 'utf-8'),
-              Buffer.from(config.SERVICE_SECRET, 'base64')
-            ).toString('base64');
-
-            const transactionRaw = await zkAppCompiler.getDeployRawTx(
+          try {
+            const transactionRaw = await zkAppCompiler.getRollupRawTx(
               payerAddress,
               zkAppPrivateKey,
-              metadataDatabase.merkleHeight
+              metadataDatabase.merkleHeight,
+              proofOffChain.proof
             );
 
             // Update transaction status and add transaction raw
@@ -123,7 +223,7 @@ export const SERVICE_COMPILE = {
               {
                 _id: new ObjectId(transactionObjectId),
                 databaseName,
-                transactionType: ETransactionType.Deploy,
+                transactionType: ETransactionType.Rollup,
               },
               {
                 $set: {
@@ -133,129 +233,32 @@ export const SERVICE_COMPILE = {
                   createdAt: new Date(),
                 },
               },
-              { session, upsert: true }
-            );
-            // Update publicKey for database metadata
-            await imMetadataDatabase.updateOne(
-              { databaseName },
               {
-                $set: {
-                  appPublicKey: zkAppPrivateKey.toPublicKey().toBase58(),
-                  deployStatus: ETransactionStatus.Unsigned,
-                },
-              },
-              { session }
-            );
-
-            // Upsert to database when we have private key
-            await imSecureStorage.updateOne(
-              {
-                databaseName,
-              },
-              {
-                $set: {
-                  privateKey: encryptedZkAppPrivateKey,
-                  publicKey: zkAppPrivateKey.toPublicKey().toBase58(),
-                  databaseName,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                },
-              },
-              { upsert: true, session: proofSession }
-            );
-          } else if (transactionType === ETransactionType.Rollup) {
-            const privateKey = await imSecureStorage.findOne(
-              {
-                databaseName,
-              },
-              {
-                session: proofSession,
+                session: sessionServerless,
+                upsert: true,
               }
             );
+          } catch (error) {
+            logger.error(`Rollup transaction error: `, error);
 
-            if (!privateKey) {
-              throw new Error(
-                `Private key of database ${databaseName} has not been found`
-              );
-            }
-            // storing encryptedData:
-            const decryptedPrivateKey = EncryptionKey.decrypt(
-              Buffer.from(privateKey.privateKey, 'base64'),
-              Buffer.from(config.SERVICE_SECRET, 'base64')
-            ).toString();
+            // Remove rollup history with transactionObjectId provided
+            // If not remove it will generate new rollup history with broken link to given transaction
+            // @TODO: Use our own Queue, since we can have ObjectId duplication with Redis Queue
+            await ModelRollupOnChainHistory.getInstance().deleteOne({
+              databaseName,
+              transactionObjectId,
+              proofObjectId: proofOffChain._id,
+            });
 
-            const zkAppPrivateKey = PrivateKey.fromBase58(decryptedPrivateKey);
-
-            if (
-              zkAppPrivateKey.toPublicKey().toBase58() !==
-              metadataDatabase.appPublicKey
-            ) {
-              throw new Error('Mismatch between privateKey and publicKey');
-            }
-
-            const proofOffChain =
-              await ModelRollupOffChain.getInstance().findOne(
-                { databaseName },
-                {
-                  session: proofSession,
-                  sort: {
-                    createdAt: -1,
-                  },
-                }
-              );
-
-            if (!proofOffChain) {
-              throw new Error(`Proof for ${databaseName} not found`);
-            }
-
-            try {
-              const transactionRaw = await zkAppCompiler.getRollupRawTx(
-                payerAddress,
-                zkAppPrivateKey,
-                metadataDatabase.merkleHeight,
-                proofOffChain.proof
-              );
-
-              // Update transaction status and add transaction raw
-              await imTransaction.updateOne(
-                {
-                  _id: new ObjectId(transactionObjectId),
-                  databaseName,
-                  transactionType: ETransactionType.Rollup,
-                },
-                {
-                  $set: {
-                    status: ETransactionStatus.Unsigned,
-                    transactionRaw,
-                    updatedAt: new Date(),
-                    createdAt: new Date(),
-                  },
-                },
-                {
-                  session,
-                  upsert: true,
-                }
-              );
-            } catch (error) {
-              logger.error('Rollup transaction error: ', error);
-
-              // Remove rollup history with transactionObjectId provided before
-              // If not remove it will generate new rollup history without transaction doc
-              const imRollupHistory = ModelRollupOnChainHistory.getInstance();
-              await imRollupHistory.deleteOne({
-                databaseName,
-                transactionObjectId,
-                proofObjectId: proofOffChain._id,
-              });
-
-              throw error;
-            }
-          } else {
-            // Show what transaction type that unsupported and not suppose to be
-            throw new Error(`Unsupported transaction ${transactionType}`);
+            throw error;
           }
+        } else {
+          // Show what transaction type that unsupported and not suppose to be
+          throw new Error(`Unsupported transaction ${transactionType}`);
         }
-      )
+      })
     );
   },
 };
+
+export default SERVICE_COMPILE;

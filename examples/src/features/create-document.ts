@@ -1,4 +1,14 @@
+import { Schema } from '@zkdb/common';
+import { CircuitString, UInt32 } from 'o1js';
 import { ZkDatabase } from 'zkdb';
+
+class Book extends Schema.create({
+  name: CircuitString,
+  author: CircuitString,
+  release: UInt32,
+}) {}
+
+export type TBook = typeof Book;
 
 // In reality you better to encrypt your private key and these information
 // It will be better if your load it from .env file
@@ -21,11 +31,14 @@ await zkdb.auth.signIn();
 // Create new instance of `db_test`
 const dbTest = zkdb.db('db_test');
 
-// Check for database existence,
-// if database isn't exist create a new data with the capacity of 2^31
-if (!(await dbTest.exist())) {
-  await dbTest.create({ merkleHeight: 32 });
-}
+// Create new instance of collection `db_test.book`
+const collectionBook = dbTest.collection<TBook>('book');
+
+await collectionBook.insert({
+  name: 'Brave New World',
+  author: 'Aldous Huxley',
+  release: 1932,
+});
 
 // Sign out
 await zkdb.auth.signOut();

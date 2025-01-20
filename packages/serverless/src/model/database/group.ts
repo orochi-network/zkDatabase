@@ -13,13 +13,17 @@ export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
     zkDatabaseConstant.databaseCollection.group;
 
   constructor(databaseName: string) {
-    super(databaseName, DATABASE_ENGINE.serverless, ModelGroup.collectionName);
+    super(
+      databaseName,
+      DATABASE_ENGINE.dbServerless,
+      ModelGroup.collectionName
+    );
   }
 
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelGroup.collectionName
     );
     /*

@@ -9,7 +9,7 @@ export enum ENetworkId {
 }
 
 // For model layer
-//@NOTE: This is for the whole metadata of the database
+// @NOTE: This is for the whole metadata of the database
 export type TMetadataDatabase = {
   databaseName: string;
   databaseOwner: string;

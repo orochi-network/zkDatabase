@@ -21,7 +21,7 @@ import {
   ModelDatabase,
   ModelMetadataDatabase,
   ModelVerificationKey,
-  withTransaction,
+  Transaction,
 } from '@zkdb/storage';
 import Joi from 'joi';
 import { Document, ObjectId } from 'mongodb';
@@ -178,7 +178,7 @@ const dbCreate = authorizeWrapper<
   TDatabaseCreateRequest,
   TDatabaseCreateResponse
 >(JOI_DATABASE_CREATE, async (_root, { databaseName, merkleHeight }, ctx) =>
-  withTransaction((session) =>
+  Transaction.serverless((session) =>
     Database.create(
       { databaseName, merkleHeight, databaseOwner: ctx.userName },
       session

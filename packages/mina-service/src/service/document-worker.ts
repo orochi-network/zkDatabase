@@ -14,7 +14,7 @@ import {
   DatabaseEngine,
   ModelGenericQueue,
   ModelSequencer,
-  withTransaction,
+  Transaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import assert from 'node:assert';
@@ -44,13 +44,11 @@ export class DocumentWorker {
   }
 
   public static async run(): Promise<void> {
-    const imDocumentQueue = await withTransaction(
-      (session) =>
-        ModelGenericQueue.getInstance<TDocumentQueuedData>(
-          zkDatabaseConstant.globalCollection.documentQueue,
-          session
-        ),
-      'proofService'
+    const imDocumentQueue = await Transaction.mina((session) =>
+      ModelGenericQueue.getInstance<TDocumentQueuedData>(
+        zkDatabaseConstant.globalCollection.documentQueue,
+        session
+      )
     );
 
     // NOTE: The exclusion queue stores databases that currently have a
@@ -76,15 +74,14 @@ export class DocumentWorker {
 
         assert(task.sequenceNumber != null, "Task's sequence number is null");
 
-        const trackingSequenceNumber = await withTransaction(
+        const trackingSequenceNumber = await Transaction.mina(
           async (session) => {
             const imModelSequencer = await ModelSequencer.getInstance(
               task.databaseName,
               session
             );
             return imModelSequencer.current(ESequencer.ProvedMerkleRoot);
-          },
-          'proofService'
+          }
         );
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
@@ -123,13 +120,13 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
             );
             await DocumentProcessor.onTask(
               acquiredTask,
-              compoundSession.proofService
+              compoundSession.sessionMina
             );
 
             const bumpSeqResult = (
               await ModelSequencer.getInstance(
                 task.databaseName,
-                compoundSession.serverless
+                compoundSession.sessionServerless
               )
             ).collection.findOneAndUpdate(
               {
@@ -147,7 +144,7 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
                 },
               },
               {
-                session: compoundSession.serverless,
+                session: compoundSession.sessionServerless,
                 upsert: true,
                 returnDocument: 'after',
               }
