@@ -73,6 +73,21 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     >;
   }
 
+  /** Unsafely create a new instance of the queue with arbitrary model type and
+   * queue name. Mostly only useful for testing. */
+  public static async unsafeGetInstance<T>(
+    queueType: EQueueType,
+    queueName: string,
+    session: ClientSession
+  ): Promise<ModelGenericQueue<T>> {
+    if (!this.instance.has(queueName)) {
+      this.instance.set(queueName, new ModelGenericQueue(queueName));
+      await ModelGenericQueue.init(queueType, queueName, session);
+    }
+
+    return this.instance.get(queueName) as ModelGenericQueue<T>;
+  }
+
   public async queueTask(
     task: Omit<TGenericQueue<T>, 'status' | 'error' | 'acquiredAt'>,
     options?: InsertOneOptions

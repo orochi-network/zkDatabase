@@ -3,6 +3,7 @@
 import { EQueueTaskStatus } from '@zkdb/common';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   withTransaction,
   zkDatabaseConstant,
@@ -48,12 +49,16 @@ describe('ModelMerkleTree', () => {
     };
 
     const imModelQueue = await withTransaction(async (session) => {
-      return ModelGenericQueue.getInstance<QueueData>(COLLECTION_NAME, session);
+      return ModelGenericQueue.unsafeGetInstance<QueueData>(
+        EQueueType.DocumentQueue,
+        COLLECTION_NAME,
+        session
+      );
     }, 'proofService');
 
     const randomDigit = Math.floor(Math.random() * 100);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 100; i++) {
       await imModelQueue.queueTask({
         data: { something: i },
         databaseName: `test${randomDigit}`,
