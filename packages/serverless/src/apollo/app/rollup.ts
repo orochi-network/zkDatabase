@@ -34,6 +34,7 @@ enum QueueTaskStatus {
   Processing 
   Failed 
   Success 
+  Unknown
 }
 
 type RollupOnChainHistoryItem {
