@@ -19,6 +19,7 @@ export enum ERollupState {
   Updating = 'Updating',
   Outdated = 'Outdated',
   Failed = 'Failed',
+  Unavailable = 'Unavailable',
 }
 
 /**
@@ -80,20 +81,12 @@ export type TRollupOnChainCreateResponse = boolean;
 
 // ==== Onchain History ====
 export type TRollupOnChainHistoryRequest = {
-  query: Partial<
-    Pick<
-      TRollupOnChainHistory,
-      'databaseName' | 'merkleRootNew' | 'merkleRootOld'
-    >
-  >;
+  databaseName: string;
   pagination?: TPagination;
 };
 
 // Hide all ref objectId field related, show status to user
-export type TRollupOnChainHistoryDataResponse = Omit<
-  TRollupOnChainHistoryRecord,
-  'transactionObjectId' | 'rollupOffChainObjectId' | '_id'
-> &
+export type TRollupOnChainHistoryDataResponse = TRollupBaseHistory &
   Pick<TTransactionRecordNullable, 'status' | 'error' | 'txHash'>;
 
 export type TRollupOnChainHistoryResponse = TPaginationReturn<

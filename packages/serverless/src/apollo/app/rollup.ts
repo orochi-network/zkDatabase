@@ -90,31 +90,16 @@ extend type Mutation {
   rollupCreate(databaseName: String!): Boolean 
 }
 `;
-const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
-  TRollupOnChainHistoryRequest['query']
->({
-  databaseName: Joi.string().optional(),
-  merkleRootNew: Joi.string().optional(),
-  merkleRootOld: Joi.string().optional(),
-});
-
-const SchemaRollupOffChainHistoryRecordQuery = Joi.object<
-  TRollupOffChainHistoryRequest['query']
->({
-  databaseName: Joi.string().required(),
-  merkleRootNew: Joi.string().optional(),
-  merkleRootOld: Joi.string().optional(),
-});
 
 const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
   Joi.object<TRollupOnChainHistoryRequest>({
-    query: SchemaRollupOnChainHistoryRecordQuery.required(),
+    databaseName: databaseName,
     pagination,
   });
 
 const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
   Joi.object<TRollupOffChainHistoryRequest>({
-    query: SchemaRollupOffChainHistoryRecordQuery.required(),
+    databaseName: databaseName,
     pagination,
   });
 

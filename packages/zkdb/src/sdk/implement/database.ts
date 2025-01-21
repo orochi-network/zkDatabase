@@ -132,24 +132,22 @@ export class Database implements IDatabase {
   }
 
   async rollUpOnChainHistory(
-    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupOnChainHistory({
-        query: { ...this.basicQuery, ...query },
+        databaseName: this.basicQuery.databaseName,
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
   }
 
   async rollUpOffChainHistory(
-    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupOffChainHistory({
-        query: { ...this.basicQuery, ...query },
+        databaseName: this.basicQuery.databaseName,
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();

@@ -218,10 +218,10 @@ export class Rollup {
     param: TRollupOnChainHistoryParam,
     session?: ClientSession
   ): Promise<TRollupOnChainHistoryResponse> {
-    const { query, pagination } = param;
+    const { databaseName, pagination } = param;
 
     const metadataDatabase = await ModelMetadataDatabase.getInstance().findOne(
-      query,
+      { databaseName },
       {
         session,
       }
@@ -282,7 +282,7 @@ export class Rollup {
 
     return {
       data: rollupOnChainHistory,
-      total: await imRollupOnChainHistory.count(query),
+      total: rollupOnChainHistory.length,
       offset: pagination?.offset || 0,
     };
   }

@@ -44,7 +44,7 @@ export type TRollupOffChainHistory = TRollupBaseHistory &
 // Model
 
 export type TRollupOffChainRecord = TDbRecord<
-  TRollupSerializedProof &
+  Pick<TRollupSerializedProof, 'step' | 'proof'> &
     Pick<TMetadataDatabase, 'databaseName'> & {
       transitionLogObjectId: ObjectId;
     }
@@ -54,10 +54,9 @@ export type TRollupOffChainRecord = TDbRecord<
 // ==== OffChain History ====
 
 export type TRollupOffChainHistoryRequest = {
-  query: Partial<Pick<TRollupBaseHistory, 'merkleRootOld' | 'merkleRootNew'>> &
-    // Database name is required since we need to use transitionLog model
-    Pick<TRollupBaseHistory, 'databaseName'>;
-  pagination: TPagination;
+  databaseName: string;
+  // Database name is required since we need to use transitionLog model
+  pagination?: TPagination;
 };
 
 export type TRollupOffChainHistoryResponse = TPaginationReturn<

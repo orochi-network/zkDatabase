@@ -5,9 +5,7 @@ import {
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
-  TRollupOnChainHistoryRequest,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
   TSchemaExtendable,
@@ -70,12 +68,10 @@ export interface IDatabase {
   rollUpOnChainStart(): Promise<boolean>;
 
   rollUpOnChainHistory(
-    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse>;
 
   rollUpOffChainHistory(
-    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse>;
 
