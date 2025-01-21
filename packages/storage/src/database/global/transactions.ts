@@ -1,10 +1,6 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import {
-  TTransaction,
-  TTransactionRecord,
-  TTransactionRecordNullable,
-} from '@zkdb/common';
+import { TTransactionRecord, TTransactionRecordNullable } from '@zkdb/common';
 import { ClientSession, Filter, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';

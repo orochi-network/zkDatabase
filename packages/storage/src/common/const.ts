@@ -7,7 +7,7 @@ export const zkDatabaseConstant = {
   // Global database for system management
   globalDatabase: '_zkdatabase_metadata',
 
-  globalProofDatabase: '_zkdatabase_proof_service',
+  globalMinaDatabase: '_zkdatabase_mina_service',
 
   globalMerkleTreeDatabase: '_zkdatabase_merkle_tree',
 

@@ -41,7 +41,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
 
   private constructor(queueName: string) {
     super(
-      zkDatabaseConstant.globalProofDatabase,
+      zkDatabaseConstant.globalMinaDatabase,
       DATABASE_ENGINE.dbMina,
       queueName
     );
@@ -282,11 +282,7 @@ that the acquisition logic is suboptimal.`
   ) {
     const collection = ModelCollection.getInstance<
       TDbRecord<TGenericQueue<unknown>>
-    >(
-      zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.dbMina,
-      queueName
-    );
+    >(zkDatabaseConstant.globalMinaDatabase, DATABASE_ENGINE.dbMina, queueName);
     if (!(await collection.isExist())) {
       await collection.createSystemIndex(
         { databaseName: 1, sequenceNumber: 1 },

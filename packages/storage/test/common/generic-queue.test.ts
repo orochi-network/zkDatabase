@@ -7,38 +7,38 @@ import {
   ModelGenericQueue,
   Transaction,
   zkDatabaseConstant,
-} from '../../build/src';
-import { config } from '../../build/src';
+  config,
+} from '../../src';
 
 const COLLECTION_NAME = '__test_run_db__generic-queue';
 
-describe('ModelMerkleTree', () => {
-  let proofDb: DatabaseEngine;
+describe('generic-queue', () => {
+  let minaDb: DatabaseEngine;
   let serverlessDb: DatabaseEngine;
 
   beforeAll(async () => {
-    proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+    minaDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
     serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-    if (!proofDb.isConnected()) {
-      await proofDb.connect();
+    if (!minaDb.isConnected()) {
+      await minaDb.connect();
       await serverlessDb.connect();
     }
-    await proofDb.client
-      .db(zkDatabaseConstant.globalProofDatabase)
+    await minaDb.client
+      .db(zkDatabaseConstant.globalMinaDatabase)
       .collection(COLLECTION_NAME)
       .drop();
   });
 
   afterAll(async () => {
-    await proofDb.disconnect();
+    await minaDb.disconnect();
     await serverlessDb.disconnect();
   });
 
   beforeEach(async () => {});
 
   afterEach(async () => {
-    await proofDb.client
-      .db(zkDatabaseConstant.globalProofDatabase)
+    await minaDb.client
+      .db(zkDatabaseConstant.globalMinaDatabase)
       .collection(COLLECTION_NAME)
       .drop();
   });
