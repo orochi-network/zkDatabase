@@ -17,7 +17,6 @@ import {
   ESequencer,
   PERMISSION_DEFAULT,
   TDocumentField,
-  TDocumentQueuedData,
   TDocumentRecordNullable,
   TPagination,
   TParamCollection,
@@ -27,10 +26,10 @@ import {
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
 import {
+  EQueueType,
   ModelGenericQueue,
   ModelSequencer,
   TCompoundSession,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { logger } from '@helper';
@@ -517,14 +516,14 @@ in database '${databaseName}'.`
       throw new Error(`Document metadata with docId '${docId}' not found.`);
     }
 
-    const imDocumentQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        sessionMina
-      );
+    const imDocumentQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      sessionMina
+    );
 
     const queuedTaskForThisDocument = await imDocumentQueue.findOne(
       {
+        databaseName,
         data: {
           docId,
         },

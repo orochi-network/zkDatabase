@@ -12,13 +12,14 @@ import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelSequencer,
   Transaction,
   zkDatabaseConstant,
 } from '@zkdb/storage';
 import assert from 'node:assert';
-import { ESequencer, TDocumentQueuedData } from '@zkdb/common';
+import { ESequencer } from '@zkdb/common';
 import { LoggerLoader } from '@orochi-network/framework';
 
 let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
@@ -45,10 +46,7 @@ export class DocumentWorker {
 
   public static async run(): Promise<void> {
     const imDocumentQueue = await Transaction.mina((session) =>
-      ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        session
-      )
+      ModelGenericQueue.getInstance(EQueueType.DocumentQueue, session)
     );
 
     // NOTE: The exclusion queue stores databases that currently have a
@@ -63,7 +61,7 @@ export class DocumentWorker {
 
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const task = await imDocumentQueue.peakNextQualifiedTask({
+        const task = await imDocumentQueue.peekNextQualifiedTask({
           databaseName: { $nin: exclusionQueue },
         });
 

@@ -1,16 +1,14 @@
-/* eslint-disable import/prefer-default-export */
 import {
+  EQueueType,
   ModelGenericQueue,
   ModelMerkleTree,
   ModelTransitionLog,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import {
   EDocumentOperation,
   TDbRecord,
   TDocumentQueuedData,
   TGenericQueue,
-  TRollupQueueData,
 } from '@zkdb/common';
 import { Field } from 'o1js';
 import assert from 'node:assert';
@@ -95,8 +93,8 @@ export class DocumentProcessor {
       );
 
     (
-      await ModelGenericQueue.getInstance<TRollupQueueData>(
-        zkDatabaseConstant.globalCollection.rollupOffChainQueue,
+      await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
         proofSession
       )
     ).queueTask({

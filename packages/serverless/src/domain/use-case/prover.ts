@@ -1,12 +1,8 @@
-import { EDocumentOperation, TDocumentQueuedData } from '@zkdb/common';
-import {
-  ModelGenericQueue,
-  TCompoundSession,
-  zkDatabaseConstant,
-} from '@zkdb/storage';
+import { EDocumentOperation } from '@zkdb/common';
+import { TCompoundSession, ModelGenericQueue, EQueueType } from '@zkdb/storage';
 import { ModelMetadataDocument } from '@model';
 import { ObjectId } from 'mongodb';
-import { DocumentSchema, TValidatedDocument } from './document-schema';
+import { DocumentSchema, TValidatedDocument } from './document-schema.js';
 
 // For prover param use-case
 export type TParamProve = {
@@ -59,11 +55,10 @@ export class Prover {
 
     const documentHash = schema.hash();
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        compoundSession.sessionMina
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {
@@ -113,11 +108,10 @@ export class Prover {
 
     const hash = schema.hash();
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        compoundSession.sessionMina
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {
@@ -158,11 +152,10 @@ export class Prover {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        compoundSession.sessionMina
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {

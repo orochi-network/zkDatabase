@@ -27,5 +27,8 @@ export default {
       '<rootDir>/../../node_modules/@orochi-network/vault',
     '^@orochi-network/queue$':
       '<rootDir>/../../node_modules/@orochi-network/queue',
+    '@common': '<rootDir>/src/common',
+    '@helper': '<rootDir>/src/helper',
+    '@database': '<rootDir>/src/database',
   },
 };

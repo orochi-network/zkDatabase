@@ -112,15 +112,6 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
             document
             createdAt
             updatedAt
-            metadata {
-              owner
-              group
-              permission
-              collectionName
-              docId
-              merkleIndex
-            }
-            queueStatus
           }
           total
           offset
