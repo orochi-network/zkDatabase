@@ -1,6 +1,7 @@
 import { gql } from '@helper';
 import {
   databaseName,
+  EQueueTaskStatus,
   TRollupQueueData,
   TZkProofRequest,
   TZkProofResponse,
@@ -69,7 +70,7 @@ const zkProofStatus = publicWrapper<
       );
 
       if (!task) {
-        return null;
+        return EQueueTaskStatus.Unknown;
       }
 
       return task.status;

@@ -39,8 +39,8 @@ enum QueueTaskStatus {
 type RollupOnChainHistoryItem {
   databaseName: String!
   onChainStep: BigInt
-  merkleRootOnChainNew: String!
-  merkleRootOnChainOld: String!
+  merkleRootNew: String!
+  merkleRootOld: String!
   status: TransactionStatus
   error: String
   txHash: String
@@ -72,8 +72,8 @@ type RollupOffChainHistoryListResponse {
 
 type RollupOnChainState {
   databaseName: String!
-  merkleRootOnChainNew: String
-  merkleRootOnChainOld: String
+  merkleRootNew: String
+  merkleRootOld: String
   rollupDifferent: BigInt
   rollupOnChainState: RollupState!
   latestRollupOnChainSuccess: Date
@@ -93,8 +93,8 @@ const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
   TRollupOnChainHistoryRequest['query']
 >({
   databaseName: Joi.string().optional(),
-  merkleRootOnChainNew: Joi.string().optional(),
-  merkleRootOnChainOld: Joi.string().optional(),
+  merkleRootNew: Joi.string().optional(),
+  merkleRootOld: Joi.string().optional(),
 });
 
 const SchemaRollupOffChainHistoryRecordQuery = Joi.object<

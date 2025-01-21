@@ -66,8 +66,8 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
           data {
             databaseName
             onChainStep
-            merkleRootOnChainNew
-            merkleRootOnChainOld
+            merkleRootNew
+            merkleRootOld
             status
             error
             txHash
@@ -88,8 +88,8 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
       query RollupState($databaseName: String!) {
         rollupState(databaseName: $databaseName) {
           databaseName
-          merkleRootOnChainNew
-          merkleRootOnChainOld
+          merkleRootNew
+          merkleRootOld
           rollupDifferent
           rollupOnChainState
           latestRollupOnChainSuccess

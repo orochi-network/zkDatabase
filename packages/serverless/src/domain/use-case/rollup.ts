@@ -9,7 +9,6 @@ import {
   TRollupOnChainHistoryDataResponse,
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
-  TRollupOnChainHistoryTransactionAggregate,
   TRollupOnChainStateResponse,
   TRollupQueueData,
 } from '@zkdb/common';
@@ -119,19 +118,19 @@ export class Rollup {
     const previousOnChainMerkleRootNew =
       rollupOnChainHistory.find(
         (e) => e.transaction.status === ETransactionStatus.Confirmed
-      )?.merkleRootOnChainNew || null;
+      )?.merkleRootNew || null;
 
     await imRollupOnChainHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
-        merkleRootOnChainNew: transitionLog.merkleRootNew,
+        merkleRootNew: transitionLog.merkleRootNew,
         // latest old merkle root = previous new merkle root
-        merkleRootOnChainOld: previousOnChainMerkleRootNew,
+        merkleRootOld: previousOnChainMerkleRootNew,
         rollupOffChainObjectId: latestOffChainRollupProof._id,
         createdAt: currentTime,
         updatedAt: currentTime,
-        onChainStep: latestOffChainRollupProof.step,
+        step: latestOffChainRollupProof.step,
       },
       { session: compoundSession?.sessionServerless }
     );
@@ -262,17 +261,17 @@ export class Rollup {
         ({
           databaseName,
           transaction,
-          merkleRootOnChainNew,
-          merkleRootOnChainOld,
-          onChainStep,
+          merkleRootNew,
+          merkleRootOld,
+          step,
           createdAt,
           updatedAt,
         }) => ({
           // Using spread will leak unexpected data, make sure return what we really need
           databaseName,
-          merkleRootOnChainNew,
-          merkleRootOnChainOld,
-          onChainStep,
+          merkleRootNew,
+          merkleRootOld,
+          step,
           createdAt,
           updatedAt,
           status: transaction.status,
@@ -326,7 +325,7 @@ export class Rollup {
     // Rollup different = step(offchain) - step(onchain)
     const rollupDifferent =
       BigInt(latestRollupOffChain.step) -
-      BigInt(latestRollupOnChain?.onChainStep || 0n);
+      BigInt(latestRollupOnChain?.step || 0n);
 
     if (rollupDifferent < 0n) {
       throw new Error(
@@ -336,8 +335,8 @@ export class Rollup {
 
     return {
       databaseName,
-      merkleRootOnChainNew: latestRollupOnChain?.merkleRootOnChainNew || null,
-      merkleRootOnChainOld: latestRollupOnChain?.merkleRootOnChainOld || null,
+      merkleRootNew: latestRollupOnChain?.merkleRootNew || null,
+      merkleRootOld: latestRollupOnChain?.merkleRootOld || null,
       rollupDifferent,
       rollupOnChainState:
         rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
