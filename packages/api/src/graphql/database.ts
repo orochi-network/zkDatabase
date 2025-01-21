@@ -17,38 +17,26 @@ import {
   TVerificationKeyRequest,
   TVerificationKeyResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common.js";
+import { createApi, TApolloClient } from "./common.js";
 
 export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
-  dbCreate: createMutateFunction<
-    TDatabaseCreateRequest,
-    TDatabaseCreateResponse
-  >(
+  dbCreate: createApi<TDatabaseCreateRequest, TDatabaseCreateResponse>(
     client,
     gql`
       mutation dbCreate($databaseName: String!, $merkleHeight: Int!) {
         dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
       }
-    `,
-    (data) => data.dbCreate
+    `
   ),
-  dbDeploy: createMutateFunction<
-    TDatabaseDeployRequest,
-    TDatabaseDeployResponse
-  >(
+  dbDeploy: createApi<TDatabaseDeployRequest, TDatabaseDeployResponse>(
     client,
     gql`
       mutation dbDeploy($databaseName: String!, $appPublicKey: String!) {
         dbDeploy(databaseName: $databaseName, appPublicKey: $appPublicKey)
       }
-    `,
-    (data) => data.dbDeploy
+    `
   ),
-  dbEnvironment: createQueryFunction<
+  dbEnvironment: createApi<
     TDatabaseEnvironmentRequest,
     TDatabaseEnvironmentResponse
   >(
@@ -60,19 +48,17 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
           networkUrl
         }
       }
-    `,
-    (data) => data.dbEnvironment
+    `
   ),
-  dbExist: createQueryFunction<TDatabaseExistRequest, TDatabaseExistResponse>(
+  dbExist: createApi<TDatabaseExistRequest, TDatabaseExistResponse>(
     client,
     gql`
       query dbExist($databaseName: String!) {
         dbExist(databaseName: $databaseName)
       }
-    `,
-    (data) => data.dbExist
+    `
   ),
-  dbInfo: createQueryFunction<TDatabaseInfoRequest, TDatabaseInfoResponse>(
+  dbInfo: createApi<TDatabaseInfoRequest, TDatabaseInfoResponse>(
     client,
     gql`
       query dbInfo($databaseName: String!) {
@@ -85,10 +71,9 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
           deployStatus
         }
       }
-    `,
-    (data) => data.dbInfo
+    `
   ),
-  dbList: createQueryFunction<TDatabaseListRequest, TDatabaseListResponse>(
+  dbList: createApi<TDatabaseListRequest, TDatabaseListResponse>(
     client,
     gql`
       query dbList($query: JSON, $pagination: PaginationInput) {
@@ -105,19 +90,17 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `,
-    (data) => data.dbList
+    `
   ),
-  dbStats: createQueryFunction<TDatabaseStatsRequest, TDatabaseStatsResponse>(
+  dbStats: createApi<TDatabaseStatsRequest, TDatabaseStatsResponse>(
     client,
     gql`
       query dbStats($databaseName: String!) {
         dbStats(databaseName: $databaseName)
       }
-    `,
-    (data) => data.dbStats
+    `
   ),
-  dbVerificationKey: createQueryFunction<
+  dbVerificationKey: createApi<
     TVerificationKeyRequest,
     TVerificationKeyResponse
   >(
@@ -126,7 +109,8 @@ export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
       query dbVerificationKey($databaseName: String!) {
         dbVerificationKey(databaseName: $databaseName)
       }
-    `,
-    (data) => data.dbVerificationKey
+    `
   ),
 });
+
+export default API_DATABASE;

@@ -9,14 +9,10 @@ import {
   TCollectionMetadataRequest,
   TCollectionMetadataResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
-  collectionCreate: createMutateFunction<
+  collectionCreate: createApi<
     TCollectionCreateRequest,
     TCollectionCreateResponse
   >(
@@ -37,13 +33,9 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
           permission: $permission
         )
       }
-    `,
-    (data) => data.collectionCreate
+    `
   ),
-  collectionExist: createQueryFunction<
-    TCollectionExistRequest,
-    TCollectionExistResponse
-  >(
+  collectionExist: createApi<TCollectionExistRequest, TCollectionExistResponse>(
     client,
     gql`
       query collectionExist($databaseName: String!, $collectionName: String!) {
@@ -52,13 +44,9 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
           collectionName: $collectionName
         )
       }
-    `,
-    (data) => data.collectionExist
+    `
   ),
-  collectionList: createQueryFunction<
-    TCollectionListRequest,
-    TCollectionListResponse
-  >(
+  collectionList: createApi<TCollectionListRequest, TCollectionListResponse>(
     client,
     gql`
       query collectionList($databaseName: String!) {
@@ -76,10 +64,9 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
           updatedAt
         }
       }
-    `,
-    (data) => data.collectionList
+    `
   ),
-  collectionMetadata: createQueryFunction<
+  collectionMetadata: createApi<
     TCollectionMetadataRequest,
     TCollectionMetadataResponse
   >(
@@ -106,7 +93,8 @@ export const API_COLLECTION = <T>(client: TApolloClient<T>) => ({
           updatedAt
         }
       }
-    `,
-    (data) => data.collectionMetadata
+    `
   ),
 });
+
+export default API_COLLECTION;

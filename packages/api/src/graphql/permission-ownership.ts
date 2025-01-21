@@ -5,10 +5,10 @@ import {
   TPermissionSetRequest,
   TPermissionSetResponse,
 } from "@zkdb/common";
-import { createMutateFunction, TApolloClient } from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_PERMISSION_OWNERSHIP = <T>(client: TApolloClient<T>) => ({
-  ownershipTransfer: createMutateFunction<
+  ownershipTransfer: createApi<
     TOwnershipTransferRequest,
     TOwnershipTransferResponse
   >(
@@ -29,13 +29,9 @@ export const API_PERMISSION_OWNERSHIP = <T>(client: TApolloClient<T>) => ({
           newOwner: $newOwner
         )
       }
-    `,
-    (data) => data.ownershipTransfer
+    `
   ),
-  permissionSet: createMutateFunction<
-    TPermissionSetRequest,
-    TPermissionSetResponse
-  >(
+  permissionSet: createApi<TPermissionSetRequest, TPermissionSetResponse>(
     client,
     gql`
       mutation permissionSet(
@@ -51,7 +47,8 @@ export const API_PERMISSION_OWNERSHIP = <T>(client: TApolloClient<T>) => ({
           permission: $permission
         )
       }
-    `,
-    (data) => data.permissionSet
+    `
   ),
 });
+
+export default API_PERMISSION_OWNERSHIP;

@@ -7,10 +7,10 @@ import {
   TZkProofStatusRequest,
   TZkProofStatusResponse,
 } from "@zkdb/common";
-import { createQueryFunction, TApolloClient } from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_PROOF = <T>(client: TApolloClient<T>) => ({
-  proof: createQueryFunction<TZkProofRequest, TZkProofResponse>(
+  proof: createApi<TZkProofRequest, TZkProofResponse>(
     client,
     gql`
       query proof($databaseName: String!) {
@@ -21,22 +21,17 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
           proof
         }
       }
-    `,
-    (data) => data.proof,
+    `
   ),
-  zkProofStatus: createQueryFunction<
-    TZkProofStatusRequest,
-    TZkProofStatusResponse
-  >(
+  zkProofStatus: createApi<TZkProofStatusRequest, TZkProofStatusResponse>(
     client,
     gql`
       query zkProofStatus($databaseName: String!) {
         zkProofStatus(databaseName: $databaseName)
       }
-    `,
-    (data) => data.zkProofStatus,
+    `
   ),
-  documentMerkleProofStatus: createQueryFunction<
+  documentMerkleProofStatus: createApi<
     TMerkleProofDocumentRequest,
     TMerkleProofDocumentResponse
   >(
@@ -53,7 +48,8 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
           docId: $docId
         )
       }
-    `,
-    (data) => data.documentMerkleProofStatus,
+    `
   ),
 });
+
+export default API_PROOF;
