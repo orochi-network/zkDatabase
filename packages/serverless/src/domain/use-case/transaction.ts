@@ -111,7 +111,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session?: ClientSession
-  ): Promise<TTransactionRecordNullable | undefined> {
+  ): Promise<TTransactionRecordNullable | null> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();
@@ -121,21 +121,12 @@ export class Transaction {
       throw Error(`User ${actor} does not exist`);
     }
 
-    const database = await ModelMetadataDatabase.getInstance().findOne({
-      databaseName,
-    });
-
-    if (!database) {
-      throw Error(`Database ${databaseName} does not exist`);
-    }
-
-    const transactionList = await ModelTransaction.getInstance()
-      .find({ databaseName, transactionType }, { session })
-      .toArray();
-
-    return transactionList.find(
-      (tx) => tx.status === ETransactionStatus.Unsigned
-    );
+    return ModelTransaction.getInstance()
+      .find(
+        { databaseName, transactionType, status: ETransactionStatus.Unsigned },
+        { session }
+      )
+      .next();
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {

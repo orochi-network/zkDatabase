@@ -65,14 +65,12 @@ const transactionDraft = authorizeWrapper<
       args.transactionType
     );
 
-    if (!transaction) {
-      return null;
-    }
-
-    return {
-      ...transaction,
-      _id: transaction._id.toString(),
-    };
+    return (
+      transaction && {
+        ...transaction,
+        _id: transaction._id.toString(),
+      }
+    );
   }
 );
 
