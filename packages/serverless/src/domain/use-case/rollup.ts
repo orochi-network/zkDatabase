@@ -25,8 +25,8 @@ import {
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
-import { Database } from './database.js';
-import { Transaction } from './transaction.js';
+import { Database } from './database';
+import { Transaction } from './transaction';
 
 export class Rollup {
   static async create(
