@@ -10,7 +10,8 @@ import {
   EQueueType,
   ModelGenericQueue,
   ModelRollupOffChain,
-  withTransaction,
+  Transaction,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
 import { publicWrapper } from '../validation.js';
@@ -52,7 +53,7 @@ const zkProofStatus = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    return withTransaction(async (proofSession) => {
+    return Transaction.mina(async (proofSession) => {
       const imRollupQueue = await ModelGenericQueue.getInstance(
         EQueueType.RollupOffChainQueue,
         proofSession

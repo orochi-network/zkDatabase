@@ -1,5 +1,6 @@
 import { IApiClient } from '@zkdb/api';
 import {
+  EContractName,
   ETransactionType,
   TCollectionListResponse,
   TDatabaseInfoResponse,
@@ -14,6 +15,7 @@ import {
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
+  TVerificationKeyResponse,
   TZkProofResponse,
   TZkProofStatusResponse,
 } from '@zkdb/common';
@@ -156,6 +158,12 @@ export class Database implements IDatabase {
   async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
     return (
       await this.apiClient.rollup.rollupOnChainState(this.basicQuery)
+    ).unwrap();
+  }
+
+  async verificationKey(): Promise<TVerificationKeyResponse> {
+    return (
+      await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
   }
 

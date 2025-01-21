@@ -13,7 +13,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   constructor(databaseName?: string) {
     super(
       databaseName || zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless
+      DATABASE_ENGINE.dbServerless
     );
   }
 

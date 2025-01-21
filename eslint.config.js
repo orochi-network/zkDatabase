@@ -97,8 +97,8 @@ export default [
         "error",
         "ignorePackages",
         {
-          js: "always",
-          ts: "always",
+          js: "never",
+          ts: "never",
         },
       ],
       "import/no-unresolved": [0],

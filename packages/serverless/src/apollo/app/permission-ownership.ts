@@ -1,4 +1,5 @@
 import { Ownership, PermissionSecurity } from '@domain';
+import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
@@ -11,10 +12,9 @@ import {
   userName,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { withTransaction } from '@zkdb/storage';
+import { Transaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
-import { gql } from '@helper';
 
 export const typeDefsPermission = gql`
   #graphql
@@ -56,7 +56,7 @@ const permissionSet = authorizeWrapper<
     permission: Joi.number().min(0).required(),
   }),
   async (_root, { databaseName, collectionName, docId, permission }, context) =>
-    await withTransaction((session) =>
+    await Transaction.serverless((session) =>
       PermissionSecurity.setPermission(
         databaseName,
         collectionName,
@@ -86,7 +86,7 @@ const ownershipTransfer = authorizeWrapper<
     { databaseName, collectionName, docId, groupType, newOwner },
     context
   ) =>
-    await withTransaction((session) => {
+    await Transaction.serverless((session) => {
       if (docId) {
         // Document case with docId
         return Ownership.transferDocument(

@@ -11,7 +11,7 @@ import {
   TTransactionSubmitRequest,
   TTransactionSubmitResponse,
 } from '@zkdb/common';
-import { withTransaction } from '@zkdb/storage';
+import { Transaction as MongoTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 
@@ -58,22 +58,26 @@ const transactionDraft = authorizeWrapper<
     databaseName,
     transactionType,
   }),
-  async (_root, args, ctx) => {
-    const transaction = await Transaction.draft(
-      args.databaseName,
-      ctx.userName,
-      args.transactionType
-    );
+  async (_root, args, ctx) =>
+    MongoTransaction.serverless(async (session) => {
+      {
+        const transaction = await Transaction.draft(
+          args.databaseName,
+          ctx.userName,
+          args.transactionType,
+          session
+        );
 
-    if (!transaction) {
-      return null;
-    }
+        if (!transaction) {
+          return null;
+        }
 
-    return {
-      ...transaction,
-      _id: transaction._id.toString(),
-    };
-  }
+        return {
+          ...transaction,
+          _id: transaction._id.toString(),
+        };
+      }
+    })
 );
 
 const transactionDeployEnqueue = authorizeWrapper<
@@ -84,7 +88,7 @@ const transactionDeployEnqueue = authorizeWrapper<
     databaseName,
   }),
   async (_root, args, ctx) =>
-    withTransaction(async (session) =>
+    MongoTransaction.serverless(async (session) =>
       (
         await Transaction.enqueue(
           args.databaseName,

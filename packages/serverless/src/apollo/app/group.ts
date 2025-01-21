@@ -19,12 +19,12 @@ import {
   TGroupUpdateResponse,
   userName,
 } from '@zkdb/common';
-import { withTransaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { Group } from '@domain';
 import { gql } from '@helper';
 import { ModelGroup, ModelUserGroup } from '@model';
 import { authorizeWrapper, publicWrapper } from '../validation';
+import { Transaction } from '@zkdb/storage';
 
 export const typeDefsGroup = gql`
   #graphql
@@ -174,7 +174,7 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
   JOI_GROUP_UPDATE,
   async (_root, args, ctx) => {
     const { databaseName, groupName, newGroupName, newGroupDescription } = args;
-    const result = await withTransaction(async (session) =>
+    const result = await Transaction.serverless(async (session) =>
       Group.updateMetadata(
         {
           databaseName,
@@ -194,7 +194,7 @@ const groupUpdate = authorizeWrapper<TGroupUpdateRequest, TGroupUpdateResponse>(
 const groupCreate = authorizeWrapper<TGroupCreateRequest, TGroupCreateResponse>(
   JOI_GROUP_CREATE,
   async (_root, { databaseName, groupDescription, groupName }, ctx) =>
-    withTransaction((session) =>
+    Transaction.serverless((session) =>
       Group.create(
         {
           databaseName,

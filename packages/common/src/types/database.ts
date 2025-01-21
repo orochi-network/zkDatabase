@@ -9,7 +9,7 @@ export enum ENetworkId {
 }
 
 // For model layer
-//@NOTE: This is for the whole metadata of the database
+// @NOTE: This is for the whole metadata of the database
 export type TMetadataDatabase = {
   databaseName: string;
   databaseOwner: string;
@@ -51,10 +51,9 @@ export type TDatabaseParamTransferOwner = Pick<
   newOwner: string;
 };
 
-export type TDatabaseParamDeploy = Pick<
-  TMetadataDatabase,
-  'databaseName' | 'appPublicKey'
->;
+export type TDatabaseParamDeploy = Pick<TMetadataDatabase, 'databaseName'> & {
+  actor: string;
+};
 
 // For application layer
 export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
@@ -62,8 +61,7 @@ export type TDatabaseRequest = Pick<TMetadataDatabase, 'databaseName'>;
 export type TDatabaseResponse = TMetadataDatabase;
 
 // Database update deploy
-export type TDatabaseDeployRequest = TDatabaseRequest &
-  Pick<TMetadataDatabase, 'appPublicKey'>;
+export type TDatabaseDeployRequest = TDatabaseRequest;
 
 export type TDatabaseDeployResponse = boolean;
 

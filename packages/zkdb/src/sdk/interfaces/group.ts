@@ -27,6 +27,12 @@ export interface IGroup {
   create(groupConfig?: Omit<TGroupConfig, 'groupName'>): Promise<boolean>;
 
   /**
+   * Check the existence of a group in database
+   * @returns {Promise<boolean>} true if the current group is exist, otherwise false
+   */
+  exist(): Promise<boolean>;
+
+  /**
    * Update an existing group
    * @param groupConfig - Group configuration object
    * @returns {Promise<boolean>} - True if group update is successful, false otherwise

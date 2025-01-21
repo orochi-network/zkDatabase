@@ -11,7 +11,7 @@ import {
   TRollupOnChainStateRequest,
   TRollupOnChainStateResponse,
 } from '@zkdb/common';
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
+import { Transaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper } from '../validation';
 import { GraphQLScalarType } from 'graphql';
@@ -136,10 +136,7 @@ const rollupOffChainHistory = authorizeWrapper<
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse
 >(JOI_ROLLUP_OFFCHAIN_HISTORY_LIST, async (_root, args) =>
-  withTransaction(
-    async (session) => Rollup.offChainHistory(args, session),
-    'proofService'
-  )
+  Transaction.mina(async (session) => Rollup.offChainHistory(args, session))
 );
 
 // Mutation
@@ -151,7 +148,7 @@ const rollupCreate = authorizeWrapper<
     databaseName,
   }),
   async (_root, { databaseName }, ctx) => {
-    const result = await withCompoundTransaction(async (compoundSession) =>
+    const result = await Transaction.compound(async (compoundSession) =>
       Rollup.create(databaseName, ctx.userName, compoundSession)
     );
     return result === null ? false : result;

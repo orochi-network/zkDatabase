@@ -1,6 +1,5 @@
 import { EDocumentOperation } from '@zkdb/common';
 import { TCompoundSession, ModelGenericQueue, EQueueType } from '@zkdb/storage';
-
 import { ModelMetadataDocument } from '@model';
 import { ObjectId } from 'mongodb';
 import { DocumentSchema, TValidatedDocument } from './document-schema.js';
@@ -31,7 +30,7 @@ export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, docId, collectionName, document, documentObjectId } =
       proveCreateParam;
@@ -42,7 +41,7 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
@@ -58,7 +57,7 @@ export class Prover {
 
     const imModelGenericQueue = await ModelGenericQueue.getInstance(
       EQueueType.DocumentQueue,
-      session.proofService
+      compoundSession.sessionMina
     );
 
     await imModelGenericQueue.queueTask(
@@ -75,14 +74,14 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const {
       databaseName,
@@ -98,7 +97,7 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
@@ -111,7 +110,7 @@ export class Prover {
 
     const imModelGenericQueue = await ModelGenericQueue.getInstance(
       EQueueType.DocumentQueue,
-      session.proofService
+      compoundSession.sessionMina
     );
 
     await imModelGenericQueue.queueTask(
@@ -128,14 +127,14 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, collectionName, docId, oldDocumentObjectId } =
       proveDeleteParam;
@@ -146,7 +145,7 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
@@ -155,7 +154,7 @@ export class Prover {
 
     const imModelGenericQueue = await ModelGenericQueue.getInstance(
       EQueueType.DocumentQueue,
-      session.proofService
+      compoundSession.sessionMina
     );
 
     await imModelGenericQueue.queueTask(
@@ -172,7 +171,7 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 }

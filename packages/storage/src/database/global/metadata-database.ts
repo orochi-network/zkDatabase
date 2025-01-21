@@ -15,7 +15,7 @@ export class ModelMetadataDatabase extends ModelGeneral<
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.globalCollection.metadataDatabase
     );
   }
@@ -48,7 +48,7 @@ export class ModelMetadataDatabase extends ModelGeneral<
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance<TMetadataDatabase>(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.globalCollection.metadataDatabase
     );
     if (!(await collection.isExist())) {

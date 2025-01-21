@@ -31,7 +31,7 @@ export class ModelDocument extends ModelGeneral<
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, DATABASE_ENGINE.serverless, collectionName);
+    super(databaseName, DATABASE_ENGINE.dbServerless, collectionName);
   }
 
   public static async init(
@@ -41,7 +41,7 @@ export class ModelDocument extends ModelGeneral<
   ) {
     const collection = new ModelCollection(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       collectionName
     );
 
@@ -59,7 +59,7 @@ export class ModelDocument extends ModelGeneral<
   get modelCollection() {
     return ModelCollection.getInstance(
       this.databaseName!,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       this.collectionName!
     );
   }

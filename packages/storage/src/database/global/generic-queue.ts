@@ -17,11 +17,7 @@ import {
 } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
-import {
-  TCompoundSession,
-  withCompoundTransaction,
-  withTransaction,
-} from '../transaction';
+import { TCompoundSession, Transaction } from '../transaction';
 
 const TASK_TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
 
@@ -46,7 +42,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   private constructor(queueName: string) {
     super(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       queueName
     );
   }
@@ -119,7 +115,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
   public async acquireNextTaskInQueue<R>(
     callback: (
       task: TDbRecord<TGenericQueue<T>>,
-      session: TCompoundSession
+      compoundSession: TCompoundSession
     ) => Promise<R>,
     filter?: Filter<TDbRecord<TGenericQueue<T>>>,
     removeTaskOnSuccess = false
@@ -136,23 +132,21 @@ export class ModelGenericQueue<T> extends ModelGeneral<
     let task: TDbRecord<TGenericQueue<T>> | null = null;
 
     try {
-      task = await withTransaction(
-        async (session) =>
-          this.collection.findOneAndUpdate(
-            await this.getQueryCriteria(session, filter),
-            {
-              $set: {
-                status: EQueueTaskStatus.Processing,
-                acquiredAt: new Date(),
-              },
+      task = await Transaction.mina(async (session) =>
+        this.collection.findOneAndUpdate(
+          await this.getQueryCriteria(session, filter),
+          {
+            $set: {
+              status: EQueueTaskStatus.Processing,
+              acquiredAt: new Date(),
             },
-            {
-              sort: { sequenceNumber: 1 },
-              returnDocument: 'after',
-              session,
-            }
-          ),
-        'proofService'
+          },
+          {
+            sort: { sequenceNumber: 1 },
+            returnDocument: 'after',
+            session,
+          }
+        )
       );
     } catch (e) {
       // This means the task is already acquired by another worker.
@@ -175,7 +169,7 @@ that the acquisition logic is suboptimal.`
     }
 
     try {
-      const result = await withCompoundTransaction(async (session) => {
+      const result = await Transaction.compound(async (session) => {
         return callback(task, session);
       });
 
@@ -225,7 +219,7 @@ that the acquisition logic is suboptimal.`
     filter?: Filter<TDbRecord<TGenericQueue<T>>>,
     options?: FindOptions
   ): Promise<TDbRecord<TGenericQueue<T>> | null> {
-    return withTransaction(async (session) =>
+    return Transaction.mina(async (session) =>
       this.collection.findOne(await this.getQueryCriteria(session, filter), {
         sort: { sequenceNumber: 1 },
         ...options,
@@ -290,7 +284,7 @@ that the acquisition logic is suboptimal.`
       TDbRecord<TGenericQueue<unknown>>
     >(
       zkDatabaseConstant.globalProofDatabase,
-      DATABASE_ENGINE.proofService,
+      DATABASE_ENGINE.dbMina,
       queueName
     );
     if (!(await collection.isExist())) {

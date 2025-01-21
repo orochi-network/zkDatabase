@@ -81,7 +81,7 @@ export class Collection {
 
       const imCollection = ModelCollection.getInstance(
         databaseName,
-        DATABASE_ENGINE.serverless,
+        DATABASE_ENGINE.dbServerless,
         collectionName
       );
 
@@ -121,7 +121,7 @@ export class Collection {
     if (actorPermission.read) {
       const imCollection = ModelCollection.getInstance(
         databaseName,
-        DATABASE_ENGINE.serverless,
+        DATABASE_ENGINE.dbServerless,
         collectionName
       );
 
@@ -194,7 +194,7 @@ export class Collection {
     if (actorPermission.read) {
       return ModelCollection.getInstance(
         databaseName,
-        DATABASE_ENGINE.serverless,
+        DATABASE_ENGINE.dbServerless,
         collectionName
       ).isIndexed(indexName);
     }
@@ -216,7 +216,7 @@ export class Collection {
       if (await Collection.indexExist(paramCollection, indexName)) {
         return ModelCollection.getInstance(
           databaseName,
-          DATABASE_ENGINE.serverless,
+          DATABASE_ENGINE.dbServerless,
           collectionName
         ).dropIndex(indexName);
       }
@@ -328,7 +328,7 @@ export class Collection {
       ...metadata,
       sizeOnDisk: await ModelCollection.getInstance(
         databaseName,
-        DATABASE_ENGINE.serverless,
+        DATABASE_ENGINE.dbServerless,
         metadata.collectionName
       ).size(),
     }));

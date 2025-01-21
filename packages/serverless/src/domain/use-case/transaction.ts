@@ -1,4 +1,4 @@
-import { transactionQueue } from '@helper';
+import { logger, transactionQueue } from '@helper';
 import { ModelUser } from '@model';
 import { FixedFloat } from '@orochi-network/utilities';
 import {
@@ -40,7 +40,7 @@ export class Transaction {
         database?.appPublicKey &&
         !PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
       ) {
-        throw Error('Smart contract is already bound to database');
+        throw new Error('Smart contract is already bound to database');
       }
     }
 
@@ -76,7 +76,7 @@ export class Transaction {
             tx.status === ETransactionStatus.Signed
         )
       ) {
-        throw Error('You have uncompleted transaction');
+        throw new Error('You have uncompleted transaction');
       }
 
       // @TODO: Recheck the logic and make sure it is correct and cover all cases.
@@ -96,12 +96,20 @@ export class Transaction {
 
     const transactionObjectId = new ObjectId();
 
-    await transactionQueue.add('transaction', {
-      transactionObjectId,
-      payerAddress: payer?.publicKey,
-      databaseName,
-      transactionType,
-    });
+    await transactionQueue.add(
+      'transaction',
+      {
+        transactionObjectId,
+        payerAddress: payer?.publicKey,
+        databaseName,
+        transactionType,
+      },
+      {
+        deduplication: {
+          id: `${databaseName}-${transactionType}`,
+        },
+      }
+    );
 
     return transactionObjectId;
   }
@@ -110,32 +118,75 @@ export class Transaction {
     databaseName: string,
     actor: string,
     transactionType: ETransactionType,
-    session?: ClientSession
-  ): Promise<TTransactionRecordNullable | undefined> {
+    session: ClientSession
+  ): Promise<TTransactionRecordNullable | null> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();
     const user = await imUser.findOne({ userName: actor }, { session });
 
     if (!user) {
-      throw Error(`User ${actor} does not exist`);
+      throw new Error(`User ${actor} does not exist`);
     }
 
-    const database = await ModelMetadataDatabase.getInstance().findOne({
-      databaseName,
-    });
+    const database = await ModelMetadataDatabase.getInstance().findOne(
+      {
+        databaseName,
+      },
+      { session }
+    );
 
     if (!database) {
-      throw Error(`Database ${databaseName} does not exist`);
+      throw new Error(`Database ${databaseName} does not exist`);
     }
+    /*
+      Contract already deploy -> Throw error
+      Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
+      Contract not deploy yet, have data -> return data
+    */
+    const imTransaction = ModelTransaction.getInstance();
+    if (transactionType === ETransactionType.Deploy) {
+      const transactionDeploy = await imTransaction.findOne(
+        {
+          databaseName,
+          transactionType: ETransactionType.Deploy,
+        },
+        { session }
+      );
 
-    const transactionList = await ModelTransaction.getInstance()
-      .find({ databaseName, transactionType }, { session })
-      .toArray();
+      // Contract already deploy, throw error
+      if (database.appPublicKey) {
+        throw new Error(
+          `Transaction already deployed database ${databaseName}`
+        );
+      }
 
-    return transactionList.find(
-      (tx) => tx.status === ETransactionStatus.Unsigned
-    );
+      // Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
+      if (!transactionDeploy) {
+        await Transaction.enqueue(
+          databaseName,
+          actor,
+          ETransactionType.Deploy,
+          session
+        );
+        return null;
+      }
+
+      return transactionDeploy;
+    } else if (transactionType === ETransactionType.Rollup) {
+      const transactionRollup = await imTransaction.findOne(
+        {
+          databaseName,
+          transactionType: ETransactionType.Rollup,
+          status: ETransactionStatus.Unsigned,
+        },
+        { session, sort: { createdAt: -1 } }
+      );
+
+      return transactionRollup;
+    } else {
+      throw new Error(`Unsupported transaction type ${transactionType}`);
+    }
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {

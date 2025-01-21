@@ -11,7 +11,6 @@ import {
   TRollupOnChainHistoryResponse,
   TRollupOnChainHistoryTransactionAggregate,
   TRollupOnChainStateResponse,
-  databaseName,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -38,7 +37,7 @@ export class Rollup {
     await Database.ownershipCheck(
       databaseName,
       actor,
-      compoundSession.serverless
+      compoundSession.sessionServerless
     );
 
     const imRollupOffChain = ModelRollupOffChain.getInstance();
@@ -46,7 +45,7 @@ export class Rollup {
     const latestOffChainRollupProof = await imRollupOffChain.findOne(
       { databaseName },
       {
-        session: compoundSession.proofService,
+        session: compoundSession.sessionMina,
         sort: {
           createdAt: -1,
         },
@@ -59,7 +58,7 @@ export class Rollup {
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
       databaseName,
-      compoundSession.proofService
+      compoundSession.sessionMina
     );
 
     const transitionLog = await imTransitionLog.findOne({
@@ -68,7 +67,9 @@ export class Rollup {
 
     if (!transitionLog) {
       throw new Error(
-        `Cannot found transition log ${latestOffChainRollupProof.transitionLogObjectId} in rollup ${latestOffChainRollupProof._id}`
+        `Cannot found transition log ${
+          latestOffChainRollupProof.transitionLogObjectId
+        } in rollup ${latestOffChainRollupProof._id}`
       );
     }
 
@@ -79,7 +80,7 @@ export class Rollup {
       {
         proofId: latestOffChainRollupProof._id,
       },
-      { session: compoundSession.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (rollUpHistory) {
@@ -89,7 +90,7 @@ export class Rollup {
         {
           _id: rollUpHistory.transactionObjectId,
         },
-        { session: compoundSession.serverless }
+        { session: compoundSession.sessionServerless }
       );
 
       if (transaction) {
@@ -109,7 +110,7 @@ export class Rollup {
       databaseName,
       actor,
       ETransactionType.Rollup,
-      compoundSession.serverless
+      compoundSession.sessionServerless
     );
 
     const currentTime = new Date();
@@ -125,7 +126,7 @@ export class Rollup {
         updatedAt: currentTime,
         onChainStep: latestOffChainRollupProof.step,
       },
-      { session: compoundSession?.serverless }
+      { session: compoundSession?.sessionServerless }
     );
 
     return true;
@@ -234,7 +235,7 @@ export class Rollup {
       .aggregate<TRollupOnChainHistoryTransactionAggregate>(
         [
           {
-            $match: { databaseName },
+            $match: { databaseName: metadataDatabase?.databaseName },
           },
           {
             $sort: { updatedAt: -1, createdAt: -1 },
@@ -349,8 +350,7 @@ export class Rollup {
     const latestRollupOnChain = rollupOnChainHistory.at(0);
 
     const latestRollupOnChainSuccess = rollupOnChainHistory.find(
-      (rollupOnChainHistory) =>
-        rollupOnChainHistory.transaction.status === ETransactionStatus.Confirmed
+      (e) => e.transaction.status === ETransactionStatus.Confirmed
     )?.updatedAt;
 
     // Rollup different = step(offchain) - step(onchain)
@@ -375,3 +375,5 @@ export class Rollup {
     };
   }
 }
+
+export default Rollup;
