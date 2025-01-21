@@ -1,7 +1,15 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { TRollupOnChainHistoryRecord } from '@zkdb/common';
-import { ClientSession, OptionalId, WithoutId } from 'mongodb';
+import {
+  TRollupOnChainHistoryRecord,
+  TRollupOnChainHistoryTransactionAggregate,
+} from '@zkdb/common';
+import {
+  AggregationCursor,
+  ClientSession,
+  OptionalId,
+  WithoutId,
+} from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -23,6 +31,39 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
       this.instance = new ModelRollupOnChainHistory();
     }
     return this.instance;
+  }
+
+  public rollupOnChainHistoryAndTransaction(
+    filter: Partial<TRollupOnChainHistoryRecord>,
+    session?: ClientSession
+  ): AggregationCursor<TRollupOnChainHistoryTransactionAggregate> {
+    return this.collection.aggregate<TRollupOnChainHistoryTransactionAggregate>(
+      [
+        {
+          $match: filter,
+        },
+        {
+          $sort: { updatedAt: -1, createdAt: -1 },
+        },
+        {
+          $lookup: {
+            from: zkDatabaseConstant.globalCollection.transaction,
+            localField: 'transactionObjectId',
+            foreignField: '_id',
+            as: 'transaction',
+          },
+        },
+        {
+          $addFields: {
+            // It's 1-1 relation so the array must have 1 element
+            transaction: { $arrayElemAt: ['$transaction', 0] },
+          },
+        },
+      ],
+      {
+        session,
+      }
+    );
   }
 
   public static async init(session?: ClientSession) {

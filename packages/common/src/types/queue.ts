@@ -21,6 +21,7 @@ export enum EQueueTaskStatus {
   Processing = 'Processing',
   Failed = 'Failed',
   Success = 'Success',
+  Unknown = 'Unknown',
 }
 
 export type TGenericQueueBase<T> = {

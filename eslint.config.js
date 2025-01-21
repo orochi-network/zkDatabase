@@ -29,7 +29,7 @@ export default [
   gitignore(),
 
   ...fixupConfigRules(
-    compat.extends("airbnb-base", "prettier", "plugin:import/typescript"),
+    compat.extends("airbnb-base", "prettier", "plugin:import/typescript")
   ),
   {
     files: ["packages/*/src/**/*.+(ts|js)"],

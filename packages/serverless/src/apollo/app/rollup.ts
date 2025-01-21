@@ -34,13 +34,14 @@ enum QueueTaskStatus {
   Processing 
   Failed 
   Success 
+  Unknown
 }
 
 type RollupOnChainHistoryItem {
   databaseName: String!
   onChainStep: BigInt
-  merkleRootOnChainNew: String!
-  merkleRootOnChainOld: String!
+  merkleRootNew: String!
+  merkleRootOld: String!
   status: TransactionStatus
   error: String
   txHash: String
@@ -72,8 +73,8 @@ type RollupOffChainHistoryListResponse {
 
 type RollupOnChainState {
   databaseName: String!
-  merkleRootOnChainNew: String
-  merkleRootOnChainOld: String
+  merkleRootNew: String
+  merkleRootOld: String
   rollupDifferent: BigInt
   rollupOnChainState: RollupState!
   latestRollupOnChainSuccess: Date
@@ -89,31 +90,16 @@ extend type Mutation {
   rollupCreate(databaseName: String!): Boolean 
 }
 `;
-const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
-  TRollupOnChainHistoryRequest['query']
->({
-  databaseName: Joi.string().optional(),
-  merkleRootOnChainNew: Joi.string().optional(),
-  merkleRootOnChainOld: Joi.string().optional(),
-});
-
-const SchemaRollupOffChainHistoryRecordQuery = Joi.object<
-  TRollupOffChainHistoryRequest['query']
->({
-  databaseName: Joi.string().required(),
-  merkleRootNew: Joi.string().optional(),
-  merkleRootOld: Joi.string().optional(),
-});
 
 const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
   Joi.object<TRollupOnChainHistoryRequest>({
-    query: SchemaRollupOnChainHistoryRecordQuery.required(),
+    databaseName: databaseName,
     pagination,
   });
 
 const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
   Joi.object<TRollupOffChainHistoryRequest>({
-    query: SchemaRollupOffChainHistoryRecordQuery.required(),
+    databaseName: databaseName,
     pagination,
   });
 

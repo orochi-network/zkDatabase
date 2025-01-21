@@ -5,19 +5,16 @@ import {
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TZkProofStatusResponse,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
-  TZkProofResponse,
-  TRollupOnChainHistoryRequest,
-  TRollupOnChainHistoryResponse,
-  TRollupOffChainHistoryRequest,
-  TRollupOffChainHistoryResponse,
-  TRollupOnChainStateResponse,
   TVerificationKeyResponse,
-  EContractName,
+  TZkProofResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -71,12 +68,10 @@ export interface IDatabase {
   rollUpOnChainStart(): Promise<boolean>;
 
   rollUpOnChainHistory(
-    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse>;
 
   rollUpOffChainHistory(
-    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse>;
 

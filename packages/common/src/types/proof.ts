@@ -27,7 +27,7 @@ export type TMerkleProofDocumentResponse = EQueueTaskStatus;
 // Database's/ZK proof status
 export type TZkProofStatusRequest = TDatabaseRequest;
 
-export type TZkProofStatusResponse = EQueueTaskStatus | null;
+export type TZkProofStatusResponse = EQueueTaskStatus;
 
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;

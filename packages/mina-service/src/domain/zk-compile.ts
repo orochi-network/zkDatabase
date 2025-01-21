@@ -180,3 +180,5 @@ export class ZkCompile {
     }
   }
 }
+
+export default ZkCompile;

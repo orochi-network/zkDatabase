@@ -1,20 +1,9 @@
 import type { ObjectId } from 'mongodb';
-import { TDbRecord, TNullable, TPickAlter } from './common';
+import { TDbRecord, TNullable } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
-import {
-  ETransactionStatus,
-  TTransactionRecord,
-  TTransactionRecordNullable,
-} from './transaction';
-
-// Base type
-export enum EMinaTransactionStatus {
-  Failed = 'failed',
-  Pending = 'pending',
-  Applied = 'applied',
-}
+import { TTransactionRecord, TTransactionRecordNullable } from './transaction';
 
 /**
  * Rollup state
@@ -30,38 +19,28 @@ export enum ERollupState {
   Updating = 'Updating',
   Outdated = 'Outdated',
   Failed = 'Failed',
+  Unavailable = 'Unavailable',
 }
 
 /**
  * Base type for ModelRollupOnChainHistory
  */
-export type TRollupOnChainHistory = Omit<
-  TRollupBaseHistory,
-  'merkleRootNew' | 'merkleRootOld' | 'step'
-> &
-  TPickAlter<
-    TRollupBaseHistory,
-    {
-      merkleRootNew: 'merkleRootOnChainNew';
-      merkleRootOld: 'merkleRootOnChainOld';
-      step: 'onChainStep';
-    }
-  > & {
-    // Previous name `txId` is changed to `transactionObjectId`,
-    // txId is not a good name it's alias of tx hash
-    // From transactionObjectId we can track the transaction status
-    transactionObjectId: ObjectId;
-    // Previous name is `proofObjectId` is changed to `rollupOffChainObjectId`
-    // Since proof model changed, this will ref to the proof in 'rollup_offchain'
-    rollupOffChainObjectId: ObjectId;
-  };
+export type TRollupOnChainHistory = TRollupBaseHistory & {
+  // Previous name `txId` is changed to `transactionObjectId`,
+  // txId is not a good name it's alias of tx hash
+  // From transactionObjectId we can track the transaction status
+  transactionObjectId: ObjectId;
+  // Previous name is `proofObjectId` is changed to `rollupOffChainObjectId`
+  // Since proof model changed, this will ref to the proof in 'rollup_offchain'
+  rollupOffChainObjectId: ObjectId;
+};
 
 /*
  * Base type for represents onchain rollup state of that database
  */
 export type TRollupOnChainState = Pick<
   TRollupOnChainHistory,
-  'databaseName' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
+  'databaseName' | 'merkleRootNew' | 'merkleRootOld'
 > & {
   // Number of merkle root transformation different to previous one
   rollupDifferent: bigint;
@@ -74,7 +53,7 @@ export type TRollupOnChainState = Pick<
  */
 export type TRollupStateNullable = TNullable<
   TRollupOnChainState,
-  'latestRollupOnChainSuccess' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
+  'latestRollupOnChainSuccess' | 'merkleRootNew' | 'merkleRootOld'
 >;
 
 /**
@@ -82,7 +61,7 @@ export type TRollupStateNullable = TNullable<
  */
 export type TRollupOnChainHistoryNullable = TNullable<
   TRollupOnChainHistory,
-  'onChainStep'
+  'merkleRootOld'
 >;
 
 // Model
@@ -102,25 +81,20 @@ export type TRollupOnChainCreateResponse = boolean;
 
 // ==== Onchain History ====
 export type TRollupOnChainHistoryRequest = {
-  query: Partial<
-    Pick<
-      TRollupOnChainHistory,
-      'databaseName' | 'merkleRootOnChainNew' | 'merkleRootOnChainOld'
-    >
-  >;
-  pagination: TPagination;
+  databaseName: string;
+  pagination?: TPagination;
 };
 
 // Hide all ref objectId field related, show status to user
-export type TRollupOnChainHistoryDataResponse = Omit<
-  TRollupOnChainHistoryRecord,
-  'transactionObjectId' | 'rollupOffChainObjectId' | '_id'
+export type TRollupOnChainHistoryDataResponse = TNullable<
+  TRollupBaseHistory,
+  'merkleRootOld'
 > &
   Pick<TTransactionRecordNullable, 'status' | 'error' | 'txHash'>;
 
 export type TRollupOnChainHistoryResponse = TPaginationReturn<
   TRollupOnChainHistoryDataResponse[]
-> | null;
+>;
 
 // ==== Onchain State ====
 export type TRollupOnChainStateRequest = TDatabaseRequest;
