@@ -10,9 +10,9 @@ import {
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
-  TRollupQueueData,
 } from '@zkdb/common';
 import {
+  EQueueType,
   ModelGenericQueue,
   ModelMetadataDatabase,
   ModelRollupOffChain,
@@ -145,11 +145,10 @@ export class Rollup {
     //
     const { query, pagination } = param;
 
-    const imRollupOffChainQueue =
-      await ModelGenericQueue.getInstance<TRollupQueueData>(
-        zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-        session
-      );
+    const imRollupOffChainQueue = await ModelGenericQueue.getInstance(
+      EQueueType.RollupOffChainQueue,
+      session
+    );
 
     // Since mongodb $lookup doesn't support joining 2 collections from 2 databases
     // https://jira.mongodb.org/browse/SERVER-34935

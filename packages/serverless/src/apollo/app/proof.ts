@@ -2,22 +2,20 @@ import { gql } from '@helper';
 import {
   databaseName,
   EQueueTaskStatus,
-  TRollupQueueData,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
 } from '@zkdb/common';
 import {
+  EQueueType,
   ModelGenericQueue,
   ModelRollupOffChain,
   Transaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
-import { publicWrapper } from '../validation';
+import { publicWrapper } from '../validation.js';
 
-/* eslint-disable import/prefer-default-export */
 export const typeDefsProof = gql`
   #graphql
   type Query
@@ -55,12 +53,11 @@ const zkProofStatus = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    return Transaction.mina(async (proofSession) => {
-      const imRollupQueue =
-        await ModelGenericQueue.getInstance<TRollupQueueData>(
-          zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-          proofSession
-        );
+    return Transaction.mina(async (minaSession) => {
+      const imRollupQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        minaSession
+      );
       // Get latest task rollup task queue
       const task = await imRollupQueue.findOne(
         {

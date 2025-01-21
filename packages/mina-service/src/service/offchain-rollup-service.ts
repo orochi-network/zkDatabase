@@ -12,9 +12,9 @@
 
 import { RollupOffChain } from '@domain';
 import { Backoff, config, logger } from '@helper';
-import { TRollupQueueData } from '@zkdb/common';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelRollupOffChain,
   Transaction,
@@ -45,10 +45,7 @@ export class RollupOffChainService {
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
         const imRollUpQueue = await Transaction.mina((session) =>
-          ModelGenericQueue.getInstance<TRollupQueueData>(
-            zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-            session
-          )
+          ModelGenericQueue.getInstance(EQueueType.RollupOffChainQueue, session)
         );
 
         const rollupResult = await imRollUpQueue.acquireNextTaskInQueue(
