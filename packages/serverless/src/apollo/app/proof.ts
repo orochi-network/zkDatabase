@@ -11,7 +11,6 @@ import {
   ModelGenericQueue,
   ModelRollupOffChain,
   Transaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import Joi from 'joi';
 import { publicWrapper } from '../validation.js';
@@ -53,10 +52,10 @@ const zkProofStatus = publicWrapper<
     databaseName,
   }),
   async (_root, { databaseName }) => {
-    return Transaction.mina(async (proofSession) => {
+    return Transaction.mina(async (minaSession) => {
       const imRollupQueue = await ModelGenericQueue.getInstance(
         EQueueType.RollupOffChainQueue,
-        proofSession
+        minaSession
       );
       // Get latest task rollup task queue
       const task = await imRollupQueue.findOne(
