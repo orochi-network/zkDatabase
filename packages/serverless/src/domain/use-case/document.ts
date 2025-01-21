@@ -34,9 +34,9 @@ import {
 import { ClientSession } from 'mongodb';
 import { logger } from '@helper';
 import { FilterCriteria, parseQuery } from '../utils';
-import { DocumentSchema } from './document-schema.js';
-import { PermissionSecurity } from './permission-security.js';
-import { Prover } from './prover.js';
+import { DocumentSchema } from './document-schema';
+import { PermissionSecurity } from './permission-security';
+import { Prover } from './prover';
 
 /** Transform an array of document fields to a document record. */
 export function fieldArrayToRecord(
