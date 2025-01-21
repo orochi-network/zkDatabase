@@ -10,7 +10,6 @@ import {
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
-  TRollupQueueData,
 } from '@zkdb/common';
 import {
   EQueueType,

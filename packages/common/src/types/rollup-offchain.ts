@@ -6,6 +6,7 @@ import { TDbRecord } from './common';
 import { TMetadataDatabase } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TGenericQueueBase } from './queue';
+import { TTransitionLogRecord } from './transition-log';
 
 // Base type
 
@@ -68,3 +69,10 @@ export type TRollupOffChainHistoryResponse = TPaginationReturn<
 export type TRollupOffChainHistoryParam = TRollupOffChainHistoryRequest;
 
 // Common type
+
+export type TRollupOffChainTransitionAggregate = Omit<
+  TRollupOffChainRecord,
+  'transitionLogObjectId'
+> & {
+  transitionLog: TTransitionLogRecord;
+};

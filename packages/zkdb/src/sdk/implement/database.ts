@@ -1,14 +1,11 @@
 import { IApiClient } from '@zkdb/api';
 import {
-  EContractName,
   ETransactionType,
   TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
-  TRollupOnChainHistoryRequest,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
   TSchemaExtendable,
@@ -96,7 +93,7 @@ export class Database implements IDatabase {
   }
 
   async zkProof(): Promise<TZkProofResponse> {
-    return (await this.apiClient.proof.proof(this.basicQuery)).unwrap();
+    return (await this.apiClient.proof.zkProof(this.basicQuery)).unwrap();
   }
 
   async zkProofStatus(): Promise<TZkProofStatusResponse> {

@@ -10,18 +10,28 @@ import {
 import { createApi, TApolloClient } from "./common";
 
 export const API_PROOF = <T>(client: TApolloClient<T>) => ({
-  proof: createApi<TZkProofRequest, TZkProofResponse>(
+  zkProof: createApi<TZkProofRequest, TZkProofResponse>(
     client,
     gql`
-      query proof($databaseName: String!) {
-        proof(databaseName: $databaseName) {
-          publicInput
-          publicOutput
-          maxProofsVerified
-          proof
+      query ZkProof($databaseName: String!) {
+        zkProof(databaseName: $databaseName) {
+          step
+          proof {
+            publicInput
+            publicOutput
+            maxProofsVerified
+            proof
+          }
         }
       }
-    `
+    `,
+    (res) =>
+      res
+        ? {
+            ...res,
+            step: BigInt(res.step),
+          }
+        : null
   ),
   zkProofStatus: createApi<TZkProofStatusRequest, TZkProofStatusResponse>(
     client,

@@ -3,6 +3,7 @@ import {
   databaseName,
   TRollupOffChainRecord,
   TRollupQueueData,
+  TRollupSerializedProof,
   TTransitionLogRecord,
 } from '@zkdb/common';
 import { ZkDbProcessor } from '@zkdb/smart-contract';
@@ -24,7 +25,7 @@ type TRollupInitParam = {
 };
 
 type TRollupUpdateParam = TRollupInitParam & {
-  previousZkProof: TRollupOffChainRecord;
+  previousZkProof: TRollupSerializedProof;
 };
 
 export class RollupOffChain {
@@ -74,12 +75,16 @@ export class RollupOffChain {
 
     // Get previous proof to update
     // NOTE: It must be sequential and can't be access with another queue task in the same database
-    const previousZkProof = await imRollupOffChain.findOne(
-      { databaseName: task.databaseName },
-      { sort: { step: -1 }, session: sessionMina }
-    );
+    const [previousRollupOffChain] = await imRollupOffChain
+      .latestRollupOffChainWithTransitionLog(
+        {
+          databaseName: task.databaseName,
+        },
+        sessionMina
+      )
+      .toArray();
 
-    if (!previousZkProof) {
+    if (!previousRollupOffChain) {
       // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
       if (BigInt(task.operationNumber) !== 1n) {
         throw new Error(
@@ -97,6 +102,12 @@ export class RollupOffChain {
 
       return zkProof;
     }
+
+    const previousZkProof: TRollupSerializedProof = {
+      step: previousRollupOffChain.step,
+      proof: previousRollupOffChain.proof,
+      merkleRootOld: previousRollupOffChain.transitionLog.merkleRootOld,
+    };
 
     const zkProof = await RollupOffChain.update({
       task,
@@ -129,7 +140,6 @@ export class RollupOffChain {
     return {
       databaseName: task.databaseName,
       transitionLogObjectId: transitionLog._id,
-      merkleRootOld: zkProofSerialized.merkleRootOld,
       proof: zkProofSerialized.proof,
       step: zkProofSerialized.step,
       createdAt: new Date(),
@@ -168,7 +178,6 @@ export class RollupOffChain {
     return {
       databaseName: task.databaseName,
       transitionLogObjectId: transitionLog._id,
-      merkleRootOld: zkProofSerialized.merkleRootOld,
       proof: zkProofSerialized.proof,
       step: zkProofSerialized.step,
       createdAt: new Date(),

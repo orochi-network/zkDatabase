@@ -81,9 +81,9 @@ type RollupOnChainState {
 }
 
 extend type Query {
-  rollupOnChainHistory(query: JSON, pagination: PaginationInput): RollupOnChainHistoryListResponse!
-  rollupOffChainHistory(query: JSON, pagination: PaginationInput): RollupOffChainHistoryListResponse!
-  rollupState(databaseName: String!): RollupOnChainState!
+  rollupOnChainHistory(databaseName: String!, pagination: PaginationInput): RollupOnChainHistoryListResponse!
+  rollupOffChainHistory(databaseName: String!, pagination: PaginationInput): RollupOffChainHistoryListResponse!
+  rollupState(databaseName: String!): RollupOnChainState
 }
 
 extend type Mutation {

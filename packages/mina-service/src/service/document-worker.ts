@@ -8,19 +8,18 @@
 // processing is done in the correct order, i.e. the task with sequence number
 // N is processed before the task with sequence number N+1.
 
-import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
+import { Backoff, config } from '@helper';
+import { LoggerLoader } from '@orochi-network/framework';
+import { ESequencer } from '@zkdb/common';
 import {
   DatabaseEngine,
   EQueueType,
   ModelGenericQueue,
   ModelSequencer,
   Transaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import assert from 'node:assert';
-import { ESequencer } from '@zkdb/common';
-import { LoggerLoader } from '@orochi-network/framework';
 
 let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
 
