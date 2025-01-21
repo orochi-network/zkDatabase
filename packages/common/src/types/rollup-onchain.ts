@@ -3,11 +3,7 @@ import { TDbRecord, TNullable, TPickAlter } from './common';
 import { TDatabaseRequest } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
-import {
-  ETransactionStatus,
-  TTransactionRecord,
-  TTransactionRecordNullable,
-} from './transaction';
+import { TTransactionRecord, TTransactionRecordNullable } from './transaction';
 
 // Base type
 export enum EMinaTransactionStatus {
@@ -82,7 +78,7 @@ export type TRollupStateNullable = TNullable<
  */
 export type TRollupOnChainHistoryNullable = TNullable<
   TRollupOnChainHistory,
-  'onChainStep'
+  'onChainStep' | 'merkleRootOnChainOld'
 >;
 
 // Model

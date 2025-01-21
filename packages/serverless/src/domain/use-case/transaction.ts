@@ -1,4 +1,4 @@
-import { logger, transactionQueue } from '@helper';
+import { transactionQueue } from '@helper';
 import { ModelUser } from '@model';
 import { FixedFloat } from '@orochi-network/utilities';
 import {
@@ -95,7 +95,13 @@ export class Transaction {
     }
 
     const transactionObjectId = new ObjectId();
-
+    // We need to create transactionObjectId here
+    // If we create transactionObjectId here, it still stay on the session mongodb and not created yet on database
+    // So when the worker service can't find
+    // So we created a objectId first and let the worker queue create transaction
+    // If you try commit before `await transactionQueue.add()` to force mongodb created on database
+    // You can't be able to use any session after this Transaction.enqueue anymore, because the session already commit
+    // TODO: Will refactor in the future. Drop bullMQ, using our GenericQueue<T>
     await transactionQueue.add(
       'transaction',
       {

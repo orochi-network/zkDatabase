@@ -18,7 +18,6 @@ import {
   ModelMetadataDatabase,
   ModelRollupOffChain,
   ModelRollupOnChainHistory,
-  ModelTransaction,
   ModelTransitionLog,
   TCompoundSession,
   zkDatabaseConstant,
@@ -47,13 +46,14 @@ export class Rollup {
       {
         session: compoundSession.sessionMina,
         sort: {
+          operationNumber: -1,
           createdAt: -1,
         },
       }
     );
 
     if (!latestOffChainRollupProof) {
-      throw Error('No proof has been generated yet');
+      throw new Error('No proof has been generated yet');
     }
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
@@ -74,35 +74,36 @@ export class Rollup {
     }
 
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
-    const imTransaction = ModelTransaction.getInstance();
 
-    const rollUpHistory = await imRollupOnChainHistory.findOne(
-      {
-        proofId: latestOffChainRollupProof._id,
-      },
-      { session: compoundSession.sessionServerless }
+    const rollupOnChainHistory = await imRollupOnChainHistory
+      .rollupOnChainHistoryAndTransaction({
+        databaseName,
+      })
+      .toArray();
+
+    // Check reuse proof for rollup history
+    const rollupOnChainHistoryWithProof = rollupOnChainHistory.find(
+      (e) =>
+        e.rollupOffChainObjectId.toString() ===
+        latestOffChainRollupProof._id.toString()
     );
 
-    if (rollUpHistory) {
+    // NOTE: I just refactor code but keep this check old logic from Oleg. Need to check
+    if (rollupOnChainHistoryWithProof) {
       logger.debug('Identified repeated proof');
-
-      const transaction = await imTransaction.findOne(
-        {
-          _id: rollUpHistory.transactionObjectId,
-        },
-        { session: compoundSession.sessionServerless }
-      );
-
-      if (transaction) {
-        if (transaction.status === ETransactionStatus.Confirmed) {
-          throw Error('You cannot roll-up the same proof');
-        }
-
-        if (transaction.status === ETransactionStatus.Unsigned) {
-          throw Error(
-            'You already have uncompleted transaction with the same proof'
-          );
-        }
+      if (
+        rollupOnChainHistoryWithProof.transaction.status ===
+        ETransactionStatus.Confirmed
+      ) {
+        throw new Error('You cannot roll-up the same proof');
+      }
+      if (
+        rollupOnChainHistoryWithProof.transaction.status ===
+        ETransactionStatus.Unsigned
+      ) {
+        throw new Error(
+          'You already have uncompleted transaction with the same proof'
+        );
       }
     }
 
@@ -115,12 +116,18 @@ export class Rollup {
 
     const currentTime = new Date();
 
+    const previousOnChainMerkleRootNew =
+      rollupOnChainHistory.find(
+        (e) => e.transaction.status === ETransactionStatus.Confirmed
+      )?.merkleRootOnChainNew || null;
+
     await imRollupOnChainHistory.insertOne(
       {
         databaseName,
         transactionObjectId,
         merkleRootOnChainNew: transitionLog.merkleRootNew,
-        merkleRootOnChainOld: latestOffChainRollupProof.merkleRootOld,
+        // latest old merkle root = previous new merkle root
+        merkleRootOnChainOld: previousOnChainMerkleRootNew,
         rollupOffChainObjectId: latestOffChainRollupProof._id,
         createdAt: currentTime,
         updatedAt: currentTime,
@@ -225,38 +232,19 @@ export class Rollup {
       !metadataDatabase?.appPublicKey ||
       PublicKey.fromBase58(metadataDatabase?.appPublicKey).isEmpty().toBoolean()
     ) {
-      throw Error(
+      throw new Error(
         `Database ${metadataDatabase?.databaseName} is not bound to zkApp, please deploy first`
       );
     }
 
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
 
-    const rollupOnChainHistoryAgg = await imRollupOnChainHistory.collection
-      .aggregate<TRollupOnChainHistoryTransactionAggregate>(
-        [
-          {
-            $match: { databaseName: metadataDatabase?.databaseName },
-          },
-          {
-            $sort: { updatedAt: -1, createdAt: -1 },
-          },
-          {
-            $lookup: {
-              from: zkDatabaseConstant.globalCollection.transaction,
-              localField: 'transactionObjectId',
-              foreignField: '_id',
-              as: 'transaction',
-            },
-          },
-          {
-            $addFields: {
-              // It's 1-1 relation so the array must have 1 element
-              transaction: { $arrayElemAt: ['$transaction', 0] },
-            },
-          },
-        ],
-        { session }
+    const rollupOnChainHistoryAgg = await imRollupOnChainHistory
+      .rollupOnChainHistoryAndTransaction(
+        {
+          databaseName: metadataDatabase?.databaseName,
+        },
+        session
       )
       .toArray();
 
@@ -306,29 +294,10 @@ export class Rollup {
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
     const imRollupOffChain = ModelRollupOffChain.getInstance();
     // Get latest rollup history
-    const rollupOnChainHistory = await imRollupOnChainHistory.collection
-      .aggregate<TRollupOnChainHistoryTransactionAggregate>([
-        {
-          $match: { databaseName },
-        },
-        {
-          $sort: { updatedAt: -1, createdAt: -1 },
-        },
-        {
-          $lookup: {
-            from: zkDatabaseConstant.globalCollection.transaction,
-            localField: 'transactionObjectId',
-            foreignField: '_id',
-            as: 'transaction',
-          },
-        },
-        {
-          $addFields: {
-            // It's 1-1 relation so the array must have 1 element
-            transaction: { $arrayElemAt: ['$transaction', 0] },
-          },
-        },
-      ])
+    const rollupOnChainHistory = await imRollupOnChainHistory
+      .rollupOnChainHistoryAndTransaction({
+        databaseName,
+      })
       .toArray();
 
     const latestRollupOffChain = await imRollupOffChain.findOne(
