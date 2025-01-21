@@ -86,7 +86,7 @@ export type TRollupOnChainHistoryRequest = {
       'databaseName' | 'merkleRootNew' | 'merkleRootOld'
     >
   >;
-  pagination: TPagination;
+  pagination?: TPagination;
 };
 
 // Hide all ref objectId field related, show status to user

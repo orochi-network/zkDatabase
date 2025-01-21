@@ -251,7 +251,7 @@ export class Rollup {
       return {
         data: [],
         total: 0,
-        offset: pagination.offset || 0,
+        offset: pagination?.offset || 0,
       };
     }
 
@@ -283,7 +283,7 @@ export class Rollup {
     return {
       data: rollupOnChainHistory,
       total: await imRollupOnChainHistory.count(query),
-      offset: pagination.offset || 0,
+      offset: pagination?.offset || 0,
     };
   }
 
