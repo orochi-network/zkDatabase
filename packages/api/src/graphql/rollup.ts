@@ -1,10 +1,4 @@
 import { gql } from "@apollo/client";
-
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
 import {
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
@@ -15,9 +9,10 @@ import {
   TRollupOnChainStateRequest,
   TRollupOnChainStateResponse,
 } from "@zkdb/common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
-  rollupCreate: createMutateFunction<
+  rollupCreate: createApi<
     TRollupOnChainCreateRequest,
     TRollupOnChainCreateResponse
   >(
@@ -26,10 +21,9 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
       mutation rollupCreate($databaseName: String!) {
         rollupCreate(databaseName: $databaseName)
       }
-    `,
-    (data) => data.rollupCreate
+    `
   ),
-  rollupOffChainHistory: createQueryFunction<
+  rollupOffChainHistory: createApi<
     TRollupOffChainHistoryRequest,
     TRollupOffChainHistoryResponse
   >(
@@ -53,9 +47,16 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.rollupOffChainHistory
+    ({ total, data, offset }) => ({
+      total,
+      offset,
+      data: data.map(({ step, ...e }) => ({
+        ...e,
+        step: BigInt(step),
+      })),
+    })
   ),
-  rollupOnChainHistory: createQueryFunction<
+  rollupOnChainHistory: createApi<
     TRollupOnChainHistoryRequest,
     TRollupOnChainHistoryResponse
   >(
@@ -77,9 +78,16 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.rollupOnChainHistory
+    ({ total, data, offset }) => ({
+      total,
+      offset,
+      data: data.map(({ step, ...e }) => ({
+        ...e,
+        step: BigInt(step),
+      })),
+    })
   ),
-  rollupOnChainState: createQueryFunction<
+  rollupOnChainState: createApi<
     TRollupOnChainStateRequest,
     TRollupOnChainStateResponse
   >(
@@ -95,7 +103,8 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
           latestRollupOnChainSuccess
         }
       }
-    `,
-    (data) => data.rollupState
+    `
   ),
 });
+
+export default API_ROLLUP;

@@ -7,15 +7,10 @@ import {
   TTransactionSubmitRequest,
   TTransactionSubmitResponse,
 } from "@zkdb/common";
-
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
-  transactionSubmit: createMutateFunction<
+  transactionSubmit: createApi<
     TTransactionSubmitRequest,
     TTransactionSubmitResponse
   >(
@@ -32,10 +27,9 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
           txHash: $txHash
         )
       }
-    `,
-    (data) => data.transactionSubmit
+    `
   ),
-  transactionDeployEnqueue: createMutateFunction<
+  transactionDeployEnqueue: createApi<
     TTransactionDeployEnqueueRequest,
     TTransactionDeployEnqueueResponse
   >(
@@ -44,10 +38,9 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
       mutation transactionDeployEnqueue($databaseName: String!) {
         transactionDeployEnqueue(databaseName: $databaseName)
       }
-    `,
-    (data) => data.transactionDeployEnqueue
+    `
   ),
-  transactionDraft: createQueryFunction<
+  transactionDraft: createApi<
     TTransactionDraftRequest,
     TTransactionDraftResponse
   >(
@@ -72,7 +65,8 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
           updatedAt
         }
       }
-    `,
-    (data) => data.transactionDraft
+    `
   ),
 });
+
+export default API_TRANSACTION;

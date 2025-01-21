@@ -86,7 +86,7 @@ export class GraphQLResult<T> {
       return this.result as T;
     }
     if (this.isError()) {
-      throw this.result as Error;
+      throw this.result;
     }
     throw new Error("Expected an error but found none");
   }
