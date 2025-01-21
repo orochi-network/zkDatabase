@@ -5,7 +5,7 @@ import {
   DatabaseEngine,
   EQueueType,
   ModelGenericQueue,
-  withTransaction,
+  Transaction,
   zkDatabaseConstant,
 } from '../../build/src';
 import { config } from '../../build/src';
@@ -48,13 +48,13 @@ describe('ModelMerkleTree', () => {
       something: number;
     };
 
-    const imModelQueue = await withTransaction(async (session) => {
+    const imModelQueue = await Transaction.mina(async (session) => {
       return ModelGenericQueue.unsafeGetInstance<QueueData>(
         EQueueType.DocumentQueue,
         COLLECTION_NAME,
         session
       );
-    }, 'proofService');
+    });
 
     const randomDigit = Math.floor(Math.random() * 100);
 
