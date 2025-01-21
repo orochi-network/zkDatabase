@@ -10,6 +10,7 @@ import {
   TRollupOnChainHistoryParam,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
+  TRollupQueueData,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -19,7 +20,6 @@ import {
   ModelRollupOnChainHistory,
   ModelTransitionLog,
   TCompoundSession,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { PublicKey } from 'o1js';
@@ -143,7 +143,7 @@ export class Rollup {
     session: ClientSession
   ): Promise<TRollupOffChainHistoryResponse> {
     //
-    const { query, pagination } = param;
+    const { databaseName, pagination } = param;
 
     const imRollupOffChainQueue = await ModelGenericQueue.getInstance(
       EQueueType.RollupOffChainQueue,
@@ -156,7 +156,7 @@ export class Rollup {
     const rollupOffChainQueue = await imRollupOffChainQueue
       .find(
         {
-          databaseName: query.databaseName,
+          databaseName,
         },
         { session }
       )
@@ -166,12 +166,12 @@ export class Rollup {
       return {
         data: [],
         total: 0,
-        offset: pagination.offset || 0,
+        offset: pagination?.offset || 0,
       };
     }
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
-      query.databaseName,
+      databaseName,
       session
     );
 
@@ -209,7 +209,7 @@ export class Rollup {
     return {
       data: rollupOffChainQueueAndTransition,
       total: rollupOffChainQueueAndTransition.length,
-      offset: pagination.offset || 0,
+      offset: pagination?.offset || 0,
     };
   }
 

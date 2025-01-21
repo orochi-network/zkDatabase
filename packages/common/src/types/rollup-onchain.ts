@@ -86,7 +86,10 @@ export type TRollupOnChainHistoryRequest = {
 };
 
 // Hide all ref objectId field related, show status to user
-export type TRollupOnChainHistoryDataResponse = TRollupBaseHistory &
+export type TRollupOnChainHistoryDataResponse = TNullable<
+  TRollupBaseHistory,
+  'merkleRootOld'
+> &
   Pick<TTransactionRecordNullable, 'status' | 'error' | 'txHash'>;
 
 export type TRollupOnChainHistoryResponse = TPaginationReturn<
