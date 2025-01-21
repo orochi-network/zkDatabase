@@ -5,13 +5,6 @@ import { TPagination, TPaginationReturn } from './pagination';
 import { TRollupBaseHistory } from './rollup-offchain';
 import { TTransactionRecord, TTransactionRecordNullable } from './transaction';
 
-// Base type
-export enum EMinaTransactionStatus {
-  Failed = 'failed',
-  Pending = 'pending',
-  Applied = 'applied',
-}
-
 /**
  * Rollup state
  * @enum
