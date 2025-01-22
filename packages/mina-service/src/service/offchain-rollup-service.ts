@@ -18,7 +18,6 @@ import {
   ModelGenericQueue,
   ModelRollupOffChain,
   Transaction,
-  zkDatabaseConstant,
 } from '@zkdb/storage';
 
 // The duration to wait before exiting the service after a crash to prevent a

@@ -32,7 +32,11 @@ export type TZkProofStatusResponse = EQueueTaskStatus;
 // ZK Proof of Database
 export type TZkProofRequest = TDatabaseRequest;
 
-export type TZkProofResponse = TRollupSerializedProof | null;
+// Step and proof would be enough, since all Merkle root info already in JsonProof
+export type TZkProofResponse = Omit<
+  TRollupSerializedProof,
+  'merkleRootOld'
+> | null;
 
 export type TRollUpOffChainAndTransitionAggregate = TRollupOffChainRecord & {
   transition: TTransitionLogRecord;
