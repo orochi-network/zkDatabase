@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import type { ObjectId } from 'mongodb';
 import { TPagination } from './pagination';
 
