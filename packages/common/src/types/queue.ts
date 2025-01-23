@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { TNullable } from './common';
 
 export enum EDocumentOperation {
@@ -12,8 +13,8 @@ export type TDocumentQueuedData = {
   newDocumentHash?: string;
   merkleIndex: bigint;
   docId: string;
-  documentObjectIdPrevious: string | null;
-  documentObjectIdCurrent: string | null;
+  documentObjectIdPrevious: ObjectId | null;
+  documentObjectIdCurrent: ObjectId | null;
 };
 
 export enum EQueueTaskStatus {
