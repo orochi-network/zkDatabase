@@ -1,21 +1,14 @@
+import { zkDatabaseConstant, zkDatabaseMetadataCollections } from '@common';
+import { DATABASE_ENGINE } from '@helper';
 import {
   ClientSession,
+  DbStatsOptions,
   Document,
+  DropDatabaseOptions,
+  ListCollectionsOptions,
   ListDatabasesResult,
-  ObjectId,
 } from 'mongodb';
-import {
-  zkDatabaseConstants,
-  zkDatabaseMetadataCollections,
-} from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelBasic from '../base/basic.js';
-
-export type DocumentMetaIndex = {
-  collection: string;
-  docId: ObjectId;
-  index: number;
-};
+import { ModelBasic } from '../base';
 
 /**
  * Handles database operations. Extends ModelBasic.
@@ -25,7 +18,10 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {
-    super(databaseName || zkDatabaseConstants.globalDatabase, DB.service);
+    super(
+      databaseName || zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.dbServerless
+    );
   }
 
   public static getInstance<T extends Document>(
@@ -40,8 +36,13 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
   }
 
-  public async listCollections(): Promise<string[]> {
-    const collections = await this.db.listCollections().toArray();
+  public async listCollections(
+    filter?: Document,
+    options?: ListCollectionsOptions
+  ): Promise<string[]> {
+    const collections = await this.db
+      .listCollections(filter, options)
+      .toArray();
     return collections
       .filter(
         (collection) => !zkDatabaseMetadataCollections.includes(collection.name)
@@ -49,8 +50,11 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
       .map((collection) => collection.name);
   }
 
-  public async isCollectionExist(collectionName: string): Promise<boolean> {
-    return (await this.listCollections()).some(
+  public async isCollectionExist(
+    collectionName: string,
+    options?: ListCollectionsOptions
+  ): Promise<boolean> {
+    return (await this.listCollections(options)).some(
       (collection) => collection === collectionName
     );
   }
@@ -58,34 +62,40 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
   public async createCollection(
     collectionName: string,
     session?: ClientSession
-  ): Promise<void> {
-    const isExist = await this.isCollectionExist(collectionName);
+  ): Promise<boolean> {
+    const isExist = await this.isCollectionExist(collectionName, { session });
     if (!isExist) {
-      await this.db.createCollection(collectionName, { session });
-    }
-  }
-
-  public async dropCollection(collectionName: string): Promise<boolean> {
-    const isExist = await this.isCollectionExist(collectionName);
-    if (isExist) {
-      await this.db.collection(collectionName).drop();
-      return true;
+      const result = await this.db.createCollection(collectionName, {
+        session,
+      });
+      return typeof result === 'object' && result !== null;
     }
     return false;
   }
 
-  public async drop(): Promise<boolean> {
-    await this.db.dropDatabase();
-    return true;
+  private async dropCollection(
+    collectionName: string,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const isExist = await this.isCollectionExist(collectionName, { session });
+    if (isExist) {
+      const dropResult = await this.db
+        .collection(collectionName)
+        .drop({ session });
+      return dropResult;
+    }
+    return false;
   }
 
-  public async stats(): Promise<Document> {
-    return this.db.stats();
+  private async drop(options?: DropDatabaseOptions): Promise<boolean> {
+    return this.db.dropDatabase(options);
   }
 
-  public async list(): Promise<ListDatabasesResult> {
-    return this.dbEngine.client.db().admin().listDatabases();
+  public async stats(options?: DbStatsOptions): Promise<Document> {
+    return this.db.stats(options);
+  }
+
+  public async list(session?: ClientSession): Promise<ListDatabasesResult> {
+    return this.dbEngine.client.db().admin().listDatabases({ session });
   }
 }
-
-export default ModelDatabase;

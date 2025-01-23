@@ -1,35 +1,9 @@
-import logger from './logger.js';
-
-export async function isOk(callback: () => Promise<any>): Promise<boolean> {
-  try {
-    await callback();
-    return true;
-  } catch (e) {
-    logger.error(e);
-    return false;
-  }
-}
-
-const cache: {
-  timestamp?: Date;
-} = {};
-
-// During tests causing: Jest has detected the following 1 open handle potentially keeping Jest from exiting
-export function getCurrentTime(): Date {
-  if (typeof cache.timestamp === 'undefined') {
-    cache.timestamp = new Date();
-    // Clear cache every 2 secs
-    setTimeout(() => {
-      delete cache.timestamp;
-    }, 2000);
-  }
-  return cache.timestamp;
-}
+import { ModelDocument } from '@model';
+import { EIndexType, TCollectionIndexMap } from '@zkdb/common';
+import { IndexDirection } from 'mongodb';
 
 export function objectToLookupPattern(
-  obj: {
-    [key: string]: any;
-  },
+  obj: Record<string, any>,
   options?: {
     regexSearch: boolean;
   }
@@ -47,3 +21,19 @@ export function objectToLookupPattern(
 }
 
 export const gql = (...args: any[]): string => args.join('\n');
+
+export const convertIndexToMongoFormat = <T = any>(
+  index: Record<string, EIndexType>
+): TCollectionIndexMap<T> =>
+  Object.entries(index).reduce((acc, [key, value]) => {
+    const val = value === EIndexType.Asc ? 1 : -1;
+    return { ...acc, [ModelDocument.indexKeyFormat(key)]: val };
+  }, {});
+
+export const convertIndexToGraphqlFormat = (
+  index: Record<string, IndexDirection>
+): Record<string, EIndexType> =>
+  Object.entries(index).reduce((acc, [key, value]) => {
+    const val = value ? EIndexType.Asc : EIndexType.Desc;
+    return { ...acc, [key]: val };
+  }, {});

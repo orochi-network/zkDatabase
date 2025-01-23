@@ -4,41 +4,47 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context/index.js";
-import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
+import { setContext } from "@apollo/client/link/context/index";
+import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index";
 import { ACCESS_TOKEN, COOKIE } from "@utils";
-import { collection } from "./collection";
-import { collectionIndex } from "./collection-index";
-import { database } from "./database";
-import { document } from "./document";
-import { environment } from "./environment";
-import { group } from "./group";
-import { merkle } from "./merkle";
-import { ownership } from "./ownership";
-import { permission } from "./permission";
-import { proof } from "./proof";
-import { rollup } from "./rollup";
-import { transaction } from "./transaction";
-import { user } from "./user";
+import { API_COLLECTION } from "./collection";
+import { API_COLLECTION_INDEX } from "./collection-index";
+import { API_DATABASE } from "./database";
+import { API_DOCUMENT } from "./document";
+import { API_GROUP } from "./group";
+import { API_MERKLE } from "./merkle";
+import { API_PERMISSION_OWNERSHIP } from "./permission-ownership";
+import { API_PROOF } from "./proof";
+import { API_ROLLUP } from "./rollup";
+import { API_TRANSACTION } from "./transaction";
+import { API_USER } from "./user";
 
-export interface IApiClient<T = any> {
-  api: ApiClient<T>;
-  db: ReturnType<typeof database>;
-  collection: ReturnType<typeof collection>;
-  index: ReturnType<typeof collectionIndex>;
-  doc: ReturnType<typeof document>;
-  user: ReturnType<typeof user>;
-  group: ReturnType<typeof group>;
-  ownership: ReturnType<typeof ownership>;
-  permission: ReturnType<typeof permission>;
-  merkle: ReturnType<typeof merkle>;
-  proof: ReturnType<typeof proof>;
-  transaction: ReturnType<typeof transaction>;
-  rollup: ReturnType<typeof rollup>;
-  environment: ReturnType<typeof environment>;
+// eslint-disable-next-line no-undef
+const _global = typeof globalThis !== "undefined" ? globalThis : window;
+
+type _RequestInit = typeof _global extends { onmessage: any }
+  ? {}
+  : import("undici-types").RequestInit;
+
+interface RequestInit extends _RequestInit {}
+
+export interface IApiClient {
+  // eslint-disable-next-line no-use-before-define
+  api: ApiClient;
+  db: ReturnType<typeof API_DATABASE>;
+  collection: ReturnType<typeof API_COLLECTION>;
+  index: ReturnType<typeof API_COLLECTION_INDEX>;
+  document: ReturnType<typeof API_DOCUMENT>;
+  user: ReturnType<typeof API_USER>;
+  group: ReturnType<typeof API_GROUP>;
+  merkle: ReturnType<typeof API_MERKLE>;
+  proof: ReturnType<typeof API_PROOF>;
+  transaction: ReturnType<typeof API_TRANSACTION>;
+  rollup: ReturnType<typeof API_ROLLUP>;
+  permissionOwnership: ReturnType<typeof API_PERMISSION_OWNERSHIP>;
 }
 
-export class ApiClient<T = any> {
+export class ApiClient {
   #client: InstanceType<typeof ApolloClient<any>>;
 
   public get apollo() {
@@ -53,11 +59,8 @@ export class ApiClient<T = any> {
     const httpLink = new HttpLink({
       uri,
       credentials: "include",
-      fetch: async (
-        uri: string | URL | globalThis.Request,
-        options?: RequestInit
-      ) => {
-        return fetch(uri, {
+      fetch: async (url: string | URL | any, options?: RequestInit) => {
+        return fetch(url, {
           ...options,
           credentials: "include", // This ensures cookies are sent with the request
         }).then((response: Response) => {
@@ -76,11 +79,11 @@ export class ApiClient<T = any> {
       const cookie = this.storage.getItem(COOKIE);
       const authHeader = headers || {};
       if (cookie) {
-        authHeader["cookie"] = cookie;
+        authHeader.cookie = cookie;
       }
 
       if (accessToken) {
-        authHeader["authorization"] = `Bearer ${accessToken}`;
+        authHeader.authorization = `Bearer ${accessToken}`;
       }
       return {
         headers: authHeader,
@@ -103,26 +106,22 @@ export class ApiClient<T = any> {
       },
     });
   }
-  public static newInstance<T = any>(
-    url: string,
-    storage: Storage
-  ): IApiClient<T> {
-    const api = new ApiClient<T>(url, storage);
+
+  public static newInstance(url: string, storage: Storage): IApiClient {
+    const api = new ApiClient(url, storage);
     return {
       api,
-      db: database(api.apollo),
-      collection: collection(api.apollo),
-      index: collectionIndex(api.apollo),
-      doc: document(api.apollo),
-      user: user(api.apollo),
-      group: group(api.apollo),
-      ownership: ownership(api.apollo),
-      permission: permission(api.apollo),
-      merkle: merkle(api.apollo),
-      proof: proof(api.apollo),
-      transaction: transaction(api.apollo),
-      rollup: rollup(api.apollo),
-      environment: environment(api.apollo),
+      db: API_DATABASE(api.apollo),
+      collection: API_COLLECTION(api.apollo),
+      index: API_COLLECTION_INDEX(api.apollo),
+      document: API_DOCUMENT(api.apollo),
+      user: API_USER(api.apollo),
+      group: API_GROUP(api.apollo),
+      merkle: API_MERKLE(api.apollo),
+      proof: API_PROOF(api.apollo),
+      transaction: API_TRANSACTION(api.apollo),
+      rollup: API_ROLLUP(api.apollo),
+      permissionOwnership: API_PERMISSION_OWNERSHIP(api.apollo),
     };
   }
 }

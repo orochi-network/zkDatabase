@@ -1,242 +1,322 @@
+import {
+  TGroupDetail,
+  TGroupParam,
+  TGroupParamCreate,
+  TGroupParamListUser,
+  TGroupParamUpdateMetadata,
+  groupDescription as joiGroupDescription,
+  groupName as joiGroupName,
+} from '@zkdb/common';
 import { ClientSession } from 'mongodb';
-import ModelGroup from '../../model/database/group.js';
-import ModelUserGroup, { TGroupInfo } from '../../model/database/user-group.js';
-import { isDatabaseOwner } from './database.js';
-import { areUsersExist } from './user.js';
+import { ModelGroup, ModelUserGroup, ModelUser } from '@model';
+import { Database } from './database';
 
-async function isGroupExist(
-  databaseName: string,
-  groupName: string,
-  session?: ClientSession
-): Promise<boolean> {
-  const modelGroup = new ModelGroup(databaseName);
+/**
+ * The `Group` class provides methods to manage groups, including creating groups,
+ * updating metadata, managing participants, and retrieving group details.
+ */
+export class Group {
+  /**
+   * Checks if a group exists based on the provided parameters.
+   *
+   * @param paramGroup - The parameters used to filter and identify the group, following the `TGroupParam` type.
+   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @returns A promise resolving to `true` if a matching group exists, otherwise `false`.
+   */
+  public static async exist(
+    paramGroup: TGroupParam,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const { databaseName, groupName } = paramGroup;
 
-  const group = await modelGroup.findGroup(groupName, session);
+    const imGroup = new ModelGroup(databaseName);
 
-  return group != null;
-}
-
-async function createGroup(
-  databaseName: string,
-  actor: string,
-  groupName: string,
-  groupDescription?: string,
-  session?: ClientSession
-): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor, session)) {
-    if (await isGroupExist(databaseName, groupName, session)) {
-      throw Error(
-        `Group ${groupName} is already exist for database ${databaseName}`
-      );
-    }
-
-    const modelGroup = new ModelGroup(databaseName);
-
-    const group = await modelGroup.createGroup(
-      groupName,
-      groupDescription,
-      actor,
-      { session }
-    );
+    const group = await imGroup.findOne({ groupName }, { session });
 
     return group != null;
   }
 
-  throw Error('Only database owner allowed to create group');
-}
+  /**
+   * Creates a new group based on the provided parameters.
+   *
+   * @param paramGroupCreate - The parameters required to create the group, adhering to the `TGroupParamCreate` type.
+   * @param session - The MongoDB session for transactional queries.
+   * @returns A promise resolving to `true` if the group is created successfully, otherwise `false`.
+   */
+  public static async create(
+    paramGroupCreate: TGroupParamCreate,
+    session: ClientSession
+  ): Promise<boolean> {
+    const { databaseName, groupName, groupDescription, createdBy } =
+      paramGroupCreate;
 
-async function getGroupInfo(
-  databaseName: string,
-  groupName: string,
-  session?: ClientSession
-): Promise<TGroupInfo> {
-  if (!(await isGroupExist(databaseName, groupName, session))) {
-    throw Error(
-      `Group ${groupName} does not exist for database ${databaseName}`
-    );
+    // Checking actor is owner first
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
+      // Checking group existed before
+      if (await Group.exist({ databaseName, groupName }, session)) {
+        throw new Error(
+          `Group ${groupName} is already exist for database ${databaseName}`
+        );
+      }
+      // Initialize model
+      const imGroup = new ModelGroup(databaseName);
+      const imUserGroup = new ModelUserGroup(databaseName);
+      const imUser = new ModelUser();
+
+      // Get user
+      const user = await imUser.findOne({ userName: createdBy }, { session });
+      // Checking user exist
+      if (user) {
+        // Create group instance
+        const group = await imGroup.insertOne(
+          {
+            groupName,
+            groupDescription: groupDescription || `Group ${groupName}`,
+            createdBy,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          { session }
+        );
+        // Make sure both group
+        return group.acknowledged;
+      }
+    }
+
+    throw new Error('Only database owner allowed to create group');
   }
-  const modelUserGroup = new ModelUserGroup(databaseName);
-  const modelGroup = new ModelGroup(databaseName);
-  const group = await modelGroup.findOne({ groupName });
-  if (!group) {
-    throw new Error('Group not existed');
-  }
-  return {
-    ...group,
-    members: await (
-      await modelUserGroup.find({ groupId: group._id })
-    ).toArray(),
-  };
-}
-async function checkUserGroupMembership(
-  databaseName: string,
-  actor: string,
-  groupName: string,
-  session?: ClientSession
-): Promise<boolean> {
-  if (!(await isGroupExist(databaseName, groupName, session))) {
-    throw Error(
-      `Group ${groupName} does not exist for database ${databaseName}`
-    );
-  }
 
-  const modelUserGroup = new ModelUserGroup(databaseName);
-  const actorGroups = await modelUserGroup.listGroupByUserName(actor, {
-    session,
-  });
-  return actorGroups.includes(groupName);
-}
+  /**
+   * Retrieves detailed information about a group based on the provided parameters.
+   *
+   * @param paramGroup - The parameters to identify the group, following the `TGroupParam` type.
+   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @returns A promise resolving to the group detail, conforming to the `TGroupDetail` type.
+   */
+  public static async detail(
+    paramGroup: TGroupParam,
+    session?: ClientSession
+  ): Promise<TGroupDetail | null> {
+    const { databaseName, groupName } = paramGroup;
 
-async function addUserToGroups(
-  databaseName: string,
-  actor: string,
-  groups: string[],
-  session?: ClientSession
-): Promise<boolean> {
-  const modelUserGroup = new ModelUserGroup(databaseName);
-  const result = await modelUserGroup.addUserToGroup(actor, groups, {
-    session,
-  });
-
-  return result.isOk();
-}
-
-async function changeGroupDescription(
-  databaseName: string,
-  actor: string,
-  groupName: string,
-  newGroupDescription: string,
-  session?: ClientSession
-): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor, session)) {
-    const modelGroup = new ModelGroup(databaseName);
-    const group = await modelGroup.findGroup(groupName, session);
+    // Checking group existed before
+    if (!(await Group.exist({ databaseName, groupName }, session))) {
+      return null;
+    }
+    // Initialize model
+    const imUserGroup = new ModelUserGroup(databaseName);
+    const imGroup = new ModelGroup(databaseName);
+    // Find group
+    const group = await imGroup.findOne({ groupName });
 
     if (group) {
-      // TODO: We can update without searching for the group first
-      const result = await modelGroup.updateOne(
-        {
-          _id: (group as any)._id,
-        },
-        {
-          $set: { description: newGroupDescription },
-        },
-        { session }
-      );
+      const listParticipant = await imUserGroup
+        .find({
+          groupObjectId: group._id,
+        })
+        .toArray();
 
-      return result.modifiedCount === 1;
+      return {
+        ...group,
+        listUser: listParticipant,
+      };
     }
 
-    throw Error(`Group ${group} does not exist`);
+    return null;
   }
 
-  throw Error('Only database owner allowed to change description of group');
-}
+  /**
+   * Updates the metadata of a group based on the provided parameters.
+   *
+   * @param paramUpdateMetadata - The parameters specifying the group and the metadata to update, following the `TGroupParamUpdateMetadata` type.
+   * @param session - The MongoDB session for transactional queries.
+   * @returns A promise resolving to `true` if the metadata was updated successfully, otherwise `false`.
+   */
+  public static async updateMetadata(
+    paramUpdateMetadata: TGroupParamUpdateMetadata,
+    session: ClientSession
+  ): Promise<boolean> {
+    const {
+      databaseName,
+      groupName,
+      createdBy,
+      newGroupName,
+      newGroupDescription,
+    } = paramUpdateMetadata;
+    // Check if user don't input both newDescription & newGroupName
+    // Using Falsy to ensure user don't input thing like '', 0, null
+    if (!newGroupName && !newGroupDescription) {
+      throw new Error('Need to provide at least one field to update');
+    }
+    // Double check new group name and description with Joi
+    const { error: groupDescriptionErr } =
+      joiGroupDescription(false).validate(newGroupDescription);
+    const { error: groupNameErr } = joiGroupName(false).validate(newGroupName);
 
-async function addUsersToGroup(
-  databaseName: string,
-  actor: string,
-  group: string,
-  users: string[],
-  session?: ClientSession
-): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor, session)) {
-    const modelGroup = new ModelGroup(databaseName);
-    const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+    if (groupDescriptionErr) {
+      throw new Error(`Description Error: ${groupDescriptionErr.message}`);
+    }
 
-    if (groupExist) {
-      if (await areUsersExist(users)) {
-        const modelUserGroup = new ModelUserGroup(databaseName);
-        const result = await modelUserGroup.addUsersToGroup(users, group, {
-          session,
-        });
+    if (groupNameErr) {
+      throw new Error(`Name Error: ${groupNameErr.message}`);
+    }
 
-        return result.isOk();
+    // Check actor permission
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
+      // Initialize model
+      const imGroup = new ModelGroup(databaseName);
+      // Find group
+      // TODO: If using findOneAndUpdate, these code would cleaner not separate 2 query and 1 exist checking
+      const group = await imGroup.findOne({ groupName }, { session });
+      if (group) {
+        const groupUpdateResult = await imGroup.updateOne(
+          {
+            groupName,
+            createdBy,
+          },
+          {
+            // MongoDB will not update if value is 'undefined', no need checking
+            $set: {
+              groupName: newGroupName,
+              groupDescription: newGroupDescription,
+            },
+          },
+          { session }
+        );
+        // If new group name, modelUserGroup need to be update too
+        if (newGroupName) {
+          // Initialize modelUserGroup here
+          const imUserGroup = new ModelUserGroup(databaseName);
+
+          const userGroupUpdateResult = await imUserGroup.updateOne(
+            {
+              groupObjectId: group._id,
+            },
+            {
+              $set: { groupName: newGroupName },
+            },
+            { session }
+          );
+          // Ensure both of these 2 models are updated if update new groupName
+          return (
+            groupUpdateResult.acknowledged && userGroupUpdateResult.acknowledged
+          );
+        }
+
+        return groupUpdateResult.acknowledged;
+      }
+      throw Error(`Group ${groupName} does not exist`);
+    }
+
+    throw Error('Only database owner allowed to rename group');
+  }
+
+  /**
+   * Adds a list of users to a group based on the provided parameters.
+   *
+   * @param paramListUser - The parameters specifying the group and the users to add, following the `TGroupParamListUser` type.
+   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @returns A promise resolving to `true` if the users were added successfully, otherwise `false`.
+   */
+  public static async addListUser(
+    paramListUser: TGroupParamListUser,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const { databaseName, groupName, createdBy, listUserName } = paramListUser;
+    // Permission owner checking
+    if (
+      await Database.isOwner(
+        {
+          databaseName,
+          databaseOwner: createdBy,
+        },
+        session
+      )
+    ) {
+      // Initialize group model
+      const imGroup = new ModelGroup(databaseName);
+
+      const group = await imGroup.findOne({ groupName }, { session });
+
+      if (group) {
+        const imUser = new ModelUser();
+        // Check list of user exist
+        if (await imUser.isListUserExist(listUserName)) {
+          const imUserGroup = new ModelUserGroup(databaseName);
+          const result = await imUserGroup.addUserListToGroup(
+            listUserName,
+            groupName,
+            {
+              session,
+            }
+          );
+
+          return result.isOk();
+        }
+
+        throw Error('Some of user in list do not exist');
       }
 
-      throw Error('Some of users do not exist');
+      throw Error(`Group ${group} does not exist`);
     }
-
-    throw Error(`Group ${group} does not exist`);
+    throw Error('Only database owner allowed to add users to group');
   }
 
-  throw Error('Only database owner allowed to add users to group');
-}
+  /**
+   * Removes a list of users from a group based on the provided parameters.
+   *
+   * @param paramListUser - The parameters specifying the group and the users to remove, following the `TGroupParamListUser` type.
+   * @param session - (Optional) The MongoDB session for transactional queries.
+   * @returns A promise resolving to `true` if the users were removed successfully, otherwise `false`.
+   */
+  public static async removeListUser(
+    paramListUser: TGroupParamListUser,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const { databaseName, groupName, createdBy, listUserName } = paramListUser;
+    // Permission owner checking
+    if (
+      await Database.isOwner(
+        { databaseName, databaseOwner: createdBy },
+        session
+      )
+    ) {
+      // Initialize group model
+      const imGroup = new ModelGroup(databaseName);
 
-async function excludeUsersToGroup(
-  databaseName: string,
-  actor: string,
-  group: string,
-  users: string[],
-  session?: ClientSession
-): Promise<boolean> {
-  if (await isDatabaseOwner(databaseName, actor, session)) {
-    const modelGroup = new ModelGroup(databaseName);
-    const groupExist = (await modelGroup.findGroup(group, session)) !== null;
+      const group = await imGroup.findOne({ groupName }, { session });
 
-    if (groupExist) {
-      if (await areUsersExist(users)) {
-        const modelUserGroup = new ModelUserGroup(databaseName);
-        const result = await modelUserGroup.removeUsersFromGroup(users, group, {
-          session,
-        });
+      if (group) {
+        const imUser = new ModelUser();
+        // Check list of user exist
+        if (await imUser.isListUserExist(listUserName)) {
+          const imUserGroup = new ModelUserGroup(databaseName);
+          const result = await imUserGroup.removeUserListFromGroup(
+            listUserName,
+            groupName,
+            {
+              session,
+            }
+          );
 
-        return result.isOk();
+          return result.isOk();
+        }
+
+        throw Error('Some of user in list do not exist');
       }
 
-      throw Error('Some of users do not exist');
+      throw Error(`Group ${group} does not exist`);
     }
-
-    throw Error(`Group ${group} does not exist`);
+    throw Error('Only database owner allowed to add users to group');
   }
-
-  throw Error('Only database owner allowed to exclude users from group');
 }
-
-async function renameGroup(
-  databaseName: string,
-  actor: string,
-  groupName: string,
-  newGroupName: string,
-  session?: ClientSession
-) {
-  if (await isDatabaseOwner(databaseName, actor, session)) {
-    const modelUserGroup = new ModelGroup(databaseName);
-    const group = await modelUserGroup.findGroup(groupName);
-    if (group) {
-      await modelUserGroup.collection.updateOne(
-        {
-          groupName,
-        },
-        { $set: { groupName: newGroupName } }
-      );
-    }
-    throw Error(`Group ${groupName} does not exist`);
-  }
-
-  throw Error('Only database owner allowed to rename group');
-}
-
-async function getUsersGroup(
-  databaseName: string,
-  userName: string,
-  session?: ClientSession
-): Promise<string[]> {
-  // TODO: Check Database Ownership
-  return new ModelUserGroup(databaseName).listGroupByUserName(userName, {
-    session,
-  });
-}
-
-export {
-  addUsersToGroup,
-  addUserToGroups,
-  changeGroupDescription,
-  checkUserGroupMembership,
-  createGroup,
-  excludeUsersToGroup,
-  getGroupInfo,
-  getUsersGroup,
-  isGroupExist,
-  renameGroup,
-};

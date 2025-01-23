@@ -1,31 +1,31 @@
-import { ZKDatabaseClient } from 'zkdb';
-import { faker } from '@faker-js/faker';
-import { DB_NAME, ZKDB_URL } from '../utils/config.js';
+import { ZkDatabase } from 'zkdb';
 
-async function run() {
-  const zkdb = await ZKDatabaseClient.connect(ZKDB_URL);
+// In reality you better to encrypt your private key and these information
+// It will be better if your load it from .env file
+const zkdb = await ZkDatabase.connect({
+  userName: 'chiro-user',
+  privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
+  environment: 'node',
+  // This URL is for test environment
+  url: 'https://test-serverless.zkdatabase.org/graphql',
+});
 
-  const fakeUser = {
-    username: faker.internet.username().toLowerCase(),
-    email: faker.internet.email().toLowerCase(),
-  };
-
-  await zkdb.authenticator.signUp(fakeUser.username, fakeUser.email);
-
-  await zkdb.authenticator.signIn();
-
-  await zkdb.db(DB_NAME).create({ merkleHeight: 18 });
-
-  const dbList = await zkdb.system.listDatabase({ databaseName: DB_NAME });
-
-  if (
-    (await zkdb.db(DB_NAME).exist()) &&
-    dbList.find((db) => db.databaseName === DB_NAME)
-  ) {
-    console.log(`${DB_NAME} created successfully`);
-  }
-
-  await zkdb.authenticator.signOut();
+// Check user existence then create
+if (!(await zkdb.auth.isUserExist('chiro-user'))) {
+  await zkdb.auth.signUp('chiro-user');
 }
 
-await run();
+// Sign in
+await zkdb.auth.signIn();
+
+// Create new instance of `db_test`
+const dbTest = zkdb.db('db_test');
+
+// Check for database existence,
+// if database isn't exist create a new data with the capacity of 2^31
+if (!(await dbTest.exist())) {
+  await dbTest.create({ merkleHeight: 32 });
+}
+
+// Sign out
+await zkdb.auth.signOut();

@@ -10,7 +10,7 @@ import { MerkleWitness, Field, Poseidon, Provable } from 'o1js';
  * @returns ExtendedMerkleWitness class with the specified height.
  */
 
-export default function createExtendedMerkleWitness(height: number): any {
+export function createExtendedMerkleWitness(height: number) {
   const BaseWitness = MerkleWitness(height);
 
   class ExtendedMerkleWitness extends BaseWitness {
@@ -56,7 +56,7 @@ export default function createExtendedMerkleWitness(height: number): any {
         const bothLowerHalf = index <= x && otherIndex <= x;
 
         if (bothUpperHalf) {
-          x = x + x / 2;
+          x += x / 2;
         } else if (bothLowerHalf) {
           x /= 2;
         } else {
@@ -83,5 +83,5 @@ export default function createExtendedMerkleWitness(height: number): any {
     }
   }
 
-  return ExtendedMerkleWitness as any;
+  return ExtendedMerkleWitness;
 }

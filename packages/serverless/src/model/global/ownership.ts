@@ -1,38 +1,49 @@
+import { TOwnershipRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
-import { Document } from 'mongodb';
+import { ClientSession, WithoutId } from 'mongodb';
 
-export interface DocumentOwnership extends Document {
-  databaseName: string;
-  owner: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export class ModelOwnership extends ModelGeneral<DocumentOwnership> {
+export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
   static collectionName: string = 'ownership';
 
   constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
-      DB.service,
+      zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.dbServerless,
       ModelOwnership.collectionName
     );
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalDatabase,
-      DB.service,
+      zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.dbServerless,
       ModelOwnership.collectionName
     );
+    /*
+      databaseName: string;
+      owner: string;
+      createdAt: Date
+      updatedAt: Date
+    */
     if (!(await collection.isExist())) {
-      collection.index({ owner: 1 }, { unique: true });
-      collection.index({ databaseName: 1 }, { unique: true });
+      await collection.createSystemIndex(
+        { databaseName: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex({ owner: 1 }, { session });
+
+      // Compound index
+      await collection.createSystemIndex(
+        { databaseName: 1, owner: 1 },
+        { unique: true, session }
+      );
+      // Timestamp index
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

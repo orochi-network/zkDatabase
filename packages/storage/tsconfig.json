@@ -8,8 +8,15 @@
     "esModuleInterop": true,
     "outDir": "./build/",
     "rootDir": ".",
-    "types": ["node", "jest"]
+    "types": ["node", "jest"],
+    "baseUrl": "./",
+    "paths": {
+      "@common": ["./src/common"],
+      "@helper": ["./src/helper"],
+      "@database": ["./src/database"],
+    }, 
   },
+  "references": [{ "path": "../common"}],
   "include": ["**/*.ts"],
   "exclude": [
     "build",

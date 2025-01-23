@@ -1,207 +1,177 @@
-import { ClientSession } from 'mongodb';
-import { Field } from 'o1js';
+import { EDocumentOperation } from '@zkdb/common';
+import { TCompoundSession, ModelGenericQueue, EQueueType } from '@zkdb/storage';
+import { ModelMetadataDocument } from '@model';
+import { ObjectId } from 'mongodb';
+import { DocumentSchema, TValidatedDocument } from './document-schema.js';
 
-import {
-  TMerkleProof,
-  ModelMerkleTree,
-  ModelQueueTask,
-  ModelSequencer,
-  CompoundSession,
-} from '@zkdb/storage';
+// For prover param use-case
+export type TParamProve = {
+  databaseName: string;
+  collectionName: string;
+  docId: string;
+};
 
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import ModelDocument from '../../model/abstract/document.js';
+export type TParamProveCreate = TParamProve & {
+  document: TValidatedDocument;
+  documentObjectId: ObjectId;
+};
 
-import { DocumentFields } from '../types/document.js';
-import { buildSchema } from './schema.js';
+export type TParamProveUpdate = TParamProve & {
+  newDocument: TValidatedDocument;
+  newDocumentObjectId: ObjectId;
+  oldDocumentObjectId: ObjectId;
+};
 
-// Prove the creation of a document
-export async function proveCreateDocument(
-  databaseName: string,
-  collectionName: string,
-  docId: string,
-  document: DocumentFields,
-  compoundSession?: CompoundSession
-): Promise<TMerkleProof[]> {
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+export type TParamProveDelete = TParamProve & {
+  oldDocumentObjectId: ObjectId;
+};
 
-  const schema = await buildSchema(
-    databaseName,
-    collectionName,
-    document,
-    compoundSession?.sessionService
-  );
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+export class Prover {
+  public static async create(
+    proveCreateParam: TParamProveCreate,
+    operationNumber: bigint,
+    compoundSession: TCompoundSession
+  ) {
+    const { databaseName, docId, collectionName, document, documentObjectId } =
+      proveCreateParam;
+    // Get document metadata
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
-  const documentMetadata = await modelDocumentMetadata.findOne(
-    {
-      docId,
-    },
-    { session: compoundSession?.sessionService }
-  );
+    const metadataDocument = await imMetadataDocument.findOne(
+      {
+        docId,
+      },
+      { session: compoundSession.sessionServerless }
+    );
 
-  if (!documentMetadata) {
-    throw Error('Metadata is missed');
+    if (!metadataDocument) {
+      throw new Error(`No metadata found for docId ${docId}`);
+    }
+
+    // Building schema
+    const schema = DocumentSchema.buildSchema(document);
+
+    const index = metadataDocument.merkleIndex;
+
+    const documentHash = schema.hash();
+
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(index),
+          newDocumentHash: documentHash.toString(),
+          operationKind: EDocumentOperation.Create,
+          docId,
+          documentObjectIdPrevious: null,
+          documentObjectIdCurrent: documentObjectId,
+        },
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: compoundSession.sessionMina }
+    );
   }
 
-  const index = documentMetadata.merkleIndex;
-
-  const currDate = new Date();
-
-  const hash = schema.hash();
-  const newRoot = await merkleTree.setLeaf(BigInt(index), hash, currDate, {
-    session: compoundSession?.sessionService,
-  });
-
-  const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue(
-    'operation',
-    compoundSession?.sessionService
-  );
-
-  await ModelQueueTask.getInstance().queueTask(
-    {
-      merkleIndex: BigInt(index),
-      hash: hash.toString(),
-      status: 'queued',
-      createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
+  public static async update(
+    proveUpdateParam: TParamProveUpdate,
+    operationNumber: bigint,
+    compoundSession: TCompoundSession
+  ) {
+    const {
+      databaseName,
+      collectionName,
       docId,
-      operationNumber,
-      merkleRoot: newRoot.toString(),
-    },
-    { session: compoundSession?.sessionProof }
-  );
+      newDocument,
+      oldDocumentObjectId,
+      newDocumentObjectId,
+    } = proveUpdateParam;
 
-  return merkleTree.getWitness(BigInt(index), currDate, {
-    session: compoundSession?.sessionService,
-  });
-}
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
+    const metadataDocument = await imMetadataDocument.findOne(
+      {
+        docId,
+      },
+      { session: compoundSession.sessionServerless }
+    );
 
-// Prove the update of a document
-export async function proveUpdateDocument(
-  databaseName: string,
-  collectionName: string,
-  docId: string,
-  newDocument: DocumentFields,
-  session?: ClientSession
-) {
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const oldDocument = await modelDocument.findOne({ docId }, session);
+    if (!metadataDocument) {
+      throw new Error(`No metadata found for docId ${docId}`);
+    }
 
-  if (!oldDocument) {
-    throw new Error('Document does not exist');
+    const schema = DocumentSchema.buildSchema(newDocument);
+
+    const hash = schema.hash();
+
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: hash.toString(),
+          operationKind: EDocumentOperation.Update,
+          docId,
+          documentObjectIdPrevious: oldDocumentObjectId,
+          documentObjectIdCurrent: newDocumentObjectId,
+        },
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: compoundSession.sessionMina }
+    );
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  public static async delete(
+    proveDeleteParam: TParamProveDelete,
+    operationNumber: bigint,
+    compoundSession: TCompoundSession
+  ) {
+    const { databaseName, collectionName, docId, oldDocumentObjectId } =
+      proveDeleteParam;
 
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-  const documentMetadata = await modelDocumentMetadata.findOne(
-    {
-      docId,
-    },
-    { session }
-  );
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
-  if (!documentMetadata) {
-    throw new Error('Document metadata is empty');
+    const metadataDocument = await imMetadataDocument.findOne(
+      {
+        docId,
+      },
+      { session: compoundSession.sessionServerless }
+    );
+
+    if (!metadataDocument) {
+      throw new Error(`No metadata found for docId ${docId}`);
+    }
+
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
+
+    await imModelGenericQueue.queueTask(
+      {
+        data: {
+          collectionName,
+          merkleIndex: BigInt(metadataDocument.merkleIndex),
+          newDocumentHash: undefined,
+          operationKind: EDocumentOperation.Drop,
+          documentObjectIdPrevious: oldDocumentObjectId,
+          documentObjectIdCurrent: null,
+          docId,
+        },
+        databaseName,
+        sequenceNumber: operationNumber,
+      },
+      { session: compoundSession.sessionMina }
+    );
   }
-
-  const schema = await buildSchema(
-    databaseName,
-    collectionName,
-    newDocument,
-    session
-  );
-  const currDate = new Date();
-  const hash = schema.hash();
-
-  const newRoot = await merkleTree.setLeaf(
-    BigInt(documentMetadata.merkleIndex),
-    hash,
-    currDate,
-    { session }
-  );
-
-  const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
-
-  await ModelQueueTask.getInstance().queueTask(
-    {
-      merkleIndex: BigInt(documentMetadata.merkleIndex),
-      hash: hash.toString(),
-      status: 'queued',
-      createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
-      docId,
-      operationNumber,
-      merkleRoot: newRoot.toString(),
-    },
-    { session }
-  );
-
-  return merkleTree.getWitness(BigInt(documentMetadata.merkleIndex), currDate, {
-    session,
-  });
-}
-
-// Prove the deletion of a document
-export async function proveDeleteDocument(
-  databaseName: string,
-  collectionName: string,
-  docId: string,
-  session?: ClientSession
-) {
-  const modelDocument = ModelDocument.getInstance(databaseName, collectionName);
-  const document = await modelDocument.findOne({ docId }, session);
-
-  if (!document) {
-    throw new Error('Document does not exist to be proved');
-  }
-
-  const merkleTree = await ModelMerkleTree.load(databaseName);
-
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-  const documentMetadata = await modelDocumentMetadata.findOne(
-    {
-      docId,
-    },
-    { session }
-  );
-
-  if (!documentMetadata) {
-    throw new Error('Document metadata is empty');
-  }
-
-  const currDate = new Date();
-  const newRoot = await merkleTree.setLeaf(
-    BigInt(documentMetadata.merkleIndex),
-    Field(0),
-    currDate,
-    { session }
-  );
-
-  const sequencer = ModelSequencer.getInstance(databaseName);
-  const operationNumber = await sequencer.getNextValue('operation', session);
-
-  await ModelQueueTask.getInstance().queueTask(
-    {
-      merkleIndex: BigInt(documentMetadata.merkleIndex),
-      hash: Field(0).toString(),
-      status: 'queued',
-      createdAt: currDate,
-      database: databaseName,
-      collection: collectionName,
-      docId,
-      operationNumber,
-      merkleRoot: newRoot.toString(),
-    },
-    { session }
-  );
-
-  return merkleTree.getWitness(BigInt(documentMetadata.merkleIndex), currDate, {
-    session,
-  });
 }

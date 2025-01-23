@@ -1,21 +1,20 @@
-import { zkDatabaseConstants } from '../../common/index.js';
-import { DB } from '../../helper/db-instance.js';
-import ModelGeneral from '../base/general.js';
-import ModelCollection from '../general/collection.js';
+import { zkDatabaseConstant } from '@common';
+import { DATABASE_ENGINE } from '@helper';
+import { TSecureStorageRecord } from '@zkdb/common';
+import { ClientSession, OptionalId } from 'mongodb';
+import { ModelGeneral } from '../base';
+import { ModelCollection } from '../general';
 
-export type PrivateKey = {
-  privateKey: string;
-  databaseName: string;
-};
-
-export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
+export class ModelSecureStorage extends ModelGeneral<
+  OptionalId<TSecureStorageRecord>
+> {
   private static instance: ModelSecureStorage | null = null;
 
   private constructor() {
     super(
-      zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
-      zkDatabaseConstants.globalCollections.secure
+      zkDatabaseConstant.globalMinaDatabase,
+      DATABASE_ENGINE.dbMina,
+      zkDatabaseConstant.globalCollection.secure
     );
   }
 
@@ -27,15 +26,31 @@ export class ModelSecureStorage extends ModelGeneral<PrivateKey> {
     return ModelSecureStorage.instance;
   }
 
-  public static async init() {
+  public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalProofDatabase,
-      DB.proof,
-      zkDatabaseConstants.globalCollections.queue
+      zkDatabaseConstant.globalMinaDatabase,
+      DATABASE_ENGINE.dbMina,
+      zkDatabaseConstant.globalCollection.secure
     );
+    /*
+      privateKey: string;
+      databaseName: string;
+    */
     if (!(await collection.isExist())) {
-      collection.index({ databaseName: 1 }, { unique: true });
-      collection.index({ privateKey: 1 }, { unique: true });
+      await collection.createSystemIndex(
+        { databaseName: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { privateKey: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { publicKey: 1 },
+        { unique: true, session }
+      );
+
+      await collection.addTimestampMongoDb({ session });
     }
   }
 }

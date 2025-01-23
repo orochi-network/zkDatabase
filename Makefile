@@ -1,17 +1,17 @@
 # Define variables for Docker image tags and paths
 BROKER_SERVICE_TAG = broker-service
-PROOF_SERVICE_TAG = proof-service
+PROOF_SERVICE_TAG = mina-service
 FTP_SERVICE_TAG = ftp-service
 SERVERLESS_TAG = serverless
 PLATFORM_TAG = linux/amd64 # You can choose between linux/amd64 for x86_64 and linux/arm64 for arm64
 
 BROKER_SERVICE_DOCKERFILE = packages/broker-service/Dockerfile
-PROOF_SERVICE_DOCKERFILE = packages/proof-service/Dockerfile
+PROOF_SERVICE_DOCKERFILE = packages/mina-service/Dockerfile
 FTP_SERVICE_DOCKERFILE = packages/ftp/Dockerfile
 SERVERLESS_DOCKERFILE = packages/serverless/Dockerfile
 
 BROKER_SERVICE_COMPOSE = packages/broker-service/docker-compose.yml
-PROOF_SERVICE_COMPOSE = packages/proof-service/docker-compose.yml
+PROOF_SERVICE_COMPOSE = packages/mina-service/docker-compose.yml
 FTP_COMPOSE = packages/ftp/docker-compose.yml
 SERVERLESS_COMPOSE = packages/serverless/docker-compose.yml
 MONGO_COMPOSE = general/database/docker-compose.yml

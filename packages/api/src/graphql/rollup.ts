@@ -1,43 +1,110 @@
 import { gql } from "@apollo/client";
-import { createMutateFunction, TApolloClient } from "./common.js";
 import {
-  TCreateRollUpRequest,
-  TGetRollUpHistoryResponse,
-} from "./types/rollup.js";
+  TRollupOffChainHistoryRequest,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainCreateRequest,
+  TRollupOnChainCreateResponse,
+  TRollupOnChainHistoryRequest,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateRequest,
+  TRollupOnChainStateResponse,
+} from "@zkdb/common";
+import { createApi, TApolloClient } from "./common";
 
-const ROLLUP_CREATE = gql`
-  mutation CreateRollUp($databaseName: String!) {
-    createRollUp(databaseName: $databaseName)
-  }
-`;
-
-const ROLLUP_HISTORY_GET = gql`
-  mutation GetRollUpHistory($databaseName: String!) {
-    getRollUpHistory(databaseName: $databaseName) {
-      state
-      extraData
-      history {
-        databaseName
-        transactionType
-        transactionHash
-        status
-        currentMerkleTreeRoot
-        previousMerkleTreeRoot
-        createdAt
-        error
+export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
+  rollupCreate: createApi<
+    TRollupOnChainCreateRequest,
+    TRollupOnChainCreateResponse
+  >(
+    client,
+    gql`
+      mutation rollupCreate($databaseName: String!) {
+        rollupCreate(databaseName: $databaseName)
       }
-    }
-  }
-`;
-export const rollup = <T>(client: TApolloClient<T>) => ({
-  createRollUp: createMutateFunction<
-    boolean,
-    TCreateRollUpRequest,
-    { createRollUp: boolean }
-  >(client, ROLLUP_CREATE, (data) => data.createRollUp),
-  getRollUpHistory: createMutateFunction<
-    TGetRollUpHistoryResponse,
-    TCreateRollUpRequest,
-    { getRollUpHistory: TGetRollUpHistoryResponse }
-  >(client, ROLLUP_HISTORY_GET, (data) => data.getRollUpHistory),
+    `
+  ),
+  rollupOffChainHistory: createApi<
+    TRollupOffChainHistoryRequest,
+    TRollupOffChainHistoryResponse
+  >(
+    client,
+    gql`
+      query RollupOffChainHistory($query: JSON, $pagination: PaginationInput) {
+        rollupOffChainHistory(query: $query, pagination: $pagination) {
+          data {
+            databaseName
+            collectionName
+            merkleRootOld
+            merkleRootNew
+            error
+            docId
+            status
+            step
+            acquiredAt
+          }
+          total
+          offset
+        }
+      }
+    `,
+    ({ total, data, offset }) => ({
+      total,
+      offset,
+      data: data.map(({ step, ...e }) => ({
+        ...e,
+        step: BigInt(step),
+      })),
+    })
+  ),
+  rollupOnChainHistory: createApi<
+    TRollupOnChainHistoryRequest,
+    TRollupOnChainHistoryResponse
+  >(
+    client,
+    gql`
+      query RollupOnChainHistory($query: JSON, $pagination: PaginationInput) {
+        rollupOnChainHistory(query: $query, pagination: $pagination) {
+          data {
+            databaseName
+            onChainStep
+            merkleRootNew
+            merkleRootOld
+            status
+            error
+            txHash
+          }
+          total
+          offset
+        }
+      }
+    `,
+    ({ total, data, offset }) => ({
+      total,
+      offset,
+      data: data.map(({ step, ...e }) => ({
+        ...e,
+        step: BigInt(step),
+      })),
+    })
+  ),
+  rollupOnChainState: createApi<
+    TRollupOnChainStateRequest,
+    TRollupOnChainStateResponse
+  >(
+    client,
+    gql`
+      query RollupState($databaseName: String!) {
+        rollupState(databaseName: $databaseName) {
+          databaseName
+          merkleRootNew
+          merkleRootOld
+          rollupDifferent
+          rollupOnChainState
+          latestRollupOnChainSuccess
+        }
+      }
+    `
+  ),
 });
+
+export default API_ROLLUP;

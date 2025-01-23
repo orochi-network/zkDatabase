@@ -48,7 +48,7 @@ cd general/database/script
 chmod +x start.sh
 ./start.sh
 cd ..
-docker compose up -d 
+docker compose up -d
 ```
 
 You can modify the environment variables in the `docker-compose.yml` file based on your requirements. If you keep the default settings, your MongoDB URL will be:
@@ -61,7 +61,7 @@ MONGODB_URL="mongodb://admin:password@mongo:27017/?directConnection=true"
 
 ### Proof-Service Setup
 
-To start `proof-service`, you need to run `broker-service` first. Then, set the `BROKER_URL` in the `.env` file of `proof-service` to:
+To start `mina-service`, you need to run `broker-service` first. Then, set the `BROKER_URL` in the `.env` file of `mina-service` to:
 
 ```bash
 BROKER_URL="http://broker-service-app-1:4001/graphql"
@@ -100,7 +100,7 @@ To build Docker images for all services:
 make build
 ```
 
-This command will build the following services: `ftp`, `proof-service`, `broker-service`, and `serverless`.
+This command will build the following services: `ftp`, `mina-service`, `broker-service`, and `serverless`.
 
 To build a specific service, such as `ftp`, use:
 
@@ -122,7 +122,7 @@ To run a specific service, such as `ftp`:
 make up-ftp
 ```
 
-To run multiple specific services, such as `ftp` and `proof-service`:
+To run multiple specific services, such as `ftp` and `mina-service`:
 
 ```bash
 make up-ftp up-proof
@@ -140,7 +140,7 @@ make down
 
 ### 9.2 Stop Specific Services
 
-To stop specific services, such as `ftp` and `proof-service`:
+To stop specific services, such as `ftp` and `mina-service`:
 
 ```bash
 make stop-ftp stop-proof

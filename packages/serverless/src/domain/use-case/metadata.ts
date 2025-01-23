@@ -1,64 +1,97 @@
-import { ClientSession } from 'mongodb';
-import { ModelCollectionMetadata } from '../../model/database/collection-metadata.js';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { CollectionMetadata } from '../types/metadata.js';
 import {
-  hasCollectionPermission,
-  hasDocumentPermission,
-} from './permission.js';
+  TCollectionMetadata,
+  TDocumentMetadata,
+  TParamCollection,
+  TParamDocument,
+  TPermissionSudo,
+} from '@zkdb/common';
+import { DATABASE_ENGINE, ModelCollection } from '@zkdb/storage';
+import { ClientSession } from 'mongodb';
+import { ModelMetadataCollection, ModelMetadataDocument } from '@model';
+import { PermissionSecurity } from './permission-security';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function readMetadata(
-  databaseName: string,
-  collectionName: string,
-  docId: string | null,
-  actor: string,
-  // eslint-disable-next-line default-param-last
-  checkPermission: boolean = false,
-  session?: ClientSession
-): Promise<CollectionMetadata> {
-  if (checkPermission) {
-    const hasReadPermission = docId
-      ? await hasDocumentPermission(
-          databaseName,
-          collectionName,
-          actor,
-          docId,
-          'read',
-          session
-        )
-      : await hasCollectionPermission(
-          databaseName,
-          collectionName,
-          actor,
-          'read'
-        );
+// We create metadata class to manage all metadata of these model
+// In Graphql metadata stay on it model FE: graphql metadata of document will be on document.ts
+export class Metadata {
+  public static async collection(
+    paramCollection: TPermissionSudo<TParamCollection>,
+    session?: ClientSession
+  ): Promise<TCollectionMetadata | null> {
+    const { sudo, databaseName, collectionName, actor } = paramCollection;
 
-    if (!hasReadPermission) {
-      const targetDescription = docId ? 'document' : 'collection';
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified ${targetDescription}.`
-      );
+    const imMetadataCollection =
+      ModelMetadataCollection.getInstance(databaseName);
+
+    const metadataCollection = await imMetadataCollection.findOne(
+      { collectionName },
+      { session }
+    );
+
+    if (!metadataCollection) {
+      return null;
     }
+
+    const actorPermission = await PermissionSecurity.collection(
+      {
+        databaseName,
+        collectionName,
+        actor,
+        // We going to reuse collection metadata from above to minimize the number of queries.
+        sudo: sudo || metadataCollection,
+      },
+      session
+    );
+
+    if (!actorPermission.read) {
+      return null;
+    }
+
+    const imCollection = ModelCollection.getInstance(
+      databaseName,
+      DATABASE_ENGINE.dbServerless,
+      collectionName
+    );
+
+    const sizeOnDisk = await imCollection.size();
+
+    return {
+      ...metadataCollection,
+      sizeOnDisk,
+    };
   }
 
-  const modelMetadata = docId
-    ? new ModelDocumentMetadata(databaseName)
-    : ModelCollectionMetadata.getInstance(databaseName);
+  public static async document(
+    paramDocument: TPermissionSudo<TParamDocument>,
+    session?: ClientSession
+  ): Promise<TDocumentMetadata | null> {
+    const { sudo, databaseName, collectionName, docId, actor } = paramDocument;
 
-  const key = docId
-    ? { docId, collection: collectionName }
-    : { collection: collectionName };
+    const imMetadataDocument = new ModelMetadataDocument(databaseName);
 
-  const metadata = await modelMetadata.findOne(key);
+    const metadataDocument = await imMetadataDocument.findOne(
+      { docId, collectionName },
+      { session }
+    );
 
-  if (!metadata) {
-    throw Error('Metadata has not been found');
+    if (!metadataDocument) {
+      return null;
+    }
+
+    const actorPermissions = await PermissionSecurity.document(
+      {
+        databaseName,
+        collectionName,
+        docId,
+        actor,
+        sudo: sudo || metadataDocument,
+      },
+      session
+    );
+
+    if (!actorPermissions.read) {
+      return null;
+    }
+
+    return metadataDocument;
   }
-
-  return {
-    owner: metadata.owner,
-    group: metadata.group,
-    permission: metadata.permission,
-  };
 }

@@ -1,15 +1,16 @@
+import { TCollectionIndexMap } from '@zkdb/common';
 import {
+  ClientSession,
   CreateIndexesOptions,
   Document,
   DropIndexesOptions,
   IndexSpecification,
+  ListIndexesOptions,
 } from 'mongodb';
-import { isOk } from '../../helper/common.js';
-import { DB } from '../../helper/db-instance.js';
-import logger from '../../helper/logger.js';
-import ModelBasic from '../base/basic.js';
-import ModelDatabase from './database.js';
-import { DatabaseEngine } from '../database-engine.js';
+import { isOk, logger } from '@helper';
+import { ModelBasic } from '../base';
+import { DatabaseEngine } from '../database-engine';
+import { ModelDatabase } from './database';
 
 /**
  * Handles collection operations. Extends ModelBasic.
@@ -37,11 +38,13 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return ModelCollection.instances.get(key) as ModelCollection<T>;
   }
 
-  public async isExist(): Promise<boolean> {
+  public async isExist(session?: ClientSession): Promise<boolean> {
     if (!this.collectionName) {
       return false;
     }
-    return this.dbEngine.isCollection(this.databaseName, this.collectionName);
+    return this.dbEngine.isCollection(this.databaseName, this.collectionName, {
+      session,
+    });
   }
 
   public async create(
@@ -64,16 +67,19 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
   }
 
   public async index(
-    indexSpec: IndexSpecification,
+    indexSpec: TCollectionIndexMap<T> | IndexSpecification,
     indexOptions?: CreateIndexesOptions
   ): Promise<boolean> {
     return isOk(async () =>
-      this.collection.createIndex(indexSpec, indexOptions)
+      this.collection.createIndex(indexSpec as IndexSpecification, indexOptions)
     );
   }
 
-  public async isIndexed(indexName: string): Promise<boolean> {
-    const indexArray = await this.collection.listIndexes().toArray();
+  public async isIndexed(
+    indexName: string,
+    options?: ListIndexesOptions
+  ): Promise<boolean> {
+    const indexArray = await this.collection.listIndexes(options).toArray();
     return indexArray.some((index) => index.name === indexName);
   }
 
@@ -84,8 +90,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return isOk(async () => this.collection.dropIndex(indexName, options));
   }
 
-  public async listIndexes(): Promise<string[]> {
-    return (await this.collection.listIndexes().toArray()).map((i) => i.name);
+  public async listIndexes(options?: ListIndexesOptions): Promise<string[]> {
+    return (await this.collection.listIndexes(options).toArray()).map(
+      (i) => i.name
+    );
   }
 
   public async size(): Promise<number> {

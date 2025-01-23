@@ -1,110 +1,116 @@
 import { gql } from "@apollo/client";
 import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common.js";
-import {
-  TDatabase,
-  TDatabaseSettings,
-  TDatabaseStatus,
-  TPagination,
-  TPaginationResponse,
-} from "./types";
+  TDatabaseCreateRequest,
+  TDatabaseCreateResponse,
+  TDatabaseDeployRequest,
+  TDatabaseDeployResponse,
+  TDatabaseEnvironmentRequest,
+  TDatabaseEnvironmentResponse,
+  TDatabaseExistRequest,
+  TDatabaseExistResponse,
+  TDatabaseInfoRequest,
+  TDatabaseInfoResponse,
+  TDatabaseListRequest,
+  TDatabaseListResponse,
+  TDatabaseStatsRequest,
+  TDatabaseStatsResponse,
+  TVerificationKeyRequest,
+  TVerificationKeyResponse,
+} from "@zkdb/common";
+import { createApi, TApolloClient } from "./common.js";
 
-const DATABASE_CHANGE_OWNER = gql`
-  mutation DbChangeOwner($databaseName: String!, $newOwner: String!) {
-    dbChangeOwner(databaseName: $databaseName, newOwner: $newOwner)
-  }
-`;
-
-const DATABASE_CREATE = gql`
-  mutation DbCreate($databaseName: String!, $merkleHeight: Int!) {
-    dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
-  }
-`;
-
-const DATABASE_SETTING = gql`
-  query GetDbSetting($databaseName: String!) {
-    dbSetting(databaseName: $databaseName) {
-      merkleHeight
-      publicKey
-      databaseOwner
-    }
-  }
-`;
-
-const DATABASE_STATUS = gql`
-  query GetDbStats($databaseName: String!) {
-    dbStats(databaseName: $databaseName)
-  }
-`;
-
-const DATABASE_LIST = gql`
-  query GetDbList($query: JSON, $pagination: PaginationInput) {
-    dbList(query: $query, pagination: $pagination) {
-      totalSize
-      offset
-      data {
-        databaseName
-        databaseOwner
-        databaseSize
-        merkleHeight
-        appPublicKey
-        collection {
-          name
-          index
-          schema {
-            order
-            name
-            kind
-            indexed
-          }
-          ownership {
-            userName
-            groupName
-            permission
-          }
+export const API_DATABASE = <T>(client: TApolloClient<T>) => ({
+  dbCreate: createApi<TDatabaseCreateRequest, TDatabaseCreateResponse>(
+    client,
+    gql`
+      mutation dbCreate($databaseName: String!, $merkleHeight: Int!) {
+        dbCreate(databaseName: $databaseName, merkleHeight: $merkleHeight)
+      }
+    `
+  ),
+  dbDeploy: createApi<TDatabaseDeployRequest, TDatabaseDeployResponse>(
+    client,
+    gql`
+      mutation dbDeploy($databaseName: String!, $appPublicKey: String!) {
+        dbDeploy(databaseName: $databaseName, appPublicKey: $appPublicKey)
+      }
+    `
+  ),
+  dbEnvironment: createApi<
+    TDatabaseEnvironmentRequest,
+    TDatabaseEnvironmentResponse
+  >(
+    client,
+    gql`
+      query dbEnvironment {
+        dbEnvironment {
+          networkId
+          networkUrl
         }
       }
-    }
-  }
-`;
-
-const DATABASE_EXIST = gql`
-  query GetDbExisted($databaseName: String!) {
-    dbExist(databaseName: $databaseName)
-  }
-`;
-export const database = <T>(client: TApolloClient<T>) => ({
-  transferOwnership: createMutateFunction<
-    boolean,
-    { databaseName: string; newOwner: string },
-    { dbChangeOwner: boolean }
-  >(client, DATABASE_CHANGE_OWNER, (data) => data.dbChangeOwner),
-  create: createMutateFunction<
-    boolean,
-    { databaseName: string; merkleHeight: number },
-    { dbCreate: boolean }
-  >(client, DATABASE_CREATE, (data) => data.dbCreate),
-  setting: createQueryFunction<
-    TDatabaseSettings,
-    { databaseName: string },
-    { dbSetting: TDatabaseSettings }
-  >(client, DATABASE_SETTING, (data) => data.dbSetting),
-  status: createQueryFunction<
-    TDatabaseStatus,
-    { databaseName: string },
-    { dbStats: TDatabaseStatus }
-  >(client, DATABASE_STATUS, (data) => data.dbStats),
-  list: createQueryFunction<
-    TDatabase[],
-    { query: any; pagination: TPagination },
-    { dbList: TPaginationResponse<TDatabase[]> }
-  >(client, DATABASE_LIST, (data) => data.dbList.data),
-  exist: createQueryFunction<
-    boolean,
-    { databaseName: string },
-    { dbExist: boolean }
-  >(client, DATABASE_EXIST, (data) => data.dbExist),
+    `
+  ),
+  dbExist: createApi<TDatabaseExistRequest, TDatabaseExistResponse>(
+    client,
+    gql`
+      query dbExist($databaseName: String!) {
+        dbExist(databaseName: $databaseName)
+      }
+    `
+  ),
+  dbInfo: createApi<TDatabaseInfoRequest, TDatabaseInfoResponse>(
+    client,
+    gql`
+      query dbInfo($databaseName: String!) {
+        dbInfo(databaseName: $databaseName) {
+          databaseName
+          databaseOwner
+          merkleHeight
+          appPublicKey
+          sizeOnDisk
+          deployStatus
+        }
+      }
+    `
+  ),
+  dbList: createApi<TDatabaseListRequest, TDatabaseListResponse>(
+    client,
+    gql`
+      query dbList($query: JSON, $pagination: PaginationInput) {
+        dbList(query: $query, pagination: $pagination) {
+          data {
+            databaseName
+            databaseOwner
+            merkleHeight
+            appPublicKey
+            sizeOnDisk
+            deployStatus
+          }
+          total
+          offset
+        }
+      }
+    `
+  ),
+  dbStats: createApi<TDatabaseStatsRequest, TDatabaseStatsResponse>(
+    client,
+    gql`
+      query dbStats($databaseName: String!) {
+        dbStats(databaseName: $databaseName)
+      }
+    `
+  ),
+  dbVerificationKey: createApi<
+    TVerificationKeyRequest,
+    TVerificationKeyResponse
+  >(
+    client,
+    gql`
+      query dbVerificationKey($databaseName: String!) {
+        dbVerificationKey(databaseName: $databaseName)
+      }
+    `
+  ),
 });
+
+export default API_DATABASE;

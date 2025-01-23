@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
 
 export default {
   input: 'src/index.ts',
@@ -11,10 +12,10 @@ export default {
     sourcemap: true,
   },
   plugins: [
+    json(),
     alias({
       entries: [
-        { find: '@', replacement: 'src' },
-        { find: '@apollo', replacement: 'src/apollo' },
+        { find: '@apollo-app', replacement: 'src/apollo' },
         { find: '@domain', replacement: 'src/domain' },
         { find: '@helper', replacement: 'src/helper' },
         { find: '@model', replacement: 'src/model' },

@@ -1,17 +1,18 @@
 # This GitHub Action will loop through all sub-repos:
 # If a package is in the publish list and its package.json version is higher than the NPM registry version, it will be published.
 # For now: The publish list is:
-# @zkdb/kubo
+# @zkdb/common
 # @zkdb/api
 # @zkdb/smart-contract
-# zkdb
 # @zkdb/permission
+# zkdb
 
 name: Publish packages in zkDatabase Repository
 
 on:
   push:
-    branches: ['main']
+    branches:
+      - main
 
 env:
   NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
@@ -25,7 +26,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
+        node-version: [22.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -46,8 +47,7 @@ jobs:
           NPM_TOKEN: ${{ env.NPM_TOKEN }}
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN} \n always-auth=true" > ~/.npmrc
-
-          PUBLISH_LIST=("@zkdb/kubo" "@zkdb/api" "@zkdb/smart-contract" "@zkdb/permission" "zkdb")
+          LIST_PACKAGE=("@zkdb/common" "@zkdb/api" "@zkdb/smart-contract" "@zkdb/permission" "zkdb")
           packages_dir="packages"
 
           # Loop through all packages
@@ -62,7 +62,7 @@ jobs:
                 yarn run lint
             fi
 
-            if [[ " ${PUBLISH_LIST[@]} " =~ " ${PACKAGE_NAME} " ]]; then
+            if [[ " ${LIST_PACKAGE[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"
               NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
               PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -71,10 +71,10 @@ jobs:
 
               # Doing version comparison
               VERSION_COMPARE=$(node -e "
-                const compareVersions = require('compare-versions');
+                const compare = require('compare-versions');
                 const npmVersion = '$NPM_VERSION';
                 const packageVersion = '$PACKAGE_VERSION';
-                if (compareVersions.compare(packageVersion, npmVersion, '>')) {
+                if (compare.compareVersions(packageVersion, npmVersion) === 1) {
                   console.log('true');
                 } else {
                   console.log('false');
@@ -84,7 +84,14 @@ jobs:
                 echo "Ignore ${PACKAGE_NAME} since no changes"
               else
                 echo "Detected: New version of ${PACKAGE_NAME}"
-                npm run release
+                # Check for tag in version
+                TAG=$(node -p "
+                  const version = require('./package.json').version;
+                  const tag = /alpha|dev|rc/.exec(version)?.[0] || 'latest';
+                  tag;
+                ")
+                echo "Publishing ${PACKAGE_NAME} with tag ${TAG}"
+                rm -rf ./build && npm run build && npm publish --tag $TAG --access public
               fi
             else
               echo "$PACKAGE_NAME is not in the publish list"

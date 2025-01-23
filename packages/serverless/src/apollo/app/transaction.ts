@@ -1,126 +1,120 @@
-import Joi from 'joi';
-import { authorizeWrapper } from '../validation.js';
-import { databaseName, transactionType } from './common.js';
-import { TDatabaseRequest } from './database.js';
+import { Transaction } from '@domain';
+import { gql } from '@helper';
 import {
-  enqueueTransaction as enqueueTransactionDomain,
-  getTransactionForSigning,
-  confirmTransaction as confirmTransactionDomain,
-} from '../../domain/use-case/transaction.js';
-import GraphQLJSON from 'graphql-type-json';
+  databaseName,
+  ETransactionType,
+  transactionType,
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse,
+  TTransactionDraftRequest,
+  TTransactionDraftResponse,
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse,
+} from '@zkdb/common';
+import { Transaction as MongoTransaction } from '@zkdb/storage';
+import Joi from 'joi';
+import { authorizeWrapper } from '../validation';
 
-export const typeDefsTransaction = `#graphql
-scalar JSON
-type Query
-type Mutation
+export const typeDefsTransaction = gql`
+  #graphql
+  type Query
+  type Mutation
 
-enum TransactionType {
-  deploy
-  rollup
-}
+  type Transaction {
+    rawTransactionId: String!
+    databaseName: String!
+    transactionType: TransactionType!
+    status: TransactionStatus!
+    transactionRaw: String!
+    txHash: String
+    error: String
+    createdAt: Date!
+    updatedAt: Date!
+  }
 
-type DbTransaction {
-  databaseName: String!
-  transactionType: TransactionType!
-  zkAppPublicKey: String!
-  status: TransactionStatus!
-  tx: String!
-  id: String!
-}
+  extend type Query {
+    transactionDraft(
+      databaseName: String!
+      transactionType: TransactionType!
+    ): Transaction
+  }
 
-extend type Query {
-  getTransaction(databaseName: String!, transactionType: TransactionType!): DbTransaction!
-}
+  extend type Mutation {
+    transactionDeployEnqueue(databaseName: String!): String!
 
-extend type Mutation {
-  enqueueDeployTransaction(databaseName: String!): String!
-  confirmTransaction(databaseName: String!, id: String!, txHash: String!): Boolean
-}
+    transactionSubmit(
+      databaseName: String!
+      rawTransactionId: String!
+      txHash: String!
+    ): Boolean!
+  }
 `;
 
-export type TTransactionRequest = TDatabaseRequest & {
-  transactionType: 'deploy' | 'rollup';
-};
-
-export type TTransactionIdRequest = TDatabaseRequest & {
-  id: string;
-};
-
-export type TTransactionConfirmRequest = TTransactionIdRequest & {
-  txHash: string;
-};
-
-const getTransaction = authorizeWrapper(
+const transactionDraft = authorizeWrapper<
+  TTransactionDraftRequest,
+  TTransactionDraftResponse
+>(
   Joi.object({
     databaseName,
     transactionType,
   }),
-  async (_root: unknown, args: TTransactionRequest, ctx) => {
-    const transaction = await getTransactionForSigning(
-      args.databaseName,
-      ctx.userName,
-      args.transactionType
-    );
-
-    transaction.status
-    return {
-      databaseName: transaction.databaseName,
-      transactionType: transaction.transactionType,
-      zkAppPublicKey: transaction.zkAppPublicKey,
-      status: transaction.status,
-      id: (transaction as any)._id,
-      tx: transaction.tx,
-    };
-  }
-);
-
-const enqueueDeployTransaction = authorizeWrapper(
-  Joi.object({
-    databaseName,
-  }),
-  async (_root: unknown, args: TDatabaseRequest, ctx) =>
-    (
-      await enqueueTransactionDomain(
+  async (_root, args, ctx) =>
+    MongoTransaction.serverless(async (session) => {
+      const transactionDraft = await Transaction.draft(
         args.databaseName,
         ctx.userName,
-        'deploy'
-      )
-    ).toString()
+        args.transactionType,
+        session
+      );
+
+      return transactionDraft;
+    })
 );
 
-const confirmTransaction = authorizeWrapper(
+const transactionDeployEnqueue = authorizeWrapper<
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse
+>(
   Joi.object({
     databaseName,
-    id: Joi.string().required(),
+  }),
+  async (_root, args, ctx) =>
+    MongoTransaction.serverless(async (session) =>
+      (
+        await Transaction.enqueue(
+          args.databaseName,
+          ctx.userName,
+          ETransactionType.Deploy,
+          session
+        )
+      ).toString()
+    )
+);
+
+const transactionSubmit = authorizeWrapper<
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse
+>(
+  Joi.object({
+    databaseName,
+    rawTransactionId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
-  async (_root: unknown, args: TTransactionConfirmRequest, ctx) =>
-    confirmTransactionDomain(
+  async (_root, args, ctx) =>
+    Transaction.submit(
       args.databaseName,
       ctx.userName,
-      args.id,
+      args.rawTransactionId,
       args.txHash
     )
 );
 
-type TTransactionResolver = {
-  JSON: typeof GraphQLJSON;
+export const resolversTransaction = {
   Query: {
-    getTransaction: typeof getTransaction;
-  };
-  Mutation: {
-    enqueueDeployTransaction: typeof enqueueDeployTransaction;
-    confirmTransaction: typeof confirmTransaction;
-  };
-};
-
-export const resolversTransaction: TTransactionResolver = {
-  JSON: GraphQLJSON,
-  Query: {
-    getTransaction,
+    transactionDraft,
   },
   Mutation: {
-    enqueueDeployTransaction,
-    confirmTransaction,
+    transactionDeployEnqueue,
+    transactionSubmit,
   },
 };

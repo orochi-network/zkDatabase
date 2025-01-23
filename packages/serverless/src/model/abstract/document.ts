@@ -1,49 +1,63 @@
-/* eslint-disable no-await-in-loop */
-// eslint-disable-next-line max-classes-per-file
-import { DB, ModelBasic, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import { logger } from '@helper';
+import {
+  TDocumentField,
+  TDocumentRecordNullable,
+  TSchemaSerializedField,
+} from '@zkdb/common';
+import {
+  DATABASE_ENGINE,
+  ModelCollection,
+  ModelGeneral,
+  ModelMetadataDatabase,
+} from '@zkdb/storage';
 import { randomUUID } from 'crypto';
-import { ClientSession, Document, Filter, ObjectId } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { SchemaField } from '../database/collection-metadata.js';
-
-export type DocumentField = Pick<SchemaField, 'name' | 'kind' | 'value'>;
-
-export type DocumentPermission = number
-
-export type DocumentRecord = Document & {
-  _id?: ObjectId;
-  docId: string;
-  active: boolean;
-  nextId?: ObjectId;
-  timestamp?: Date;
-} & {
-  [key: string]: DocumentField;
-};
+import {
+  ClientSession,
+  Filter,
+  InsertOneResult,
+  ObjectId,
+  OptionalId,
+} from 'mongodb';
 
 /**
  * ModelDocument is a class that extends ModelBasic.
  * ModelDocument handle document of zkDatabase with index hook.
  */
-export class ModelDocument extends ModelBasic<DocumentRecord> {
+export class ModelDocument extends ModelGeneral<
+  OptionalId<TDocumentRecordNullable>
+> {
   public static instances = new Map<string, ModelDocument>();
 
   private constructor(databaseName: string, collectionName: string) {
-    super(databaseName, DB.service, collectionName, {
-      timeseries: {
-        timeField: 'timestamp',
-        granularity: 'seconds',
-      },
-    });
+    super(databaseName, DATABASE_ENGINE.dbServerless, collectionName);
+  }
+
+  public static async init(
+    databaseName: string,
+    collectionName: string,
+    session?: ClientSession
+  ) {
+    const collection = new ModelCollection(
+      databaseName,
+      DATABASE_ENGINE.dbServerless,
+      collectionName
+    );
+
+    if (!(await collection.isExist())) {
+      await collection.createSystemIndex({ docId: 1, active: 1 }, { session });
+
+      await collection.addTimestampMongoDb({ session });
+    }
   }
 
   get modelDatabase() {
-    return ModelDatabase.getInstance(this.databaseName);
+    return ModelMetadataDatabase.getInstance();
   }
 
   get modelCollection() {
     return ModelCollection.getInstance(
       this.databaseName!,
-      DB.service,
+      DATABASE_ENGINE.dbServerless,
       this.collectionName!
     );
   }
@@ -59,49 +73,63 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
     return ModelDocument.instances.get(key)!;
   }
 
-  public async insertOne(document: DocumentRecord, session?: ClientSession) {
-    logger.debug(`ModelDocument::updateDocument()`);
-    const documentRecord = {
-      timestamp: new Date(),
-      ...document,
-      docId: randomUUID(),
-      active: true,
-    } as DocumentRecord;
-
-    const result = await this.collection.insertOne(documentRecord, { session });
-
-    if (result.acknowledged) {
-      return documentRecord;
-    }
-
-    throw Error('Error occurred when inserting document');
+  /** Construct a document with fields and insert it to the collection, marking
+   * it as active. If `oldDocument` is provided, the docId will be reused and
+   * the new document will have reference to the old one. */
+  public async insertOneFromListField(
+    listField: Record<string, TSchemaSerializedField>,
+    oldDocument?: {
+      docId: string;
+      _id: ObjectId;
+    },
+    session?: ClientSession
+  ): Promise<[InsertOneResult<TDocumentRecordNullable>, string]> {
+    const insertingDocId = oldDocument?.docId || randomUUID();
+    return [
+      await this.insertOne(
+        {
+          document: listField,
+          docId: insertingDocId,
+          active: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          previousObjectId: oldDocument?._id || null,
+        },
+        {
+          session,
+        }
+      ),
+      insertingDocId,
+    ];
   }
 
-  public async updateOne(
+  /** Update a document by creating a new revision and setting the old one to
+   * inactive. */
+  public async update(
     docId: string,
-    document: DocumentRecord,
+    fields: Record<string, TDocumentField>,
     session: ClientSession
   ) {
     logger.debug(`ModelDocument::updateDocument()`, { docId });
-    const findDocument = await this.findOne({ docId });
+    const document = await this.findOne({ docId, active: true }, { session });
 
-    if (findDocument) {
-      const documentRecord = {
-        timestamp: new Date(),
-        ...document,
-        docId: findDocument.docId,
-        active: true,
-      } as DocumentRecord;
+    if (document) {
       // Insert new document
-      const documentUpdated = await this.collection.insertOne(documentRecord, {
-        session,
-      });
+      const documentUpdated = await this.insertOneFromListField(
+        fields,
+        {
+          docId: document.docId,
+          _id: document._id,
+        },
+        session
+      );
+
       // Set old document to active: false
       // Point the nextId to updated document to keep track history
       await this.collection.findOneAndUpdate(
-        { _id: findDocument._id },
+        { _id: document._id },
         {
-          $set: { active: false, nextId: documentUpdated.insertedId },
+          $set: { active: false },
         },
         {
           session,
@@ -111,61 +139,21 @@ export class ModelDocument extends ModelBasic<DocumentRecord> {
       return documentUpdated;
     }
 
-    throw new Error('No documents found to update');
+    throw new Error('No document found to update');
   }
 
-  public async dropOne(docId: string, session?: ClientSession) {
-    logger.debug(`ModelDocument::drop()`, { docId });
-    const findDocument = await this.find({ docId });
-
-    const docIds = findDocument.map((doc) => doc.docId);
-
-    // eslint-disable-next-line @typescript-eslint/no-shadow
-    const bulkOps = docIds.map((docId) => ({
-      updateMany: {
-        filter: { docId },
-        update: {
-          $set: {
-            active: false,
-          },
-        },
-      },
-    }));
-
-    // Execute the bulk update
-    const result = await this.collection.bulkWrite(bulkOps, { session });
-
-    logger.debug(
-      `ModelDocument::drop() - All versions of documents soft deleted`,
-      { result }
-    );
-
-    return result;
-  }
-
-  public async findOne(filter: Filter<any>, session?: ClientSession) {
-    logger.debug(`ModelDocument::findOne()`, { filter });
-    return this.collection.findOne(
-      { ...filter, active: true },
-      {
-        sort: { timestamp: -1 },
-        session,
-      }
-    );
-  }
-
-  public async findHistoryOne(docId: string, session?: ClientSession) {
-    const documents = this.find({ docId }, session);
-    return documents;
-  }
-
-  public async find(filter?: Filter<any>, session?: ClientSession) {
-    logger.debug(`ModelDocument::find()`, { filter });
-    return this.collection.find(filter || {}, { session }).toArray();
-  }
-
-  public async countActiveDocuments(filter?: Filter<any>) {
+  public async countActiveDocuments(filter?: Filter<TDocumentRecordNullable>) {
     return this.collection.countDocuments({ ...filter, active: true });
+  }
+
+  public static indexKeyFormat(field: string) {
+    // const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
+
+    // if (error) {
+    //   throw error;
+    // }
+
+    return `document.${field}.value`;
   }
 }
 

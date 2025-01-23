@@ -9,7 +9,7 @@
     "esModuleInterop": true,
     "noImplicitAny": true,
     "resolveJsonModule": true,
-    "removeComments": true,
+    "removeComments": false,
     "preserveConstEnums": true,
     "skipLibCheck": true,
     "declaration": true,
@@ -17,6 +17,12 @@
     "preserveSymlinks": true
   },
   "references": [
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/permission"
+    },
     {
       "path": "./packages/smart-contract"
     },
@@ -27,7 +33,7 @@
       "path": "./packages/kubo"
     },
     {
-      "path": "./packages/proof-service"
+      "path": "./packages/mina-service"
     },
     {
       "path": "./packages/api"
@@ -36,21 +42,10 @@
       "path": "./packages/zkdb"
     },
     {
-      "path": "./packages/compile-service"
-    },
-    {
       "path": "./packages/serverless"
-    },
-    {
-      "path": "./packages/broker-service"
-    },
-    {
-      "path": "./packages/ftp"
     }
   ],
-  "include": [
-    "./src/"
-  ],
+  "include": ["./src/"],
   "exclude": [
     "**/build",
     "**/node_modules",

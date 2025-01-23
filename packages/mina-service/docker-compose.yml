@@ -1,0 +1,10 @@
+services:
+  app:
+    image: mina-service
+    env_file:
+      - .env
+    networks:
+      - zk
+networks:
+  zk:
+    external: true

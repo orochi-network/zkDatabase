@@ -1,161 +1,176 @@
-import { ModelMerkleTree, TMerkleProof } from '@zkdb/storage';
+ 
+import {
+  TMerkleNodeJson,
+  TMerkleProofSerialized,
+  TMerkleTreeInfo,
+  TPagination,
+  TPaginationReturn,
+} from '@zkdb/common';
+import { ModelMerkleTree, TCompoundSession } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
-import ModelDocumentMetadata from '../../model/database/document-metadata.js';
-import { Pagination, PaginationReturn } from '../types/pagination.js';
-import { MerkleNode, MerkleTreeInfo } from '../types/merkle-tree.js';
 import { Field } from 'o1js';
+import { ModelMetadataDocument } from '@model';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function getWitnessByDocumentId(
-  databaseName: string,
-  docId: string,
-  session?: ClientSession
-): Promise<TMerkleProof[]> {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
+export class MerkleTree {
+  public static async document(
+    databaseName: string,
+    docId: string,
+    compoundSession: TCompoundSession
+  ): Promise<TMerkleProofSerialized[]> {
+    const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-  const docMetadata = await modelDocumentMetadata.findOne({
-    docId,
-  });
+    const docMetadata = await modelDocumentMetadata.findOne(
+      {
+        docId,
+      },
+      { session: compoundSession.sessionServerless }
+    );
 
-  if (!docMetadata) {
-    throw Error(`Metadata has not been found`);
+    if (!docMetadata) {
+      throw Error(`Metadata has not been found`);
+    }
+
+    const merkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      compoundSession.sessionMina
+    );
+
+    return merkleTree.getMerkleProof(BigInt(docMetadata.merkleIndex), {
+      session: compoundSession.sessionMina,
+    });
   }
 
-  const merkleTree = await ModelMerkleTree.load(databaseName);
+  public static async nodeByLevel(
+    databaseName: string,
+    nodeLevel: number,
+    pagination: TPagination,
+    session: ClientSession
+  ): Promise<TPaginationReturn<TMerkleNodeJson[]>> {
+    const imMerkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      session
+    );
 
-  return merkleTree.getWitness(BigInt(docMetadata.merkleIndex), new Date(), {
-    session,
-  });
-}
+    const listZeroNode = imMerkleTree.getListZeroNode();
 
-export async function getMerkleNodesByLevel(
-  databaseName: string,
-  nodeLevel: number,
-  pagination?: Pagination
-): Promise<PaginationReturn<MerkleNode[]>> {
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+    if (nodeLevel < imMerkleTree.height) {
+      const listNode = (
+        await imMerkleTree.getListNodeByLevel(nodeLevel, pagination, session)
+      ).map(({ level, index, hash }) => ({
+        level,
+        index,
+        hash,
+        empty: listZeroNode[level].equals(Field(hash)).toBoolean(),
+      }));
 
-  const zeroNodes = modelMerkleTree.getZeroNodes();
+      return {
+        data: listNode,
+        offset: pagination?.offset ?? 0,
+        total: await imMerkleTree.countNodeByLevel(nodeLevel, session),
+      };
+    }
 
-  if (nodeLevel < modelMerkleTree.height) {
-    const nodes = (
-      await modelMerkleTree.getNodesByLevel(nodeLevel, new Date(), {
-        ...pagination,
-      })
-    ).map(({ level, index, hash }) => ({
-      level,
-      index,
-      hash,
-      empty: zeroNodes[level].equals(Field(hash)).toBoolean()
-    }));
+    throw Error('Node Level must be less then Merkle Tree Height');
+  }
+
+  public static async info(
+    databaseName: string,
+    session: ClientSession
+  ): Promise<TMerkleTreeInfo> {
+    const imMerkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      session
+    );
+
+    const merkleRoot = (await imMerkleTree.getRoot({ session })).toString();
 
     return {
-      data: nodes,
-      offset: pagination?.offset ?? 0,
-      totalSize: await modelMerkleTree.countLatestNodesByLevel(
-        nodeLevel,
-        new Date()
-      ),
+      merkleRoot,
+      merkleHeight: imMerkleTree.height,
     };
   }
 
-  throw Error('Node Level must be less then Merkle Tree Height');
-}
+  public static async nodeChildren(
+    databaseName: string,
+    parentLevel: number,
+    parentIndex: bigint,
+    session: ClientSession
+  ): Promise<TMerkleNodeJson[]> {
+    if (!Number.isInteger(parentLevel) || parentLevel <= 0) {
+      throw new Error(
+        `Invalid parentLevel: ${parentLevel}. It must be a greater than zero integer.`
+      );
+    }
 
-export async function getMerkleTreeInfo(
-  databaseName: string
-): Promise<MerkleTreeInfo> {
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
-
-  const merkleRoot = (await modelMerkleTree.getRoot(new Date())).toString();
-
-  return {
-    merkleRoot,
-    merkleHeight: modelMerkleTree.height,
-  };
-}
-
-export async function getChildrenNodes(
-  databaseName: string,
-  parentLevel: number,
-  parentIndex: bigint
-): Promise<MerkleNode[]> {
-  if (!Number.isInteger(parentLevel) || parentLevel < 0) {
-    throw new Error(
-      `Invalid parentLevel: ${parentLevel}. It must be a non-negative integer.`
+    const imMerkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      session
     );
-  }
 
-  if (parentIndex < 0) {
-    throw new Error(
-      `Invalid parentIndex: ${parentIndex}. It must be a non-negative integer.`
+    if (parentLevel >= imMerkleTree.height) {
+      throw new Error(
+        `Invalid parentLevel: ${parentLevel}. The Merkle Tree has a height of ${imMerkleTree.height}.`
+      );
+    }
+
+    const childrenLevel = parentLevel - 1;
+    const leftChildIndex = parentIndex * 2n;
+    const rightChildIndex = leftChildIndex + 1n;
+
+    const leftNodeField = await imMerkleTree.getNode(
+      childrenLevel,
+      leftChildIndex,
+      session
     );
-  }
-
-  if (parentLevel <= 0) {
-    throw new Error(
-      `Invalid parentLevel: ${parentLevel}. Leaves do not have children nodes.`
+    const rightNodeField = await imMerkleTree.getNode(
+      childrenLevel,
+      rightChildIndex,
+      session
     );
+
+    const listZeroNode = imMerkleTree.getListZeroNode();
+
+    return [
+      {
+        hash: leftNodeField.toString(),
+        index: leftChildIndex,
+        level: childrenLevel,
+        empty: listZeroNode[childrenLevel].equals(leftNodeField).toBoolean(),
+      },
+      {
+        hash: rightNodeField.toString(),
+        index: rightChildIndex,
+        level: childrenLevel,
+        empty: listZeroNode[childrenLevel].equals(rightNodeField).toBoolean(),
+      },
+    ];
   }
 
-  const modelMerkleTree = await ModelMerkleTree.load(databaseName);
+  public static async nodePath(
+    databaseName: string,
+    docId: string,
+    compoundSession: TCompoundSession
+  ) {
+    const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
-  if (parentLevel >= modelMerkleTree.height) {
-    throw new Error(
-      `Invalid parentLevel: ${parentLevel}. The Merkle Tree has a height of ${modelMerkleTree.height}.`
+    const docMetadata = await modelDocumentMetadata.findOne(
+      {
+        docId,
+      },
+      { session: compoundSession.sessionServerless }
     );
+
+    if (!docMetadata) {
+      throw Error(`Metadata has not been found`);
+    }
+
+    const merkleTree = await ModelMerkleTree.getInstance(
+      databaseName,
+      compoundSession.sessionMina
+    );
+
+    return merkleTree.getMerkleProofPath(BigInt(docMetadata.merkleIndex), {
+      session: compoundSession.sessionMina,
+    });
   }
-
-  const currentDate = new Date();
-
-  const childrenLevel = parentLevel - 1;
-  const leftChildIndex = parentIndex * 2n;
-  const rightChildIndex = leftChildIndex + 1n;
-
-  const leftNodeField = await modelMerkleTree.getNode(
-    childrenLevel,
-    leftChildIndex,
-    currentDate
-  );
-  const rightNodeField = await modelMerkleTree.getNode(
-    childrenLevel,
-    rightChildIndex,
-    currentDate
-  );
-
-  const zeroNodes = modelMerkleTree.getZeroNodes();
-
-  return [
-    {
-      hash: leftNodeField.toString(),
-      index: Number(leftChildIndex),
-      level: childrenLevel,
-      empty: zeroNodes[childrenLevel].equals(leftNodeField).toBoolean(),
-    },
-    {
-      hash: rightNodeField.toString(),
-      index: Number(rightChildIndex),
-      level: childrenLevel,
-      empty: zeroNodes[childrenLevel].equals(rightNodeField).toBoolean(),
-    },
-  ];
-}
-
-export async function getMerkleWitnessPath(
-  databaseName: string,
-  docId: string
-) {
-  const modelDocumentMetadata = new ModelDocumentMetadata(databaseName);
-
-  const docMetadata = await modelDocumentMetadata.findOne({
-    docId,
-  });
-
-  if (!docMetadata) {
-    throw Error(`Metadata has not been found`);
-  }
-
-  const merkleTree = await ModelMerkleTree.load(databaseName);
-
-  return merkleTree.getWitnessPath(BigInt(docMetadata.merkleIndex), new Date());
 }

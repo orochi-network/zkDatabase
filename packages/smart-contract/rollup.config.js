@@ -16,13 +16,8 @@ export default [
       commonjs(),
       alias({
         entries: [
-          { find: '@', replacement: 'src' },
-          { find: '@archive-node', replacement: 'src/archive-node' },
-          { find: '@contracts', replacement: 'src/contracts' },
-          { find: '@proof', replacement: 'src/proof' },
-          { find: '@types', replacement: 'src/types' },
+          { find: '@helper', replacement: 'src/helper' },
           { find: '@network', replacement: 'src/network' },
-          { find: '@utils', replacement: 'src/utils' },
         ],
       }),
       typescript({ sourceMap: true, tsconfig: 'tsconfig.json' }),

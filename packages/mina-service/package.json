@@ -1,0 +1,40 @@
+{
+  "name": "@zkdb/mina-service",
+  "version": "1.1.1",
+  "description": "",
+  "author": "",
+  "license": "Apache-2.0",
+  "type": "module",
+  "keywords": [
+    "mina-zkapp",
+    "mina-zk-app",
+    "mina-dapp",
+    "zkapp"
+  ],
+  "scripts": {
+    "build": "rm -rf ./build && rollup -c",
+    "dev:debug": "tsx --inspect ./src/index.ts",
+    "start:prod": "yarn run build && node ./build/src/index.js",
+    "dev": "tsx --watch ./src/index.ts",
+    "coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "format": "prettier --write --ignore-unknown **/*",
+    "test": "echo 'hello world'",
+    "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "lint": "eslint ./src/**/*.ts --fix && prettier . --write"
+  },
+  "peerDependencies": {
+    "bullmq": "^5.34.3",
+    "graphql": "^16.10.0",
+    "mongodb": "^6.12.0",
+    "o1js": "^2.2.0"
+  },
+  "dependencies": {
+    "@orochi-network/framework": "^2.3.22",
+    "@orochi-network/queue": "^0.1.11",
+    "@orochi-network/vault": "^1.4.15",
+    "@zkdb/common": "^0.1.2",
+    "@zkdb/smart-contract": "^1.1.0",
+    "@zkdb/storage": "^1.1.0",
+    "graphql-request": "7.1.2"
+  }
+}

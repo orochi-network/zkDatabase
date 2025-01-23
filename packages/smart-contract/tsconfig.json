@@ -10,13 +10,8 @@
     "rootDir": ".",
     "baseUrl": "./",
     "paths": {
-      "@archive-node": ["./src/archive-node"],
-      "@contracts": ["./src/contracts"],
-      "@proof": ["./src/proof"],
-      "@types": ["./src/types"],
-      "@cache": ["./src/cache"],
+      "@helper": ["./src/helper"],
       "@network": ["./src/network"],
-      "@utils": ["./src/utils"]
     },
     "strictPropertyInitialization": false, // to enable generic constructors, e.g. on CircuitValue
     "forceConsistentCasingInFileNames": true,

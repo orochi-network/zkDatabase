@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "target": "ESNext",
+    "module": "ESNext",
+    "lib": ["dom", "esnext"],
+    "outDir": "./build",
+    "rootDir": ".",
+    "declarationMap": false,
+    "strictPropertyInitialization": false,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "Node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "sourceMap": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@types": ["./src/types"],
+      "@validation": ["./src/validation"]
+    }
+  },
+  "include": ["./src"],
+  "exclude": ["./node_modules", "./build", "**/*.spec.ts", "**/*.test.ts"]
+}

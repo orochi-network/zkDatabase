@@ -1,19 +1,19 @@
 import Joi from 'joi';
 import { GraphQLError, GraphQLResolveInfo } from 'graphql';
-import { ZKDATABASE_USER_NOBODY } from '../common/const.js';
-import { TAuthorizedContext, TPublicContext } from '../common/types.js';
+import { TAuthorizedContext, TPublicContext } from '@zkdb/common';
+import { ZKDATABASE_USER_NOBODY } from '@common';
 
-export type THandler<R, T, C> = (
+export type THandler<Req, Res, R, C> = (
   _root: R,
-  _args: T,
+  _args: Req,
   _context: C,
   _info: GraphQLResolveInfo
-) => Promise<any>;
+) => Promise<Res>;
 
-export type TWrapperHandler<R, T, C> = (
-  schema: Joi.ObjectSchema<T>,
-  resolver: THandler<R, T, C>
-) => THandler<R, T, C>;
+export type TWrapperHandler<Req, Res, R, C> = (
+  schema: Joi.ObjectSchema<Req>,
+  resolver: THandler<Req, Res, R, C>
+) => THandler<Req, Res, R, C>;
 
 export type TResolver<T> = {
   [key: string]: any;
@@ -27,54 +27,99 @@ export type TResolver<T> = {
   };
 };
 
-export type TOriginResolver<R, T, C> = TResolver<THandler<R, T, C>>;
+export type TOriginResolver<Req, Res, R, C> = TResolver<
+  THandler<Req, Res, R, C>
+>;
 
 export type TWrapperMap<T> = TResolver<Joi.ObjectSchema<T>>;
 
-export const publicWrapper = <T, R = any, C = TPublicContext>(
-  schema: Joi.ObjectSchema<T>,
-  resolver: THandler<R, T, C>
-): THandler<R, T, C> => {
-  return async (root: R, args: T, context: C, info: GraphQLResolveInfo) => {
-    const { error } = schema.validate(args);
-    if (error) {
-      throw error;
-    }
-    return resolver(root, args, context, info);
-  };
-};
+export function publicWrapper<Req = unknown, Res = any, R = any>(
+  resolver: THandler<Req, Res, R, TPublicContext>
+): THandler<Req, Res, R, TPublicContext>;
 
-export const authorizeWrapper = <T, R = any, C = TAuthorizedContext>(
-  schema: Joi.ObjectSchema<T>,
-  resolver: THandler<R, T, C>
-): THandler<R, T, C> => {
-  return async (root: R, args: T, context: C, info: GraphQLResolveInfo) => {
-    if ((context as TAuthorizedContext).userName === ZKDATABASE_USER_NOBODY) {
-      throw new GraphQLError('This method required authorized user', {
-        extensions: {
-          code: 'UNAUTHENTICATED',
-          http: { status: 401 },
-        },
-      });
-    }
-    const { error } = schema.validate(args);
-    if (error) {
-      throw error;
-    }
-    return resolver(root, args, context, info);
-  };
-};
+export function publicWrapper<Req = unknown, Res = any, R = any>(
+  schema: Joi.ObjectSchema<Req>,
+  resolver: THandler<Req, Res, R, TPublicContext>
+): THandler<Req, Res, R, TPublicContext>;
 
-export const validateDigest = Joi.string()
-  .pattern(/^b[a-z,2,3,4,5,6,7]+(|=)+$/i)
-  .message('Invalid base32 digest');
+// @TODO Remove Res=any to enforcing type
+export function publicWrapper<Req = unknown, Res = any, R = any>(
+  ...params: any[]
+): THandler<Req, Res, R, TPublicContext> {
+  if (params.length === 2) {
+    const [schema, resolver] = params;
+    return async (
+      root: R,
+      args: Req,
+      context: TPublicContext,
+      info: GraphQLResolveInfo
+    ) => {
+      const { error } = schema.validate(args);
+      if (error) {
+        throw error;
+      }
+      return resolver(root, args, context, info);
+    };
+  } 
+    const [resolver] = params;
+    return async (
+      root: R,
+      args: Req,
+      context: TPublicContext,
+      info: GraphQLResolveInfo
+    ) => {
+      return resolver(root, args, context, info);
+    };
+  
+}
 
-export const validateCID = Joi.string()
-  .pattern(/^b[a-z,2,3,4,5,6,7]+(|=)+$/i)
-  .message('Invalid CID');
+export function authorizeWrapper<Req = unknown, Res = any, R = any>(
+  resolver: THandler<Req, Res, R, TAuthorizedContext>
+): THandler<Req, Res, R, TAuthorizedContext>;
 
-export const validateCollection = Joi.string()
-  .pattern(/^[a-z][0-9,a-z]{3,64}$/)
-  .message('Invalid collection name');
+export function authorizeWrapper<Req = unknown, Res = any, R = any>(
+  schema: Joi.ObjectSchema<Req>,
+  resolver: THandler<Req, Res, R, TAuthorizedContext>
+): THandler<Req, Res, R, TAuthorizedContext>;
 
-export default publicWrapper;
+export function authorizeWrapper<Req = unknown, Res = any, R = any>(
+  ...params: any[]
+): THandler<Req, Res, R, TAuthorizedContext> {
+  if (params.length === 2) {
+    const [schema, resolver] = params;
+    return async (
+      root: R,
+      args: Req,
+      context: TAuthorizedContext,
+      info: GraphQLResolveInfo
+    ) => {
+      if (
+        typeof context?.userName !== 'string' ||
+        typeof context?.email !== 'string' ||
+        context.userName === ZKDATABASE_USER_NOBODY
+      ) {
+        throw new GraphQLError('This method required authorized user', {
+          extensions: {
+            code: 'UNAUTHENTICATED',
+            http: { status: 401 },
+          },
+        });
+      }
+      const { error } = schema.validate(args);
+      if (error) {
+        throw error;
+      }
+      return resolver(root, args, context, info);
+    };
+  } 
+    const [resolver] = params;
+    return async (
+      root: R,
+      args: Req,
+      context: TAuthorizedContext,
+      info: GraphQLResolveInfo
+    ) => {
+      return resolver(root, args, context, info);
+    };
+  
+}

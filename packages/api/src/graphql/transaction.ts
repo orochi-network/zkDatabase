@@ -1,57 +1,72 @@
 import { gql } from "@apollo/client";
 import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common.js";
-import {
-  TDbTransaction,
-  TTransactionConfirmRequest,
-  TTransactionRequest,
-} from "./types/transaction.js";
+  TTransactionDeployEnqueueRequest,
+  TTransactionDeployEnqueueResponse,
+  TTransactionDraftRequest,
+  TTransactionDraftResponse,
+  TTransactionSubmitRequest,
+  TTransactionSubmitResponse,
+} from "@zkdb/common";
+import { createApi, TApolloClient } from "./common";
 
-const TRANSACTION_GET = gql`
-  query GetTransaction(
-    $databaseName: String!
-    $transactionType: TransactionType!
-  ) {
-    getTransaction(
-      databaseName: $databaseName
-      transactionType: $transactionType
-    ) {
-      databaseName
-      transactionType
-      status
-      id
-      tx
-      zkAppPublicKey
-    }
-  }
-`;
-
-const TRANSACTION_CONFIRM = gql`
-  mutation ConfirmTransaction(
-    $databaseName: String!
-    $confirmTransactionId: String!
-    $txHash: String!
-  ) {
-    confirmTransaction(
-      databaseName: $databaseName
-      id: $confirmTransactionId
-      txHash: $txHash
-    )
-  }
-`;
-
-export const transaction = <T>(client: TApolloClient<T>) => ({
-  getTransaction: createQueryFunction<
-    TDbTransaction,
-    TTransactionRequest,
-    { getTransaction: TDbTransaction }
-  >(client, TRANSACTION_GET, (data) => data.getTransaction),
-  confirmTransaction: createMutateFunction<
-    boolean,
-    TTransactionConfirmRequest,
-    { confirmTransaction: boolean }
-  >(client, TRANSACTION_CONFIRM, (data) => data.confirmTransaction),
+export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
+  transactionSubmit: createApi<
+    TTransactionSubmitRequest,
+    TTransactionSubmitResponse
+  >(
+    client,
+    gql`
+      mutation TransactionSubmit(
+        $databaseName: String!
+        $rawTransactionId: String!
+        $txHash: String!
+      ) {
+        transactionSubmit(
+          databaseName: $databaseName
+          rawTransactionId: $rawTransactionId
+          txHash: $txHash
+        )
+      }
+    `
+  ),
+  transactionDeployEnqueue: createApi<
+    TTransactionDeployEnqueueRequest,
+    TTransactionDeployEnqueueResponse
+  >(
+    client,
+    gql`
+      mutation transactionDeployEnqueue($databaseName: String!) {
+        transactionDeployEnqueue(databaseName: $databaseName)
+      }
+    `
+  ),
+  transactionDraft: createApi<
+    TTransactionDraftRequest,
+    TTransactionDraftResponse
+  >(
+    client,
+    gql`
+      query TransactionDraft(
+        $databaseName: String!
+        $transactionType: TransactionType!
+      ) {
+        transactionDraft(
+          databaseName: $databaseName
+          transactionType: $transactionType
+        ) {
+          rawTransactionId
+          databaseName
+          transactionType
+          status
+          transactionRaw
+          txHash
+          error
+          createdAt
+          updatedAt
+        }
+      }
+    `
+  ),
 });
+
+export default API_TRANSACTION;

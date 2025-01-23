@@ -1,29 +1,17 @@
+import { ZKDATABASE_USER_NOBODY, ZKDATABASE_USER_SYSTEM } from '@common';
+import { objectToLookupPattern } from '@helper';
+import { TUser, TUserRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
-import { Document } from 'mongodb';
-import {
-  ZKDATABASE_USER_NOBODY,
-  ZKDATABASE_USER_SYSTEM,
-} from '../../common/const.js';
-import { getCurrentTime, objectToLookupPattern } from '../../helper/common.js';
+import { ClientSession, OptionalId } from 'mongodb';
 
-export interface DocumentUser extends Document {
-  userName: string;
-  email: string;
-  publicKey: string;
-  activated: boolean;
-  userData: any;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export class ModelUser extends ModelGeneral<DocumentUser> {
+export class ModelUser extends ModelGeneral<OptionalId<TUserRecord>> {
   private static collectionName: string =
-    zkDatabaseConstants.globalCollections.user;
+    zkDatabaseConstant.globalCollection.user;
 
   static defaultUsers: string[] = [
     ZKDATABASE_USER_NOBODY,
@@ -32,36 +20,31 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
 
   constructor() {
     super(
-      zkDatabaseConstants.globalDatabase,
-      DB.service,
+      zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.dbServerless,
       ModelUser.collectionName
     );
   }
 
-  public static async init() {
-    const collection = ModelCollection.getInstance(
-      zkDatabaseConstants.globalDatabase,
-      DB.service,
-      ModelUser.collectionName
-    );
-    if (!(await collection.isExist())) {
-      collection.index({ userName: 1 }, { unique: true });
-      collection.index({ publicKey: 1 }, { unique: true });
-      collection.index({ email: 1 }, { unique: true });
-    }
+  /**
+   * Validates whether the given username is valid.
+   *
+   * @param userName - The username to validate.
+   * @returns `true` if the username is valid, otherwise `false`.
+   */
+  public static isValid(userName: string): boolean {
+    return ModelUser.defaultUsers.includes(userName);
   }
 
-  public static isValidUser(userName: string) {
-    if (ModelUser.defaultUsers.includes(userName)) {
-      throw new Error('Username is reserved');
-    }
-  }
-
-  public async isUserExist(
-    searchingInfo: Partial<
-      Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
-    >
-  ) {
+  /**
+   * Checks if a user exists based on the provided search criteria.
+   *
+   * @param searchingInfo - Partial search criteria for a user, excluding 'activated' and 'userData' fields.
+   * @returns A promise that resolves to `true` if the user exists, otherwise `false`.
+   */
+  public async isExist(
+    searchingInfo: Partial<Omit<TUser, 'activated' | 'userData'>>
+  ): Promise<boolean> {
     // Search a user for given information is matched
     return (
       (await this.collection.countDocuments({
@@ -70,11 +53,15 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     );
   }
 
+  /**
+   * Finds a user based on the provided search criteria.
+   *
+   * @param searchingInfo - Partial search criteria for a user, excluding 'activated' and 'userData' fields.
+   * @returns A promise resolving to the user if found, or `undefined` if not found.
+   */
   public async findUser(
-    searchingInfo: Partial<
-      Pick<DocumentUser, 'userName' | 'email' | 'publicKey'>
-    >
-  ) {
+    searchingInfo: Partial<Omit<TUser, 'activated' | 'userData'>>
+  ): Promise<TUserRecord[]> {
     // Search a user for given information is matched
     const result = await this.collection.find({
       $or: objectToLookupPattern(searchingInfo),
@@ -83,35 +70,44 @@ export class ModelUser extends ModelGeneral<DocumentUser> {
     return result.toArray();
   }
 
-  public async areUsersExist(userNames: string[]) {
-    const users = await this.collection
+  /**
+   * Checks if a list of usernames exist.
+   *
+   * @param listUserName - An array of usernames to check for existence.
+   * @returns A promise that resolves to `true` if all usernames exist, otherwise `false`.
+   */
+  public async isListUserExist(listUserName: string[]): Promise<boolean> {
+    const listUser = await this.collection
       .find({
-        userName: { $in: userNames },
+        userName: { $in: listUserName },
       })
       .toArray();
 
-    return userNames.length === users.length;
+    return listUserName.length === listUser.length;
   }
 
-  public async create(
-    userName: string,
-    email: string,
-    publicKey: string,
-    userData: any
-  ) {
-    ModelUser.isValidUser(userName);
-    if (!(await this.isUserExist({ userName, email, publicKey }))) {
-      return this.insertOne({
-        userName,
-        email,
-        publicKey,
-        userData,
-        activated: true,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      });
+  public static async init(session?: ClientSession) {
+    const collection = ModelCollection.getInstance(
+      zkDatabaseConstant.globalDatabase,
+      DATABASE_ENGINE.dbServerless,
+      ModelUser.collectionName
+    );
+    if (!(await collection.isExist())) {
+      await collection.createSystemIndex(
+        { userName: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { publicKey: 1 },
+        { unique: true, session }
+      );
+      await collection.createSystemIndex(
+        { email: 1 },
+        { unique: true, session }
+      );
+
+      await collection.addTimestampMongoDb({ session });
     }
-    return null;
   }
 }
 

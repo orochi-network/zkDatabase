@@ -1,198 +1,168 @@
 import { gql } from "@apollo/client";
 import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
-import {
-  TDocumentEncoded,
-  TDocumentHistoryPayload,
-  TDocumentPayload,
-  TMerkleWitness,
-  TPagination,
-  TPaginationResponse,
-} from "./types";
+  TDocumentCreateRequest,
+  TDocumentCreateResponse,
+  TDocumentDropRequest,
+  TDocumentDropResponse,
+  TDocumentFindRequest,
+  TDocumentFindResponse,
+  TDocumentMetadataRequest,
+  TDocumentMetadataResponse,
+  TDocumentUpdateRequest,
+  TDocumentUpdateResponse,
+} from "@zkdb/common";
+import { createApi, TApolloClient } from "./common";
 
-const DOCUMENT_DELETE = gql`
-  mutation DocumentDrop(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentDrop(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_CREATE = gql`
-  input DocumentRecordInput {
-    name: String!
-    kind: String!
-    value: String!
-  }
-
-  mutation DocumentCreate(
-    $databaseName: String!
-    $collectionName: String!
-    $documentRecord: [DocumentRecordInput!]!
-    $documentPermission: Number
-  ) {
-    documentCreate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentRecord: $documentRecord
-      documentPermission: $documentPermission
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_UPDATE = gql`
-  mutation DocumentUpdate(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $documentRecord: [DocumentRecordInput!]!
-  ) {
-    documentUpdate(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      documentRecord: $documentRecord
-    ) {
-      isLeft
-      sibling
-    }
-  }
-`;
-
-const DOCUMENT_FIND_ONE = gql`
-  query DocumentFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-  ) {
-    documentFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-    ) {
-      docId
-      field {
-        name
-        kind
-        value
-      }
-      createdAt
-    }
-  }
-`;
-
-const DOCUMENT_FIND_MANY = gql`
-  query DocumentsFind(
-    $databaseName: String!
-    $collectionName: String!
-    $documentQuery: JSON!
-    $pagination: PaginationInput
-  ) {
-    documentsFind(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      documentQuery: $documentQuery
-      pagination: $pagination
-    ) {
-      totalSize
-      offset
-      data {
-        docId
-        field {
-          name
-          kind
-          value
+export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
+  documentCreate: createApi<TDocumentCreateRequest, TDocumentCreateResponse>(
+    client,
+    gql`
+      mutation documentCreate(
+        $databaseName: String!
+        $collectionName: String!
+        $document: JSON!
+        $documentPermission: Int
+      ) {
+        documentCreate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          document: $document
+          documentPermission: $documentPermission
+        ) {
+          docId
+          acknowledged
+          document
         }
-        createdAt
       }
-    }
-  }
-`;
-
-const DOCUMENT_HISTORY = gql`
-  query HistoryDocumentGet(
-    $databaseName: String!
-    $collectionName: String!
-    $docId: String!
-  ) {
-    historyDocumentGet(
-      databaseName: $databaseName
-      collectionName: $collectionName
-      docId: $docId
-    ) {
-      docId
-      documents {
-        docId
-        fields {
-          name
-          kind
-          value
+    `,
+  ),
+  documentDrop: createApi<TDocumentDropRequest, TDocumentDropResponse>(
+    client,
+    gql`
+      mutation documentDrop(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentDrop(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        ) {
+          docId
+          acknowledged
         }
-        createdAt
       }
-    }
-  }
-`;
+    `,
+  ),
+  documentUpdate: createApi<TDocumentUpdateRequest, TDocumentUpdateResponse>(
+    client,
+    gql`
+      mutation documentUpdate(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+        $document: JSON!
+      ) {
+        documentUpdate(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+          document: $document
+        )
+      }
+    `,
+  ),
+  documentFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
+    client,
+    gql`
+      query documentFind(
+        $databaseName: String!
+        $collectionName: String!
+        $query: JSON
+        $pagination: PaginationInput
+      ) {
+        documentFind(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          query: $query
+          pagination: $pagination
+        ) {
+          data {
+            docId
+            document
+            createdAt
+            updatedAt
+          }
+          total
+          offset
+        }
+      }
+    `,
+  ),
+  documentHistoryFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
+    client,
+    gql`
+      query documentHistoryFind(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+        $pagination: PaginationInput
+      ) {
+        documentHistoryFind(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+          pagination: $pagination
+        ) {
+          data {
+            createdAt
+            document
+            updatedAt
+          }
+          total
+          offset
+        }
+      }
+    `,
+  ),
+  documentMetadata: createApi<
+    TDocumentMetadataRequest,
+    TDocumentMetadataResponse
+  >(
+    client,
+    gql`
+      query documentMetadata(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentMetadata(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        ) {
+          owner
+          group
+          permission
+          collectionName
+          docId
+          merkleIndex
+        }
+      }
+    `,
+    (res) => {
+      if (res === null) {
+        return null;
+      }
 
-export const document = <T>(client: TApolloClient<T>) => ({
-  delete: createMutateFunction<
-    TMerkleWitness,
-    { databaseName: string; collectionName: string; documentQuery: any },
-    { documentDrop: TMerkleWitness }
-  >(client, DOCUMENT_DELETE, (data) => data.documentDrop),
-  create: createMutateFunction<
-    TMerkleWitness,
-    {
-      databaseName: string;
-      collectionName: string;
-      documentRecord: TDocumentEncoded;
-      documentPermission?: number;
+      const { merkleIndex, ...rest } = res;
+      return {
+        ...rest,
+        merkleIndex: BigInt(merkleIndex),
+      };
     },
-    { documentCreate: TMerkleWitness }
-  >(client, DOCUMENT_CREATE, (data) => data.documentCreate),
-  update: createMutateFunction<
-    TMerkleWitness,
-    {
-      databaseName: string;
-      collectionName: string;
-      documentQuery: any;
-      documentRecord: TDocumentEncoded;
-    },
-    { documentUpdate: TMerkleWitness }
-  >(client, DOCUMENT_UPDATE, (data) => data.documentUpdate),
-  findOne: createQueryFunction<
-    TDocumentPayload,
-    { databaseName: string; collectionName: string; documentQuery: any },
-    { documentFind: TDocumentPayload }
-  >(client, DOCUMENT_FIND_ONE, (data) => data.documentFind),
-  findMany: createQueryFunction<
-    TDocumentPayload[],
-    {
-      databaseName: string;
-      collectionName: string;
-      documentQuery: any;
-      pagination?: TPagination;
-    },
-    { documentsFind: TPaginationResponse<TDocumentPayload[]> }
-  >(client, DOCUMENT_FIND_MANY, (data) => data.documentsFind.data),
-  history: createQueryFunction<
-    TDocumentHistoryPayload,
-    { databaseName: string; collectionName: string; docId: string },
-    { historyDocumentGet: TDocumentHistoryPayload }
-  >(client, DOCUMENT_HISTORY, (data) => data.historyDocumentGet),
+  ),
 });
+
+export default API_DOCUMENT;

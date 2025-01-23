@@ -1,82 +1,63 @@
-/* eslint-disable no-unused-vars */
+import {
+  TCollectionIndex,
+  TCollectionMetadata,
+  TDocumentCreateResponse,
+  TPagination,
+  TPaginationReturn,
+  TSchemaExtendable,
+} from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { Filter, MerkleWitness, Pagination } from '../../types';
-import { IndexField } from '../../types/collection-index';
-import { ZKDocument } from '../interfaces';
-import { DocumentEncoded, SchemaInterface } from '../schema';
-import { Ownable } from './ownable';
+import { IDocument } from '.';
+import { IMetadata } from './metadata';
 
-export interface ZKCollectionIndex {
-  list(): Promise<string[]>;
-  create(index: IndexField[]): Promise<boolean>;
+/**
+ * Interface for managing collection indexes.
+ * @interface ICollectionIndex
+ */
+export interface ICollectionIndex {
+  /**
+   * Retrieves all indexes in the collection.
+   * @returns {Promise<TCollectionIndex[]>} A promise that resolves to an array of index objects.
+   */
+  list(): Promise<TCollectionIndex[]>;
+
+  /**
+   * Creates new indexes in the collection.
+   * @param index
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating success or failure.
+   */
+  create(index: TCollectionIndex[]): Promise<boolean>;
+
+  /**
+   * Drops an existing index in the collection.
+   * @param indexName
+   * @returns {Promise<boolean>} A promise that resolves to a boolean indicating success or failure.
+   */
   drop(indexName: string): Promise<boolean>;
 }
 
-export interface ZKCollection {
-  get ownership(): Ownable;
+export interface ICollection<T extends TSchemaExtendable<any>> {
+  get index(): ICollectionIndex;
 
-  get index(): ZKCollectionIndex;
+  get metadata(): IMetadata<TCollectionMetadata>;
 
   exist(): Promise<boolean>;
 
-  create<T extends SchemaInterface>(
-    type: T,
-    index?: string[] | IndexField[],
+  create(
+    schema: T,
     permission?: Permission,
     groupName?: string
   ): Promise<boolean>;
 
-  findOne<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-    },
-  >(
-    filter: Filter<T>
-  ): Promise<ZKDocument | null>;
+  findOne(filter: Partial<T['innerStructure']>): Promise<IDocument<T> | null>;
 
-  findMany<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-    },
-  >(
-    filter?: Filter<T>,
-    pagination?: Pagination
-  ): Promise<ZKDocument[]>;
+  findMany(
+    filter?: Partial<T['innerStructure']>,
+    pagination?: TPagination
+  ): Promise<TPaginationReturn<IDocument<T>[]>>;
 
-  insert<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-      serialize: () => DocumentEncoded;
-    },
-  >(
-    model: InstanceType<T>,
-    permission: Permission
-  ): Promise<MerkleWitness>;
-
-  insert<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-      serialize: () => DocumentEncoded;
-    },
-  >(
-    model: InstanceType<T>
-  ): Promise<MerkleWitness>;
-
-  update<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-      serialize: () => DocumentEncoded;
-    },
-  >(
-    filter: Filter<T>,
-    model: InstanceType<T>
-  ): Promise<MerkleWitness>;
-
-  drop<
-    T extends {
-      new (..._args: any): InstanceType<T>;
-    },
-  >(
-    filter: Filter<T>
-  ): Promise<MerkleWitness>;
+  insert(
+    document: T['innerStructure'],
+    permission?: Permission
+  ): Promise<TDocumentCreateResponse>;
 }

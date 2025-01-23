@@ -1,12 +1,24 @@
-import { ClientSession, CreateCollectionOptions, Document } from 'mongodb';
-import logger from '../../helper/logger.js';
-import { DatabaseEngine } from '../database-engine.js';
+import { zkDatabaseConstant } from '@common';
+import { logger } from '@helper';
+import {
+  ClientSession,
+  CreateCollectionOptions,
+  CreateIndexesOptions,
+  Document,
+  IndexDirection,
+} from 'mongodb';
+import { JOI_ZKDB_FIELD_NAME } from '@zkdb/common';
+import { DatabaseEngine } from '../database-engine';
+
+type TIndexSpec = {
+  [key: string]: IndexDirection;
+};
 
 /**
  * ModelBasic is the most basic model of data. It interacts directly with DatabaseEngine
  * and provides .db and .collection to allow other models to interact with the database/collection.
  */
-export default abstract class ModelBasic<T extends Document> {
+export abstract class ModelBasic<T extends Document> {
   protected dbEngine: DatabaseEngine;
 
   protected databaseName: string;
@@ -57,5 +69,32 @@ export default abstract class ModelBasic<T extends Document> {
       await session.abortTransaction();
     }
     return result;
+  }
+
+  public async createSystemIndex(
+    indexSpec: TIndexSpec,
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ): Promise<void> {
+    const listIndexedField = Object.keys(indexSpec);
+    listIndexedField.forEach((field) => {
+      const { error } = JOI_ZKDB_FIELD_NAME.validate(field);
+      if (error) {
+        throw new Error(`Invalid field name ${field}: ${error}`);
+      }
+    });
+
+    const fieldName = `${zkDatabaseConstant.systemIndex}_${Object.keys(indexSpec).join('_')}`;
+
+    await this.collection.createIndex(indexSpec, {
+      ...indexOptions,
+      name: fieldName,
+    });
+  }
+
+  public async addTimestampMongoDb(
+    indexOptions?: Omit<CreateIndexesOptions, 'name'>
+  ) {
+    await this.createSystemIndex({ createdAt: 1 }, indexOptions);
+    await this.createSystemIndex({ updatedAt: 1 }, indexOptions);
   }
 }

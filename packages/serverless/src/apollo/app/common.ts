@@ -1,95 +1,119 @@
-import Joi from 'joi';
-import { O1JS_VALID_TYPE } from '../../common/const.js';
-import { TDocumentField } from '../types/document.js';
+import { gql } from '@helper';
+import { GraphQLScalarType } from 'graphql';
+import { GraphQLJSONObject } from 'graphql-type-json';
 
-export const objectId = Joi.string()
-  .trim()
-  .min(36)
-  .max(36)
-  .required()
-  .pattern(/^[a-f0-9]+/i);
+export const typeDefsCommon = gql`
+  scalar Date
+  scalar JSON
 
-export const databaseName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum TransactionType {
+    Deploy
+    Rollup
+  }
 
-export const userName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[._a-z0-9]+/i);
+  # ETransactionStatus in TS
+  enum TransactionStatus {
+    Unsigned
+    Signed
+    Unconfirmed
+    Confirming
+    Failed
+    Confirmed
+    Unknown
+  }
 
-export const collectionName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum QueueTaskStatus {
+    Queued
+    Processing
+    Failed
+    Success
+  }
 
-export const groupName = Joi.string()
-  .trim()
-  .min(4)
-  .max(128)
-  .required()
-  .pattern(/^[a-z]+[_a-z0-9]+/i);
+  enum Sorting {
+    Asc
+    Desc
+  }
 
-export const groupDescription = Joi.string().trim().min(10).max(256).required();
+  enum SchemaType {
+    CircuitString
+    UInt32
+    UInt64
+    Bool
+    Sign
+    Character
+    Int64
+    Field
+    PrivateKey
+    PublicKey
+    Signature
+    MerkleMapWitness
+  }
 
-export const groupOptionalDescription = Joi.string()
-  .allow('')
-  .optional()
-  .description(
-    'Optional description of the group, providing additional context.'
-  );
+  # EIndexProperty in TS
+  enum IndexProperty {
+    Compound
+    Single
+  }
 
-export const publicKey = Joi.string()
-  .trim()
-  .length(55)
-  .required()
-  .pattern(/^[A-HJ-NP-Za-km-z1-9]{55}$/);
+  type IndexInput {
+    name: String!
+    sorting: Sorting!
+  }
 
-export const indexName = Joi.string()
-  .trim()
-  .min(2)
-  .max(128)
-  .required()
-  .pattern(/^[_a-z]+[_a-z0-9]+/i);
+  input PaginationInput {
+    offset: Int
+    limit: Int
+  }
 
-export const indexNumber = Joi.string()
-  .regex(/^[0-9]+$/)
-  .required();
+  input MinaSignatureInput {
+    field: String!
+    scalar: String!
+  }
 
-export const index = Joi.array().items(Joi.string().required());
+  input ProofInput {
+    signature: MinaSignatureInput!
+    publicKey: String!
+    data: String!
+  }
 
-export const documentField = Joi.object<TDocumentField>({
-  name: Joi.string()
-    .pattern(/^[a-z][a-zA-Z0-9\\_]+$/)
-    .required(),
-  kind: Joi.string()
-    .valid(...O1JS_VALID_TYPE)
-    .required(),
-  value: Joi.string().raw().required(),
-});
+  input SchemaFieldInput {
+    name: String!
+    kind: SchemaType!
+  }
 
-export const pagination = Joi.object({
-  offset: Joi.number().integer().min(0).default(0).optional(),
-  limit: Joi.number().integer().min(1).max(100).default(10).optional(),
-});
+  type SchemaFieldOutput {
+    name: String!
+    kind: SchemaType!
+  }
+`;
 
-export const search = Joi.object({
-  search: Joi.optional(),
-  pagination,
-});
+/** Recusively traverse through an object and convert all field with bigint to
+ * string */
+function convertBigIntToString(obj: any): any {
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => convertBigIntToString(item));
+  }
+  if (typeof obj === 'object') {
+    Object.keys(obj).forEach((key) => {
+      // eslint-disable-next-line no-param-reassign
+      obj[key] = convertBigIntToString(obj[key]);
+    });
+  }
+  return obj;
+}
 
-export const sortingOrder = Joi.string().valid(...['ASC', 'DESC']);
-
-export const collectionIndex = Joi.object({
-  name: indexName,
-  sorting: sortingOrder,
-});
-
-export const transactionType = Joi.string().valid(...['deploy', 'rollup']);
+export const resolversCommon = {
+  JSON: new GraphQLScalarType({
+    name: 'JSON',
+    description: 'JSON scalar type (aka Object)',
+    serialize(value) {
+      return GraphQLJSONObject.serialize(convertBigIntToString(value));
+    },
+    parseValue(value) {
+      return GraphQLJSONObject.parseValue(value);
+    },
+  }),
+};

@@ -1,63 +1,54 @@
+import { ModelUserGroup } from '@model';
+import { TGroupRecord } from '@zkdb/common';
 import {
-  DB,
+  DATABASE_ENGINE,
   ModelCollection,
   ModelGeneral,
-  zkDatabaseConstants,
+  zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, Document, InsertOneOptions } from 'mongodb';
-import { ZKDATABASE_USER_SYSTEM } from '../../common/const.js';
-import { getCurrentTime } from '../../helper/common.js';
+import { ClientSession, ObjectId, OptionalId } from 'mongodb';
 
-export interface GroupSchema extends Document {
-  groupName: string;
-  description: string;
-  createBy: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export class ModelGroup extends ModelGeneral<GroupSchema> {
+export class ModelGroup extends ModelGeneral<OptionalId<TGroupRecord>> {
   private static collectionName: string =
-    zkDatabaseConstants.databaseCollections.group;
+    zkDatabaseConstant.databaseCollection.group;
 
   constructor(databaseName: string) {
-    super(databaseName, DB.service, ModelGroup.collectionName);
-  }
-
-  public async createGroup(
-    groupName: string,
-    description?: string,
-    createBy?: string,
-    options?: InsertOneOptions
-  ) {
-    return this.insertOne(
-      {
-        groupName,
-        description: description || `Group ${groupName}`,
-        createBy: createBy || ZKDATABASE_USER_SYSTEM,
-        createdAt: getCurrentTime(),
-        updatedAt: getCurrentTime(),
-      },
-      options
-    );
-  }
-
-  public async findGroup(
-    groupName: string,
-    session?: ClientSession
-  ): Promise<GroupSchema | null> {
-    return this.collection.findOne({ groupName }, { session });
-  }
-
-  public static async init(databaseName: string) {
-    const collection = ModelCollection.getInstance(
+    super(
       databaseName,
-      DB.service,
+      DATABASE_ENGINE.dbServerless,
       ModelGroup.collectionName
     );
+  }
+
+  public static async init(databaseName: string, session?: ClientSession) {
+    const collection = ModelCollection.getInstance(
+      databaseName,
+      DATABASE_ENGINE.dbServerless,
+      ModelGroup.collectionName
+    );
+    /*
+      groupName: string;
+      groupDescription: string;
+      createdBy: string;
+      createdAt: Date
+      updatedAt: Date
+    */
     if (!(await collection.isExist())) {
-      await collection.index({ groupName: 1 }, { unique: true });
+      await collection.createSystemIndex(
+        { groupName: 1 },
+        { unique: true, session }
+      );
+
+      await collection.addTimestampMongoDb({ session });
     }
+  }
+
+  /** Drop group and all relations of user in group. */
+  public async dropGroup(groupObjectId: ObjectId, session: ClientSession) {
+    const imUserGroup = new ModelUserGroup(this.databaseName);
+
+    await imUserGroup.deleteMany({ groupObjectId }, { session });
+    await this.deleteOne({ _id: groupObjectId }, { session });
   }
 }
 

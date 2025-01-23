@@ -1,47 +1,81 @@
-/* eslint-disable no-unused-vars */
-import { JsonProof } from 'o1js';
 import {
-  DatabaseSetting,
-  GroupDescription,
-  TDbTransaction,
-  TGetRollUpHistory,
-  TTransactionType,
-} from '../../types';
-import { ZKCollection } from './collection';
-import { ZKGroup } from './group';
+  ETransactionType,
+  TDatabaseCreateRequest,
+  TDatabaseInfoResponse,
+  TGroupListAllResponse,
+  TPagination,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateResponse,
+  TSchemaExtendable,
+  TTransactionDraftResponse,
+  TUser,
+  TUserFindResponse,
+  TVerificationKeyResponse,
+  TZkProofResponse,
+  TZkProofStatusResponse,
+} from '@zkdb/common';
+import { ICollection } from './collection';
+import { IGroup } from './group';
+import { IUser } from './user';
 
-export interface ZKDatabaseConfig {
-  merkleHeight: number;
-}
+export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
 
-export interface ZKDatabase {
+export interface IDatabase {
   // Database
-  create(config: ZKDatabaseConfig): Promise<boolean>;
+  create(config: TDatabaseConfig): Promise<boolean>;
 
   exist(): Promise<boolean>;
 
+  info(): Promise<TDatabaseInfoResponse>;
+
   // Collection
-  collection(name: string): ZKCollection;
-  listCollection(): Promise<string[]>;
+  collection<T extends TSchemaExtendable<any>>(
+    collectionName: string
+  ): ICollection<T>;
+
+  collectionList(): Promise<string[]>;
 
   // Group
-  group(groupName: string): ZKGroup;
-  listGroup(): Promise<GroupDescription[]>;
+  group(groupName: string): IGroup;
 
-  // Settings
-  setting(): Promise<DatabaseSetting>;
+  groupList(): Promise<TGroupListAllResponse>;
 
-  // Ownership
-  changeOwner(newOwner: string): Promise<boolean>;
+  // User
+  user(
+    userFilter: Partial<Pick<TUser, 'email' | 'publicKey' | 'userName'>>
+  ): IUser;
 
-  // Proof
-  getProof(): Promise<JsonProof>;
+  userList(): Promise<TUserFindResponse>;
+
+  // ZK Proof
+  zkProof(): Promise<TZkProofResponse>;
+
+  zkProofStatus(): Promise<TZkProofStatusResponse>;
 
   // Transaction
-  getTransaction(transactionType: TTransactionType): Promise<TDbTransaction>;
-  confirmTransaction(id: string, txHash: string): Promise<boolean>;
+  transactionDraft(
+    transactionType: ETransactionType
+  ): Promise<TTransactionDraftResponse>;
+
+  transactionSubmit(
+    transactionObjectId: string,
+    txHash: string
+  ): Promise<boolean>;
 
   // Rollup
-  createRollup(): Promise<boolean>;
-  getRollUpHistory(): Promise<TGetRollUpHistory>;
+  rollUpOnChainStart(): Promise<boolean>;
+
+  rollUpOnChainHistory(
+    pagination?: TPagination
+  ): Promise<TRollupOnChainHistoryResponse>;
+
+  rollUpOffChainHistory(
+    pagination?: TPagination
+  ): Promise<TRollupOffChainHistoryResponse>;
+
+  rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
+
+  // Verification key
+  verificationKey(): Promise<TVerificationKeyResponse>;
 }
