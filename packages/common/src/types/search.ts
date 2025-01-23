@@ -31,7 +31,7 @@ export type TSearch<T = any> = {
   condition: TCondition<T>;
 };
 
-export type TSearchInput<T> = Partial<TSearch>;
+export type TSearchInput<T> = Partial<TSearch<T>>;
 
 export type TQueryOption<T> = {
   where?: TSearchInput<T>;

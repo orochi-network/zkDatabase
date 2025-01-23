@@ -80,7 +80,7 @@ export class ZkDatabase {
             environment: 'browser',
             url: apiURL,
           };
-    } else if (typeof config === 'object') {
+    } if (typeof config === 'object') {
       return config;
     }
     throw new Error(
@@ -170,7 +170,7 @@ export class ZkDatabase {
         apiClient,
         new Authenticator(signer, apiClient, cfg.userName, storage),
         {
-          networkId: networkId,
+          networkId,
           networkUrl,
         }
       );

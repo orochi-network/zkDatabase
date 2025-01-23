@@ -100,7 +100,7 @@ const ownershipTransfer = authorizeWrapper<
           },
           session
         );
-      } else {
+      } 
         // Collection case without docId
         return Ownership.transferCollection(
           {
@@ -112,7 +112,7 @@ const ownershipTransfer = authorizeWrapper<
           },
           session
         );
-      }
+      
     })
 );
 

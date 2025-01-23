@@ -12,7 +12,7 @@ import {
   TRollupTransition,
 } from './common.js';
 import { CompilerCache } from './compiler-cache.js';
-import { logger, LoggerSet } from './helper/logger.js';
+import { logger, LoggerSet } from './logger.js';
 import { ZkDbContract } from './zkdb-contract.js';
 import { ZkDbRollup, ZkDbRollupInput } from './zkdb-rollup.js';
 

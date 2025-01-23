@@ -114,21 +114,21 @@ export interface ISchemaExtend {
   hash(): Field;
 }
 
-export type TSchemaExtendable<
-  A,
-  T extends InferProvable<A> = InferProvable<A> & ISchemaExtend,
-> = Struct<InferProvable<A>> & (new (..._args: any[]) => T) & ISchemaStatic<A>;
-
 export interface ISchemaStatic<A> {
   innerStructure: TSchemaQueryMap<A>;
 
-  // eslint-disable-next-line no-use-before-define
   deserialize(
     doc: TSchemaSerializedField[]
+    // eslint-disable-next-line no-use-before-define
   ): InstanceType<TSchemaExtendable<A>>;
 
   definition(): TSchemaSerializedFieldDefinition[];
 }
+
+export type TSchemaExtendable<
+  A,
+  T extends InferProvable<A> = InferProvable<A> & ISchemaExtend,
+> = Struct<InferProvable<A>> & (new (..._args: any[]) => T) & ISchemaStatic<A>;
 
 export type TProvableMapped<T extends TSchemaSerializedFieldDefinition[]> = {
   [Property in T[number]['name']]?: (typeof PROVABLE_TYPE_MAP)[TProvableTypeString];

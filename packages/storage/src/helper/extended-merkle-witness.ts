@@ -56,7 +56,7 @@ export function createExtendedMerkleWitness(height: number) {
         const bothLowerHalf = index <= x && otherIndex <= x;
 
         if (bothUpperHalf) {
-          x = x + x / 2;
+          x += x / 2;
         } else if (bothLowerHalf) {
           x /= 2;
         } else {

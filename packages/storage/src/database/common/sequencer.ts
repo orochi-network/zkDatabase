@@ -58,7 +58,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       }
 
       return updateResult.seq;
-    } else {
+    } 
       const creationTime = new Date();
 
       const insertResult = await this.collection.insertOne(
@@ -76,7 +76,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       }
 
       return ModelSequencer.INITIAL_SEQUENCE_VALUE;
-    }
+    
   }
 
   async current(type: ESequencer, session?: ClientSession) {

@@ -1,5 +1,5 @@
-import { ETransactionStatus } from '@zkdb/common';
-import { TZkAppTransaction, ZkDbProcessor } from '@zkdb/smart-contract';
+import { ETransactionStatus, TZkAppTransaction } from '@zkdb/common';
+import { ZkDbProcessor } from '@zkdb/smart-contract';
 import {
   ModelMetadataDatabase,
   ModelRollupOnChainHistory,

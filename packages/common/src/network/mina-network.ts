@@ -6,11 +6,12 @@ import {
 } from './api';
 
 export class MinaNetwork {
+  // eslint-disable-next-line no-use-before-define
   private static instance: MinaNetwork;
-  private isConnected: boolean;
-  #api: BlockberryApi;
 
-  private constructor() {}
+  private isConnected: boolean;
+
+  #api: BlockberryApi;
 
   public get connected() {
     return this.isConnected;

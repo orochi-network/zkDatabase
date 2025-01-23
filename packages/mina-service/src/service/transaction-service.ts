@@ -1,7 +1,10 @@
 import { config, logger } from '@helper';
 import { Fill, QueueLoop, TimeDuration } from '@orochi-network/queue';
-import { ETransactionStatus, ETransactionType } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
+import {
+  ETransactionStatus,
+  ETransactionType,
+  MinaNetwork,
+} from '@zkdb/common';
 import { DatabaseEngine, ModelTransaction, Transaction } from '@zkdb/storage';
 import { TransactionOnChain } from '@domain';
 // Time duration is equal 1/10 time on chain

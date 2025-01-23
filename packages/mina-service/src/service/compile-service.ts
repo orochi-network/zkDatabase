@@ -5,8 +5,8 @@ import {
   ETransactionStatus,
   ETransactionType,
   TTransactionQueue,
+  MinaNetwork,
 } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,

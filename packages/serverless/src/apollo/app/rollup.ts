@@ -13,9 +13,9 @@ import {
 } from '@zkdb/common';
 import { Transaction } from '@zkdb/storage';
 import Joi from 'joi';
-import { authorizeWrapper } from '../validation';
 import { GraphQLScalarType } from 'graphql';
 import { ScalarType } from '@orochi-network/utilities';
+import { authorizeWrapper } from '../validation';
 
 export const typeDefsRollup = `#graphql
 scalar Date
@@ -93,13 +93,13 @@ extend type Mutation {
 
 const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
   Joi.object<TRollupOnChainHistoryRequest>({
-    databaseName: databaseName,
+    databaseName,
     pagination,
   });
 
 const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
   Joi.object<TRollupOffChainHistoryRequest>({
-    databaseName: databaseName,
+    databaseName,
     pagination,
   });
 

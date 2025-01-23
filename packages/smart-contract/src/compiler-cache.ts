@@ -1,6 +1,6 @@
 import { Cache, VerificationKey } from 'o1js';
 import { EZkDbContractName } from './common.js';
-import { logger } from './helper/logger.js';
+import { logger } from './logger.js';
 import { ZkDbContract, ZkDbContractFactory } from './zkdb-contract.js';
 import { ZkDbRollup, ZkDbRollupFactory } from './zkdb-rollup.js';
 

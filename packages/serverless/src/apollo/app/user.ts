@@ -30,8 +30,8 @@ import {
   sessionDestroy,
 } from '@helper';
 import { ModelUser } from '@model';
-import { authorizeWrapper, publicWrapper } from '../validation';
 import { NetworkId } from 'o1js';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsUser = gql`
   #graphql

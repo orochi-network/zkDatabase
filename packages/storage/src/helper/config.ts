@@ -1,4 +1,4 @@
-/* eslint-disable no-param-reassign */
+ 
 import { ConfigLoader } from '@orochi-network/framework';
 import Joi from 'joi';
 
