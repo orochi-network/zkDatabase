@@ -3,7 +3,7 @@ import {
   TDocumentDropResponse,
   TDocumentField,
   TDocumentHistoryFindResponse,
-  TDocumentMetadata,
+  TDocumentMetadataResponse,
   TDocumentResponse,
   TDocumentUpdateResponse,
   TMerkleProofDocumentResponse,
@@ -71,7 +71,7 @@ export class Document<T extends TSchemaExtendable<any>>
     return { ...this._document, ...flatDocument };
   }
 
-  get metadata(): IMetadata<TDocumentMetadata> {
+  get metadata(): IMetadata<TDocumentMetadataResponse> {
     return new DocumentMetadata(
       this.apiClient,
       this.databaseName,

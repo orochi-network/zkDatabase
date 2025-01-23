@@ -16,14 +16,14 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      mutation transactionSubmit(
+      mutation TransactionSubmit(
         $databaseName: String!
-        $transactionObjectId: String!
+        $rawTransactionId: String!
         $txHash: String!
       ) {
         transactionSubmit(
           databaseName: $databaseName
-          transactionObjectId: $transactionObjectId
+          rawTransactionId: $rawTransactionId
           txHash: $txHash
         )
       }
@@ -54,7 +54,7 @@ export const API_TRANSACTION = <T>(client: TApolloClient<T>) => ({
           databaseName: $databaseName
           transactionType: $transactionType
         ) {
-          _id
+          rawTransactionId
           databaseName
           transactionType
           status

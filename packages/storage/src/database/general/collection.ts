@@ -5,6 +5,7 @@ import {
   Document,
   DropIndexesOptions,
   IndexSpecification,
+  ListIndexesOptions,
 } from 'mongodb';
 import { isOk, logger } from '@helper';
 import { ModelBasic } from '../base';
@@ -74,8 +75,11 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     );
   }
 
-  public async isIndexed(indexName: string): Promise<boolean> {
-    const indexArray = await this.collection.listIndexes().toArray();
+  public async isIndexed(
+    indexName: string,
+    options?: ListIndexesOptions
+  ): Promise<boolean> {
+    const indexArray = await this.collection.listIndexes(options).toArray();
     return indexArray.some((index) => index.name === indexName);
   }
 
@@ -86,8 +90,10 @@ export class ModelCollection<T extends Document> extends ModelBasic<T> {
     return isOk(async () => this.collection.dropIndex(indexName, options));
   }
 
-  public async listIndexes(): Promise<string[]> {
-    return (await this.collection.listIndexes().toArray()).map((i) => i.name);
+  public async listIndexes(options?: ListIndexesOptions): Promise<string[]> {
+    return (await this.collection.listIndexes(options).toArray()).map(
+      (i) => i.name
+    );
   }
 
   public async size(): Promise<number> {

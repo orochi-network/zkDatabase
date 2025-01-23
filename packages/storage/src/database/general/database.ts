@@ -1,6 +1,13 @@
 import { zkDatabaseConstant, zkDatabaseMetadataCollections } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import { ClientSession, Document, ListDatabasesResult } from 'mongodb';
+import {
+  ClientSession,
+  DbStatsOptions,
+  Document,
+  DropDatabaseOptions,
+  ListCollectionsOptions,
+  ListDatabasesResult,
+} from 'mongodb';
 import { ModelBasic } from '../base';
 
 /**
@@ -29,8 +36,13 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return ModelDatabase.instances.get(databaseName) as ModelDatabase<T>;
   }
 
-  public async listCollections(): Promise<string[]> {
-    const collections = await this.db.listCollections().toArray();
+  public async listCollections(
+    filter?: Document,
+    options?: ListCollectionsOptions
+  ): Promise<string[]> {
+    const collections = await this.db
+      .listCollections(filter, options)
+      .toArray();
     return collections
       .filter(
         (collection) => !zkDatabaseMetadataCollections.includes(collection.name)
@@ -38,8 +50,11 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
       .map((collection) => collection.name);
   }
 
-  public async isCollectionExist(collectionName: string): Promise<boolean> {
-    return (await this.listCollections()).some(
+  public async isCollectionExist(
+    collectionName: string,
+    options?: ListCollectionsOptions
+  ): Promise<boolean> {
+    return (await this.listCollections(options)).some(
       (collection) => collection === collectionName
     );
   }
@@ -48,7 +63,7 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     collectionName: string,
     session?: ClientSession
   ): Promise<boolean> {
-    const isExist = await this.isCollectionExist(collectionName);
+    const isExist = await this.isCollectionExist(collectionName, { session });
     if (!isExist) {
       const result = await this.db.createCollection(collectionName, {
         session,
@@ -58,25 +73,29 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     return false;
   }
 
-  public async dropCollection(collectionName: string): Promise<boolean> {
-    const isExist = await this.isCollectionExist(collectionName);
+  private async dropCollection(
+    collectionName: string,
+    session?: ClientSession
+  ): Promise<boolean> {
+    const isExist = await this.isCollectionExist(collectionName, { session });
     if (isExist) {
-      await this.db.collection(collectionName).drop();
-      return true;
+      const dropResult = await this.db
+        .collection(collectionName)
+        .drop({ session });
+      return dropResult;
     }
     return false;
   }
 
-  public async drop(): Promise<boolean> {
-    await this.db.dropDatabase();
-    return true;
+  private async drop(options?: DropDatabaseOptions): Promise<boolean> {
+    return this.db.dropDatabase(options);
   }
 
-  public async stats(): Promise<Document> {
-    return this.db.stats();
+  public async stats(options?: DbStatsOptions): Promise<Document> {
+    return this.db.stats(options);
   }
 
-  public async list(): Promise<ListDatabasesResult> {
-    return this.dbEngine.client.db().admin().listDatabases();
+  public async list(session?: ClientSession): Promise<ListDatabasesResult> {
+    return this.dbEngine.client.db().admin().listDatabases({ session });
   }
 }

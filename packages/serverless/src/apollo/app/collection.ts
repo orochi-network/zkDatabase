@@ -76,7 +76,7 @@ export const typeDefsCollection = gql`
     collectionMetadata(
       databaseName: String!
       collectionName: String!
-    ): CollectionMetadata!
+    ): CollectionMetadata
 
     collectionExist(databaseName: String!, collectionName: String!): Boolean!
   }
@@ -159,10 +159,6 @@ const collectionMetadata = authorizeWrapper<
       collectionName,
       actor: ctx.userName,
     });
-
-    if (!collectionMetadata) {
-      throw new Error(`Can't find metadata collection: ${collectionName}`);
-    }
 
     return collectionMetadata;
   }

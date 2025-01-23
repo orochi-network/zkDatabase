@@ -113,11 +113,14 @@ export class Collection {
   }
 
   public static async indexList(
-    paramCollection: TParamCollection
+    paramCollection: TParamCollection,
+    session?: ClientSession
   ): Promise<TCollectionIndexInfo[]> {
     const { databaseName, collectionName, actor } = paramCollection;
-    const actorPermission =
-      await PermissionSecurity.collection(paramCollection);
+    const actorPermission = await PermissionSecurity.collection(
+      paramCollection,
+      session
+    );
     if (actorPermission.read) {
       const imCollection = ModelCollection.getInstance(
         databaseName,
@@ -129,7 +132,7 @@ export class Collection {
       const indexSizes = stats.indexSizes || {};
 
       const indexUsageStats = await imCollection.collection
-        .aggregate([{ $indexStats: {} }])
+        .aggregate([{ $indexStats: {} }], { session })
         .toArray();
 
       const indexUsageMap: { [key: string]: any } = {};
@@ -139,7 +142,7 @@ export class Collection {
         }
       });
 
-      const indexes = await imCollection.collection.indexes();
+      const indexes = await imCollection.collection.indexes({ session });
 
       // const x = await imCollection.collection.listIndexes();
       const validIndexes = indexes.filter(
@@ -196,7 +199,7 @@ export class Collection {
         databaseName,
         DATABASE_ENGINE.dbServerless,
         collectionName
-      ).isIndexed(indexName);
+      ).isIndexed(indexName, { session });
     }
 
     throw Error(
@@ -206,19 +209,22 @@ export class Collection {
 
   public static async indexDrop(
     paramCollection: TParamCollection,
-    indexName: string
+    indexName: string,
+    session?: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
-    const actorPermission =
-      await PermissionSecurity.collection(paramCollection);
+    const actorPermission = await PermissionSecurity.collection(
+      paramCollection,
+      session
+    );
     if (actorPermission.system) {
       // TODO: Owner should able to drop
-      if (await Collection.indexExist(paramCollection, indexName)) {
+      if (await Collection.indexExist(paramCollection, indexName, session)) {
         return ModelCollection.getInstance(
           databaseName,
           DATABASE_ENGINE.dbServerless,
           collectionName
-        ).dropIndex(indexName);
+        ).dropIndex(indexName, { session });
       }
 
       throw Error(
@@ -236,12 +242,15 @@ export class Collection {
     schema: TSchemaSerializedFieldDefinition[],
     groupName: string,
     permission: Permission,
-    collectionIndex?: TCollectionIndex[],
-    session?: ClientSession
+    collectionIndex: TCollectionIndex[] | undefined,
+    session: ClientSession
   ): Promise<boolean> {
     const { databaseName, collectionName, actor } = paramCollection;
 
-    if (!(await PermissionSecurity.database({ databaseName, actor })).system) {
+    if (
+      !(await PermissionSecurity.database({ databaseName, actor }, session))
+        .system
+    ) {
       throw new Error(
         `Access denied: Actor '${actor}' lacks 'system' permission to create collections in the '${databaseName}' database.`
       );

@@ -73,7 +73,7 @@ export type TGroupListAllResponse = WithoutId<TGroupRecord>[];
 
 export type TGroupDetailRequest = TGroupRequest;
 
-export type TGroupDetailResponse = TGroupDetail;
+export type TGroupDetailResponse = TGroupDetail | null;
 
 export type TGroupCreateRequest = TDatabaseRequest &
   TPickOptional<

@@ -15,7 +15,7 @@ export interface IGroup {
    * Get group information
    * @returns {Promise<TGroupDetail>} Group detail information
    */
-  info(): Promise<TGroupDetail>;
+  info(): Promise<TGroupDetail | null>;
 
   /**
    * Create a new group

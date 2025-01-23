@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import { TDbRecord } from './common';
 import { TMerkleProofSerialized } from './merkle-tree';
 import { EDocumentOperation } from './queue';
@@ -11,9 +12,9 @@ export type TTransitionLog = {
   operationNumber: bigint;
   operationKind: EDocumentOperation;
   // Should be null if the operation kind is create
-  documentObjectIdPrevious: string | null;
+  documentObjectIdPrevious: ObjectId | null;
   // Should be null if the operation kind is drop
-  documentObjectIdCurrent: string | null;
+  documentObjectIdCurrent: ObjectId | null;
 };
 
 export type TTransitionLogRecord = TDbRecord<TTransitionLog>;

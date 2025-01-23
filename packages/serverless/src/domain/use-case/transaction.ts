@@ -4,7 +4,7 @@ import { FixedFloat } from '@orochi-network/utilities';
 import {
   ETransactionStatus,
   ETransactionType,
-  TTransactionRecordNullable,
+  TTransactionDraftResponse,
 } from '@zkdb/common';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
@@ -125,7 +125,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session: ClientSession
-  ): Promise<TTransactionRecordNullable | null> {
+  ): Promise<TTransactionDraftResponse> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();
@@ -178,8 +178,14 @@ export class Transaction {
         return null;
       }
 
-      return transactionDeploy;
-    } if (transactionType === ETransactionType.Rollup) {
+      return (
+        transactionDeploy && {
+          ...transactionDeploy,
+          rawTransactionId: transactionDeploy._id,
+        }
+      );
+    }
+    if (transactionType === ETransactionType.Rollup) {
       const transactionRollup = await imTransaction.findOne(
         {
           databaseName,
@@ -189,10 +195,14 @@ export class Transaction {
         { session, sort: { createdAt: -1 } }
       );
 
-      return transactionRollup;
-    } 
-      throw new Error(`Unsupported transaction type ${transactionType}`);
-    
+      return (
+        transactionRollup && {
+          ...transactionRollup,
+          rawTransactionId: transactionRollup._id,
+        }
+      );
+    }
+    throw new Error(`Unsupported transaction type ${transactionType}`);
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {
@@ -210,14 +220,14 @@ export class Transaction {
   static async submit(
     databaseName: string,
     actor: string,
-    transactionObjectId: string,
+    rawTransactionId: string,
     txHash: string,
     session?: ClientSession
   ) {
     await Database.ownershipCheck(databaseName, actor, session);
 
     await ModelTransaction.getInstance().updateOne(
-      { _id: new ObjectId(transactionObjectId) },
+      { _id: new ObjectId(rawTransactionId) },
       {
         $set: {
           txHash,

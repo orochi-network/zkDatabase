@@ -19,7 +19,7 @@ export type TDocument = Pick<
 export interface IDocument<T extends TSchemaExtendable<any>> {
   get document(): TDocument & T['innerStructure'];
 
-  get metadata(): IMetadata<TDocumentMetadata>;
+  get metadata(): IMetadata<TDocumentMetadata | null>;
 
   drop(): Promise<TDocumentDropResponse>;
 

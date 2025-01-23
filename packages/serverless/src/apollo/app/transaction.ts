@@ -21,7 +21,7 @@ export const typeDefsTransaction = gql`
   type Mutation
 
   type Transaction {
-    _id: String!
+    rawTransactionId: String!
     databaseName: String!
     transactionType: TransactionType!
     status: TransactionStatus!
@@ -44,7 +44,7 @@ export const typeDefsTransaction = gql`
 
     transactionSubmit(
       databaseName: String!
-      transactionObjectId: String!
+      rawTransactionId: String!
       txHash: String!
     ): Boolean!
   }
@@ -60,23 +60,14 @@ const transactionDraft = authorizeWrapper<
   }),
   async (_root, args, ctx) =>
     MongoTransaction.serverless(async (session) => {
-      {
-        const transaction = await Transaction.draft(
-          args.databaseName,
-          ctx.userName,
-          args.transactionType,
-          session
-        );
+      const transactionDraft = await Transaction.draft(
+        args.databaseName,
+        ctx.userName,
+        args.transactionType,
+        session
+      );
 
-        if (!transaction) {
-          return null;
-        }
-
-        return {
-          ...transaction,
-          _id: transaction._id.toString(),
-        };
-      }
+      return transactionDraft;
     })
 );
 
@@ -106,14 +97,14 @@ const transactionSubmit = authorizeWrapper<
 >(
   Joi.object({
     databaseName,
-    transactionObjectId: Joi.string().required(),
+    rawTransactionId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
   async (_root, args, ctx) =>
     Transaction.submit(
       args.databaseName,
       ctx.userName,
-      args.transactionObjectId,
+      args.rawTransactionId,
       args.txHash
     )
 );

@@ -32,7 +32,7 @@ export class DocumentMetadata implements IMetadata<TDocumentMetadataResponse> {
     this.apiClient = apiClient;
   }
 
-  async info(): Promise<TDocumentMetadataResponse | null> {
+  async info(): Promise<TDocumentMetadataResponse> {
     return (
       await this.apiClient.document.documentMetadata({
         databaseName: this.databaseName,
@@ -72,9 +72,14 @@ export class DocumentMetadata implements IMetadata<TDocumentMetadataResponse> {
   }
 
   async permissionGet(): Promise<OwnershipAndPermission> {
-    const { owner, permission, group } = (
+    const metadata = (
       await this.apiClient.document.documentMetadata(this.basicRequest)
     ).unwrap();
+    if (metadata === null) {
+      throw new Error('Document metadata not found');
+    }
+
+    const { owner, permission, group } = metadata;
     return {
       owner,
       permission,

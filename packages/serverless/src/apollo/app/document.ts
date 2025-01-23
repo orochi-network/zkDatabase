@@ -133,7 +133,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       query: JSON # If not provided, return all documents
       pagination: PaginationInput
-    ): DocumentFindResponse
+    ): DocumentFindResponse!
 
     documentMetadata(
       databaseName: String!
@@ -146,7 +146,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       pagination: PaginationInput
-    ): DocumentHistoryFindResponse
+    ): DocumentHistoryFindResponse!
 
     documentMerkleProofStatus(
       databaseName: String!

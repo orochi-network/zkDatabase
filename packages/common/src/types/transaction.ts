@@ -1,5 +1,5 @@
 import type { ObjectId, WithoutId } from 'mongodb';
-import { TDbRecord, TNullable } from './common.js';
+import { TDbRecord, TNullable, TPickAlter } from './common.js';
 import { TDatabaseRequest } from './database.js';
 
 /**
@@ -81,11 +81,12 @@ export type TTransactionDraftRequest = TDatabaseRequest & {
   transactionType: ETransactionType;
 };
 
-export type TTransactionDraftResponse =
-  | (WithoutId<TTransactionRecordNullable> & {
-      _id: string;
-    })
-  | null;
+export type TTransactionDraftResponse = TPickAlter<
+  TTransactionRecordNullable,
+  {
+    _id: 'rawTransactionId';
+  }
+> | null;
 
 /**
  * Transaction by ID request
@@ -104,8 +105,9 @@ export type TTransactionByIdRequest = TDatabaseRequest & {
  * @param {string} TTransactionByIdRequest.objectId - Transaction object ID
  * @param {string} txHash - Transaction hash
  */
-export type TTransactionSubmitRequest = TTransactionByIdRequest & {
+export type TTransactionSubmitRequest = TDatabaseRequest & {
   txHash: string;
+  rawTransactionId: string;
 };
 
 export type TTransactionSubmitResponse = boolean;
