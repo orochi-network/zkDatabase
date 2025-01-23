@@ -151,11 +151,17 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (res) =>
-      res && {
-        ...res,
-        merkleIndex: BigInt(res.merkleIndex),
-      },
+    (res) => {
+      if (res === null) {
+        return null;
+      }
+
+      const { merkleIndex, ...rest } = res;
+      return {
+        ...rest,
+        merkleIndex: BigInt(merkleIndex),
+      };
+    },
   ),
 });
 
