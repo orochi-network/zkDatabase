@@ -1,4 +1,5 @@
 import pkg from "crypto-js";
+
 const {
   HmacSHA256,
   enc,
@@ -28,12 +29,12 @@ export class JWT {
   }
 
   public authentication(): string {
-    /*const header = enc.Utf8.parse(
+    /* const header = enc.Utf8.parse(
           JSON.stringify({
             alg: 'HS256',
             typ: 'JWT',
           }),
-        );*/
+        ); */
     const payload = enc.Utf8.parse(
       JSON.stringify({
         userName: this.userName,

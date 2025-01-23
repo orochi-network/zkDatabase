@@ -23,8 +23,8 @@ import Joi from 'joi';
 import { Group } from '@domain';
 import { gql } from '@helper';
 import { ModelGroup, ModelUserGroup } from '@model';
-import { authorizeWrapper, publicWrapper } from '../validation';
 import { Transaction } from '@zkdb/storage';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const typeDefsGroup = gql`
   #graphql

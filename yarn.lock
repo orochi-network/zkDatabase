@@ -2843,9 +2843,9 @@ axios@1.7.4:
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
-axios@1.7.9, axios@^1.4.0:
+axios@1.7.9, axios@^1.4.0, axios@^1.7.9:
   version "1.7.9"
-  resolved "https://registry.npmjs.org/axios/-/axios-1.7.9.tgz"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.9.tgz#d7d071380c132a24accda1b2cfc1535b79ec650a"
   integrity sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==
   dependencies:
     follow-redirects "^1.15.6"
@@ -6419,9 +6419,9 @@ mimic-fn@^2.1.0:
   resolved "https://registry.npmjs.org/mimic-fn/-/mimic-fn-2.1.0.tgz"
   integrity sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==
 
-mina-signer@3.0.7:
+mina-signer@3.0.7, mina-signer@^3.0.7:
   version "3.0.7"
-  resolved "https://registry.npmjs.org/mina-signer/-/mina-signer-3.0.7.tgz"
+  resolved "https://registry.yarnpkg.com/mina-signer/-/mina-signer-3.0.7.tgz#9b926464db5ccf78ae7648a35f0b679fbdb111a4"
   integrity sha512-7eYp/6WWj2VzJjvfC8dNeGMud/brdBrzkUsCdysFFXnfV2/FVpVhAGCMfaS6hs0HJtS4+eplmiD2hXfshQS8CQ==
   dependencies:
     blakejs "^1.2.1"

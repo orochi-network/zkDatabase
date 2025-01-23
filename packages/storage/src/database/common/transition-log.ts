@@ -1,4 +1,4 @@
-/* eslint-disable no-await-in-loop */
+ 
 
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';

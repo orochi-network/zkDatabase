@@ -7,7 +7,7 @@ const zkdb = await ZkDatabase.connect({
   privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
   environment: 'node',
   url: 'http://zkdb-serverless.zenfactory.org/graphql',
-});*/
+}); */
 
 const zkdb = await ZkDatabase.connect(
   'zkdb+http://chiro-user:EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP@localhost:4000/graphql'

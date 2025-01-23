@@ -12,8 +12,7 @@ import {
   RedisInstance,
 } from '@helper';
 import { ModelOwnership, ModelUser } from '@model';
-import { TApplicationContext } from '@zkdb/common';
-import { MinaNetwork } from '@zkdb/smart-contract';
+import { TApplicationContext, MinaNetwork } from '@zkdb/common';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,

@@ -179,7 +179,7 @@ export class Transaction {
       }
 
       return transactionDeploy;
-    } else if (transactionType === ETransactionType.Rollup) {
+    } if (transactionType === ETransactionType.Rollup) {
       const transactionRollup = await imTransaction.findOne(
         {
           databaseName,
@@ -190,9 +190,9 @@ export class Transaction {
       );
 
       return transactionRollup;
-    } else {
+    } 
       throw new Error(`Unsupported transaction type ${transactionType}`);
-    }
+    
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {

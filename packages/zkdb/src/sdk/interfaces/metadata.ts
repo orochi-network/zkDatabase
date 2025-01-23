@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+ 
 import { Permission, OwnershipAndPermission } from '@zkdb/permission';
 
 export interface IMetadata<T> {

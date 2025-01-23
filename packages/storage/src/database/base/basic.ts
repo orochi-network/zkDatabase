@@ -7,8 +7,8 @@ import {
   Document,
   IndexDirection,
 } from 'mongodb';
-import { DatabaseEngine } from '../database-engine';
 import { JOI_ZKDB_FIELD_NAME } from '@zkdb/common';
+import { DatabaseEngine } from '../database-engine';
 
 type TIndexSpec = {
   [key: string]: IndexDirection;

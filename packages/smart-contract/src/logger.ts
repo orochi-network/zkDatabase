@@ -1,17 +1,17 @@
 const loggerInstance: any = { logger: null };
 
 export function LoggerSet(activeLogger: any) {
-  loggerInstance['logger'] = activeLogger;
+  loggerInstance.logger = activeLogger;
 }
 
 export const LoggerAny = <T>(): T =>
   new Proxy(loggerInstance, {
     get(_target, prop, receiver) {
       if (
-        loggerInstance['logger'] !== null &&
-        typeof loggerInstance['logger'][prop] !== 'undefined'
+        loggerInstance.logger !== null &&
+        typeof loggerInstance.logger[prop] !== 'undefined'
       ) {
-        return Reflect.get(loggerInstance['logger'], prop, receiver);
+        return Reflect.get(loggerInstance.logger, prop, receiver);
       }
       return () => {};
     },
