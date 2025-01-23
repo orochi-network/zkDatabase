@@ -105,8 +105,9 @@ export type TTransactionByIdRequest = TDatabaseRequest & {
  * @param {string} TTransactionByIdRequest.objectId - Transaction object ID
  * @param {string} txHash - Transaction hash
  */
-export type TTransactionSubmitRequest = TTransactionByIdRequest & {
+export type TTransactionSubmitRequest = TDatabaseRequest & {
   txHash: string;
+  rawTransactionId: string;
 };
 
 export type TTransactionSubmitResponse = boolean;

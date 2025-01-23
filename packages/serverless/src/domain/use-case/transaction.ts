@@ -220,14 +220,14 @@ export class Transaction {
   static async submit(
     databaseName: string,
     actor: string,
-    transactionObjectId: string,
+    rawTransactionId: string,
     txHash: string,
     session?: ClientSession
   ) {
     await Database.ownershipCheck(databaseName, actor, session);
 
     await ModelTransaction.getInstance().updateOne(
-      { _id: new ObjectId(transactionObjectId) },
+      { _id: new ObjectId(rawTransactionId) },
       {
         $set: {
           txHash,

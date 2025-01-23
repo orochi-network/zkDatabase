@@ -44,7 +44,7 @@ export const typeDefsTransaction = gql`
 
     transactionSubmit(
       databaseName: String!
-      transactionObjectId: String!
+      rawTransactionId: String!
       txHash: String!
     ): Boolean!
   }
@@ -97,14 +97,14 @@ const transactionSubmit = authorizeWrapper<
 >(
   Joi.object({
     databaseName,
-    transactionObjectId: Joi.string().required(),
+    rawTransactionId: Joi.string().required(),
     txHash: Joi.string().required(),
   }),
   async (_root, args, ctx) =>
     Transaction.submit(
       args.databaseName,
       ctx.userName,
-      args.transactionObjectId,
+      args.rawTransactionId,
       args.txHash
     )
 );

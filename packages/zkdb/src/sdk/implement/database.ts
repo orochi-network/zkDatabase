@@ -112,13 +112,13 @@ export class Database implements IDatabase {
   }
 
   async transactionSubmit(
-    transactionObjectId: string,
+    rawTransactionId: string,
     txHash: string
   ): Promise<boolean> {
     return (
       await this.apiClient.transaction.transactionSubmit({
         ...this.basicQuery,
-        transactionObjectId,
+        rawTransactionId,
         txHash,
       })
     ).unwrap();
