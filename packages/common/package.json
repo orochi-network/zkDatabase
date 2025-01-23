@@ -57,7 +57,12 @@
   "peerDependencies": {
     "joi": "^17.13.3",
     "mongodb": "^6.12.0",
-    "o1js": "^2.2.0"
+    "o1js": "^2.2.0",
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-typescript": "^12.1.2"
   },
   "dependencies": {
     "@aurowallet/mina-provider": "^1.0.6",
