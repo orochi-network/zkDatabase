@@ -1990,12 +1990,12 @@
 
 "@rollup/plugin-alias@^5.1.1":
   version "5.1.1"
-  resolved "https://registry.npmjs.org/@rollup/plugin-alias/-/plugin-alias-5.1.1.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-alias/-/plugin-alias-5.1.1.tgz#53601d88cda8b1577aa130b4a6e452283605bf26"
   integrity sha512-PR9zDb+rOzkRb2VD+EuKB7UC41vU5DIwZ5qqCpk0KJudcWAyi8rvYOhS7+L5aZCspw1stTViLgN5v6FF1p5cgQ==
 
 "@rollup/plugin-commonjs@^28.0.2":
   version "28.0.2"
-  resolved "https://registry.npmjs.org/@rollup/plugin-commonjs/-/plugin-commonjs-28.0.2.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-commonjs/-/plugin-commonjs-28.0.2.tgz#193d7a86470f112b56927c1d821ee45951a819ea"
   integrity sha512-BEFI2EDqzl+vA1rl97IDRZ61AIwGH093d9nz8+dThxJNH8oSoB7MjWvPCX3dkaK1/RCJ/1v/R1XB15FuSs0fQw==
   dependencies:
     "@rollup/pluginutils" "^5.0.1"
@@ -2008,14 +2008,14 @@
 
 "@rollup/plugin-json@^6.1.0":
   version "6.1.0"
-  resolved "https://registry.npmjs.org/@rollup/plugin-json/-/plugin-json-6.1.0.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-json/-/plugin-json-6.1.0.tgz#fbe784e29682e9bb6dee28ea75a1a83702e7b805"
   integrity sha512-EGI2te5ENk1coGeADSIwZ7G2Q8CJS2sF120T7jLw4xFw9n7wIOXHo+kIYRAoVpJAN+kmqZSoO3Fp4JtoNF4ReA==
   dependencies:
     "@rollup/pluginutils" "^5.1.0"
 
 "@rollup/plugin-node-resolve@^16.0.0":
   version "16.0.0"
-  resolved "https://registry.npmjs.org/@rollup/plugin-node-resolve/-/plugin-node-resolve-16.0.0.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-node-resolve/-/plugin-node-resolve-16.0.0.tgz#b1a0594661f40d7b061d82136e847354ff85f211"
   integrity sha512-0FPvAeVUT/zdWoO0jnb/V5BlBsUSNfkIOtFHzMO4H9MOklrmQFY6FduVHKucNb/aTFxvnGhj4MNj/T1oNdDfNg==
   dependencies:
     "@rollup/pluginutils" "^5.0.1"
@@ -2026,7 +2026,7 @@
 
 "@rollup/plugin-typescript@^12.1.2":
   version "12.1.2"
-  resolved "https://registry.npmjs.org/@rollup/plugin-typescript/-/plugin-typescript-12.1.2.tgz"
+  resolved "https://registry.yarnpkg.com/@rollup/plugin-typescript/-/plugin-typescript-12.1.2.tgz#ebaeec2e7376faa889030ccd7cb485a649e63118"
   integrity sha512-cdtSp154H5sv637uMr1a8OTWB0L1SWDSm1rDGiyfcGcvQ6cuTs4MDk2BVEBGysUWago4OJN4EQZqOTl/QY3Jgg==
   dependencies:
     "@rollup/pluginutils" "^5.1.0"

@@ -27,7 +27,7 @@ export const docId = (required: boolean = true) => {
     // docId is UUID type
     // regex for docId (20-36 characters long, including dashes)
     // @TODO: better check for ObjectId, for now MongoDB accepts both hexadecimal and dash-encoded string formats
-    .regex(/^[0-9a-fA-F\-]{20,36}$/)
+    .regex(/^[0-9a-fA-F-]{20,36}$/)
     .min(20)
     .max(36);
 

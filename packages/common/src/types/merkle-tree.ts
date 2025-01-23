@@ -10,6 +10,10 @@ export type TMerkle = {
   index: bigint;
 };
 
+export type TMerkleField<T> = Omit<T, 'hash'> & {
+  hash: Field;
+};
+
 export type TMerkleNode = Pick<
   TMerkleField<TMerkle>,
   'hash' | 'level' | 'index'
@@ -28,10 +32,6 @@ export type TMerkleEmptyNode = {
 
 export type TMerkleJson<T> = Omit<T, 'hash'> & {
   hash: string;
-};
-
-export type TMerkleField<T> = Omit<T, 'hash'> & {
-  hash: Field;
 };
 
 export type TMerkleWitness = {
