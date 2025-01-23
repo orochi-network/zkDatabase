@@ -13,14 +13,10 @@ import {
   TUserSignUpRequest,
   TUserSignUpResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_USER = <T>(client: TApolloClient<T>) => ({
-  userSignIn: createMutateFunction<TUserSignInRequest, TUserSignInResponse>(
+  userSignIn: createApi<TUserSignInRequest, TUserSignInResponse>(
     client,
     gql`
       mutation userSignIn($proof: ProofInput!) {
@@ -32,19 +28,17 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
           email
         }
       }
-    `,
-    (data) => data.userSignIn
+    `
   ),
-  userSignOut: createMutateFunction<TUserSignOutRequest, TUserSignOutResponse>(
+  userSignOut: createApi<TUserSignOutRequest, TUserSignOutResponse>(
     client,
     gql`
       mutation userSignOut {
         userSignOut
       }
-    `,
-    (data) => data.userSignOut
+    `
   ),
-  userSignUp: createMutateFunction<TUserSignUpRequest, TUserSignUpResponse>(
+  userSignUp: createApi<TUserSignUpRequest, TUserSignUpResponse>(
     client,
     gql`
       mutation userSignUp($newUser: SignUpInput!, $proof: ProofInput!) {
@@ -58,10 +52,9 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
           updatedAt
         }
       }
-    `,
-    (data) => data.userSignUp
+    `
   ),
-  userEcdsaChallenge: createMutateFunction<
+  userEcdsaChallenge: createApi<
     TUserEcdsaChallengeRequest,
     TUserEcdsaChallengeResponse
   >(
@@ -70,10 +63,9 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
       mutation userEcdsaChallenge {
         userEcdsaChallenge
       }
-    `,
-    (data) => data.userEcdsaChallenge
+    `
   ),
-  userFind: createQueryFunction<TUserFindRequest, TUserFindResponse>(
+  userFind: createApi<TUserFindRequest, TUserFindResponse>(
     client,
     gql`
       query userFind($query: UserFindQueryInput, $pagination: PaginationInput) {
@@ -88,10 +80,9 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `,
-    (data) => data.userFind
+    `
   ),
-  userMe: createQueryFunction<TUserMeRequest, TUserMeResponse>(
+  userMe: createApi<TUserMeRequest, TUserMeResponse>(
     client,
     gql`
       query userMe {
@@ -103,7 +94,8 @@ export const API_USER = <T>(client: TApolloClient<T>) => ({
           email
         }
       }
-    `,
-    (data) => data.userMe
+    `
   ),
 });
+
+export default API_USER;

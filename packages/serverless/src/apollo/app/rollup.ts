@@ -11,11 +11,11 @@ import {
   TRollupOnChainStateRequest,
   TRollupOnChainStateResponse,
 } from '@zkdb/common';
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
+import { Transaction } from '@zkdb/storage';
 import Joi from 'joi';
-import { authorizeWrapper } from '../validation';
 import { GraphQLScalarType } from 'graphql';
 import { ScalarType } from '@orochi-network/utilities';
+import { authorizeWrapper } from '../validation';
 
 export const typeDefsRollup = `#graphql
 scalar Date
@@ -34,13 +34,14 @@ enum QueueTaskStatus {
   Processing 
   Failed 
   Success 
+  Unknown
 }
 
 type RollupOnChainHistoryItem {
   databaseName: String!
   onChainStep: BigInt
-  merkleRootOnChainNew: String!
-  merkleRootOnChainOld: String!
+  merkleRootNew: String!
+  merkleRootOld: String!
   status: TransactionStatus
   error: String
   txHash: String
@@ -72,48 +73,33 @@ type RollupOffChainHistoryListResponse {
 
 type RollupOnChainState {
   databaseName: String!
-  merkleRootOnChainNew: String
-  merkleRootOnChainOld: String
+  merkleRootNew: String
+  merkleRootOld: String
   rollupDifferent: BigInt
   rollupOnChainState: RollupState!
   latestRollupOnChainSuccess: Date
 }
 
 extend type Query {
-  rollupOnChainHistory(query: JSON, pagination: PaginationInput): RollupOnChainHistoryListResponse!
-  rollupOffChainHistory(query: JSON, pagination: PaginationInput): RollupOffChainHistoryListResponse!
-  rollupState(databaseName: String!): RollupOnChainState!
+  rollupOnChainHistory(databaseName: String!, pagination: PaginationInput): RollupOnChainHistoryListResponse!
+  rollupOffChainHistory(databaseName: String!, pagination: PaginationInput): RollupOffChainHistoryListResponse!
+  rollupState(databaseName: String!): RollupOnChainState
 }
 
 extend type Mutation {
   rollupCreate(databaseName: String!): Boolean 
 }
 `;
-const SchemaRollupOnChainHistoryRecordQuery = Joi.object<
-  TRollupOnChainHistoryRequest['query']
->({
-  databaseName: Joi.string().optional(),
-  merkleRootOnChainNew: Joi.string().optional(),
-  merkleRootOnChainOld: Joi.string().optional(),
-});
-
-const SchemaRollupOffChainHistoryRecordQuery = Joi.object<
-  TRollupOffChainHistoryRequest['query']
->({
-  databaseName: Joi.string().required(),
-  merkleRootNew: Joi.string().optional(),
-  merkleRootOld: Joi.string().optional(),
-});
 
 const JOI_ROLLUP_ONCHAIN_HISTORY_LIST =
   Joi.object<TRollupOnChainHistoryRequest>({
-    query: SchemaRollupOnChainHistoryRecordQuery.required(),
+    databaseName,
     pagination,
   });
 
 const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
   Joi.object<TRollupOffChainHistoryRequest>({
-    query: SchemaRollupOffChainHistoryRecordQuery.required(),
+    databaseName,
     pagination,
   });
 
@@ -136,10 +122,7 @@ const rollupOffChainHistory = authorizeWrapper<
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse
 >(JOI_ROLLUP_OFFCHAIN_HISTORY_LIST, async (_root, args) =>
-  withTransaction(
-    async (session) => Rollup.offChainHistory(args, session),
-    'proofService'
-  )
+  Transaction.mina(async (session) => Rollup.offChainHistory(args, session))
 );
 
 // Mutation
@@ -151,7 +134,7 @@ const rollupCreate = authorizeWrapper<
     databaseName,
   }),
   async (_root, { databaseName }, ctx) => {
-    const result = await withCompoundTransaction(async (compoundSession) =>
+    const result = await Transaction.compound(async (compoundSession) =>
       Rollup.create(databaseName, ctx.userName, compoundSession)
     );
     return result === null ? false : result;

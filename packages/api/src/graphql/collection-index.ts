@@ -2,19 +2,15 @@ import { gql } from "@apollo/client";
 import {
   TIndexCreateRequest,
   TIndexCreateResponse,
-  TIndexDropResponse,
   TIndexDropRequest,
+  TIndexDropResponse,
   TIndexListRequest,
   TIndexListResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
-  indexCreate: createMutateFunction<TIndexCreateRequest, TIndexCreateResponse>(
+  indexCreate: createApi<TIndexCreateRequest, TIndexCreateResponse>(
     client,
     gql`
       mutation indexCreate(
@@ -28,10 +24,9 @@ export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
           index: $index
         )
       }
-    `,
-    (data) => data.indexCreate
+    `
   ),
-  indexDrop: createMutateFunction<TIndexDropRequest, TIndexDropResponse>(
+  indexDrop: createApi<TIndexDropRequest, TIndexDropResponse>(
     client,
     gql`
       mutation indexDrop(
@@ -45,10 +40,9 @@ export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
           indexName: $indexName
         )
       }
-    `,
-    (data) => data.indexDrop
+    `
   ),
-  indexList: createQueryFunction<TIndexListRequest, TIndexListResponse>(
+  indexList: createApi<TIndexListRequest, TIndexListResponse>(
     client,
     gql`
       query indexList($databaseName: String!, $collectionName: String!) {
@@ -63,7 +57,8 @@ export const API_COLLECTION_INDEX = <T>(client: TApolloClient<T>) => ({
           createdAt
         }
       }
-    `,
-    (data) => data.indexList
+    `
   ),
 });
+
+export default API_COLLECTION_INDEX;

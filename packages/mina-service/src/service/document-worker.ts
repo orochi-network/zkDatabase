@@ -8,18 +8,18 @@
 // processing is done in the correct order, i.e. the task with sequence number
 // N is processed before the task with sequence number N+1.
 
-import { config, Backoff } from '@helper';
 import { DocumentProcessor } from '@domain';
+import { Backoff, config } from '@helper';
+import { LoggerLoader } from '@orochi-network/framework';
+import { ESequencer } from '@zkdb/common';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelSequencer,
-  withTransaction,
-  zkDatabaseConstant,
+  Transaction,
 } from '@zkdb/storage';
 import assert from 'node:assert';
-import { ESequencer, TDocumentQueuedData } from '@zkdb/common';
-import { LoggerLoader } from '@orochi-network/framework';
 
 let logger = new LoggerLoader('zkDatabase', 'debug', 'string');
 
@@ -44,13 +44,8 @@ export class DocumentWorker {
   }
 
   public static async run(): Promise<void> {
-    const imDocumentQueue = await withTransaction(
-      (session) =>
-        ModelGenericQueue.getInstance<TDocumentQueuedData>(
-          zkDatabaseConstant.globalCollection.documentQueue,
-          session
-        ),
-      'proofService'
+    const imDocumentQueue = await Transaction.mina((session) =>
+      ModelGenericQueue.getInstance(EQueueType.DocumentQueue, session)
     );
 
     // NOTE: The exclusion queue stores databases that currently have a
@@ -65,7 +60,7 @@ export class DocumentWorker {
 
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const task = await imDocumentQueue.peakNextQualifiedTask({
+        const task = await imDocumentQueue.peekNextQualifiedTask({
           databaseName: { $nin: exclusionQueue },
         });
 
@@ -76,15 +71,14 @@ export class DocumentWorker {
 
         assert(task.sequenceNumber != null, "Task's sequence number is null");
 
-        const trackingSequenceNumber = await withTransaction(
+        const trackingSequenceNumber = await Transaction.mina(
           async (session) => {
             const imModelSequencer = await ModelSequencer.getInstance(
               task.databaseName,
               session
             );
             return imModelSequencer.current(ESequencer.ProvedMerkleRoot);
-          },
-          'proofService'
+          }
         );
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
@@ -123,13 +117,13 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
             );
             await DocumentProcessor.onTask(
               acquiredTask,
-              compoundSession.proofService
+              compoundSession.sessionMina
             );
 
             const bumpSeqResult = (
               await ModelSequencer.getInstance(
                 task.databaseName,
-                compoundSession.serverless
+                compoundSession.sessionServerless
               )
             ).collection.findOneAndUpdate(
               {
@@ -147,7 +141,7 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
                 },
               },
               {
-                session: compoundSession.serverless,
+                session: compoundSession.sessionServerless,
                 upsert: true,
                 returnDocument: 'after',
               }

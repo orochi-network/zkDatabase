@@ -19,7 +19,7 @@ import {
   TCollectionMetadataResponse,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { withTransaction } from '@zkdb/storage';
+import { Transaction } from '@zkdb/storage';
 import Joi from 'joi';
 import { authorizeWrapper, publicWrapper } from '../validation';
 
@@ -101,7 +101,7 @@ const collectionList = authorizeWrapper<
     databaseName,
   }),
   async (_root, { databaseName }, ctx) =>
-    withTransaction((session) =>
+    Transaction.serverless((session) =>
       Collection.list(databaseName, ctx.userName, session)
     )
 );
@@ -129,7 +129,7 @@ const collectionCreate = authorizeWrapper<
     { databaseName, collectionName, schema, groupName, permission },
     ctx
   ) =>
-    withTransaction((session) =>
+    Transaction.serverless((session) =>
       Collection.create(
         {
           databaseName,

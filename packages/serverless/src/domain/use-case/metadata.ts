@@ -52,7 +52,7 @@ export class Metadata {
 
     const imCollection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       collectionName
     );
 

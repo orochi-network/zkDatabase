@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 import {
   AddChainArgs,
   ChainInfoArgs,
@@ -21,9 +22,9 @@ import {
   VerifyMessageArgs,
 } from '@aurowallet/mina-provider';
 import { IMinaProvider } from '@aurowallet/mina-provider/dist/IProvider';
-import { sendTransaction } from '@zkdb/smart-contract';
 import Client from 'mina-signer';
 import { NetworkId, PrivateKey, fetchAccount } from 'o1js';
+import { sendTransaction } from './network';
 
 export class NodeProvider implements IMinaProvider {
   #privateKey: PrivateKey;
@@ -53,7 +54,7 @@ export class NodeProvider implements IMinaProvider {
     return new NodeProvider(PrivateKey.random(), networkId);
   }
 
-  request(args: RequestArguments): Promise<unknown> {
+  request(_args: RequestArguments): Promise<unknown> {
     throw new Error('Method not implemented.');
   }
 
@@ -102,13 +103,13 @@ export class NodeProvider implements IMinaProvider {
   }
 
   sendPayment(
-    args: SendPaymentArgs
+    _args: SendPaymentArgs
   ): Promise<SendTransactionResult | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
   sendStakeDelegation(
-    args: SendStakeDelegationArgs
+    _args: SendStakeDelegationArgs
   ): Promise<SendTransactionResult | ProviderError> {
     throw new Error('Method not implemented.');
   }
@@ -134,46 +135,46 @@ export class NodeProvider implements IMinaProvider {
   }
 
   signFields(
-    args: SignFieldsArguments
+    _args: SignFieldsArguments
   ): Promise<SignedFieldsData | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
-  verifyFields(args: VerifyFieldsArguments): Promise<boolean | ProviderError> {
+  verifyFields(_args: VerifyFieldsArguments): Promise<boolean | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
   signJsonMessage(
-    args: SignJsonMessageArgs
+    _args: SignJsonMessageArgs
   ): Promise<SignedData | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
   verifyJsonMessage(
-    args: VerifyJsonMessageArgs
+    _args: VerifyJsonMessageArgs
   ): Promise<boolean | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
   createNullifier(
-    args: CreateNullifierArgs
+    _args: CreateNullifierArgs
   ): Promise<Nullifier | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
-  addChain(args: AddChainArgs): Promise<ChainInfoArgs | ProviderError> {
+  addChain(_args: AddChainArgs): Promise<ChainInfoArgs | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
-  switchChain(args: SwitchChainArgs): Promise<ChainInfoArgs | ProviderError> {
+  switchChain(_args: SwitchChainArgs): Promise<ChainInfoArgs | ProviderError> {
     throw new Error('Method not implemented.');
   }
 
-  on(eventName: unknown, listener: unknown): this {
+  on(_eventName: unknown, _listener: unknown): this {
     throw new Error('Method not implemented.');
   }
 
-  removeListener(eventName: unknown, listener: unknown): this {
+  removeListener(_eventName: unknown, _listener: unknown): this {
     throw new Error('Method not implemented.');
   }
 }

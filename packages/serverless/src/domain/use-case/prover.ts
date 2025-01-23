@@ -1,13 +1,8 @@
-import { EDocumentOperation, TDocumentQueuedData } from '@zkdb/common';
-import {
-  TCompoundSession,
-  ModelGenericQueue,
-  zkDatabaseConstant,
-} from '@zkdb/storage';
-
+import { EDocumentOperation } from '@zkdb/common';
+import { TCompoundSession, ModelGenericQueue, EQueueType } from '@zkdb/storage';
 import { ModelMetadataDocument } from '@model';
 import { ObjectId } from 'mongodb';
-import { DocumentSchema, TValidatedDocument } from './document-schema';
+import { DocumentSchema, TValidatedDocument } from './document-schema.js';
 
 // For prover param use-case
 export type TParamProve = {
@@ -35,7 +30,7 @@ export class Prover {
   public static async create(
     proveCreateParam: TParamProveCreate,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, docId, collectionName, document, documentObjectId } =
       proveCreateParam;
@@ -46,7 +41,7 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
@@ -60,11 +55,10 @@ export class Prover {
 
     const documentHash = schema.hash();
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {
@@ -80,14 +74,14 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 
   public static async update(
     proveUpdateParam: TParamProveUpdate,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const {
       databaseName,
@@ -103,7 +97,7 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
@@ -114,11 +108,10 @@ export class Prover {
 
     const hash = schema.hash();
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {
@@ -134,14 +127,14 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 
   public static async delete(
     proveDeleteParam: TParamProveDelete,
     operationNumber: bigint,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const { databaseName, collectionName, docId, oldDocumentObjectId } =
       proveDeleteParam;
@@ -152,18 +145,17 @@ export class Prover {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!metadataDocument) {
       throw new Error(`No metadata found for docId ${docId}`);
     }
 
-    const imModelGenericQueue =
-      await ModelGenericQueue.getInstance<TDocumentQueuedData>(
-        zkDatabaseConstant.globalCollection.documentQueue,
-        session.proofService
-      );
+    const imModelGenericQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      compoundSession.sessionMina
+    );
 
     await imModelGenericQueue.queueTask(
       {
@@ -179,7 +171,7 @@ export class Prover {
         databaseName,
         sequenceNumber: operationNumber,
       },
-      { session: session.proofService }
+      { session: compoundSession.sessionMina }
     );
   }
 }

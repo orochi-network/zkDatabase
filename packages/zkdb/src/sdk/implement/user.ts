@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-dupe-class-members */
 import { IApiClient } from '@zkdb/api';
 import { TGroupListByUserResponse, TUser } from '@zkdb/common';
 import { IUser } from '../interfaces/user';

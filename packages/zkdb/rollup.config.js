@@ -1,6 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import alias from '@rollup/plugin-alias';
 import commonjs from '@rollup/plugin-commonjs';
+
 export default {
   input: 'src/index.ts',
   output: {

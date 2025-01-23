@@ -15,17 +15,10 @@ import {
   TGroupUpdateRequest,
   TGroupUpdateResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_GROUP = <T>(client: TApolloClient<T>) => ({
-  groupAddUser: createMutateFunction<
-    TGroupAddUserListRequest,
-    TGroupAddUserListResponse
-  >(
+  groupAddUser: createApi<TGroupAddUserListRequest, TGroupAddUserListResponse>(
     client,
     gql`
       mutation groupAddUser(
@@ -39,10 +32,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           listUser: $listUser
         )
       }
-    `,
-    (data) => data.groupAddUser
+    `
   ),
-  groupCreate: createMutateFunction<TGroupCreateRequest, TGroupCreateResponse>(
+  groupCreate: createApi<TGroupCreateRequest, TGroupCreateResponse>(
     client,
     gql`
       mutation groupCreate(
@@ -56,10 +48,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           groupDescription: $groupDescription
         )
       }
-    `,
-    (data) => data.groupCreate
+    `
   ),
-  groupRemoveUser: createMutateFunction<
+  groupRemoveUser: createApi<
     TGroupRemoveUserListRequest,
     TGroupRemoveUserListResponse
   >(
@@ -76,10 +67,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           listUser: $listUser
         )
       }
-    `,
-    (data) => data.groupRemoveUser
+    `
   ),
-  groupUpdate: createMutateFunction<TGroupUpdateRequest, TGroupUpdateResponse>(
+  groupUpdate: createApi<TGroupUpdateRequest, TGroupUpdateResponse>(
     client,
     gql`
       mutation groupUpdate(
@@ -95,10 +85,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           newGroupDescription: $newGroupDescription
         )
       }
-    `,
-    (data) => data.groupUpdate
+    `
   ),
-  groupDetail: createQueryFunction<TGroupDetailRequest, TGroupDetailResponse>(
+  groupDetail: createApi<TGroupDetailRequest, TGroupDetailResponse>(
     client,
     gql`
       query groupDetail($databaseName: String!, $groupName: String!) {
@@ -115,13 +104,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           }
         }
       }
-    `,
-    (data) => data.groupDetail
+    `
   ),
-  groupListAll: createQueryFunction<
-    TGroupListAllRequest,
-    TGroupListAllResponse
-  >(
+  groupListAll: createApi<TGroupListAllRequest, TGroupListAllResponse>(
     client,
     gql`
       query groupListAll($databaseName: String!) {
@@ -133,13 +118,9 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
           createdAt
         }
       }
-    `,
-    (data) => data.groupListAll
+    `
   ),
-  groupListByUser: createQueryFunction<
-    TGroupListByUserRequest,
-    TGroupListByUserResponse
-  >(
+  groupListByUser: createApi<TGroupListByUserRequest, TGroupListByUserResponse>(
     client,
     gql`
       query groupListByUser(
@@ -148,7 +129,8 @@ export const API_GROUP = <T>(client: TApolloClient<T>) => ({
       ) {
         groupListByUser(databaseName: $databaseName, userQuery: $userQuery)
       }
-    `,
-    (data) => data.groupListByUser
+    `
   ),
 });
+
+export default API_GROUP;

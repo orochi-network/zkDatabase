@@ -1,21 +1,19 @@
-/* eslint-disable no-unused-vars */
 import {
   ETransactionType,
   TDatabaseCreateRequest,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TZkProofStatusResponse,
+  TRollupOffChainHistoryResponse,
+  TRollupOnChainHistoryResponse,
+  TRollupOnChainStateResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
+  TVerificationKeyResponse,
   TZkProofResponse,
-  TRollupOnChainHistoryRequest,
-  TRollupOnChainHistoryResponse,
-  TRollupOffChainHistoryRequest,
-  TRollupOffChainHistoryResponse,
-  TRollupOnChainStateResponse,
+  TZkProofStatusResponse,
 } from '@zkdb/common';
 import { ICollection } from './collection';
 import { IGroup } from './group';
@@ -69,14 +67,15 @@ export interface IDatabase {
   rollUpOnChainStart(): Promise<boolean>;
 
   rollUpOnChainHistory(
-    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse>;
 
   rollUpOffChainHistory(
-    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse>;
 
   rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
+
+  // Verification key
+  verificationKey(): Promise<TVerificationKeyResponse>;
 }

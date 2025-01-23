@@ -5,15 +5,14 @@ import {
   TDatabaseInfoResponse,
   TGroupListAllResponse,
   TPagination,
-  TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
-  TRollupOnChainHistoryRequest,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
   TSchemaExtendable,
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
+  TVerificationKeyResponse,
   TZkProofResponse,
   TZkProofStatusResponse,
 } from '@zkdb/common';
@@ -94,7 +93,7 @@ export class Database implements IDatabase {
   }
 
   async zkProof(): Promise<TZkProofResponse> {
-    return (await this.apiClient.proof.proof(this.basicQuery)).unwrap();
+    return (await this.apiClient.proof.zkProof(this.basicQuery)).unwrap();
   }
 
   async zkProofStatus(): Promise<TZkProofStatusResponse> {
@@ -130,24 +129,22 @@ export class Database implements IDatabase {
   }
 
   async rollUpOnChainHistory(
-    query: Omit<TRollupOnChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOnChainHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupOnChainHistory({
-        query: { ...this.basicQuery, ...query },
+        databaseName: this.basicQuery.databaseName,
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
   }
 
   async rollUpOffChainHistory(
-    query: Omit<TRollupOffChainHistoryRequest['query'], 'databaseName'>,
     pagination?: TPagination
   ): Promise<TRollupOffChainHistoryResponse> {
     return (
       await this.apiClient.rollup.rollupOffChainHistory({
-        query: { ...this.basicQuery, ...query },
+        databaseName: this.basicQuery.databaseName,
         pagination: pagination ?? { limit: 10, offset: 0 },
       })
     ).unwrap();
@@ -156,6 +153,12 @@ export class Database implements IDatabase {
   async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
     return (
       await this.apiClient.rollup.rollupOnChainState(this.basicQuery)
+    ).unwrap();
+  }
+
+  async verificationKey(): Promise<TVerificationKeyResponse> {
+    return (
+      await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
   }
 

@@ -14,7 +14,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
   }
@@ -58,7 +58,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       }
 
       return updateResult.seq;
-    } else {
+    } 
       const creationTime = new Date();
 
       const insertResult = await this.collection.insertOne(
@@ -76,7 +76,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
       }
 
       return ModelSequencer.INITIAL_SEQUENCE_VALUE;
-    }
+    
   }
 
   async current(type: ESequencer, session?: ClientSession) {
@@ -93,7 +93,7 @@ export class ModelSequencer extends ModelBasic<WithoutId<TSequencedItem>> {
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       zkDatabaseConstant.databaseCollection.sequencer
     );
     if (!(await collection.isExist())) {

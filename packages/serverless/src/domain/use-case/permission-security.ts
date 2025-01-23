@@ -265,7 +265,7 @@ export class PermissionSecurity {
         { session }
       );
       return result.acknowledged;
-    } else {
+    } 
       const imMetadataCollection =
         ModelMetadataCollection.getInstance(databaseName);
       const collectionMetadata = await imMetadataCollection.findOne({
@@ -284,6 +284,6 @@ export class PermissionSecurity {
         { session }
       );
       return result.acknowledged;
-    }
+    
   }
 }

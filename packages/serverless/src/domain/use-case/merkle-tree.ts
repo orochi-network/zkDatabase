@@ -1,4 +1,4 @@
-/* eslint-disable import/prefer-default-export */
+ 
 import {
   TMerkleNodeJson,
   TMerkleProofSerialized,
@@ -15,7 +15,7 @@ export class MerkleTree {
   public static async document(
     databaseName: string,
     docId: string,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ): Promise<TMerkleProofSerialized[]> {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
@@ -23,7 +23,7 @@ export class MerkleTree {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!docMetadata) {
@@ -32,11 +32,11 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(
       databaseName,
-      session.proofService
+      compoundSession.sessionMina
     );
 
     return merkleTree.getMerkleProof(BigInt(docMetadata.merkleIndex), {
-      session: session.proofService,
+      session: compoundSession.sessionMina,
     });
   }
 
@@ -149,7 +149,7 @@ export class MerkleTree {
   public static async nodePath(
     databaseName: string,
     docId: string,
-    session: TCompoundSession
+    compoundSession: TCompoundSession
   ) {
     const modelDocumentMetadata = new ModelMetadataDocument(databaseName);
 
@@ -157,7 +157,7 @@ export class MerkleTree {
       {
         docId,
       },
-      { session: session.serverless }
+      { session: compoundSession.sessionServerless }
     );
 
     if (!docMetadata) {
@@ -166,11 +166,11 @@ export class MerkleTree {
 
     const merkleTree = await ModelMerkleTree.getInstance(
       databaseName,
-      session.proofService
+      compoundSession.sessionMina
     );
 
     return merkleTree.getMerkleProofPath(BigInt(docMetadata.merkleIndex), {
-      session: session.proofService,
+      session: compoundSession.sessionMina,
     });
   }
 }
