@@ -1,4 +1,3 @@
- 
 import {
   TMerkleNodeJson,
   TMerkleProofSerialized,

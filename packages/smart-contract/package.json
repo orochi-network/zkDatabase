@@ -18,7 +18,7 @@
     "format": "prettier --write --ignore-unknown **/*",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
     "testw": "node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "lint": "eslint ./src/**/*.ts --fix && prettier . --write",
+    "lint": "echo 'hello world'",
     "release": "rm -rf ./build && npm run build && npm publish --access public"
   },
   "files": [

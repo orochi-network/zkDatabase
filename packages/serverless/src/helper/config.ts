@@ -1,4 +1,3 @@
- 
 import { ConfigLoader, TLogLevel, TNodeEnv } from '@orochi-network/framework';
 import { ENetworkId } from '@zkdb/common';
 import { createHash } from 'crypto';
