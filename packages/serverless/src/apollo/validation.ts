@@ -60,17 +60,16 @@ export function publicWrapper<Req = unknown, Res = any, R = any>(
       }
       return resolver(root, args, context, info);
     };
-  } 
-    const [resolver] = params;
-    return async (
-      root: R,
-      args: Req,
-      context: TPublicContext,
-      info: GraphQLResolveInfo
-    ) => {
-      return resolver(root, args, context, info);
-    };
-  
+  }
+  const [resolver] = params;
+  return async (
+    root: R,
+    args: Req,
+    context: TPublicContext,
+    info: GraphQLResolveInfo
+  ) => {
+    return resolver(root, args, context, info);
+  };
 }
 
 export function authorizeWrapper<Req = unknown, Res = any, R = any>(
@@ -111,15 +110,14 @@ export function authorizeWrapper<Req = unknown, Res = any, R = any>(
       }
       return resolver(root, args, context, info);
     };
-  } 
-    const [resolver] = params;
-    return async (
-      root: R,
-      args: Req,
-      context: TAuthorizedContext,
-      info: GraphQLResolveInfo
-    ) => {
-      return resolver(root, args, context, info);
-    };
-  
+  }
+  const [resolver] = params;
+  return async (
+    root: R,
+    args: Req,
+    context: TAuthorizedContext,
+    info: GraphQLResolveInfo
+  ) => {
+    return resolver(root, args, context, info);
+  };
 }

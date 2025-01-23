@@ -23,8 +23,8 @@
       "@domain": ["./src/domain"],
       "@helper": ["./src/helper"],
       "@model": ["./src/model"],
-      "@service": ["./src/service"],
-    }, 
+      "@service": ["./src/service"]
+    }
     // For jest + o1js Schema to work
     // https://github.com/o1-labs/o1js/issues/1380#issuecomment-1902038952
     // "useDefineForClassFields": false

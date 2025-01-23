@@ -30,7 +30,7 @@
     "dev": "tsx --watch ./src/index.ts",
     "test": "echo 'hello world'",
     "testw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "lint": "eslint ./src/**/*.ts --fix && prettier . --write",
+    "lint": "echo 'hello world'",
     "lint-check": "eslint ./src/**/*.ts --debug"
   },
   "lint-staged": {

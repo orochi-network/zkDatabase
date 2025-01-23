@@ -265,25 +265,24 @@ export class PermissionSecurity {
         { session }
       );
       return result.acknowledged;
-    } 
-      const imMetadataCollection =
-        ModelMetadataCollection.getInstance(databaseName);
-      const collectionMetadata = await imMetadataCollection.findOne({
-        collectionName,
-      });
-      if (actor !== collectionMetadata?.owner) {
-        throw new Error(
-          `Actor ${actor} is not owner of collection ${collectionName}`
-        );
-      }
-      const result = await imMetadataCollection.updateOne(
-        {
-          collectionName,
-        },
-        { $set: { permission: permission.value } },
-        { session }
+    }
+    const imMetadataCollection =
+      ModelMetadataCollection.getInstance(databaseName);
+    const collectionMetadata = await imMetadataCollection.findOne({
+      collectionName,
+    });
+    if (actor !== collectionMetadata?.owner) {
+      throw new Error(
+        `Actor ${actor} is not owner of collection ${collectionName}`
       );
-      return result.acknowledged;
-    
+    }
+    const result = await imMetadataCollection.updateOne(
+      {
+        collectionName,
+      },
+      { $set: { permission: permission.value } },
+      { session }
+    );
+    return result.acknowledged;
   }
 }
