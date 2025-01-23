@@ -53,7 +53,7 @@
     "@orochi-network/utilities": "^0.2.42",
     "@zkdb/common": "^0.1.1",
     "@zkdb/permission": "^0.1.7",
-    "@zkdb/smart-contract": "^1.1.7",
+    "@zkdb/smart-contract": "^1.1.9-dev1",
     "@zkdb/storage": "^1.1.2",
     "axios": "1.7.9",
     "connect-redis": "8.0.1",
