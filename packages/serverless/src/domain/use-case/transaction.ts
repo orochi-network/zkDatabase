@@ -4,7 +4,7 @@ import { FixedFloat } from '@orochi-network/utilities';
 import {
   ETransactionStatus,
   ETransactionType,
-  TTransactionRecordNullable,
+  TTransactionDraftResponse,
 } from '@zkdb/common';
 import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
@@ -111,7 +111,7 @@ export class Transaction {
     actor: string,
     transactionType: ETransactionType,
     session?: ClientSession
-  ): Promise<TTransactionRecordNullable | undefined> {
+  ): Promise<TTransactionDraftResponse> {
     await Database.ownershipCheck(databaseName, actor, session);
 
     const imUser = new ModelUser();
@@ -133,9 +133,18 @@ export class Transaction {
       .find({ databaseName, transactionType }, { session })
       .toArray();
 
-    return transactionList.find(
+    const transactionDraft = transactionList.find(
       (tx) => tx.status === ETransactionStatus.Unsigned
     );
+
+    if (!transactionDraft) {
+      return null;
+    }
+
+    return {
+      ...transactionDraft,
+      rawTransactionId: transactionDraft._id,
+    };
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {
