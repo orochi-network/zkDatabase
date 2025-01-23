@@ -2606,26 +2606,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/common@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@zkdb/common/-/common-0.1.2.tgz#1556ddeec9cebefee9849b7de1785fd548b54ca2"
-  integrity sha512-nptxG+rxpjjKy7qBrGVegiHC/SGY2Z71s+Ih74CaUcQDNOilhBqvJJ/KFdIHSt1dw1C7KFmC9CXiLd8NBCD9Yw==
-  dependencies:
-    "@zkdb/permission" "^0.1.6"
-
-"@zkdb/permission@^0.1.6":
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/@zkdb/permission/-/permission-0.1.7.tgz#029436a9788de3deee6a103a3d0f25061f57be5d"
-  integrity sha512-nx/rUTYhI/B3KBi+sS54VxMpYvlD9zYJVR8+rxv2KznN78drDHFViaI+3PXaq0DE2pOGVwZZ4bhRleU9oeUNyQ==
-
-"@zkdb/smart-contract@^1.1.0":
-  version "1.1.7"
-  resolved "https://registry.yarnpkg.com/@zkdb/smart-contract/-/smart-contract-1.1.7.tgz#52273753a099ad458106bd02b5490e9a4348be1b"
-  integrity sha512-BAoJf0yRBNWl4w6l1uo96iJfAE49rG+CkQseetPkEgMt/6ResrByXQetuPahXtdmifQjXL7qf62rmQ7xnecFJQ==
-  dependencies:
-    axios "1.7.7"
-    basic-ftp "^5.0.5"
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz"
@@ -2863,15 +2843,6 @@ axios@1.7.4:
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
-axios@1.7.7:
-  version "1.7.7"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.7.tgz#2f554296f9892a72ac8d8e4c5b79c14a91d0a47f"
-  integrity sha512-S4kL7XrjgBmvdGut0sN3yJxqYzrDOnivkBiN0OFs6hLiUam3UPvswUo0kqGyhqUZGEOytHyumEdXsAkgCOUf3Q==
-  dependencies:
-    follow-redirects "^1.15.6"
-    form-data "^4.0.0"
-    proxy-from-env "^1.1.0"
-
 axios@1.7.9, axios@^1.4.0, axios@^1.7.9:
   version "1.7.9"
   resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.9.tgz#d7d071380c132a24accda1b2cfc1535b79ec650a"
@@ -2984,11 +2955,6 @@ basic-auth@~2.0.1:
   integrity sha512-NF+epuEdnUYVlGuhaxbbq+dvJttwLnGY+YixlXlME5KpQ5W3CnXA5cVTneY3SPbPDRkcjMbifrwmFYcClgOZeg==
   dependencies:
     safe-buffer "5.1.2"
-
-basic-ftp@^5.0.5:
-  version "5.0.5"
-  resolved "https://registry.yarnpkg.com/basic-ftp/-/basic-ftp-5.0.5.tgz#14a474f5fffecca1f4f406f1c26b18f800225ac0"
-  integrity sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==
 
 batch@0.6.1:
   version "0.6.1"

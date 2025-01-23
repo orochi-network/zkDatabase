@@ -11,9 +11,12 @@ type TProcessJob = (job: Job) => Promise<void>;
 export class QueueWorker {
   private worker: Worker;
 
+  /* eslint-disable-next-line no-useless-constructor --
+   * This constructor is not useless */
   constructor(
     private readonly queueName: string,
     private readonly options?: WorkerOptions
+    // eslint-disable-next-line no-empty-function
   ) {}
 
   public start(process: TProcessJob) {

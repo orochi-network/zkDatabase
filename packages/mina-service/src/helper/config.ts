@@ -4,7 +4,6 @@ import {
   TNodeEnv,
 } from '@orochi-network/framework';
 import Joi from 'joi';
-import path from 'node:path';
 import { NetworkId } from 'o1js';
 
 type TApplicationConfig = {
@@ -20,6 +19,7 @@ type TApplicationConfig = {
 
 const configLoader = new ConfigLoader<TApplicationConfig>(
   (raw) => {
+    /* eslint-disable no-param-reassign */
     raw.NETWORK_ID = raw.NODE_ENV === 'production' ? 'mainnet' : 'testnet';
     raw.MINA_URL =
       raw.NODE_ENV === 'production'
