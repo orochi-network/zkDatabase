@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import {
   TGroupDetail,
   TGroupParam,
@@ -65,7 +66,6 @@ export class Group {
       }
       // Initialize model
       const imGroup = new ModelGroup(databaseName);
-      const imUserGroup = new ModelUserGroup(databaseName);
       const imUser = new ModelUser();
 
       // Get user
@@ -133,7 +133,8 @@ export class Group {
   /**
    * Updates the metadata of a group based on the provided parameters.
    *
-   * @param paramUpdateMetadata - The parameters specifying the group and the metadata to update, following the `TGroupParamUpdateMetadata` type.
+   * @param paramUpdateMetadata - The parameters specifying the group and the metadata to update,
+   * following the `TGroupParamUpdateMetadata` type.
    * @param session - The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the metadata was updated successfully, otherwise `false`.
    */
@@ -224,7 +225,8 @@ export class Group {
   /**
    * Adds a list of users to a group based on the provided parameters.
    *
-   * @param paramListUser - The parameters specifying the group and the users to add, following the `TGroupParamListUser` type.
+   * @param paramListUser - The parameters specifying the group and the users to add,
+   * following the `TGroupParamListUser` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were added successfully, otherwise `false`.
    */
@@ -275,7 +277,8 @@ export class Group {
   /**
    * Removes a list of users from a group based on the provided parameters.
    *
-   * @param paramListUser - The parameters specifying the group and the users to remove, following the `TGroupParamListUser` type.
+   * @param paramListUser - The parameters specifying the group and the users to remove,
+   * following the `TGroupParamListUser` type.
    * @param session - (Optional) The MongoDB session for transactional queries.
    * @returns A promise resolving to `true` if the users were removed successfully, otherwise `false`.
    */

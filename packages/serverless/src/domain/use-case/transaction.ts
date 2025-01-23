@@ -1,3 +1,4 @@
+/* eslint-disable import/no-cycle */
 import { transactionQueue } from '@helper';
 import { ModelUser } from '@model';
 import { FixedFloat } from '@orochi-network/utilities';

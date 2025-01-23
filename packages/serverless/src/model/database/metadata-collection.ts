@@ -5,7 +5,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, FindOptions, OptionalId, NumericType } from 'mongodb';
+import { ClientSession, FindOptions, OptionalId } from 'mongodb';
 
 export class ModelMetadataCollection extends ModelGeneral<
   OptionalId<TCollectionMetadataRecord>

@@ -1,11 +1,10 @@
+import { Db, MongoServerError } from 'mongodb';
 import {
   DATABASE_ENGINE,
-  DatabaseEngine,
   ModelCollection,
   ModelGeneral,
   Transaction,
 } from '../../src';
-import { Db, MongoServerError } from 'mongodb';
 
 const DATABASE_NAME = '__test_run_db_compound-transaction';
 const COLLECTION_NAME = '__test_run_collection_compound-transaction';

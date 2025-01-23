@@ -75,7 +75,9 @@ export class Collection {
       if (invalidIndex.length > 0) {
         const invalidList = invalidIndex.join(', ');
         throw new Error(
-          `Invalid index fields: ${invalidList}. These fields are not part of the '${collectionName}' collection schema. Please ensure all index fields exist in the schema and are spelled correctly.`
+          `Invalid index fields: ${invalidList}. 
+           These fields are not part of the '${collectionName}' collection schema. 
+           Please ensure all index fields exist in the schema and are spelled correctly.`
         );
       }
 
@@ -108,7 +110,8 @@ export class Collection {
     }
 
     throw new Error(
-      `Access denied: Actor '${actor}' lacks 'system' permission to create indexes in the '${collectionName}' collection.`
+      `Access denied: Actor '${actor}' lacks 'system' permission to create indexes
+       in the '${collectionName}' collection.`
     );
   }
 
@@ -233,7 +236,8 @@ export class Collection {
     }
 
     throw Error(
-      `Access denied: Actor '${actor}' lacks 'system' permission to drop indexes in the '${collectionName}' collection.`
+      `Access denied: Actor '${actor}' lacks 'system' permission to drop indexes 
+      in the '${collectionName}' collection.`
     );
   }
 
@@ -252,7 +256,8 @@ export class Collection {
         .system
     ) {
       throw new Error(
-        `Access denied: Actor '${actor}' lacks 'system' permission to create collections in the '${databaseName}' database.`
+        `Access denied: Actor '${actor}' lacks 'system' permission to create collections 
+        in the '${databaseName}' database.`
       );
     }
 

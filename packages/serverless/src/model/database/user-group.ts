@@ -12,8 +12,8 @@ import {
   ObjectId,
   OptionalId,
 } from 'mongodb';
-import ModelUser from '../global/user';
-import ModelGroup from './group';
+import { ModelUser } from '../global/user';
+import { ModelGroup } from './group';
 
 export class ModelUserGroup extends ModelGeneral<OptionalId<TUserGroupRecord>> {
   private static collectionName =

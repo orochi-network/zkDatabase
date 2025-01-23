@@ -2606,18 +2606,6 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/common@^0.1.1":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@zkdb/common/-/common-0.1.2.tgz#1556ddeec9cebefee9849b7de1785fd548b54ca2"
-  integrity sha512-nptxG+rxpjjKy7qBrGVegiHC/SGY2Z71s+Ih74CaUcQDNOilhBqvJJ/KFdIHSt1dw1C7KFmC9CXiLd8NBCD9Yw==
-  dependencies:
-    "@zkdb/permission" "^0.1.6"
-
-"@zkdb/permission@^0.1.6", "@zkdb/permission@^0.1.7":
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/@zkdb/permission/-/permission-0.1.7.tgz#029436a9788de3deee6a103a3d0f25061f57be5d"
-  integrity sha512-nx/rUTYhI/B3KBi+sS54VxMpYvlD9zYJVR8+rxv2KznN78drDHFViaI+3PXaq0DE2pOGVwZZ4bhRleU9oeUNyQ==
-
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.npmjs.org/abbrev/-/abbrev-1.1.1.tgz"
