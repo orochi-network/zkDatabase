@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-
 import { TGroup, TGroupDetail } from '@zkdb/common';
 
 /**
@@ -17,7 +15,7 @@ export interface IGroup {
    * Get group information
    * @returns {Promise<TGroupDetail>} Group detail information
    */
-  info(): Promise<TGroupDetail>;
+  info(): Promise<TGroupDetail | null>;
 
   /**
    * Create a new group
@@ -25,6 +23,12 @@ export interface IGroup {
    * @returns {Promise<boolean>} - True if group creation is successful, false otherwise
    */
   create(groupConfig?: Omit<TGroupConfig, 'groupName'>): Promise<boolean>;
+
+  /**
+   * Check the existence of a group in database
+   * @returns {Promise<boolean>} true if the current group is exist, otherwise false
+   */
+  exist(): Promise<boolean>;
 
   /**
    * Update an existing group

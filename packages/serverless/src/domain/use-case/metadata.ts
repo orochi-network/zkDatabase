@@ -16,7 +16,7 @@ export class Metadata {
   public static async collection(
     paramCollection: TPermissionSudo<TParamCollection>,
     session?: ClientSession
-  ): Promise<TCollectionMetadata> {
+  ): Promise<TCollectionMetadata | null> {
     const { sudo, databaseName, collectionName, actor } = paramCollection;
 
     const imMetadataCollection =
@@ -28,9 +28,7 @@ export class Metadata {
     );
 
     if (!metadataCollection) {
-      throw new Error(
-        `Cannot find metadata collection of ${collectionName} in database ${databaseName}`
-      );
+      return null;
     }
 
     const actorPermission = await PermissionSecurity.collection(
@@ -45,14 +43,12 @@ export class Metadata {
     );
 
     if (!actorPermission.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified collection`
-      );
+      return null;
     }
 
     const imCollection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       collectionName
     );
 
@@ -67,7 +63,7 @@ export class Metadata {
   public static async document(
     paramDocument: TPermissionSudo<TParamDocument>,
     session?: ClientSession
-  ): Promise<TDocumentMetadata> {
+  ): Promise<TDocumentMetadata | null> {
     const { sudo, databaseName, collectionName, docId, actor } = paramDocument;
 
     const imMetadataDocument = new ModelMetadataDocument(databaseName);
@@ -78,9 +74,7 @@ export class Metadata {
     );
 
     if (!metadataDocument) {
-      throw new Error(
-        `Metadata document has not been found on collection ${collectionName} database ${databaseName}`
-      );
+      return null;
     }
 
     const actorPermissions = await PermissionSecurity.document(
@@ -95,9 +89,7 @@ export class Metadata {
     );
 
     if (!actorPermissions.read) {
-      throw new Error(
-        `Access denied: Actor '${actor}' does not have 'read' permission for the specified document.`
-      );
+      return null;
     }
 
     return metadataDocument;

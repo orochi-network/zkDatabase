@@ -13,10 +13,10 @@ import {
   TMerkleTreeProofByIndexRequest,
   TMerkleTreeProofByIndexResponse,
 } from "@zkdb/common";
-import { createQueryFunction, TApolloClient } from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
-  merkleNodeByLevel: createQueryFunction<
+  merkleNodeByLevel: createApi<
     TMerkleTreeNodeListByLevelRequest,
     TMerkleTreeNodeListByLevelResponse
   >(
@@ -43,9 +43,16 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.merkleNodeByLevel
+    ({ total, data, offset }) => ({
+      total,
+      offset,
+      data: data.map(({ index, ...e }) => ({
+        ...e,
+        index: BigInt(index),
+      })),
+    })
   ),
-  merkleNodeChildren: createQueryFunction<
+  merkleNodeChildren: createApi<
     TMerkleTreeNodeChildrenRequest,
     TMerkleTreeNodeChildrenResponse
   >(
@@ -68,9 +75,13 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.merkleNodeChildren
+    (res) =>
+      res.map(({ index, ...e }) => ({
+        ...e,
+        index: BigInt(index),
+      }))
   ),
-  merkleNodePath: createQueryFunction<
+  merkleNodePath: createApi<
     TMerkleTreeNodePathRequest,
     TMerkleTreeNodePathResponse
   >(
@@ -86,9 +97,13 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.merkleNodePath
+    (res) =>
+      res.map(({ index, ...e }) => ({
+        ...e,
+        index: BigInt(index),
+      }))
   ),
-  merkleProof: createQueryFunction<
+  merkleProof: createApi<
     TMerkleTreeProofByIndexRequest,
     TMerkleTreeProofByIndexResponse
   >(
@@ -100,10 +115,9 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           sibling
         }
       }
-    `,
-    (data) => data.merkleProof
+    `
   ),
-  merkleProofDocId: createQueryFunction<
+  merkleProofDocId: createApi<
     TMerkleTreeProofByDocIdRequest,
     TMerkleTreeProofByDocIdResponse
   >(
@@ -115,13 +129,9 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           sibling
         }
       }
-    `,
-    (data) => data.merkleProofDocId
+    `
   ),
-  merkleTreeInfo: createQueryFunction<
-    TMerkleTreeInfoRequest,
-    TMerkleTreeInfoResponse
-  >(
+  merkleTreeInfo: createApi<TMerkleTreeInfoRequest, TMerkleTreeInfoResponse>(
     client,
     gql`
       query merkleTreeInfo($databaseName: String!) {
@@ -130,7 +140,8 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           merkleHeight
         }
       }
-    `,
-    (data) => data.merkleTreeInfo
+    `
   ),
 });
+
+export default API_MERKLE;

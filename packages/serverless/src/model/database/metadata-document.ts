@@ -16,7 +16,7 @@ export class ModelMetadataDocument extends ModelGeneral<
   constructor(databaseName: string) {
     super(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelMetadataDocument.collectionName
     );
   }
@@ -24,7 +24,7 @@ export class ModelMetadataDocument extends ModelGeneral<
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = new ModelCollection(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelMetadataDocument.collectionName
     );
 

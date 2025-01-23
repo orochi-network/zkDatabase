@@ -12,13 +12,12 @@
 
 import { RollupOffChain } from '@domain';
 import { Backoff, config, logger } from '@helper';
-import { TRollupQueueData } from '@zkdb/common';
 import {
   DatabaseEngine,
+  EQueueType,
   ModelGenericQueue,
   ModelRollupOffChain,
-  withTransaction,
-  zkDatabaseConstant,
+  Transaction,
 } from '@zkdb/storage';
 
 // The duration to wait before exiting the service after a crash to prevent a
@@ -44,13 +43,8 @@ export class RollupOffChainService {
   public static async run(): Promise<void> {
     await new Backoff(INITIAL_DELAY, Infinity, DELAY_CAP_MS, logger).run(
       async () => {
-        const imRollUpQueue = await withTransaction(
-          (session) =>
-            ModelGenericQueue.getInstance<TRollupQueueData>(
-              zkDatabaseConstant.globalCollection.rollupOffChainQueue,
-              session
-            ),
-          'proofService'
+        const imRollUpQueue = await Transaction.mina((session) =>
+          ModelGenericQueue.getInstance(EQueueType.RollupOffChainQueue, session)
         );
 
         const rollupResult = await imRollUpQueue.acquireNextTaskInQueue(

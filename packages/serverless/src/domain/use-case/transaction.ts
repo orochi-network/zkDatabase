@@ -40,7 +40,7 @@ export class Transaction {
         database?.appPublicKey &&
         !PublicKey.fromBase58(database?.appPublicKey).isEmpty().toBoolean()
       ) {
-        throw Error('Smart contract is already bound to database');
+        throw new Error('Smart contract is already bound to database');
       }
     }
 
@@ -76,7 +76,7 @@ export class Transaction {
             tx.status === ETransactionStatus.Signed
         )
       ) {
-        throw Error('You have uncompleted transaction');
+        throw new Error('You have uncompleted transaction');
       }
 
       // @TODO: Recheck the logic and make sure it is correct and cover all cases.
@@ -95,13 +95,27 @@ export class Transaction {
     }
 
     const transactionObjectId = new ObjectId();
-
-    await transactionQueue.add('transaction', {
-      transactionObjectId,
-      payerAddress: payer?.publicKey,
-      databaseName,
-      transactionType,
-    });
+    // We need to create transactionObjectId here
+    // If we create transactionObjectId here, it still stay on the session mongodb and not created yet on database
+    // So when the worker service can't find
+    // So we created a objectId first and let the worker queue create transaction
+    // If you try commit before `await transactionQueue.add()` to force mongodb created on database
+    // You can't be able to use any session after this Transaction.enqueue anymore, because the session already commit
+    // TODO: Will refactor in the future. Drop bullMQ, using our GenericQueue<T>
+    await transactionQueue.add(
+      'transaction',
+      {
+        transactionObjectId,
+        payerAddress: payer?.publicKey,
+        databaseName,
+        transactionType,
+      },
+      {
+        deduplication: {
+          id: `${databaseName}-${transactionType}`,
+        },
+      }
+    );
 
     return transactionObjectId;
   }
@@ -110,7 +124,7 @@ export class Transaction {
     databaseName: string,
     actor: string,
     transactionType: ETransactionType,
-    session?: ClientSession
+    session: ClientSession
   ): Promise<TTransactionDraftResponse> {
     await Database.ownershipCheck(databaseName, actor, session);
 
@@ -118,33 +132,77 @@ export class Transaction {
     const user = await imUser.findOne({ userName: actor }, { session });
 
     if (!user) {
-      throw Error(`User ${actor} does not exist`);
+      throw new Error(`User ${actor} does not exist`);
     }
 
-    const database = await ModelMetadataDatabase.getInstance().findOne({
-      databaseName,
-    });
-
-    if (!database) {
-      throw Error(`Database ${databaseName} does not exist`);
-    }
-
-    const transactionList = await ModelTransaction.getInstance()
-      .find({ databaseName, transactionType }, { session })
-      .toArray();
-
-    const transactionDraft = transactionList.find(
-      (tx) => tx.status === ETransactionStatus.Unsigned
+    const database = await ModelMetadataDatabase.getInstance().findOne(
+      {
+        databaseName,
+      },
+      { session }
     );
 
-    if (!transactionDraft) {
-      return null;
+    if (!database) {
+      throw new Error(`Database ${databaseName} does not exist`);
     }
+    /*
+      Contract already deploy -> Throw error
+      Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
+      Contract not deploy yet, have data -> return data
+    */
+    const imTransaction = ModelTransaction.getInstance();
+    if (transactionType === ETransactionType.Deploy) {
+      const transactionDeploy = await imTransaction.findOne(
+        {
+          databaseName,
+          transactionType: ETransactionType.Deploy,
+        },
+        { session }
+      );
 
-    return {
-      ...transactionDraft,
-      rawTransactionId: transactionDraft._id,
-    };
+      // Contract already deploy, throw error
+      if (database.appPublicKey) {
+        throw new Error(
+          `Transaction already deployed database ${databaseName}`
+        );
+      }
+
+      // Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
+      if (!transactionDeploy) {
+        await Transaction.enqueue(
+          databaseName,
+          actor,
+          ETransactionType.Deploy,
+          session
+        );
+        return null;
+      }
+
+      return (
+        transactionDeploy && {
+          ...transactionDeploy,
+          rawTransactionId: transactionDeploy._id,
+        }
+      );
+    }
+    if (transactionType === ETransactionType.Rollup) {
+      const transactionRollup = await imTransaction.findOne(
+        {
+          databaseName,
+          transactionType: ETransactionType.Rollup,
+          status: ETransactionStatus.Unsigned,
+        },
+        { session, sort: { createdAt: -1 } }
+      );
+
+      return (
+        transactionRollup && {
+          ...transactionRollup,
+          rawTransactionId: transactionRollup._id,
+        }
+      );
+    }
+    throw new Error(`Unsupported transaction type ${transactionType}`);
   }
 
   static async latest(databaseName: string, transactionType: ETransactionType) {

@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import {
   TCollectionIndex,
   TCollectionMetadata,
@@ -8,7 +7,7 @@ import {
   TSchemaExtendable,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { IDocument } from '../interfaces';
+import { IDocument } from '.';
 import { IMetadata } from './metadata';
 
 /**

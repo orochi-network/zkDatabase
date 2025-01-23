@@ -46,11 +46,11 @@ export type TDocumentMetadataRequest = TDatabaseRequest &
   Pick<TCollection, 'collectionName'> &
   Pick<TDocument, 'docId'>;
 
-export type TDocumentMetadataResponse = TDocumentMetadata;
+export type TDocumentMetadataResponse = TDocumentMetadata | null;
 
 export type TCollectionMetadataRequest = Omit<
   TDocumentMetadataRequest,
   'docId'
 >;
 
-export type TCollectionMetadataResponse = TCollectionMetadata;
+export type TCollectionMetadataResponse = TCollectionMetadata | null;

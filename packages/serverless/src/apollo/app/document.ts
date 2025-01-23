@@ -1,34 +1,34 @@
 // TODO: parseQuery already validates the query to some extent, but still,
 // consider validating the query object before passing to parseQuery
 
-import { withCompoundTransaction, withTransaction } from '@zkdb/storage';
-import Joi from 'joi';
 import { Document, Metadata } from '@domain';
 import { gql } from '@helper';
 import {
   collectionName,
   databaseName,
+  docId,
   pagination,
-  TDocumentCreateRequest,
-  TDocumentFindRequest,
-  TDocumentUpdateRequest,
-  TDocumentHistoryFindRequest,
-  TDocumentHistoryFindResponse,
-  TDocumentUpdateResponse,
-  TDocumentFindResponse,
   PERMISSION_DEFAULT,
+  TDocumentCreateRequest,
   TDocumentCreateResponse,
   TDocumentDropRequest,
   TDocumentDropResponse,
-  docId,
+  TDocumentFindRequest,
+  TDocumentFindResponse,
+  TDocumentHistoryFindRequest,
+  TDocumentHistoryFindResponse,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
+  TDocumentUpdateRequest,
+  TDocumentUpdateResponse,
   TMerkleProofDocumentRequest,
   TMerkleProofDocumentResponse,
 } from '@zkdb/common';
+import { Transaction } from '@zkdb/storage';
+import Joi from 'joi';
 
-import { Permission } from '@zkdb/permission';
 import { DEFAULT_PAGINATION } from '@common';
+import { Permission } from '@zkdb/permission';
 import { authorizeWrapper } from '../validation';
 
 // The value will be validated against the schema type in the database later
@@ -133,7 +133,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       query: JSON # If not provided, return all documents
       pagination: PaginationInput
-    ): DocumentFindResponse
+    ): DocumentFindResponse!
 
     documentMetadata(
       databaseName: String!
@@ -146,7 +146,7 @@ export const typeDefsDocument = gql`
       collectionName: String!
       docId: String!
       pagination: PaginationInput
-    ): DocumentHistoryFindResponse
+    ): DocumentHistoryFindResponse!
 
     documentMerkleProofStatus(
       databaseName: String!
@@ -182,7 +182,7 @@ const documentFind = authorizeWrapper<
   TDocumentFindRequest,
   TDocumentFindResponse
 >(JOI_DOCUMENT_LIST_REQUEST, async (_root: unknown, args, ctx) => {
-  return withTransaction(async (session) => {
+  return Transaction.serverless(async (session) => {
     const [listDocument, numTotalDocument]: [
       TDocumentFindResponse['data'],
       number,
@@ -202,7 +202,7 @@ const documentFind = authorizeWrapper<
       total: numTotalDocument,
       offset: args.pagination?.offset || DEFAULT_PAGINATION.offset,
     };
-  }, 'serverless');
+  });
 });
 
 // Mutation
@@ -210,7 +210,7 @@ const documentCreate = authorizeWrapper<
   TDocumentCreateRequest,
   TDocumentCreateResponse
 >(JOI_DOCUMENT_CREATE_REQUEST, async (_root: unknown, args, ctx) =>
-  withCompoundTransaction(async (compoundSession) =>
+  Transaction.compound(async (compoundSession) =>
     Document.create(
       {
         databaseName: args.databaseName,
@@ -230,7 +230,7 @@ const documentUpdate = authorizeWrapper<
   TDocumentUpdateRequest,
   TDocumentUpdateResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return withCompoundTransaction(async (session) =>
+  return Transaction.compound(async (session) =>
     Document.update(
       {
         databaseName: args.databaseName,
@@ -248,7 +248,7 @@ const documentDrop = authorizeWrapper<
   TDocumentDropRequest,
   TDocumentDropResponse
 >(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
-  return withCompoundTransaction(async (session) => {
+  return Transaction.compound(async (session) => {
     const droppedDocId = await Document.drop(
       {
         databaseName: args.databaseName,
@@ -276,7 +276,7 @@ const documentHistoryFind = authorizeWrapper<
     { databaseName, collectionName, docId, pagination },
     ctx
   ) => {
-    return withTransaction(async (session) => {
+    return Transaction.serverless(async (session) => {
       const [listRevision, totalRevision] = await Document.history(
         {
           databaseName,
@@ -332,7 +332,7 @@ const documentMerkleProofStatus = authorizeWrapper<
     docId,
   }),
   async (_root, args, ctx) => {
-    return withCompoundTransaction(async (session) =>
+    return Transaction.compound(async (session) =>
       Document.merkleProofStatus(
         {
           ...args,

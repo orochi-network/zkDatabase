@@ -26,7 +26,7 @@ export const convertIndexToMongoFormat = <T = any>(
   index: Record<string, EIndexType>
 ): TCollectionIndexMap<T> =>
   Object.entries(index).reduce((acc, [key, value]) => {
-    let val = value === EIndexType.Asc ? 1 : -1;
+    const val = value === EIndexType.Asc ? 1 : -1;
     return { ...acc, [ModelDocument.indexKeyFormat(key)]: val };
   }, {});
 
@@ -34,6 +34,6 @@ export const convertIndexToGraphqlFormat = (
   index: Record<string, IndexDirection>
 ): Record<string, EIndexType> =>
   Object.entries(index).reduce((acc, [key, value]) => {
-    let val = value ? EIndexType.Asc : EIndexType.Desc;
+    const val = value ? EIndexType.Asc : EIndexType.Desc;
     return { ...acc, [key]: val };
   }, {});

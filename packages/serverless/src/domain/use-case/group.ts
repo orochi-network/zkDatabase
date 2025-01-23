@@ -101,14 +101,12 @@ export class Group {
   public static async detail(
     paramGroup: TGroupParam,
     session?: ClientSession
-  ): Promise<TGroupDetail> {
+  ): Promise<TGroupDetail | null> {
     const { databaseName, groupName } = paramGroup;
 
     // Checking group existed before
     if (!(await Group.exist({ databaseName, groupName }, session))) {
-      throw Error(
-        `Group ${groupName} does not exist for database ${databaseName}`
-      );
+      return null;
     }
     // Initialize model
     const imUserGroup = new ModelUserGroup(databaseName);
@@ -129,7 +127,7 @@ export class Group {
       };
     }
 
-    throw new Error('Group not existed');
+    return null;
   }
 
   /**

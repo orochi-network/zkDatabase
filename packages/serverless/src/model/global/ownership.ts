@@ -13,7 +13,7 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
   constructor() {
     super(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelOwnership.collectionName
     );
   }
@@ -21,7 +21,7 @@ export class ModelOwnership extends ModelGeneral<WithoutId<TOwnershipRecord>> {
   public static async init(session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       zkDatabaseConstant.globalDatabase,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelOwnership.collectionName
     );
     /*

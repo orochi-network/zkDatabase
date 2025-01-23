@@ -4,8 +4,8 @@ import {
   HttpLink,
   InMemoryCache,
 } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context/index.js";
-import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index.js";
+import { setContext } from "@apollo/client/link/context/index";
+import { removeTypenameFromVariables } from "@apollo/client/link/remove-typename/index";
 import { ACCESS_TOKEN, COOKIE } from "@utils";
 import { API_COLLECTION } from "./collection";
 import { API_COLLECTION_INDEX } from "./collection-index";
@@ -19,7 +19,17 @@ import { API_ROLLUP } from "./rollup";
 import { API_TRANSACTION } from "./transaction";
 import { API_USER } from "./user";
 
+// eslint-disable-next-line no-undef
+const _global = typeof globalThis !== "undefined" ? globalThis : window;
+
+type _RequestInit = typeof _global extends { onmessage: any }
+  ? {}
+  : import("undici-types").RequestInit;
+
+interface RequestInit extends _RequestInit {}
+
 export interface IApiClient {
+  // eslint-disable-next-line no-use-before-define
   api: ApiClient;
   db: ReturnType<typeof API_DATABASE>;
   collection: ReturnType<typeof API_COLLECTION>;
@@ -49,11 +59,8 @@ export class ApiClient {
     const httpLink = new HttpLink({
       uri,
       credentials: "include",
-      fetch: async (
-        uri: string | URL | globalThis.Request,
-        options?: RequestInit
-      ) => {
-        return fetch(uri, {
+      fetch: async (url: string | URL | any, options?: RequestInit) => {
+        return fetch(url, {
           ...options,
           credentials: "include", // This ensures cookies are sent with the request
         }).then((response: Response) => {
@@ -72,11 +79,11 @@ export class ApiClient {
       const cookie = this.storage.getItem(COOKIE);
       const authHeader = headers || {};
       if (cookie) {
-        authHeader["cookie"] = cookie;
+        authHeader.cookie = cookie;
       }
 
       if (accessToken) {
-        authHeader["authorization"] = `Bearer ${accessToken}`;
+        authHeader.authorization = `Bearer ${accessToken}`;
       }
       return {
         headers: authHeader,
@@ -99,6 +106,7 @@ export class ApiClient {
       },
     });
   }
+
   public static newInstance(url: string, storage: Storage): IApiClient {
     const api = new ApiClient(url, storage);
     return {

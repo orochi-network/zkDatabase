@@ -1,5 +1,9 @@
 import { IApiClient } from '@zkdb/api';
-import { EOwnershipType, TCollectionMetadata } from '@zkdb/common';
+import {
+  EOwnershipType,
+  TCollectionMetadata,
+  TCollectionMetadataResponse,
+} from '@zkdb/common';
 import { OwnershipAndPermission, Permission } from '@zkdb/permission';
 import { IMetadata } from '../interfaces';
 
@@ -27,7 +31,7 @@ export class CollectionMetadata implements IMetadata<TCollectionMetadata> {
     this.apiClient = apiClient;
   }
 
-  async info(): Promise<TCollectionMetadata | null> {
+  async info(): Promise<TCollectionMetadataResponse> {
     return (
       await this.apiClient.collection.collectionMetadata(this.basicRequest)
     ).unwrap();
@@ -63,9 +67,14 @@ export class CollectionMetadata implements IMetadata<TCollectionMetadata> {
   }
 
   async permissionGet(): Promise<OwnershipAndPermission> {
-    const { owner, permission, group } = (
+    const metadata = (
       await this.apiClient.collection.collectionMetadata(this.basicRequest)
     ).unwrap();
+    if (metadata === null) {
+      throw new Error('Collection metadata not found');
+    }
+
+    const { owner, permission, group } = metadata;
     return {
       owner,
       permission,

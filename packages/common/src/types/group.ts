@@ -20,6 +20,11 @@ export type TUserGroup = {
 
 export type TGroupRecord = TDbRecord<TGroup>;
 
+export type TGroupUserInfo = Pick<
+  TUserRecord,
+  'userName' | 'createdAt' | 'updatedAt'
+>;
+
 export type TGroupDetail = TGroupRecord & { listUser: TGroupUserInfo[] };
 
 export type TUserGroupRecord = TDbRecord<TUserGroup>;
@@ -56,11 +61,6 @@ export type TGroupUpdateRequest = TGroupRequest & {
 
 export type TGroupUpdateResponse = boolean;
 
-export type TGroupUserInfo = Pick<
-  TUserRecord,
-  'userName' | 'createdAt' | 'updatedAt'
->;
-
 export type TGroupListByUserRequest = TDatabaseRequest & {
   userQuery: Partial<Pick<TUser, 'userName' | 'email' | 'publicKey'>>;
 };
@@ -73,7 +73,7 @@ export type TGroupListAllResponse = WithoutId<TGroupRecord>[];
 
 export type TGroupDetailRequest = TGroupRequest;
 
-export type TGroupDetailResponse = TGroupDetail;
+export type TGroupDetailResponse = TGroupDetail | null;
 
 export type TGroupCreateRequest = TDatabaseRequest &
   TPickOptional<

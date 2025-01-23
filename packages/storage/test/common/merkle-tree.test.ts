@@ -3,24 +3,24 @@ import {
   DatabaseEngine,
   ModelMerkleTree,
   ModelMetadataDatabase,
-  withTransaction,
+  Transaction,
   zkDatabaseConstant,
-} from '../../build/src';
-import { config } from '../../build/src';
+  config,
+} from '../../src';
 import { ETransactionStatus } from '@zkdb/common';
 
 const DB_NAME = '__test_run_db__merkle-tree';
 const MERKLE_HEIGHT = 12;
 
 describe('ModelMerkleTree', () => {
-  let proofDb: DatabaseEngine;
+  let minaDb: DatabaseEngine;
   let serverlessDb: DatabaseEngine;
 
   beforeAll(async () => {
-    proofDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
+    minaDb = DatabaseEngine.getInstance(config.PROOF_MONGODB_URL);
     serverlessDb = DatabaseEngine.getInstance(config.MONGODB_URL);
-    if (!proofDb.isConnected()) {
-      await proofDb.connect();
+    if (!minaDb.isConnected()) {
+      await minaDb.connect();
       await serverlessDb.connect();
     }
 
@@ -29,7 +29,7 @@ describe('ModelMerkleTree', () => {
 
   afterAll(async () => {
     await new ModelMetadataDatabase().deleteOne({ databaseName: DB_NAME });
-    await proofDb.disconnect();
+    await minaDb.disconnect();
     await serverlessDb.disconnect();
   });
 
@@ -43,24 +43,25 @@ describe('ModelMerkleTree', () => {
       updatedAt: new Date(),
       deployStatus: ETransactionStatus.Unknown,
     });
-    await proofDb.client
+    await minaDb.client
       .db(zkDatabaseConstant.globalMerkleTreeDatabase)
       .collection(DB_NAME)
       .drop();
   });
 
   afterEach(async () => {
-    await proofDb.client
+    await minaDb.client
       .db(zkDatabaseConstant.globalMerkleTreeDatabase)
       .collection(DB_NAME)
       .drop();
     ModelMerkleTree.clearInstance(DB_NAME);
+    await new ModelMetadataDatabase().deleteOne({ databaseName: DB_NAME });
   });
 
   test('should correctly set leaf nodes and match root with in-memory MerkleTree', async () => {
-    const modelMerkleTree = await withTransaction(async (session) => {
+    const modelMerkleTree = await Transaction.mina(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    });
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -68,9 +69,9 @@ describe('ModelMerkleTree', () => {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await withTransaction(async (session) => {
+      await Transaction.mina(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      });
 
       const root = await modelMerkleTree.getRoot();
 
@@ -79,9 +80,9 @@ describe('ModelMerkleTree', () => {
   });
 
   test('should correctly retrieve Merkle witnesses for leaf nodes', async () => {
-    const modelMerkleTree = await withTransaction(async (session) => {
+    const modelMerkleTree = await Transaction.mina(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    });
 
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
@@ -89,9 +90,9 @@ describe('ModelMerkleTree', () => {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await withTransaction(async (session) => {
+      await Transaction.mina(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      });
 
       const witness = (await modelMerkleTree.getMerkleProof(index)).map(
         (w) => ({
@@ -107,17 +108,17 @@ describe('ModelMerkleTree', () => {
   test('merkle tree utilities correctness', async () => {
     const merkleTree = new MerkleTree(MERKLE_HEIGHT);
 
-    const modelMerkleTree = await withTransaction(async (session) => {
+    const modelMerkleTree = await Transaction.mina(async (session) => {
       return ModelMerkleTree.getInstance(DB_NAME, session);
-    }, 'proofService');
+    });
 
     for (let i = 0; i < 100; i++) {
       const index = BigInt(i);
       const value = Field(i + 1);
       merkleTree.setLeaf(index, value);
-      await withTransaction(async (session) => {
+      await Transaction.mina(async (session) => {
         await modelMerkleTree.setLeaf(index, value, session);
-      }, 'proofService');
+      });
 
       expect(await modelMerkleTree.countNodeByLevel(0)).toEqual(i + 1);
       expect(

@@ -31,7 +31,6 @@ export class ModelGeneral<T extends Document> extends ModelBasic<T> {
     update: UpdateFilter<T> | Document,
     options?: UpdateOptions
   ): Promise<UpdateResult<T>> {
-    logger.debug(`ModelGeneral::updateOne()`, filter, update);
     return this.collection.updateOne(filter, update, options);
   }
 

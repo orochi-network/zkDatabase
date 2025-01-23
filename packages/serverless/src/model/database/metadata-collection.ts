@@ -5,7 +5,7 @@ import {
   ModelGeneral,
   zkDatabaseConstant,
 } from '@zkdb/storage';
-import { ClientSession, FindOptions, OptionalId } from 'mongodb';
+import { ClientSession, FindOptions, OptionalId, NumericType } from 'mongodb';
 
 export class ModelMetadataCollection extends ModelGeneral<
   OptionalId<TCollectionMetadataRecord>
@@ -18,7 +18,7 @@ export class ModelMetadataCollection extends ModelGeneral<
   private constructor(databaseName: string) {
     super(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelMetadataCollection.collectionName
     );
   }
@@ -45,7 +45,7 @@ export class ModelMetadataCollection extends ModelGeneral<
   public static async init(databaseName: string, session?: ClientSession) {
     const collection = ModelCollection.getInstance(
       databaseName,
-      DATABASE_ENGINE.serverless,
+      DATABASE_ENGINE.dbServerless,
       ModelMetadataCollection.collectionName
     );
 

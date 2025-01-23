@@ -28,7 +28,19 @@ export class Group implements IGroup {
     this.apiClient = apiClient;
   }
 
-  async info(): Promise<TGroupDetail> {
+  async exist(): Promise<boolean> {
+    const groupList = (
+      await this.apiClient.group.groupListAll({
+        databaseName: this.databaseName,
+      })
+    )
+      .unwrap()
+      .map((e) => e.groupName)
+      .filter((e) => e.length > 0);
+    return groupList.includes(this.groupName);
+  }
+
+  async info(): Promise<TGroupDetail | null> {
     return (await this.apiClient.group.groupDetail(this.basicQuery)).unwrap();
   }
 

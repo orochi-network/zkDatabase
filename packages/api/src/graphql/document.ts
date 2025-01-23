@@ -6,22 +6,15 @@ import {
   TDocumentDropResponse,
   TDocumentFindRequest,
   TDocumentFindResponse,
-  TDocumentUpdateRequest,
-  TDocumentUpdateResponse,
   TDocumentMetadataRequest,
   TDocumentMetadataResponse,
+  TDocumentUpdateRequest,
+  TDocumentUpdateResponse,
 } from "@zkdb/common";
-import {
-  createMutateFunction,
-  createQueryFunction,
-  TApolloClient,
-} from "./common";
+import { createApi, TApolloClient } from "./common";
 
 export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
-  documentCreate: createMutateFunction<
-    TDocumentCreateRequest,
-    TDocumentCreateResponse
-  >(
+  documentCreate: createApi<TDocumentCreateRequest, TDocumentCreateResponse>(
     client,
     gql`
       mutation documentCreate(
@@ -42,12 +35,8 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentCreate,
   ),
-  documentDrop: createMutateFunction<
-    TDocumentDropRequest,
-    TDocumentDropResponse
-  >(
+  documentDrop: createApi<TDocumentDropRequest, TDocumentDropResponse>(
     client,
     gql`
       mutation documentDrop(
@@ -65,12 +54,8 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentDrop,
   ),
-  documentUpdate: createMutateFunction<
-    TDocumentUpdateRequest,
-    TDocumentUpdateResponse
-  >(
+  documentUpdate: createApi<TDocumentUpdateRequest, TDocumentUpdateResponse>(
     client,
     gql`
       mutation documentUpdate(
@@ -87,12 +72,8 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         )
       }
     `,
-    (data) => data.documentUpdate,
   ),
-  documentFind: createQueryFunction<
-    TDocumentFindRequest,
-    TDocumentFindResponse
-  >(
+  documentFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
     gql`
       query documentFind(
@@ -112,27 +93,14 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
             document
             createdAt
             updatedAt
-            metadata {
-              owner
-              group
-              permission
-              collectionName
-              docId
-              merkleIndex
-            }
-            queueStatus
           }
           total
           offset
         }
       }
     `,
-    (data) => data.documentFind,
   ),
-  documentHistoryFind: createQueryFunction<
-    TDocumentFindRequest,
-    TDocumentFindResponse
-  >(
+  documentHistoryFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
     gql`
       query documentHistoryFind(
@@ -157,9 +125,8 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentHistoryFind,
   ),
-  documentMetadata: createQueryFunction<
+  documentMetadata: createApi<
     TDocumentMetadataRequest,
     TDocumentMetadataResponse
   >(
@@ -184,6 +151,18 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (data) => data.documentMetadata,
+    (res) => {
+      if (res === null) {
+        return null;
+      }
+
+      const { merkleIndex, ...rest } = res;
+      return {
+        ...rest,
+        merkleIndex: BigInt(merkleIndex),
+      };
+    },
   ),
 });
+
+export default API_DOCUMENT;

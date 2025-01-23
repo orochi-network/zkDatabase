@@ -27,7 +27,7 @@ export const docId = (required: boolean = true) => {
     // docId is UUID type
     // regex for docId (20-36 characters long, including dashes)
     // @TODO: better check for ObjectId, for now MongoDB accepts both hexadecimal and dash-encoded string formats
-    .regex(/^[0-9a-fA-F\-]{20,36}$/)
+    .regex(/^[0-9a-fA-F-]{20,36}$/)
     .min(20)
     .max(36);
 
@@ -127,6 +127,6 @@ export const indexName = Joi.string()
   .pattern(/^[_a-z]+[_a-z0-9]+/i);
 
 export const JOI_ZKDB_FIELD_NAME = Joi.string()
-  .regex(/^[a-zA-Z][a-zA-Z0-9\_]{1,128}$/)
+  .regex(/^[a-zA-Z][a-zA-Z0-9_.]{1,128}$/)
   .trim()
   .required();
