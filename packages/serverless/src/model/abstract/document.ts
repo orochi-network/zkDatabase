@@ -50,6 +50,7 @@ export class ModelDocument extends ModelGeneral<
     }
   }
 
+  // eslint-disable-next-line class-methods-use-this
   get modelDatabase() {
     return ModelMetadataDatabase.getInstance();
   }

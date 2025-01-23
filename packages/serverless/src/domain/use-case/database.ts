@@ -1,5 +1,5 @@
+/* eslint-disable import/no-cycle */
 import { GROUP_DEFAULT_ADMIN } from '@common';
-import { logger } from '@helper';
 import {
   ModelGroup,
   ModelMetadataCollection,
@@ -11,7 +11,6 @@ import {
   ETransactionStatus,
   ETransactionType,
   TDatabaseParamCreate,
-  TDatabaseParamDeploy,
   TDatabaseParamIsOwner,
   TDatabaseParamListDetail,
   TMetadataDatabaseDetail,
@@ -21,11 +20,10 @@ import {
   ModelDatabase,
   ModelMetadataDatabase,
   ModelSequencer,
-  ModelTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Group } from './group';
-import Transaction from './transaction';
+import { Transaction } from './transaction';
 
 export class Database {
   public static async create(

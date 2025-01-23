@@ -56,7 +56,7 @@ const permissionSet = authorizeWrapper<
     permission: Joi.number().min(0).required(),
   }),
   async (_root, { databaseName, collectionName, docId, permission }, context) =>
-    await Transaction.serverless((session) =>
+    Transaction.serverless((session) =>
       PermissionSecurity.setPermission(
         databaseName,
         collectionName,
@@ -86,7 +86,7 @@ const ownershipTransfer = authorizeWrapper<
     { databaseName, collectionName, docId, groupType, newOwner },
     context
   ) =>
-    await Transaction.serverless((session) => {
+    Transaction.serverless((session) => {
       if (docId) {
         // Document case with docId
         return Ownership.transferDocument(
@@ -100,19 +100,18 @@ const ownershipTransfer = authorizeWrapper<
           },
           session
         );
-      } 
-        // Collection case without docId
-        return Ownership.transferCollection(
-          {
-            databaseName,
-            collectionName,
-            groupType,
-            newOwner,
-            actor: context.userName,
-          },
-          session
-        );
-      
+      }
+      // Collection case without docId
+      return Ownership.transferCollection(
+        {
+          databaseName,
+          collectionName,
+          groupType,
+          newOwner,
+          actor: context.userName,
+        },
+        session
+      );
     })
 );
 

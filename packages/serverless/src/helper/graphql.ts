@@ -32,7 +32,7 @@ export class GraphqlHelper {
   ): number | undefined {
     let selections = info.fieldNodes[0].selectionSet?.selections;
 
-    for (let i = 0; i < path.length - 1; i++) {
+    for (let i = 0; i < path.length - 1; i += 1) {
       const fieldName = path[i];
       const fieldNode = selections?.find(
         (v) => v.kind === Kind.FIELD && v.name.value === fieldName

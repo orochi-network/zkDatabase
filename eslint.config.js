@@ -32,6 +32,7 @@ export default [
     compat.extends("airbnb-base", "prettier", "plugin:import/typescript")
   ),
   {
+    ignores: ["**/test/**"], // Ignore all test folders in monorepo
     files: ["packages/*/src/**/*.+(ts|js)"],
     plugins: {
       "@typescript-eslint": typescriptEslint,
@@ -39,13 +40,14 @@ export default [
 
     languageOptions: {
       globals: {
-        ...globals.commonjs,
-        ...globals.node,
-        ...globals.browser,
+        // NOTE: Ignore for now, enabled later
+        // Current problem: https://github.com/sindresorhus/globals/issues/239
+        // ...globals.commonjs,
+        // ...globals.node,
+        // ...globals.browser,
         Atomics: "readonly",
         SharedArrayBuffer: "readonly",
       },
-
       parser: tsParser,
     },
 
@@ -56,7 +58,6 @@ export default [
         },
       },
     },
-
     rules: {
       "no-shadow": "off",
       "@typescript-eslint/no-shadow": "off",
