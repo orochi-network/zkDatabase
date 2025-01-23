@@ -1,5 +1,3 @@
- 
-
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
 import { TTransitionLogRecord } from '@zkdb/common';

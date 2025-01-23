@@ -1,6 +1,5 @@
- 
 import { IApiClient } from '@zkdb/api';
-import { IMinaProvider , TUserSignInResponse } from '@zkdb/common';
+import { IMinaProvider, TUserSignInResponse } from '@zkdb/common';
 import InMemoryStorage from '../storage/memory';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';

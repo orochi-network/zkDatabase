@@ -1,4 +1,3 @@
- 
 import { Permission, OwnershipAndPermission } from '@zkdb/permission';
 
 export interface IMetadata<T> {

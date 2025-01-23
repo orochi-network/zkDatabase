@@ -1,5 +1,3 @@
- 
- 
 import { IApiClient } from '@zkdb/api';
 import { TGroupListByUserResponse, TUser } from '@zkdb/common';
 import { IUser } from '../interfaces/user';

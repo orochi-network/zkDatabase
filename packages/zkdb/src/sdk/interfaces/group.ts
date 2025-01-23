@@ -1,5 +1,3 @@
- 
-
 import { TGroup, TGroupDetail } from '@zkdb/common';
 
 /**
