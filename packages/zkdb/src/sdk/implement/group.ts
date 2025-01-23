@@ -40,7 +40,7 @@ export class Group implements IGroup {
     return groupList.includes(this.groupName);
   }
 
-  async info(): Promise<TGroupDetail> {
+  async info(): Promise<TGroupDetail | null> {
     return (await this.apiClient.group.groupDetail(this.basicQuery)).unwrap();
   }
 

@@ -34,7 +34,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document
         }
       }
-    `
+    `,
   ),
   documentDrop: createApi<TDocumentDropRequest, TDocumentDropResponse>(
     client,
@@ -53,7 +53,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           acknowledged
         }
       }
-    `
+    `,
   ),
   documentUpdate: createApi<TDocumentUpdateRequest, TDocumentUpdateResponse>(
     client,
@@ -71,7 +71,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document: $document
         )
       }
-    `
+    `,
   ),
   documentFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -98,7 +98,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `
+    `,
   ),
   documentHistoryFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -124,7 +124,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `
+    `,
   ),
   documentMetadata: createApi<
     TDocumentMetadataRequest,
@@ -151,10 +151,11 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         }
       }
     `,
-    (res) => ({
-      ...res,
-      merkleIndex: BigInt(res.merkleIndex),
-    })
+    (res) =>
+      res && {
+        ...res,
+        merkleIndex: BigInt(res.merkleIndex),
+      },
   ),
 });
 
