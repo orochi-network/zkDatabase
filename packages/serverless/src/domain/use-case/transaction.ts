@@ -216,9 +216,21 @@ export class Transaction {
     actor: string,
     rawTransactionId: string,
     txHash: string,
-    session?: ClientSession
+    session: ClientSession
   ) {
     await Database.ownershipCheck(databaseName, actor, session);
+
+    await ModelMetadataDatabase.getInstance().updateOne(
+      { databaseName },
+      {
+        $set: {
+          deployStatus: ETransactionStatus.Signed,
+        },
+      },
+      {
+        session,
+      }
+    );
 
     await ModelTransaction.getInstance().updateOne(
       { _id: new ObjectId(rawTransactionId) },
