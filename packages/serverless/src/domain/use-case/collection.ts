@@ -147,7 +147,6 @@ export class Collection {
 
       const indexes = await imCollection.collection.indexes({ session });
 
-      // const x = await imCollection.collection.listIndexes();
       const validIndexes = indexes.filter(
         (indexDef): indexDef is typeof indexDef & { name: string } =>
           indexDef.name !== undefined
@@ -202,7 +201,7 @@ export class Collection {
         databaseName,
         DATABASE_ENGINE.dbServerless,
         collectionName
-      ).isIndexed(indexName, { session });
+      ).isIndexed(indexName);
     }
 
     throw Error(
@@ -262,16 +261,16 @@ export class Collection {
     }
 
     // Get system database
-    const modelDatabase = ModelDatabase.getInstance(databaseName);
+    const imDatabase = ModelDatabase.getInstance(databaseName);
 
-    if (await modelDatabase.isCollectionExist(collectionName)) {
-      throw Error(
+    if (await imDatabase.isCollectionExist(collectionName)) {
+      throw new Error(
         `Collection ${collectionName} already exist in database ${databaseName}`
       );
     }
 
     if (!(await Group.exist({ databaseName, groupName }, session))) {
-      throw Error(
+      throw new Error(
         `Group ${groupName} does not exist in database ${databaseName}`
       );
     }
@@ -287,7 +286,7 @@ export class Collection {
       );
     }
 
-    if (!(await modelDatabase.createCollection(collectionName, session))) {
+    if (!(await imDatabase.createCollection(collectionName, session))) {
       throw new Error(`Failed to create collection ${collectionName}`);
     }
 
