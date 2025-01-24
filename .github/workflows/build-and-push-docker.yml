@@ -10,7 +10,7 @@ on:
 jobs:
   on-success:
     name: Handle Success
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     env:
       version: ${{ github.sha }}
@@ -58,7 +58,7 @@ jobs:
 
   on-failure:
     name: Handle Failure
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     if: ${{ github.event.workflow_run.conclusion == 'failure' && github.ref == 'refs/heads/main' }}
     steps:
       - name: Failure Message
