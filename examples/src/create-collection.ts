@@ -1,6 +1,7 @@
 import { Schema } from '@zkdb/common';
 import { CircuitString, UInt32 } from 'o1js';
-import { ZkDatabase } from 'zkdb';
+import { Permission } from 'zkdb';
+import { zkdb } from './connection';
 
 class Book extends Schema.create({
   name: CircuitString,
@@ -9,16 +10,6 @@ class Book extends Schema.create({
 }) {}
 
 export type TBook = typeof Book;
-
-// In reality you better to encrypt your private key and these information
-// It will be better if your load it from .env file
-const zkdb = await ZkDatabase.connect({
-  userName: 'chiro-user',
-  privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
-  environment: 'node',
-  // This URL is for test environment
-  url: 'https://test-serverless.zkdatabase.org/graphql',
-});
 
 // Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
@@ -34,11 +25,31 @@ const dbTest = zkdb.db('db_test');
 // Create new instance of collection `db_test.book`
 const collectionBook = dbTest.collection<TBook>('book');
 
-const documentList = await collectionBook.findMany({ name: 'Brave New World' });
+// Define a group instance
+const librarian = dbTest.group('librarian');
 
-for (let i = 0; i < documentList.data.length; i += 1) {
-  console.log(`Document ${i}:`, documentList.data[i].document);
+if (!(await librarian.exist())) {
+  await librarian.create({ groupDescription: 'Group of librarians' });
 }
+
+// Create an
+await collectionBook.create(
+  Book,
+  Permission.from({
+    owner: {
+      read: true,
+      write: true,
+      system: true,
+      delete: true,
+    },
+    // Other users in this group can read and write
+    group: {
+      read: true,
+      write: true,
+    },
+  }),
+  'librarian'
+);
 
 // Sign out
 await zkdb.auth.signOut();
