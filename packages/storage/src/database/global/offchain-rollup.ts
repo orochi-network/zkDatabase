@@ -1,10 +1,7 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
-import {
-  TRollupOffChainRecord,
-  TRollupOffChainTransitionAggregate,
-} from '@zkdb/common';
-import { AggregationCursor, ClientSession, OptionalId } from 'mongodb';
+import { TRollupOffChainRecord } from '@zkdb/common';
+import { ClientSession, OptionalId } from 'mongodb';
 import { ModelGeneral } from '../base';
 import { ModelCollection } from '../general';
 
@@ -22,40 +19,6 @@ export class ModelRollupOffChain extends ModelGeneral<
       );
     }
     return this.instance;
-  }
-
-  public latestRollupOffChainWithTransitionLog(
-    filter: Partial<TRollupOffChainRecord>,
-    session: ClientSession
-  ): AggregationCursor<TRollupOffChainTransitionAggregate> {
-    return this.collection.aggregate<TRollupOffChainTransitionAggregate>(
-      [
-        {
-          $match: filter,
-        },
-        {
-          $sort: { step: -1 },
-        },
-        {
-          $lookup: {
-            from: zkDatabaseConstant.globalCollection.transaction,
-            localField: 'transitionLogObjectId',
-            foreignField: '_id',
-            as: 'transitionLog',
-          },
-        },
-        {
-          $addFields: {
-            // It's 1-1 relation so the array must have 1 element
-            transitionLog: { $arrayElemAt: ['$transitionLog', 0] },
-          },
-        },
-        { $limit: 1 },
-      ],
-      {
-        session,
-      }
-    );
   }
 
   public static async init(session?: ClientSession) {

@@ -75,14 +75,15 @@ export class RollupOffChain {
 
     // Get previous proof to update
     // NOTE: It must be sequential and can't be access with another queue task in the same database
-    const [previousRollupOffChain] = await imRollupOffChain
-      .latestRollupOffChainWithTransitionLog(
-        {
-          databaseName: task.databaseName,
-        },
-        sessionMina
-      )
-      .toArray();
+    const previousRollupOffChain = await imRollupOffChain.findOne(
+      {
+        databaseName: task.databaseName,
+      },
+      {
+        session: sessionMina,
+        sort: { step: -1 },
+      }
+    );
 
     if (!previousRollupOffChain) {
       // After init, output step must be 1n and equals to operationNumber 1n, throw Error if not
@@ -106,7 +107,7 @@ export class RollupOffChain {
     const previousZkProof: TRollupSerializedProof = {
       step: previousRollupOffChain.step,
       proof: previousRollupOffChain.proof,
-      merkleRootOld: previousRollupOffChain.transitionLog.merkleRootOld,
+      merkleRootOld: transitionLog.merkleRootOld,
     };
 
     const zkProof = await RollupOffChain.update({

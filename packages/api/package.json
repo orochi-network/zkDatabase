@@ -19,7 +19,7 @@
   "description": "",
   "dependencies": {
     "@apollo/client": "^3.12.4",
-    "@zkdb/common": "0.1.4-dev2",
+    "@zkdb/common": "0.1.5-dev2",
     "react": "^19.0.0"
   },
   "peerDependencies": {
