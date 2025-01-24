@@ -72,6 +72,8 @@ export const typeDefsDatabase = gql`
     verificationKeyHash: String!
     verificationKey: VerificationKeySerialized!
     contractName: ContractName!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   type VerificationKeyResponse {
@@ -221,9 +223,13 @@ const dbVerificationKey = publicWrapper<
   }
 
   const vkList = await ModelVerificationKey.getInstance()
-    .find({
-      merkleHeight: metadataDatabase.merkleHeight,
-    })
+    .find(
+      {
+        merkleHeight: metadataDatabase.merkleHeight,
+      },
+      // Hide _id
+      { projection: { _id: 0 } }
+    )
     .toArray();
 
   if (!vkList) {

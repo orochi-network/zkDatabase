@@ -1,3 +1,4 @@
+import { WithoutId } from 'mongodb';
 import { TDbRecord } from './common';
 import { TDatabaseRequest } from './database';
 
@@ -24,5 +25,5 @@ export type TVerificationKeyRequest = Pick<TDatabaseRequest, 'databaseName'>;
 
 export type TVerificationKeyResponse = Record<
   EContractName,
-  TZkDbVerificationKeyRecord
+  WithoutId<TZkDbVerificationKeyRecord>
 > | null;
