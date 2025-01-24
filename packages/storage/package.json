@@ -32,6 +32,6 @@
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.19",
-    "@zkdb/common": "0.1.3-dev2"
+    "@zkdb/common": "0.1.4-dev2"
   }
 }
