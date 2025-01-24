@@ -7,11 +7,7 @@ import {
   ETransactionType,
   TTransactionDraftResponse,
 } from '@zkdb/common';
-import {
-  ModelDatabase,
-  ModelMetadataDatabase,
-  ModelTransaction,
-} from '@zkdb/storage';
+import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { Database } from './database';

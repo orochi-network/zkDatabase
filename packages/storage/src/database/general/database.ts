@@ -52,9 +52,10 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
 
   public async isCollectionExist(
     collectionName: string,
+    filter?: Document,
     options?: ListCollectionsOptions
   ): Promise<boolean> {
-    return (await this.listCollections(options)).some(
+    return (await this.listCollections(filter, options)).some(
       (collection) => collection === collectionName
     );
   }
@@ -63,7 +64,9 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     collectionName: string,
     session?: ClientSession
   ): Promise<boolean> {
-    const isExist = await this.isCollectionExist(collectionName, { session });
+    const isExist = await this.isCollectionExist(collectionName, undefined, {
+      session,
+    });
     if (!isExist) {
       const result = await this.db.createCollection(collectionName, {
         session,
@@ -77,7 +80,9 @@ export class ModelDatabase<T extends Document> extends ModelBasic<T> {
     collectionName: string,
     session?: ClientSession
   ): Promise<boolean> {
-    const isExist = await this.isCollectionExist(collectionName, { session });
+    const isExist = await this.isCollectionExist(collectionName, undefined, {
+      session,
+    });
     if (isExist) {
       const dropResult = await this.db
         .collection(collectionName)
