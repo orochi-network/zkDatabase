@@ -5,9 +5,15 @@ import { readFileSync } from "node:fs";
 const execPromise = promisify(exec);
 
 async function execCommand(command) {
+  const startTime = Date.now();
   const { stdout, stderr } = await execPromise(command);
-  process.stdout.write(stdout);
-  process.stderr.write(stderr);
+  process.stdout.write(
+    `Completed in ${Date.now() - startTime} ms: \x1b[32m${command}\x1b[0m`
+  );
+  if (stderr) {
+    process.stdout.write(stdout);
+    process.stderr.write(stderr);
+  }
 }
 
 function readJsonFile(path) {
@@ -45,6 +51,8 @@ for (let i = 0; i < allFile.length; i += 1) {
 }
 
 async function main() {
+  allFile.push("./packages/serverless/package.json");
+  allFile.push("./packages/mina-service/package.json");
   for (let i = 0; i < allFile.length; i += 1) {
     const jsonFile = readJsonFile(allFile[i]);
     const dependencies = Object.entries(
@@ -61,7 +69,7 @@ async function main() {
 
     if (listPackage.length > 0) {
       const command = `yarn workspace ${jsonFile.name} add ${listPackage.join(" ")}\n`;
-      process.stdout.write(`Execute: \x1b[32m ${command}\x1b[0m`);
+      process.stdout.write(`Execute: \x1b[33m${command}\x1b[0m`);
       // eslint-disable-next-line no-await-in-loop
       await execCommand(command);
     }
