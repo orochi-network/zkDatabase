@@ -3,12 +3,14 @@ import { CircuitString, UInt32 } from 'o1js';
 import { Permission } from 'zkdb';
 import { zkdb } from './connection';
 
+// Define the Book schema using Schema's create method and export it as TBook type alias for easy use in code
 class Book extends Schema.create({
   name: CircuitString,
   author: CircuitString,
   release: UInt32,
 }) {}
 
+// Define a type alias for the Book schema
 export type TBook = typeof Book;
 
 // Check user existence then create
@@ -23,7 +25,7 @@ await zkdb.auth.signIn();
 const dbTest = zkdb.db('db_test');
 
 // Create new instance of collection `db_test.book`
-const collectionBook = dbTest.collection<TBook>('book');
+const collectionBook = dbTest.collection<TBook>(`book`);
 
 // Define a group instance
 const librarian = dbTest.group('librarian');
