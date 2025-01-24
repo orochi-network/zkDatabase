@@ -161,13 +161,6 @@ export class Transaction {
         { session }
       );
 
-      // Contract already deploy, throw error
-      if (database.appPublicKey) {
-        throw new Error(
-          `Transaction already deployed database ${databaseName}`
-        );
-      }
-
       // Contract not deploy yet, no data -> add to queue, return null (make sure queue not deduplicated)
       if (!transactionDeploy) {
         await Transaction.enqueue(
