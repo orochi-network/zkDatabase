@@ -69,10 +69,3 @@ export type TRollupOffChainHistoryResponse = TPaginationReturn<
 export type TRollupOffChainHistoryParam = TRollupOffChainHistoryRequest;
 
 // Common type
-
-export type TRollupOffChainTransitionAggregate = Omit<
-  TRollupOffChainRecord,
-  'transitionLogObjectId'
-> & {
-  transitionLog: TTransitionLogRecord;
-};

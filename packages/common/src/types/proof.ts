@@ -37,7 +37,3 @@ export type TZkProofResponse = Omit<
   TRollupSerializedProof,
   'merkleRootOld'
 > | null;
-
-export type TRollUpOffChainAndTransitionAggregate = TRollupOffChainRecord & {
-  transition: TTransitionLogRecord;
-};

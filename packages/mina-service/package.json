@@ -33,9 +33,9 @@
     "@orochi-network/framework": "^2.3.22",
     "@orochi-network/queue": "^0.1.11",
     "@orochi-network/vault": "^1.4.15",
-    "@zkdb/common": "0.1.4-dev2",
+    "@zkdb/common": "0.1.5-dev2",
     "@zkdb/smart-contract": "1.1.9-dev1",
-    "@zkdb/storage": "1.1.5",
+    "@zkdb/storage": "1.1.6",
     "graphql-request": "7.1.2"
   }
 }
