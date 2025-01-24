@@ -64,7 +64,14 @@ jobs:
 
             if [[ " ${LIST_PACKAGE[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"
-              NPM_VERSION=$(npm show "$PACKAGE_NAME" version 2>/dev/null || echo 0.0.0)
+
+              # Check for tag in version
+              TAG=$(node -p "
+                const version = require('./package.json').version;
+                const tag = /alpha|dev|rc/.exec(version)?.[0] || 'latest';
+                tag;
+              ")
+              NPM_VERSION=$(npm show "$PACKAGE_NAME" dist-tags."$TAG" 2>/dev/null || echo 0.0.0)
               PACKAGE_VERSION=$(node -p "require('./package.json').version")
               echo "NPM_VERSION = " $NPM_VERSION
               echo "PACKAGE_VERSION = " $PACKAGE_VERSION
@@ -83,13 +90,6 @@ jobs:
               if [ "$VERSION_COMPARE" = "false" ]; then
                 echo "Ignore ${PACKAGE_NAME} since no changes"
               else
-                echo "Detected: New version of ${PACKAGE_NAME}"
-                # Check for tag in version
-                TAG=$(node -p "
-                  const version = require('./package.json').version;
-                  const tag = /alpha|dev|rc/.exec(version)?.[0] || 'latest';
-                  tag;
-                ")
                 echo "Publishing ${PACKAGE_NAME} with tag ${TAG}"
                 rm -rf ./build && npm run build && npm publish --tag $TAG --access public
               fi
