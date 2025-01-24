@@ -7,7 +7,11 @@ import {
   ETransactionType,
   TTransactionDraftResponse,
 } from '@zkdb/common';
-import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
+import {
+  ModelDatabase,
+  ModelMetadataDatabase,
+  ModelTransaction,
+} from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
 import { PublicKey } from 'o1js';
 import { Database } from './database';
@@ -216,9 +220,21 @@ export class Transaction {
     actor: string,
     rawTransactionId: string,
     txHash: string,
-    session?: ClientSession
+    session: ClientSession
   ) {
     await Database.ownershipCheck(databaseName, actor, session);
+
+    await ModelMetadataDatabase.getInstance().updateOne(
+      { databaseName },
+      {
+        $set: {
+          deployStatus: ETransactionStatus.Signed,
+        },
+      },
+      {
+        session,
+      }
+    );
 
     await ModelTransaction.getInstance().updateOne(
       { _id: new ObjectId(rawTransactionId) },

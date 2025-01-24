@@ -101,12 +101,17 @@ const transactionSubmit = authorizeWrapper<
     txHash: Joi.string().required(),
   }),
   async (_root, args, ctx) =>
-    Transaction.submit(
-      args.databaseName,
-      ctx.userName,
-      args.rawTransactionId,
-      args.txHash
-    )
+    MongoTransaction.serverless(async (session) => {
+      const transactionSubmit = await Transaction.submit(
+        args.databaseName,
+        ctx.userName,
+        args.rawTransactionId,
+        args.txHash,
+        session
+      );
+
+      return transactionSubmit;
+    })
 );
 
 export const resolversTransaction = {
