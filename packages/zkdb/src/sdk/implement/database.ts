@@ -93,7 +93,14 @@ export class Database implements IDatabase {
   }
 
   async zkProof(): Promise<TZkProofResponse> {
-    return (await this.apiClient.proof.zkProof(this.basicQuery)).unwrap();
+    const result = await this.apiClient.proof.zkProof(this.basicQuery);
+    if (result.isValid()) {
+      return result.unwrap();
+    }
+    if (result.isUndefined()) {
+      return null;
+    }
+    throw result.unwrap();
   }
 
   async zkProofStatus(): Promise<TZkProofStatusResponse> {
@@ -151,9 +158,16 @@ export class Database implements IDatabase {
   }
 
   async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
-    return (
-      await this.apiClient.rollup.rollupOnChainState(this.basicQuery)
-    ).unwrap();
+    const result = await this.apiClient.rollup.rollupOnChainState(
+      this.basicQuery
+    );
+    if (result.isValid()) {
+      return result.unwrap();
+    }
+    if (result.isUndefined()) {
+      return null;
+    }
+    throw result.unwrap();
   }
 
   async verificationKey(): Promise<TVerificationKeyResponse> {

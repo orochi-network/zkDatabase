@@ -1,24 +1,17 @@
 import { Schema } from '@zkdb/common';
 import { CircuitString, UInt32 } from 'o1js';
-import { Permission, ZkDatabase } from 'zkdb';
+import { Permission } from 'zkdb';
+import { zkdb } from './connection';
 
+// Define the Book schema using Schema's create method and export it as TBook type alias for easy use in code
 class Book extends Schema.create({
   name: CircuitString,
   author: CircuitString,
   release: UInt32,
 }) {}
 
+// Define a type alias for the Book schema
 export type TBook = typeof Book;
-
-// In reality you better to encrypt your private key and these information
-// It will be better if your load it from .env file
-const zkdb = await ZkDatabase.connect({
-  userName: 'chiro-user',
-  privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
-  environment: 'node',
-  // This URL is for test environment
-  url: 'https://test-serverless.zkdatabase.org/graphql',
-});
 
 // Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
@@ -32,7 +25,7 @@ await zkdb.auth.signIn();
 const dbTest = zkdb.db('db_test');
 
 // Create new instance of collection `db_test.book`
-const collectionBook = dbTest.collection<TBook>('book');
+const collectionBook = dbTest.collection<TBook>(`book`);
 
 // Define a group instance
 const librarian = dbTest.group('librarian');
