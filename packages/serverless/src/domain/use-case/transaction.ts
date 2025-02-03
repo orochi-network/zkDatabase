@@ -221,7 +221,7 @@ export class Transaction {
     await Database.ownershipCheck(databaseName, actor, session);
 
     await ModelMetadataDatabase.getInstance().updateOne(
-      { databaseName },
+      { databaseName, deployStatus: ETransactionStatus.Unsigned },
       {
         $set: {
           deployStatus: ETransactionStatus.Signed,

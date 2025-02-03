@@ -3,10 +3,9 @@
 import { ObjectId } from 'mongodb';
 import { JsonProof } from 'o1js';
 import { TDbRecord } from './common';
-import { TMetadataDatabase } from './database';
+import { TDatabaseRequest, TMetadataDatabase } from './database';
 import { TPagination, TPaginationReturn } from './pagination';
-import { TGenericQueueBase } from './queue';
-import { TTransitionLogRecord } from './transition-log';
+import { EQueueTaskStatus, TGenericQueueBase } from './queue';
 
 // Base type
 
@@ -50,7 +49,22 @@ export type TRollupOffChainRecord = TDbRecord<
       transitionLogObjectId: ObjectId;
     }
 >;
+
+export type TRollupOffChainState = Pick<
+  TRollupBaseHistory,
+  'databaseName' | 'merkleRootNew' | 'merkleRootOld'
+> & {
+  rollupOffChainState: EQueueTaskStatus;
+  latestRollupOffChainSuccess: Date | null;
+};
+
 // Request & Response
+
+// ==== Offchain State ====
+
+export type TRollupOffChainStateRequest = TDatabaseRequest;
+
+export type TRollupOffChainStateResponse = TRollupOffChainState | null;
 
 // ==== OffChain History ====
 

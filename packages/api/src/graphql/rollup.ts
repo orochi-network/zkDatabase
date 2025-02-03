@@ -2,6 +2,8 @@ import { gql } from "@apollo/client";
 import {
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
+  TRollupOffChainStateRequest,
+  TRollupOffChainStateResponse,
   TRollupOnChainCreateRequest,
   TRollupOnChainCreateResponse,
   TRollupOnChainHistoryRequest,
@@ -101,6 +103,23 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
           rollupDifferent
           rollupOnChainState
           latestRollupOnChainSuccess
+        }
+      }
+    `
+  ),
+  rollupOffChainState: createApi<
+    TRollupOffChainStateRequest,
+    TRollupOffChainStateResponse
+  >(
+    client,
+    gql`
+      query RollupOffChainState($databaseName: String!) {
+        rollupOffChainState(databaseName: $databaseName) {
+          databaseName
+          merkleRootNew
+          merkleRootOld
+          rollupOffChainState
+          latestRollupOffChainSuccess
         }
       }
     `
