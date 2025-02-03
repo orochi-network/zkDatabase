@@ -4,6 +4,8 @@ import {
   pagination,
   TRollupOffChainHistoryRequest,
   TRollupOffChainHistoryResponse,
+  TRollupOffChainStateRequest,
+  TRollupOffChainStateResponse,
   TRollupOnChainCreateRequest,
   TRollupOnChainCreateResponse,
   TRollupOnChainHistoryRequest,
@@ -41,7 +43,7 @@ type RollupOnChainHistoryItem {
   databaseName: String!
   onChainStep: BigInt
   merkleRootNew: String!
-  merkleRootOld: String!
+  merkleRootOld: String
   status: TransactionStatus
   error: String
   txHash: String
@@ -80,10 +82,19 @@ type RollupOnChainState {
   latestRollupOnChainSuccess: Date
 }
 
+type RollupOffChainState {
+  databaseName: String!
+  merkleRootNew: String!
+  merkleRootOld: String!
+  rollupOffChainState: QueueTaskStatus!
+  latestRollupOffChainSuccess: Date
+}
+
 extend type Query {
   rollupOnChainHistory(databaseName: String!, pagination: PaginationInput): RollupOnChainHistoryListResponse!
   rollupOffChainHistory(databaseName: String!, pagination: PaginationInput): RollupOffChainHistoryListResponse!
-  rollupState(databaseName: String!): RollupOnChainState
+  rollupOnChainState(databaseName: String!): RollupOnChainState
+  rollupOffChainState(databaseName: String!): RollupOffChainState
 }
 
 extend type Mutation {
@@ -104,11 +115,20 @@ const JOI_ROLLUP_OFFCHAIN_HISTORY_LIST =
   });
 
 // Query
-const rollupState = authorizeWrapper<
+const rollupOnChainState = authorizeWrapper<
   TRollupOnChainStateRequest,
   TRollupOnChainStateResponse
 >(Joi.object({ databaseName }), async (_root, { databaseName }) =>
-  Rollup.state(databaseName)
+  Rollup.onChainState(databaseName)
+);
+
+const rollupOffChainState = authorizeWrapper<
+  TRollupOffChainStateRequest,
+  TRollupOffChainStateResponse
+>(Joi.object({ databaseName }), async (_root, { databaseName }) =>
+  Transaction.mina(async (session) =>
+    Rollup.offChainState(databaseName, session)
+  )
 );
 
 const rollupOnChainHistory = authorizeWrapper<
@@ -151,7 +171,8 @@ export const resolversRollup = {
   Query: {
     rollupOnChainHistory,
     rollupOffChainHistory,
-    rollupState,
+    rollupOnChainState,
+    rollupOffChainState,
   },
   Mutation: {
     rollupCreate,

@@ -1,5 +1,6 @@
 import { logger } from '@helper';
 import {
+  EQueueTaskStatus,
   ERollupState,
   ETransactionStatus,
   ETransactionType,
@@ -285,7 +286,69 @@ export class Rollup {
     };
   }
 
-  static async state(
+  static async offChainState(databaseName: string, session: ClientSession) {
+    const imRollupOffChain = ModelRollupOffChain.getInstance();
+
+    const imRollupOffChainQueue = await ModelGenericQueue.getInstance(
+      EQueueType.RollupOffChainQueue,
+      session
+    );
+
+    const imTransitionLog = await ModelTransitionLog.getInstance(
+      databaseName,
+      session
+    );
+
+    const latestRollupOffChain = await imRollupOffChain.findOne(
+      {
+        databaseName,
+      },
+      { sort: { updatedAt: -1, createdAt: -1 }, session }
+    );
+
+    if (!latestRollupOffChain) {
+      return null;
+    }
+
+    const transitionLog = await imTransitionLog.findOne(
+      {
+        _id: latestRollupOffChain.transitionLogObjectId,
+      },
+      { session }
+    );
+
+    if (!transitionLog) {
+      throw new Error(
+        `Cannot found transition log for rollup ${latestRollupOffChain._id}`
+      );
+    }
+
+    const rollupOffChainQueueList = await imRollupOffChainQueue
+      .find(
+        {
+          databaseName,
+        },
+        { sort: { updatedAt: -1, createdAt: -1 }, session }
+      )
+      .toArray();
+
+    if (!rollupOffChainQueueList.length) {
+      return null;
+    }
+
+    return {
+      databaseName,
+      merkleRootNew: transitionLog.merkleRootNew,
+      merkleRootOld: transitionLog.merkleRootOld,
+      rollupOffChainState: rollupOffChainQueueList[0].status,
+      latestRollupOffChainSuccess:
+        rollupOffChainQueueList.find(
+          (queue) => queue.status === EQueueTaskStatus.Success
+        )?.updatedAt || null,
+    };
+  }
+
+  static async onChainState(
     databaseName: string
   ): Promise<TRollupOnChainStateResponse> {
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();

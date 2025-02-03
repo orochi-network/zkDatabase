@@ -6,6 +6,7 @@ import {
   TGroupListAllResponse,
   TPagination,
   TRollupOffChainHistoryResponse,
+  TRollupOffChainStateResponse,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
   TSchemaExtendable,
@@ -159,6 +160,19 @@ export class Database implements IDatabase {
 
   async rollUpOnChainState(): Promise<TRollupOnChainStateResponse> {
     const result = await this.apiClient.rollup.rollupOnChainState(
+      this.basicQuery
+    );
+    if (result.isValid()) {
+      return result.unwrap();
+    }
+    if (result.isUndefined()) {
+      return null;
+    }
+    throw result.unwrap();
+  }
+
+  async rollUpOffChainState(): Promise<TRollupOffChainStateResponse> {
+    const result = await this.apiClient.rollup.rollupOffChainState(
       this.basicQuery
     );
     if (result.isValid()) {

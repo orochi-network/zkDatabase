@@ -5,6 +5,7 @@ import {
   TGroupListAllResponse,
   TPagination,
   TRollupOffChainHistoryResponse,
+  TRollupOffChainStateResponse,
   TRollupOnChainHistoryResponse,
   TRollupOnChainStateResponse,
   TSchemaExtendable,
@@ -75,6 +76,8 @@ export interface IDatabase {
   ): Promise<TRollupOffChainHistoryResponse>;
 
   rollUpOnChainState(): Promise<TRollupOnChainStateResponse>;
+
+  rollUpOffChainState(): Promise<TRollupOffChainStateResponse>;
 
   // Verification key
   verificationKey(): Promise<TVerificationKeyResponse>;
