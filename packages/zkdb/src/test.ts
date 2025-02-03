@@ -1,15 +1,21 @@
-import { CircuitString, UInt64 } from 'o1js';
-import { Schema, ZkDatabase } from './index';
+import { ZkDatabase } from './index';
 
-/*
-const zkdb = await ZkDatabase.connect({
+// In reality you better to encrypt your private key and these information
+// It will be better if your load it from .env file
+export const zkdb = await ZkDatabase.connect({
   userName: 'chiro-user',
   privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
   environment: 'node',
-  url: 'http://zkdb-serverless.zenfactory.org/graphql',
-}); */
+  // This URL is for local environment
+  url: 'http://0.0.0.0:4000/graphql',
+});
 
-const zkdb = await ZkDatabase.connect(
+// Sign in
+await zkdb.auth.signIn();
+
+// Create new instance of `db_test`
+const dbTest = zkdb.db('db_test');
+
   'zkdb+http://chiro-user:EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP@localhost:4000/graphql'
 );
 
@@ -41,6 +47,6 @@ for (let i = 0; i < 10; i += 1) {
 
 console.log(await zkdb.db(DB_NAME).rollUpOffChainHistory());
 
-console.log(await zkdb.db(DB_NAME).info());
 
+// Sign out
 await zkdb.auth.signOut();
