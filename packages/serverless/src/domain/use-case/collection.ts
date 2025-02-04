@@ -13,7 +13,12 @@ import {
   TSchemaSerializedFieldDefinition,
 } from '@zkdb/common';
 import { Permission, PermissionBase } from '@zkdb/permission';
-import { DATABASE_ENGINE, ModelCollection, ModelDatabase } from '@zkdb/storage';
+import {
+  DATABASE_ENGINE,
+  ModelCollection,
+  ModelDatabase,
+  zkDatabaseConstant,
+} from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Group } from './group';
 import { PermissionSecurity } from './permission-security';
@@ -149,7 +154,8 @@ export class Collection {
 
       const validIndexes = indexes.filter(
         (indexDef): indexDef is typeof indexDef & { name: string } =>
-          indexDef.name !== undefined
+          indexDef.name !== undefined &&
+          !indexDef.name.startsWith(zkDatabaseConstant.systemIndex)
       );
 
       const indexList: TCollectionIndexInfo[] = validIndexes.map((indexDef) => {
@@ -181,7 +187,7 @@ export class Collection {
       return indexList;
     }
 
-    throw Error(
+    throw new Error(
       `Access denied: Actor '${actor}' lacks 'read' permission to read indexes in the '${collectionName}' collection.`
     );
   }
@@ -219,6 +225,11 @@ export class Collection {
       paramCollection,
       session
     );
+
+    if (indexName.startsWith(zkDatabaseConstant.systemIndex)) {
+      throw new Error('Cannot delete zkdatabase system index');
+    }
+
     if (actorPermission.system) {
       // TODO: Owner should able to drop
       if (await Collection.indexExist(paramCollection, indexName, session)) {
@@ -229,12 +240,12 @@ export class Collection {
         ).dropIndex(indexName, { session });
       }
 
-      throw Error(
+      throw new Error(
         `Index '${indexName}' does not exist on ${databaseName}/${collectionName}`
       );
     }
 
-    throw Error(
+    throw new Error(
       `Access denied: Actor '${actor}' lacks 'system' permission to drop indexes 
       in the '${collectionName}' collection.`
     );
