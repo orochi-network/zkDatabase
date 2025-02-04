@@ -524,9 +524,7 @@ in database '${databaseName}'.`
     const queuedTaskForThisDocument = await imDocumentQueue.findOne(
       {
         databaseName,
-        data: {
-          docId,
-        },
+        'data.docId': docId,
       },
       { session: sessionMina }
     );
