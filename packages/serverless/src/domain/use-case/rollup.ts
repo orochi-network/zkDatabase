@@ -39,6 +39,19 @@ export class Rollup {
       compoundSession.sessionServerless
     );
 
+    const imMetadataDatabase = ModelMetadataDatabase.getInstance();
+
+    const metadataDatabase = await imMetadataDatabase.findOne(
+      { databaseName },
+      { session: compoundSession.sessionServerless }
+    );
+
+    if (metadataDatabase?.deployStatus !== ETransactionStatus.Confirmed) {
+      throw new Error(
+        'Database need to be deployed onchain to make rollup onchain. Please deploy database first'
+      );
+    }
+
     const imRollupOffChain = ModelRollupOffChain.getInstance();
 
     const latestOffChainRollupProof = await imRollupOffChain.findOne(
