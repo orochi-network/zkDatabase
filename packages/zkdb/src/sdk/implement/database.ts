@@ -13,16 +13,17 @@ import {
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
-  TVerificationKeyResponse,
-  TZkProofResponse,
   TZkProofStatusResponse,
 } from '@zkdb/common';
+import { Field, VerificationKey, verify } from 'o1js';
 import {
   ICollection,
   IDatabase,
   IGroup,
   IUser,
   TDatabaseConfig,
+  TZkDbProof,
+  TZkDbProofVerify,
 } from '../interfaces';
 import { Collection } from './collection';
 import { Group } from './group';
@@ -93,15 +94,40 @@ export class Database implements IDatabase {
     ).unwrap();
   }
 
-  async zkProof(): Promise<TZkProofResponse> {
+  async zkProof(): Promise<TZkDbProof | null> {
     const result = await this.apiClient.proof.zkProof(this.basicQuery);
     if (result.isValid()) {
-      return result.unwrap();
+      const zkDBProof = result.unwrap();
+      if (zkDBProof) {
+        return {
+          step: BigInt(zkDBProof.step),
+          proof: zkDBProof.proof,
+          merkleRoot: zkDBProof.proof.publicOutput[1] || '',
+        };
+      }
+      return null;
     }
     if (result.isUndefined()) {
       return null;
     }
     throw result.unwrap();
+  }
+
+  async zkProofVerify(): Promise<TZkDbProofVerify> {
+    const verificationKey = await this.verificationKey();
+    const zkDbProof = await this.zkProof();
+    if (!verificationKey || !zkDbProof) {
+      return {
+        step: 0n,
+        merkleRoot: '',
+        valid: false,
+      };
+    }
+    return {
+      step: zkDbProof.step,
+      merkleRoot: zkDbProof.merkleRoot,
+      valid: await verify(zkDbProof.proof, verificationKey),
+    };
   }
 
   async zkProofStatus(): Promise<TZkProofStatusResponse> {
@@ -184,10 +210,17 @@ export class Database implements IDatabase {
     throw result.unwrap();
   }
 
-  async verificationKey(): Promise<TVerificationKeyResponse> {
-    return (
+  async verificationKey(): Promise<VerificationKey | null> {
+    const result = (
       await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
+    if (result) {
+      const {
+        Rollup: { data, hash },
+      } = result;
+      return { data, hash: Field(hash) };
+    }
+    return null;
   }
 
   async info(): Promise<TDatabaseInfoResponse> {

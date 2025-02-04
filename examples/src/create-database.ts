@@ -2,7 +2,7 @@ import { zkdb } from './connection';
 
 // Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
-  await zkdb.auth.signUp('chiro-user');
+  await zkdb.auth.signUp('chiro@orochi.network');
 }
 
 // Sign in
