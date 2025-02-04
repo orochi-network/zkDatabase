@@ -17,7 +17,7 @@ if (!(await zkdb.auth.isUserExist('chiro-user'))) {
   await zkdb.auth.signUp('chiro@orochi.network');
 }
 
-const DB_NAME = 'zkdb_test1';
+const DB_NAME = 'zkdb_test';
 
 console.log(await zkdb.auth.signIn());
 
