@@ -92,8 +92,8 @@ type RollupOffChainState {
 
 extend type Query {
   rollupOnChainHistory(databaseName: String!, pagination: PaginationInput): RollupOnChainHistoryListResponse!
-  rollupOffChainHistory(databaseName: String!, pagination: PaginationInput): RollupOffChainHistoryListResponse!
   rollupOnChainState(databaseName: String!): RollupOnChainState
+  rollupOffChainHistory(databaseName: String!, pagination: PaginationInput): RollupOffChainHistoryListResponse!
   rollupOffChainState(databaseName: String!): RollupOffChainState
 }
 

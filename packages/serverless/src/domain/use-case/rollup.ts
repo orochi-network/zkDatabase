@@ -18,6 +18,7 @@ import {
   ModelMetadataDatabase,
   ModelRollupOffChain,
   ModelRollupOnChainHistory,
+  ModelTransaction,
   ModelTransitionLog,
   TCompoundSession,
 } from '@zkdb/storage';
@@ -158,7 +159,12 @@ export class Rollup {
         {
           databaseName,
         },
-        { session }
+        {
+          session,
+          sort: { createdAt: -1 },
+          limit: pagination?.limit,
+          skip: pagination?.offset,
+        }
       )
       .toArray();
 
@@ -207,6 +213,7 @@ export class Rollup {
       });
 
     return {
+      // data: rollupOffChainQueueAndTransition,
       data: rollupOffChainQueueAndTransition,
       total: rollupOffChainQueueAndTransition.length,
       offset: pagination?.offset || 0,
@@ -242,6 +249,7 @@ export class Rollup {
         {
           databaseName: metadataDatabase?.databaseName,
         },
+        pagination,
         session
       )
       .toArray();
@@ -353,6 +361,21 @@ export class Rollup {
   ): Promise<TRollupOnChainStateResponse> {
     const imRollupOnChainHistory = ModelRollupOnChainHistory.getInstance();
     const imRollupOffChain = ModelRollupOffChain.getInstance();
+    const imTransaction = ModelTransaction.getInstance();
+
+    const transactionDeployConfirmed = await imTransaction.findOne({
+      databaseName,
+      transactionType: ETransactionType.Deploy,
+      status: ETransactionStatus.Confirmed,
+    });
+
+    if (!transactionDeployConfirmed) {
+      logger.debug(
+        `Database ${databaseName} need to be deployed first to make an onchain rollup`
+      );
+      return null;
+    }
+
     // Get latest rollup history
     const rollupOnChainHistory = await imRollupOnChainHistory
       .rollupOnChainHistoryAndTransaction({
@@ -379,6 +402,10 @@ export class Rollup {
     // We can .at(0) and check undefined instead of arr[0] don't give type check when array is undefined
     const latestRollupOnChain = rollupOnChainHistory.at(0);
 
+    if (!latestRollupOnChain) {
+      return null;
+    }
+
     const latestRollupOnChainSuccess = rollupOnChainHistory.find(
       (e) => e.transaction.status === ETransactionStatus.Confirmed
     )?.updatedAt;
@@ -394,13 +421,40 @@ export class Rollup {
       );
     }
 
+    let rollupOnChainState: ERollupState = ERollupState.Unavailable;
+
+    if (rollupDifferent > 0) {
+      rollupOnChainState = ERollupState.Outdated;
+    } else {
+      const imTransaction = ModelTransaction.getInstance();
+      const rollupTransaction = await imTransaction.findOne(
+        { databaseName, transactionType: ETransactionType.Rollup },
+        { sort: { updatedAt: -1, createdAt: -1 } }
+      );
+
+      switch (rollupTransaction?.status) {
+        case ETransactionStatus.Confirmed:
+          rollupOnChainState = ERollupState.Updated;
+          break;
+        case ETransactionStatus.Confirming:
+        case ETransactionStatus.Unconfirmed:
+        case ETransactionStatus.Signed:
+          rollupOnChainState = ERollupState.Updating;
+          break;
+        case ETransactionStatus.Failed:
+          rollupOnChainState = ERollupState.Failed;
+          break;
+        default:
+          rollupOnChainState = ERollupState.Outdated;
+      }
+    }
+
     return {
       databaseName,
-      merkleRootNew: latestRollupOnChain?.merkleRootNew || null,
-      merkleRootOld: latestRollupOnChain?.merkleRootOld || null,
+      merkleRootNew: latestRollupOnChain.merkleRootNew,
+      merkleRootOld: latestRollupOnChain.merkleRootOld || null,
       rollupDifferent,
-      rollupOnChainState:
-        rollupDifferent > 0 ? ERollupState.Outdated : ERollupState.Updated,
+      rollupOnChainState,
       latestRollupOnChainSuccess: latestRollupOnChainSuccess || null,
     };
   }

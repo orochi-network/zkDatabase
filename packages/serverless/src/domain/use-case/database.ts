@@ -25,12 +25,23 @@ import { ClientSession } from 'mongodb';
 import { Group } from './group';
 import { Transaction } from './transaction';
 
+const MAX_MERKLE_TREE_HEIGHT = 256;
+const MIN_MERKLE_TREE_HEIGHT = 8;
+
 export class Database {
   public static async create(
     paramCreate: TDatabaseParamCreate,
     session: ClientSession
   ) {
     const { databaseName, databaseOwner, merkleHeight } = paramCreate;
+
+    if (
+      merkleHeight < MIN_MERKLE_TREE_HEIGHT ||
+      merkleHeight > MAX_MERKLE_TREE_HEIGHT
+    ) {
+      throw new Error('Merkle height must be between 8-256');
+    }
+
     // Find user
     const user = await new ModelUser().findOne(
       { userName: databaseOwner },

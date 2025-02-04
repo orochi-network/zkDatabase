@@ -24,21 +24,22 @@ console.log(await zkdb.auth.signIn());
 if (!(await zkdb.db(DB_NAME).exist())) {
   await zkdb.db(DB_NAME).create({ merkleHeight: 8 });
 }
+
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
 }) {}
 
-await zkdb.db(DB_NAME).collection('students').create(TShirt);
+// await zkdb.db(DB_NAME).collection('students').create(TShirt);
 
 const collection = zkdb.db(DB_NAME).collection<typeof TShirt>('students');
 
-for (let i = 0; i < 10; i += 1) {
-  const res = await collection.insert({ name: `zkDatabase ${i}`, price: 15n });
-  console.log(res);
-}
+// for (let i = 0; i < 10; i += 1) {
+//   const res = await collection.insert({ name: `zkDatabase ${i}`, price: 15n });
+//   console.log(res);
+// }
 
-console.log(await zkdb.db(DB_NAME).rollUpOnChainState());
+console.log(await zkdb.db(DB_NAME).rollUpOffChainHistory());
 
 console.log(await zkdb.db(DB_NAME).info());
 
