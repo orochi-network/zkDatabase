@@ -82,8 +82,8 @@ export class DocumentWorker {
         );
 
         if (task.sequenceNumber <= trackingSequenceNumber) {
-          exclusionQueue.push(task.databaseName);
           exclusionQueue.shift();
+          exclusionQueue.push(task.databaseName);
           logger.debug(
             `Task sequence number of task ${task._id} is less than or equal \
 to the current tracking sequence number. This is expected as the workers  \
@@ -101,8 +101,8 @@ ${task.sequenceNumber}, tracking sequence number: ${trackingSequenceNumber}`
           BigInt(task.sequenceNumber) !==
           BigInt(trackingSequenceNumber) + 1n
         ) {
-          exclusionQueue.push(task.databaseName);
           exclusionQueue.shift();
+          exclusionQueue.push(task.databaseName);
           return true;
         }
 
