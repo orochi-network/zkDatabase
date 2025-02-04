@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/api",
-  "version": "1.1.16-dev2",
+  "version": "1.1.17-dev2",
   "main": "build/src/index.js",
   "types": "build/src/index.d.ts",
   "type": "module",
@@ -19,10 +19,16 @@
   "description": "",
   "dependencies": {
     "@apollo/client": "^3.12.4",
-    "@zkdb/common": "0.1.6-dev2",
+    "@zkdb/common": "0.1.7-dev2",
     "react": "^19.0.0"
   },
   "peerDependencies": {
     "graphql": "^16.10.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }

@@ -53,5 +53,10 @@
       "eslint ./src/**/*.ts --fix",
       "prettier --write --ignore-unknown"
     ]
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }
