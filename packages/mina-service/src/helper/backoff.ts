@@ -49,8 +49,6 @@ export class Backoff {
         delay = Math.min(delay * 2, this.delayCapMs); // Exponential backoff with cap
         delay += Math.floor((Math.random() * this.delayCapMs) / 100); // Add jitter
         retries += 1;
-
-        this.logger.debug(`Task service backing off for ${delay}ms`);
       } else {
         delay = this.initialDelayMs;
         retries = 0;
