@@ -15,9 +15,6 @@ import {
 } from '@zkdb/storage';
 import { OptionalId } from 'mongodb';
 
-const MAX_MERKLE_TREE_HEIGHT = 256;
-const MIN_MERKLE_TREE_HEIGHT = 8;
-
 type TRollupInitParam = {
   task: TRollupQueueData;
   merkleHeight: number;
@@ -46,15 +43,6 @@ export class RollupOffChain {
     }
 
     const { merkleHeight } = metadataDatabase;
-
-    if (
-      merkleHeight < MIN_MERKLE_TREE_HEIGHT ||
-      merkleHeight > MAX_MERKLE_TREE_HEIGHT
-    ) {
-      throw new Error(
-        `Invalid Merkle height. Expected 8-256, got ${merkleHeight}`
-      );
-    }
 
     const imTransitionLog = await ModelTransitionLog.getInstance(
       task.databaseName,

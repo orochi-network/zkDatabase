@@ -61,8 +61,8 @@
     "o1js": "^2.2.0"
   },
   "dependencies": {
-    "@zkdb/api": "1.1.15-dev2",
-    "@zkdb/common": "0.1.5-dev2",
+    "@zkdb/api": "1.1.16-dev2",
+    "@zkdb/common": "0.1.6-dev2",
     "@zkdb/permission": "0.1.8-dev1",
     "@zkdb/smart-contract": "1.1.9-dev1",
     "graphql-request": "7.1.2",

@@ -1,12 +1,14 @@
 import { zkDatabaseConstant } from '@common';
 import { DATABASE_ENGINE } from '@helper';
 import {
+  TPagination,
   TRollupOnChainHistoryRecord,
   TRollupOnChainHistoryTransactionAggregate,
 } from '@zkdb/common';
 import {
   AggregationCursor,
   ClientSession,
+  Document,
   OptionalId,
   WithoutId,
 } from 'mongodb';
@@ -35,34 +37,45 @@ export class ModelRollupOnChainHistory extends ModelGeneral<
 
   public rollupOnChainHistoryAndTransaction(
     filter: Partial<TRollupOnChainHistoryRecord>,
+    pagination?: TPagination,
     session?: ClientSession
   ): AggregationCursor<TRollupOnChainHistoryTransactionAggregate> {
-    return this.collection.aggregate<TRollupOnChainHistoryTransactionAggregate>(
-      [
-        {
-          $match: filter,
-        },
-        {
-          $sort: { updatedAt: -1, createdAt: -1 },
-        },
-        {
-          $lookup: {
-            from: zkDatabaseConstant.globalCollection.transaction,
-            localField: 'transactionObjectId',
-            foreignField: '_id',
-            as: 'transaction',
-          },
-        },
-        {
-          $addFields: {
-            // It's 1-1 relation so the array must have 1 element
-            transaction: { $arrayElemAt: ['$transaction', 0] },
-          },
-        },
-      ],
+    const pipeline: Document[] = [
+      { $match: filter },
+      { $sort: { updatedAt: -1, createdAt: -1 } },
       {
-        session,
+        $lookup: {
+          from: zkDatabaseConstant.globalCollection.transaction,
+          localField: 'transactionObjectId',
+          foreignField: '_id',
+          as: 'transaction',
+        },
+      },
+      {
+        $addFields: {
+          // Since it's a 1-to-1 relation, we take the first element of the array.
+          transaction: { $arrayElemAt: ['$transaction', 0] },
+        },
+      },
+    ];
+
+    // Conditionally add pagination stages
+    if (pagination) {
+      const { offset, limit } = pagination;
+
+      if (typeof offset === 'number' && offset > 0) {
+        pipeline.push({ $skip: offset });
       }
+
+      if (typeof limit === 'number' && limit > 0) {
+        pipeline.push({ $limit: limit });
+      }
+    }
+
+    // Run the aggregate with the built pipeline
+    return this.collection.aggregate<TRollupOnChainHistoryTransactionAggregate>(
+      pipeline,
+      { session }
     );
   }
 

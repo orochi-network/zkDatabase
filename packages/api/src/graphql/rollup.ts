@@ -31,8 +31,14 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query RollupOffChainHistory($query: JSON, $pagination: PaginationInput) {
-        rollupOffChainHistory(query: $query, pagination: $pagination) {
+      query RollupOffChainHistory(
+        $databaseName: String!
+        $pagination: PaginationInput
+      ) {
+        rollupOffChainHistory(
+          databaseName: $databaseName
+          pagination: $pagination
+        ) {
           data {
             databaseName
             collectionName
@@ -44,8 +50,8 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
             step
             acquiredAt
           }
-          total
           offset
+          total
         }
       }
     `,
@@ -64,8 +70,14 @@ export const API_ROLLUP = <T>(client: TApolloClient<T>) => ({
   >(
     client,
     gql`
-      query RollupOnChainHistory($query: JSON, $pagination: PaginationInput) {
-        rollupOnChainHistory(query: $query, pagination: $pagination) {
+      query RollupOnChainHistory(
+        $databaseName: String!
+        $pagination: PaginationInput
+      ) {
+        rollupOnChainHistory(
+          databaseName: $databaseName
+          pagination: $pagination
+        ) {
           data {
             databaseName
             onChainStep

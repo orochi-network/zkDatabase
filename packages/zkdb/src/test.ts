@@ -24,6 +24,7 @@ console.log(await zkdb.auth.signIn());
 if (!(await zkdb.db(DB_NAME).exist())) {
   await zkdb.db(DB_NAME).create({ merkleHeight: 8 });
 }
+
 class TShirt extends Schema.create({
   name: CircuitString,
   price: UInt64,
@@ -38,7 +39,7 @@ for (let i = 0; i < 10; i += 1) {
   console.log(res);
 }
 
-console.log(await zkdb.db(DB_NAME).rollUpOnChainState());
+console.log(await zkdb.db(DB_NAME).rollUpOffChainHistory());
 
 console.log(await zkdb.db(DB_NAME).info());
 
