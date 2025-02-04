@@ -62,6 +62,12 @@ const JOI_DOCUMENT_UPDATE_REQUEST = Joi.object<TDocumentUpdateRequest>({
   document: JOI_DOCUMENT_CREATE(true),
 });
 
+const JOI_DOCUMENT_DROP_REQUEST = Joi.object<TDocumentDropRequest>({
+  databaseName,
+  collectionName: collectionName(),
+  docId: docId(),
+});
+
 const JOI_DOCUMENT_HISTORY_FIND_REQUEST =
   Joi.object<TDocumentHistoryFindRequest>({
     databaseName,
@@ -247,7 +253,7 @@ const documentUpdate = authorizeWrapper<
 const documentDrop = authorizeWrapper<
   TDocumentDropRequest,
   TDocumentDropResponse
->(JOI_DOCUMENT_UPDATE_REQUEST, async (_root: unknown, args, ctx) => {
+>(JOI_DOCUMENT_DROP_REQUEST, async (_root: unknown, args, ctx) => {
   return Transaction.compound(async (session) => {
     const droppedDocId = await Document.drop(
       {
