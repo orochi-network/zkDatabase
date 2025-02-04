@@ -213,7 +213,6 @@ export class Rollup {
       });
 
     return {
-      // data: rollupOffChainQueueAndTransition,
       data: rollupOffChainQueueAndTransition,
       total: rollupOffChainQueueAndTransition.length,
       offset: pagination?.offset || 0,
