@@ -1,20 +1,23 @@
 name: "Build & Push All Docker Images to Docker Hub"
 
 on:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows:
+      - "Publish packages in zkDatabase Repository"
+    types:
+      - completed
 
 jobs:
-  build:
-    name: Build & Push Docker Images and Push to GitOps
+  on-success:
+    name: Handle Success
     runs-on: [self-hosted, linux]
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     env:
       version: ${{ github.sha }}
       LIST_SERVICE_BUILD: "serverless mina-service"
       LIST_DOCKER_REPO: "orochinetwork/zkdb-serverless orochinetwork/zkdb-mina-service"
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
@@ -28,8 +31,8 @@ jobs:
 
       - name: Build & Push Docker Images
         run: |
-          IFS=' ' read -r -a LIST_DOCKER_REPO <<< "${{env.LIST_DOCKER_REPO}}"
-          IFS=' ' read -r -a LIST_SERVICE_BUILD <<< "${{env.LIST_SERVICE_BUILD}}"
+          IFS=' ' read -r -a LIST_DOCKER_REPO <<< "${{ env.LIST_DOCKER_REPO }}"
+          IFS=' ' read -r -a LIST_SERVICE_BUILD <<< "${{ env.LIST_SERVICE_BUILD }}"
           
           for i in ${!LIST_SERVICE_BUILD[@]}; do
             SERVICE_BUILD="${LIST_SERVICE_BUILD[$i]}"
@@ -50,35 +53,17 @@ jobs:
 
           done
 
-  gitops-push:
-    name: Push Changes to GitOps
-    needs: build
+      - name: Success Message
+        run: echo "Docker images have been successfully built and pushed."
+
+  on-failure:
+    name: Handle Failure
     runs-on: [self-hosted, linux]
-    env:
-      version: ${{ github.sha }}
-      gitopsbranch: main
+    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.ref == 'refs/heads/main' }}
     steps:
-      - name: Push changes to GitOps
+      - name: Failure Message
+        run: echo 'The triggering workflow failed'
+
+      - name: Log Failure
         run: |
-          eval $(ssh-agent -s)
-          echo "${{ secrets.SSH_KEY }}" | tr -d '\r' | ssh-add - > /dev/null 2>&1
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
-          git config --global user.name "${{ secrets.GITOPS_USER }}"
-          git config --global user.email "${{ secrets.GITOPS_EMAIL }}"
-          git clone ${{ secrets.GITOPS_REPO }}
-
-          cd test-argo-cd
-          git checkout ${{ env.gitopsbranch }}
-          LIST_CHANGE_SERVICE=("serverless" "mina-service")
-
-          for SERVICE in "${LIST_CHANGE_SERVICE[@]}"; do
-            VALUES_PATH="services/orochi/zkDatabase/$SERVICE/zkdb-$SERVICE/values.yaml"
-            sed -i "s| tag: .*| tag: ${{ env.version }}|" "$VALUES_PATH"
-            git add "$VALUES_PATH"
-          done
-
-          echo "Committing and pushing changes for ${LIST_CHANGE_SERVICE[*]} to ${{ env.gitopsbranch }} version ${{ env.version }}"
-          git commit -m "Update versions for: ${LIST_CHANGE_SERVICE[*]} to ${{ env.version }}"
-          git push origin ${{ env.gitopsbranch }}
+          echo "The previous workflow failed. Review the logs and take necessary actions."
