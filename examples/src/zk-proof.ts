@@ -1,7 +1,7 @@
 import { verify } from 'o1js';
 import { zkdb } from './connection';
 
-// Check user existed, register if not exist
+// Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
   await zkdb.auth.signUp('chiro@orochi.network');
 }
