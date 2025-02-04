@@ -206,7 +206,7 @@ export class Rollup {
           docId: rollupOffchain.data.docId,
           status: rollupOffchain.status,
           databaseName: rollupOffchain.databaseName,
-          step: BigInt(rollupOffchain.sequenceNumber || 0n) + 1n,
+          step: BigInt(rollupOffchain.sequenceNumber || 0n),
           collectionName: rollupOffchain.data.collectionName,
           acquiredAt: rollupOffchain.acquiredAt || rollupOffchain.createdAt,
         };
