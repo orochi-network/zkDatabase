@@ -1,4 +1,7 @@
 import {
+  EQueueTaskStatus,
+  TMerkleProofTaskRetryLatestFailedRequest,
+  TMerkleProofTaskRetryLatestFailedResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -17,7 +20,12 @@ import {
   pagination,
 } from '@zkdb/common';
 import { ScalarType } from '@orochi-network/utilities';
-import { ModelMerkleTree, Transaction } from '@zkdb/storage';
+import {
+  EQueueType,
+  ModelGenericQueue,
+  ModelMerkleTree,
+  Transaction,
+} from '@zkdb/storage';
 import Joi from 'joi';
 import { MerkleTree } from '@domain';
 import { GraphQLScalarType } from 'graphql';
@@ -48,6 +56,10 @@ export const JOI_MERKLE_TREE_NODE_CHILDREN = Joi.object({
   databaseName,
   index: merkleIndex,
   level: Joi.number().required(),
+});
+
+export const JOI_MERKLE_PROOF_TASK_RETRY_LATEST_FAILED = Joi.object({
+  databaseName,
 });
 
 export const typeDefsMerkleTree = `#graphql
@@ -87,18 +99,23 @@ type MerkleTreeInfo {
 }
 
 extend type Query {
-
   merkleTreeInfo(databaseName: String!): MerkleTreeInfo!
-  
+
   merkleProof(databaseName: String!, index: BigInt!): [MerkleProof]!
-  
+
   merkleProofDocId(databaseName: String!, docId: String!): [MerkleProof]!
 
   merkleNodeByLevel(databaseName: String!, level: Int!, pagination: PaginationInput): MerkleNodePaginationOutput!
-  
+
   merkleNodePath(databaseName: String!, docId: String!): [MerkleNodeDetail]!
 
   merkleNodeChildren(databaseName: String!, level: Int!, index: BigInt!): [MerkleNode!]!
+}
+
+extend type Mutation {
+  merkleProofTaskRetryLatestFailed(
+    databaseName: String!
+  ): Boolean!
 }
 `;
 
@@ -167,6 +184,20 @@ const merkleNodePath = publicWrapper<
   )
 );
 
+const merkleProofTaskRetryLatestFailed = publicWrapper<
+  TMerkleProofTaskRetryLatestFailedRequest,
+  TMerkleProofTaskRetryLatestFailedResponse
+>(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName }) =>
+  Transaction.mina(async (session) => {
+    const imDocumentQueue = await ModelGenericQueue.getInstance(
+      EQueueType.DocumentQueue,
+      session
+    );
+
+    return imDocumentQueue.retryLatestFailedTask(databaseName, session);
+  })
+);
+
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 export const resolversMerkleTree = {
   // If we put directly BigInt: ScalarType.BigInt() you will got
@@ -180,5 +211,6 @@ export const resolversMerkleTree = {
     merkleNodeByLevel,
     merkleTreeInfo,
     merkleNodePath,
+    merkleProofTaskRetryLatestFailed,
   },
 };
