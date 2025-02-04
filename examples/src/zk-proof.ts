@@ -1,9 +1,6 @@
 import { verify } from 'o1js';
-import { ZkDatabase } from 'zkdb';
+import { zkdb } from './connection';
 
-const zkdb = await ZkDatabase.connect(
-  'zkdb+http://chiro-user:EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP@zkdb-serverless.zenfactory.org/graphql'
-);
 // Check user existed, register if not exist
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
   await zkdb.auth.signUp('chiro@orochi.network');
