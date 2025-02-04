@@ -40,7 +40,7 @@ export class TransactionOnChain {
 
     // zkTransaction from mina got error
     if (
-      zkTransaction.failures.length > 0 ||
+      zkTransaction.failures?.length > 0 ||
       zkTransaction.txStatus === 'failed'
     ) {
       await imTransaction.updateOne(
@@ -184,7 +184,7 @@ export class TransactionOnChain {
     }
     // zkTransaction from mina got error
     if (
-      zkTransaction.failures.length > 0 ||
+      zkTransaction.failures?.length > 0 ||
       zkTransaction.txStatus === 'failed'
     ) {
       const updatedTransaction =
