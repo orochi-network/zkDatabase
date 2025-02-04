@@ -1,6 +1,6 @@
 {
   "name": "zkdb",
-  "version": "1.2.14",
+  "version": "1.2.15",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -56,15 +56,18 @@
     ]
   },
   "peerDependencies": {
-    "@aurowallet/mina-provider": "^1.0.6",
-    "graphql": "^16.10.0",
     "o1js": "^2.2.0"
   },
   "dependencies": {
-    "@zkdb/api": "1.1.16-dev2",
-    "@zkdb/common": "0.1.6-dev2",
-    "@zkdb/permission": "0.1.8-dev1",
+    "@zkdb/api": "1.1.17-dev2",
+    "@zkdb/common": "0.1.7-dev2",
+    "@zkdb/permission": "0.1.9-dev1",
     "graphql-request": "7.1.2",
     "mina-signer": "3.0.7"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }
