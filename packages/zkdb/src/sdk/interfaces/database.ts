@@ -12,13 +12,24 @@ import {
   TTransactionDraftResponse,
   TUser,
   TUserFindResponse,
-  TVerificationKeyResponse,
-  TZkProofResponse,
   TZkProofStatusResponse,
 } from '@zkdb/common';
+import { JsonProof, VerificationKey } from 'o1js';
 import { ICollection } from './collection';
 import { IGroup } from './group';
 import { IUser } from './user';
+
+export type TZkDbProof = {
+  step: bigint;
+  proof: JsonProof;
+  merkleRoot: string;
+};
+
+export type TZkDbProofVerify = {
+  step: bigint;
+  merkleRoot: string;
+  valid: boolean;
+};
 
 export type TDatabaseConfig = Pick<TDatabaseCreateRequest, 'merkleHeight'>;
 
@@ -50,7 +61,9 @@ export interface IDatabase {
   userList(): Promise<TUserFindResponse>;
 
   // ZK Proof
-  zkProof(): Promise<TZkProofResponse>;
+  zkProof(): Promise<TZkDbProof | null>;
+
+  zkProofVerify(): Promise<TZkDbProofVerify>;
 
   zkProofStatus(): Promise<TZkProofStatusResponse>;
 
@@ -80,5 +93,5 @@ export interface IDatabase {
   rollUpOffChainState(): Promise<TRollupOffChainStateResponse>;
 
   // Verification key
-  verificationKey(): Promise<TVerificationKeyResponse>;
+  verificationKey(): Promise<VerificationKey | null>;
 }
