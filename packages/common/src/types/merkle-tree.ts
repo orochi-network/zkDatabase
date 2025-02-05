@@ -87,7 +87,3 @@ export type TMerkleTreeNodeChildrenResponse = TMerkleNodeJson[];
 export type TMerkleTreeNodePathRequest = TMerkleTreeProofByDocIdRequest;
 
 export type TMerkleTreeNodePathResponse = TMerkleNodeDetailJson[];
-
-export type TMerkleProofTaskRetryRequest = TDatabaseRequest;
-
-export type TMerkleProofTaskRetryResponse = boolean;
