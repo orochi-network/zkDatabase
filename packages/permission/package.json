@@ -32,12 +32,6 @@
     "lint": "prettier . --write",
     "lint-check": "eslint ./src/**/*.ts --debug"
   },
-  "exports": {
-    ".": {
-      "types": "./build/src/index.d.ts",
-      "import": "./build/src/index.js"
-    }
-  },
   "typesVersions": {
     "*": {
       "*": [
