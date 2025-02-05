@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/common",
-  "version": "0.1.7-dev1",
+  "version": "0.1.8-dev2",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -54,20 +54,26 @@
       "prettier --write --ignore-unknown"
     ]
   },
+  "exports": {
+    ".": {
+      "types": "./build/src/index.d.ts",
+      "import": "./build/src/index.js"
+    }
+  },
   "peerDependencies": {
-    "@rollup/plugin-alias": "^5.1.1",
-    "@rollup/plugin-commonjs": "^28.0.2",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.0",
-    "@rollup/plugin-typescript": "^12.1.2",
-    "joi": "^17.13.3",
-    "mongodb": "^6.12.0",
     "o1js": "^2.2.0"
   },
   "dependencies": {
     "@aurowallet/mina-provider": "^1.0.6",
-    "@zkdb/permission": "0.1.8-dev1",
+    "@zkdb/permission": "0.1.10-dev1",
     "axios": "^1.7.9",
     "mina-signer": "^3.0.7"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }

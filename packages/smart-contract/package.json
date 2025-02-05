@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/smart-contract",
-  "version": "1.1.9-dev1",
+  "version": "1.1.11-dev1",
   "description": "",
   "author": "",
   "license": "Apache-2.0",
@@ -21,6 +21,12 @@
     "lint": "echo 'hello world'",
     "release": "rm -rf ./build && npm run build && npm publish --access public"
   },
+  "exports": {
+    ".": {
+      "types": "./build/src/index.d.ts",
+      "import": "./build/src/index.js"
+    }
+  },
   "files": [
     "build/",
     "!**/*.tsbuildinfo"
@@ -32,6 +38,9 @@
     "node": ">=18.14.0"
   },
   "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-typescript": "^12.1.2",
     "jest": "^29.7.0"
   }
 }

@@ -8,7 +8,7 @@ import {
 import { DatabaseEngine, ModelTransaction, Transaction } from '@zkdb/storage';
 import { TransactionOnChain } from '@domain';
 // Time duration is equal 1/10 time on chain
-const PADDING_TIME = TimeDuration.fromMinute(1);
+const PADDING_TIME = TimeDuration.fromSecond(30);
 
 export const SERVICE_TRANSACTION = {
   clusterName: 'transaction',

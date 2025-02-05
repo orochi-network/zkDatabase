@@ -1,12 +1,6 @@
 import { ETransactionStatus, TZkAppTransaction } from '@zkdb/common';
-import { ZkDbProcessor } from '@zkdb/smart-contract';
-import {
-  ModelMetadataDatabase,
-  ModelRollupOnChainHistory,
-  ModelTransaction,
-} from '@zkdb/storage';
+import { ModelMetadataDatabase, ModelTransaction } from '@zkdb/storage';
 import { ClientSession, ObjectId } from 'mongodb';
-import { PublicKey } from 'o1js';
 
 export class TransactionOnChain {
   public static async rollup(
@@ -37,13 +31,12 @@ export class TransactionOnChain {
 
       return updatedTransaction.acknowledged;
     }
-
     // zkTransaction from mina got error
     if (
       zkTransaction.failures?.length > 0 ||
       zkTransaction.txStatus === 'failed'
     ) {
-      await imTransaction.updateOne(
+      const transactionUpdated = await imTransaction.updateOne(
         { _id: transactionObjectId },
         {
           $set: {
@@ -53,6 +46,7 @@ export class TransactionOnChain {
         },
         { session }
       );
+      return transactionUpdated.acknowledged;
     }
 
     if (zkTransaction.txStatus === 'pending') {
@@ -69,63 +63,21 @@ export class TransactionOnChain {
     }
 
     if (zkTransaction.txStatus === 'applied') {
-      const updatedTransaction =
-        await imTransaction.collection.findOneAndUpdate(
-          {
-            _id: transactionObjectId,
+      const updatedTransaction = await imTransaction.collection.updateOne(
+        {
+          _id: transactionObjectId,
+        },
+        {
+          $set: {
+            status: ETransactionStatus.Confirmed,
           },
-          {
-            $set: {
-              status: ETransactionStatus.Confirmed,
-            },
-          },
-          {
-            session,
-          }
-        );
-
-      if (!updatedTransaction) {
-        return false;
-      }
-
-      // Insert on chain info
-      // NOTE: Do get onchain data from smart contract or we get from transaction
-      const imMetadataDatabase = ModelMetadataDatabase.getInstance();
-
-      const metadataDatabase = await imMetadataDatabase.findOne(
-        { databaseName: updatedTransaction.databaseName },
-        { session }
+        },
+        {
+          session,
+        }
       );
 
-      if (!metadataDatabase) {
-        throw new Error(
-          `Cannot found metadata database ${updatedTransaction.databaseName}`
-        );
-      }
-
-      const zkDbProcessor = await ZkDbProcessor.getInstance(
-        metadataDatabase.merkleHeight
-      );
-
-      const zkDbContract = zkDbProcessor.getInstanceZkDBContract(
-        PublicKey.fromBase58(metadataDatabase.appPublicKey)
-      );
-
-      const rollupOnChainHistoryUpdateResult =
-        await ModelRollupOnChainHistory.getInstance().updateOne(
-          {
-            databaseName: updatedTransaction.databaseName,
-            transactionObjectId,
-          },
-          {
-            $set: {
-              step: zkDbContract.step.get().toBigInt(),
-              updatedAt: new Date(),
-            },
-          },
-          { session }
-        );
-      return rollupOnChainHistoryUpdateResult.acknowledged;
+      return updatedTransaction.acknowledged;
     }
 
     throw new Error(

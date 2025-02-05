@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/permission",
-  "version": "0.1.8-dev1",
+  "version": "0.1.10-dev1",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -32,6 +32,12 @@
     "lint": "prettier . --write",
     "lint-check": "eslint ./src/**/*.ts --debug"
   },
+  "exports": {
+    ".": {
+      "types": "./build/src/index.d.ts",
+      "import": "./build/src/index.js"
+    }
+  },
   "typesVersions": {
     "*": {
       "*": [
@@ -53,5 +59,10 @@
       "eslint ./src/**/*.ts --fix",
       "prettier --write --ignore-unknown"
     ]
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }
