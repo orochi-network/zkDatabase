@@ -1,6 +1,6 @@
 {
   "name": "zkdb",
-  "version": "1.2.17",
+  "version": "1.2.18",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -66,8 +66,8 @@
     "o1js": "^2.2.0"
   },
   "dependencies": {
-    "@zkdb/api": "1.1.18-dev2",
-    "@zkdb/common": "0.1.8-dev2",
+    "@zkdb/api": "1.1.19-dev1",
+    "@zkdb/common": "0.1.9-dev1",
     "@zkdb/permission": "0.1.10-dev1",
     "graphql-request": "7.1.2",
     "mina-signer": "3.0.7"
