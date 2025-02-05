@@ -3,7 +3,7 @@ import {
   TDatabaseCreateRequest,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
-  TMerkleProofTaskRetryLatestFailedResponse,
+  TMerkleProofTaskRetryResponse,
   TPagination,
   TRollupOffChainHistoryResponse,
   TRollupOffChainStateResponse,
@@ -14,7 +14,7 @@ import {
   TUser,
   TUserFindResponse,
   TZkProofStatusResponse,
-  TZkProofTaskRetryLatestFailedResponse,
+  TZkProofTaskRetryResponse,
 } from '@zkdb/common';
 import { JsonProof, VerificationKey } from 'o1js';
 import { ICollection } from './collection';
@@ -69,9 +69,9 @@ export interface IDatabase {
 
   zkProofStatus(): Promise<TZkProofStatusResponse>;
 
-  zkProofTaskRetryLatestFailed(): Promise<TZkProofTaskRetryLatestFailedResponse>;
+  zkProofTaskRetry(): Promise<TZkProofTaskRetryResponse>;
 
-  merkleProofTaskRetryLatestFailed(): Promise<TMerkleProofTaskRetryLatestFailedResponse>;
+  merkleProofTaskRetry(): Promise<TMerkleProofTaskRetryResponse>;
 
   // Transaction
   transactionDraft(

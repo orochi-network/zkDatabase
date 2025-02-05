@@ -6,8 +6,8 @@ import {
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
-  TZkProofTaskRetryLatestFailedRequest,
-  TZkProofTaskRetryLatestFailedResponse,
+  TZkProofTaskRetryRequest,
+  TZkProofTaskRetryResponse,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -94,8 +94,8 @@ const zkProofStatus = publicWrapper<
 );
 
 const zkProofTaskRetryLatestFailed = publicWrapper<
-  TZkProofTaskRetryLatestFailedRequest,
-  TZkProofTaskRetryLatestFailedResponse
+  TZkProofTaskRetryRequest,
+  TZkProofTaskRetryResponse
 >(JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED, async (_root, { databaseName }) =>
   Transaction.mina(async (session) => {
     const imDocumentQueue = await ModelGenericQueue.getInstance(

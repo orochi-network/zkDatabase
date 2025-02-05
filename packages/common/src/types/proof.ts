@@ -34,5 +34,6 @@ export type TZkProofResponse = Omit<
   'merkleRootOld'
 > | null;
 
-export type TZkProofTaskRetryLatestFailedRequest = TDatabaseRequest;
-export type TZkProofTaskRetryLatestFailedResponse = boolean;
+export type TZkProofTaskRetryRequest = TDatabaseRequest;
+
+export type TZkProofTaskRetryResponse = boolean;

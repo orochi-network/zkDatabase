@@ -2,8 +2,8 @@ import { DEFAULT_PAGINATION } from '@common';
 import { MerkleTree } from '@domain';
 import { ScalarType } from '@orochi-network/utilities';
 import {
-  TMerkleProofTaskRetryLatestFailedRequest,
-  TMerkleProofTaskRetryLatestFailedResponse,
+  TMerkleProofTaskRetryRequest,
+  TMerkleProofTaskRetryResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -184,8 +184,8 @@ const merkleNodePath = publicWrapper<
 );
 
 const merkleProofTaskRetryLatestFailed = publicWrapper<
-  TMerkleProofTaskRetryLatestFailedRequest,
-  TMerkleProofTaskRetryLatestFailedResponse
+  TMerkleProofTaskRetryRequest,
+  TMerkleProofTaskRetryResponse
 >(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName }) =>
   Transaction.mina(async (session) => {
     const imDocumentQueue = await ModelGenericQueue.getInstance(
