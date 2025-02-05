@@ -1,5 +1,7 @@
+import { DEFAULT_PAGINATION } from '@common';
+import { MerkleTree } from '@domain';
+import { ScalarType } from '@orochi-network/utilities';
 import {
-  EQueueTaskStatus,
   TMerkleProofTaskRetryLatestFailedRequest,
   TMerkleProofTaskRetryLatestFailedResponse,
   TMerkleTreeInfoRequest,
@@ -19,17 +21,14 @@ import {
   merkleIndex,
   pagination,
 } from '@zkdb/common';
-import { ScalarType } from '@orochi-network/utilities';
 import {
   EQueueType,
   ModelGenericQueue,
   ModelMerkleTree,
   Transaction,
 } from '@zkdb/storage';
-import Joi from 'joi';
-import { MerkleTree } from '@domain';
 import { GraphQLScalarType } from 'graphql';
-import { DEFAULT_PAGINATION } from '@common';
+import Joi from 'joi';
 import { publicWrapper } from '../validation';
 
 export const JOI_MERKLE_TREE_NODE_LIST_BY_LEVEL = Joi.object({
