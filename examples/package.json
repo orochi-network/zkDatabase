@@ -30,7 +30,7 @@
     ]
   },
   "dependencies": {
-    "zkdb": "1.2.13-dev1"
+    "zkdb": "^1.2.17"
   },
   "peerDependencies": {
     "o1js": "2.2.0"
