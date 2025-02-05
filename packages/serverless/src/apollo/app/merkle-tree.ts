@@ -211,6 +211,8 @@ export const resolversMerkleTree = {
     merkleNodeByLevel,
     merkleTreeInfo,
     merkleNodePath,
+  },
+  Mutation: {
     merkleProofTaskRetryLatestFailed,
   },
 };
