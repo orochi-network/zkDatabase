@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/permission",
-  "version": "0.1.9-dev1",
+  "version": "0.1.10-dev1",
   "description": "zkDatabase for the future of Web3",
   "author": "chiro@orochi.network",
   "license": "Apache-2.0",
@@ -31,6 +31,12 @@
     "testw": "node ../../node_modules/jest/bin/jest.js --watch",
     "lint": "prettier . --write",
     "lint-check": "eslint ./src/**/*.ts --debug"
+  },
+  "exports": {
+    ".": {
+      "types": "./build/src/index.d.ts",
+      "import": "./build/src/index.js"
+    }
   },
   "typesVersions": {
     "*": {

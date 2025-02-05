@@ -1,6 +1,6 @@
 {
   "name": "@zkdb/smart-contract",
-  "version": "1.1.10-dev1",
+  "version": "1.1.11-dev1",
   "description": "",
   "author": "",
   "license": "Apache-2.0",
@@ -20,6 +20,12 @@
     "testw": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "lint": "echo 'hello world'",
     "release": "rm -rf ./build && npm run build && npm publish --access public"
+  },
+  "exports": {
+    ".": {
+      "types": "./build/src/index.d.ts",
+      "import": "./build/src/index.js"
+    }
   },
   "files": [
     "build/",
