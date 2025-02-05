@@ -122,6 +122,7 @@ export class ZkCompile {
     return partialSignedTx.toJSON();
   }
 
+  // eslint-disable-next-line class-methods-use-this
   public async verificationKeySet(
     merkleHeight: number,
     session: ClientSession
@@ -170,6 +171,7 @@ export class ZkCompile {
     return true;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   private ensureTransaction() {
     // Ensure 1 mina transaction can be process at time
     if (Mina.currentTransaction.has()) {

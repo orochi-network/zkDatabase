@@ -1,3 +1,5 @@
+/* eslint-disable max-classes-per-file */
+
 import {
   Field,
   MerkleWitness,
@@ -5,7 +7,7 @@ import {
   VerificationKey,
   ZkProgram,
 } from 'o1js';
-import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
+import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree';
 import {
   TRollupProof,
   TRollupSerializedProof,
@@ -130,6 +132,7 @@ export class ZkDbProcessor {
       );
       processorCache.zkDbContract.set(
         publicKeyString,
+        // eslint-disable-next-line new-cap
         new this.zkdbContract(publicKey, tokenId)
       );
     }
@@ -211,6 +214,7 @@ export class ZkDbProcessor {
     };
   }
 
+  // eslint-disable-next-line class-methods-use-this
   serialize(proof: TRollupProof): TRollupSerializedProof {
     return {
       step: proof.step.toBigInt(),

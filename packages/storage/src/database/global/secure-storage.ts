@@ -8,6 +8,7 @@ import { ModelCollection } from '../general';
 export class ModelSecureStorage extends ModelGeneral<
   OptionalId<TSecureStorageRecord>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelSecureStorage | null = null;
 
   private constructor() {

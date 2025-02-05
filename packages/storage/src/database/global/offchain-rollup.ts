@@ -8,6 +8,7 @@ import { ModelCollection } from '../general';
 export class ModelRollupOffChain extends ModelGeneral<
   OptionalId<TRollupOffChainRecord>
 > {
+  // eslint-disable-next-line no-use-before-define
   public static instance: ModelRollupOffChain;
 
   public static getInstance(): ModelRollupOffChain {

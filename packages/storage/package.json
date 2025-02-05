@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@orochi-network/framework": "^2.3.19",
-    "@zkdb/common": "0.1.9-dev1"
+    "@zkdb/common": "0.1.9-dev1",
+    "joi": "^17.13.3"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",

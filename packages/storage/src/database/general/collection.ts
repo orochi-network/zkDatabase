@@ -1,3 +1,4 @@
+import { isOk, logger } from '@helper';
 import { TCollectionIndexMap } from '@zkdb/common';
 import {
   ClientSession,
@@ -5,9 +6,7 @@ import {
   Document,
   DropIndexesOptions,
   IndexSpecification,
-  ListIndexesOptions,
 } from 'mongodb';
-import { isOk, logger } from '@helper';
 import { ModelBasic } from '../base';
 import { DatabaseEngine } from '../database-engine';
 import { ModelDatabase } from './database';
@@ -17,6 +16,7 @@ import { ModelDatabase } from './database';
  * This class should not be used directly.
  */
 export class ModelCollection<T extends Document> extends ModelBasic<T> {
+  // eslint-disable-next-line no-use-before-define
   private static instances: Map<string, ModelCollection<any>> = new Map();
 
   public get modelDatabase() {

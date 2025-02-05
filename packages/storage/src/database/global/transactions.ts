@@ -8,6 +8,7 @@ import { ModelCollection } from '../general';
 export class ModelTransaction extends ModelGeneral<
   OptionalId<TTransactionRecordNullable>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelTransaction;
 
   private constructor() {
@@ -26,7 +27,7 @@ export class ModelTransaction extends ModelGeneral<
   }
 
   public async count(filter?: Filter<TTransactionRecordNullable>) {
-    return await this.collection.countDocuments(filter);
+    return this.collection.countDocuments(filter);
   }
 
   public static async init(session?: ClientSession) {

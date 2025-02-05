@@ -8,7 +8,7 @@ export default {
       useESM: true,
     },
   },
-  testTimeout: 1_000_000,
+  testTimeout: 1000000,
   transform: {
     '^.+\\.(t)s$': 'ts-jest',
     '^.+\\.(js|mjs|jsx)$': 'babel-jest',

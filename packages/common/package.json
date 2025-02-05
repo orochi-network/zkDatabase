@@ -67,7 +67,9 @@
     "@aurowallet/mina-provider": "^1.0.6",
     "@zkdb/permission": "0.1.11-dev1",
     "axios": "^1.7.9",
-    "mina-signer": "^3.0.7"
+    "joi": "^17.13.3",
+    "mina-signer": "^3.0.7",
+    "mongodb": "^6.13.0"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.1",

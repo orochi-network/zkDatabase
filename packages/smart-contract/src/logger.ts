@@ -1,3 +1,5 @@
+import { Console } from 'console';
+
 const loggerInstance: any = { logger: null };
 
 export function LoggerSet(activeLogger: any) {

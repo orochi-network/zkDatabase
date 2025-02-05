@@ -7,7 +7,7 @@ import {
   TSchemaExtendable,
 } from '@zkdb/common';
 import { Permission } from '@zkdb/permission';
-import { IDocument } from '.';
+import { IDocument } from './document';
 import { IMetadata } from './metadata';
 
 /**

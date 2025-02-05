@@ -1,5 +1,6 @@
+/* eslint-disable no-bitwise */
 import { PermissionDetail, PermissionDetailPartial } from './common';
-import PermissionBase from './permission-base';
+import { PermissionBase } from './permission-base';
 
 export class Permission {
   #owner: PermissionBase = PermissionBase.from(0);

@@ -53,6 +53,7 @@ export class ApiClient {
 
   constructor(
     uri: string,
+    // eslint-disable-next-line no-undef
     private readonly storage: Storage
   ) {
     const removeTypenameLink = removeTypenameFromVariables();
@@ -106,7 +107,7 @@ export class ApiClient {
       },
     });
   }
-
+  // eslint-disable-next-line no-undef
   public static newInstance(url: string, storage: Storage): IApiClient {
     const api = new ApiClient(url, storage);
     return {

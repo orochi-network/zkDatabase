@@ -3,7 +3,7 @@ export default {
   verbose: true,
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
-  testTimeout: 1_000_000,
+  testTimeout: 1000000,
   globals: {
     'ts-jest': {
       useESM: true,

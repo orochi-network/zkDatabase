@@ -152,7 +152,7 @@ export class ModelGenericQueue<T> extends ModelGeneral<
       // This means the task is already acquired by another worker.
       // DuplicateKey error
       // https://www.mongodb.com/docs/manual/reference/error-codes/#mongodb-error-11000
-      if (e instanceof MongoServerError && String(e.code) == '11000') {
+      if (e instanceof MongoServerError && String(e.code) === '11000') {
         logger.warning(
           `Task aquisition conflict due to duplicate key error is ignore, this is expected \
 and has been handled properly. However if this warning appears frequently, it may indicate \
@@ -337,8 +337,7 @@ that the acquisition logic is suboptimal.`
             'data.docId': 1,
           });
           break;
-        case EQueueType.RollupOffChainQueue:
-          break;
+        default:
       }
 
       await collection.addTimestampMongoDb({ session });

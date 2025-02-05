@@ -3,10 +3,10 @@ import pkg from "crypto-js";
 const {
   HmacSHA256,
   enc,
-  lib: { WordArray },
+  lib: { WordArray: _WordArray },
 } = pkg;
 
-export type TWordArray = typeof WordArray;
+export type TWordArray = typeof _WordArray;
 
 export class JWT {
   private userName: string;
@@ -38,6 +38,7 @@ export class JWT {
     const payload = enc.Utf8.parse(
       JSON.stringify({
         userName: this.userName,
+        // eslint-disable-next-line no-bitwise
         nonce: (Math.random() * 0xffffffff) >>> 0,
         timestamp: Date.now(),
       })
