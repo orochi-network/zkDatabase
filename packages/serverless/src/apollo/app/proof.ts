@@ -116,6 +116,8 @@ export const resolversProof = {
   Query: {
     zkProof,
     zkProofStatus,
+  },
+  Mutation: {
     merkleProofTaskRetryLatestFailed,
   },
 };
