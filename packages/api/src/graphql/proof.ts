@@ -6,6 +6,8 @@ import {
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
+  TZkProofTaskRetryLatestFailedRequest,
+  TZkProofTaskRetryLatestFailedResponse,
 } from "@zkdb/common";
 import { createApi, TApolloClient } from "./common";
 
@@ -31,7 +33,7 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
             ...res,
             step: BigInt(res.step),
           }
-        : null
+        : null,
   ),
   zkProofStatus: createApi<TZkProofStatusRequest, TZkProofStatusResponse>(
     client,
@@ -39,7 +41,7 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
       query zkProofStatus($databaseName: String!) {
         zkProofStatus(databaseName: $databaseName)
       }
-    `
+    `,
   ),
   documentMerkleProofStatus: createApi<
     TMerkleProofDocumentRequest,
@@ -58,7 +60,18 @@ export const API_PROOF = <T>(client: TApolloClient<T>) => ({
           docId: $docId
         )
       }
-    `
+    `,
+  ),
+  zkProofTaskRetryLatestFailed: createApi<
+    TZkProofTaskRetryLatestFailedRequest,
+    TZkProofTaskRetryLatestFailedResponse
+  >(
+    client,
+    gql`
+      mutation zkProofTaskRetryLatestFailed($databaseName: String!) {
+        zkProofTaskRetryLatestFailed(databaseName: $databaseName)
+      }
+    `,
   ),
 });
 

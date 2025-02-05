@@ -275,6 +275,30 @@ that the acquisition logic is suboptimal.`
     };
   }
 
+  /** Retry the latest failed task for a given database by marking it as
+   * `Queued` so that the workers can pick it up again. */
+  public async retryLatestFailedTask(
+    databaseName: string,
+    session: ClientSession,
+    filter?: Filter<TDbRecord<TGenericQueue<T>>>
+  ): Promise<boolean> {
+    const result = await this.collection.findOneAndUpdate(
+      {
+        databaseName,
+        status: EQueueTaskStatus.Failed,
+        ...filter,
+      },
+      {
+        $set: {
+          status: EQueueTaskStatus.Queued,
+        },
+      },
+      { sort: { sequenceNumber: 1 }, session, returnDocument: 'before' }
+    );
+
+    return result !== null;
+  }
+
   public static async init(
     queueType: EQueueType,
     queueName: string,

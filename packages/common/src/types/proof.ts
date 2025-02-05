@@ -37,3 +37,6 @@ export type TZkProofResponse = Omit<
   TRollupSerializedProof,
   'merkleRootOld'
 > | null;
+
+export type TZkProofTaskRetryLatestFailedRequest = TDatabaseRequest;
+export type TZkProofTaskRetryLatestFailedResponse = boolean;

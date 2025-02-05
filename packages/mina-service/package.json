@@ -33,7 +33,7 @@
     "@orochi-network/framework": "^2.3.22",
     "@orochi-network/queue": "^0.1.11",
     "@orochi-network/vault": "^1.4.15",
-    "@zkdb/common": "0.1.8-dev2",
+    "@zkdb/common": "0.1.9-dev1",
     "@zkdb/smart-contract": "1.1.11-dev1",
     "@zkdb/storage": "1.1.6",
     "graphql-request": "7.1.2"

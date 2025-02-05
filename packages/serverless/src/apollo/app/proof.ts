@@ -6,6 +6,8 @@ import {
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
+  TZkProofTaskRetryLatestFailedRequest,
+  TZkProofTaskRetryLatestFailedResponse,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -17,6 +19,10 @@ import Joi from 'joi';
 import { GraphQLScalarType } from 'graphql';
 import { ScalarType } from '@orochi-network/utilities';
 import { publicWrapper } from '../validation.js';
+
+export const JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED = Joi.object({
+  databaseName,
+});
 
 export const typeDefsProof = gql`
   #graphql
@@ -39,6 +45,10 @@ export const typeDefsProof = gql`
     zkProofStatus(databaseName: String!): QueueTaskStatus
 
     zkProof(databaseName: String!): ZkProof
+  }
+
+  extend type Mutation {
+    zkProofTaskRetryLatestFailed(databaseName: String!): Boolean!
   }
 `;
 
@@ -83,6 +93,19 @@ const zkProofStatus = publicWrapper<
   }
 );
 
+const merkleProofTaskRetryLatestFailed = publicWrapper<
+  TZkProofTaskRetryLatestFailedRequest,
+  TZkProofTaskRetryLatestFailedResponse
+>(JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED, async (_root, { databaseName }) =>
+  Transaction.mina(async (session) => {
+    const imDocumentQueue = await ModelGenericQueue.getInstance(
+      EQueueType.RollupOffChainQueue,
+      session
+    );
+
+    return imDocumentQueue.retryLatestFailedTask(databaseName, session);
+  })
+);
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 
 export const resolversProof = {
@@ -93,5 +116,6 @@ export const resolversProof = {
   Query: {
     zkProof,
     zkProofStatus,
+    merkleProofTaskRetryLatestFailed,
   },
 };

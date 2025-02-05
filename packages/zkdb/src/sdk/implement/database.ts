@@ -4,6 +4,7 @@ import {
   TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
+  TMerkleProofTaskRetryLatestFailedResponse,
   TPagination,
   TRollupOffChainHistoryResponse,
   TRollupOffChainStateResponse,
@@ -14,6 +15,7 @@ import {
   TUser,
   TUserFindResponse,
   TZkProofStatusResponse,
+  TZkProofTaskRetryLatestFailedResponse,
 } from '@zkdb/common';
 import { Field, VerificationKey, verify } from 'o1js';
 import {
@@ -225,5 +227,19 @@ export class Database implements IDatabase {
 
   async info(): Promise<TDatabaseInfoResponse> {
     return (await this.apiClient.db.dbInfo(this.basicQuery)).unwrap();
+  }
+
+  async zkProofTaskRetryLatestFailed(): Promise<TZkProofTaskRetryLatestFailedResponse> {
+    return (
+      await this.apiClient.proof.zkProofTaskRetryLatestFailed(this.basicQuery)
+    ).unwrap();
+  }
+
+  async merkleProofTaskRetryLatestFailed(): Promise<TMerkleProofTaskRetryLatestFailedResponse> {
+    return (
+      await this.apiClient.merkle.merkleProofTaskRetryLatestFailed(
+        this.basicQuery
+      )
+    ).unwrap();
   }
 }
