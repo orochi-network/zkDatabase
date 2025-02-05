@@ -1,6 +1,6 @@
 import { Field, JsonProof, Proof } from 'o1js';
-import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree.js';
-import { ZkDbRollupInput, ZkDbRollupOutput } from './zkdb-rollup.js';
+import { Witness } from 'o1js/dist/node/lib/provable/merkle-tree';
+import { ZkDbRollupInput, ZkDbRollupOutput } from './zkdb-rollup';
 
 export type TRollupProof = {
   step: Field;

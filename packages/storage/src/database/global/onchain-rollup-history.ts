@@ -18,6 +18,7 @@ import { ModelCollection } from '../general';
 export class ModelRollupOnChainHistory extends ModelGeneral<
   OptionalId<TRollupOnChainHistoryRecord>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelRollupOnChainHistory;
 
   private constructor() {

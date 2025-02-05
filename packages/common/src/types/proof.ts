@@ -1,11 +1,7 @@
 import { TCollectionRequest } from './collection';
 import { TDatabaseRequest } from './database';
 import { EQueueTaskStatus } from './queue';
-import {
-  TRollupOffChainRecord,
-  TRollupSerializedProof,
-} from './rollup-offchain';
-import { TTransitionLogRecord } from './transition-log';
+import { TRollupSerializedProof } from './rollup-offchain';
 
 export type TWithQueueStatus<T> = T & { queueStatus: EQueueTaskStatus };
 

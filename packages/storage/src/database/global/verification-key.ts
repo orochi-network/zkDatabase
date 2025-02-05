@@ -8,6 +8,7 @@ import { ModelCollection } from '../general';
 export class ModelVerificationKey extends ModelGeneral<
   OptionalId<TZkDbVerificationKeyRecord>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelVerificationKey;
 
   private constructor() {
@@ -26,7 +27,7 @@ export class ModelVerificationKey extends ModelGeneral<
   }
 
   public async count(filter?: Filter<TZkDbVerificationKeyRecord>) {
-    return await this.collection.countDocuments(filter);
+    return this.collection.countDocuments(filter);
   }
 
   public static async init(session?: ClientSession) {

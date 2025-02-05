@@ -1,6 +1,6 @@
+/* eslint-disable max-classes-per-file */
 import axios, { AxiosRequestConfig } from "axios";
-import { Readable, Writable } from "stream";
-import { ReadStream } from "fs";
+import { Readable } from "stream";
 import { JWT } from "./jwt.js";
 
 export interface IKuboOption {
@@ -134,7 +134,7 @@ export class RequestBuilder {
 
   public option<
     K extends keyof Partial<IKuboOption>,
-    V extends Partial<IKuboOption>[K]
+    V extends Partial<IKuboOption>[K],
   >(key: K, value: V): RequestBuilder {
     this.options[key] = value;
     return this;
@@ -185,7 +185,7 @@ export class KuboClient {
     try {
       await this.filesStat({ arg: path });
       return true;
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }
@@ -194,7 +194,7 @@ export class KuboClient {
     try {
       const result = await this.filesStat({ arg: path });
       return result.Type === "file";
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }
@@ -203,7 +203,7 @@ export class KuboClient {
     try {
       const result = await this.filesStat({ arg: path });
       return result.Type === "directory";
-    } catch (e) {
+    } catch (_e) {
       return false;
     }
   }

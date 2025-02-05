@@ -10,6 +10,7 @@ const SYSTEM_DATABASE_SET = new Set(['admin', 'local', '_zkdatabase_metadata']);
 export class ModelMetadataDatabase extends ModelGeneral<
   OptionalId<TMetadataDatabaseRecord>
 > {
+  // eslint-disable-next-line no-use-before-define
   private static instance: ModelMetadataDatabase;
 
   constructor() {
@@ -42,7 +43,7 @@ export class ModelMetadataDatabase extends ModelGeneral<
   }
 
   public async count(filter?: Filter<TMetadataDatabase>) {
-    return await this.collection.countDocuments(filter);
+    return this.collection.countDocuments(filter);
   }
 
   public static async init(session?: ClientSession) {

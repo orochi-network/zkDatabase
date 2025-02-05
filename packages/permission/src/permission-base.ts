@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-expressions */
+/* eslint-disable no-bitwise */
 import {
   PermissionRecord,
   PERMISSION_FIELD,
@@ -103,11 +105,13 @@ export class PermissionBase {
     }
     const permission = new PermissionBase(0);
 
-    for (const key of PERMISSION_FIELD) {
+    for (let i = 0; i < PERMISSION_FIELD.length; i += 1) {
+      const key = PERMISSION_FIELD[i];
       if (typeof param[key] === 'boolean') {
         permission[key as PermissionRecordKey] = param[key];
       }
     }
+
     return permission;
   }
 

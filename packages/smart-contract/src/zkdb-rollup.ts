@@ -1,12 +1,6 @@
-import {
-  DynamicProof,
-  FeatureFlags,
-  Field,
-  MerkleWitness,
-  SelfProof,
-  Struct,
-  ZkProgram,
-} from 'o1js';
+/* eslint-disable max-classes-per-file */
+/* eslint-disable no-use-before-define */
+import { Field, MerkleWitness, SelfProof, Struct, ZkProgram } from 'o1js';
 
 export type ZkDbRollup = ReturnType<typeof ZkDbRollupFactory>;
 
@@ -20,18 +14,6 @@ export class ZkDbRollupOutput extends Struct({
   step: Field,
   merkleRoot: Field,
 }) {}
-
-export class ZkDbRollupDynamicProof extends DynamicProof<
-  ZkDbRollupInput,
-  ZkDbRollupOutput
-> {
-  static publicInputType = ZkDbRollupInput;
-  static publicOutputType = ZkDbRollupOutput;
-
-  static maxProofsVerified = 0 as const;
-
-  static featureFlags = FeatureFlags.allMaybe;
-}
 
 export function ZkDbRollupFactory(merkleTreeHeight: number) {
   class ZkDbMerkleWitness extends MerkleWitness(merkleTreeHeight) {}

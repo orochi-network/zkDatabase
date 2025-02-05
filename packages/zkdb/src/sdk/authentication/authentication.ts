@@ -1,6 +1,6 @@
 import { IApiClient } from '@zkdb/api';
 import { IMinaProvider, TUserSignInResponse } from '@zkdb/common';
-import InMemoryStorage from '../storage/memory';
+import { InMemoryStorage } from '../storage/memory';
 
 export const ZKDB_KEY_ACCESS_TOKEN = 'accessToken';
 
@@ -9,6 +9,7 @@ export const ZKDB_KEY_USER_INFO = 'userInfo';
 export class Authenticator {
   #signer: IMinaProvider | undefined;
 
+  // eslint-disable-next-line no-undef
   #storage: Storage;
 
   #userName: string;
@@ -19,6 +20,7 @@ export class Authenticator {
     signer: IMinaProvider,
     apiClient: IApiClient,
     userName: string,
+    // eslint-disable-next-line no-undef
     storage: Storage = new InMemoryStorage()
   ) {
     this.#signer = signer;
@@ -31,6 +33,7 @@ export class Authenticator {
     return this.apiClient.user;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   private timestamp() {
     return Math.floor(Date.now() / 1000);
   }
@@ -121,7 +124,7 @@ export class Authenticator {
       return JSON.parse(
         this.#storage.getItem(ZKDB_KEY_USER_INFO) || 'undefined'
       );
-    } catch (e) {
+    } catch (_e) {
       return undefined;
     }
   }

@@ -1,11 +1,16 @@
+// eslint-disable-next-line no-undef
 export class InMemoryStorage implements Storage {
   [name: string]: any;
-  keys: string[] = [];
-  length: number;
+
+  private keys: string[] = [];
+
+  get length(): number {
+    return this.keys.length;
+  }
 
   clear(): void {
-    for (const key of this.keys) {
-      delete this[key];
+    for (let i = 0; i < this.keys.length; i += 1) {
+      delete this[this.keys[i]];
     }
   }
 

@@ -15,6 +15,7 @@ import { ModelBasic } from '../base';
  * This class should not be used directly.
  */
 export class ModelDatabase<T extends Document> extends ModelBasic<T> {
+  // eslint-disable-next-line no-use-before-define
   private static instances: Map<string, ModelDatabase<any>> = new Map();
 
   constructor(databaseName?: string) {

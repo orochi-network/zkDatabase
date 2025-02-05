@@ -5,7 +5,7 @@ import { Mina, NetworkId, PrivateKey } from 'o1js';
 import { Authenticator } from '../authentication';
 import { Database } from '../implement';
 import { IDatabase } from '../interfaces';
-import InMemoryStorage from '../storage/memory';
+import { InMemoryStorage } from '../storage/memory';
 
 type TMinaConfig = {
   networkUrl: string;
@@ -80,7 +80,8 @@ export class ZkDatabase {
             environment: 'browser',
             url: apiURL,
           };
-    } if (typeof config === 'object') {
+    }
+    if (typeof config === 'object') {
       return config;
     }
     throw new Error(
@@ -144,6 +145,7 @@ export class ZkDatabase {
       if (cfg.environment === 'browser') {
         const apiClient = ApiClient.newInstance(
           cfg.url,
+          // eslint-disable-next-line no-undef
           globalThis.localStorage
         );
         const signer = new MinaProvider();
@@ -151,6 +153,7 @@ export class ZkDatabase {
           signer,
           apiClient,
           cfg.userName,
+          // eslint-disable-next-line no-undef
           globalThis.localStorage
         );
         return new ZkDatabase(apiClient, authenticator, {

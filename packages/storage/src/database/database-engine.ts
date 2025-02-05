@@ -2,8 +2,11 @@ import { ListCollectionsOptions, MongoClient, ServerApiVersion } from 'mongodb';
 import { logger } from '@helper';
 
 export class DatabaseEngine {
+  // eslint-disable-next-line no-use-before-define
   private static instances: Record<string, DatabaseEngine> = {};
+
   private mongoClient: MongoClient;
+
   private connection: MongoClient | null = null;
 
   private constructor(uri: string) {

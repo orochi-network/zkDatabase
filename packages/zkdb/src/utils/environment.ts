@@ -2,6 +2,7 @@ import { NetworkId } from 'o1js';
 
 export function isBrowser(): boolean {
   return (
+    // eslint-disable-next-line no-undef
     typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
   );
 }
