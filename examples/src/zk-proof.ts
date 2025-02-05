@@ -6,7 +6,7 @@ await zkdb.auth.signIn();
 // Create new instance of `db_test`
 const dbTest = zkdb.db('db_test');
 
-console.log(await dbTest.zkProof());
+console.log('ZK Proof:', await dbTest.zkProof());
 
 console.log(await dbTest.zkProofStatus());
 

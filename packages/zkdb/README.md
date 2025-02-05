@@ -1,275 +1,99 @@
-## Hello o1js!
-
-This version contain no-backward compatible changes, please check the [O(1) Labs has renamed SnarkyJS to o1js, effective immediately!](https://github.com/o1-labs/o1js) for more details.
-
-zkDatabase (aka `zkdb`) from `1.0.0` will switch to `o1js` as the underlying zkSNARK engine.
-
 ## Introduction
 
 Data plays a critical role in any computational process, including the emerging Web3 era. In order to successfully transition to Web3, it is imperative to enhance accessibility and accuracy of data. The zkDatabase use a distributed storage engine that improves the availability of data. It utilizes Zero-Knowledge Proof to ensuring the correctness of data in verifiable manner. With zkDatabase, it's allow developers to focus on developing their ideas, rather than managing the complexities of data storage and management.
 
-**It's time for provable data.**
+**It's time for verifiable data.**
 
 ## Installation
 
 ```bash
-npm install zkdb
+npm install zkdb graphql o1js
 ```
 
 ## Usage
 
 ```typescript
-import {
-  Mina,
-  method,
-  UInt32,
-  PrivateKey,
-  AccountUpdate,
-  MerkleWitness,
-  Field,
-  State,
-  state,
-  CircuitString,
-  SmartContract,
-} from 'o1js';
-import { Schema, ZkDatabaseStorage } from 'zkdb';
+import { CircuitString, Field, UInt64, verify } from 'o1js';
+import { Schema, ZkDatabase } from 'zkdb';
 
-// Enable this to generate proofs
-const doProofs = false;
+// In reality you better to encrypt your private key and these information
+// It will be better if your load it from .env file
+export const zkdb = await ZkDatabase.connect({
+  userName: 'chiro-user',
+  // Check the credential setup here https://test-doc.zkdatabase.org/getting-stated#setup-your-credentials for testnet
+  privateKey: 'EKFTciRxyxshZjimay9sktsn7v5PvmC5zPq7q4JnitHUytxUVnFP',
+  environment: 'node',
+  // This URL is for test environment
+  url: 'https://test-serverless.zkdatabase.org/graphql',
+});
 
-// Height of the Merkle Tree
-const merkleHeight = 8;
+// Check if user exists in the database or not, if it doesn't exist
+// then sign up user and log him into system using his/her email id (e.g chiro@example.com)
+if (!(await zkdb.auth.isUserExist('chiro-user'))) {
+  await zkdb.auth.signUp('chiro@example.com');
+}
 
-// Extend Merkle witness at the same height as the Merkle Tree
-class MyMerkleWitness extends MerkleWitness(merkleHeight) {}
+// Sign in
+await zkdb.auth.signIn();
 
-// Define the schema of the document
-class Account extends Schema({
-  accountName: CircuitString,
-  balance: UInt32,
-}) {
-  // Deserialize the document from a Uint8Array
-  static deserialize(data: Uint8Array): Account {
-    return new Account(Account.decode(data));
-  }
+// Create new instance of `db_test`
+const dbTest = zkdb.db('db_test');
 
-  // Index the document by accountName
-  index(): { accountName: string } {
-    return {
-      accountName: this.accountName.toString(),
-    };
-  }
+// Define schema for shirt collection
+class Shirt extends Schema.create({
+  name: CircuitString,
+  price: UInt64,
+}) {}
 
-  // Serialize the document to a json object
-  json(): { accountName: string; balance: string } {
-    return {
-      accountName: this.accountName.toString(),
-      balance: this.balance.toString(),
-    };
+const collectionShirt = dbTest.collection<typeof Shirt>('shirt');
+
+console.log('Signin info:', await zkdb.auth.signIn());
+
+// Check if database and collection exist or not, if not exist then create it
+if (!(await zkdb.exists('chiro-user'))){
+if (!(await dbTest.exist())) {
+  await dbTest.create({ merkleHeight: 8 });
+}
+
+// Check if collection exist or not, If it doesn’t exists
+// then create the table for `shirt` Collection in database (db_test).
+if (!(await collectionShirt.exist())) {
+  await collectionShirt.create(Shirt);
+}
+
+if ((await collectionShirt.findMany({})).total <= 0) {
+  for (let i = 0; i < 10; i += 1) {
+    // Insert 10 shirts into the `shirt` collection in database (db_test).
+    await collectionShirt.insert({
+      name: `zkDatabase ${i}`,
+      price: 15n,
+    });
   }
 }
 
-// Merkle Tree root commitment at the time of contract initialization
-let initialCommitment: Field;
+// Verify current ZKP of zkDatabase yourself
+const verificationKey = await dbTest.verificationKey();
+const zkDbProof = await dbTest.zkProof();
 
-// A Piglet Bank contract
-class PigletBank extends SmartContract {
-  @state(Field) root = State<Field>();
-
-  @method init() {
-    super.init();
-    this.root.set(initialCommitment);
-  }
-
-  /**
-   * Todo provide acuumulation of multiple records
-   * @param oldRecord
-   * @param newRecord
-   * @param merkleWitness
-   */
-  @method
-  trasnfer(
-    from: Account,
-    fromWitness: MyMerkleWitness,
-    to: Account,
-    toWitness: MyMerkleWitness,
-    value: UInt32
-  ) {
-    // We fetch the on-chain merkle root commitment,
-    // Make sure it matches the one we have locally
-    let commitment = this.root.get();
-    this.root.assertEquals(commitment);
-
-    // Make sure that from account is within the committed Merkle Tree
-    fromWitness.calculateRoot(from.hash()).assertEquals(commitment);
-
-    // We calculate the new Merkle Root, based on the record changes
-    let newCommitment = fromWitness.calculateRoot(
-      new Account({
-        accountName: from.accountName,
-        balance: from.balance.sub(value),
-      }).hash()
-    );
-
-    // Make sure that to account is within the committed Merkle Tree
-    toWitness.calculateRoot(to.hash()).assertEquals(newCommitment);
-
-    // We calculate the new Merkle Root, based on the record changes
-    newCommitment = toWitness.calculateRoot(
-      new Account({
-        accountName: to.accountName,
-        balance: to.balance.add(value),
-      }).hash()
-    );
-
-    // Update the root state
-    this.root.set(newCommitment);
-  }
+if (verificationKey && zkDbProof) {
+  console.log(
+    'Is valid zkProof:',
+    await verify(zkDbProof.proof, verificationKey)
+  );
 }
 
-(async () => {
-  type TNames = 'Bob' | 'Alice' | 'Charlie' | 'Olivia';
-  const accountNameList: TNames[] = ['Bob', 'Alice', 'Charlie', 'Olivia'];
+// Use wrapped method of zkDatabase to verify ZKP
+console.log('Verify result:', await dbTest.zkProofVerify());
 
-  let Local = Mina.LocalBlockchain({ proofsEnabled: doProofs });
-  Mina.setActiveInstance(Local);
-  let initialBalance = 10_000_000_000;
+// Check proving status
+console.log('ZK Proof Status:', await dbTest.zkProofStatus());
 
-  let feePayerKey = Local.testAccounts[0].privateKey;
-  let feePayer = Local.testAccounts[0].publicKey;
+// Get off-chain rollup state
+console.log('Rollup Off-chain State:', await dbTest.rollUpOffChainState());
 
-  // the zkapp account
-  let zkappKey = PrivateKey.random();
-  let zkappAddress = zkappKey.toPublicKey();
-
-  // we now need "wrap" the Merkle tree around our off-chain storage
-  // we initialize a new Merkle Tree with height 8
-  const zkdb = await ZkDatabaseStorage.getInstance('zkdb-test', {
-    storageEngine: 'local',
-    merkleHeight,
-    storageEngineCfg: {
-      dataLocation: './data',
-    },
-  });
-  for (let i = 0; i < accountNameList.length; i++) {
-    const findRecord = zkdb.findOne('accountName', accountNameList[i]);
-    if (findRecord.isEmpty()) {
-      await zkdb.add(
-        new Account({
-          accountName: CircuitString.fromString(accountNameList[i]),
-          balance: UInt32.from(10000000),
-        })
-      );
-      console.log(
-        `Account ${accountNameList[i]} created, balance: ${10000000}`
-      );
-    } else {
-      const account = await findRecord.load(Account);
-      console.log(
-        `Load account ${
-          accountNameList[i]
-        }, balance: ${account.balance.toString()}`
-      );
-    }
-  }
-
-  initialCommitment = await zkdb.getMerkleRoot();
-  console.log('Initial root:', initialCommitment.toString());
-
-  let zkAppPigletBank = new PigletBank(zkappAddress);
-  console.log('Deploying Piglet Bank..');
-  if (doProofs) {
-    await PigletBank.compile();
-  }
-  let tx = await Mina.transaction(feePayer, () => {
-    AccountUpdate.fundNewAccount(feePayer).send({
-      to: zkappAddress,
-      amount: initialBalance,
-    });
-    zkAppPigletBank.deploy();
-  });
-  await tx.prove();
-  await tx.sign([feePayerKey, zkappKey]).send();
-
-  console.log('Do transaction..');
-  await transfer('Bob', 'Alice', 132);
-  await transfer('Alice', 'Charlie', 44);
-  await transfer('Charlie', 'Olivia', 82);
-  await transfer('Olivia', 'Bob', 50);
-
-  // Print the final balances
-  for (let i = 0; i < accountNameList.length; i++) {
-    const findResult = await zkdb.findOne('accountName', accountNameList[i]);
-    if (!findResult.isEmpty()) {
-      const account = await findResult.load(Account);
-      const { accountName, balance } = account.json();
-      console.log(`Final balance of ${accountName} :`, balance);
-    }
-  }
-
-  /**
-   * Transfers a specified value from one account to another.
-   * @param fromName The name of the account to transfer from.
-   * @param toName The name of the account to transfer to.
-   * @param value The value to transfer.
-   */
-  async function transfer(fromName: TNames, toName: TNames, value: number) {
-    console.log(`Transfer from ${fromName} to ${toName} with ${value}..`);
-
-    // Find the account with the given name
-    const findFromAccount = await zkdb.findOne('accountName', fromName);
-    // Load the account instance from the database
-    const from = await findFromAccount.load(Account);
-
-    // Get merkle witness for the account
-    const fromWitness = new MyMerkleWitness(await findFromAccount.witness());
-    // Update the account with the new balance
-    await findFromAccount.update(
-      new Account({
-        accountName: from.accountName,
-        balance: from.balance.sub(value),
-      })
-    );
-
-    // Find the account with the given name
-    const findToAccount = await zkdb.findOne('accountName', toName);
-    // Load the account instance from the database
-    const to = await findToAccount.load(Account);
-
-    // Get merkle witness for the account
-    const toWitness = new MyMerkleWitness(await findToAccount.witness());
-    // Update the account with the new balance
-    await findToAccount.update(
-      new Account({
-        accountName: to.accountName,
-        balance: to.balance.add(value),
-      })
-    );
-
-    // Perform the transaction
-    let tx = await Mina.transaction(feePayer, () => {
-      zkAppPigletBank.trasnfer(
-        from,
-        fromWitness,
-        to,
-        toWitness,
-        UInt32.from(value)
-      );
-    });
-    await tx.prove();
-    await tx.sign([feePayerKey, zkappKey]).send();
-
-    // Make sure that off-chain Merkle Tree matches the on-chain Merkle Tree
-    zkAppPigletBank.root.get().assertEquals(await zkdb.getMerkleRoot());
-  }
-})();
+// Sign out
+await zkdb.auth.signOut();
 ```
-
-### Next version
-
-- [ ] Add more test cases
-- [ ] Support IPFS via Kubo RPC
-- [ ] Improve ther performance of indexing engine
 
 ## License
 

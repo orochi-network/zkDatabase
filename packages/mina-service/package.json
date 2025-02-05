@@ -37,5 +37,10 @@
     "@zkdb/smart-contract": "1.1.10-dev1",
     "@zkdb/storage": "1.1.6",
     "graphql-request": "7.1.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.1",
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@rollup/plugin-typescript": "^12.1.2"
   }
 }
