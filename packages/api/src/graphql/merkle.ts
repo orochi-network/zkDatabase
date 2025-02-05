@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 import {
-  TMerkleProofTaskRetryLatestFailedRequest,
-  TMerkleProofTaskRetryLatestFailedResponse,
+  TMerkleProofTaskRetryRequest,
+  TMerkleProofTaskRetryResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -52,7 +52,7 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
         ...e,
         index: BigInt(index),
       })),
-    }),
+    })
   ),
   merkleNodeChildren: createApi<
     TMerkleTreeNodeChildrenRequest,
@@ -81,7 +81,7 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
       res.map(({ index, ...e }) => ({
         ...e,
         index: BigInt(index),
-      })),
+      }))
   ),
   merkleNodePath: createApi<
     TMerkleTreeNodePathRequest,
@@ -103,7 +103,7 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
       res.map(({ index, ...e }) => ({
         ...e,
         index: BigInt(index),
-      })),
+      }))
   ),
   merkleProof: createApi<
     TMerkleTreeProofByIndexRequest,
@@ -117,7 +117,7 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           sibling
         }
       }
-    `,
+    `
   ),
   merkleProofDocId: createApi<
     TMerkleTreeProofByDocIdRequest,
@@ -131,7 +131,7 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           sibling
         }
       }
-    `,
+    `
   ),
   merkleTreeInfo: createApi<TMerkleTreeInfoRequest, TMerkleTreeInfoResponse>(
     client,
@@ -142,18 +142,18 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           merkleHeight
         }
       }
-    `,
+    `
   ),
   merkleProofTaskRetryLatestFailed: createApi<
-    TMerkleProofTaskRetryLatestFailedRequest,
-    TMerkleProofTaskRetryLatestFailedResponse
+    TMerkleProofTaskRetryRequest,
+    TMerkleProofTaskRetryResponse
   >(
     client,
     gql`
       mutation merkleProofTaskRetryLatestFailed($databaseName: String!) {
         merkleProofTaskRetryLatestFailed(databaseName: $databaseName)
       }
-    `,
+    `
   ),
 });
 
