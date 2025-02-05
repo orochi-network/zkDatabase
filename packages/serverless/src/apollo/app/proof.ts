@@ -93,7 +93,7 @@ const zkProofStatus = publicWrapper<
   }
 );
 
-const merkleProofTaskRetryLatestFailed = publicWrapper<
+const zkProofTaskRetryLatestFailed = publicWrapper<
   TZkProofTaskRetryLatestFailedRequest,
   TZkProofTaskRetryLatestFailedResponse
 >(JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED, async (_root, { databaseName }) =>
@@ -118,6 +118,6 @@ export const resolversProof = {
     zkProofStatus,
   },
   Mutation: {
-    merkleProofTaskRetryLatestFailed,
+    zkProofTaskRetryLatestFailed,
   },
 };
