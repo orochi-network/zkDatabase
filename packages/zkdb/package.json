@@ -68,7 +68,7 @@
   "dependencies": {
     "@zkdb/api": "1.1.18-dev2",
     "@zkdb/common": "0.1.8-dev2",
-    "@zkdb/permission": "0.1.10-dev1",
+    "@zkdb/permission": "0.1.11-dev1",
     "graphql-request": "7.1.2",
     "mina-signer": "3.0.7"
   },
