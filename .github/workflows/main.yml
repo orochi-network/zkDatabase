@@ -34,10 +34,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install package & build at root
+      - name: Install package & run lint & build at root
         run: |
           echo "//registry.npmjs.org/:_authToken=\${NPM_INSTALL_TOKEN} \n always-auth=true" > ~/.npmrc
-          yarn install && yarn build
+          yarn install
+          yarn lint
+          yarn build
         env:
           NPM_INSTALL_TOKEN: ${{ env.NPM_INSTALL_TOKEN }}
       - name: Install compare-versions package
@@ -57,10 +59,6 @@ jobs:
             cd $package_dir
             
             PACKAGE_NAME=$(node -p "require('./package.json').name")
-            if jq -e '.scripts.lint' package.json > /dev/null; then
-                echo "Running lint script for $PACKAGE_NAME"
-                yarn run lint
-            fi
 
             if [[ " ${LIST_PACKAGE[@]} " =~ " ${PACKAGE_NAME} " ]]; then
               echo "$PACKAGE_NAME is in the publish list"
