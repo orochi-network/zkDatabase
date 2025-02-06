@@ -121,7 +121,7 @@ export class Document<T extends TSchemaExtendable<any>>
 
   async merkleProofStatus(): Promise<TMerkleProofDocumentResponse> {
     return (
-      await this.apiClient.proof.documentMerkleProofStatus(this.basicRequest)
+      await this.apiClient.document.documentMerkleProofStatus(this.basicRequest)
     ).unwrap();
   }
 

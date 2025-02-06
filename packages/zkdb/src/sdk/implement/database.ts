@@ -1,11 +1,13 @@
 import { IApiClient } from '@zkdb/api';
 import {
+  EContractName,
   ETransactionType,
   TCollectionListResponse,
   TDatabaseInfoResponse,
   TGroupListAllResponse,
-  TMerkleProofTaskRetryResponse,
   TPagination,
+  TProverRetryResponse,
+  TProverStatusResponse,
   TRollupOffChainHistoryResponse,
   TRollupOffChainStateResponse,
   TRollupOnChainHistoryResponse,
@@ -15,7 +17,6 @@ import {
   TUser,
   TUserFindResponse,
   TZkProofStatusResponse,
-  TZkProofTaskRetryResponse,
 } from '@zkdb/common';
 import { Field, VerificationKey, verify } from 'o1js';
 import {
@@ -216,7 +217,7 @@ export class Database implements IDatabase {
     const result = (
       await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
-    if (result) {
+    if (result && typeof result[EContractName.Rollup] === 'object') {
       const {
         Rollup: { data, hash },
       } = result;
@@ -229,17 +230,11 @@ export class Database implements IDatabase {
     return (await this.apiClient.db.dbInfo(this.basicQuery)).unwrap();
   }
 
-  async zkProofTaskRetry(): Promise<TZkProofTaskRetryResponse> {
-    return (
-      await this.apiClient.proof.zkProofTaskRetryLatestFailed(this.basicQuery)
-    ).unwrap();
+  async proverRetry(): Promise<TProverRetryResponse> {
+    return (await this.apiClient.prover.proverRetry(this.basicQuery)).unwrap();
   }
 
-  async merkleProofTaskRetry(): Promise<TMerkleProofTaskRetryResponse> {
-    return (
-      await this.apiClient.merkle.merkleProofTaskRetryLatestFailed(
-        this.basicQuery
-      )
-    ).unwrap();
+  async proverStatus(): Promise<TProverStatusResponse> {
+    return (await this.apiClient.prover.proverStatus(this.basicQuery)).unwrap();
   }
 }

@@ -1,7 +1,5 @@
 import { gql } from "@apollo/client";
 import {
-  TMerkleProofTaskRetryRequest,
-  TMerkleProofTaskRetryResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -141,17 +139,6 @@ export const API_MERKLE = <T>(client: TApolloClient<T>) => ({
           merkleRoot
           merkleHeight
         }
-      }
-    `
-  ),
-  merkleProofTaskRetryLatestFailed: createApi<
-    TMerkleProofTaskRetryRequest,
-    TMerkleProofTaskRetryResponse
-  >(
-    client,
-    gql`
-      mutation merkleProofTaskRetryLatestFailed($databaseName: String!) {
-        merkleProofTaskRetryLatestFailed(databaseName: $databaseName)
       }
     `
   ),

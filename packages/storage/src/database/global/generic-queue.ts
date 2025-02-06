@@ -299,6 +299,42 @@ that the acquisition logic is suboptimal.`
     return result !== null;
   }
 
+  public async databaseLatestStatus(
+    databaseName: string,
+    session: ClientSession,
+    filter?: Filter<TDbRecord<TGenericQueue<T>>>
+  ): Promise<EQueueTaskStatus> {
+    const failedTask = await this.collection.findOne(
+      {
+        databaseName,
+        status: EQueueTaskStatus.Failed,
+        ...filter,
+      },
+      { session }
+    );
+
+    if (failedTask != null) {
+      return EQueueTaskStatus.Failed;
+    }
+
+    const task = await this.collection.findOne(
+      {
+        databaseName,
+        status: {
+          $in: [EQueueTaskStatus.Queued, EQueueTaskStatus.Processing],
+        },
+        ...filter,
+      },
+      { sort: { sequenceNumber: 1 }, session }
+    );
+
+    if (task != null) {
+      return task.status;
+    }
+
+    return EQueueTaskStatus.Success;
+  }
+
   public static async init(
     queueType: EQueueType,
     queueName: string,

@@ -1,4 +1,4 @@
-import { zkdb } from './connection';
+import { zkdb } from './connection.js';
 
 // Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {

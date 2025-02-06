@@ -2,12 +2,14 @@ import { gql } from '@helper';
 import {
   databaseName,
   EQueueTaskStatus,
+  TProverStatusRequest,
+  TProverStatusResponse,
+  TProverRetryRequest,
+  TProverRetryResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
-  TZkProofTaskRetryRequest,
-  TZkProofTaskRetryResponse,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -18,9 +20,10 @@ import {
 import Joi from 'joi';
 import { GraphQLScalarType } from 'graphql';
 import { ScalarType } from '@orochi-network/utilities';
-import { publicWrapper } from '../validation.js';
+import { PermissionSecurity } from '@domain';
+import { authorizeWrapper, publicWrapper } from '../validation.js';
 
-export const JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED = Joi.object({
+export const JOI_PROVER_STATUS = Joi.object({
   databaseName,
 });
 
@@ -45,10 +48,12 @@ export const typeDefsProof = gql`
     zkProofStatus(databaseName: String!): QueueTaskStatus
 
     zkProof(databaseName: String!): ZkProof
+
+    proverStatus(databaseName: String!): QueueTaskStatus!
   }
 
   extend type Mutation {
-    zkProofTaskRetryLatestFailed(databaseName: String!): Boolean!
+    proverRetry(databaseName: String!): Boolean!
   }
 `;
 
@@ -93,19 +98,92 @@ const zkProofStatus = publicWrapper<
   }
 );
 
-const zkProofTaskRetryLatestFailed = publicWrapper<
-  TZkProofTaskRetryRequest,
-  TZkProofTaskRetryResponse
->(JOI_ZK_PROOF_TASK_RETRY_LATEST_FAILED, async (_root, { databaseName }) =>
-  Transaction.mina(async (session) => {
-    const imDocumentQueue = await ModelGenericQueue.getInstance(
-      EQueueType.RollupOffChainQueue,
-      session
-    );
+const proverStatus = publicWrapper<TProverStatusRequest, TProverStatusResponse>(
+  JOI_PROVER_STATUS,
+  async (_root, { databaseName }) =>
+    Transaction.mina(async (session) => {
+      const imDocumentQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        session
+      );
 
-    return imDocumentQueue.retryLatestFailedTask(databaseName, session);
-  })
+      const documentQueueStatus = await imDocumentQueue.databaseLatestStatus(
+        databaseName,
+        session
+      );
+
+      if (documentQueueStatus === EQueueTaskStatus.Failed) {
+        return EQueueTaskStatus.Failed;
+      }
+
+      const imRollupOffchainQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        session
+      );
+
+      // NOTE: This assumes that the rollup offchain queue is always slower
+      // than the document queue, thus we can use the latest status of the
+      // rollup offchain queue as the status of the prover.
+      //
+      // A correct implementation needs to account for the possibility that the
+      // rollup offchain queue is faster than the document queue, in which case
+      // we have 5 * 5 = 25 possible states to consider, which is not worth it
+      // for now.
+      return imRollupOffchainQueue.databaseLatestStatus(databaseName, session);
+    })
 );
+
+const proverRetry = authorizeWrapper<TProverRetryRequest, TProverRetryResponse>(
+  JOI_PROVER_STATUS,
+  async (_root, { databaseName }, ctx) =>
+    Transaction.compound(async ({ sessionServerless, sessionMina }) => {
+      const permission = await PermissionSecurity.database(
+        { databaseName, actor: ctx.userName },
+        sessionServerless
+      );
+
+      if (permission.system === false) {
+        throw new Error(
+          `Actor '${ctx.userName}' does not have 'system' permission which is required by this operation.`
+        );
+      }
+
+      const imDocumentQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        sessionMina
+      );
+
+      const documentQueueStatus = await imDocumentQueue.databaseLatestStatus(
+        databaseName,
+        sessionMina
+      );
+
+      if (documentQueueStatus === EQueueTaskStatus.Failed) {
+        return imDocumentQueue.retryLatestFailedTask(databaseName, sessionMina);
+      }
+
+      const imRollupOffchainQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        sessionMina
+      );
+
+      const rollupOffchainQueueStatus =
+        await imRollupOffchainQueue.databaseLatestStatus(
+          databaseName,
+          sessionMina
+        );
+
+      if (rollupOffchainQueueStatus === EQueueTaskStatus.Failed) {
+        return imRollupOffchainQueue.retryLatestFailedTask(
+          databaseName,
+          sessionMina
+        );
+      }
+
+      return false;
+    })
+);
+
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 
 export const resolversProof = {
@@ -116,8 +194,9 @@ export const resolversProof = {
   Query: {
     zkProof,
     zkProofStatus,
+    proverStatus,
   },
   Mutation: {
-    zkProofTaskRetryLatestFailed,
+    proverRetry,
   },
 };

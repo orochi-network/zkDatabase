@@ -18,6 +18,7 @@ import { API_PROOF } from "./proof";
 import { API_ROLLUP } from "./rollup";
 import { API_TRANSACTION } from "./transaction";
 import { API_USER } from "./user";
+import { API_PROVER } from "./prover";
 
 // eslint-disable-next-line no-undef
 const _global = typeof globalThis !== "undefined" ? globalThis : window;
@@ -42,6 +43,7 @@ export interface IApiClient {
   transaction: ReturnType<typeof API_TRANSACTION>;
   rollup: ReturnType<typeof API_ROLLUP>;
   permissionOwnership: ReturnType<typeof API_PERMISSION_OWNERSHIP>;
+  prover: ReturnType<typeof API_PROVER>;
 }
 
 export class ApiClient {
@@ -123,6 +125,7 @@ export class ApiClient {
       transaction: API_TRANSACTION(api.apollo),
       rollup: API_ROLLUP(api.apollo),
       permissionOwnership: API_PERMISSION_OWNERSHIP(api.apollo),
+      prover: API_PROVER(api.apollo),
     };
   }
 }

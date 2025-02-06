@@ -7,7 +7,7 @@ Data plays a critical role in any computational process, including the emerging 
 ## Installation
 
 ```bash
-npm install zkdb graphql o1js
+npm install zkdb o1js
 ```
 
 ## Usage

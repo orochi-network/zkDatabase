@@ -2,8 +2,6 @@ import { DEFAULT_PAGINATION } from '@common';
 import { MerkleTree } from '@domain';
 import { ScalarType } from '@orochi-network/utilities';
 import {
-  TMerkleProofTaskRetryRequest,
-  TMerkleProofTaskRetryResponse,
   TMerkleTreeInfoRequest,
   TMerkleTreeInfoResponse,
   TMerkleTreeNodeChildrenRequest,
@@ -21,12 +19,7 @@ import {
   merkleIndex,
   pagination,
 } from '@zkdb/common';
-import {
-  EQueueType,
-  ModelGenericQueue,
-  ModelMerkleTree,
-  Transaction,
-} from '@zkdb/storage';
+import { ModelMerkleTree, Transaction } from '@zkdb/storage';
 import { GraphQLScalarType } from 'graphql';
 import Joi from 'joi';
 import { publicWrapper } from '../validation';
@@ -110,12 +103,6 @@ extend type Query {
 
   merkleNodeChildren(databaseName: String!, level: Int!, index: BigInt!): [MerkleNode!]!
 }
-
-extend type Mutation {
-  merkleProofTaskRetryLatestFailed(
-    databaseName: String!
-  ): Boolean!
-}
 `;
 
 const merkleProof = publicWrapper<
@@ -183,20 +170,6 @@ const merkleNodePath = publicWrapper<
   )
 );
 
-const merkleProofTaskRetryLatestFailed = publicWrapper<
-  TMerkleProofTaskRetryRequest,
-  TMerkleProofTaskRetryResponse
->(JOI_MERKLE_TREE_PROOF_BY_DOCID, async (_root, { databaseName }) =>
-  Transaction.mina(async (session) => {
-    const imDocumentQueue = await ModelGenericQueue.getInstance(
-      EQueueType.DocumentQueue,
-      session
-    );
-
-    return imDocumentQueue.retryLatestFailedTask(databaseName, session);
-  })
-);
-
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
 export const resolversMerkleTree = {
   // If we put directly BigInt: ScalarType.BigInt() you will got
@@ -210,8 +183,5 @@ export const resolversMerkleTree = {
     merkleNodeByLevel,
     merkleTreeInfo,
     merkleNodePath,
-  },
-  Mutation: {
-    merkleProofTaskRetryLatestFailed,
   },
 };
