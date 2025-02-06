@@ -35,7 +35,7 @@ console.log(await dbTest.zkProofVerify());
  * Lastly, call the `verify()` from o1js
  * */
 
-console.log('Off-chain ZK-data-rollups status:', await dbTest.zkProofStatus());
+console.log('Off-chain ZK-data-rollups status:', await dbTest.proverStatus());
 
 console.log('Off-chain rollup history:', await dbTest.rollUpOffChainHistory());
 
@@ -51,7 +51,9 @@ if (verificationKey && zkProof) {
   console.log('Is proof valid:', await verify(zkProof.proof, verificationKey));
 }
 
-console.log(await dbTest.zkProofTaskRetry());
+if ((await dbTest.proverStatus()) === 'Failed') {
+  console.log('Retry:', await dbTest.proverRetry());
+}
 
 // Sign out
 await zkdb.auth.signOut();
