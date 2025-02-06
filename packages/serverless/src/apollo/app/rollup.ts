@@ -41,7 +41,7 @@ enum QueueTaskStatus {
 
 type RollupOnChainHistoryItem {
   databaseName: String!
-  onChainStep: BigInt
+  step: BigInt
   merkleRootNew: String!
   merkleRootOld: String
   status: TransactionStatus

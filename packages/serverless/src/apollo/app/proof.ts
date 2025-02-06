@@ -10,6 +10,7 @@ import {
   TZkProofResponse,
   TZkProofStatusRequest,
   TZkProofStatusResponse,
+  TRollupOffChainRecord,
 } from '@zkdb/common';
 import {
   EQueueType,
@@ -17,11 +18,12 @@ import {
   ModelRollupOffChain,
   Transaction,
 } from '@zkdb/storage';
-import Joi from 'joi';
+import { Joi } from '@orochi-network/framework';
 import { GraphQLScalarType } from 'graphql';
 import { ScalarType } from '@orochi-network/utilities';
 import { PermissionSecurity } from '@domain';
-import { authorizeWrapper, publicWrapper } from '../validation.js';
+import { Filter } from 'mongodb';
+import { authorizeWrapper, publicWrapper } from '../validation';
 
 export const JOI_PROVER_STATUS = Joi.object({
   databaseName,
@@ -47,7 +49,7 @@ export const typeDefsProof = gql`
   extend type Query {
     zkProofStatus(databaseName: String!): QueueTaskStatus
 
-    zkProof(databaseName: String!): ZkProof
+    zkProof(databaseName: String!, step: BigInt): ZkProof
 
     proverStatus(databaseName: String!): QueueTaskStatus!
   }
@@ -60,12 +62,19 @@ export const typeDefsProof = gql`
 const zkProof = publicWrapper<TZkProofRequest, TZkProofResponse>(
   Joi.object({
     databaseName,
+    step: Joi.bigint().optional(),
   }),
-  async (_root, { databaseName }) =>
-    ModelRollupOffChain.getInstance().findOne(
-      { databaseName },
-      { sort: { createdAt: -1 } }
-    )
+  async (_root, { databaseName, step }) => {
+    let filter: Filter<TRollupOffChainRecord> = { databaseName };
+
+    if (step) {
+      filter = { ...filter, step: BigInt(step) };
+    }
+
+    return ModelRollupOffChain.getInstance().findOne(filter, {
+      sort: { createdAt: -1 },
+    });
+  }
 );
 
 const zkProofStatus = publicWrapper<

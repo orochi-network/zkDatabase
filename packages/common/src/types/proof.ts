@@ -26,7 +26,7 @@ export type TZkProofStatusRequest = TDatabaseRequest;
 export type TZkProofStatusResponse = EQueueTaskStatus;
 
 // ZK Proof of Database
-export type TZkProofRequest = TDatabaseRequest;
+export type TZkProofRequest = TDatabaseRequest & { step?: bigint };
 
 // Step and proof would be enough, since all Merkle root info already in JsonProof
 export type TZkProofResponse = Omit<

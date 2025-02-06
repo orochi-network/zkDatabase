@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@zkdb/api": "1.1.22",
-    "@zkdb/common": "0.1.12",
+    "@zkdb/common": "0.1.13",
     "@zkdb/permission": "0.1.13",
     "graphql": "^16.10.0",
     "graphql-request": "7.1.2",
