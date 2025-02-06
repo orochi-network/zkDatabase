@@ -4,8 +4,8 @@ import {
   EQueueTaskStatus,
   TProverStatusRequest,
   TProverStatusResponse,
-  TProverStatusRetryRequest,
-  TProverStatusRetryResponse,
+  TProverRetryRequest,
+  TProverRetryResponse,
   TZkProofRequest,
   TZkProofResponse,
   TZkProofStatusRequest,
@@ -53,7 +53,7 @@ export const typeDefsProof = gql`
   }
 
   extend type Mutation {
-    proverStatusRetry(databaseName: String!): Boolean!
+    proverRetry(databaseName: String!): Boolean!
   }
 `;
 
@@ -133,56 +133,55 @@ const proverStatus = publicWrapper<TProverStatusRequest, TProverStatusResponse>(
     })
 );
 
-const proverStatusRetry = authorizeWrapper<
-  TProverStatusRetryRequest,
-  TProverStatusRetryResponse
->(JOI_PROVER_STATUS, async (_root, { databaseName }, ctx) =>
-  Transaction.compound(async ({ sessionServerless, sessionMina }) => {
-    const permission = await PermissionSecurity.database(
-      { databaseName, actor: ctx.userName },
-      sessionServerless
-    );
-
-    if (permission.system === false) {
-      throw new Error(
-        `Actor '${ctx.userName}' does not have 'system' permission which is required by this operation.`
+const proverRetry = authorizeWrapper<TProverRetryRequest, TProverRetryResponse>(
+  JOI_PROVER_STATUS,
+  async (_root, { databaseName }, ctx) =>
+    Transaction.compound(async ({ sessionServerless, sessionMina }) => {
+      const permission = await PermissionSecurity.database(
+        { databaseName, actor: ctx.userName },
+        sessionServerless
       );
-    }
 
-    const imDocumentQueue = await ModelGenericQueue.getInstance(
-      EQueueType.RollupOffChainQueue,
-      sessionMina
-    );
+      if (permission.system === false) {
+        throw new Error(
+          `Actor '${ctx.userName}' does not have 'system' permission which is required by this operation.`
+        );
+      }
 
-    const documentQueueStatus = await imDocumentQueue.databaseLatestStatus(
-      databaseName,
-      sessionMina
-    );
+      const imDocumentQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
+        sessionMina
+      );
 
-    if (documentQueueStatus === EQueueTaskStatus.Failed) {
-      return imDocumentQueue.retryLatestFailedTask(databaseName, sessionMina);
-    }
-
-    const imRollupOffchainQueue = await ModelGenericQueue.getInstance(
-      EQueueType.RollupOffChainQueue,
-      sessionMina
-    );
-
-    const rollupOffchainQueueStatus =
-      await imRollupOffchainQueue.databaseLatestStatus(
+      const documentQueueStatus = await imDocumentQueue.databaseLatestStatus(
         databaseName,
         sessionMina
       );
 
-    if (rollupOffchainQueueStatus === EQueueTaskStatus.Failed) {
-      return imRollupOffchainQueue.retryLatestFailedTask(
-        databaseName,
+      if (documentQueueStatus === EQueueTaskStatus.Failed) {
+        return imDocumentQueue.retryLatestFailedTask(databaseName, sessionMina);
+      }
+
+      const imRollupOffchainQueue = await ModelGenericQueue.getInstance(
+        EQueueType.RollupOffChainQueue,
         sessionMina
       );
-    }
 
-    return false;
-  })
+      const rollupOffchainQueueStatus =
+        await imRollupOffchainQueue.databaseLatestStatus(
+          databaseName,
+          sessionMina
+        );
+
+      if (rollupOffchainQueueStatus === EQueueTaskStatus.Failed) {
+        return imRollupOffchainQueue.retryLatestFailedTask(
+          databaseName,
+          sessionMina
+        );
+      }
+
+      return false;
+    })
 );
 
 const BigIntScalar: GraphQLScalarType<bigint, string> = ScalarType.BigInt();
@@ -198,6 +197,6 @@ export const resolversProof = {
     proverStatus,
   },
   Mutation: {
-    proverStatusRetry,
+    proverRetry,
   },
 };

@@ -10,6 +10,8 @@ import {
   TDocumentMetadataResponse,
   TDocumentUpdateRequest,
   TDocumentUpdateResponse,
+  TMerkleProofDocumentRequest,
+  TMerkleProofDocumentResponse,
 } from "@zkdb/common";
 import { createApi, TApolloClient } from "./common";
 
@@ -34,7 +36,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document
         }
       }
-    `,
+    `
   ),
   documentDrop: createApi<TDocumentDropRequest, TDocumentDropResponse>(
     client,
@@ -53,7 +55,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           acknowledged
         }
       }
-    `,
+    `
   ),
   documentUpdate: createApi<TDocumentUpdateRequest, TDocumentUpdateResponse>(
     client,
@@ -71,7 +73,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document: $document
         )
       }
-    `,
+    `
   ),
   documentFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -98,7 +100,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `,
+    `
   ),
   documentHistoryFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -124,7 +126,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `,
+    `
   ),
   documentMetadata: createApi<
     TDocumentMetadataRequest,
@@ -161,7 +163,27 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         ...rest,
         merkleIndex: BigInt(merkleIndex),
       };
-    },
+    }
+  ),
+
+  documentMerkleProofStatus: createApi<
+    TMerkleProofDocumentRequest,
+    TMerkleProofDocumentResponse
+  >(
+    client,
+    gql`
+      query documentMerkleProofStatus(
+        $databaseName: String!
+        $collectionName: String!
+        $docId: String!
+      ) {
+        documentMerkleProofStatus(
+          databaseName: $databaseName
+          collectionName: $collectionName
+          docId: $docId
+        )
+      }
+    `
   ),
 });
 

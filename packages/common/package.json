@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "@aurowallet/mina-provider": "^1.0.6",
-    "@zkdb/permission": "0.1.12",
+    "@zkdb/permission": "0.1.13",
     "axios": "^1.7.9",
     "joi": "^17.13.3",
     "mina-signer": "^3.0.7",

@@ -38,6 +38,6 @@ export type TProverStatusRequest = TDatabaseRequest;
 
 export type TProverStatusResponse = EQueueTaskStatus;
 
-export type TProverStatusRetryRequest = TDatabaseRequest;
+export type TProverRetryRequest = TDatabaseRequest;
 
-export type TProverStatusRetryResponse = boolean;
+export type TProverRetryResponse = boolean;
