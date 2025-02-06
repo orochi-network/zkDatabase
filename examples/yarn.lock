@@ -131,31 +131,31 @@
   dependencies:
     tslib "^2.3.0"
 
-"@zkdb/api@1.1.21":
-  version "1.1.21"
-  resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.21.tgz#a4d2a9e111ef9a76e8030b8dae1c958cc7ec4e3d"
-  integrity sha512-neKNBEfyjVyxuchus7Sbj3Iw3Zi0sPKWfbZpM11/9uCW9/WrU+JuMp6AvgXwCcymAA5dOi74Qu6O003lGF4P7Q==
+"@zkdb/api@1.1.22":
+  version "1.1.22"
+  resolved "https://registry.yarnpkg.com/@zkdb/api/-/api-1.1.22.tgz#542dfe84a61c417f3f2d73ce946ffe764d1c606a"
+  integrity sha512-fVeV8BYmlzCCeA7rKx/AUBXTTS4tM2ROOKq2tM+J5WtW/xMZFA7XzFNrVsVQu1epB8g5WN9Cw2f5vbRMZtJc9w==
   dependencies:
     "@apollo/client" "^3.12.4"
-    "@zkdb/common" "0.1.11"
+    "@zkdb/common" "0.1.12"
     react "^19.0.0"
 
-"@zkdb/common@0.1.11":
-  version "0.1.11"
-  resolved "https://registry.yarnpkg.com/@zkdb/common/-/common-0.1.11.tgz#162e113cddd64aa5401557da243b199dde0f44c0"
-  integrity sha512-AcuaN3yKrQ3xnIYHr67TARi3679ddnharLumsDr9HVoVDsUBwqKhfyFzp36PXF7jHbZ7KMMAVKkHWGlCRjvN7A==
+"@zkdb/common@0.1.12":
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/@zkdb/common/-/common-0.1.12.tgz#60d1c356b3d0f10d3d7eb0de9022d593e6315a95"
+  integrity sha512-4TmUZjxVVgOHaIM3FEZd0Hmrc0CuuYEbl2tDscCynQ1N5SbWlsy14dXd1xVHE0Xv7a72cruskZ8XTaXTnpCL0A==
   dependencies:
     "@aurowallet/mina-provider" "^1.0.6"
-    "@zkdb/permission" "0.1.12"
+    "@zkdb/permission" "0.1.13"
     axios "^1.7.9"
     joi "^17.13.3"
     mina-signer "^3.0.7"
     mongodb "^6.13.0"
 
-"@zkdb/permission@0.1.12":
-  version "0.1.12"
-  resolved "https://registry.yarnpkg.com/@zkdb/permission/-/permission-0.1.12.tgz#f9a3f9328150caaa5e103c46dd62ef7b466d3d57"
-  integrity sha512-fNgsUEVmPIf3ACfDqiBRW5qyFh0YMg1UgRXOEZPUIHVIZ+vbQlnLmKqDChhZpXMBT6s2lj0huRkJw4I+qKPYxQ==
+"@zkdb/permission@0.1.13":
+  version "0.1.13"
+  resolved "https://registry.yarnpkg.com/@zkdb/permission/-/permission-0.1.13.tgz#7aedf88aea767e34fd6f1105ef8902d3b9a0467a"
+  integrity sha512-A5JBp0msmbBrNqYIhzBAYP0fJszoZKytAQr6XFOLMjK5LOCfSmMNBVRtYE8pQFzpvIybZSIQKXQfGPNHdfIsYA==
 
 asynckit@^0.4.0:
   version "0.4.0"
@@ -493,14 +493,14 @@ zen-observable@0.8.15:
   resolved "https://registry.yarnpkg.com/zen-observable/-/zen-observable-0.8.15.tgz#96415c512d8e3ffd920afd3889604e30b9eaac15"
   integrity sha512-PQ2PC7R9rslx84ndNBZB/Dkv8V8fZEpk83RLgXtYd0fwUgEjseMn1Dgajh2x6S8QbZAFa9p2qVCEuYZNgve0dQ==
 
-zkdb@1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.3.1.tgz#9383e8b4f38ff741936c7a48ea66f169e109ca33"
-  integrity sha512-PbcTk2YFtYfm9/jS9/rT0+CLUA+4/xNkuWUZ0wmHLOEbTP9KLs/UtTVxc1cPwRsPfAuB2ftTmpcBf4kk/aWbwA==
+zkdb@1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/zkdb/-/zkdb-1.3.3.tgz#764aa337ec5ff23a74d96118b883ac9de8ba888a"
+  integrity sha512-eQTgW2xiXgAqlA54quyiGs9tlDv2uIn3i4O16iJ5/99N0MpxQgS+wF+mv0iKyxahy3a/0BaNf6r5vdaHdtQ+tQ==
   dependencies:
-    "@zkdb/api" "1.1.21"
-    "@zkdb/common" "0.1.11"
-    "@zkdb/permission" "0.1.12"
+    "@zkdb/api" "1.1.22"
+    "@zkdb/common" "0.1.12"
+    "@zkdb/permission" "0.1.13"
     graphql "^16.10.0"
     graphql-request "7.1.2"
     mina-signer "3.0.7"
