@@ -319,6 +319,19 @@ export class Rollup {
       session
     );
 
+    const rollupOffChainQueueList = await imRollupOffChainQueue
+      .find(
+        {
+          databaseName,
+        },
+        { sort: { updatedAt: -1, createdAt: -1 }, session }
+      )
+      .toArray();
+
+    if (!rollupOffChainQueueList.length) {
+      return null;
+    }
+
     const latestRollupOffChain = await imRollupOffChain.findOne(
       {
         databaseName,
@@ -326,8 +339,16 @@ export class Rollup {
       { sort: { updatedAt: -1, createdAt: -1 }, session }
     );
 
+    // This case happen when first rollup off-chain queue failed
+    // We need to show failed state for client-side retry
     if (!latestRollupOffChain) {
-      return null;
+      return {
+        databaseName,
+        merkleRootNew: null,
+        merkleRootOld: null,
+        rollupOffChainState: rollupOffChainQueueList[0].status,
+        latestRollupOffChainSuccess: null,
+      };
     }
 
     const transitionLog = await imTransitionLog.findOne(
@@ -341,19 +362,6 @@ export class Rollup {
       throw new Error(
         `Cannot found transition log for rollup ${latestRollupOffChain._id}`
       );
-    }
-
-    const rollupOffChainQueueList = await imRollupOffChainQueue
-      .find(
-        {
-          databaseName,
-        },
-        { sort: { updatedAt: -1, createdAt: -1 }, session }
-      )
-      .toArray();
-
-    if (!rollupOffChainQueueList.length) {
-      return null;
     }
 
     return {
