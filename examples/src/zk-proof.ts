@@ -52,7 +52,7 @@ if (verificationKey && zkProof) {
 }
 
 if ((await dbTest.proverStatus()) === 'Failed') {
-  console.log('Retry:', await dbTest.proverStatus());
+  console.log('Retry:', await dbTest.proverRetry());
 }
 
 // Sign out
