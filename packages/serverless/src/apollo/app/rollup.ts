@@ -84,8 +84,8 @@ type RollupOnChainState {
 
 type RollupOffChainState {
   databaseName: String!
-  merkleRootNew: String!
-  merkleRootOld: String!
+  merkleRootNew: String
+  merkleRootOld: String
   rollupOffChainState: QueueTaskStatus!
   latestRollupOffChainSuccess: Date
 }

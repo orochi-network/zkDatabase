@@ -50,10 +50,9 @@ export type TRollupOffChainRecord = TDbRecord<
     }
 >;
 
-export type TRollupOffChainState = Pick<
-  TRollupBaseHistory,
-  'databaseName' | 'merkleRootNew' | 'merkleRootOld'
-> & {
+export type TRollupOffChainState = Pick<TRollupBaseHistory, 'databaseName'> & {
+  merkleRootOld: string | null;
+  merkleRootNew: string | null;
   rollupOffChainState: EQueueTaskStatus;
   latestRollupOffChainSuccess: Date | null;
 };
