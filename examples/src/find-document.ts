@@ -1,6 +1,6 @@
 import { Schema } from '@zkdb/common';
 import { CircuitString, UInt32 } from 'o1js';
-import { zkdb } from './connection';
+import { zkdb } from './connection.js';
 
 class Book extends Schema.create({
   name: CircuitString,
@@ -28,6 +28,12 @@ const documentList = await collectionBook.findMany({ name: 'Brave New World' });
 
 for (let i = 0; i < documentList.data.length; i += 1) {
   console.log(`Document ${i}:`, documentList.data[i].document);
+  if (documentList.data[i]) {
+    console.log(
+      'Merkle proof status:',
+      await documentList.data[i].merkleProofStatus()
+    );
+  }
 }
 
 // Sign out

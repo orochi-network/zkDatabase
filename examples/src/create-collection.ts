@@ -1,7 +1,7 @@
 import { Schema } from '@zkdb/common';
 import { CircuitString, UInt32 } from 'o1js';
 import { Permission } from 'zkdb';
-import { zkdb } from './connection';
+import { zkdb } from './connection.js';
 
 // Define the Book schema using Schema's create method and export it as TBook type alias for easy use in code
 class Book extends Schema.create({

@@ -1,5 +1,5 @@
 import { verify } from 'o1js';
-import { zkdb } from './connection';
+import { zkdb } from './connection.js';
 
 // Check user existence then create
 if (!(await zkdb.auth.isUserExist('chiro-user'))) {
@@ -35,6 +35,10 @@ console.log(await dbTest.zkProofVerify());
  * Lastly, call the `verify()` from o1js
  * */
 
+console.log('Off-chain ZK-data-rollups status:', await dbTest.zkProofStatus());
+
+console.log('Off-chain rollup history:', await dbTest.rollUpOffChainHistory());
+
 // Get verification key to verify
 const verificationKey = await dbTest.verificationKey();
 
@@ -46,6 +50,8 @@ if (verificationKey && zkProof) {
   // Verify proof via `verify` method from o1js
   console.log('Is proof valid:', await verify(zkProof.proof, verificationKey));
 }
+
+console.log(await dbTest.zkProofTaskRetry());
 
 // Sign out
 await zkdb.auth.signOut();

@@ -1,6 +1,6 @@
 import { Schema } from '@zkdb/common';
 import { CircuitString, UInt32 } from 'o1js';
-import { zkdb } from './connection';
+import { zkdb } from './connection.js';
 
 class Book extends Schema.create({
   name: CircuitString,
