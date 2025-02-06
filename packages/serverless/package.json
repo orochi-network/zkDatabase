@@ -51,7 +51,7 @@
     "@apollo/server": "4.11.0",
     "@orochi-network/framework": "^2.3.19",
     "@orochi-network/utilities": "^0.2.42",
-    "@zkdb/common": "0.1.12",
+    "@zkdb/common": "0.1.13",
     "@zkdb/permission": "0.1.13",
     "@zkdb/smart-contract": "1.1.13",
     "@zkdb/storage": "1.1.6",
