@@ -1,5 +1,6 @@
 import { IApiClient } from '@zkdb/api';
 import {
+  EContractName,
   ETransactionType,
   TCollectionListResponse,
   TDatabaseInfoResponse,
@@ -216,7 +217,7 @@ export class Database implements IDatabase {
     const result = (
       await this.apiClient.db.dbVerificationKey(this.basicQuery)
     ).unwrap();
-    if (result) {
+    if (result && typeof result[EContractName.Rollup] === 'object') {
       const {
         Rollup: { data, hash },
       } = result;
