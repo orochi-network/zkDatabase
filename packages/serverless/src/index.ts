@@ -130,6 +130,10 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
     ttl: EXPRESS_SESSION_EXPIRE_TIME,
   });
 
+  // NOTE: trusting first proxy is required for express-session to send back
+  // `secure` cookies if the reverse proxy is plain HTTP, per documented at:
+  // https://github.com/expressjs/session/tree/v1.18.1#cookiesecure
+  app.set('trust proxy', 1);
   app.use(
     session({
       genid: () => randomUUID(),
