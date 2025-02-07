@@ -147,6 +147,7 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
       cookie: {
         path: '/',
         maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
+        secure: true,
       },
     })
   );
