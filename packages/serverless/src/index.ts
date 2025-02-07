@@ -86,8 +86,32 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
   app.use(
     helmet({
       crossOriginOpenerPolicy: false,
-      // enable playground apollo when environment is local
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          // Default to self for all directives/resources
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            // Allow loading and executing Graphql Playground scripts from
+            // cdn.apollographql.com
+            'embeddable-sandbox.cdn.apollographql.com',
+          ],
+          // Allow loading Graphql Playground iframes from
+          // embed.apollographql.com
+          frameSrc: ["'self'", 'sandbox.embed.apollographql.com'],
+          // Allow loading Graphql Playground images
+          imgSrc: [
+            "'self'",
+            'apollo-server-landing-page.cdn.apollographql.com',
+          ],
+          // Allow loading Graphql Playground manifest
+          manifestSrc: [
+            "'self'",
+            'apollo-server-landing-page.cdn.apollographql.com',
+          ],
+        },
+      },
       // set the “X-Frame-Options” header to prevent clickjacking attacks
       frameguard: { action: 'deny' },
       // set the “X-XSS-Protection” header to prevent cross-site scripting (XSS) attacks
