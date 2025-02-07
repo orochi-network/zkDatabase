@@ -95,21 +95,15 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
             "'unsafe-inline'",
             // Allow loading and executing Graphql Playground scripts from
             // cdn.apollographql.com
-            'embeddable-sandbox.cdn.apollographql.com',
+            '*.cdn.apollographql.com',
           ],
           // Allow loading Graphql Playground iframes from
           // embed.apollographql.com
           frameSrc: ["'self'", 'sandbox.embed.apollographql.com'],
           // Allow loading Graphql Playground images
-          imgSrc: [
-            "'self'",
-            'apollo-server-landing-page.cdn.apollographql.com',
-          ],
+          imgSrc: ["'self'", '*.cdn.apollographql.com'],
           // Allow loading Graphql Playground manifest
-          manifestSrc: [
-            "'self'",
-            'apollo-server-landing-page.cdn.apollographql.com',
-          ],
+          manifestSrc: ["'self'", '*.cdn.apollographql.com'],
         },
       },
       // set the “X-Frame-Options” header to prevent clickjacking attacks
