@@ -80,7 +80,7 @@ export const SERVICE_COMPILE = {
         );
 
         if (!metadataDatabase) {
-          throw new Error('Metadata database not found');
+          throw new Error(`Metadata database ${databaseName} not found`);
         }
 
         await zkAppCompiler.verificationKeySet(
