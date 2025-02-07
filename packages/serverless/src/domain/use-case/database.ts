@@ -20,6 +20,7 @@ import {
   ModelDatabase,
   ModelMetadataDatabase,
   ModelSequencer,
+  Transaction as MongoTransaction,
 } from '@zkdb/storage';
 import { ClientSession } from 'mongodb';
 import { Group } from './group';
@@ -29,26 +30,27 @@ const MAX_MERKLE_TREE_HEIGHT = 256;
 const MIN_MERKLE_TREE_HEIGHT = 8;
 
 export class Database {
-  public static async create(
-    paramCreate: TDatabaseParamCreate,
-    session: ClientSession
-  ) {
+  public static async create(paramCreate: TDatabaseParamCreate) {
     const { databaseName, databaseOwner, merkleHeight } = paramCreate;
+    const createResult = await MongoTransaction.serverless(async (session) => {
+      if (
+        merkleHeight < MIN_MERKLE_TREE_HEIGHT ||
+        merkleHeight > MAX_MERKLE_TREE_HEIGHT
+      ) {
+        throw new Error('Merkle height must be between 8-256');
+      }
 
-    if (
-      merkleHeight < MIN_MERKLE_TREE_HEIGHT ||
-      merkleHeight > MAX_MERKLE_TREE_HEIGHT
-    ) {
-      throw new Error('Merkle height must be between 8-256');
-    }
+      // Find user
+      const user = await new ModelUser().findOne(
+        { userName: databaseOwner },
+        { session }
+      );
+      // Ensure databaseOwner existed
 
-    // Find user
-    const user = await new ModelUser().findOne(
-      { userName: databaseOwner },
-      { session }
-    );
-    // Ensure databaseOwner existed
-    if (user) {
+      if (!user) {
+        throw new Error(`User ${databaseOwner} has not been found`);
+      }
+
       const imMetadataDatabase = new ModelMetadataDatabase();
 
       // Case database already exist
@@ -75,43 +77,44 @@ export class Database {
         },
         { session }
       );
-      if (metadataDatabase) {
-        // Create default group
-        await Group.create(
-          {
-            databaseName,
-            createdBy: databaseOwner,
-            groupName: GROUP_DEFAULT_ADMIN,
-            groupDescription: 'Default group for owner',
-          },
-          session
-        );
-        // After created group, add owner to list participant
-        await Group.addListUser(
-          {
-            databaseName,
-            createdBy: databaseOwner,
-            listUserName: [databaseOwner],
-            groupName: GROUP_DEFAULT_ADMIN,
-          },
-          session
-        );
 
-        // Enqueue transaction
-        // NOTE: need to put this at last because it commit the session
-        // If we put it to before another we query that have session, it will not work, since
-        await Transaction.enqueue(
-          databaseName,
-          databaseOwner,
-          ETransactionType.Deploy,
-          session
-        );
-
-        return true;
+      if (!metadataDatabase) {
+        return false;
       }
-      return false;
+
+      // Create default group
+      await Group.create(
+        {
+          databaseName,
+          createdBy: databaseOwner,
+          groupName: GROUP_DEFAULT_ADMIN,
+          groupDescription: 'Default group for owner',
+        },
+        session
+      );
+      // After created group, add owner to list participant
+      await Group.addListUser(
+        {
+          databaseName,
+          createdBy: databaseOwner,
+          listUserName: [databaseOwner],
+          groupName: GROUP_DEFAULT_ADMIN,
+        },
+        session
+      );
+      return true;
+    });
+
+    if (createResult) {
+      // Enqueue transaction
+      await Transaction.enqueue(
+        databaseName,
+        databaseOwner,
+        ETransactionType.Deploy
+      );
     }
-    throw Error(`User ${databaseOwner} has not been found`);
+
+    return createResult;
   }
 
   public static async isOwner(

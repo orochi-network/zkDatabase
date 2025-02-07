@@ -101,8 +101,12 @@ export class Rollup {
         latestOffChainRollupProof._id.toString()
     );
 
+    // This case prevent user click create rollup multiple times with the same proof
     // NOTE: I just refactor code but keep this check old logic from Oleg. Need to check
     if (rollupOnChainHistoryWithProof) {
+      if (!rollupOnChainHistoryWithProof.transaction) {
+        throw new Error('Transaction is not created yet');
+      }
       logger.debug('Identified repeated proof');
       if (
         rollupOnChainHistoryWithProof.transaction.status ===
@@ -123,8 +127,7 @@ export class Rollup {
     const transactionObjectId = await Transaction.enqueue(
       databaseName,
       actor,
-      ETransactionType.Rollup,
-      compoundSession.sessionServerless
+      ETransactionType.Rollup
     );
 
     const currentTime = new Date();
@@ -146,7 +149,7 @@ export class Rollup {
         updatedAt: currentTime,
         step: latestOffChainRollupProof.step,
       },
-      { session: compoundSession?.sessionServerless }
+      { session: compoundSession.sessionServerless }
     );
 
     return true;
