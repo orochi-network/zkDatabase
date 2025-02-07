@@ -4,14 +4,13 @@ import { EncryptionKey } from '@orochi-network/vault';
 import {
   ETransactionStatus,
   ETransactionType,
-  TTransactionQueue,
   MinaNetwork,
+  TTransactionQueue,
 } from '@zkdb/common';
 import {
   DatabaseEngine,
   ModelMetadataDatabase,
   ModelRollupOffChain,
-  ModelRollupOnChainHistory,
   ModelSecureStorage,
   ModelTransaction,
   TCompoundSession,
@@ -81,7 +80,7 @@ export const SERVICE_COMPILE = {
         );
 
         if (!metadataDatabase) {
-          throw new Error('Metadata database not found');
+          throw new Error(`Metadata database ${databaseName} not found`);
         }
 
         await zkAppCompiler.verificationKeySet(
@@ -177,7 +176,7 @@ export const SERVICE_COMPILE = {
           );
 
           if (!privateKey) {
-            throw Error(
+            throw new Error(
               `Private key of database ${databaseName} has not been found`
             );
           }
@@ -210,48 +209,33 @@ export const SERVICE_COMPILE = {
             throw new Error(`Proof for ${databaseName} not found`);
           }
 
-          try {
-            const transactionRaw = await zkAppCompiler.getRollupRawTx(
-              payerAddress,
-              zkAppPrivateKey,
-              metadataDatabase.merkleHeight,
-              proofOffChain.proof
-            );
+          const transactionRaw = await zkAppCompiler.getRollupRawTx(
+            payerAddress,
+            zkAppPrivateKey,
+            metadataDatabase.merkleHeight,
+            proofOffChain.proof
+          );
 
-            // Update transaction status and add transaction raw
-            await imTransaction.updateOne(
-              {
-                _id: new ObjectId(transactionObjectId),
-                databaseName,
-                transactionType: ETransactionType.Rollup,
-              },
-              {
-                $set: {
-                  status: ETransactionStatus.Unsigned,
-                  transactionRaw,
-                  updatedAt: new Date(),
-                  createdAt: new Date(),
-                },
-              },
-              {
-                session: sessionServerless,
-                upsert: true,
-              }
-            );
-          } catch (error) {
-            logger.error(`Rollup transaction error: `, error);
-
-            // Remove rollup history with transactionObjectId provided
-            // If not remove it will generate new rollup history with broken link to given transaction
-            // @TODO: Use our own Queue, since we can have ObjectId duplication with Redis Queue
-            await ModelRollupOnChainHistory.getInstance().deleteOne({
+          // Update transaction status and add transaction raw
+          await imTransaction.updateOne(
+            {
+              _id: new ObjectId(transactionObjectId),
               databaseName,
-              transactionObjectId,
-              proofObjectId: proofOffChain._id,
-            });
-
-            throw error;
-          }
+              transactionType: ETransactionType.Rollup,
+            },
+            {
+              $set: {
+                status: ETransactionStatus.Unsigned,
+                transactionRaw,
+                updatedAt: new Date(),
+                createdAt: new Date(),
+              },
+            },
+            {
+              session: sessionServerless,
+              upsert: true,
+            }
+          );
         } else {
           // Show what transaction type that unsupported and not suppose to be
           throw new Error(`Unsupported transaction ${transactionType}`);
