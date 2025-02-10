@@ -145,7 +145,22 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
       cookie: {
         path: '/',
         maxAge: EXPRESS_SESSION_EXPIRE_TIME * 1000,
-        secure: true,
+        // NOTE: When combining secure: 'auto' with trust proxy settings:
+        // - Cookies are always marked as 'secure' when the reverse proxy
+        //   connection uses HTTPS
+        // - For plain HTTP reverse proxy connections:
+        //   * Cookies are 'secure' if the client-to-proxy request uses HTTPS
+        //   * Cookies are not 'secure' if the client-to-proxy request uses HTTP
+        //   * This is determined by the 'x-forwarded-proto' header value
+        //
+        // This configuration allows local development testing over HTTP (e.g.
+        // calling from localhost) with working cookies, while maintaining
+        // secure cookies in production.
+        //
+        // Sources:
+        //  - https://github.com/expressjs/session/blob/v1.18.1/index.js#L631-L655
+        //  - https://github.com/expressjs/session/tree/v1.18.1#cookiesecure
+        secure: 'auto',
       },
     })
   );
