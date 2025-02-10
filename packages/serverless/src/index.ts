@@ -104,6 +104,10 @@ const EXPRESS_SESSION_EXPIRE_TIME = 86400;
           imgSrc: ["'self'", '*.cdn.apollographql.com'],
           // Allow loading Graphql Playground manifest
           manifestSrc: ["'self'", '*.cdn.apollographql.com'],
+          // Don't automatically upgrade HTTP requests to HTTPS so that Graphql
+          // Studio can work over HTTP to fetch schemas, etc. on test
+          // environments
+          upgradeInsecureRequests: null,
         },
       },
       // set the “X-Frame-Options” header to prevent clickjacking attacks
