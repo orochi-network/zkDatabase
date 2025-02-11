@@ -1,5 +1,3 @@
-// TODO: need end to end testing for every function in this file
-// TODO: debug types to annotate the actual correct types
 // TODO: pagination does not work properly since we fetch all documents with
 // the pagination filter first and then filter them by permission, which can
 // lead to less documents being returned than expected. This also affects the

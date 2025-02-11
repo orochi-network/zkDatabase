@@ -36,7 +36,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document
         }
       }
-    `
+    `,
   ),
   documentDrop: createApi<TDocumentDropRequest, TDocumentDropResponse>(
     client,
@@ -55,7 +55,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           acknowledged
         }
       }
-    `
+    `,
   ),
   documentUpdate: createApi<TDocumentUpdateRequest, TDocumentUpdateResponse>(
     client,
@@ -73,7 +73,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           document: $document
         )
       }
-    `
+    `,
   ),
   documentFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -100,7 +100,22 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `
+    `,
+    ({ data, offset, total }) => ({
+      total,
+      offset,
+      // Deserialize document fields so that the wire format is converted to
+      // the internal format, such as BigInt for Int64.
+      data: data.map((d) => {
+        Object.entries(d.document).forEach(([k, v]) => {
+          if (v.kind === "Int64" || v.kind === "UInt64") {
+            // eslint-disable-next-line no-param-reassign
+            d.document[k].value = BigInt(v.value);
+          }
+        });
+        return d;
+      }),
+    }),
   ),
   documentHistoryFind: createApi<TDocumentFindRequest, TDocumentFindResponse>(
     client,
@@ -126,7 +141,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           offset
         }
       }
-    `
+    `,
   ),
   documentMetadata: createApi<
     TDocumentMetadataRequest,
@@ -163,7 +178,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
         ...rest,
         merkleIndex: BigInt(merkleIndex),
       };
-    }
+    },
   ),
 
   documentMerkleProofStatus: createApi<
@@ -183,7 +198,7 @@ export const API_DOCUMENT = <T>(client: TApolloClient<T>) => ({
           docId: $docId
         )
       }
-    `
+    `,
   ),
 });
 
