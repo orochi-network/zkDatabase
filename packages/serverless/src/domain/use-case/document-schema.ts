@@ -11,9 +11,6 @@ import Joi from 'joi';
 
 const schemaVerification: Map<TProvableTypeString, Joi.Schema> = new Map();
 
-// NOTE: not used but keeping here for reference
-// TODO: remove when synchronized with the upper level validators
-// Every data type will be treaded as string when store/transfer
 if (schemaVerification.size === 0) {
   const base58String = Joi.string()
     .max(256)
