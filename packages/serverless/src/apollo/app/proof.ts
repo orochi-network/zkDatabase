@@ -129,6 +129,15 @@ const proverStatus = publicWrapper<TProverStatusRequest, TProverStatusResponse>(
         EQueueType.RollupOffChainQueue,
         session
       );
+      const rollupOffchainStatus =
+        await imRollupOffchainQueue.databaseLatestStatus(databaseName, session);
+
+      if (
+        rollupOffchainStatus === EQueueTaskStatus.Queued &&
+        documentQueueStatus === EQueueTaskStatus.Processing
+      ) {
+        return EQueueTaskStatus.Processing;
+      }
 
       // NOTE: This assumes that the rollup offchain queue is always slower
       // than the document queue, thus we can use the latest status of the
@@ -136,9 +145,9 @@ const proverStatus = publicWrapper<TProverStatusRequest, TProverStatusResponse>(
       //
       // A correct implementation needs to account for the possibility that the
       // rollup offchain queue is faster than the document queue, in which case
-      // we have 5 * 5 = 25 possible states to consider, which is not worth it
+      // we have 5 * 4 = 20 possible states to consider, which is not worth it
       // for now.
-      return imRollupOffchainQueue.databaseLatestStatus(databaseName, session);
+      return rollupOffchainStatus;
     })
 );
 
